@@ -1,10 +1,50 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.jsx'
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import AppLayout from './layouts/AppLayout';
+import CustomerLayout from './layouts/CustomerLayout';
+import Dashboard from './views/Dashboard';
+import CustomerOverview from './views/CustomerOverview';
+import ActionManager from './views/ActionManager';
+import ReportGenerator from './views/ReportGenerator';
+import YAMLEditor from './views/YAMLEditor';
+import ArtifactManager from './views/ArtifactManager';
+import WeeklyUpdateForm from './views/WeeklyUpdateForm';
+import './index.css';
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { staleTime: 30_000, retry: 1 },
+  },
+});
+
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <AppLayout />,
+    children: [
+      { index: true, element: <Dashboard /> },
+      {
+        path: 'customer/:customerId',
+        element: <CustomerLayout />,
+        children: [
+          { index: true, element: <CustomerOverview /> },
+          { path: 'actions', element: <ActionManager /> },
+          { path: 'reports', element: <ReportGenerator /> },
+          { path: 'yaml', element: <YAMLEditor /> },
+          { path: 'artifacts', element: <ArtifactManager /> },
+          { path: 'update', element: <WeeklyUpdateForm /> },
+        ],
+      },
+    ],
+  },
+]);
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
+  </React.StrictMode>
+);
