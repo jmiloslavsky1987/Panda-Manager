@@ -28,28 +28,57 @@ workstreams:
       percent_complete: 40
       progress_notes: "Webhook endpoints configured"
       blockers: ""
-    configuration:
-      status: "not_started"
-      percent_complete: 0
-      progress_notes: ""
-      blockers: ""
+      scope: []
     outbound_integrations:
       status: "not_started"
       percent_complete: 0
       progress_notes: ""
       blockers: ""
-    workflow_configuration:
+      scope: []
+    normalization:
+      status: "not_started"
+      percent_complete: 0
+      progress_notes: ""
+      blockers: ""
+    platform_configuration:
+      status: "not_started"
+      percent_complete: 0
+      progress_notes: ""
+      blockers: ""
+    correlation:
+      status: "not_started"
+      percent_complete: 0
+      progress_notes: ""
+      blockers: ""
+    training_and_uat:
       status: "not_started"
       percent_complete: 0
       progress_notes: ""
       blockers: ""
   biggy:
-    integrations:
+    biggy_app_integration:
       status: "in_progress"
       percent_complete: 50
       progress_notes: "Correlation patterns defined"
       blockers: ""
-    workflow_configuration:
+    udc:
+      status: "not_started"
+      percent_complete: 0
+      progress_notes: ""
+      blockers: ""
+      scope: []
+    real_time_integrations:
+      status: "not_started"
+      percent_complete: 0
+      progress_notes: ""
+      blockers: ""
+      scope: []
+    action_plans_configuration:
+      status: "not_started"
+      percent_complete: 0
+      progress_notes: ""
+      blockers: ""
+    workflows_configuration:
       status: "not_started"
       percent_complete: 0
       progress_notes: ""
@@ -119,28 +148,53 @@ history:
           percent_complete: 40
           progress_notes: "Webhook endpoints configured for test environment"
           blockers: ""
-        configuration:
-          status: "not_started"
-          percent_complete: 0
-          progress_notes: ""
-          blockers: ""
         outbound_integrations:
           status: "not_started"
           percent_complete: 0
           progress_notes: ""
           blockers: ""
-        workflow_configuration:
+        normalization:
+          status: "not_started"
+          percent_complete: 0
+          progress_notes: ""
+          blockers: ""
+        platform_configuration:
+          status: "not_started"
+          percent_complete: 0
+          progress_notes: ""
+          blockers: ""
+        correlation:
+          status: "not_started"
+          percent_complete: 0
+          progress_notes: ""
+          blockers: ""
+        training_and_uat:
           status: "not_started"
           percent_complete: 0
           progress_notes: ""
           blockers: ""
       biggy:
-        integrations:
+        biggy_app_integration:
           status: "in_progress"
           percent_complete: 50
           progress_notes: "Initial correlation rules mapped"
           blockers: ""
-        workflow_configuration:
+        udc:
+          status: "not_started"
+          percent_complete: 0
+          progress_notes: ""
+          blockers: ""
+        real_time_integrations:
+          status: "not_started"
+          percent_complete: 0
+          progress_notes: ""
+          blockers: ""
+        action_plans_configuration:
+          status: "not_started"
+          percent_complete: 0
+          progress_notes: ""
+          blockers: ""
+        workflows_configuration:
           status: "not_started"
           percent_complete: 0
           progress_notes: ""
