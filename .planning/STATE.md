@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 04-02-PLAN — artifacts.js POST + PATCH + 7 passing tests
-last_updated: "2026-03-05T18:16:45.280Z"
+stopped_at: Completed 04-04-PLAN — ArtifactManager inline CRUD + shared InlineEditField/InlineSelectField components
+last_updated: "2026-03-05T18:21:04.473Z"
 last_activity: 2026-03-05 — Phase 4 plan 01 complete (10 t.todo() stubs, 0 failures)
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 22
-  completed_plans: 19
+  completed_plans: 20
   percent: 65
 ---
 
@@ -65,6 +65,7 @@ Progress: [███████░░░] 65% (Phase 4 started, test infrastruc
 | Phase 04-structured-write-views P01 | 1 | 2 tasks | 2 files |
 | Phase 04-structured-write-views P03 | 2min | 2 tasks | 2 files |
 | Phase 04-structured-write-views P02 | 3 | 2 tasks | 2 files |
+| Phase 04-structured-write-views P04 | 2 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -103,6 +104,8 @@ Recent decisions affecting current work:
 - [Phase 04-02]: GET stub removed from artifacts.js — client reads artifacts via full customer object GET /api/customers/:id, matching same decision as actions.js
 - [Phase 04-02]: PATCH always appends last_updated: today after spread — prevents stale date regardless of client payload (Pitfall 3 from plan)
 - [Phase 04-02]: related_topics: [] and linked_actions: [] hardcoded in POST — never trust client to initialize empty arrays for new artifacts (Pitfall 2 from plan)
+- [Phase 04-structured-write-views]: InlineEditField/InlineSelectField extracted to shared components when ArtifactManager became second consumer (Phase 3 deferral trigger met)
+- [Phase 04-structured-write-views]: ArtifactManager reads customer.artifacts via useOutletContext() — no useQuery, no double-fetch (matches ActionManager/ProjectSetup pattern)
 
 ### Pending Todos
 
@@ -116,7 +119,7 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-05T18:16:45.278Z
-Stopped at: Completed 04-02-PLAN — artifacts.js POST + PATCH + 7 passing tests
+Last session: 2026-03-05T18:21:04.471Z
+Stopped at: Completed 04-04-PLAN — ArtifactManager inline CRUD + shared InlineEditField/InlineSelectField components
 Resume file: None
 Next action: Execute 04-02 (artifacts route implementation — POST + PATCH endpoints)
