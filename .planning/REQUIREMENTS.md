@@ -7,15 +7,15 @@
 
 ### Infrastructure & Backend (INFRA)
 
-- [ ] **INFRA-01**: Server reads all `*_Master_Status.yaml` files from a designated Google Drive folder using a service account
-- [ ] **INFRA-02**: Server writes updated YAML back to Drive atomically (read → modify in memory → write full file — never partial)
+- [x] **INFRA-01**: Server reads all `*_Master_Status.yaml` files from a designated Google Drive folder using a service account
+- [x] **INFRA-02**: Server writes updated YAML back to Drive atomically (read → modify in memory → write full file — never partial)
 - [x] **INFRA-03**: YAML is parsed and serialized with js-yaml using options that prevent type coercion (yes/no/on/off stay as strings) and preserve key order and multiline strings
 - [x] **INFRA-04**: yamlService enforces the fixed schema on every read and write — all top-level keys must be present, no extra keys allowed
 - [x] **INFRA-05**: Sequential ID assignment (A-###, R-###, X-###) is enforced server-side by reading all existing IDs and incrementing the highest
 - [ ] **INFRA-06**: Express REST API exposes all endpoints specified in the brief (GET /api/customers, GET/PUT /api/customers/:id, PATCH action endpoints, POST /api/reports/generate)
 - [ ] **INFRA-07**: Vite proxy routes `/api` requests to Express — no CORS package used
-- [ ] **INFRA-08**: Environment variables loaded from `.env` (ANTHROPIC_API_KEY, GOOGLE_SERVICE_ACCOUNT_PATH, DRIVE_FOLDER_ID, PORT)
-- [ ] **INFRA-09**: `.env.example` with all required keys and inline comments
+- [x] **INFRA-08**: Environment variables loaded from `.env` (ANTHROPIC_API_KEY, GOOGLE_SERVICE_ACCOUNT_PATH, DRIVE_FOLDER_ID, PORT)
+- [x] **INFRA-09**: `.env.example` with all required keys and inline comments
 - [ ] **INFRA-10**: `npm run dev` starts both Express and Vite concurrently, app opens at localhost:3000
 
 ### Dashboard — View 1 (DASH)
@@ -140,15 +140,15 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFRA-01 | Phase 1: Foundation | Pending |
-| INFRA-02 | Phase 1: Foundation | Pending |
+| INFRA-01 | Phase 1: Foundation | Complete |
+| INFRA-02 | Phase 1: Foundation | Complete |
 | INFRA-03 | Phase 1: Foundation | Complete |
 | INFRA-04 | Phase 1: Foundation | Complete |
 | INFRA-05 | Phase 1: Foundation | Complete |
 | INFRA-06 | Phase 1: Foundation | Pending |
 | INFRA-07 | Phase 1: Foundation | Pending |
-| INFRA-08 | Phase 1: Foundation | Pending |
-| INFRA-09 | Phase 1: Foundation | Pending |
+| INFRA-08 | Phase 1: Foundation | Complete |
+| INFRA-09 | Phase 1: Foundation | Complete |
 | INFRA-10 | Phase 1: Foundation | Pending |
 | DASH-01 | Phase 2: Read Surface | Pending |
 | DASH-02 | Phase 2: Read Surface | Pending |
