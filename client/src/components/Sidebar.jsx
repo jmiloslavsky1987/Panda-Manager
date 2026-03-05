@@ -1,0 +1,53 @@
+// client/src/components/Sidebar.jsx — UI-03, CUST-01
+// Persistent customer sidebar. Uses NavLink for active state (handles nested routes correctly).
+// CRITICAL: All NavLink className strings must be complete literals — no dynamic construction.
+import { NavLink, Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { getCustomers } from '../api';
+
+export default function Sidebar() {
+  const { data: customers = [], isPending } = useQuery({
+    queryKey: ['customers'],
+    queryFn: getCustomers,
+    staleTime: 30_000,
+  });
+
+  return (
+    <nav className="w-64 bg-white border-r border-gray-200 h-full overflow-y-auto flex flex-col shrink-0">
+      {/* App title / home link */}
+      <div className="p-4 border-b border-gray-200">
+        <Link to="/" className="text-sm font-bold text-teal-700 hover:text-teal-800">
+          Project Intelligence
+        </Link>
+      </div>
+
+      {/* Customer list — CUST-01 */}
+      <div className="p-3 border-b border-gray-100">
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Customers</p>
+      </div>
+      <ul className="flex-1">
+        {isPending && (
+          <li className="px-4 py-2 text-xs text-gray-400">Loading...</li>
+        )}
+        {customers.map(c => (
+          <li key={c.fileId}>
+            {/* NavLink knows about nested route matching — isActive true for /customer/:id and all children */}
+            <NavLink
+              to={`/customer/${c.fileId}`}
+              className={({ isActive }) =>
+                isActive
+                  ? 'block px-4 py-2.5 text-sm bg-teal-50 text-teal-700 font-medium border-r-2 border-teal-500'
+                  : 'block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50'
+              }
+            >
+              {c.customer?.name ?? c.fileId}
+            </NavLink>
+          </li>
+        ))}
+        {!isPending && customers.length === 0 && (
+          <li className="px-4 py-2 text-xs text-gray-400">No customers found</li>
+        )}
+      </ul>
+    </nav>
+  );
+}
