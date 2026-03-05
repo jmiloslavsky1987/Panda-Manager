@@ -91,7 +91,7 @@
 - [ ] **UPD-01**: Form to create a new history entry for the current week; week_of defaults to today's date
 - [ ] **UPD-02**: Per-workstream section for each sub-workstream: status selector (green/yellow/red), percent_complete slider/input, progress_notes text field, blockers text field
 - [ ] **UPD-03**: Summary section: multi-entry fields for progress bullets, decisions, and outcomes for the week
-- [ ] **UPD-04**: Submit prepends a new well-formed history entry to the YAML history array and writes to Drive atomically
+- [x] **UPD-04**: Submit prepends a new well-formed history entry to the YAML history array and writes to Drive atomically
 - [ ] **UPD-05**: After successful submit, navigates back to Customer Overview (which now reflects the new entry)
 
 ### Reusable UI Components (UI)
@@ -186,7 +186,7 @@
 | UPD-01 | Phase 4: Structured Write Views | Pending |
 | UPD-02 | Phase 4: Structured Write Views | Pending |
 | UPD-03 | Phase 4: Structured Write Views | Pending |
-| UPD-04 | Phase 4: Structured Write Views | Pending |
+| UPD-04 | Phase 4: Structured Write Views | Complete |
 | UPD-05 | Phase 4: Structured Write Views | Pending |
 | ART-01 | Phase 4: Structured Write Views | Pending |
 | ART-02 | Phase 4: Structured Write Views | Pending |

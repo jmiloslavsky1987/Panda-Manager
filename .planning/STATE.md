@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 04-01-PLAN — Wave 0 test stubs (artifacts + history)
-last_updated: "2026-03-05T18:11:00.000Z"
-last_activity: 2026-03-05 — Phase 4 plan 01 complete (artifacts.test.js + history.test.js stubs, 10 TODO tests, 0 failures)
+status: completed
+stopped_at: Completed 04-03-PLAN — history POST endpoint + 3 green tests
+last_updated: "2026-03-05T18:16:18.747Z"
+last_activity: 2026-03-05 — Phase 4 plan 01 complete (10 t.todo() stubs, 0 failures)
 progress:
   total_phases: 5
-  completed_phases: 1
-  total_plans: 16
-  completed_plans: 16
-  percent: 25
+  completed_phases: 3
+  total_plans: 22
+  completed_plans: 19
+  percent: 65
 ---
 
 # Project State
@@ -63,6 +63,7 @@ Progress: [███████░░░] 65% (Phase 4 started, test infrastruc
 | Phase 03-project-setup-action-manager P05 | 1 | 2 tasks | 1 files |
 | Phase 03-project-setup-action-manager P06 | 3 | 2 tasks | 6 files |
 | Phase 04-structured-write-views P01 | 1 | 2 tasks | 2 files |
+| Phase 04-structured-write-views P03 | 2min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -96,6 +97,8 @@ Recent decisions affecting current work:
 - [Phase 03-06]: Status cell as <select> dropdown — user preference for explicit selection over click-to-cycle span
 - [Phase 04-01]: Wave 0 t.todo() stubs for artifacts and history test files — Nyquist verify path established before implementation begins
 - [Phase 04-01]: artifacts.js and history.js route files already existed (mounted in index.js from Phase 3) — test files can immediately supertest them
+- [Phase 04-structured-write-views]: node:test mock call argument access is calls[N].arguments[I] not Sinon-style calls[N][I]
+- [Phase 04-03]: week_ending key confirmed (not week_of) — Pitfall 1 avoided at implementation time
 
 ### Pending Todos
 
@@ -109,7 +112,7 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-05T18:11:00.000Z
-Stopped at: Completed 04-01-PLAN — Wave 0 test stubs (artifacts + history routes)
+Last session: 2026-03-05T18:16:18.745Z
+Stopped at: Completed 04-03-PLAN — history POST endpoint + 3 green tests
 Resume file: None
 Next action: Execute 04-02 (artifacts route implementation — POST + PATCH endpoints)
