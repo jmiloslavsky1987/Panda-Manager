@@ -18,3 +18,15 @@ export const getCustomers = () => apiFetch('/customers');
 export const getCustomer = (id) => apiFetch(`/customers/${id}`);
 export const updateCustomer = (id, body) =>
   apiFetch(`/customers/${id}`, { method: 'PUT', body: JSON.stringify(body) });
+
+export const patchRisk = (customerId, riskId, patch) =>
+  apiFetch(`/customers/${customerId}/risks/${riskId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(patch),
+  });
+
+export const patchMilestone = (customerId, milestoneId, patch) =>
+  apiFetch(`/customers/${customerId}/milestones/${milestoneId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(patch),
+  });
