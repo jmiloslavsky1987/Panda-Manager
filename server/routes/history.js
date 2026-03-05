@@ -3,21 +3,6 @@ const router = require('express').Router({ mergeParams: true });
 const asyncWrapper = require('../middleware/asyncWrapper');
 const driveService = require('../services/driveService');
 const yamlService = require('../services/yamlService');
-const claudeService = require('../services/claudeService');
-
-// GET /api/customers/:id/history/draft
-// Reads customer YAML and asks Claude to draft this week's progress, decisions, outcomes.
-// Returns { progress, decisions, outcomes } — plain text strings to pre-fill the Weekly Update Form.
-router.get('/draft', asyncWrapper(async (req, res) => {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return res.status(503).json({ error: 'ANTHROPIC_API_KEY is not configured on the server' });
-  }
-  const { id: fileId } = req.params;
-  const content = await driveService.readYamlFile(fileId);
-  const data = yamlService.parseYaml(content);
-  const draft = await claudeService.generateUpdateDraft(data);
-  res.json(draft);
-}));
 
 router.post('/', asyncWrapper(async (req, res) => {
   const { id: fileId } = req.params;
