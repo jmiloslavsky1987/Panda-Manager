@@ -41,14 +41,11 @@ function validateYaml(data) {
 
   const keys = Object.keys(data);
   const missing = REQUIRED_TOP_LEVEL_KEYS.filter(k => !keys.includes(k));
-  const extra = keys.filter(k => !REQUIRED_TOP_LEVEL_KEYS.includes(k));
 
   if (missing.length > 0) {
     throw new ValidationError(`Missing required keys: ${missing.join(', ')}`, { missing });
   }
-  if (extra.length > 0) {
-    throw new ValidationError(`Extra keys not allowed: ${extra.join(', ')}`, { extra });
-  }
+  // Extra keys are allowed — real customer files may have additional top-level fields
 
   for (const field of ARRAY_FIELDS) {
     if (!Array.isArray(data[field])) {
