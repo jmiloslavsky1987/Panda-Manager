@@ -62,6 +62,8 @@ function InlineEditField({ value, onSave, isPending, className = '', type = 'tex
 }
 
 // Inline select for immediate onChange -> onSave
+// Always includes a blank placeholder so value="" is a real selectable state —
+// prevents the "first option never fires onChange" bug when value is undefined.
 function InlineSelectField({ value, options, onSave, isPending }) {
   if (isPending) {
     return <span className="text-gray-400 italic text-sm">Saving...</span>;
@@ -69,9 +71,10 @@ function InlineSelectField({ value, options, onSave, isPending }) {
   return (
     <select
       className="text-sm border border-gray-200 rounded px-1 py-0.5 bg-white"
-      value={value}
-      onChange={e => onSave(e.target.value)}
+      value={value ?? ''}
+      onChange={e => { if (e.target.value) onSave(e.target.value); }}
     >
+      <option value="">— Select —</option>
       {options.map(o => (
         <option key={o.value} value={o.value}>{o.label}</option>
       ))}
