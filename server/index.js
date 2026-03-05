@@ -23,6 +23,7 @@ app.use('/api/customers/:id/milestones', require('./routes/milestones'));
 app.use('/api/customers/:id/artifacts', require('./routes/artifacts'));
 app.use('/api/customers/:id/history', require('./routes/history'));
 app.use('/api/customers/:id/reports', require('./routes/reports'));
+app.use('/api/customers/:id/workstreams', require('./routes/workstreams'));
 
 // Error handler — MUST be last middleware (4-argument signature identifies it to Express)
 app.use(require('./middleware/errorHandler'));
