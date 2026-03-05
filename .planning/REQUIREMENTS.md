@@ -46,12 +46,12 @@
 
 - [x] **ACT-01**: Open actions displayed in a sortable table with columns: checkbox, ID (monospace), description, owner, due date, status badge, workstream, actions
 - [x] **ACT-02**: Checking the checkbox immediately marks the action complete as of today, moves it to the completed table, and writes updated YAML to Drive atomically — no confirmation dialog
-- [ ] **ACT-03**: UI updates optimistically on checkbox click; "Saving…" indicator shown until Drive confirms
+- [x] **ACT-03**: UI updates optimistically on checkbox click; "Saving…" indicator shown until Drive confirms
 - [x] **ACT-04**: Description and owner are editable inline on click; changes write to Drive on blur/enter
 - [x] **ACT-05**: Due date is editable inline; renders red if the date is in the past
 - [x] **ACT-06**: Status badge cycles on click: Open → Delayed → In Review → Open; each cycle writes to Drive
 - [x] **ACT-07**: Workstream field is a dropdown matching the fixed workstream hierarchy
-- [ ] **ACT-08**: Table supports sort by any column header; filter by workstream (dropdown) and by status (toggle buttons: All / Open / Delayed / In Review)
+- [x] **ACT-08**: Table supports sort by any column header; filter by workstream (dropdown) and by status (toggle buttons: All / Open / Delayed / In Review)
 - [x] **ACT-09**: "Add Action" row pinned to bottom of open table with fields: description, owner, due, workstream, Save button; Save assigns the next sequential A-### ID and writes to Drive
 - [ ] **ACT-10**: Completed actions table is collapsed by default and expandable; columns: ID, description, owner, due, completed date; each row has a "Reopen" button
 - [x] **ACT-11**: "Reopen" moves the action back to open with status: open and clears the completion date; writes to Drive atomically
@@ -173,12 +173,12 @@
 | UI-03 | Phase 2: Read Surface | Pending |
 | ACT-01 | Phase 3: Action Manager | Complete |
 | ACT-02 | Phase 3: Action Manager | Complete |
-| ACT-03 | Phase 3: Action Manager | Pending |
+| ACT-03 | Phase 3: Action Manager | Complete |
 | ACT-04 | Phase 3: Action Manager | Complete |
 | ACT-05 | Phase 3: Action Manager | Complete |
 | ACT-06 | Phase 3: Action Manager | Complete |
 | ACT-07 | Phase 3: Action Manager | Complete |
-| ACT-08 | Phase 3: Action Manager | Pending |
+| ACT-08 | Phase 3: Action Manager | Complete |
 | ACT-09 | Phase 3: Action Manager | Complete |
 | ACT-10 | Phase 3: Action Manager | Pending |
 | ACT-11 | Phase 3: Action Manager | Complete |
