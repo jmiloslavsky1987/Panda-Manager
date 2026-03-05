@@ -5,6 +5,7 @@ import { Link, useOutletContext, useParams } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { patchRisk, patchMilestone } from '../api';
 import {
+  WORKSTREAM_CONFIG,
   getLatestHistory,
   getLatestWorkstreams,
   deriveOverallStatus,
@@ -92,29 +93,50 @@ function InlineSelectField({ value, options, onSave, isPending }) {
   );
 }
 
-// Workstream health card — one card per workstream, driven by history[0].workstreams array
-function WorkstreamCard({ workstream }) {
-  const { name, status, percentComplete, notes, blockers } = workstream;
-  const truncatedNotes    = notes?.length    > 80 ? notes.slice(0, 80) + '…'    : notes;
-  const truncatedBlockers = blockers?.length > 80 ? blockers.slice(0, 80) + '…' : blockers;
+// One row per sub-workstream inside a group card
+function SubWorkstreamRow({ ws }) {
+  const { name, status, percentComplete, notes, blockers, scope } = ws;
+  const truncNote     = notes?.length    > 70 ? notes.slice(0, 70) + '…'    : notes;
+  const truncBlockers = blockers?.length > 70 ? blockers.slice(0, 70) + '…' : blockers;
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 flex-1 min-w-[200px]">
-      <div className="flex items-center gap-2 mb-2">
-        <StatusDot status={status} />
-        <h4 className="text-sm font-semibold text-gray-700 flex-1 truncate" title={name}>{name}</h4>
-        <span className="text-xs font-medium text-gray-600 shrink-0">{percentComplete}%</span>
+    <div className="flex items-start gap-2 py-2 border-b border-gray-50 last:border-0">
+      <StatusDot status={status} />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-2 mb-1">
+          <span className="text-xs font-medium text-gray-700 truncate">{name}</span>
+          <span className="text-xs text-gray-500 shrink-0">{percentComplete}%</span>
+        </div>
+        <ProgressBar percent={percentComplete} />
+        {scope !== null && scope.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-1">
+            {scope.map(t => (
+              <span key={t} className="text-xs bg-teal-50 text-teal-700 rounded px-1.5 py-0.5">{t}</span>
+            ))}
+          </div>
+        )}
+        {scope !== null && scope.length === 0 && (
+          <p className="text-xs text-gray-300 mt-1 italic">No tools in scope — set via Project Setup</p>
+        )}
+        {truncNote && !scope && (
+          <p className="text-xs text-gray-400 mt-1 truncate" title={notes}>{truncNote}</p>
+        )}
+        {blockers && (
+          <p className="text-xs text-red-500 mt-1 truncate" title={blockers}>⚠ {truncBlockers}</p>
+        )}
       </div>
-      <ProgressBar percent={percentComplete} />
-      {truncatedNotes && (
-        <p className="text-xs text-gray-500 mt-2 line-clamp-2" title={notes}>
-          {truncatedNotes}
-        </p>
-      )}
-      {blockers && (
-        <p className="text-xs text-red-500 mt-1 line-clamp-1" title={blockers}>
-          ⚠ {truncatedBlockers}
-        </p>
-      )}
+    </div>
+  );
+}
+
+// One card per top-level group (ADR / Biggy)
+function WorkstreamGroupCard({ groupKey, config, workstreams }) {
+  const groupWs = workstreams.filter(ws => ws.group === groupKey);
+  return (
+    <div className="bg-white rounded-lg border border-gray-200 p-4 flex-1 min-w-[280px]">
+      <h4 className="text-sm font-bold text-gray-800 mb-1">{config.label}</h4>
+      <div>
+        {groupWs.map(ws => <SubWorkstreamRow key={ws.key} ws={ws} />)}
+      </div>
     </div>
   );
 }
@@ -362,16 +384,25 @@ export default function CustomerOverview() {
 
       {/* Workstream Health — CUST-03, CUST-04, CUST-05 */}
       <section>
-        <h3 className="text-base font-semibold text-gray-800 mb-3">Workstream Health</h3>
-        {workstreams.length > 0 ? (
-          <div className="flex gap-4 flex-wrap">
-            {workstreams.map(ws => (
-              <WorkstreamCard key={ws.name} workstream={ws} />
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-gray-400">No history entries yet. Submit a Weekly Update to see workstream health.</p>
-        )}
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-base font-semibold text-gray-800">Workstream Health</h3>
+          <a
+            href={`/customer/${customerId}/setup`}
+            className="text-sm text-teal-600 hover:text-teal-700 font-medium"
+          >
+            Project Setup →
+          </a>
+        </div>
+        <div className="flex gap-4 flex-wrap">
+          {Object.entries(WORKSTREAM_CONFIG).map(([groupKey, config]) => (
+            <WorkstreamGroupCard
+              key={groupKey}
+              groupKey={groupKey}
+              config={config}
+              workstreams={workstreams}
+            />
+          ))}
+        </div>
       </section>
 
       {/* Open Actions Summary — CUST-06 */}
