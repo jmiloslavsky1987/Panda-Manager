@@ -85,11 +85,19 @@ Plans:
 **Depends on**: Phase 3
 **Requirements**: UPD-01, UPD-02, UPD-03, UPD-04, UPD-05, ART-01, ART-02, ART-03, ART-04, ART-05
 **Success Criteria** (what must be TRUE):
-  1. Weekly Update Form pre-fills week_of with today's date and provides per-workstream inputs (status, %, progress notes, blockers) for all 11 sub-workstreams (ADR: 6, Biggy: 5)
+  1. Weekly Update Form pre-fills week_ending with today's date and provides per-workstream inputs (status, %, progress notes, blockers) for all 11 sub-workstreams (ADR: 6, Biggy: 5)
   2. Submitting the form prepends a new well-formed history entry to the YAML and writes to Drive atomically; Customer Overview immediately reflects the new entry after redirect
   3. Artifact Manager lists all customer artifacts with id, type, title, status, owner, and last_updated; all fields are editable inline with a "Saving..." indicator
   4. Adding a new artifact assigns the next sequential X-### ID; changing status to superseded or retired writes to Drive atomically
-**Plans**: TBD
+**Plans**: 6 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — Wave 0: Test stubs (artifacts.test.js + history.test.js)
+- [ ] 04-02-PLAN.md — Wave 1: artifacts.js endpoints (POST + PATCH) + test assertions
+- [ ] 04-03-PLAN.md — Wave 1: history.js POST endpoint + test assertions (parallel with 04-02)
+- [ ] 04-04-PLAN.md — Wave 2: Extract InlineEditField/InlineSelectField + api.js additions + ArtifactManager.jsx
+- [ ] 04-05-PLAN.md — Wave 2: WeeklyUpdateForm.jsx
+- [ ] 04-06-PLAN.md — Wave 3: Full suite test run + human visual verification checkpoint
 
 ### Phase 5: AI Reports and YAML Editor
 **Goal**: Users can generate Claude-powered reports (weekly status text and ELT PPTX decks) from any customer's data, and can directly edit and validate raw customer YAML in a syntax-highlighted editor as an escape hatch
@@ -113,5 +121,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Foundation | 1/5 | In Progress|  |
 | 2. Read Surface | 0/5 | Not started | - |
 | 3. Project Setup + Action Manager | 6/6 | Complete | 2026-03-05 |
-| 4. Structured Write Views | 0/TBD | Not started | - |
+| 4. Structured Write Views | 0/6 | Not started | - |
 | 5. AI Reports and YAML Editor | 0/TBD | Not started | - |
