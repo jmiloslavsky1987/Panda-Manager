@@ -4,6 +4,8 @@ import { useOutletContext, useParams } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { patchAction, postAction } from '../api';
 import { WORKSTREAM_OPTIONS, STATUS_CYCLE } from '../lib/deriveCustomer';
+import InlineEditField from '../components/InlineEditField';
+import InlineSelectField from '../components/InlineSelectField';
 import clsx from 'clsx';
 
 // STATUS_BADGE_CLASSES — complete literal strings (Tailwind v4 purge safety)
@@ -20,67 +22,6 @@ const STATUS_BADGE_LABELS = {
   in_review: 'In Review',
   completed: 'Completed',
 };
-
-// Inline edit field — shows value as text; click to edit; saves on blur/enter
-function InlineEditField({ value, onSave, isPending, className = '', type = 'text' }) {
-  const [editing, setEditing] = React.useState(false);
-  const [draft, setDraft] = React.useState(value ?? '');
-
-  const handleBlur = () => {
-    if (draft !== (value ?? '')) onSave(draft);
-    setEditing(false);
-  };
-
-  if (isPending) {
-    return <span className="text-gray-400 italic text-sm">Saving...</span>;
-  }
-  if (editing) {
-    return (
-      <input
-        autoFocus
-        type={type}
-        className="border border-teal-300 rounded px-1 py-0.5 text-sm w-full"
-        value={draft}
-        onChange={e => setDraft(e.target.value)}
-        onBlur={handleBlur}
-        onKeyDown={e => {
-          if (e.key === 'Enter') handleBlur();
-          if (e.key === 'Escape') setEditing(false);
-        }}
-      />
-    );
-  }
-  return (
-    <span
-      className={clsx('cursor-pointer hover:bg-gray-100 rounded px-1 py-0.5 text-sm', className)}
-      title="Click to edit"
-      onClick={() => { setDraft(value ?? ''); setEditing(true); }}
-    >
-      {value || <span className="text-gray-400">—</span>}
-    </span>
-  );
-}
-
-// Inline select for immediate onChange -> onSave
-// Always includes a blank placeholder so value="" is a real selectable state —
-// prevents the "first option never fires onChange" bug when value is undefined.
-function InlineSelectField({ value, options, onSave, isPending }) {
-  if (isPending) {
-    return <span className="text-gray-400 italic text-sm">Saving...</span>;
-  }
-  return (
-    <select
-      className="text-sm border border-gray-200 rounded px-1 py-0.5 bg-white"
-      value={value ?? ''}
-      onChange={e => { if (e.target.value) onSave(e.target.value); }}
-    >
-      <option value="">— Select —</option>
-      {options.map(o => (
-        <option key={o.value} value={o.value}>{o.label}</option>
-      ))}
-    </select>
-  );
-}
 
 // SortableHeader sub-component
 function SortableHeader({ label, sortKey: key, currentSortKey, currentSortDir, onSort, className = '' }) {
