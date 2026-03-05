@@ -140,21 +140,80 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFRA-01 through INFRA-10 | Phase 1 | Pending |
-| DASH-01 through DASH-08 | Phase 2 | Pending |
-| CUST-01 through CUST-10 | Phase 2 | Pending |
-| UI-01 through UI-03 | Phase 2 | Pending |
-| ACT-01 through ACT-12 | Phase 3 | Pending |
-| UPD-01 through UPD-05 | Phase 4 | Pending |
-| ART-01 through ART-05 | Phase 4 | Pending |
-| RPT-01 through RPT-10 | Phase 5 | Pending |
-| YAML-01 through YAML-05 | Phase 5 | Pending |
+| INFRA-01 | Phase 1: Foundation | Pending |
+| INFRA-02 | Phase 1: Foundation | Pending |
+| INFRA-03 | Phase 1: Foundation | Pending |
+| INFRA-04 | Phase 1: Foundation | Pending |
+| INFRA-05 | Phase 1: Foundation | Pending |
+| INFRA-06 | Phase 1: Foundation | Pending |
+| INFRA-07 | Phase 1: Foundation | Pending |
+| INFRA-08 | Phase 1: Foundation | Pending |
+| INFRA-09 | Phase 1: Foundation | Pending |
+| INFRA-10 | Phase 1: Foundation | Pending |
+| DASH-01 | Phase 2: Read Surface | Pending |
+| DASH-02 | Phase 2: Read Surface | Pending |
+| DASH-03 | Phase 2: Read Surface | Pending |
+| DASH-04 | Phase 2: Read Surface | Pending |
+| DASH-05 | Phase 2: Read Surface | Pending |
+| DASH-06 | Phase 2: Read Surface | Pending |
+| DASH-07 | Phase 2: Read Surface | Pending |
+| DASH-08 | Phase 2: Read Surface | Pending |
+| CUST-01 | Phase 2: Read Surface | Pending |
+| CUST-02 | Phase 2: Read Surface | Pending |
+| CUST-03 | Phase 2: Read Surface | Pending |
+| CUST-04 | Phase 2: Read Surface | Pending |
+| CUST-05 | Phase 2: Read Surface | Pending |
+| CUST-06 | Phase 2: Read Surface | Pending |
+| CUST-07 | Phase 2: Read Surface | Pending |
+| CUST-08 | Phase 2: Read Surface | Pending |
+| CUST-09 | Phase 2: Read Surface | Pending |
+| CUST-10 | Phase 2: Read Surface | Pending |
+| UI-01 | Phase 2: Read Surface | Pending |
+| UI-02 | Phase 2: Read Surface | Pending |
+| UI-03 | Phase 2: Read Surface | Pending |
+| ACT-01 | Phase 3: Action Manager | Pending |
+| ACT-02 | Phase 3: Action Manager | Pending |
+| ACT-03 | Phase 3: Action Manager | Pending |
+| ACT-04 | Phase 3: Action Manager | Pending |
+| ACT-05 | Phase 3: Action Manager | Pending |
+| ACT-06 | Phase 3: Action Manager | Pending |
+| ACT-07 | Phase 3: Action Manager | Pending |
+| ACT-08 | Phase 3: Action Manager | Pending |
+| ACT-09 | Phase 3: Action Manager | Pending |
+| ACT-10 | Phase 3: Action Manager | Pending |
+| ACT-11 | Phase 3: Action Manager | Pending |
+| ACT-12 | Phase 3: Action Manager | Pending |
+| UPD-01 | Phase 4: Structured Write Views | Pending |
+| UPD-02 | Phase 4: Structured Write Views | Pending |
+| UPD-03 | Phase 4: Structured Write Views | Pending |
+| UPD-04 | Phase 4: Structured Write Views | Pending |
+| UPD-05 | Phase 4: Structured Write Views | Pending |
+| ART-01 | Phase 4: Structured Write Views | Pending |
+| ART-02 | Phase 4: Structured Write Views | Pending |
+| ART-03 | Phase 4: Structured Write Views | Pending |
+| ART-04 | Phase 4: Structured Write Views | Pending |
+| ART-05 | Phase 4: Structured Write Views | Pending |
+| RPT-01 | Phase 5: AI Reports and YAML Editor | Pending |
+| RPT-02 | Phase 5: AI Reports and YAML Editor | Pending |
+| RPT-03 | Phase 5: AI Reports and YAML Editor | Pending |
+| RPT-04 | Phase 5: AI Reports and YAML Editor | Pending |
+| RPT-05 | Phase 5: AI Reports and YAML Editor | Pending |
+| RPT-06 | Phase 5: AI Reports and YAML Editor | Pending |
+| RPT-07 | Phase 5: AI Reports and YAML Editor | Pending |
+| RPT-08 | Phase 5: AI Reports and YAML Editor | Pending |
+| RPT-09 | Phase 5: AI Reports and YAML Editor | Pending |
+| RPT-10 | Phase 5: AI Reports and YAML Editor | Pending |
+| YAML-01 | Phase 5: AI Reports and YAML Editor | Pending |
+| YAML-02 | Phase 5: AI Reports and YAML Editor | Pending |
+| YAML-03 | Phase 5: AI Reports and YAML Editor | Pending |
+| YAML-04 | Phase 5: AI Reports and YAML Editor | Pending |
+| YAML-05 | Phase 5: AI Reports and YAML Editor | Pending |
 
 **Coverage:**
-- v1 requirements: 58 total
-- Mapped to phases: 58
-- Unmapped: 0 ✓
+- v1 requirements: 68 total
+- Mapped to phases: 68
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-04*
-*Last updated: 2026-03-04 after initial definition*
+*Last updated: 2026-03-04 after roadmap creation (traceability expanded to per-requirement rows; count corrected from 58 to 68)*
