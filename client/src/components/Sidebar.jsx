@@ -1,11 +1,20 @@
 // client/src/components/Sidebar.jsx — UI-03, CUST-01
 // Persistent customer sidebar. Uses NavLink for active state (handles nested routes correctly).
 // CRITICAL: All NavLink className strings must be complete literals — no dynamic construction.
-import { NavLink, Link } from 'react-router-dom';
+import { NavLink, Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getCustomers } from '../api';
 
+const NAV_LINKS = [
+  { path: '',        label: 'Overview' },
+  { path: '/update', label: 'Weekly Update' },
+  { path: '/actions', label: 'Actions' },
+  { path: '/artifacts', label: 'Artifacts' },
+  { path: '/setup',  label: 'Project Setup' },
+];
+
 export default function Sidebar() {
+  const { customerId } = useParams();
   const { data: customers = [], isPending } = useQuery({
     queryKey: ['customers'],
     queryFn: getCustomers,
@@ -48,6 +57,30 @@ export default function Sidebar() {
           <li className="px-4 py-2 text-xs text-gray-400">No customers found</li>
         )}
       </ul>
+
+      {/* Per-customer sub-nav — only shown when inside a customer route */}
+      {customerId && (
+        <div className="border-t border-gray-200 p-3">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Views</p>
+          <ul>
+            {NAV_LINKS.map(({ path, label }) => (
+              <li key={path}>
+                <NavLink
+                  to={`/customer/${customerId}${path}`}
+                  end={path === ''}
+                  className={({ isActive }) =>
+                    isActive
+                      ? 'block px-3 py-1.5 text-sm rounded bg-teal-50 text-teal-700 font-medium'
+                      : 'block px-3 py-1.5 text-sm rounded text-gray-600 hover:bg-gray-50'
+                  }
+                >
+                  {label}
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </nav>
   );
 }

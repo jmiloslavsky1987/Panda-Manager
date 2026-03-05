@@ -405,6 +405,41 @@ export default function CustomerOverview() {
         </div>
       </section>
 
+      {/* Weekly Update shortcut */}
+      <section>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-base font-semibold text-gray-800">Weekly Update</h3>
+          <Link
+            to={`/customer/${customerId}/update`}
+            className="text-sm text-teal-600 hover:text-teal-700 font-medium"
+          >
+            Submit Update →
+          </Link>
+        </div>
+        <p className="text-sm text-gray-400">
+          Record this week's workstream progress, decisions, and outcomes.
+        </p>
+      </section>
+
+      {/* Artifacts shortcut */}
+      <section>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-base font-semibold text-gray-800">
+            Artifacts
+            <span className="ml-2 text-sm font-normal text-gray-500">({customer.artifacts?.length ?? 0})</span>
+          </h3>
+          <Link
+            to={`/customer/${customerId}/artifacts`}
+            className="text-sm text-teal-600 hover:text-teal-700 font-medium"
+          >
+            Manage Artifacts →
+          </Link>
+        </div>
+        <p className="text-sm text-gray-400">
+          Track diagrams, documents, runbooks, and other project deliverables.
+        </p>
+      </section>
+
       {/* Open Actions Summary — CUST-06 */}
       <section>
         <div className="flex items-center justify-between mb-3">
