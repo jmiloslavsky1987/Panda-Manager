@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-project-setup-action-manager-03-03-PLAN.md
-last_updated: "2026-03-05T15:36:56.492Z"
+stopped_at: Completed 03-project-setup-action-manager-03-04-PLAN.md
+last_updated: "2026-03-05T15:40:32.514Z"
 last_activity: 2026-03-05 — Plan 01-01 complete (Wave 0 test scaffold)
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 16
-  completed_plans: 12
+  completed_plans: 13
   percent: 20
 ---
 
@@ -55,6 +55,7 @@ Progress: [██░░░░░░░░] 20%
 | Phase 03-project-setup-action-manager P01 | 3 | 3 tasks | 5 files |
 | Phase 03-project-setup-action-manager P02 | 1 | 2 tasks | 2 files |
 | Phase 03-project-setup-action-manager P03 | 2 | 2 tasks | 3 files |
+| Phase 03-project-setup-action-manager P04 | 1 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -81,6 +82,9 @@ Recent decisions affecting current work:
 - [Phase Phase 03-02]: GET /actions stub preserved at 501 — client reads actions from full customer object via useOutletContext, no dedicated GET needed in Phase 3
 - [Phase 03-03]: REQUIRED_GROUPS validation runs before readYamlFile — fast-fail avoids unnecessary Drive API call on malformed body
 - [Phase 03-03]: workstreams key replaced wholesale (not merged) — caller owns full workstreams object to prevent stale sub-workstream keys
+- [Phase 03-04]: No useQuery in ProjectSetup — customer data via useOutletContext() from CustomerLayout to avoid double-fetch and cache duplication
+- [Phase 03-04]: No optimistic update for workstreams save — form re-init risk if cache update races local formState; simple invalidateQueries on success is safer
+- [Phase 03-04]: TagInput kept inline in ProjectSetup.jsx — extract to shared component only when a second consumer appears
 
 ### Pending Todos
 
@@ -94,6 +98,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-05T15:36:56.489Z
-Stopped at: Completed 03-project-setup-action-manager-03-03-PLAN.md
+Last session: 2026-03-05T15:40:32.511Z
+Stopped at: Completed 03-project-setup-action-manager-03-04-PLAN.md
 Resume file: None
