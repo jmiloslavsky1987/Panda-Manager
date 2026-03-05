@@ -88,11 +88,11 @@
 
 ### Weekly Update Form — View 7 (UPD)
 
-- [ ] **UPD-01**: Form to create a new history entry for the current week; week_of defaults to today's date
-- [ ] **UPD-02**: Per-workstream section for each sub-workstream: status selector (green/yellow/red), percent_complete slider/input, progress_notes text field, blockers text field
-- [ ] **UPD-03**: Summary section: multi-entry fields for progress bullets, decisions, and outcomes for the week
+- [x] **UPD-01**: Form to create a new history entry for the current week; week_of defaults to today's date
+- [x] **UPD-02**: Per-workstream section for each sub-workstream: status selector (green/yellow/red), percent_complete slider/input, progress_notes text field, blockers text field
+- [x] **UPD-03**: Summary section: multi-entry fields for progress bullets, decisions, and outcomes for the week
 - [x] **UPD-04**: Submit prepends a new well-formed history entry to the YAML history array and writes to Drive atomically
-- [ ] **UPD-05**: After successful submit, navigates back to Customer Overview (which now reflects the new entry)
+- [x] **UPD-05**: After successful submit, navigates back to Customer Overview (which now reflects the new entry)
 
 ### Reusable UI Components (UI)
 
@@ -183,11 +183,11 @@
 | ACT-10 | Phase 3: Action Manager | Complete |
 | ACT-11 | Phase 3: Action Manager | Complete |
 | ACT-12 | Phase 3: Action Manager | Complete |
-| UPD-01 | Phase 4: Structured Write Views | Pending |
-| UPD-02 | Phase 4: Structured Write Views | Pending |
-| UPD-03 | Phase 4: Structured Write Views | Pending |
+| UPD-01 | Phase 4: Structured Write Views | Complete |
+| UPD-02 | Phase 4: Structured Write Views | Complete |
+| UPD-03 | Phase 4: Structured Write Views | Complete |
 | UPD-04 | Phase 4: Structured Write Views | Complete |
-| UPD-05 | Phase 4: Structured Write Views | Pending |
+| UPD-05 | Phase 4: Structured Write Views | Complete |
 | ART-01 | Phase 4: Structured Write Views | Complete |
 | ART-02 | Phase 4: Structured Write Views | Complete |
 | ART-03 | Phase 4: Structured Write Views | Complete |
