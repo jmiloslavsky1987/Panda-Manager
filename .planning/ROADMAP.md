@@ -70,7 +70,15 @@ Plans:
   5. Description, owner, due date, workstream, and status are all editable inline; each edit writes to Drive on blur/enter and updates the UI optimistically
   6. "Add Action" row at the bottom of the table assigns the next sequential A-### ID on save and writes to Drive
   7. Completed actions table is collapsed by default; "Reopen" moves an action back to open status with the completion date cleared
-**Plans**: TBD
+**Plans**: 6 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Wave 1: Update sample.yaml (11 subworkstreams), test stubs (actions.test.js, workstreams.test.js), deriveCustomer WORKSTREAM_OPTIONS + STATUS_CYCLE
+- [ ] 03-02-PLAN.md — Wave 2: Implement POST + PATCH actions endpoints, fill actions.test.js assertions
+- [ ] 03-03-PLAN.md — Wave 2: Create workstreams route + PATCH endpoint + mount in server/index.js
+- [ ] 03-04-PLAN.md — Wave 3: ProjectSetup.jsx + setup route in main.jsx + api.js additions + CustomerOverview Link fix
+- [ ] 03-05-PLAN.md — Wave 3: ActionManager.jsx (full inline CRUD table, sort/filter, add action, completed table)
+- [ ] 03-06-PLAN.md — Wave 4: Full suite test run + human visual verification checkpoint
 
 ### Phase 4: Structured Write Views
 **Goal**: Users can submit a structured weekly update that prepends a new history entry to the YAML, and can manage the full lifecycle of customer artifacts — add, edit, retire, and supersede — with all changes persisted atomically to Drive
@@ -104,6 +112,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Foundation | 1/5 | In Progress|  |
 | 2. Read Surface | 0/5 | Not started | - |
-| 3. Project Setup + Action Manager | 0/TBD | Not started | - |
+| 3. Project Setup + Action Manager | 0/6 | Not started | - |
 | 4. Structured Write Views | 0/TBD | Not started | - |
 | 5. AI Reports and YAML Editor | 0/TBD | Not started | - |
