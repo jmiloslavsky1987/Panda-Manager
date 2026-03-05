@@ -1,7 +1,7 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { postHistory } from '../api';
+import { postHistory, getUpdateDraft } from '../api';
 import { WORKSTREAM_CONFIG } from '../lib/deriveCustomer';
 
 // Build initial nested workstream state from WORKSTREAM_CONFIG
@@ -47,6 +47,27 @@ export default function WeeklyUpdateForm() {
         [subKey]: { ...prev[groupKey][subKey], [field]: value },
       },
     }));
+  };
+
+  // AI draft generation state
+  const [isDrafting, setIsDrafting] = React.useState(false);
+  const [draftError, setDraftError] = React.useState(null);
+
+  const handleGenerateDraft = async () => {
+    setIsDrafting(true);
+    setDraftError(null);
+    try {
+      const draft = await getUpdateDraft(customerId);
+      setSummaryState({
+        progress: draft.progress ?? '',
+        decisions: draft.decisions ?? '',
+        outcomes: draft.outcomes ?? '',
+      });
+    } catch (err) {
+      setDraftError(err.message);
+    } finally {
+      setIsDrafting(false);
+    }
   };
 
   const submitMutation = useMutation({
@@ -185,7 +206,29 @@ export default function WeeklyUpdateForm() {
 
       {/* Summary section */}
       <div className="bg-white rounded-lg border border-gray-200 p-4 flex flex-col gap-4">
-        <h3 className="text-base font-semibold text-gray-800">Weekly Summary</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-semibold text-gray-800">Weekly Summary</h3>
+          <button
+            type="button"
+            onClick={handleGenerateDraft}
+            disabled={isDrafting}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-teal-700 bg-teal-50 border border-teal-200 rounded-md hover:bg-teal-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isDrafting ? (
+              <>
+                <span className="inline-block w-3.5 h-3.5 border-2 border-teal-400 border-t-transparent rounded-full animate-spin" />
+                Generating…
+              </>
+            ) : (
+              <>✨ Generate Draft</>
+            )}
+          </button>
+        </div>
+        {draftError && (
+          <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
+            Draft failed: {draftError}
+          </p>
+        )}
 
         <div className="flex flex-col gap-0.5">
           <label className="text-sm font-medium text-gray-700">Progress</label>

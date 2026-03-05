@@ -68,3 +68,6 @@ export const postHistory = (customerId, entry) =>
     method: 'POST',
     body: JSON.stringify(entry),
   });
+
+export const getUpdateDraft = (customerId) =>
+  apiFetch(`/customers/${customerId}/history/draft`);
