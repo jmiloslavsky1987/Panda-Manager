@@ -1,0 +1,13 @@
+{
+  "name": "bigpanda-project-assistant",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd server && nodemon --watch . index.js",
+    "client": "cd client && npx vite"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "nodemon": "^3.1.14"
+  }
+}

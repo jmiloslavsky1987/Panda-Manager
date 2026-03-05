@@ -3,8 +3,8 @@
 credentials/
 !credentials/.gitkeep
 
-# Service account keys (any JSON in credentials/)
-*.json
+# Service account keys (JSON files in credentials/ directory)
+credentials/*.json
 
 # Dependencies
 node_modules/
