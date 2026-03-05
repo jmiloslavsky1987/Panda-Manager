@@ -49,7 +49,14 @@ Plans:
   3. Customer Overview displays workstream health for all 6 sub-workstreams (ADR: 4, Biggy: 2) with progress bars, percentage labels, status dots, and truncated progress notes matching the most recent history entry
   4. Risks and milestones are visible in Customer Overview; existing risk and milestone fields are editable inline with a "Saving..." indicator that confirms Drive write success
   5. Persistent sidebar lists all customers; clicking any navigates to that customer's overview without losing current page state
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — Wave 0: test stubs (risks.test.js, milestones.test.js, deriveCustomer.test.js), install supertest + clsx, deriveCustomer.js skeleton
+- [ ] 02-02-PLAN.md — Wave 1: Implement PATCH risks + milestones endpoints, fill test assertions
+- [ ] 02-03-PLAN.md — Wave 1: Client shared components (StatusBadge, ProgressBar, deriveCustomer.js full) + Dashboard.jsx
+- [ ] 02-04-PLAN.md — Wave 1: CustomerOverview.jsx (workstream health, risks/milestones inline edit, actions summary)
+- [ ] 02-05-PLAN.md — Wave 2: Sidebar.jsx + AppLayout wiring + visual browser checkpoint
 
 ### Phase 3: Action Manager
 **Goal**: Users can manage all open actions for a customer — add, edit, complete, reopen, filter, and sort — with every change written atomically to Drive and reflected immediately in the UI
@@ -94,7 +101,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 1/5 | In Progress|  |
-| 2. Read Surface | 0/TBD | Not started | - |
+| 2. Read Surface | 0/5 | Not started | - |
 | 3. Action Manager | 0/TBD | Not started | - |
 | 4. Structured Write Views | 0/TBD | Not started | - |
 | 5. AI Reports and YAML Editor | 0/TBD | Not started | - |
