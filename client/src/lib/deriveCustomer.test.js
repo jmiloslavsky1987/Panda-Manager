@@ -8,8 +8,8 @@ import {
   countOpenActions,
   countHighRisks,
   sortCustomers,
-  WORKSTREAM_CONFIG,
   getLatestHistory,
+  getLatestWorkstreams,
 } from './deriveCustomer.js';
 
 // Minimal fixture matching actual sample.yaml shape
@@ -23,51 +23,64 @@ const makeCustomer = (overrides = {}) => ({
   ...overrides,
 });
 
-const latestWorkstreams = {
-  adr: {
-    inbound_integrations: { status: 'in_progress', percent_complete: 40 },
-    configuration: { status: 'not_started', percent_complete: 0 },
-    outbound_integrations: { status: 'not_started', percent_complete: 0 },
-    workflow_configuration: { status: 'not_started', percent_complete: 0 },
-  },
-  biggy: {
-    integrations: { status: 'in_progress', percent_complete: 50 },
-    workflow_configuration: { status: 'not_started', percent_complete: 0 },
-  },
-};
+// Merck/Kaiser style: workstreams is an array in history entries
+const makeWsHistory = (workstreams) => [{ week_of: '2026-03-07', workstreams }];
+
+const twoWorkstreams = [
+  { name: 'ADR Onboarding',   status: 'yellow', percent_complete: 40, progress_notes: 'In progress', blockers: '' },
+  { name: 'Biggy Onboarding', status: 'green',  percent_complete: 60, progress_notes: 'On track',    blockers: '' },
+];
+
+describe('getLatestWorkstreams', () => {
+  it('normalizes green/yellow/red to on_track/at_risk/off_track', () => {
+    const c = makeCustomer({ history: makeWsHistory([
+      { name: 'ADR',   status: 'red',    percent_complete: 0, progress_notes: '', blockers: 'blocker' },
+      { name: 'Biggy', status: 'yellow', percent_complete: 0, progress_notes: '', blockers: '' },
+      { name: 'Extra', status: 'green',  percent_complete: 0, progress_notes: '', blockers: '' },
+    ])});
+    const ws = getLatestWorkstreams(c);
+    assert.equal(ws[0].status, 'off_track');
+    assert.equal(ws[1].status, 'at_risk');
+    assert.equal(ws[2].status, 'on_track');
+  });
+
+  it('handles AMEX delivery_status format', () => {
+    const c = makeCustomer({ history: [{ delivery_status: [
+      { workstream: 'Architecture', summary: 'Baseline understood', blockers: '' },
+      { workstream: 'Automation',   summary: 'Roles clarified',    blockers: 'Pending SNOW field guardrails' },
+    ], status_score: { delivery: 'yellow' } }] });
+    const ws = getLatestWorkstreams(c);
+    assert.equal(ws.length, 2);
+    assert.equal(ws[0].name, 'Architecture');
+    assert.equal(ws[1].name, 'Automation');
+    // Entry with blockers → at_risk regardless of overall score
+    assert.equal(ws[1].status, 'at_risk');
+  });
+
+  it('returns empty array when no history', () => {
+    const c = makeCustomer({ history: [] });
+    assert.deepEqual(getLatestWorkstreams(c), []);
+  });
+});
 
 describe('deriveOverallStatus', () => {
-  it('returns off_track when any sub-workstream has status red or off_track', () => {
-    const c = makeCustomer({ history: [{ week_ending: '2026-03-07', workstreams: {
-      adr: { inbound_integrations: { status: 'red', percent_complete: 0 },
-             configuration: { status: 'not_started', percent_complete: 0 },
-             outbound_integrations: { status: 'not_started', percent_complete: 0 },
-             workflow_configuration: { status: 'not_started', percent_complete: 0 } },
-      biggy: { integrations: { status: 'not_started', percent_complete: 0 },
-               workflow_configuration: { status: 'not_started', percent_complete: 0 } },
-    }}] });
+  it('returns off_track when any workstream has status red (normalized off_track)', () => {
+    const c = makeCustomer({ history: makeWsHistory([
+      { name: 'ADR', status: 'red', percent_complete: 0, progress_notes: '', blockers: '' },
+    ])});
     assert.equal(deriveOverallStatus(c), 'off_track');
   });
 
-  it('returns at_risk when any sub-workstream has status yellow, at_risk, or in_progress', () => {
-    const c = makeCustomer({ history: [{ week_ending: '2026-03-07', workstreams: latestWorkstreams }] });
+  it('returns at_risk when any workstream has status yellow (normalized at_risk)', () => {
+    const c = makeCustomer({ history: makeWsHistory(twoWorkstreams) });
     assert.equal(deriveOverallStatus(c), 'at_risk');
   });
 
-  it('returns on_track when all sub-workstreams are not_started or green', () => {
-    const allNotStarted = {
-      adr: {
-        inbound_integrations: { status: 'not_started', percent_complete: 0 },
-        configuration: { status: 'not_started', percent_complete: 0 },
-        outbound_integrations: { status: 'not_started', percent_complete: 0 },
-        workflow_configuration: { status: 'not_started', percent_complete: 0 },
-      },
-      biggy: {
-        integrations: { status: 'not_started', percent_complete: 0 },
-        workflow_configuration: { status: 'not_started', percent_complete: 0 },
-      },
-    };
-    const c = makeCustomer({ history: [{ week_ending: '2026-03-07', workstreams: allNotStarted }] });
+  it('returns on_track when all workstreams are green', () => {
+    const c = makeCustomer({ history: makeWsHistory([
+      { name: 'ADR',   status: 'green', percent_complete: 0, progress_notes: '', blockers: '' },
+      { name: 'Biggy', status: 'green', percent_complete: 0, progress_notes: '', blockers: '' },
+    ])});
     assert.equal(deriveOverallStatus(c), 'on_track');
   });
 
@@ -78,10 +91,10 @@ describe('deriveOverallStatus', () => {
 });
 
 describe('derivePercentComplete', () => {
-  it('returns average of all 6 sub-workstream percent_complete values from history[0]', () => {
-    // ADR: 40+0+0+0=40, Biggy: 50+0=50. Total=90, count=6, avg=15
-    const c = makeCustomer({ history: [{ week_ending: '2026-03-07', workstreams: latestWorkstreams }] });
-    assert.equal(derivePercentComplete(c), Math.round((40 + 0 + 0 + 0 + 50 + 0) / 6));
+  it('returns average of workstream percent_complete values from history[0]', () => {
+    // twoWorkstreams: ADR=40, Biggy=60. Avg = (40+60)/2 = 50
+    const c = makeCustomer({ history: makeWsHistory(twoWorkstreams) });
+    assert.equal(derivePercentComplete(c), 50);
   });
 
   it('falls back to project.overall_percent_complete when no history exists', () => {
@@ -152,18 +165,10 @@ describe('countHighRisks', () => {
 describe('sortCustomers', () => {
   it('sorts: at_risk customers appear before on_track, on_track before off_track', () => {
     const makeCs = (statuses) => statuses.map((s, i) =>
-      makeCustomer({ history: [{ week_ending: '2026-03-07', workstreams: {
-        adr: {
-          inbound_integrations: { status: s === 'off_track' ? 'red' : s === 'at_risk' ? 'in_progress' : 'not_started', percent_complete: 0 },
-          configuration: { status: 'not_started', percent_complete: 0 },
-          outbound_integrations: { status: 'not_started', percent_complete: 0 },
-          workflow_configuration: { status: 'not_started', percent_complete: 0 },
-        },
-        biggy: {
-          integrations: { status: 'not_started', percent_complete: 0 },
-          workflow_configuration: { status: 'not_started', percent_complete: 0 },
-        },
-      }}], customer: { name: `Customer ${i}` } })
+      makeCustomer({ history: makeWsHistory([
+        { name: 'ADR', percent_complete: 0, progress_notes: '', blockers: '',
+          status: s === 'off_track' ? 'red' : s === 'at_risk' ? 'yellow' : 'green' },
+      ]), customer: { name: `Customer ${i}` } })
     );
     const customers = makeCs(['off_track', 'on_track', 'at_risk']);
     const sorted = sortCustomers(customers);
@@ -180,35 +185,13 @@ describe('sortCustomers', () => {
   });
 });
 
-describe('WORKSTREAM_CONFIG', () => {
-  it('ADR has exactly 4 sub-workstreams with correct keys and labels', () => {
-    const { subWorkstreams } = WORKSTREAM_CONFIG.adr;
-    assert.equal(subWorkstreams.length, 4);
-    assert.equal(subWorkstreams[0].key, 'inbound_integrations');
-    assert.equal(subWorkstreams[0].label, 'Inbound Integrations');
-    assert.equal(subWorkstreams[1].key, 'configuration');
-    assert.equal(subWorkstreams[2].key, 'outbound_integrations');
-    assert.equal(subWorkstreams[3].key, 'workflow_configuration');
-    assert.equal(WORKSTREAM_CONFIG.adr.label, 'ADR');
-  });
-
-  it('Biggy has exactly 2 sub-workstreams with correct keys and labels', () => {
-    const { subWorkstreams } = WORKSTREAM_CONFIG.biggy;
-    assert.equal(subWorkstreams.length, 2);
-    assert.equal(subWorkstreams[0].key, 'integrations');
-    assert.equal(subWorkstreams[0].label, 'Integrations');
-    assert.equal(subWorkstreams[1].key, 'workflow_configuration');
-    assert.equal(WORKSTREAM_CONFIG.biggy.label, 'Biggy');
-  });
-});
-
 describe('getLatestHistory', () => {
   it('returns history[0] (prepend-ordered — index 0 is most recent)', () => {
     const c = makeCustomer({ history: [
-      { week_ending: '2026-03-14' },
-      { week_ending: '2026-03-07' },
+      { week_of: '2026-03-14' },
+      { week_of: '2026-03-07' },
     ]});
-    assert.equal(getLatestHistory(c).week_ending, '2026-03-14');
+    assert.equal(getLatestHistory(c).week_of, '2026-03-14');
   });
 
   it('returns null when history array is empty', () => {

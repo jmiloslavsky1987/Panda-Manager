@@ -5,8 +5,8 @@ import { Link, useOutletContext, useParams } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { patchRisk, patchMilestone } from '../api';
 import {
-  WORKSTREAM_CONFIG,
   getLatestHistory,
+  getLatestWorkstreams,
   deriveOverallStatus,
   deriveDaysToGoLive,
   countOpenActions,
@@ -92,36 +92,29 @@ function InlineSelectField({ value, options, onSave, isPending }) {
   );
 }
 
-// Workstream health card — renders one workstream (adr or biggy) with all its sub-rows
-function WorkstreamCard({ wsKey, config, latestWs }) {
+// Workstream health card — one card per workstream, driven by history[0].workstreams array
+function WorkstreamCard({ workstream }) {
+  const { name, status, percentComplete, notes, blockers } = workstream;
+  const truncatedNotes    = notes?.length    > 80 ? notes.slice(0, 80) + '…'    : notes;
+  const truncatedBlockers = blockers?.length > 80 ? blockers.slice(0, 80) + '…' : blockers;
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 flex-1 min-w-0">
-      <h4 className="text-sm font-semibold text-gray-700 mb-3">{config.label}</h4>
-      <div className="flex flex-col gap-3">
-        {config.subWorkstreams.map(({ key, label }) => {
-          const sub = latestWs?.[wsKey]?.[key] ?? {};
-          const pct = sub.percent_complete ?? 0;
-          const note = sub.progress_notes ?? '';
-          const truncated = note.length > 60 ? note.slice(0, 60) + '…' : note;
-          return (
-            <div key={key} className="flex items-start gap-2">
-              <StatusDot status={sub.status ?? 'not_started'} />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2 mb-1">
-                  <span className="text-xs text-gray-700 truncate">{label}</span>
-                  <span className="text-xs font-medium text-gray-600 shrink-0">{pct}%</span>
-                </div>
-                <ProgressBar percent={pct} />
-                {truncated && (
-                  <p className="text-xs text-gray-400 mt-1 truncate" title={note}>
-                    {truncated}
-                  </p>
-                )}
-              </div>
-            </div>
-          );
-        })}
+    <div className="bg-white rounded-lg border border-gray-200 p-4 flex-1 min-w-[200px]">
+      <div className="flex items-center gap-2 mb-2">
+        <StatusDot status={status} />
+        <h4 className="text-sm font-semibold text-gray-700 flex-1 truncate" title={name}>{name}</h4>
+        <span className="text-xs font-medium text-gray-600 shrink-0">{percentComplete}%</span>
       </div>
+      <ProgressBar percent={percentComplete} />
+      {truncatedNotes && (
+        <p className="text-xs text-gray-500 mt-2 line-clamp-2" title={notes}>
+          {truncatedNotes}
+        </p>
+      )}
+      {blockers && (
+        <p className="text-xs text-red-500 mt-1 line-clamp-1" title={blockers}>
+          ⚠ {truncatedBlockers}
+        </p>
+      )}
     </div>
   );
 }
@@ -321,6 +314,7 @@ export default function CustomerOverview() {
   });
 
   const latest = getLatestHistory(customer);
+  const workstreams = getLatestWorkstreams(customer);
   const overallStatus = deriveOverallStatus(customer);
   const days = deriveDaysToGoLive(customer);
   const openActionCount = countOpenActions(customer);
@@ -369,15 +363,10 @@ export default function CustomerOverview() {
       {/* Workstream Health — CUST-03, CUST-04, CUST-05 */}
       <section>
         <h3 className="text-base font-semibold text-gray-800 mb-3">Workstream Health</h3>
-        {latest ? (
+        {workstreams.length > 0 ? (
           <div className="flex gap-4 flex-wrap">
-            {Object.entries(WORKSTREAM_CONFIG).map(([wsKey, config]) => (
-              <WorkstreamCard
-                key={wsKey}
-                wsKey={wsKey}
-                config={config}
-                latestWs={latest.workstreams}
-              />
+            {workstreams.map(ws => (
+              <WorkstreamCard key={ws.name} workstream={ws} />
             ))}
           </div>
         ) : (
