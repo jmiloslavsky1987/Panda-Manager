@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 04-03-PLAN — history POST endpoint + 3 green tests
-last_updated: "2026-03-05T18:16:18.747Z"
+stopped_at: Completed 04-02-PLAN — artifacts.js POST + PATCH + 7 passing tests
+last_updated: "2026-03-05T18:16:45.280Z"
 last_activity: 2026-03-05 — Phase 4 plan 01 complete (10 t.todo() stubs, 0 failures)
 progress:
   total_phases: 5
@@ -64,6 +64,7 @@ Progress: [███████░░░] 65% (Phase 4 started, test infrastruc
 | Phase 03-project-setup-action-manager P06 | 3 | 2 tasks | 6 files |
 | Phase 04-structured-write-views P01 | 1 | 2 tasks | 2 files |
 | Phase 04-structured-write-views P03 | 2min | 2 tasks | 2 files |
+| Phase 04-structured-write-views P02 | 3 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -99,6 +100,9 @@ Recent decisions affecting current work:
 - [Phase 04-01]: artifacts.js and history.js route files already existed (mounted in index.js from Phase 3) — test files can immediately supertest them
 - [Phase 04-structured-write-views]: node:test mock call argument access is calls[N].arguments[I] not Sinon-style calls[N][I]
 - [Phase 04-03]: week_ending key confirmed (not week_of) — Pitfall 1 avoided at implementation time
+- [Phase 04-02]: GET stub removed from artifacts.js — client reads artifacts via full customer object GET /api/customers/:id, matching same decision as actions.js
+- [Phase 04-02]: PATCH always appends last_updated: today after spread — prevents stale date regardless of client payload (Pitfall 3 from plan)
+- [Phase 04-02]: related_topics: [] and linked_actions: [] hardcoded in POST — never trust client to initialize empty arrays for new artifacts (Pitfall 2 from plan)
 
 ### Pending Todos
 
@@ -112,7 +116,7 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-05T18:16:18.745Z
-Stopped at: Completed 04-03-PLAN — history POST endpoint + 3 green tests
+Last session: 2026-03-05T18:16:45.278Z
+Stopped at: Completed 04-02-PLAN — artifacts.js POST + PATCH + 7 passing tests
 Resume file: None
 Next action: Execute 04-02 (artifacts route implementation — POST + PATCH endpoints)

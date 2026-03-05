@@ -81,10 +81,10 @@
 ### Artifact Manager — View 6 (ART)
 
 - [ ] **ART-01**: Lists all artifacts for the current customer (id, type, title, status, owner, last_updated) in a table
-- [ ] **ART-02**: "Add Artifact" inline row at bottom of table; Save assigns next sequential X-### ID and writes to Drive
-- [ ] **ART-03**: All artifact fields are editable inline: type (dropdown matching schema types), title, description, status (dropdown: active / in_review / superseded / retired), owner
-- [ ] **ART-04**: Status change to superseded or retired writes to Drive atomically
-- [ ] **ART-05**: All writes optimistic with "Saving…" indicator
+- [x] **ART-02**: "Add Artifact" inline row at bottom of table; Save assigns next sequential X-### ID and writes to Drive
+- [x] **ART-03**: All artifact fields are editable inline: type (dropdown matching schema types), title, description, status (dropdown: active / in_review / superseded / retired), owner
+- [x] **ART-04**: Status change to superseded or retired writes to Drive atomically
+- [x] **ART-05**: All writes optimistic with "Saving…" indicator
 
 ### Weekly Update Form — View 7 (UPD)
 
@@ -189,10 +189,10 @@
 | UPD-04 | Phase 4: Structured Write Views | Complete |
 | UPD-05 | Phase 4: Structured Write Views | Pending |
 | ART-01 | Phase 4: Structured Write Views | Pending |
-| ART-02 | Phase 4: Structured Write Views | Pending |
-| ART-03 | Phase 4: Structured Write Views | Pending |
-| ART-04 | Phase 4: Structured Write Views | Pending |
-| ART-05 | Phase 4: Structured Write Views | Pending |
+| ART-02 | Phase 4: Structured Write Views | Complete |
+| ART-03 | Phase 4: Structured Write Views | Complete |
+| ART-04 | Phase 4: Structured Write Views | Complete |
+| ART-05 | Phase 4: Structured Write Views | Complete |
 | RPT-01 | Phase 5: AI Reports and YAML Editor | Pending |
 | RPT-02 | Phase 5: AI Reports and YAML Editor | Pending |
 | RPT-03 | Phase 5: AI Reports and YAML Editor | Pending |
