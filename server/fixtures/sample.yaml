@@ -1,0 +1,149 @@
+# Sample customer YAML fixture for yamlService tests
+# IMPORTANT: Do NOT use bare YAML boolean-coercible values (on, off, yes, no, true, false)
+# as unquoted bare keys/values. This fixture is parsed with js-yaml JSON_SCHEMA to prevent
+# coercion. All values here are intentionally safe strings.
+#
+# Seeded IDs for assignNextId tests:
+#   actions: max is A-003 → assignNextId("A", actions) must return "A-004"
+#   risks:   max is R-001 → assignNextId("R", risks) must return "R-002"
+#   artifacts: max is X-001 → assignNextId("X", artifacts) must return "X-002"
+
+customer:
+  name: "Acme Corp"
+  contact: "Jane Smith"
+  email: "jane.smith@acme.example.com"
+
+project:
+  name: "BigPanda Implementation"
+  go_live_date: "2026-06-01"
+  overall_percent_complete: 35
+  notes: "On schedule for Q2 go-live"
+
+status: "on_track"
+
+workstreams:
+  adr:
+    inbound_integrations:
+      status: "in_progress"
+      percent_complete: 40
+      progress_notes: "Webhook endpoints configured"
+      blockers: ""
+    configuration:
+      status: "not_started"
+      percent_complete: 0
+      progress_notes: ""
+      blockers: ""
+    outbound_integrations:
+      status: "not_started"
+      percent_complete: 0
+      progress_notes: ""
+      blockers: ""
+    workflow_configuration:
+      status: "not_started"
+      percent_complete: 0
+      progress_notes: ""
+      blockers: ""
+  biggy:
+    integrations:
+      status: "in_progress"
+      percent_complete: 50
+      progress_notes: "Correlation patterns defined"
+      blockers: ""
+    workflow_configuration:
+      status: "not_started"
+      percent_complete: 0
+      progress_notes: ""
+      blockers: ""
+
+actions:
+  - id: "A-001"
+    description: "Complete network diagram"
+    owner: "Bob Lee"
+    due: "2026-03-15"
+    status: "completed"
+    workstream: "adr"
+    completed_date: "2026-03-10"
+  - id: "A-002"
+    description: "Schedule kickoff call with customer team"
+    owner: "Jane Smith"
+    due: "2026-03-20"
+    status: "open"
+    workstream: "adr"
+    completed_date: ""
+  - id: "A-003"
+    description: "Validate inbound webhook payload schema"
+    owner: "Bob Lee"
+    due: "2026-03-28"
+    status: "open"
+    workstream: "adr"
+    completed_date: ""
+
+risks:
+  - id: "R-001"
+    description: "Customer IT firewall may block outbound webhook traffic"
+    severity: "high"
+    status: "open"
+    mitigation: "Request firewall rule change by 2026-03-25"
+    raised_date: "2026-03-04"
+    closed_date: ""
+
+milestones:
+  - id: "M-001"
+    name: "Environment Access Confirmed"
+    target_date: "2026-03-31"
+    status: "not_started"
+    notes: ""
+  - id: "M-002"
+    name: "End-to-End Integration Smoke Test"
+    target_date: "2026-05-15"
+    status: "not_started"
+    notes: ""
+
+artifacts:
+  - id: "X-001"
+    type: "document"
+    title: "Network Architecture Diagram"
+    description: "Diagram showing all integration points between customer infra and BigPanda"
+    status: "active"
+    owner: "Bob Lee"
+    last_updated: "2026-03-10"
+    related_topics: []
+    linked_actions: ["A-001"]
+
+history:
+  - week_ending: "2026-03-07"
+    workstreams:
+      adr:
+        inbound_integrations:
+          status: "in_progress"
+          percent_complete: 40
+          progress_notes: "Webhook endpoints configured for test environment"
+          blockers: ""
+        configuration:
+          status: "not_started"
+          percent_complete: 0
+          progress_notes: ""
+          blockers: ""
+        outbound_integrations:
+          status: "not_started"
+          percent_complete: 0
+          progress_notes: ""
+          blockers: ""
+        workflow_configuration:
+          status: "not_started"
+          percent_complete: 0
+          progress_notes: ""
+          blockers: ""
+      biggy:
+        integrations:
+          status: "in_progress"
+          percent_complete: 50
+          progress_notes: "Initial correlation rules mapped"
+          blockers: ""
+        workflow_configuration:
+          status: "not_started"
+          percent_complete: 0
+          progress_notes: ""
+          blockers: ""
+    decisions: "Agreed to use REST webhooks for inbound integrations"
+    outcomes: "Network diagram completed and approved"
