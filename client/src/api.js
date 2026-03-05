@@ -50,3 +50,21 @@ export const patchWorkstreams = (customerId, workstreams) =>
     method: 'PATCH',
     body: JSON.stringify(workstreams),
   });
+
+export const postArtifact = (customerId, body) =>
+  apiFetch(`/customers/${customerId}/artifacts`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+
+export const patchArtifact = (customerId, artifactId, patch) =>
+  apiFetch(`/customers/${customerId}/artifacts/${artifactId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(patch),
+  });
+
+export const postHistory = (customerId, entry) =>
+  apiFetch(`/customers/${customerId}/history`, {
+    method: 'POST',
+    body: JSON.stringify(entry),
+  });
