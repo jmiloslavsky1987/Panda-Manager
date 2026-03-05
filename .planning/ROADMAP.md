@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Foundation** - Backend scaffold, Drive service, YAML service, Vite proxy, React Router skeleton
 - [ ] **Phase 2: Read Surface** - Dashboard and Customer Overview powered by real Drive data
-- [ ] **Phase 3: Action Manager** - Full inline action editing with atomic Drive writes and optimistic UI
+- [ ] **Phase 3: Project Setup + Action Manager** - Project Setup screen for workstream scope intake; full inline action editing with atomic Drive writes and optimistic UI
 - [ ] **Phase 4: Structured Write Views** - Weekly Update Form and Artifact Manager
 - [ ] **Phase 5: AI Reports and YAML Editor** - Claude report generation, PPTX export, CodeMirror editor
 
@@ -46,7 +46,7 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Dashboard shows one card per customer YAML, sorted At Risk first then On Track then Off Track, with correct name, status badge, days to go-live, % complete, open action count, and high-severity risk count
   2. Clicking "View" on any card navigates to that customer's Customer Overview without a page reload
-  3. Customer Overview displays workstream health for all 6 sub-workstreams (ADR: 4, Biggy: 2) with progress bars, percentage labels, status dots, and truncated progress notes matching the most recent history entry
+  3. Customer Overview displays workstream health for all 11 sub-workstreams (ADR: 6, Biggy: 5) with progress bars, percentage labels, status dots, and truncated progress notes; scope tags shown for inbound_integrations, outbound_integrations, udc, real_time_integrations
   4. Risks and milestones are visible in Customer Overview; existing risk and milestone fields are editable inline with a "Saving..." indicator that confirms Drive write success
   5. Persistent sidebar lists all customers; clicking any navigates to that customer's overview without losing current page state
 **Plans**: 5 plans
@@ -58,16 +58,18 @@ Plans:
 - [ ] 02-04-PLAN.md — Wave 1: CustomerOverview.jsx (workstream health, risks/milestones inline edit, actions summary)
 - [ ] 02-05-PLAN.md — Wave 2: Sidebar.jsx + AppLayout wiring + visual browser checkpoint
 
-### Phase 3: Action Manager
-**Goal**: Users can manage all open actions for a customer — add, edit, complete, reopen, filter, and sort — with every change written atomically to Drive and reflected immediately in the UI
+### Phase 3: Project Setup + Action Manager
+**Goal**: Users can configure the scope and initial status of all 11 sub-workstreams via a dedicated Project Setup screen, and can manage all open actions for a customer — add, edit, complete, reopen, filter, and sort — with every change written atomically to Drive and reflected immediately in the UI
 **Depends on**: Phase 2
 **Requirements**: ACT-01, ACT-02, ACT-03, ACT-04, ACT-05, ACT-06, ACT-07, ACT-08, ACT-09, ACT-10, ACT-11, ACT-12
 **Success Criteria** (what must be TRUE):
-  1. Open actions table is sortable by any column and filterable by workstream and status; overdue due dates render red
-  2. Checking an action's checkbox immediately moves it to the completed table and writes to Drive atomically — no confirmation dialog; a "Saving..." indicator appears and resolves
-  3. Description, owner, due date, workstream, and status are all editable inline; each edit writes to Drive on blur/enter and updates the UI optimistically
-  4. "Add Action" row at the bottom of the table assigns the next sequential A-### ID on save and writes to Drive
-  5. Completed actions table is collapsed by default; "Reopen" moves an action back to open status with the completion date cleared
+  1. Project Setup screen at `/customer/:id/setup` renders all 11 sub-workstreams grouped by ADR/Biggy; scope-enabled sub-workstreams (inbound_integrations, outbound_integrations, udc, real_time_integrations) show a tag-input for tools in scope
+  2. Saving Project Setup writes the full `workstreams` nested object to Drive atomically and Customer Overview immediately reflects the new scope tags and statuses
+  3. Open actions table is sortable by any column and filterable by workstream and status; overdue due dates render red
+  4. Checking an action's checkbox immediately moves it to the completed table and writes to Drive atomically — no confirmation dialog; a "Saving..." indicator appears and resolves
+  5. Description, owner, due date, workstream, and status are all editable inline; each edit writes to Drive on blur/enter and updates the UI optimistically
+  6. "Add Action" row at the bottom of the table assigns the next sequential A-### ID on save and writes to Drive
+  7. Completed actions table is collapsed by default; "Reopen" moves an action back to open status with the completion date cleared
 **Plans**: TBD
 
 ### Phase 4: Structured Write Views
@@ -75,7 +77,7 @@ Plans:
 **Depends on**: Phase 3
 **Requirements**: UPD-01, UPD-02, UPD-03, UPD-04, UPD-05, ART-01, ART-02, ART-03, ART-04, ART-05
 **Success Criteria** (what must be TRUE):
-  1. Weekly Update Form pre-fills week_of with today's date and provides per-workstream inputs (status, %, progress notes, blockers) for all 6 sub-workstreams
+  1. Weekly Update Form pre-fills week_of with today's date and provides per-workstream inputs (status, %, progress notes, blockers) for all 11 sub-workstreams (ADR: 6, Biggy: 5)
   2. Submitting the form prepends a new well-formed history entry to the YAML and writes to Drive atomically; Customer Overview immediately reflects the new entry after redirect
   3. Artifact Manager lists all customer artifacts with id, type, title, status, owner, and last_updated; all fields are editable inline with a "Saving..." indicator
   4. Adding a new artifact assigns the next sequential X-### ID; changing status to superseded or retired writes to Drive atomically
@@ -102,6 +104,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Foundation | 1/5 | In Progress|  |
 | 2. Read Surface | 0/5 | Not started | - |
-| 3. Action Manager | 0/TBD | Not started | - |
+| 3. Project Setup + Action Manager | 0/TBD | Not started | - |
 | 4. Structured Write Views | 0/TBD | Not started | - |
 | 5. AI Reports and YAML Editor | 0/TBD | Not started | - |
