@@ -3,6 +3,59 @@ const router = require('express').Router();
 const asyncWrapper = require('../middleware/asyncWrapper');
 const driveService = require('../services/driveService');
 const yamlService = require('../services/yamlService');
+// Build a minimal valid YAML scaffold for a new customer
+function buildNewCustomerYaml(customerName, projectName, goLiveDate) {
+  const slug = customerName.replace(/[^a-zA-Z0-9]/g, '_');
+  const data = {
+    customer: { name: customerName },
+    project: {
+      name: projectName || `${customerName} Implementation`,
+      go_live_date: goLiveDate || '',
+      percent_complete: 0,
+      status: 'not_started',
+    },
+    workstreams: {
+      adr: {
+        inbound_integrations:   { status: 'not_started', percent_complete: 0, scope: [], progress_notes: '', blockers: '' },
+        outbound_integrations:  { status: 'not_started', percent_complete: 0, scope: [], progress_notes: '', blockers: '' },
+        normalization:          { status: 'not_started', percent_complete: 0, progress_notes: '', blockers: '' },
+        platform_configuration: { status: 'not_started', percent_complete: 0, progress_notes: '', blockers: '' },
+        correlation:            { status: 'not_started', percent_complete: 0, progress_notes: '', blockers: '' },
+        training_and_uat:       { status: 'not_started', percent_complete: 0, progress_notes: '', blockers: '' },
+      },
+      biggy: {
+        biggy_app_integration:      { status: 'not_started', percent_complete: 0, progress_notes: '', blockers: '' },
+        udc:                        { status: 'not_started', percent_complete: 0, scope: [], progress_notes: '', blockers: '' },
+        real_time_integrations:     { status: 'not_started', percent_complete: 0, scope: [], progress_notes: '', blockers: '' },
+        action_plans_configuration: { status: 'not_started', percent_complete: 0, progress_notes: '', blockers: '' },
+        workflows_configuration:    { status: 'not_started', percent_complete: 0, progress_notes: '', blockers: '' },
+      },
+    },
+    actions: [],
+    risks: [],
+    milestones: [],
+    artifacts: [],
+    history: [],
+  };
+  const yamlString = yamlService.serializeYaml(data);
+  const fileName = `${slug}_Master_Status.yaml`;
+  return { data, yamlString, fileName };
+}
+
+// POST /api/customers — create a new customer YAML in Drive
+router.post('/', asyncWrapper(async (req, res) => {
+  const { customerName, projectName, goLiveDate } = req.body || {};
+  if (!customerName || !customerName.trim()) {
+    return res.status(422).json({ error: 'customerName is required' });
+  }
+  const { data, yamlString, fileName } = buildNewCustomerYaml(
+    customerName.trim(),
+    projectName?.trim() || '',
+    goLiveDate?.trim() || ''
+  );
+  const file = await driveService.createYamlFile(fileName, yamlString);
+  res.status(201).json({ fileId: file.id, ...data });
+}));
 
 // GET /api/customers — list all customers
 router.get('/', asyncWrapper(async (req, res) => {

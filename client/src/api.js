@@ -15,6 +15,8 @@ async function apiFetch(path, options = {}) {
 }
 
 export const getCustomers = () => apiFetch('/customers');
+export const createCustomer = (body) =>
+  apiFetch('/customers', { method: 'POST', body: JSON.stringify(body) });
 export const getCustomer = (id) => apiFetch(`/customers/${id}`);
 export const updateCustomer = (id, body) =>
   apiFetch(`/customers/${id}`, { method: 'PUT', body: JSON.stringify(body) });

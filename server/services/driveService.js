@@ -48,9 +48,26 @@ async function writeYamlFile(fileId, yamlContent) {
   });
 }
 
+async function createYamlFile(fileName, yamlContent) {
+  const folderId = process.env.DRIVE_FOLDER_ID;
+  const res = await drive.files.create({
+    requestBody: {
+      name: fileName,
+      parents: [folderId],
+      mimeType: 'text/plain',
+    },
+    media: {
+      mimeType: 'text/plain',
+      body: Readable.from([yamlContent]),
+    },
+    fields: 'id, name',
+  });
+  return res.data; // { id, name }
+}
+
 async function checkDriveHealth() {
   const files = await listCustomerFiles();
   return { ok: true, fileCount: files.length, files: files.map(f => f.name) };
 }
 
-module.exports = { listCustomerFiles, readYamlFile, writeYamlFile, checkDriveHealth };
+module.exports = { listCustomerFiles, readYamlFile, writeYamlFile, createYamlFile, checkDriveHealth };

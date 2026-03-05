@@ -166,8 +166,7 @@ export default function ActionManager() {
   // Derived: filtered + sorted open actions
   const openActions = React.useMemo(() => {
     let list = (customer.actions ?? []).filter(a => a.status !== 'completed');
-    if (filterWorkstream === '__unassigned__') list = list.filter(a => !a.workstream);
-    else if (filterWorkstream !== 'all') list = list.filter(a => a.workstream === filterWorkstream);
+    if (filterWorkstream !== 'all') list = list.filter(a => a.workstream === filterWorkstream);
     if (filterStatus !== 'all') list = list.filter(a => a.status === filterStatus);
     return [...list].sort((a, b) => {
       const aVal = a[sortKey] ?? '';
@@ -199,7 +198,6 @@ export default function ActionManager() {
           onChange={e => setFilterWorkstream(e.target.value)}
         >
           <option value="all">All Workstreams</option>
-          <option value="__unassigned__">Unassigned</option>
           {WORKSTREAM_OPTIONS.map(o => (
             <option key={o.value} value={o.value}>{o.label}</option>
           ))}
@@ -283,7 +281,7 @@ export default function ActionManager() {
             {openActions.length === 0 && (
               <tr>
                 <td colSpan={7} className="py-8 px-4 text-sm text-gray-400 text-center">
-                  {filterWorkstream !== 'all' && filterWorkstream !== '__unassigned__'
+                  {filterWorkstream !== 'all'
                     ? 'No actions assigned to this workstream. Use the Workstream column to assign actions.'
                     : 'No actions match the current filters.'}
                 </td>
