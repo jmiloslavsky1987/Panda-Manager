@@ -92,7 +92,7 @@ Plans:
 **Plans**: 6 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — Wave 0: Test stubs (artifacts.test.js + history.test.js)
+- [x] 04-01-PLAN.md — Wave 0: Test stubs (artifacts.test.js + history.test.js)
 - [ ] 04-02-PLAN.md — Wave 1: artifacts.js endpoints (POST + PATCH) + test assertions
 - [ ] 04-03-PLAN.md — Wave 1: history.js POST endpoint + test assertions (parallel with 04-02)
 - [ ] 04-04-PLAN.md — Wave 2: Extract InlineEditField/InlineSelectField + api.js additions + ArtifactManager.jsx
@@ -121,5 +121,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Foundation | 1/5 | In Progress|  |
 | 2. Read Surface | 0/5 | Not started | - |
 | 3. Project Setup + Action Manager | 6/6 | Complete | 2026-03-05 |
-| 4. Structured Write Views | 0/6 | Not started | - |
+| 4. Structured Write Views | 1/6 | In Progress | - |
 | 5. AI Reports and YAML Editor | 0/TBD | Not started | - |

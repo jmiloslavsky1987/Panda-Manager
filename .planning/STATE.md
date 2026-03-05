@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-project-setup-action-manager — Phase 3 DONE
-last_updated: "2026-03-05T17:00:00.000Z"
-last_activity: 2026-03-05 — Phase 3 complete (6/6 plans, 65/65 tests, human checkpoint approved)
+stopped_at: Completed 04-01-PLAN — Wave 0 test stubs (artifacts + history)
+last_updated: "2026-03-05T18:11:00.000Z"
+last_activity: 2026-03-05 — Phase 4 plan 01 complete (artifacts.test.js + history.test.js stubs, 10 TODO tests, 0 failures)
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 16
-  completed_plans: 15
-  percent: 20
+  completed_plans: 16
+  percent: 25
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-03-04)
 
 ## Current Position
 
-Phase: 3 of 5 (Project Setup + Action Manager) — **COMPLETE**
-Plan: 6 of 6 in current phase — all done
-Status: Phase 3 signed off; awaiting Phase 4 start
-Last activity: 2026-03-05 — Phase 3 complete (6/6 plans, 65/65 tests, human checkpoint approved)
+Phase: 4 of 5 (Structured Write Views) — **IN PROGRESS**
+Plan: 1 of 6 in current phase — 04-01 done
+Status: 04-01 complete; Wave 0 test stubs established for artifacts and history routes
+Last activity: 2026-03-05 — Phase 4 plan 01 complete (10 t.todo() stubs, 0 failures)
 
-Progress: [██████░░░░] 60% (Phases 2 + 3 fully functional)
+Progress: [███████░░░] 65% (Phase 4 started, test infrastructure ready)
 
 ## Performance Metrics
 
@@ -46,6 +46,7 @@ Progress: [██████░░░░] 60% (Phases 2 + 3 fully functional)
 | 01-foundation | 1/5 | 2 min | 2 min |
 | 02-read-surface | 5/5 | ~10 min | ~2 min |
 | 03-project-setup-action-manager | 6/6 | ~12 min | ~2 min |
+| 04-structured-write-views | 1/6 | ~1 min | ~1 min |
 
 **Recent Trend:**
 - Last 5 plans: ~2 min
@@ -61,6 +62,7 @@ Progress: [██████░░░░] 60% (Phases 2 + 3 fully functional)
 | Phase 03-project-setup-action-manager P04 | 1 | 2 tasks | 4 files |
 | Phase 03-project-setup-action-manager P05 | 1 | 2 tasks | 1 files |
 | Phase 03-project-setup-action-manager P06 | 3 | 2 tasks | 6 files |
+| Phase 04-structured-write-views P01 | 1 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -92,6 +94,8 @@ Recent decisions affecting current work:
 - [Phase 03-06]: require.main === module guard in server/index.js — prevents test suite from occupying port 3001, blocking dev server
 - [Phase 03-06]: InlineSelectField placeholder option value="" — fixes first-option onChange never firing when backing value is undefined
 - [Phase 03-06]: Status cell as <select> dropdown — user preference for explicit selection over click-to-cycle span
+- [Phase 04-01]: Wave 0 t.todo() stubs for artifacts and history test files — Nyquist verify path established before implementation begins
+- [Phase 04-01]: artifacts.js and history.js route files already existed (mounted in index.js from Phase 3) — test files can immediately supertest them
 
 ### Pending Todos
 
@@ -105,7 +109,7 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-05T17:00:00.000Z
-Stopped at: Phase 3 complete — all 6 plans done, 65/65 tests passing, human checkpoint approved
+Last session: 2026-03-05T18:11:00.000Z
+Stopped at: Completed 04-01-PLAN — Wave 0 test stubs (artifacts + history routes)
 Resume file: None
-Next action: Plan Phase 4 (Structured Write Views — Weekly Update Form + Artifact Manager)
+Next action: Execute 04-02 (artifacts route implementation — POST + PATCH endpoints)
