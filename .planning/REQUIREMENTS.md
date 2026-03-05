@@ -53,7 +53,7 @@
 - [x] **ACT-07**: Workstream field is a dropdown matching the fixed workstream hierarchy
 - [x] **ACT-08**: Table supports sort by any column header; filter by workstream (dropdown) and by status (toggle buttons: All / Open / Delayed / In Review)
 - [x] **ACT-09**: "Add Action" row pinned to bottom of open table with fields: description, owner, due, workstream, Save button; Save assigns the next sequential A-### ID and writes to Drive
-- [ ] **ACT-10**: Completed actions table is collapsed by default and expandable; columns: ID, description, owner, due, completed date; each row has a "Reopen" button
+- [x] **ACT-10**: Completed actions table is collapsed by default and expandable; columns: ID, description, owner, due, completed date; each row has a "Reopen" button
 - [x] **ACT-11**: "Reopen" moves the action back to open with status: open and clears the completion date; writes to Drive atomically
 - [x] **ACT-12**: "Mark Delayed" button in actions column sets status to delayed and optionally accepts a new due date inline
 
@@ -180,7 +180,7 @@
 | ACT-07 | Phase 3: Action Manager | Complete |
 | ACT-08 | Phase 3: Action Manager | Complete |
 | ACT-09 | Phase 3: Action Manager | Complete |
-| ACT-10 | Phase 3: Action Manager | Pending |
+| ACT-10 | Phase 3: Action Manager | Complete |
 | ACT-11 | Phase 3: Action Manager | Complete |
 | ACT-12 | Phase 3: Action Manager | Complete |
 | UPD-01 | Phase 4: Structured Write Views | Pending |

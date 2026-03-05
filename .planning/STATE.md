@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-project-setup-action-manager-03-04-PLAN.md
-last_updated: "2026-03-05T15:40:32.514Z"
+stopped_at: Completed 03-project-setup-action-manager-03-05-PLAN.md
+last_updated: "2026-03-05T15:44:36.860Z"
 last_activity: 2026-03-05 — Plan 01-01 complete (Wave 0 test scaffold)
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 16
-  completed_plans: 13
+  completed_plans: 14
   percent: 20
 ---
 
@@ -56,6 +56,7 @@ Progress: [██░░░░░░░░] 20%
 | Phase 03-project-setup-action-manager P02 | 1 | 2 tasks | 2 files |
 | Phase 03-project-setup-action-manager P03 | 2 | 2 tasks | 3 files |
 | Phase 03-project-setup-action-manager P04 | 1 | 2 tasks | 4 files |
+| Phase 03-project-setup-action-manager P05 | 1 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,9 @@ Recent decisions affecting current work:
 - [Phase 03-04]: No useQuery in ProjectSetup — customer data via useOutletContext() from CustomerLayout to avoid double-fetch and cache duplication
 - [Phase 03-04]: No optimistic update for workstreams save — form re-init risk if cache update races local formState; simple invalidateQueries on success is safer
 - [Phase 03-04]: TagInput kept inline in ProjectSetup.jsx — extract to shared component only when a second consumer appears
+- [Phase Phase 03-05]: InlineEditField and InlineSelectField copied verbatim from CustomerOverview.jsx — extract to shared component only when second consumer appears
+- [Phase Phase 03-05]: postAction uses onSuccess invalidation only (no optimistic) — server assigns sequential A-### ID; optimistic would require client-side ID prediction
+- [Phase Phase 03-05]: STATUS_BADGE_CLASSES as module-level lookup with complete literal Tailwind strings — Tailwind v4 purge safety, no dynamic class construction
 
 ### Pending Todos
 
@@ -98,6 +102,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-05T15:40:32.511Z
-Stopped at: Completed 03-project-setup-action-manager-03-04-PLAN.md
+Last session: 2026-03-05T15:44:36.858Z
+Stopped at: Completed 03-project-setup-action-manager-03-05-PLAN.md
 Resume file: None
