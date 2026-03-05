@@ -29,8 +29,12 @@ app.use('/api/customers/:id/workstreams', require('./routes/workstreams'));
 app.use(require('./middleware/errorHandler'));
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`[server] Express running on http://localhost:${PORT}`);
-});
+
+// Only start listening when run directly (not when required by tests)
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`[server] Express running on http://localhost:${PORT}`);
+  });
+}
 
 module.exports = app; // Export for testing with supertest
