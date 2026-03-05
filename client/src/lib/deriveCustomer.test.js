@@ -3,6 +3,8 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   WORKSTREAM_CONFIG,
+  WORKSTREAM_OPTIONS,
+  STATUS_CYCLE,
   deriveOverallStatus,
   derivePercentComplete,
   deriveDaysToGoLive,
@@ -283,5 +285,55 @@ describe('getLatestHistory', () => {
 
   it('returns null when history array is empty', () => {
     assert.equal(getLatestHistory(makeCustomer()), null);
+  });
+});
+
+// ── WORKSTREAM_OPTIONS (Phase 3) ──────────────────────────────────────────────
+
+describe('WORKSTREAM_OPTIONS', () => {
+  it('has exactly 11 entries (all ADR + Biggy sub-workstreams)', () => {
+    assert.equal(WORKSTREAM_OPTIONS.length, 11);
+  });
+  it('every entry has value and label string fields', () => {
+    for (const opt of WORKSTREAM_OPTIONS) {
+      assert.equal(typeof opt.value, 'string');
+      assert.equal(typeof opt.label, 'string');
+    }
+  });
+  it('inbound_integrations value maps to ADR / Inbound Integrations label', () => {
+    const opt = WORKSTREAM_OPTIONS.find(o => o.value === 'inbound_integrations');
+    assert.ok(opt, 'inbound_integrations option must exist');
+    assert.equal(opt.label, 'ADR / Inbound Integrations');
+  });
+});
+
+// ── STATUS_CYCLE (Phase 3) ────────────────────────────────────────────────────
+
+describe('STATUS_CYCLE', () => {
+  it('cycles open -> delayed -> in_review -> open', () => {
+    assert.equal(STATUS_CYCLE['open'],      'delayed');
+    assert.equal(STATUS_CYCLE['delayed'],   'in_review');
+    assert.equal(STATUS_CYCLE['in_review'], 'open');
+  });
+  it('completed maps to open as safe fallback', () => {
+    assert.equal(STATUS_CYCLE['completed'], 'open');
+  });
+});
+
+// ── isOverdue (Phase 3) ───────────────────────────────────────────────────────
+
+describe('isOverdue (inline logic)', () => {
+  it('past date with non-completed status is overdue', () => {
+    const isOverdue = (due, status) => due && status !== 'completed' && new Date(due) < new Date();
+    assert.ok(isOverdue('2020-01-01', 'open'));
+    assert.ok(isOverdue('2020-01-01', 'delayed'));
+  });
+  it('completed action is not overdue even if past due date', () => {
+    const isOverdue = (due, status) => due && status !== 'completed' && new Date(due) < new Date();
+    assert.equal(isOverdue('2020-01-01', 'completed'), false);
+  });
+  it('future date is not overdue', () => {
+    const isOverdue = (due, status) => due && status !== 'completed' && new Date(due) < new Date();
+    assert.equal(isOverdue('2099-12-31', 'open'), false);
   });
 });

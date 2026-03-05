@@ -29,6 +29,23 @@ export const WORKSTREAM_CONFIG = {
   },
 };
 
+// Flat array of { value, label } for all 11 sub-workstreams (used by selects/filters)
+export const WORKSTREAM_OPTIONS = Object.entries(WORKSTREAM_CONFIG).flatMap(
+  ([groupKey, group]) =>
+    group.subWorkstreams.map(sw => ({
+      value: sw.key,
+      label: `${group.label} / ${sw.label}`,
+    }))
+);
+
+// Status transition cycle for cycling action status forward
+export const STATUS_CYCLE = {
+  open:      'delayed',
+  delayed:   'in_review',
+  in_review: 'open',
+  completed: 'open',
+};
+
 // Map YAML color vocabulary → normalized status
 const COLOR_TO_STATUS = {
   green:  'on_track',
