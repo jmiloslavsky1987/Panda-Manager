@@ -110,13 +110,21 @@ function CustomerCard({ customer }) {
         </div>
       </div>
 
-      {/* View button — DASH-04 */}
-      <Link
-        to={`/customer/${customer.fileId}`}
-        className="mt-auto inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium text-white bg-teal-600 rounded-md hover:bg-teal-700 transition-colors"
-      >
-        View
-      </Link>
+      {/* View + Setup buttons — DASH-04 */}
+      <div className="mt-auto flex gap-2">
+        <Link
+          to={`/customer/${customer.fileId}`}
+          className="flex-1 inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium text-white bg-teal-600 rounded-md hover:bg-teal-700 transition-colors"
+        >
+          View
+        </Link>
+        <Link
+          to={`/customer/${customer.fileId}/setup`}
+          className="inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium text-teal-700 bg-teal-50 rounded-md hover:bg-teal-100 transition-colors"
+        >
+          Setup
+        </Link>
+      </div>
     </div>
   );
 }

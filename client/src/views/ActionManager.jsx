@@ -166,7 +166,8 @@ export default function ActionManager() {
   // Derived: filtered + sorted open actions
   const openActions = React.useMemo(() => {
     let list = (customer.actions ?? []).filter(a => a.status !== 'completed');
-    if (filterWorkstream !== 'all') list = list.filter(a => a.workstream === filterWorkstream);
+    if (filterWorkstream === '__unassigned__') list = list.filter(a => !a.workstream);
+    else if (filterWorkstream !== 'all') list = list.filter(a => a.workstream === filterWorkstream);
     if (filterStatus !== 'all') list = list.filter(a => a.status === filterStatus);
     return [...list].sort((a, b) => {
       const aVal = a[sortKey] ?? '';
@@ -198,6 +199,7 @@ export default function ActionManager() {
           onChange={e => setFilterWorkstream(e.target.value)}
         >
           <option value="all">All Workstreams</option>
+          <option value="__unassigned__">Unassigned</option>
           {WORKSTREAM_OPTIONS.map(o => (
             <option key={o.value} value={o.value}>{o.label}</option>
           ))}
@@ -275,14 +277,15 @@ export default function ActionManager() {
                 onSort={handleSort}
                 className="w-52"
               />
-              <th className="pb-2 pt-3 px-2 text-xs font-medium text-gray-500 w-28"></th>
             </tr>
           </thead>
           <tbody>
             {openActions.length === 0 && (
               <tr>
-                <td colSpan={8} className="py-8 px-4 text-sm text-gray-400 text-center">
-                  No actions match the current filters.
+                <td colSpan={7} className="py-8 px-4 text-sm text-gray-400 text-center">
+                  {filterWorkstream !== 'all' && filterWorkstream !== '__unassigned__'
+                    ? 'No actions assigned to this workstream. Use the Workstream column to assign actions.'
+                    : 'No actions match the current filters.'}
                 </td>
               </tr>
             )}
@@ -329,24 +332,26 @@ export default function ActionManager() {
                       onSave={val => actionMutation.mutate({ actionId: action.id, patch: { due: val } })}
                     />
                   </td>
-                  {/* Status badge — cycles on click (ACT-06) */}
+                  {/* Status dropdown (ACT-06) */}
                   <td className="py-2 px-2">
                     {isPending ? (
                       <span className="text-gray-400 italic text-sm">Saving...</span>
                     ) : (
-                      <span
+                      <select
                         className={clsx(
-                          'cursor-pointer px-2 py-0.5 rounded-full text-xs font-medium',
+                          'text-xs font-medium rounded-full px-2 py-0.5 border-0 cursor-pointer appearance-none text-center',
                           STATUS_BADGE_CLASSES[action.status] ?? STATUS_BADGE_CLASSES.open
                         )}
-                        title="Click to cycle status"
-                        onClick={() => actionMutation.mutate({
+                        value={action.status ?? 'open'}
+                        onChange={e => actionMutation.mutate({
                           actionId: action.id,
-                          patch: { status: STATUS_CYCLE[action.status] ?? 'open' },
+                          patch: { status: e.target.value },
                         })}
                       >
-                        {STATUS_BADGE_LABELS[action.status] ?? action.status}
-                      </span>
+                        <option value="open">Open</option>
+                        <option value="delayed">Delayed</option>
+                        <option value="in_review">In Review</option>
+                      </select>
                     )}
                   </td>
                   {/* Workstream — inline select (ACT-07) */}
@@ -357,15 +362,6 @@ export default function ActionManager() {
                       isPending={isPending}
                       onSave={val => actionMutation.mutate({ actionId: action.id, patch: { workstream: val } })}
                     />
-                  </td>
-                  {/* Actions — Mark Delayed (ACT-12) */}
-                  <td className="py-2 px-2">
-                    <button
-                      className="text-xs text-orange-600 hover:text-orange-800"
-                      onClick={() => actionMutation.mutate({ actionId: action.id, patch: { status: 'delayed' } })}
-                    >
-                      Mark Delayed
-                    </button>
                   </td>
                 </tr>
               );
