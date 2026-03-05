@@ -386,12 +386,12 @@ export default function CustomerOverview() {
       <section>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-base font-semibold text-gray-800">Workstream Health</h3>
-          <a
-            href={`/customer/${customerId}/setup`}
+          <Link
+            to={`/customer/${customerId}/setup`}
             className="text-sm text-teal-600 hover:text-teal-700 font-medium"
           >
             Project Setup →
-          </a>
+          </Link>
         </div>
         <div className="flex gap-4 flex-wrap">
           {Object.entries(WORKSTREAM_CONFIG).map(([groupKey, config]) => (

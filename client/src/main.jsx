@@ -11,6 +11,7 @@ import ReportGenerator from './views/ReportGenerator';
 import YAMLEditor from './views/YAMLEditor';
 import ArtifactManager from './views/ArtifactManager';
 import WeeklyUpdateForm from './views/WeeklyUpdateForm';
+import ProjectSetup from './views/ProjectSetup';
 import './index.css';
 
 const queryClient = new QueryClient({
@@ -35,6 +36,7 @@ const router = createBrowserRouter([
           { path: 'yaml', element: <YAMLEditor /> },
           { path: 'artifacts', element: <ArtifactManager /> },
           { path: 'update', element: <WeeklyUpdateForm /> },
+          { path: 'setup', element: <ProjectSetup /> },
         ],
       },
     ],

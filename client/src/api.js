@@ -30,3 +30,21 @@ export const patchMilestone = (customerId, milestoneId, patch) =>
     method: 'PATCH',
     body: JSON.stringify(patch),
   });
+
+export const postAction = (customerId, body) =>
+  apiFetch(`/customers/${customerId}/actions`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+
+export const patchAction = (customerId, actionId, patch) =>
+  apiFetch(`/customers/${customerId}/actions/${actionId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(patch),
+  });
+
+export const patchWorkstreams = (customerId, workstreams) =>
+  apiFetch(`/customers/${customerId}/workstreams`, {
+    method: 'PATCH',
+    body: JSON.stringify(workstreams),
+  });
