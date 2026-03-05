@@ -30,7 +30,14 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. `GET /api/customers` returns all parsed customer objects with all top-level schema keys present; no YAML type coercion errors on fields like `status: on`
   4. `PUT /api/customers/:id` round-trips a YAML without data loss: field order preserved, multiline strings intact, no boolean coercion
   5. All 7 view routes render placeholder components (no blank screen, no missing Outlet errors)
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Wave 0: test stubs and sample.yaml fixture (yamlService tests)
+- [ ] 01-02-PLAN.md — Wave 1: driveService.js, server dependencies, .env.example, .gitignore
+- [ ] 01-03-PLAN.md — Wave 1: yamlService.js, asyncWrapper, errorHandler, fill test assertions
+- [ ] 01-04-PLAN.md — Wave 2: Express server scaffold with all 8 route files
+- [ ] 01-05-PLAN.md — Wave 3: Vite + React scaffold, concurrently dev runner, human verification
 
 ### Phase 2: Read Surface
 **Goal**: Users can see health status for all customers at a glance on the Dashboard, and drill into any customer's full workstream, risk, milestone, and action summary on the Customer Overview
@@ -86,7 +93,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/TBD | Not started | - |
+| 1. Foundation | 0/5 | Not started | - |
 | 2. Read Surface | 0/TBD | Not started | - |
 | 3. Action Manager | 0/TBD | Not started | - |
 | 4. Structured Write Views | 0/TBD | Not started | - |
