@@ -17,6 +17,10 @@ async function apiFetch(path, options = {}) {
 export const getCustomers = () => apiFetch('/customers');
 export const createCustomer = (body) =>
   apiFetch('/customers', { method: 'POST', body: JSON.stringify(body) });
+
+// postCustomer accepts { customerName, projectName, goLiveDate, yamlContent? }
+// yamlContent: base64-encoded YAML string from a FileReader result
+export const postCustomer = createCustomer;
 export const getCustomer = (id) => apiFetch(`/customers/${id}`);
 export const updateCustomer = (id, body) =>
   apiFetch(`/customers/${id}`, { method: 'PUT', body: JSON.stringify(body) });

@@ -13,6 +13,7 @@ import ArtifactManager from './views/ArtifactManager';
 import WeeklyUpdateForm from './views/WeeklyUpdateForm';
 import ProjectSetup from './views/ProjectSetup';
 import HistoryTimeline from './views/HistoryTimeline';
+import NewCustomer from './views/NewCustomer';
 import './index.css';
 
 const queryClient = new QueryClient({
@@ -27,6 +28,7 @@ const router = createBrowserRouter([
     element: <AppLayout />,
     children: [
       { index: true, element: <Dashboard /> },
+      { path: 'new-customer', element: <NewCustomer /> },
       {
         path: 'customer/:customerId',
         element: <CustomerLayout />,

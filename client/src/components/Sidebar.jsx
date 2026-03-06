@@ -43,8 +43,14 @@ export default function Sidebar() {
       </div>
 
       {/* Customer list — CUST-01 */}
-      <div className="p-3 border-b border-gray-100">
+      <div className="p-3 border-b border-gray-100 flex items-center justify-between">
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Customers</p>
+        <Link
+          to="/new-customer"
+          className="text-xs font-medium text-teal-600 hover:text-teal-700 px-2 py-0.5 rounded border border-teal-200 hover:border-teal-400 transition-colors"
+        >
+          + New
+        </Link>
       </div>
       <ul className="flex-1">
         {isPending && (
