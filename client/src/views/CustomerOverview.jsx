@@ -3,7 +3,7 @@
 import React from 'react';
 import { Link, useOutletContext, useParams } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { patchRisk, patchMilestone } from '../api';
+import { patchRisk, patchMilestone, postRisk, postMilestone } from '../api';
 import {
   WORKSTREAM_CONFIG,
   getLatestHistory,
@@ -99,14 +99,25 @@ const RISK_SEVERITY_OPTIONS = [
   { value: 'low', label: 'Low' },
 ];
 
-function RisksSection({ customer, customerId, mutation }) {
+function RisksSection({ customer, customerId, mutation, addingRisk, newRisk, setNewRisk, addRiskMutation, onAddClick, onCancelAdd }) {
   const risks = [...(customer.risks ?? [])].sort((a, b) => {
     const order = { high: 0, medium: 1, low: 2 };
     return (order[a.severity] ?? 3) - (order[b.severity] ?? 3);
   });
 
-  if (risks.length === 0) {
-    return <p className="text-sm text-gray-400">No risks recorded. Add via YAML Editor.</p>;
+  if (risks.length === 0 && !addingRisk) {
+    return (
+      <>
+        <p className="text-sm text-gray-400">No risks recorded.</p>
+        <button
+          type="button"
+          onClick={onAddClick}
+          className="mt-2 text-xs text-teal-600 hover:text-teal-700 hover:underline"
+        >
+          + Add Risk
+        </button>
+      </>
+    );
   }
 
   return (
@@ -120,6 +131,7 @@ function RisksSection({ customer, customerId, mutation }) {
             <th className="pb-2 text-xs font-medium text-gray-500 w-24">Severity</th>
             <th className="pb-2 text-xs font-medium text-gray-500 w-24">Status</th>
             <th className="pb-2 text-xs font-medium text-gray-500">Mitigation</th>
+            <th className="pb-2 text-xs font-medium text-gray-500 w-24"></th>
           </tr>
         </thead>
         <tbody>
@@ -163,10 +175,94 @@ function RisksSection({ customer, customerId, mutation }) {
                   onSave={val => mutation.mutate({ riskId: risk.id, patch: { mitigation: val } })}
                 />
               </td>
+              <td className="py-2"></td>
             </tr>
           ))}
+          {addingRisk && (
+            <tr className="bg-gray-50">
+              <td className="py-1.5 pr-3 font-mono text-xs text-gray-400">—</td>
+              <td className="py-1.5 pr-3">
+                <input
+                  autoFocus
+                  type="text"
+                  placeholder="Description"
+                  value={newRisk.description}
+                  onChange={e => setNewRisk(r => ({ ...r, description: e.target.value }))}
+                  className="w-full text-sm border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-teal-400"
+                />
+              </td>
+              <td className="py-1.5 pr-3">
+                <input
+                  type="text"
+                  placeholder="Owner"
+                  value={newRisk.owner}
+                  onChange={e => setNewRisk(r => ({ ...r, owner: e.target.value }))}
+                  className="w-full text-sm border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-teal-400"
+                />
+              </td>
+              <td className="py-1.5 pr-3">
+                <select
+                  value={newRisk.severity}
+                  onChange={e => setNewRisk(r => ({ ...r, severity: e.target.value }))}
+                  className="text-sm border border-gray-200 rounded px-2 py-1 focus:outline-none"
+                >
+                  <option value="high">High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                </select>
+              </td>
+              <td className="py-1.5 pr-3">
+                <select
+                  value={newRisk.status}
+                  onChange={e => setNewRisk(r => ({ ...r, status: e.target.value }))}
+                  className="text-sm border border-gray-200 rounded px-2 py-1 focus:outline-none"
+                >
+                  <option value="open">Open</option>
+                  <option value="mitigated">Mitigated</option>
+                  <option value="closed">Closed</option>
+                </select>
+              </td>
+              <td className="py-1.5">
+                <input
+                  type="text"
+                  placeholder="Mitigation"
+                  value={newRisk.mitigation}
+                  onChange={e => setNewRisk(r => ({ ...r, mitigation: e.target.value }))}
+                  className="w-full text-sm border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-teal-400"
+                />
+              </td>
+              <td className="py-1.5 pl-2">
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => addRiskMutation.mutate(newRisk)}
+                    disabled={!newRisk.description || addRiskMutation.isPending}
+                    className="text-xs px-2.5 py-1 rounded bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-50"
+                  >
+                    {addRiskMutation.isPending ? 'Saving…' : 'Save'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onCancelAdd}
+                    className="text-xs px-2.5 py-1 rounded border border-gray-200 text-gray-500 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
+      {!addingRisk && (
+        <button
+          type="button"
+          onClick={onAddClick}
+          className="mt-2 text-xs text-teal-600 hover:text-teal-700 hover:underline"
+        >
+          + Add Risk
+        </button>
+      )}
     </div>
   );
 }
@@ -179,13 +275,24 @@ const MILESTONE_STATUS_OPTIONS = [
   { value: 'delayed', label: 'Delayed' },
 ];
 
-function MilestonesSection({ customer, mutation }) {
+function MilestonesSection({ customer, mutation, addingMilestone, newMilestone, setNewMilestone, addMilestoneMutation, onAddClick, onCancelAdd }) {
   const milestones = [...(customer.milestones ?? [])].sort(
     (a, b) => new Date(a.target_date) - new Date(b.target_date)
   );
 
-  if (milestones.length === 0) {
-    return <p className="text-sm text-gray-400">No milestones recorded. Add via YAML Editor.</p>;
+  if (milestones.length === 0 && !addingMilestone) {
+    return (
+      <>
+        <p className="text-sm text-gray-400">No milestones recorded.</p>
+        <button
+          type="button"
+          onClick={onAddClick}
+          className="mt-2 text-xs text-teal-600 hover:text-teal-700 hover:underline"
+        >
+          + Add Milestone
+        </button>
+      </>
+    );
   }
 
   return (
@@ -198,6 +305,7 @@ function MilestonesSection({ customer, mutation }) {
             <th className="pb-2 text-xs font-medium text-gray-500 w-28">Target Date</th>
             <th className="pb-2 text-xs font-medium text-gray-500 w-28">Status</th>
             <th className="pb-2 text-xs font-medium text-gray-500">Notes</th>
+            <th className="pb-2 text-xs font-medium text-gray-500 w-24"></th>
           </tr>
         </thead>
         <tbody>
@@ -233,10 +341,77 @@ function MilestonesSection({ customer, mutation }) {
                   onSave={val => mutation.mutate({ milestoneId: ms.id, patch: { notes: val } })}
                 />
               </td>
+              <td className="py-2"></td>
             </tr>
           ))}
+          {addingMilestone && (
+            <tr className="bg-gray-50">
+              <td className="py-1.5 pr-3 font-mono text-xs text-gray-400">—</td>
+              <td className="py-1.5 pr-3">
+                <input
+                  autoFocus
+                  type="text"
+                  placeholder="Milestone name"
+                  value={newMilestone.name}
+                  onChange={e => setNewMilestone(m => ({ ...m, name: e.target.value }))}
+                  className="w-full text-sm border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-teal-400"
+                />
+              </td>
+              <td className="py-1.5 pr-3">
+                <input
+                  type="text"
+                  placeholder="YYYY-MM-DD"
+                  value={newMilestone.date}
+                  onChange={e => setNewMilestone(m => ({ ...m, date: e.target.value }))}
+                  className="w-full text-sm border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-teal-400"
+                />
+              </td>
+              <td className="py-1.5 pr-3">
+                <select
+                  value={newMilestone.status}
+                  onChange={e => setNewMilestone(m => ({ ...m, status: e.target.value }))}
+                  className="text-sm border border-gray-200 rounded px-2 py-1 focus:outline-none"
+                >
+                  <option value="upcoming">Upcoming</option>
+                  <option value="complete">Complete</option>
+                  <option value="delayed">Delayed</option>
+                </select>
+              </td>
+              <td className="py-1.5">
+                <span className="text-xs text-gray-300 italic">—</span>
+              </td>
+              <td className="py-1.5 pl-2">
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => addMilestoneMutation.mutate(newMilestone)}
+                    disabled={!newMilestone.name || addMilestoneMutation.isPending}
+                    className="text-xs px-2.5 py-1 rounded bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-50"
+                  >
+                    {addMilestoneMutation.isPending ? 'Saving…' : 'Save'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onCancelAdd}
+                    className="text-xs px-2.5 py-1 rounded border border-gray-200 text-gray-500 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
+      {!addingMilestone && (
+        <button
+          type="button"
+          onClick={onAddClick}
+          className="mt-2 text-xs text-teal-600 hover:text-teal-700 hover:underline"
+        >
+          + Add Milestone
+        </button>
+      )}
     </div>
   );
 }
@@ -247,6 +422,32 @@ export default function CustomerOverview() {
   const { customerId } = useParams();
   const queryClient = useQueryClient();
   const queryKey = ['customer', customerId];
+
+  // Add Risk inline form state
+  const [addingRisk, setAddingRisk] = React.useState(false);
+  const [newRisk, setNewRisk] = React.useState({ description: '', owner: '', severity: 'medium', status: 'open', mitigation: '' });
+
+  const addRiskMutation = useMutation({
+    mutationFn: (body) => postRisk(customerId, body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      setAddingRisk(false);
+      setNewRisk({ description: '', owner: '', severity: 'medium', status: 'open', mitigation: '' });
+    },
+  });
+
+  // Add Milestone inline form state
+  const [addingMilestone, setAddingMilestone] = React.useState(false);
+  const [newMilestone, setNewMilestone] = React.useState({ name: '', date: '', status: 'upcoming' });
+
+  const addMilestoneMutation = useMutation({
+    mutationFn: (body) => postMilestone(customerId, body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      setAddingMilestone(false);
+      setNewMilestone({ name: '', date: '', status: 'upcoming' });
+    },
+  });
 
   // Optimistic mutation for risk edits (CUST-07, CUST-09)
   const riskMutation = useMutation({
@@ -429,10 +630,19 @@ export default function CustomerOverview() {
       <section>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-base font-semibold text-gray-800">Risks</h3>
-          <span className="text-xs text-gray-400">Add new risks via YAML Editor</span>
         </div>
         <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <RisksSection customer={customer} customerId={customerId} mutation={riskMutation} />
+          <RisksSection
+            customer={customer}
+            customerId={customerId}
+            mutation={riskMutation}
+            addingRisk={addingRisk}
+            newRisk={newRisk}
+            setNewRisk={setNewRisk}
+            addRiskMutation={addRiskMutation}
+            onAddClick={() => setAddingRisk(true)}
+            onCancelAdd={() => setAddingRisk(false)}
+          />
         </div>
       </section>
 
@@ -440,10 +650,18 @@ export default function CustomerOverview() {
       <section>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-base font-semibold text-gray-800">Milestones</h3>
-          <span className="text-xs text-gray-400">Add new milestones via YAML Editor</span>
         </div>
         <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <MilestonesSection customer={customer} mutation={milestoneMutation} />
+          <MilestonesSection
+            customer={customer}
+            mutation={milestoneMutation}
+            addingMilestone={addingMilestone}
+            newMilestone={newMilestone}
+            setNewMilestone={setNewMilestone}
+            addMilestoneMutation={addMilestoneMutation}
+            onAddClick={() => setAddingMilestone(true)}
+            onCancelAdd={() => setAddingMilestone(false)}
+          />
         </div>
       </section>
     </div>
