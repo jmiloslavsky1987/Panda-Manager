@@ -25,6 +25,7 @@ const ARTIFACT_TYPE_OPTIONS = [
   { value: 'team-contact',      label: 'Team Contact' },
   { value: 'backlog-item',      label: 'Backlog Item' },
   { value: 'integration-note',  label: 'Integration Note' },
+  { value: 'session',           label: 'Session' },
 ];
 
 export default function ArtifactManager() {
