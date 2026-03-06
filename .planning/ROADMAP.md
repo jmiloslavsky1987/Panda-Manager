@@ -151,10 +151,29 @@ Plans:
 - [ ] 07-05-PLAN.md — Wave 2: ELT timeline date picker + generateExternalELT/generateInternalELT timeline filtering
 - [ ] 07-06-PLAN.md — Wave 3: ProjectSetup auto-fill from YAML (customer name, go-live date, workstreams)
 
+### Phase 8: Session Scheduler Integration
+**Goal**: Users can find mutual calendar availability and schedule working sessions directly from any customer's context — attendees pre-filled from YAML contact data, sessions logged as artifacts, and all without requiring other users to log into the app or incurring API costs
+**Depends on**: Phase 7
+**Requirements**: SESS-01, SESS-02, SESS-03, SESS-04, SESS-05, SESS-06
+**Success Criteria** (what must be TRUE):
+  1. One-time Google Calendar OAuth setup: user clicks "Connect Google Calendar" in app settings, completes OAuth in browser, token stored locally — no repeated login required thereafter
+  2. Sessions view loads for any customer with attendee fields pre-populated from the customer's YAML contact data; user can add/remove attendees before searching
+  3. Availability search returns mutual free slots across all attendee calendars for a configurable duration and look-ahead window; inaccessible calendars show a graceful error (not a crash)
+  4. User can select a slot and create a Google Calendar event with all attendees invited directly from the app
+  5. Scheduled sessions are saved as artifacts (type: "session") in the customer's YAML with date, attendees, and title
+  6. Sessions tab appears in the customer sidebar; the feature degrades gracefully if Calendar is not yet authorized (shows "Connect Calendar" prompt instead of crashing)
+**Plans**: 4 plans
+
+Plans:
+- [ ] 08-01-PLAN.md — Wave 1: calendarService.js (OAuth2 + slot algorithm), calendarService.test.js, calendar.js route, mount in index.js, .env.example update
+- [ ] 08-02-PLAN.md — Wave 1: SessionScheduler.jsx shell (unauthenticated card + authenticated form), route in main.jsx, Sidebar Sessions link, api.js calendar functions
+- [ ] 08-03-PLAN.md — Wave 2: Wire SessionScheduler.jsx to real API (availability search, slot selection, event creation, artifact save)
+- [ ] 08-04-PLAN.md — Wave 3: ArtifactManager 'session' type + calendar.test.js integration tests + visual checkpoint
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -165,3 +184,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 5. AI Reports and YAML Editor | 1/1 | Verified ✓ | 2026-03-06 |
 | 6. UX Polish and Feature Enhancements | 6/6 | Verified ✓ | 2026-03-06 |
 | 7. Smart Data Flow and Customer Onboarding | 6/6 | Verified ✓ | 2026-03-06 |
+| 8. Session Scheduler Integration | 0/4 | Not started | - |
