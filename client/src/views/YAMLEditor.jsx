@@ -4,7 +4,7 @@
 // Server validates structure before writing; errors surface inline.
 
 import React, { useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useBlocker } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { EditorView, basicSetup } from 'codemirror';
 import { EditorState } from '@codemirror/state';
@@ -47,6 +47,12 @@ export default function YAMLEditor() {
   const initializedRef  = useRef(false);
 
   const [isDirty,     setIsDirty]     = React.useState(false);
+
+  // ── Navigate-away guard ────────────────────────────────────────────────────
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      isDirty && currentLocation.pathname !== nextLocation.pathname
+  );
   const [saveError,   setSaveError]   = React.useState(null);
   const [saveSuccess, setSaveSuccess] = React.useState(false);
 
@@ -148,6 +154,13 @@ export default function YAMLEditor() {
         </code>
       </div>
 
+      {/* Comments-stripping banner */}
+      <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm text-amber-800 shrink-0">
+        <strong>Comments will be stripped on save.</strong>{' '}
+        js-yaml does not preserve YAML comments when serializing.
+        Copy any comments you want to keep before saving.
+      </div>
+
       {/* Loading state */}
       {isLoading && (
         <p className="text-sm text-gray-400">Loading YAML…</p>
@@ -212,6 +225,32 @@ export default function YAMLEditor() {
             className="flex-1 min-h-0 border border-gray-200 rounded-lg overflow-hidden focus-within:border-teal-400 transition-colors"
             style={{ minHeight: '500px' }}
           />
+        </div>
+      )}
+
+      {/* Navigate-away confirmation dialog */}
+      {blocker.state === 'blocked' && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full shadow-lg border border-gray-200">
+            <p className="text-sm font-medium text-gray-900 mb-1">Unsaved Changes</p>
+            <p className="text-sm text-gray-600 mb-4">You have unsaved YAML changes. Leave anyway?</p>
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => blocker.reset()}
+                className="px-3 py-1.5 text-sm rounded border border-gray-200 text-gray-600 hover:bg-gray-50"
+              >
+                Stay
+              </button>
+              <button
+                type="button"
+                onClick={() => blocker.proceed()}
+                className="px-3 py-1.5 text-sm rounded bg-red-600 text-white hover:bg-red-700"
+              >
+                Leave anyway
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
