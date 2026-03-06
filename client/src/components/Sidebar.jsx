@@ -16,6 +16,7 @@ const SIDEBAR_STATUS_DOT_CLASSES = {
 
 const NAV_LINKS = [
   { path: '',           label: 'Overview' },
+  { path: '/history',   label: 'History' },
   { path: '/update',    label: 'Weekly Update' },
   { path: '/reports',   label: 'Reports' },
   { path: '/actions',   label: 'Actions' },
