@@ -75,3 +75,10 @@ export const generateReportPptx = (customerId, type) =>
     body: JSON.stringify({ type }),
   });
 
+export const getRawYaml = (id) => apiFetch(`/customers/${id}/yaml`);
+
+export const putRawYaml = (id, content) =>
+  apiFetch(`/customers/${id}/yaml`, {
+    method: 'PUT',
+    body: JSON.stringify({ content }),
+  });

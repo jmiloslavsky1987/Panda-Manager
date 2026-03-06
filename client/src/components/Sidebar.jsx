@@ -6,12 +6,13 @@ import { useQuery } from '@tanstack/react-query';
 import { getCustomers } from '../api';
 
 const NAV_LINKS = [
-  { path: '',         label: 'Overview' },
-  { path: '/update',  label: 'Weekly Update' },
-  { path: '/reports', label: 'Reports' },
-  { path: '/actions', label: 'Actions' },
+  { path: '',           label: 'Overview' },
+  { path: '/update',    label: 'Weekly Update' },
+  { path: '/reports',   label: 'Reports' },
+  { path: '/actions',   label: 'Actions' },
   { path: '/artifacts', label: 'Artifacts' },
-  { path: '/setup',   label: 'Project Setup' },
+  { path: '/setup',     label: 'Project Setup' },
+  { path: '/yaml',      label: 'YAML Editor' },
 ];
 
 export default function Sidebar() {

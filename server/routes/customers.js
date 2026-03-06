@@ -71,6 +71,34 @@ router.get('/', asyncWrapper(async (req, res) => {
   res.json(customers);
 }));
 
+// GET /api/customers/:id/yaml — return raw YAML string for the editor
+router.get('/:id/yaml', asyncWrapper(async (req, res) => {
+  const content = await driveService.readYamlFile(req.params.id);
+  res.json({ content });
+}));
+
+// PUT /api/customers/:id/yaml — parse + validate + write raw YAML string
+// The editor sends the raw string; we validate structure before writing to Drive.
+router.put('/:id/yaml', asyncWrapper(async (req, res) => {
+  const { content } = req.body;
+  if (typeof content !== 'string') {
+    return res.status(400).json({ error: 'content must be a string' });
+  }
+  let data;
+  try {
+    data = yamlService.parseYaml(content);
+  } catch (err) {
+    return res.status(422).json({ error: `YAML parse error: ${err.message}` });
+  }
+  try {
+    yamlService.validateYaml(data);
+  } catch (err) {
+    return res.status(422).json({ error: err.message, details: err.details });
+  }
+  await driveService.writeYamlFile(req.params.id, content);
+  res.json({ content });
+}));
+
 // GET /api/customers/:id — single customer by Drive file ID
 router.get('/:id', asyncWrapper(async (req, res) => {
   const content = await driveService.readYamlFile(req.params.id);
