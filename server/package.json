@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon --watch . index.js",
-    "test": "jest"
+    "test": "node --test --test-reporter spec routes/*.test.js services/*.test.js",
+    "test:drive": "jest __tests__/driveService.test.js"
   },
   "keywords": [],
   "author": "",

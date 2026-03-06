@@ -119,17 +119,14 @@ describe('validateYaml', () => {
     );
   });
 
-  test('validateYaml() throws ValidationError when an extra key is present', () => {
+  test('validateYaml() does NOT throw when extra top-level keys are present', () => {
+    // Design decision: extra keys are allowed — real customer files may have
+    // additional fields. Only the 9 required keys are enforced.
     const data = makeValid();
     data.foo = 'bar';
-    assert.throws(
+    assert.doesNotThrow(
       () => validateYaml(data),
-      (err) => {
-        assert.ok(err instanceof ValidationError, 'error should be a ValidationError');
-        assert.ok(err.message.includes('Extra'), `error message should include "Extra", got: ${err.message}`);
-        assert.deepStrictEqual(err.details.extra, ['foo']);
-        return true;
-      }
+      'validateYaml should not throw for extra top-level keys'
     );
   });
 
