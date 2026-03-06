@@ -10,7 +10,6 @@ import ActionManager from './views/ActionManager';
 import ReportGenerator from './views/ReportGenerator';
 import YAMLEditor from './views/YAMLEditor';
 import ArtifactManager from './views/ArtifactManager';
-import WeeklyUpdateForm from './views/WeeklyUpdateForm';
 import ProjectSetup from './views/ProjectSetup';
 import HistoryTimeline from './views/HistoryTimeline';
 import NewCustomer from './views/NewCustomer';
@@ -38,7 +37,6 @@ const router = createBrowserRouter([
           { path: 'reports', element: <ReportGenerator /> },
           { path: 'yaml', element: <YAMLEditor /> },
           { path: 'artifacts', element: <ArtifactManager /> },
-          { path: 'update', element: <WeeklyUpdateForm /> },
           { path: 'setup', element: <ProjectSetup /> },
           { path: 'history', element: <HistoryTimeline /> },
         ],
