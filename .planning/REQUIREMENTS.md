@@ -208,12 +208,18 @@
 | YAML-03 | Phase 5: AI Reports and YAML Editor | Pending |
 | YAML-04 | Phase 5: AI Reports and YAML Editor | Pending |
 | YAML-05 | Phase 5: AI Reports and YAML Editor | Pending |
+| SESS-01 | Phase 8: Session Scheduler Integration | Implemented |
+| SESS-02 | Phase 8: Session Scheduler Integration | Implemented |
+| SESS-03 | Phase 8: Session Scheduler Integration | Implemented |
+| SESS-04 | Phase 8: Session Scheduler Integration | Implemented |
+| SESS-05 | Phase 8: Session Scheduler Integration | Implemented |
+| SESS-06 | Phase 8: Session Scheduler Integration | Implemented |
 
 **Coverage:**
-- v1 requirements: 68 total
-- Mapped to phases: 68
+- v1 requirements: 74 total
+- Mapped to phases: 74
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-04*
-*Last updated: 2026-03-04 after roadmap creation (traceability expanded to per-requirement rows; count corrected from 58 to 68)*
+*Last updated: 2026-03-06 after Phase 8 — added SESS-01 through SESS-06 (Session Scheduler Integration)*
