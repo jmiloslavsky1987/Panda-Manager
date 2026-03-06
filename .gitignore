@@ -3,6 +3,9 @@
 credentials/
 !credentials/.gitkeep
 
+# Google Calendar OAuth token — contains user credentials, never commit
+server/calendar-token.json
+
 # Service account keys (JSON files in credentials/ directory)
 credentials/*.json
 
