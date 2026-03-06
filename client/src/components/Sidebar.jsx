@@ -4,6 +4,15 @@
 import { NavLink, Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getCustomers } from '../api';
+import { deriveOverallStatus } from '../lib/deriveCustomer';
+
+// Status dot lookup — complete literal class strings (Tailwind v4 purge safety)
+const SIDEBAR_STATUS_DOT_CLASSES = {
+  on_track:    'bg-green-500',
+  at_risk:     'bg-yellow-400',
+  off_track:   'bg-red-500',
+  not_started: 'bg-gray-300',
+};
 
 const NAV_LINKS = [
   { path: '',           label: 'Overview' },
@@ -51,7 +60,12 @@ export default function Sidebar() {
                   : 'block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50'
               }
             >
-              {c.customer?.name ?? c.fileId}
+              <span className="flex items-center gap-2">
+                <span
+                  className={`w-2 h-2 rounded-full shrink-0 ${SIDEBAR_STATUS_DOT_CLASSES[deriveOverallStatus(c)] ?? 'bg-gray-300'}`}
+                />
+                {c.customer?.name ?? c.fileId}
+              </span>
             </NavLink>
           </li>
         ))}
