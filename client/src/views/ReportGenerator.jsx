@@ -4,12 +4,27 @@
 // User edits the pre-filled content, then copies it out.
 
 import React from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useParams, useOutletContext } from 'react-router-dom';
 import {
   generateWeeklyCustomerStatus,
   generateExternalELT,
   generateInternalELT,
 } from '../lib/reportGenerator';
+import { generateReportPptx } from '../api';
+
+// Triggers a browser file download from a base64 PPTX blob
+function downloadPptx(base64, filename) {
+  const binary = atob(base64);
+  const bytes  = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 // ─────────────────────────────────────────────────────────────
 // Sub-components
@@ -161,10 +176,16 @@ const REPORT_TYPES = [
 ];
 
 export default function ReportGenerator() {
-  const { customer } = useOutletContext();
-  const [activeType, setActiveType] = React.useState('weekly');
-  const [reportData, setReportData] = React.useState(null);
-  const [reportKey, setReportKey] = React.useState(0);
+  const { customerId } = useParams();
+  const { customer }   = useOutletContext();
+
+  const [activeType,  setActiveType]  = React.useState('weekly');
+  const [reportData,  setReportData]  = React.useState(null);
+  const [reportKey,   setReportKey]   = React.useState(0);
+  const [pptxLoading, setPptxLoading] = React.useState(false);
+  const [pptxError,   setPptxError]   = React.useState(null);
+
+  const isEltType = activeType === 'elt_external' || activeType === 'elt_internal';
 
   const handleGenerate = () => {
     let data;
@@ -177,11 +198,26 @@ export default function ReportGenerator() {
     }
     setReportData(data);
     setReportKey(k => k + 1);
+    setPptxError(null);
+  };
+
+  const handleDownloadPptx = async () => {
+    setPptxLoading(true);
+    setPptxError(null);
+    try {
+      const { base64, filename } = await generateReportPptx(customerId, activeType);
+      downloadPptx(base64, filename);
+    } catch (err) {
+      setPptxError(err.message || 'Failed to generate PPTX');
+    } finally {
+      setPptxLoading(false);
+    }
   };
 
   const handleTypeChange = (key) => {
     setActiveType(key);
     setReportData(null);
+    setPptxError(null);
   };
 
   const activeDesc = REPORT_TYPES.find(rt => rt.key === activeType)?.description ?? '';
@@ -221,13 +257,41 @@ export default function ReportGenerator() {
           <p className="text-xs text-gray-400">{activeDesc}</p>
         )}
 
-        <button
-          type="button"
-          onClick={handleGenerate}
-          className="self-start px-5 py-2 text-sm font-medium text-white bg-teal-600 rounded-md hover:bg-teal-700 transition-colors"
-        >
-          Generate Report
-        </button>
+        {/* Action buttons — Generate (text) + Download PPTX (ELT only) */}
+        <div className="flex gap-3 flex-wrap items-center">
+          <button
+            type="button"
+            onClick={handleGenerate}
+            className="px-5 py-2 text-sm font-medium text-white bg-teal-600 rounded-md hover:bg-teal-700 transition-colors"
+          >
+            Preview Report
+          </button>
+
+          {isEltType && (
+            <button
+              type="button"
+              disabled={pptxLoading}
+              onClick={handleDownloadPptx}
+              className="px-5 py-2 text-sm font-medium text-teal-700 bg-white border border-teal-300 rounded-md hover:bg-teal-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {pptxLoading ? (
+                <>
+                  <svg className="animate-spin h-4 w-4 text-teal-600" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                  </svg>
+                  Building PPTX…
+                </>
+              ) : (
+                <>↓ Download PPTX</>
+              )}
+            </button>
+          )}
+        </div>
+
+        {pptxError && (
+          <p className="text-sm text-red-600">PPTX error: {pptxError}</p>
+        )}
       </div>
 
       {/* Output panel — key forces full remount on each new generation */}

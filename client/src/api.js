@@ -69,3 +69,9 @@ export const postHistory = (customerId, entry) =>
     body: JSON.stringify(entry),
   });
 
+export const generateReportPptx = (customerId, type) =>
+  apiFetch(`/customers/${customerId}/reports/pptx`, {
+    method: 'POST',
+    body: JSON.stringify({ type }),
+  });
+
