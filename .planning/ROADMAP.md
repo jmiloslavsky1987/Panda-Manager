@@ -131,10 +131,30 @@ Plans:
 - [ ] 06-05-PLAN.md — Wave 2: Server POST risks + milestones endpoints + test assertions
 - [ ] 06-06-PLAN.md — Wave 3: New features (Dashboard overdue roll-up, History Timeline view, inline risk/milestone creation)
 
+### Phase 7: Smart Data Flow and Customer Onboarding
+**Goal**: The app handles the full customer lifecycle intelligently — new customers can be created with an optional YAML upload, artifacts are extended to capture all relevant notes (workflow decisions, team contacts, backlog items) with type-based grouping, the Weekly Update flow is consolidated into Reports for a single-entry-point workflow, ELT decks are pre-populated with timeline-scoped data, and Project Setup auto-fills from the initial YAML
+**Depends on**: Phase 6
+**Requirements**: MGT-01, MGT-02, MGT-03, MGT-04, MGT-05
+**Success Criteria** (what must be TRUE):
+  1. New customer creation flow: user enters customer name/metadata and optionally uploads a YAML file; if YAML provided it seeds the customer file; if not, a template YAML is generated; customer appears in the sidebar immediately
+  2. Artifact Manager supports extended types (workflow-decision, team-contact, backlog-item, integration-note) with type-based grouping and filtering; existing X-### artifacts are unaffected
+  3. Weekly Update form is removed as a standalone view; when generating a Weekly Status report, an inline data-entry step (pre-filled with last update) allows entering this week's progress before generation; data can be optionally saved to YAML history
+  4. Internal ELT and External ELT report generation includes a timeline/date selector; generated slides are pre-populated with relevant data from the YAML up to the selected date
+  5. Project Setup view auto-fills all fields it can from the customer's YAML on first load; YAML upload in the new customer flow pre-populates Project Setup fields
+**Plans**: 6 plans
+
+Plans:
+- [ ] 07-01-PLAN.md — Wave 0: POST /api/customers test stubs in customers.test.js
+- [ ] 07-02-PLAN.md — Wave 1: Extend POST /api/customers (yamlContent upload); NewCustomer.jsx + Sidebar button
+- [ ] 07-03-PLAN.md — Wave 1: ArtifactManager extended types (4 new) + type filter dropdown
+- [ ] 07-04-PLAN.md — Wave 2: Remove WeeklyUpdateForm; merge inline entry into ReportGenerator Weekly Status flow
+- [ ] 07-05-PLAN.md — Wave 2: ELT timeline date picker + generateExternalELT/generateInternalELT timeline filtering
+- [ ] 07-06-PLAN.md — Wave 3: ProjectSetup auto-fill from YAML (customer name, go-live date, workstreams)
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -144,3 +164,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 4. Structured Write Views | 5/6 | In Progress|  |
 | 5. AI Reports and YAML Editor | 0/TBD | Not started | - |
 | 6. UX Polish and Feature Enhancements | 0/6 | Not started | - |
+| 7. Smart Data Flow and Customer Onboarding | 0/6 | Not started | - |
