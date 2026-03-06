@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 07-05-PLAN.md
-last_updated: "2026-03-06T05:30:03.261Z"
+stopped_at: Completed 07-06-PLAN.md
+last_updated: "2026-03-06T05:34:39.954Z"
 last_activity: 2026-03-06 — Phase 6 verified complete; all browser checks passed
 progress:
   total_phases: 7
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 34
-  completed_plans: 32
+  completed_plans: 33
   percent: 86
 ---
 
@@ -74,6 +74,7 @@ Progress: [█████████░] 86% (Phase 7 ready to execute)
 | Phase 07-smart-data-flow-and-customer-onboarding P03 | 3 | 1 tasks | 1 files |
 | Phase 07-smart-data-flow-and-customer-onboarding P04 | 8 | 2 tasks | 3 files |
 | Phase 07-smart-data-flow-and-customer-onboarding P05 | 2 | 2 tasks | 2 files |
+| Phase 07-smart-data-flow-and-customer-onboarding P06 | 3 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -127,6 +128,8 @@ Recent decisions affecting current work:
 - [Phase 07-smart-data-flow-and-customer-onboarding]: WeeklyEntryForm inline in ReportGenerator — no separate route; single entry point for weekly workflow satisfies MGT-03
 - [Phase 07-smart-data-flow-and-customer-onboarding]: handleWeeklyDataReady receives (mergedCustomer, entry) — mergedCustomer drives report generation using form data; entry drives optional Save to history
 - [Phase 07-smart-data-flow-and-customer-onboarding]: timelineDate defaults to null in ELT generators — additive with full backwards compatibility (zero regression risk)
+- [Phase 07-smart-data-flow-and-customer-onboarding]: updateCustomer (PUT) used for metadata save — no dedicated PATCH for customer-level fields; full object spread with fileId stripped before sending
+- [Phase 07-smart-data-flow-and-customer-onboarding]: customerName state drives both page header subtitle and input — single source of truth; metaMutation invalidates both customer and customers caches for immediate sidebar refresh
 
 ### Pending Todos
 
@@ -140,7 +143,7 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-06T05:30:03.258Z
-Stopped at: Completed 07-05-PLAN.md
+Last session: 2026-03-06T05:34:39.951Z
+Stopped at: Completed 07-06-PLAN.md
 Resume file: None
 Next action: Execute Phase 7 (`/gsd:execute-phase 7`)
