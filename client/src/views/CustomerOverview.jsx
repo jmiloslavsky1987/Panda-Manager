@@ -559,12 +559,12 @@ export default function CustomerOverview() {
         </div>
       </section>
 
-      {/* Weekly Update shortcut */}
+      {/* Weekly Update shortcut → Reports (WeeklyUpdateForm removed in Phase 7) */}
       <section>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-base font-semibold text-gray-800">Weekly Update</h3>
           <Link
-            to={`/customer/${customerId}/update`}
+            to={`/customer/${customerId}/reports`}
             className="text-sm text-teal-600 hover:text-teal-700 font-medium"
           >
             Submit Update →
