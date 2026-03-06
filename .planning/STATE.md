@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: complete
-stopped_at: Phase 7 verified — all 5 requirements confirmed in browser
-last_updated: "2026-03-06T03:45:00.000Z"
-last_activity: 2026-03-06 — Phase 7 verified complete (5/5); milestone v1.0 feature-complete
+status: verifying
+stopped_at: Completed 08-01-PLAN.md
+last_updated: "2026-03-06T18:41:26.540Z"
+last_activity: 2026-03-06 — Phase 7 verified (5/5 checks); all 40 plans complete
 progress:
-  total_phases: 7
-  completed_phases: 7
-  total_plans: 40
-  completed_plans: 40
+  total_phases: 8
+  completed_phases: 5
+  total_plans: 38
+  completed_plans: 34
   percent: 100
 ---
 
@@ -75,6 +75,7 @@ Progress: [██████████] 100% (Milestone v1.0 complete)
 | Phase 07-smart-data-flow-and-customer-onboarding P04 | 8 | 2 tasks | 3 files |
 | Phase 07-smart-data-flow-and-customer-onboarding P05 | 2 | 2 tasks | 2 files |
 | Phase 07-smart-data-flow-and-customer-onboarding P06 | 3 | 1 tasks | 1 files |
+| Phase 08-session-scheduler-integration P01 | 5 | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -130,6 +131,9 @@ Recent decisions affecting current work:
 - [Phase 07-smart-data-flow-and-customer-onboarding]: timelineDate defaults to null in ELT generators — additive with full backwards compatibility (zero regression risk)
 - [Phase 07-smart-data-flow-and-customer-onboarding]: updateCustomer (PUT) used for metadata save — no dedicated PATCH for customer-level fields; full object spread with fileId stripped before sending
 - [Phase 07-smart-data-flow-and-customer-onboarding]: customerName state drives both page header subtitle and input — single source of truth; metaMutation invalidates both customer and customers caches for immediate sidebar refresh
+- [Phase 08-session-scheduler-integration]: timeMax exclusive boundary: curDate < endDate in slot loop matches Python end_date semantics — inclusive bound processed extra days beyond the requested window
+- [Phase 08-session-scheduler-integration]: DST awareness: test date 2026-03-09 is EDT (UTC-4) not EST (UTC-5) — DST springs forward 2026-03-08; localHourToUtc via Intl.DateTimeFormat handles this correctly without external timezone library
+- [Phase 08-session-scheduler-integration]: calendar-token.json stored in server/ directory, gitignored, auto-refreshed via googleapis OAuth2 client 'tokens' event listener
 
 ### Pending Todos
 
@@ -143,7 +147,7 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-06T05:34:39.951Z
-Stopped at: Completed 07-06-PLAN.md
+Last session: 2026-03-06T18:41:26.537Z
+Stopped at: Completed 08-01-PLAN.md
 Resume file: None
 Next action: Execute Phase 7 (`/gsd:execute-phase 7`)
