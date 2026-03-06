@@ -152,3 +152,11 @@ describe('PUT /api/customers/:id/yaml', () => {
     assert.equal(mockWriteYamlFile.mock.calls.length, 0, 'writeYamlFile must NOT be called');
   });
 });
+
+// ── POST /api/customers ───────────────────────────────────────────────────────
+
+describe('POST /api/customers', () => {
+  it('returns 201 with fileId and customer data when customerName is provided', { todo: true });
+  it('returns 422 with error when customerName is missing or empty', { todo: true });
+  it('returns 201 and seeds customer from yamlContent when base64 YAML string is provided', { todo: true });
+});
