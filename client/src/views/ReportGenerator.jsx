@@ -49,8 +49,19 @@ function CopyButton({ text, label = 'Copy' }) {
   );
 }
 
+// Triggers a browser file download of plain text content
+function downloadTxt(text, filename) {
+  const blob = new Blob([text], { type: 'text/plain' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 // Single large editable textarea for the Weekly Customer Status email
-function WeeklyStatusPanel({ customer }) {
+function WeeklyStatusPanel({ customer, customerId }) {
   const [text, setText] = React.useState(
     () => generateWeeklyCustomerStatus(customer)
   );
@@ -62,7 +73,16 @@ function WeeklyStatusPanel({ customer }) {
         <p className="text-sm text-gray-500">
           Edit the pre-filled email below, then copy.
         </p>
-        <CopyButton text={text} label="Copy Email" />
+        <div className="flex items-center gap-2">
+          <CopyButton text={text} label="Copy Email" />
+          <button
+            type="button"
+            onClick={() => downloadTxt(text, `weekly-status-${customerId || 'report'}.txt`)}
+            className="text-xs px-2.5 py-1 rounded border border-gray-200 text-gray-500 hover:border-teal-300 hover:text-teal-600 transition-colors whitespace-nowrap"
+          >
+            ↓ Download .txt
+          </button>
+        </div>
       </div>
       <textarea
         rows={Math.max(lineCount + 2, 20)}
@@ -298,7 +318,7 @@ export default function ReportGenerator() {
       {reportData && (
         <div key={reportKey} className="flex flex-col gap-4">
           {reportData.type === 'weekly' && (
-            <WeeklyStatusPanel customer={reportData.customer} />
+            <WeeklyStatusPanel customer={reportData.customer} customerId={customerId} />
           )}
           {(reportData.type === 'elt_external' || reportData.type === 'elt_internal') && (
             <EltDeckPanel slides={reportData.slides} />
