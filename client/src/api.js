@@ -98,3 +98,18 @@ export const putRawYaml = (id, content) =>
     method: 'PUT',
     body: JSON.stringify({ content }),
   });
+
+// Calendar / Session Scheduler — Phase 8
+export const getCalendarStatus = () => apiFetch('/calendar/status');
+
+export const getCalendarAvailability = (body) =>
+  apiFetch('/calendar/availability', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+
+export const postCalendarEvent = (body) =>
+  apiFetch('/calendar/events', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
