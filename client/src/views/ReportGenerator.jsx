@@ -393,13 +393,14 @@ export default function ReportGenerator() {
   const { customer }   = useOutletContext();
   const queryClient    = useQueryClient();
 
-  const [activeType,  setActiveType]  = React.useState('weekly');
-  const [reportData,  setReportData]  = React.useState(null);
-  const [reportKey,   setReportKey]   = React.useState(0);
-  const [pptxLoading, setPptxLoading] = React.useState(false);
-  const [pptxError,   setPptxError]   = React.useState(null);
-  const [weeklyEntry, setWeeklyEntry] = React.useState(null);
-  const [savedFlag,   setSavedFlag]   = React.useState(false);
+  const [activeType,   setActiveType]   = React.useState('weekly');
+  const [reportData,   setReportData]   = React.useState(null);
+  const [reportKey,    setReportKey]    = React.useState(0);
+  const [pptxLoading,  setPptxLoading]  = React.useState(false);
+  const [pptxError,    setPptxError]    = React.useState(null);
+  const [weeklyEntry,  setWeeklyEntry]  = React.useState(null);
+  const [savedFlag,    setSavedFlag]    = React.useState(false);
+  const [timelineDate, setTimelineDate] = React.useState('');
 
   const isEltType = activeType === 'elt_external' || activeType === 'elt_internal';
 
@@ -414,10 +415,12 @@ export default function ReportGenerator() {
 
   const handleGenerate = () => {
     let data;
-    if (activeType === 'elt_external') {
-      data = { type: 'elt_external', slides: generateExternalELT(customer) };
+    if (activeType === 'weekly') {
+      data = { type: 'weekly', customer };
+    } else if (activeType === 'elt_external') {
+      data = { type: 'elt_external', slides: generateExternalELT(customer, timelineDate || null) };
     } else {
-      data = { type: 'elt_internal', slides: generateInternalELT(customer) };
+      data = { type: 'elt_internal', slides: generateInternalELT(customer, timelineDate || null) };
     }
     setReportData(data);
     setReportKey(k => k + 1);
@@ -450,6 +453,7 @@ export default function ReportGenerator() {
     setPptxError(null);
     setWeeklyEntry(null);
     setSavedFlag(false);
+    setTimelineDate('');
   };
 
   const activeDesc = REPORT_TYPES.find(rt => rt.key === activeType)?.description ?? '';
@@ -487,6 +491,26 @@ export default function ReportGenerator() {
 
         {activeDesc && (
           <p className="text-xs text-gray-400">{activeDesc}</p>
+        )}
+
+        {/* ELT Timeline date picker — MGT-04 */}
+        {isEltType && (
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-gray-700">
+              Report as of date <span className="text-xs text-gray-400 font-normal">(optional — leave blank for current data)</span>
+            </label>
+            <input
+              type="date"
+              className="border border-gray-200 rounded px-3 py-1.5 text-sm w-44 focus:outline-none focus:border-teal-400"
+              value={timelineDate}
+              onChange={e => setTimelineDate(e.target.value)}
+            />
+            {timelineDate && (
+              <p className="text-xs text-gray-400">
+                Showing data up to {timelineDate} — history entries and completed actions after this date are excluded.
+              </p>
+            )}
+          </div>
         )}
 
         {/* Action buttons — Generate button only for ELT types; weekly uses WeeklyEntryForm preview button */}
