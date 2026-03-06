@@ -116,6 +116,7 @@ function RisksSection({ customer, customerId, mutation }) {
           <tr className="border-b border-gray-200 text-left">
             <th className="pb-2 text-xs font-medium text-gray-500 w-8">ID</th>
             <th className="pb-2 text-xs font-medium text-gray-500">Description</th>
+            <th className="pb-2 text-xs font-medium text-gray-500 w-28">Owner</th>
             <th className="pb-2 text-xs font-medium text-gray-500 w-24">Severity</th>
             <th className="pb-2 text-xs font-medium text-gray-500 w-24">Status</th>
             <th className="pb-2 text-xs font-medium text-gray-500">Mitigation</th>
@@ -130,6 +131,13 @@ function RisksSection({ customer, customerId, mutation }) {
                   value={risk.description}
                   isPending={mutation.isPending && mutation.variables?.riskId === risk.id}
                   onSave={val => mutation.mutate({ riskId: risk.id, patch: { description: val } })}
+                />
+              </td>
+              <td className="py-2 pr-2">
+                <InlineEditField
+                  value={risk.owner ?? ''}
+                  isPending={mutation.isPending && mutation.variables?.riskId === risk.id}
+                  onSave={val => mutation.mutate({ riskId: risk.id, patch: { owner: val } })}
                 />
               </td>
               <td className="py-2 pr-2">
