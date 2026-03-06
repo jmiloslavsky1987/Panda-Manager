@@ -2,6 +2,8 @@
 // Pure heuristic report generation — no AI, no API calls.
 // Takes customer YAML data, returns pre-populated report content for user editing.
 
+import { WORKSTREAM_CONFIG, deriveOverallStatus } from './deriveCustomer.js';
+
 // ─────────────────────────────────────────────────────────────
 // Internal helpers
 // ─────────────────────────────────────────────────────────────
@@ -28,7 +30,7 @@ function statusEmoji(s) {
 }
 
 function overallStatusLabel(customer) {
-  return statusEmoji(customer?.status ?? 'on_track');
+  return statusEmoji(deriveOverallStatus(customer));
 }
 
 // Maps YAML 11 sub-workstreams → ELT 4 ADR + 2 Biggy groupings.
@@ -406,8 +408,9 @@ export function generateExternalELT(customer) {
     const progressBullets = sw.notes
       ? sw.notes.split(/\.\s+/).filter(Boolean).map(s => `- ${s.trim().replace(/\.$/, '')}`)
       : ['- Work in progress'];
+    const groupSubKeys = (WORKSTREAM_CONFIG[sw.group]?.subWorkstreams ?? []).map(s => s.key);
     const relevantActions = openActions
-      .filter(a => a.workstream && a.workstream.toLowerCase() === sw.group)
+      .filter(a => a.workstream && groupSubKeys.includes(a.workstream))
       .slice(0, 2)
       .map(a => `- ${a.description}${a.due ? ` (${a.due})` : ''}`);
     const lookingAhead = relevantActions.length > 0
