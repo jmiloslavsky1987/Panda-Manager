@@ -111,10 +111,30 @@ Plans:
   5. Navigating away from the YAML Editor with unsaved changes shows a warning; a banner warns that saving strips YAML comments
 **Plans**: TBD
 
+### Phase 6: UX Polish and Feature Enhancements
+**Goal**: All 7 views are polished, consistent, and complete — gaps across Dashboard, Customer Overview, Action Manager, Report Generator, YAML Editor, Artifact Manager, and Weekly Update are closed, and high-value new features are added to improve the day-to-day workflow
+**Depends on**: Phase 5
+**Requirements**: UX-01, UX-02, UX-03, UX-04, UX-05, UX-06, UX-07, UX-08, UX-09, UX-10
+**Success Criteria** (what must be TRUE):
+  1. All views have consistent empty states, loading skeletons, and error handling
+  2. Navigation flow between views feels natural — no dead ends, back-navigation works, breadcrumbs or context indicators present
+  3. Dashboard and Customer Overview surface the most actionable information at a glance
+  4. At least 3 high-value new features are implemented and working end-to-end
+  5. The app is visually consistent — spacing, typography, and color usage are uniform across all 7 views
+**Plans**: 6 plans
+
+Plans:
+- [ ] 06-01-PLAN.md — Wave 0: Test stubs (POST risks, POST milestones, reportGenerator.test.js)
+- [ ] 06-02-PLAN.md — Wave 1: Bug fixes (reportGenerator buildPanel filter, ArtifactManager badge, CustomerOverview shared imports)
+- [ ] 06-03-PLAN.md — Wave 1: Phase 5 gaps (YAML Editor useBlocker + comments banner, Report Generator .txt download)
+- [ ] 06-04-PLAN.md — Wave 2: UX consistency (CustomerLayout skeleton, Sidebar dots, risks owner column, WeeklyUpdateForm labels)
+- [ ] 06-05-PLAN.md — Wave 2: Server POST risks + milestones endpoints + test assertions
+- [ ] 06-06-PLAN.md — Wave 3: New features (Dashboard overdue roll-up, History Timeline view, inline risk/milestone creation)
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -123,3 +143,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 3. Project Setup + Action Manager | 6/6 | Complete | 2026-03-05 |
 | 4. Structured Write Views | 5/6 | In Progress|  |
 | 5. AI Reports and YAML Editor | 0/TBD | Not started | - |
+| 6. UX Polish and Feature Enhancements | 0/6 | Not started | - |
