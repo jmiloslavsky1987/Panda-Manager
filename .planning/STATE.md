@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 08-01-PLAN.md
-last_updated: "2026-03-06T18:41:26.540Z"
+stopped_at: Completed 08-02-PLAN.md
+last_updated: "2026-03-06T18:44:18.585Z"
 last_activity: 2026-03-06 — Phase 7 verified (5/5 checks); all 40 plans complete
 progress:
   total_phases: 8
   completed_phases: 5
   total_plans: 38
-  completed_plans: 34
+  completed_plans: 35
   percent: 100
 ---
 
@@ -76,6 +76,7 @@ Progress: [██████████] 100% (Milestone v1.0 complete)
 | Phase 07-smart-data-flow-and-customer-onboarding P05 | 2 | 2 tasks | 2 files |
 | Phase 07-smart-data-flow-and-customer-onboarding P06 | 3 | 1 tasks | 1 files |
 | Phase 08-session-scheduler-integration P01 | 5 | 3 tasks | 6 files |
+| Phase 08-session-scheduler-integration P02 | 1 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -134,6 +135,8 @@ Recent decisions affecting current work:
 - [Phase 08-session-scheduler-integration]: timeMax exclusive boundary: curDate < endDate in slot loop matches Python end_date semantics — inclusive bound processed extra days beyond the requested window
 - [Phase 08-session-scheduler-integration]: DST awareness: test date 2026-03-09 is EDT (UTC-4) not EST (UTC-5) — DST springs forward 2026-03-08; localHourToUtc via Intl.DateTimeFormat handles this correctly without external timezone library
 - [Phase 08-session-scheduler-integration]: calendar-token.json stored in server/ directory, gitignored, auto-refreshed via googleapis OAuth2 client 'tokens' event listener
+- [Phase 08-session-scheduler-integration]: href='/api/calendar/auth' not React Router Link — must hit Express OAuth redirect, not SPA router
+- [Phase 08-session-scheduler-integration]: retry:false on calendarStatus query — 401 is expected when not authorized, not a transient error
 
 ### Pending Todos
 
@@ -147,7 +150,7 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-06T18:41:26.537Z
-Stopped at: Completed 08-01-PLAN.md
+Last session: 2026-03-06T18:44:18.583Z
+Stopped at: Completed 08-02-PLAN.md
 Resume file: None
 Next action: Execute Phase 7 (`/gsd:execute-phase 7`)
