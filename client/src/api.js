@@ -33,6 +33,18 @@ export const patchMilestone = (customerId, milestoneId, patch) =>
     body: JSON.stringify(patch),
   });
 
+export const postRisk = (customerId, body) =>
+  apiFetch(`/customers/${customerId}/risks`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+
+export const postMilestone = (customerId, body) =>
+  apiFetch(`/customers/${customerId}/milestones`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+
 export const postAction = (customerId, body) =>
   apiFetch(`/customers/${customerId}/actions`, {
     method: 'POST',

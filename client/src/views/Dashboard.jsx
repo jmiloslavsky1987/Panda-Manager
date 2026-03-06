@@ -12,6 +12,7 @@ import {
   countOpenActions,
   countHighRisks,
   sortCustomers,
+  getMostOverdueActions,
 } from '../lib/deriveCustomer';
 import StatusBadge from '../components/StatusBadge';
 import ProgressBar from '../components/ProgressBar';
@@ -97,6 +98,60 @@ function NewCustomerModal({ onClose }) {
   );
 }
 
+function OverdueActionsPanel({ customers }) {
+  const today = new Date().toISOString().slice(0, 10);
+  const allOverdue = customers.flatMap(c => {
+    const overdue = getMostOverdueActions(c, 10);
+    // Filter to only truly overdue (due < today)
+    return overdue
+      .filter(a => a.due < today)
+      .map(a => ({
+        ...a,
+        customerName: c.customer?.name ?? c.fileId,
+        customerId: c.fileId,
+      }));
+  }).sort((a, b) => {
+    if (!a.due && !b.due) return 0;
+    if (!a.due) return 1;
+    if (!b.due) return -1;
+    return a.due.localeCompare(b.due);
+  });
+
+  if (allOverdue.length === 0) return null;
+
+  return (
+    <div className="bg-white border border-red-200 rounded-lg p-5 mb-6">
+      <h2 className="text-sm font-semibold text-red-700 mb-3">
+        Overdue Actions ({allOverdue.length})
+      </h2>
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="text-left text-gray-500 border-b border-gray-100">
+            <th className="pb-2 pr-4 font-medium">Customer</th>
+            <th className="pb-2 pr-4 font-medium">Action</th>
+            <th className="pb-2 pr-4 font-medium">Owner</th>
+            <th className="pb-2 font-medium">Due</th>
+          </tr>
+        </thead>
+        <tbody>
+          {allOverdue.slice(0, 10).map(a => (
+            <tr key={a.id} className="border-b border-gray-50 last:border-0">
+              <td className="py-1.5 pr-4">
+                <a href={`/customer/${a.customerId}/actions`} className="text-teal-600 hover:underline text-xs">
+                  {a.customerName}
+                </a>
+              </td>
+              <td className="py-1.5 pr-4 text-gray-700">{a.description}</td>
+              <td className="py-1.5 pr-4 text-gray-500 text-xs">{a.owner ?? '—'}</td>
+              <td className="py-1.5 text-red-600 text-xs font-medium">{a.due}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const [showNewModal, setShowNewModal] = React.useState(false);
   const { data: customers = [], isPending, isError, error } = useQuery({
@@ -137,6 +192,7 @@ export default function Dashboard() {
           + New Customer
         </button>
       </div>
+      <OverdueActionsPanel customers={sorted} />
       {sorted.length === 0 ? (
         <p className="text-gray-500">No customers found. Check Drive folder configuration.</p>
       ) : (
