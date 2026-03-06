@@ -44,15 +44,43 @@ function buildNewCustomerYaml(customerName, projectName, goLiveDate) {
 
 // POST /api/customers — create a new customer YAML in Drive
 router.post('/', asyncWrapper(async (req, res) => {
-  const { customerName, projectName, goLiveDate } = req.body || {};
+  const { customerName, projectName, goLiveDate, yamlContent } = req.body || {};
   if (!customerName || !customerName.trim()) {
     return res.status(422).json({ error: 'customerName is required' });
   }
-  const { data, yamlString, fileName } = buildNewCustomerYaml(
-    customerName.trim(),
-    projectName?.trim() || '',
-    goLiveDate?.trim() || ''
-  );
+
+  let yamlString, data;
+  const slug = customerName.trim().replace(/[^a-zA-Z0-9]/g, '_');
+  const fileName = `${slug}_Master_Status.yaml`;
+
+  if (yamlContent) {
+    // Decode base64, parse, validate — use uploaded YAML as-is
+    let decoded;
+    try {
+      decoded = Buffer.from(yamlContent, 'base64').toString('utf8');
+    } catch (e) {
+      return res.status(422).json({ error: 'yamlContent must be valid base64' });
+    }
+    try {
+      data = yamlService.parseYaml(decoded);
+    } catch (e) {
+      return res.status(422).json({ error: `YAML parse error: ${e.message}` });
+    }
+    try {
+      yamlService.validateYaml(data);
+    } catch (e) {
+      return res.status(422).json({ error: e.message, details: e.details });
+    }
+    yamlString = decoded; // write uploaded YAML verbatim (preserves formatting)
+  } else {
+    // No upload — generate template YAML
+    ({ data, yamlString } = buildNewCustomerYaml(
+      customerName.trim(),
+      projectName?.trim() || '',
+      goLiveDate?.trim() || ''
+    ));
+  }
+
   const file = await driveService.createYamlFile(fileName, yamlString);
   res.status(201).json({ fileId: file.id, ...data });
 }));

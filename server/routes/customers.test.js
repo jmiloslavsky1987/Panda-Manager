@@ -52,6 +52,42 @@ before(async () => {
 
 const FILE_ID = 'fake-yaml-file-id';
 
+// ── POST /api/customers ───────────────────────────────────────────────────────
+
+describe('POST /api/customers', () => {
+  it('returns 201 with fileId and customer data when customerName is provided', async () => {
+    const res = await request
+      .post('/api/customers')
+      .send({ customerName: 'Test Corp' })
+      .set('Content-Type', 'application/json');
+    assert.equal(res.status, 201);
+    assert.ok(res.body.fileId, 'response must include fileId');
+    assert.ok(res.body.customer, 'response must include customer object');
+  });
+
+  it('returns 422 with error when customerName is missing or empty', async () => {
+    const res = await request
+      .post('/api/customers')
+      .send({ customerName: '' })
+      .set('Content-Type', 'application/json');
+    assert.equal(res.status, 422);
+    assert.ok(res.body.error && res.body.error.includes('customerName'), `got: ${res.body.error}`);
+  });
+
+  it('returns 201 and seeds customer from yamlContent when base64 YAML string is provided', async () => {
+    const yamlBase64 = Buffer.from(sampleYamlContent).toString('base64');
+    const res = await request
+      .post('/api/customers')
+      .send({ customerName: 'Acme Corp', yamlContent: yamlBase64 })
+      .set('Content-Type', 'application/json');
+    assert.equal(res.status, 201);
+    assert.ok(res.body.fileId, 'response must include fileId');
+    // Assert only that the customer block is present — the name comes from the uploaded YAML's
+    // customer.name field, not the request customerName field. Fixture content may vary.
+    assert.ok(res.body.customer, 'customer block present in response');
+  });
+});
+
 // ── GET /api/customers/:id/yaml ───────────────────────────────────────────────
 
 describe('GET /api/customers/:id/yaml', () => {
