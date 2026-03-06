@@ -96,8 +96,43 @@ describe('PATCH /api/customers/:id/risks/:riskId', () => {
 });
 
 describe('POST /api/customers/:id/risks', () => {
-  it('creates a new risk and returns 201 with R-### id');
-  it('assigns next sequential R-### id (max+1) when risks already exist');
-  it('rejects missing required fields with 400');
-  it('writes the new risk to Drive atomically (writeYamlFile called once)');
+  it('creates a new risk and returns 201 with R-### id', async () => {
+    mockWriteYamlFile.mock.resetCalls();
+    const res = await request
+      .post(`/api/customers/${FAKE_FILE_ID}/risks`)
+      .send({ description: 'New integration risk', owner: 'Alice', severity: 'high', status: 'open', mitigation: '' })
+      .set('Content-Type', 'application/json');
+    assert.equal(res.status, 201);
+    assert.ok(res.body.risk.id, 'risk.id must be set');
+    assert.match(res.body.risk.id, /^R-\d{3}$/, 'risk.id must be R-### format');
+    assert.equal(res.body.risk.description, 'New integration risk');
+  });
+
+  it('assigns next sequential R-### id (max+1) when risks already exist', async () => {
+    // sample.yaml has R-001 as max — new risk should be R-002
+    const res = await request
+      .post(`/api/customers/${FAKE_FILE_ID}/risks`)
+      .send({ description: 'Sequential ID test' })
+      .set('Content-Type', 'application/json');
+    assert.equal(res.status, 201);
+    assert.equal(res.body.risk.id, 'R-002', 'expected R-002 as next after R-001');
+  });
+
+  it('rejects missing required fields with 400', async () => {
+    const res = await request
+      .post(`/api/customers/${FAKE_FILE_ID}/risks`)
+      .send({})
+      .set('Content-Type', 'application/json');
+    assert.equal(res.status, 400);
+    assert.ok(res.body.error);
+  });
+
+  it('writes the new risk to Drive atomically (writeYamlFile called once)', async () => {
+    mockWriteYamlFile.mock.resetCalls();
+    await request
+      .post(`/api/customers/${FAKE_FILE_ID}/risks`)
+      .send({ description: 'Atomic write test' })
+      .set('Content-Type', 'application/json');
+    assert.equal(mockWriteYamlFile.mock.calls.length, 1, 'writeYamlFile must be called exactly once');
+  });
 });

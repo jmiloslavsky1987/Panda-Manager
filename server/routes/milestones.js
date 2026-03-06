@@ -13,6 +13,36 @@ router.get('/', asyncWrapper(async (req, res) => {
   res.json(data.milestones ?? []);
 }));
 
+// POST /api/customers/:id/milestones — create new milestone with sequential M-### ID
+router.post('/', asyncWrapper(async (req, res) => {
+  const { id: fileId } = req.params;
+  const { name, date, status } = req.body;
+
+  if (!name) {
+    return res.status(400).json({ error: 'name is required' });
+  }
+
+  const content = await driveService.readYamlFile(fileId);
+  const data = yamlService.parseYaml(content);
+  yamlService.validateYaml(data);
+
+  const newId = yamlService.assignNextId('M', data.milestones ?? []);
+  const newMilestone = {
+    id: newId,
+    name,
+    date: date ?? '',
+    status: status ?? 'upcoming',
+  };
+
+  data.milestones = [...(data.milestones ?? []), newMilestone];
+
+  const normalized = yamlService.normalizeForSerialization(data);
+  const yamlString = yamlService.serializeYaml(normalized);
+  await driveService.writeYamlFile(fileId, yamlString);
+
+  res.status(201).json({ fileId, milestone: newMilestone });
+}));
+
 // PATCH /api/customers/:id/milestones/:milestoneId — inline field edit (atomic write)
 // Body: partial milestone fields to update (e.g., { status: "complete", notes: "..." })
 router.patch('/:milestoneId', asyncWrapper(async (req, res) => {
