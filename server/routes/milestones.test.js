@@ -75,3 +75,10 @@ describe('PATCH /api/customers/:id/milestones/:milestoneId', () => {
     assert.equal(mockWriteYamlFile.mock.calls.length, 1, 'writeYamlFile must be called exactly once');
   });
 });
+
+describe('POST /api/customers/:id/milestones', () => {
+  it('creates a new milestone and returns 201 with M-### id');
+  it('assigns next sequential M-### id (max+1) when milestones already exist');
+  it('rejects missing required fields with 400');
+  it('writes the new milestone to Drive atomically (writeYamlFile called once)');
+});

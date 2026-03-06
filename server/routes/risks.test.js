@@ -94,3 +94,10 @@ describe('PATCH /api/customers/:id/risks/:riskId', () => {
     assert.equal(res.status, 422);
   });
 });
+
+describe('POST /api/customers/:id/risks', () => {
+  it('creates a new risk and returns 201 with R-### id');
+  it('assigns next sequential R-### id (max+1) when risks already exist');
+  it('rejects missing required fields with 400');
+  it('writes the new risk to Drive atomically (writeYamlFile called once)');
+});
