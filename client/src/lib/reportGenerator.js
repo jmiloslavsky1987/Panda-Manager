@@ -170,6 +170,23 @@ function getOpenActionsSorted(customer) {
     });
 }
 
+// History entries on or before a cutoff date (or all entries if no cutoff)
+// History array is prepend-ordered (newest first). Returns newest entry at index 0.
+function getHistoryUpTo(customer, timelineDate) {
+  const history = customer?.history ?? [];
+  if (!timelineDate) return history;
+  return history.filter(entry => entry.week_ending && entry.week_ending <= timelineDate);
+}
+
+// Completed actions with completed_date on or before timelineDate (or all if no cutoff)
+function getCompletedActionsUpTo(customer, timelineDate) {
+  const completed = (customer?.actions ?? []).filter(
+    a => a.status === 'completed' && a.completed_date
+  );
+  if (!timelineDate) return completed;
+  return completed.filter(a => a.completed_date <= timelineDate);
+}
+
 // ─────────────────────────────────────────────────────────────
 // WeeklyUpdateForm heuristic prefill
 // ─────────────────────────────────────────────────────────────
@@ -360,7 +377,7 @@ export function generateWeeklyCustomerStatus(customer) {
  * Generates External ELT slide content (customer-facing, 5 slides).
  * Returns Array<{ title: string, sections: Array<{ label: string, content: string }> }>
  */
-export function generateExternalELT(customer) {
+export function generateExternalELT(customer, timelineDate = null) {
   const name = customer?.customer?.name ?? 'Customer';
   const today = new Date();
   const monthYear = today.toLocaleString('default', { month: 'long', year: 'numeric' });
@@ -368,14 +385,22 @@ export function generateExternalELT(customer) {
   const goLive = customer?.project?.go_live_date;
 
   const { eltAdr, eltBiggy } = getEltWorkstreams(customer);
-  const lastEntry = customer?.history?.[0];
-  const openActions = getOpenActionsSorted(customer);
+  const filteredHistory = getHistoryUpTo(customer, timelineDate);
+  const lastEntry = filteredHistory[0] ?? null;
+  // When timeline set, only include open actions with due <= timelineDate or no due date
+  const openActions = getOpenActionsSorted(customer).filter(a =>
+    !timelineDate || !a.due || a.due <= timelineDate
+  );
   const upcomingMilestones = (customer?.milestones ?? []).filter(
     m => m.status !== 'completed' && m.status !== 'complete'
   );
 
   // Executive summary content
-  const recentDone = getRecentCompleted(customer, lastEntry?.week_ending ?? null);
+  const completedUpTo = getCompletedActionsUpTo(customer, timelineDate);
+  const recentCutoff = lastEntry?.week_ending ?? null;
+  const recentDone = recentCutoff
+    ? completedUpTo.filter(a => a.completed_date >= recentCutoff)
+    : completedUpTo.slice(-5); // fallback: last 5 completed
   const highlights = recentDone.slice(0, 4).map(a => `- ${a.description}`);
   if (highlights.length === 0 && lastEntry?.progress) highlights.push(`- ${lastEntry.progress}`);
   if (highlights.length === 0) highlights.push('- [Add highlights]');
@@ -387,9 +412,8 @@ export function generateExternalELT(customer) {
   );
   if (designProgress.length === 0) designProgress.push('- [Add design & integration progress]');
 
-  // Timeline: chronological completed actions
-  const timelineItems = (customer?.actions ?? [])
-    .filter(a => a.status === 'completed' && a.completed_date)
+  // Timeline: chronological completed actions up to timelineDate
+  const timelineItems = getCompletedActionsUpTo(customer, timelineDate)
     .sort((a, b) => a.completed_date.localeCompare(b.completed_date))
     .slice(0, 6)
     .map(a => {
@@ -526,7 +550,7 @@ export function generateExternalELT(customer) {
  * Generates Internal ELT slide content (leadership-facing, 4 slides).
  * Returns Array<{ title: string, sections: Array<{ label: string, content: string }> }>
  */
-export function generateInternalELT(customer) {
+export function generateInternalELT(customer, timelineDate = null) {
   const name = customer?.customer?.name ?? 'Customer';
   const today = new Date();
   const dateStr = today.toLocaleDateString('en-US', {
@@ -535,7 +559,9 @@ export function generateInternalELT(customer) {
   const year = today.getFullYear();
 
   const { eltAdr, eltBiggy } = getEltWorkstreams(customer);
-  const openActions = getOpenActionsSorted(customer);
+  const openActions = getOpenActionsSorted(customer).filter(a =>
+    !timelineDate || !a.due || a.due <= timelineDate
+  );
   const highRisks = (customer?.risks ?? []).filter(r => r.severity === 'high' && r.status === 'open');
 
   // Key Focuses: top open actions + highest-priority risk
