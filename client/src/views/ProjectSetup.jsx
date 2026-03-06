@@ -5,7 +5,7 @@
 import React from 'react';
 import { useOutletContext, useParams } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { patchWorkstreams } from '../api';
+import { patchWorkstreams, updateCustomer } from '../api';
 import { WORKSTREAM_CONFIG } from '../lib/deriveCustomer';
 
 // Status select options — complete literal strings (Tailwind v4 purge safety)
@@ -90,6 +90,41 @@ export default function ProjectSetup() {
   const [formState, setFormState] = React.useState(() => buildFormState(customer.workstreams));
   const [savedFlag, setSavedFlag] = React.useState(false);
 
+  const [customerName, setCustomerName] = React.useState(
+    () => customer?.customer?.name ?? ''
+  );
+  const [goLiveDate, setGoLiveDate] = React.useState(
+    () => customer?.project?.go_live_date ?? ''
+  );
+  const [projectName, setProjectName] = React.useState(
+    () => customer?.project?.name ?? ''
+  );
+  const [metaSavedFlag, setMetaSavedFlag] = React.useState(false);
+
+  const metaMutation = useMutation({
+    mutationFn: () => {
+      // Build updated customer object with new name, program name, and go-live date
+      const updated = {
+        ...customer,
+        customer: { ...customer.customer, name: customerName.trim() },
+        project:  {
+          ...customer.project,
+          go_live_date: goLiveDate,
+          name: projectName.trim(),
+        },
+      };
+      // Remove the fileId key before sending (server adds it back)
+      const { fileId, ...body } = updated;
+      return updateCustomer(customerId, body);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customer', customerId] });
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      setMetaSavedFlag(true);
+      setTimeout(() => setMetaSavedFlag(false), 2000);
+    },
+  });
+
   const workstreamsMutation = useMutation({
     mutationFn: (workstreams) => patchWorkstreams(customerId, workstreams),
     onSuccess: () => {
@@ -119,8 +154,70 @@ export default function ProjectSetup() {
       <div>
         <h2 className="text-xl font-bold text-gray-900">Project Setup</h2>
         <p className="text-sm text-gray-500 mt-0.5">
-          {customer.customer?.name ?? customerId}
+          {customerName || customerId}
         </p>
+      </div>
+
+      {/* Customer Metadata — auto-filled from YAML; MGT-05 */}
+      <div className="bg-white rounded-lg border border-gray-200 p-4 flex flex-col gap-4">
+        <h3 className="text-sm font-bold text-gray-800">Customer Metadata</h3>
+        <p className="text-xs text-gray-400">
+          Pre-filled from YAML. Changes here update the YAML customer and project blocks.
+        </p>
+
+        <div className="grid grid-cols-3 gap-4">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-gray-700">Customer Name</label>
+            <input
+              type="text"
+              className="w-full text-sm border border-gray-200 rounded px-3 py-1.5 focus:outline-none focus:border-teal-400"
+              value={customerName}
+              onChange={e => setCustomerName(e.target.value)}
+            />
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-gray-700">Project / Program Name</label>
+            <input
+              type="text"
+              className="w-full text-sm border border-gray-200 rounded px-3 py-1.5 focus:outline-none focus:border-teal-400"
+              value={projectName}
+              onChange={e => setProjectName(e.target.value)}
+            />
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-gray-700">Go-Live Date</label>
+            <input
+              type="date"
+              className="w-full text-sm border border-gray-200 rounded px-3 py-1.5 focus:outline-none focus:border-teal-400"
+              value={goLiveDate}
+              onChange={e => setGoLiveDate(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            disabled={metaMutation.isPending}
+            onClick={() => metaMutation.mutate()}
+            className="px-4 py-1.5 text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 rounded-md disabled:opacity-50 transition-colors"
+          >
+            Save Metadata
+          </button>
+          {metaMutation.isPending && (
+            <span className="text-sm text-gray-400 italic">Saving...</span>
+          )}
+          {metaSavedFlag && !metaMutation.isPending && (
+            <span className="text-sm text-teal-600 font-medium">Saved!</span>
+          )}
+          {metaMutation.isError && (
+            <span className="text-sm text-red-500">
+              Error: {metaMutation.error?.message ?? 'Save failed'}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Two-column cards: ADR and Biggy */}
