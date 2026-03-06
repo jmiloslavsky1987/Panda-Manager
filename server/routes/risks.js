@@ -13,6 +13,38 @@ router.get('/', asyncWrapper(async (req, res) => {
   res.json(data.risks ?? []);
 }));
 
+// POST /api/customers/:id/risks — create new risk with sequential R-### ID
+router.post('/', asyncWrapper(async (req, res) => {
+  const { id: fileId } = req.params;
+  const { description, owner, severity, status, mitigation } = req.body;
+
+  if (!description) {
+    return res.status(400).json({ error: 'description is required' });
+  }
+
+  const content = await driveService.readYamlFile(fileId);
+  const data = yamlService.parseYaml(content);
+  yamlService.validateYaml(data);
+
+  const newId = yamlService.assignNextId('R', data.risks ?? []);
+  const newRisk = {
+    id: newId,
+    description,
+    owner: owner ?? '',
+    severity: severity ?? 'medium',
+    status: status ?? 'open',
+    mitigation: mitigation ?? '',
+  };
+
+  data.risks = [...(data.risks ?? []), newRisk];
+
+  const normalized = yamlService.normalizeForSerialization(data);
+  const yamlString = yamlService.serializeYaml(normalized);
+  await driveService.writeYamlFile(fileId, yamlString);
+
+  res.status(201).json({ fileId, risk: newRisk });
+}));
+
 // PATCH /api/customers/:id/risks/:riskId — inline field edit (atomic write)
 // Body: partial risk fields to update (e.g., { status: "mitigated", mitigation: "..." })
 // Pattern: read → parse → validate → find → merge → validate → normalize → serialize → write
