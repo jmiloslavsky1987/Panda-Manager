@@ -28,28 +28,31 @@ const sunMax = new Date('2026-03-09T00:00:00Z');
 // Empty busy (no busy periods at all)
 const emptyFreeBusy = { 'user@example.com': { busy: [], errors: [] } };
 
-// Fully busy Monday: 8am-6pm EST = 13:00-23:00 UTC
+// DST note: 2026-03-08 at 2am clocks spring forward → 2026-03-09 is EDT (UTC-4), not EST (UTC-5)
+// 8am EDT = 12:00Z, 9am EDT = 13:00Z, 11am EDT = 15:00Z, 6pm EDT = 22:00Z
+
+// Fully busy Monday: 8am-6pm EDT = 12:00-22:00 UTC (DST active on 2026-03-09)
 const fullyBusyFreeBusy = {
   'user@example.com': {
-    busy: [{ start: '2026-03-09T13:00:00Z', end: '2026-03-09T23:00:00Z' }],
+    busy: [{ start: '2026-03-09T12:00:00Z', end: '2026-03-09T22:00:00Z' }],
     errors: [],
   },
 };
 
-// Busy 9am-11am EST = 14:00-16:00 UTC on Monday
+// Busy 9am-11am EDT = 13:00-15:00 UTC on Monday (DST active)
 const busyMorningFreeBusy = {
   'user@example.com': {
-    busy: [{ start: '2026-03-09T14:00:00Z', end: '2026-03-09T16:00:00Z' }],
+    busy: [{ start: '2026-03-09T13:00:00Z', end: '2026-03-09T15:00:00Z' }],
     errors: [],
   },
 };
 
-// Two overlapping busy periods: 8am-10am and 9am-11am EST = 13:00-15:00Z and 14:00-16:00Z
+// Two overlapping busy periods: 8am-10am and 9am-11am EDT = 12:00-14:00Z and 13:00-15:00Z
 const overlappingBusyFreeBusy = {
   'user@example.com': {
     busy: [
+      { start: '2026-03-09T12:00:00Z', end: '2026-03-09T14:00:00Z' },
       { start: '2026-03-09T13:00:00Z', end: '2026-03-09T15:00:00Z' },
-      { start: '2026-03-09T14:00:00Z', end: '2026-03-09T16:00:00Z' },
     ],
     errors: [],
   },
@@ -100,7 +103,8 @@ describe('findAvailableSlots', () => {
     assert.equal(result.slots.length, 0, 'Fully busy weekday must produce zero slots');
   });
 
-  it('busy 9am-11am EST leaves slots before 9am and after 11am', () => {
+  it('busy 9am-11am EDT leaves slots before 9am and after 11am', () => {
+    // DST active: 2026-03-09 is EDT (UTC-4). 9am EDT = 13:00Z, 11am EDT = 15:00Z
     assert.ok(findAvailableSlots, 'findAvailableSlots must be exported from calendarService');
     const result = findAvailableSlots({
       freeBusyByCalendar: busyMorningFreeBusy,
@@ -109,17 +113,18 @@ describe('findAvailableSlots', () => {
       timeMax: monMax,
       timezone: TZ,
     });
-    // 8am-9am EST free (1 hour window = 1 slot), 11am-6pm EST free (7 hour window = 7 slots)
+    // 8am-9am EDT free (1 hour window = 1 slot), 11am-6pm EDT free (7 hour window = 7 slots)
     // total = 8 slots
     assert.ok(result.slots.length > 0, 'Must have slots before 9am and after 11am');
-    // Verify there are slots before 9am EST (= before 14:00 UTC)
-    const beforeBusy = result.slots.filter(s => new Date(s.start) < new Date('2026-03-09T14:00:00Z'));
-    const afterBusy = result.slots.filter(s => new Date(s.start) >= new Date('2026-03-09T16:00:00Z'));
-    assert.ok(beforeBusy.length > 0, 'Must have at least one slot before busy period (8am-9am EST)');
-    assert.ok(afterBusy.length > 0, 'Must have at least one slot after busy period (after 11am EST)');
+    // Verify there are slots before 9am EDT (= before 13:00 UTC)
+    const beforeBusy = result.slots.filter(s => new Date(s.start) < new Date('2026-03-09T13:00:00Z'));
+    const afterBusy = result.slots.filter(s => new Date(s.start) >= new Date('2026-03-09T15:00:00Z'));
+    assert.ok(beforeBusy.length > 0, 'Must have at least one slot before busy period (8am-9am EDT)');
+    assert.ok(afterBusy.length > 0, 'Must have at least one slot after busy period (after 11am EDT)');
   });
 
-  it('overlapping busy periods merged into one — gap only after 11am EST', () => {
+  it('overlapping busy periods merged into one — gap only after 11am EDT', () => {
+    // DST active: 8am-10am EDT = 12:00-14:00Z, 9am-11am EDT = 13:00-15:00Z → merged: 12:00-15:00Z
     assert.ok(findAvailableSlots, 'findAvailableSlots must be exported from calendarService');
     const result = findAvailableSlots({
       freeBusyByCalendar: overlappingBusyFreeBusy,
@@ -128,18 +133,18 @@ describe('findAvailableSlots', () => {
       timeMax: monMax,
       timezone: TZ,
     });
-    // Merged busy: 8am-11am EST (13:00-16:00Z)
-    // Free before: nothing (busy starts at 8am which is window start)
-    // Free after: 11am-6pm EST (16:00-23:00Z) = 7 hours = 7 slots
+    // Merged busy: 8am-11am EDT (12:00-15:00Z)
+    // Free before: nothing (busy starts at 8am = 12:00Z = window start)
+    // Free after: 11am-6pm EDT (15:00-22:00Z) = 7 hours = 7 slots
     assert.ok(result.slots.length > 0, 'Must have slots after merged busy block');
-    // No slots should start at or before 16:00Z (during merged busy)
-    const duringBusy = result.slots.filter(s => new Date(s.start) < new Date('2026-03-09T16:00:00Z'));
+    // No slots should start before 15:00Z (during merged busy 12:00-15:00Z)
+    const duringBusy = result.slots.filter(s => new Date(s.start) < new Date('2026-03-09T15:00:00Z'));
     assert.equal(duringBusy.length, 0, 'Merged overlapping periods must block all busy time');
   });
 
-  it('60-min slot cannot start at 17:30 EST when window ends at 18:00 EST', () => {
-    // 17:30 EST = 22:30 UTC, 18:00 EST = 23:00 UTC — a 60-min slot starting at 22:30 ends at 23:30 which exceeds 23:00
-    // So the last valid slot start would be 17:00 EST = 22:00 UTC
+  it('60-min slot cannot start at 17:30 EDT when window ends at 18:00 EDT', () => {
+    // DST active: 17:30 EDT = 21:30Z, 18:00 EDT = 22:00Z — a 60-min slot starting at 21:30Z ends at 22:30Z which exceeds 22:00Z
+    // So the last valid slot start would be 17:00 EDT = 21:00Z
     assert.ok(findAvailableSlots, 'findAvailableSlots must be exported from calendarService');
     const result = findAvailableSlots({
       freeBusyByCalendar: emptyFreeBusy,
@@ -148,18 +153,18 @@ describe('findAvailableSlots', () => {
       timeMax: monMax,
       timezone: TZ,
     });
-    // Window: 8am-6pm EST = 13:00-23:00 UTC, 10 hours = 10 x 60-min slots
+    // Window: 8am-6pm EDT = 12:00-22:00 UTC, 10 hours = 10 x 60-min slots
     assert.ok(result.slots.length > 0, 'Must have slots');
     const lastSlot = result.slots[result.slots.length - 1];
     const lastSlotEnd = new Date(lastSlot.end);
-    const windowEnd = new Date('2026-03-09T23:00:00Z'); // 6pm EST
+    const windowEnd = new Date('2026-03-09T22:00:00Z'); // 6pm EDT
     assert.ok(
       lastSlotEnd <= windowEnd,
-      `Last slot end ${lastSlot.end} must be at or before 6pm EST (${windowEnd.toISOString()})`
+      `Last slot end ${lastSlot.end} must be at or before 6pm EDT (${windowEnd.toISOString()})`
     );
-    // Verify no slot starts at 17:30 EST (22:30 UTC) since a 60-min slot would overflow
-    const halfHourStart = result.slots.find(s => s.start === '2026-03-09T22:30:00.000Z');
-    assert.equal(halfHourStart, undefined, 'No slot should start at 17:30 EST (would overflow 6pm window)');
+    // Verify no slot starts at 17:30 EDT (21:30Z) since a 60-min slot would overflow the 22:00Z window end
+    const halfHourStart = result.slots.find(s => s.start === '2026-03-09T21:30:00.000Z');
+    assert.equal(halfHourStart, undefined, 'No slot should start at 17:30 EDT (would overflow 6pm window)');
   });
 
   it('errors dict populated when calendar has errors in freebusy response', () => {
