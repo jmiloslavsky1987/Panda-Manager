@@ -12,6 +12,7 @@ import YAMLEditor from './views/YAMLEditor';
 import ArtifactManager from './views/ArtifactManager';
 import ProjectSetup from './views/ProjectSetup';
 import HistoryTimeline from './views/HistoryTimeline';
+import SessionScheduler from './views/SessionScheduler';
 import NewCustomer from './views/NewCustomer';
 import './index.css';
 
@@ -39,6 +40,7 @@ const router = createBrowserRouter([
           { path: 'artifacts', element: <ArtifactManager /> },
           { path: 'setup', element: <ProjectSetup /> },
           { path: 'history', element: <HistoryTimeline /> },
+          { path: 'sessions', element: <SessionScheduler /> },
         ],
       },
     ],

@@ -21,6 +21,7 @@ const NAV_LINKS = [
   { path: '/artifacts', label: 'Artifacts' },
   { path: '/setup',     label: 'Project Setup' },
   { path: '/yaml',      label: 'YAML Editor' },
+  { path: '/sessions',  label: 'Sessions' },
 ];
 
 export default function Sidebar() {
