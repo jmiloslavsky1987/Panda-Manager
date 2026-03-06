@@ -5,7 +5,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { postArtifact, patchArtifact } from '../api';
 import InlineEditField from '../components/InlineEditField';
 import InlineSelectField from '../components/InlineSelectField';
-import clsx from 'clsx';
 
 // Complete literal strings — Tailwind v4 purge safety (no dynamic class construction)
 const ARTIFACT_STATUS_OPTIONS = [
@@ -23,13 +22,6 @@ const ARTIFACT_TYPE_OPTIONS = [
   { value: 'runbook',      label: 'Runbook' },
   { value: 'other',        label: 'Other' },
 ];
-
-const ARTIFACT_STATUS_BADGE_CLASSES = {
-  active:     'bg-green-100 text-green-700',
-  in_review:  'bg-purple-100 text-purple-700',
-  superseded: 'bg-gray-100 text-gray-600',
-  retired:    'bg-red-100 text-red-600',
-};
 
 export default function ArtifactManager() {
   const { customer } = useOutletContext();
@@ -141,11 +133,8 @@ export default function ArtifactManager() {
                     />
                   </td>
 
-                  {/* Status — inline select with badge styling */}
+                  {/* Status — inline select */}
                   <td className="py-2 px-2">
-                    <span className={clsx('inline-block rounded-full px-2 py-0.5 text-xs font-medium mr-1', ARTIFACT_STATUS_BADGE_CLASSES[artifact.status])}>
-                      {artifact.status}
-                    </span>
                     <InlineSelectField
                       value={artifact.status}
                       options={ARTIFACT_STATUS_OPTIONS}

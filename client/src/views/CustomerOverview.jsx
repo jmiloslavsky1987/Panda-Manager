@@ -15,6 +15,8 @@ import {
 } from '../lib/deriveCustomer';
 import StatusBadge from '../components/StatusBadge';
 import ProgressBar from '../components/ProgressBar';
+import InlineEditField from '../components/InlineEditField';
+import InlineSelectField from '../components/InlineSelectField';
 
 // Status dot lookup — complete literal class strings (Tailwind v4 purge safety)
 const STATUS_DOT_CLASSES = {
@@ -34,63 +36,6 @@ const STATUS_DOT_CLASSES = {
 function StatusDot({ status }) {
   const cls = STATUS_DOT_CLASSES[status] ?? 'bg-gray-300';
   return <span className={`inline-block w-2.5 h-2.5 rounded-full shrink-0 ${cls}`} />;
-}
-
-// Inline edit field — shows value as text; click to edit; saves on blur/enter
-function InlineEditField({ value, onSave, isPending, className = '' }) {
-  const [editing, setEditing] = React.useState(false);
-  const [draft, setDraft] = React.useState(value ?? '');
-
-  const handleBlur = () => {
-    if (draft !== (value ?? '')) onSave(draft);
-    setEditing(false);
-  };
-
-  if (isPending) {
-    return <span className="text-gray-400 italic text-sm">Saving...</span>;
-  }
-  if (editing) {
-    return (
-      <input
-        autoFocus
-        className="border border-teal-300 rounded px-1 py-0.5 text-sm w-full"
-        value={draft}
-        onChange={e => setDraft(e.target.value)}
-        onBlur={handleBlur}
-        onKeyDown={e => {
-          if (e.key === 'Enter') handleBlur();
-          if (e.key === 'Escape') setEditing(false);
-        }}
-      />
-    );
-  }
-  return (
-    <span
-      className={`cursor-pointer hover:bg-gray-100 rounded px-1 py-0.5 text-sm ${className}`}
-      title="Click to edit"
-      onClick={() => { setDraft(value ?? ''); setEditing(true); }}
-    >
-      {value || <span className="text-gray-400">—</span>}
-    </span>
-  );
-}
-
-// Inline select for status fields
-function InlineSelectField({ value, options, onSave, isPending }) {
-  if (isPending) {
-    return <span className="text-gray-400 italic text-sm">Saving...</span>;
-  }
-  return (
-    <select
-      className="text-sm border border-gray-200 rounded px-1 py-0.5 bg-white"
-      value={value}
-      onChange={e => onSave(e.target.value)}
-    >
-      {options.map(o => (
-        <option key={o.value} value={o.value}>{o.label}</option>
-      ))}
-    </select>
-  );
 }
 
 // One row per sub-workstream inside a group card
