@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 06-04-PLAN — CustomerLayout skeleton, Sidebar status dots, RisksSection Owner column
-last_updated: "2026-03-06T02:42:10.323Z"
+stopped_at: Completed 06-06-PLAN — Dashboard overdue panel, History Timeline, inline Risk/Milestone creation
+last_updated: "2026-03-06T02:51:44.345Z"
 last_activity: 2026-03-05 — Phase 4 plan 01 complete (10 t.todo() stubs, 0 failures)
 progress:
   total_phases: 7
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 34
-  completed_plans: 25
+  completed_plans: 27
   percent: 65
 ---
 
@@ -70,6 +70,7 @@ Progress: [███████░░░] 65% (Phase 4 started, test infrastruc
 | Phase 06-ux-polish-and-feature-enhancements P01 | 1 | 2 tasks | 3 files |
 | Phase 06-ux-polish-and-feature-enhancements P02 | 8 | 2 tasks | 4 files |
 | Phase 06-ux-polish-and-feature-enhancements P04 | 4 | 2 tasks | 3 files |
+| Phase 06-ux-polish-and-feature-enhancements P06 | 8 | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -117,6 +118,8 @@ Recent decisions affecting current work:
 - [Phase 06-ux-polish-and-feature-enhancements]: buildPanel uses WORKSTREAM_CONFIG[sw.group].subWorkstreams.map(s => s.key) for action filter — avoids hardcoding sub-workstream lists, single source of truth
 - [Phase 06-ux-polish-and-feature-enhancements]: overallStatusLabel calls deriveOverallStatus(customer) not customer.status — workstream-derived status is authoritative
 - [Phase 06-ux-polish-and-feature-enhancements]: CustomerSkeleton as local function in CustomerLayout — only one consumer; SIDEBAR_STATUS_DOT_CLASSES uses complete literal Tailwind strings for v4 purge safety; WeeklyUpdateForm.jsx not modified — removed in Phase 7; Owner cell uses value={risk.owner ?? ''} to handle missing field safely
+- [Phase 06-ux-polish-and-feature-enhancements]: OverdueActionsPanel filters actions where due < today (ISO string compare) — getMostOverdueActions returns all open actions with due date, so client-side filter is required for truly overdue subset
+- [Phase 06-ux-polish-and-feature-enhancements]: Empty-state for risks/milestones shows add button directly — removes Add via YAML Editor hint since inline creation is now available
 
 ### Pending Todos
 
@@ -130,7 +133,7 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-06T02:42:10.321Z
-Stopped at: Completed 06-04-PLAN — CustomerLayout skeleton, Sidebar status dots, RisksSection Owner column
+Last session: 2026-03-06T02:51:44.342Z
+Stopped at: Completed 06-06-PLAN — Dashboard overdue panel, History Timeline, inline Risk/Milestone creation
 Resume file: None
 Next action: Execute 04-02 (artifacts route implementation — POST + PATCH endpoints)
