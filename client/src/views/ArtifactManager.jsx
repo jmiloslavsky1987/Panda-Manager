@@ -15,12 +15,16 @@ const ARTIFACT_STATUS_OPTIONS = [
 ];
 
 const ARTIFACT_TYPE_OPTIONS = [
-  { value: 'diagram',      label: 'Diagram' },
-  { value: 'document',     label: 'Document' },
-  { value: 'spreadsheet',  label: 'Spreadsheet' },
-  { value: 'presentation', label: 'Presentation' },
-  { value: 'runbook',      label: 'Runbook' },
-  { value: 'other',        label: 'Other' },
+  { value: 'diagram',           label: 'Diagram' },
+  { value: 'document',          label: 'Document' },
+  { value: 'spreadsheet',       label: 'Spreadsheet' },
+  { value: 'presentation',      label: 'Presentation' },
+  { value: 'runbook',           label: 'Runbook' },
+  { value: 'other',             label: 'Other' },
+  { value: 'workflow-decision', label: 'Workflow Decision' },
+  { value: 'team-contact',      label: 'Team Contact' },
+  { value: 'backlog-item',      label: 'Backlog Item' },
+  { value: 'integration-note',  label: 'Integration Note' },
 ];
 
 export default function ArtifactManager() {
@@ -33,6 +37,9 @@ export default function ArtifactManager() {
   const [newArtifact, setNewArtifact] = React.useState({
     type: 'document', title: '', description: '', status: 'active', owner: '',
   });
+
+  // Type filter state — MGT-02
+  const [typeFilter, setTypeFilter] = React.useState('all');
 
   // Optimistic mutation for patch operations (ART-03, ART-04, ART-05)
   const artifactMutation = useMutation({
@@ -64,13 +71,40 @@ export default function ArtifactManager() {
   });
 
   const artifacts = customer.artifacts ?? [];
+  const filteredArtifacts = typeFilter === 'all'
+    ? artifacts
+    : artifacts.filter(a => a.type === typeFilter);
 
   return (
     <div className="p-6 flex flex-col gap-6">
       {/* Header */}
       <div>
         <h2 className="text-2xl font-bold text-gray-900 mb-1">Artifact Manager</h2>
-        <p className="text-sm text-gray-500">{artifacts.length} artifact{artifacts.length !== 1 ? 's' : ''}</p>
+        <p className="text-sm text-gray-500">
+          {typeFilter === 'all'
+            ? `${artifacts.length} artifact${artifacts.length !== 1 ? 's' : ''}`
+            : `${filteredArtifacts.length} of ${artifacts.length} artifact${artifacts.length !== 1 ? 's' : ''} (${ARTIFACT_TYPE_OPTIONS.find(o => o.value === typeFilter)?.label ?? typeFilter})`}
+        </p>
+      </div>
+
+      {/* Type filter — MGT-02 */}
+      <div className="flex items-center gap-2">
+        <label className="text-sm text-gray-600 font-medium">Filter by type:</label>
+        <select
+          className="border border-gray-200 rounded px-3 py-1.5 text-sm bg-white focus:outline-none focus:border-teal-400"
+          value={typeFilter}
+          onChange={e => setTypeFilter(e.target.value)}
+        >
+          <option value="all">All Types</option>
+          {ARTIFACT_TYPE_OPTIONS.map(o => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+        {typeFilter !== 'all' && (
+          <span className="text-xs text-gray-400">
+            {filteredArtifacts.length} of {artifacts.length}
+          </span>
+        )}
       </div>
 
       {/* Artifacts Table — ART-01 */}
@@ -89,16 +123,18 @@ export default function ArtifactManager() {
           </thead>
           <tbody>
             {/* Empty state */}
-            {artifacts.length === 0 && (
+            {filteredArtifacts.length === 0 && (
               <tr>
                 <td colSpan={7} className="py-8 px-4 text-sm text-gray-400 text-center">
-                  No artifacts yet. Use Add Artifact below to create the first one.
+                  {artifacts.length === 0
+                    ? 'No artifacts yet. Use Add Artifact below to create the first one.'
+                    : `No artifacts match type "${typeFilter}".`}
                 </td>
               </tr>
             )}
 
             {/* Artifact rows */}
-            {artifacts.map(artifact => {
+            {filteredArtifacts.map(artifact => {
               const isPending = artifactMutation.isPending && artifactMutation.variables?.artifactId === artifact.id;
               return (
                 <tr key={artifact.id} className="border-b border-gray-100 hover:bg-gray-50">
