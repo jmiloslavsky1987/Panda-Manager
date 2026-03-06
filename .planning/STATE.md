@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 06-01-PLAN — Wave 0 test stubs for POST risks, POST milestones, and reportGenerator buildPanel
-last_updated: "2026-03-06T02:30:37.472Z"
+stopped_at: Completed 06-02-PLAN — P0 bug fixes for reportGenerator buildPanel, ArtifactManager badge, CustomerOverview shared imports
+last_updated: "2026-03-06T02:35:06.562Z"
 last_activity: 2026-03-05 — Phase 4 plan 01 complete (10 t.todo() stubs, 0 failures)
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 34
-  completed_plans: 22
+  completed_plans: 23
   percent: 65
 ---
 
@@ -68,6 +68,7 @@ Progress: [███████░░░] 65% (Phase 4 started, test infrastruc
 | Phase 04-structured-write-views P04 | 2 | 2 tasks | 5 files |
 | Phase 04-structured-write-views P05 | 1 | 1 tasks | 1 files |
 | Phase 06-ux-polish-and-feature-enhancements P01 | 1 | 2 tasks | 3 files |
+| Phase 06-ux-polish-and-feature-enhancements P02 | 8 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -112,6 +113,8 @@ Recent decisions affecting current work:
 - [Phase 04-structured-write-views]: week_ending key confirmed in WeeklyUpdateForm (never week_of) — matches sample.yaml and CustomerOverview read pattern
 - [Phase 06-ux-polish-and-feature-enhancements]: ESM import syntax required for node:test in client/ tree — client/package.json has type=module so require() fails
 - [Phase 06-ux-polish-and-feature-enhancements]: No-callback it('description') pattern for pending stubs — node:test treats missing callback as passing todo
+- [Phase 06-ux-polish-and-feature-enhancements]: buildPanel uses WORKSTREAM_CONFIG[sw.group].subWorkstreams.map(s => s.key) for action filter — avoids hardcoding sub-workstream lists, single source of truth
+- [Phase 06-ux-polish-and-feature-enhancements]: overallStatusLabel calls deriveOverallStatus(customer) not customer.status — workstream-derived status is authoritative
 
 ### Pending Todos
 
@@ -125,7 +128,7 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-06T02:30:37.466Z
-Stopped at: Completed 06-01-PLAN — Wave 0 test stubs for POST risks, POST milestones, and reportGenerator buildPanel
+Last session: 2026-03-06T02:35:06.560Z
+Stopped at: Completed 06-02-PLAN — P0 bug fixes for reportGenerator buildPanel, ArtifactManager badge, CustomerOverview shared imports
 Resume file: None
 Next action: Execute 04-02 (artifacts route implementation — POST + PATCH endpoints)
