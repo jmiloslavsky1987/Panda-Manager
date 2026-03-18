@@ -145,23 +145,89 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 through DATA-08 | Phase 1 | Pending |
-| DASH-01 through DASH-09 | Phase 2 | Pending |
-| WORK-01 through WORK-09 | Phase 2 | Pending |
-| SKILL-01 through SKILL-02 | Phase 4 | Pending |
-| SKILL-03 through SKILL-14 | Phase 5 | Pending |
-| OUT-01 through OUT-04 | Phase 5 | Pending |
-| SCHED-01 through SCHED-08 | Phase 4 | Pending |
-| SET-01 through SET-04 | Phase 1 | Pending |
-| PLAN-01 through PLAN-13 | Phase 6 | Pending |
-| KB-01 through KB-03 | Phase 7 | Pending |
-| SRCH-01 through SRCH-03 | Phase 7 | Pending |
+| DATA-01 | Phase 1 | Pending |
+| DATA-02 | Phase 1 | Pending |
+| DATA-03 | Phase 1 | Pending |
+| DATA-04 | Phase 1 | Pending |
+| DATA-05 | Phase 1 | Pending |
+| DATA-06 | Phase 1 | Pending |
+| DATA-07 | Phase 1 | Pending |
+| DATA-08 | Phase 1 | Pending |
+| SET-01 | Phase 1 | Pending |
+| SET-02 | Phase 1 | Pending |
+| SET-03 | Phase 1 | Pending |
+| SET-04 | Phase 1 | Pending |
+| DASH-01 | Phase 2 | Pending |
+| DASH-02 | Phase 2 | Pending |
+| DASH-03 | Phase 2 | Pending |
+| DASH-06 | Phase 2 | Pending |
+| DASH-07 | Phase 2 | Pending |
+| DASH-08 | Phase 2 | Pending |
+| WORK-01 | Phase 2 | Pending |
+| WORK-03 | Phase 2 | Pending |
+| WORK-04 | Phase 2 | Pending |
+| WORK-05 | Phase 2 | Pending |
+| WORK-06 | Phase 2 | Pending |
+| WORK-07 | Phase 2 | Pending |
+| WORK-08 | Phase 2 | Pending |
+| WORK-09 | Phase 2 | Pending |
+| WORK-02 | Phase 3 | Pending |
+| PLAN-01 | Phase 3 | Pending |
+| PLAN-02 | Phase 3 | Pending |
+| PLAN-03 | Phase 3 | Pending |
+| PLAN-04 | Phase 3 | Pending |
+| PLAN-05 | Phase 3 | Pending |
+| PLAN-06 | Phase 3 | Pending |
+| PLAN-07 | Phase 3 | Pending |
+| PLAN-08 | Phase 3 | Pending |
+| PLAN-09 | Phase 3 | Pending |
+| PLAN-10 | Phase 3 | Pending |
+| PLAN-11 | Phase 3 | Pending |
+| SCHED-01 | Phase 4 | Pending |
+| SCHED-02 | Phase 4 | Pending |
+| SCHED-03 | Phase 4 | Pending |
+| SCHED-04 | Phase 4 | Pending |
+| SCHED-05 | Phase 4 | Pending |
+| SCHED-06 | Phase 4 | Pending |
+| SCHED-07 | Phase 4 | Pending |
+| SCHED-08 | Phase 4 | Pending |
+| SKILL-01 | Phase 5 | Pending |
+| SKILL-02 | Phase 5 | Pending |
+| SKILL-03 | Phase 5 | Pending |
+| SKILL-04 | Phase 5 | Pending |
+| SKILL-11 | Phase 5 | Pending |
+| SKILL-12 | Phase 5 | Pending |
+| SKILL-13 | Phase 5 | Pending |
+| SKILL-14 | Phase 5 | Pending |
+| DASH-09 | Phase 5 | Pending |
+| OUT-01 | Phase 5 | Pending |
+| OUT-02 | Phase 5 | Pending |
+| OUT-03 | Phase 5 | Pending |
+| OUT-04 | Phase 5 | Pending |
+| SKILL-10 | Phase 6 | Pending |
+| DASH-04 | Phase 6 | Pending |
+| DASH-05 | Phase 6 | Pending |
+| SKILL-05 | Phase 7 | Pending |
+| SKILL-06 | Phase 7 | Pending |
+| SKILL-07 | Phase 7 | Pending |
+| SKILL-08 | Phase 7 | Pending |
+| SKILL-09 | Phase 7 | Pending |
+| PLAN-12 | Phase 7 | Pending |
+| PLAN-13 | Phase 7 | Pending |
+| KB-01 | Phase 8 | Pending |
+| KB-02 | Phase 8 | Pending |
+| KB-03 | Phase 8 | Pending |
+| SRCH-01 | Phase 8 | Pending |
+| SRCH-02 | Phase 8 | Pending |
+| SRCH-03 | Phase 8 | Pending |
 
 **Coverage:**
-- v1 requirements: 69 total
-- Mapped to phases: 69
-- Unmapped: 0 ✓
+- v1 requirements enumerated: 75 (DATA:8, DASH:9, WORK:9, SKILL:14, OUT:4, PLAN:13, KB:3, SRCH:3, SCHED:8, SET:4)
+- Mapped to phases: 75
+- Unmapped: 0
+
+> Note: Original REQUIREMENTS.md stated 69 v1 requirements. Enumeration counts 75. All enumerated requirements are mapped; no orphans exist. The discrepancy should be reconciled on next requirements review.
 
 ---
 *Requirements defined: 2026-03-18*
-*Last updated: 2026-03-18 after initial definition*
+*Last updated: 2026-03-18 — traceability table updated to match ROADMAP.md phase assignments*
