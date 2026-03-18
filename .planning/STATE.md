@@ -1,162 +1,44 @@
----
-gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: verifying
-stopped_at: Completed 08-04-PLAN.md — Phase 8 visual checkpoint approved (4/4 checks)
-last_updated: "2026-03-06T18:57:32.950Z"
-last_activity: 2026-03-06 — Phase 8 verified (4/4 browser checks); all phases complete
-progress:
-  total_phases: 8
-  completed_phases: 6
-  total_plans: 38
-  completed_plans: 37
-  percent: 100
----
-
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-04)
+See: .planning/PROJECT.md (updated 2026-03-18)
 
-**Core value:** The dashboard gives instant health visibility across all customers — at-risk flagging, % complete, open action counts, high-severity risks — so nothing slips through the cracks.
-**Current focus:** Milestone v1.0 feature-complete — all 7 phases delivered and verified
+**Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
+**Current focus:** Phase 1 — Data Foundation
 
-## Current Position
+## Current Status
 
-Phase: 8 of 8 (Session Scheduler Integration) — **COMPLETE AND VERIFIED**
-Plan: 4 of 4 — all plans executed and verified
-Status: All SESS requirements verified in browser; Phase 8 human checkpoint approved (4/4 checks)
-Last activity: 2026-03-06 — Phase 8 verified (4/4 browser checks); all phases complete
+**Phase:** Pre-execution (roadmap defined, no phases started)
+**Last action:** Project initialized — research, requirements, and roadmap complete
+**Next action:** Run `/gsd:plan-phase 1`
 
-Progress: [██████████] 100% (All 8 phases complete and verified)
+## Phase Progress
 
-## Performance Metrics
+| Phase | Status |
+|-------|--------|
+| 1. Data Foundation | Not started |
+| 2. App Shell + Read Surface | Not started |
+| 3. Write Surface + Plan Builder | Not started |
+| 4. Job Infrastructure | Not started |
+| 5. Skill Engine | Not started |
+| 6. MCP Integrations | Not started |
+| 7. File Generation + Remaining Skills | Not started |
+| 8. Cross-Project Features + Polish | Not started |
 
-**Velocity:**
-- Total plans completed: 15
-- Average duration: ~2 min
-- Total execution time: ~0.5 hours
+## Active Work
 
-**By Phase:**
+None — awaiting Phase 1 planning.
 
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 01-foundation | 1/5 | 2 min | 2 min |
-| 02-read-surface | 5/5 | ~10 min | ~2 min |
-| 03-project-setup-action-manager | 6/6 | ~12 min | ~2 min |
-| 04-structured-write-views | 1/6 | ~1 min | ~1 min |
+## Key Context for Next Session
 
-**Recent Trend:**
-- Last 5 plans: ~2 min
-- Trend: stable
+- **Working directory:** `/Users/jmiloslavsky/Documents/Project Assistant Code`
+- **Research flags:** Phases 4, 5, 6, 7 require research spikes before planning (see ROADMAP.md)
+- **Critical pitfall:** BullMQ worker must be a dedicated process — never in-process cron
+- **Critical pitfall:** SkillOrchestrator must be separated from Route Handlers before Phase 5
+- **Cowork compatibility:** js-yaml settings `sortKeys: false, lineWidth: -1, JSON_SCHEMA` — non-negotiable
+- **Version ground-truth:** React 19, Vite 7, Tailwind 4, pptxgenjs v4, Anthropic SDK 0.78.x — read from existing package.json files
 
-*Updated after each plan completion*
-| Phase 01-foundation P01 | 3 | 2 tasks | 2 files |
-| Phase 01-foundation P02 | 3 | 3 tasks | 7 files |
-| Phase 02-read-surface P01-P05 | ~10 | ~10 tasks | ~15 files |
-| Phase 03-project-setup-action-manager P01 | 3 | 3 tasks | 5 files |
-| Phase 03-project-setup-action-manager P02 | 1 | 2 tasks | 2 files |
-| Phase 03-project-setup-action-manager P03 | 2 | 2 tasks | 3 files |
-| Phase 03-project-setup-action-manager P04 | 1 | 2 tasks | 4 files |
-| Phase 03-project-setup-action-manager P05 | 1 | 2 tasks | 1 files |
-| Phase 03-project-setup-action-manager P06 | 3 | 2 tasks | 6 files |
-| Phase 04-structured-write-views P01 | 1 | 2 tasks | 2 files |
-| Phase 04-structured-write-views P03 | 2min | 2 tasks | 2 files |
-| Phase 04-structured-write-views P02 | 3 | 2 tasks | 2 files |
-| Phase 04-structured-write-views P04 | 2 | 2 tasks | 5 files |
-| Phase 04-structured-write-views P05 | 1 | 1 tasks | 1 files |
-| Phase 06-ux-polish-and-feature-enhancements P01 | 1 | 2 tasks | 3 files |
-| Phase 06-ux-polish-and-feature-enhancements P02 | 8 | 2 tasks | 4 files |
-| Phase 06-ux-polish-and-feature-enhancements P04 | 4 | 2 tasks | 3 files |
-| Phase 06-ux-polish-and-feature-enhancements P06 | 8 | 3 tasks | 6 files |
-| Phase 07-smart-data-flow-and-customer-onboarding P03 | 3 | 1 tasks | 1 files |
-| Phase 07-smart-data-flow-and-customer-onboarding P04 | 8 | 2 tasks | 3 files |
-| Phase 07-smart-data-flow-and-customer-onboarding P05 | 2 | 2 tasks | 2 files |
-| Phase 07-smart-data-flow-and-customer-onboarding P06 | 3 | 1 tasks | 1 files |
-| Phase 08-session-scheduler-integration P01 | 5 | 3 tasks | 6 files |
-| Phase 08-session-scheduler-integration P02 | 1 | 2 tasks | 4 files |
-| Phase 08-session-scheduler-integration P03 | 2 | 2 tasks | 1 files |
-| Phase 08-session-scheduler-integration P04 | 2 | 2 tasks | 2 files |
-
-## Accumulated Context
-
-### Decisions
-
-Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:
-
-- [Roadmap]: 5-phase structure derived from dependency graph — Drive+YAML services block everything; read surface before writes; AI reports last (isolated)
-- [Phase 1]: Research flags C1/C2/C4/C13 as Phase 1 pitfalls — Drive scope, token caching, js-yaml coercion, missing Outlet all preventable at scaffold time
-- [Phase 5]: Run `npm view @anthropic-ai/sdk version` before writing any Phase 5 code — PROJECT.md `^0.20.0` is severely outdated
-- [01-01]: Use node:test built-in only — no vitest/jest/mocha, Wave 0 requires zero npm installs
-- [01-01]: All stubs use t.todo() so runner exits 0 before Plan 03 implementation — Nyquist verify path established
-- [01-01]: sample.yaml uses only JSON_SCHEMA-safe string values to prevent YAML coercion in test fixture
-- [01-01]: yamlService.test.js wraps require() in try/catch so Wave 0 file is runnable before yamlService.js exists
-- [Phase 01-02]: GoogleAuth instance passed to drive client (not raw token) to prevent silent 401 after 3600s token expiry — Pitfall C4 from research
-- [Phase 01-02]: SCOPES=['https://www.googleapis.com/auth/drive'] not drive.file — drive.file 403s on human-created files (Pitfall C1 from research)
-- [Phase 03-01]: scope arrays on hasScope sub-workstreams only; history entries omit scope; STATUS_CYCLE completed->open safe fallback; WORKSTREAM_OPTIONS derived from WORKSTREAM_CONFIG (single source of truth)
-- [Phase 03-02]: completed_date set client-side as YYYY-MM-DD string and passed through by server — PATCH stays generic for all field types
-- [Phase 03-02]: GET /actions stub preserved at 501 — client reads actions from full customer object via useOutletContext, no dedicated GET needed in Phase 3
-- [Phase 03-03]: REQUIRED_GROUPS validation runs before readYamlFile — fast-fail avoids unnecessary Drive API call on malformed body
-- [Phase 03-03]: workstreams key replaced wholesale (not merged) — caller owns full workstreams object to prevent stale sub-workstream keys
-- [Phase 03-04]: No useQuery in ProjectSetup — customer data via useOutletContext() from CustomerLayout to avoid double-fetch and cache duplication
-- [Phase 03-04]: No optimistic update for workstreams save — form re-init risk if cache update races local formState; simple invalidateQueries on success is safer
-- [Phase 03-04]: TagInput kept inline in ProjectSetup.jsx — extract to shared component only when a second consumer appears
-- [Phase 03-05]: InlineEditField and InlineSelectField copied verbatim from CustomerOverview.jsx — extract to shared component only when second consumer appears
-- [Phase 03-05]: postAction uses onSuccess invalidation only (no optimistic) — server assigns sequential A-### ID; optimistic would require client-side ID prediction
-- [Phase 03-05]: STATUS_BADGE_CLASSES as module-level lookup with complete literal Tailwind strings — Tailwind v4 purge safety, no dynamic class construction
-- [Phase 03-06]: require.main === module guard in server/index.js — prevents test suite from occupying port 3001, blocking dev server
-- [Phase 03-06]: InlineSelectField placeholder option value="" — fixes first-option onChange never firing when backing value is undefined
-- [Phase 03-06]: Status cell as <select> dropdown — user preference for explicit selection over click-to-cycle span
-- [Phase 04-01]: Wave 0 t.todo() stubs for artifacts and history test files — Nyquist verify path established before implementation begins
-- [Phase 04-01]: artifacts.js and history.js route files already existed (mounted in index.js from Phase 3) — test files can immediately supertest them
-- [Phase 04-structured-write-views]: node:test mock call argument access is calls[N].arguments[I] not Sinon-style calls[N][I]
-- [Phase 04-03]: week_ending key confirmed (not week_of) — Pitfall 1 avoided at implementation time
-- [Phase 04-02]: GET stub removed from artifacts.js — client reads artifacts via full customer object GET /api/customers/:id, matching same decision as actions.js
-- [Phase 04-02]: PATCH always appends last_updated: today after spread — prevents stale date regardless of client payload (Pitfall 3 from plan)
-- [Phase 04-02]: related_topics: [] and linked_actions: [] hardcoded in POST — never trust client to initialize empty arrays for new artifacts (Pitfall 2 from plan)
-- [Phase 04-structured-write-views]: InlineEditField/InlineSelectField extracted to shared components when ArtifactManager became second consumer (Phase 3 deferral trigger met)
-- [Phase 04-structured-write-views]: ArtifactManager reads customer.artifacts via useOutletContext() — no useQuery, no double-fetch (matches ActionManager/ProjectSetup pattern)
-- [Phase 04-structured-write-views]: WeeklyUpdateForm uses no useQuery/useOutletContext — static WORKSTREAM_CONFIG drives form shape; no customer data needed to render
-- [Phase 04-structured-write-views]: week_ending key confirmed in WeeklyUpdateForm (never week_of) — matches sample.yaml and CustomerOverview read pattern
-- [Phase 06-ux-polish-and-feature-enhancements]: ESM import syntax required for node:test in client/ tree — client/package.json has type=module so require() fails
-- [Phase 06-ux-polish-and-feature-enhancements]: No-callback it('description') pattern for pending stubs — node:test treats missing callback as passing todo
-- [Phase 06-ux-polish-and-feature-enhancements]: buildPanel uses WORKSTREAM_CONFIG[sw.group].subWorkstreams.map(s => s.key) for action filter — avoids hardcoding sub-workstream lists, single source of truth
-- [Phase 06-ux-polish-and-feature-enhancements]: overallStatusLabel calls deriveOverallStatus(customer) not customer.status — workstream-derived status is authoritative
-- [Phase 06-ux-polish-and-feature-enhancements]: CustomerSkeleton as local function in CustomerLayout — only one consumer; SIDEBAR_STATUS_DOT_CLASSES uses complete literal Tailwind strings for v4 purge safety; WeeklyUpdateForm.jsx not modified — removed in Phase 7; Owner cell uses value={risk.owner ?? ''} to handle missing field safely
-- [Phase 06-ux-polish-and-feature-enhancements]: OverdueActionsPanel filters actions where due < today (ISO string compare) — getMostOverdueActions returns all open actions with due date, so client-side filter is required for truly overdue subset
-- [Phase 06-ux-polish-and-feature-enhancements]: Empty-state for risks/milestones shows add button directly — removes Add via YAML Editor hint since inline creation is now available
-- [Phase 07-smart-data-flow-and-customer-onboarding]: ARTIFACT_TYPE_OPTIONS extended with 4 new values as complete literal strings — Tailwind v4 purge safety maintained; filteredArtifacts computed from typeFilter state before return
-- [Phase 07-smart-data-flow-and-customer-onboarding]: WeeklyEntryForm inline in ReportGenerator — no separate route; single entry point for weekly workflow satisfies MGT-03
-- [Phase 07-smart-data-flow-and-customer-onboarding]: handleWeeklyDataReady receives (mergedCustomer, entry) — mergedCustomer drives report generation using form data; entry drives optional Save to history
-- [Phase 07-smart-data-flow-and-customer-onboarding]: timelineDate defaults to null in ELT generators — additive with full backwards compatibility (zero regression risk)
-- [Phase 07-smart-data-flow-and-customer-onboarding]: updateCustomer (PUT) used for metadata save — no dedicated PATCH for customer-level fields; full object spread with fileId stripped before sending
-- [Phase 07-smart-data-flow-and-customer-onboarding]: customerName state drives both page header subtitle and input — single source of truth; metaMutation invalidates both customer and customers caches for immediate sidebar refresh
-- [Phase 08-session-scheduler-integration]: timeMax exclusive boundary: curDate < endDate in slot loop matches Python end_date semantics — inclusive bound processed extra days beyond the requested window
-- [Phase 08-session-scheduler-integration]: DST awareness: test date 2026-03-09 is EDT (UTC-4) not EST (UTC-5) — DST springs forward 2026-03-08; localHourToUtc via Intl.DateTimeFormat handles this correctly without external timezone library
-- [Phase 08-session-scheduler-integration]: calendar-token.json stored in server/ directory, gitignored, auto-refreshed via googleapis OAuth2 client 'tokens' event listener
-- [Phase 08-session-scheduler-integration]: href='/api/calendar/auth' not React Router Link — must hit Express OAuth redirect, not SPA router
-- [Phase 08-session-scheduler-integration]: retry:false on calendarStatus query — 401 is expected when not authorized, not a transient error
-- [Phase 08-session-scheduler-integration]: postArtifact called directly (await) in eventMutation.onSuccess — no separate useMutation for artifact save since no separate UI loading/error state needed
-- [Phase 08-session-scheduler-integration]: SLOT_CLASSES module-level constant with complete Tailwind literal strings — Tailwind v4 purge safety, no dynamic class construction in SessionScheduler
-- [Phase 08-session-scheduler-integration]: customer prop threaded from SessionScheduler to SchedulerForm for event description — single data flow, no additional query needed
-- [Phase 08-session-scheduler-integration]: Temp token file approach for authorized calendar route tests: write TEST_TOKEN JSON in before(), unlink in after() — matches real requireCalendarAuth middleware without needing fs mock
-
-### Pending Todos
-
-None.
-
-### Blockers/Concerns
-
-- [Phase 1]: Google Drive service account GCP setup has non-obvious steps (API enablement, folder sharing, scope selection) — research-phase recommended before planning
-- [Phase 5]: Anthropic SDK version must be verified with `npm view` before coding; pptxgenjs z-order behavior may have changed since training data cutoff — research-phase recommended before planning
-- [Phase 2]: Tailwind v3 vs v4 and React 18 vs React 19 scaffold defaults need live verification — check what `npm create vite@latest` installs before committing
-
-## Session Continuity
-
-Last session: 2026-03-06T18:53:55.376Z
-Stopped at: Completed 08-04-PLAN.md — Phase 8 visual checkpoint approved (4/4 checks)
-Resume file: None
-Next action: All phases complete. Project is feature-complete.
+---
+*Initialized: 2026-03-18*
+*Last updated: 2026-03-18 after project initialization*
