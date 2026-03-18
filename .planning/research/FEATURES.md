@@ -1,277 +1,176 @@
 # Feature Landscape
 
-**Domain:** Single-user local project management / customer implementation tracking tool
-**Researched:** 2026-03-04
-**Confidence note:** No web search or Context7 access available in this session. Analysis is drawn from domain expertise, the detailed PROJECT.md spec, and established UX patterns for PM tools. Confidence is MEDIUM overall — the tool is well-understood by domain, but specifics should be validated against the user's daily workflow.
+**Domain:** AI-native PS Delivery Management — single power user, n customer accounts, heavy AI output generation
+**Researched:** 2026-03-18
+**Confidence:** MEDIUM — grounded in PROJECT.md specification (domain-authoritative) and training knowledge of PS delivery tooling; external research unavailable in this session
 
 ---
 
 ## Table Stakes
 
-Features that any PM tool user expects. Missing = tool feels broken or untrustworthy.
+Features users expect. Missing = product fails or user reverts to manual workflows.
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| Status visibility at a glance | PM tools live or die by "what's at risk right now" | Low | Dashboard grid already specified; red/yellow/green dot system is universal |
-| Overdue item highlighting | Users rely on visual urgency cues; without it items silently slip | Low | Overdue dates render red in Action Manager — already in spec |
-| Inline editing (no modal popups for simple fields) | Modals for every edit create friction that breaks flow | Medium | Spec calls this out for actions, risks, milestones, artifacts — critical to execute well |
-| Sort and filter on the actions table | Any list of 10+ items needs filtering to be usable | Low-Med | Already in spec: filter by workstream/status, sort by any column |
-| Unsaved changes protection | Without this, users lose edits and lose trust in the tool | Low | Already in spec for YAML Editor; should also apply to Weekly Update Form |
-| Confirmation on destructive actions | Delete/retire/close with no confirmation = accidental data loss | Low | Inline "Retire artifact" and "Close risk" need a one-step confirm — not a modal, a confirmation row state |
-| Consistent status vocabulary | Green/yellow/red + On Track/At Risk/Off Track must map 1:1 everywhere | Low | The YAML schema is fixed so vocabulary is fixed — UI must render it identically across all 7 views |
-| Empty states that explain what to do | First time a customer has no actions/risks, blank screen reads as broken | Low | Each empty section needs a short message + add prompt |
-| Atomic persistence | Users must trust that clicking Save never half-writes | Low | Already spec'd as the Drive write strategy — critical to never deviate |
-| Navigation breadcrumb / back button | Users need to know where they are when drilling from Dashboard → Customer → Action Manager | Low | Single-level breadcrumb: `Dashboard > [Customer Name] > [View]` |
+| Project health at a glance (RAG status) | Without this, user must open every project to know what needs attention | Low | Auto-derived from overdue actions + stalled milestones + unresolved high risks — never manual |
+| Per-project action tracker with inline editing | Core PM primitive; PS delivery lives and dies on tracked actions | Medium | Must sync to PA3_Action_Tracker.xlsx — that file is the contractual Cowork handshake |
+| Risk register with append-only mitigation log | Required for accountability and ELT escalation; append-only prevents revision of history | Medium | Severity/status editable; mitigation entries are never deleted |
+| Milestone tracker with completion history | Milestones are the external commitment surface; clients ask "where are we?" | Low-Med | Links to actions; history shows when each milestone closed |
+| Engagement history (append-only) | Running memory of the project; survives knowledge transfer gaps | Low | Never editable — source of truth for "what did we agree?" |
+| Key decisions log (append-only) | Alignment record for escalations and disagreements | Low | Searchable; linkable to other records |
+| Stakeholder roster | PS delivery depends on knowing who owns what on both sides | Low | Separate BigPanda vs customer contacts |
+| Full-text search across all records | At 10+ active accounts, grep-by-brain fails; search is the navigation layer | High | Must span actions, risks, decisions, history, artifacts, tasks, KB across all projects |
+| Output Library (all generated files) | AI outputs must be findable after generation; "where's that deck from Tuesday?" is constant | Medium | Indexed by account + skill type + date; HTML renders inline |
+| Settings (API keys, paths, schedule times) | Single-user tool must be self-configurable without code changes | Low | Anthropic key stored securely; paths configurable for different machine setups |
+| Multi-account architecture (n projects) | Business has more than 3 customers; hardcoding is a death sentence for v2 | Medium | Add/close/archive lifecycle; archived projects are read-only but fully searchable |
 
 ---
 
 ## Differentiators
 
-Features that make this meaningfully better than the current manual workflow (multiple Claude.ai projects + spreadsheet). Not expected, but high value.
+Features that make this AI-native rather than just a PM tool. Not expected from standard PM tools, but high-value here.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| Cross-customer risk aggregation on Dashboard | Spreadsheets can't show "3 customers have high-severity risks this week" without pivot table gymnastics | Low | Already in spec — the card grid with at-risk sorting is this feature |
-| AI report generation (Claude API) | Turns a 30-minute weekly write-up into a 60-second generation + review | High | Already in spec; the real differentiator vs manual workflow |
-| Sequential, human-readable IDs (A-001, X-001) | Enables reference in emails, Slack, slide decks without copy-pasting GUIDs | Low | Already in spec — server-side ID assignment enforces this |
-| YAML-backed portable data | The source of truth is readable plain text on Drive, not a proprietary DB; survives app death | Low | Architectural differentiator; important to communicate in README |
-| Weekly Update Form as a structured ritual | A dedicated form beats "find the YAML section and type in the right indentation" every time | Low-Med | Already in spec — the value is focus: you see only this week's inputs, nothing else |
-| Per-workstream progress bars | Instant visual completion signal without reading notes | Low | Already in spec for Customer Overview — render accurately from YAML percent_complete fields |
-| Artifact linking to actions | Implementation tools often lose the "this artifact was created because of action A-012" thread; linking surfaces it | Medium | Spec includes linked_actions field on artifacts — expose this in the UI, don't hide it in YAML |
-| Drive version history as free undo | Because every write is the full YAML, Drive's version history is a complete audit trail at zero app cost | Low | No app work needed — document this for users; educate that Drive revision history is their undo |
+| Scheduled background intelligence (cron jobs) | Tool runs intelligence even when user is away — morning briefing is ready at 8am, not when the user thinks to ask | High | 6 scheduled jobs; requires persistent process (not serverless); results stored in DB for immediate display |
+| Skill Launcher with 15 pre-built AI skills | AI output generation is one click from a live DB, not "open Claude, paste context, wait" | High | SKILL.md files read from disk at runtime — prompts are never bundled, always current with Cowork updates |
+| Tone separation (customer-facing vs internal) | PS delivery requires two different voices simultaneously — partnership tone outward, analytical tone inward — mixing them is a trust risk | Medium | Enforced at skill level; Weekly Customer Status != ELT Internal Status; never expose internal severity language in external outputs |
+| Drafts Inbox (AI output review queue) | AI-generated emails/Slack drafts must be reviewed before send; a unified queue prevents missed drafts and accidental sends | Medium | Pending review state on all outbound AI content; sent/discarded lifecycle |
+| Auto health scoring (data-derived) | Removes human inconsistency; forces confrontation between gut feel and actual signals | Medium | Algorithm: overdue actions + stalled milestones + unresolved high risks → RAG; manual override with required justification |
+| Context Updater (notes → DB → context doc) | 14-step structured update from meeting notes closes the loop between human input and machine-readable state | High | One of the most complex skills; must apply all 14 steps atomically and export a round-trip-safe context doc |
+| Cross-project risk heat map | Portfolio-level view that no per-project tool provides; delivery manager needs to know if multiple accounts are red simultaneously | Medium | Probability × impact matrix, all accounts; useful for staffing decisions and escalation sequencing |
+| Cross-account watch list | Escalated/time-sensitive items that need daily attention regardless of which project they live in | Low-Med | Derived from action due dates, risk severity, upcoming go-lives |
+| Customer Project Tracker (Gmail/Slack/Gong sweep) | Automated signal harvesting from external sources closes the gap between "what I know" and "what's actually happening" | High | Sweep results update DB and action tracker; most complex scheduled job |
+| Knowledge Base (cross-project lessons learned) | PS delivery accumulates patterns across customers — a shared KB turns each project into training data for future ones | Medium | Searchable; linkable to risks/decisions; searchable after project archive |
+| Source tracing on all records | Every action/risk/artifact must know where it came from (skill run, manual entry, file, date, verified vs inferred) | Medium | Contractual constraint — Cowork skills depend on this for confidence framing in outputs |
+| Team Engagement Map (HTML self-contained) | Business outcome + team structure + onboarding status in a single deliverable — no standard PM tool generates this | High | Self-contained HTML; ADR + Biggy tracks; generated from live DB context |
+| Onboarding velocity view (stall detection) | Time-in-phase tracking catches stuck onboarding before it becomes a go-live risk | Medium | Per-team, per-phase; stall threshold configurable |
+| AI-assisted plan generation | Sprint summary + project context → proposed task additions — reduces weekly planning overhead | High | Must pull from DB, not invent facts; proposed additions require human approval |
+| YAML ↔ DB round-trip | Cowork skills operate on YAML context docs; app must export DB state to YAML without drift | High | js-yaml constraints (sortKeys: false, lineWidth: -1, JSON_SCHEMA) are proven in existing skill ecosystem — must be preserved exactly |
 
 ---
 
 ## Anti-Features
 
-Features to deliberately NOT build in v1. Specifically relevant to a single-user local tool.
+Things to deliberately NOT build for v1. Each entry is a trap that will absorb scope without proportional value.
 
 | Anti-Feature | Why Avoid | What to Do Instead |
 |--------------|-----------|-------------------|
-| In-app notifications / reminders | Requires a background daemon or cron job; adds OS-level complexity for a local app; the Dashboard overdue count is the reminder | Let the Dashboard's overdue action count + red date coloring serve as the notification system |
-| User accounts / login | This is a single-user local app; login adds friction without benefit | Hard-code or env-var the single user identity for action ownership labels |
-| Comments / threaded discussion on actions | No second user to discuss with; becomes dead storage | Use the description and progress_notes fields for context |
-| Drag-and-drop reordering | Nice in SaaS, complex to implement, doesn't map to YAML array order semantics | Sort by column instead; order in YAML is chronological/ID-based |
-| In-app YAML versioning / undo history | Drive already provides full version history for every write | Document Drive's revision history as the undo mechanism; don't rebuild it |
-| Customer creation wizard | Small dataset (1-10 customers), rare operation; building a schema-aware create form adds a month of work for an event that happens quarterly | Create new customer YAML manually (copy template), drop in Drive folder |
-| Real-time sync / auto-refresh | Single user, no concurrent access; polling wastes complexity budget | Refresh-on-navigate is sufficient; explicit refresh button as fallback |
-| Gantt chart view | Complex to render, overkill for 4-6 month implementations with a handful of milestones | The chronological milestones list in Customer Overview is sufficient |
-| Mobile / responsive design | This is a desktop local tool; responsive adds CSS complexity without a use case | Design for desktop viewport (1280px+) only |
-| Email sending | Out of scope per PROJECT.md; reports are copy/download | Copy-to-clipboard + download covers the workflow |
-| Webhook / Slack integration | External API dependencies in a local app; fragile | Reports are the communication artifact |
-| Multi-report history / archive | Report generation is cheap (API call) and Drive has the YAML source; storing rendered reports creates stale data risk | Regenerate on demand; no archive needed |
-| Keyboard shortcut customization | Over-engineered for v1 single user | Ship opinionated defaults; document them |
-
----
-
-## Evaluation of the Proposed 7-View Structure
-
-### What Works Well
-
-The 7-view structure is logical and covers the actual workflow:
-- Dashboard (where am I across all customers)
-- Customer Overview (what's the health of one customer)
-- Action Manager (manage the work items)
-- Report Generator (produce outputs)
-- YAML Editor (escape hatch for power users and edge cases)
-- Artifact Manager (manage deliverables and outputs)
-- Weekly Update Form (structured recurring ritual)
-
-### What Might Be Painful to Lack
-
-**1. Global action search across customers**
-When you remember "there's an action about Kafka connector but don't know which customer," you need cross-customer search. The current spec is per-customer only (you navigate to a customer first). For 1-10 customers this is manageable but annoying.
-- Recommendation: Add a global search bar in the Dashboard header that searches action descriptions and artifact titles across all loaded YAMLs. LOW complexity since all YAMLs are in memory after the initial load.
-
-**2. Quick-add action from Customer Overview**
-The Customer Overview shows "3 most overdue actions" but the user has to navigate to Action Manager to add a new one. A single "Add Action" quick button on the Overview header that drops a prefilled row in the Action Manager (then navigates there) would reduce the context switch cost.
-- Recommendation: LOW complexity, HIGH value for daily use.
-
-**3. History / audit trail viewer**
-The YAML has a `history` array that the Weekly Update Form writes to, but no view reads it back. Users eventually want to say "what was the status three weeks ago?" The YAML Editor exposes it, but raw YAML is not a good reading experience.
-- Recommendation: Consider a read-only "History Timeline" section at the bottom of Customer Overview — collapsed by default, showing past weekly entries in reverse chronological order. MEDIUM complexity, deferrable to v2 unless history entries accumulate quickly.
-
-**4. Risk/Milestone cross-customer roll-up on Dashboard**
-The Dashboard cards show high-severity risk count, which is good. But there's no "show me all high-severity risks across all customers in a table." If a user is preparing for an internal ELT meeting, they want this roll-up without opening each customer card.
-- Recommendation: Add a "Risk Summary" collapsed panel below the customer grid on the Dashboard. LOW-MED complexity. Could be v1 if ELT prep is a frequent workflow.
-
-### Confirmed Sufficient
-
-- No Settings view needed (no user-configurable preferences in a fixed-schema single-user app)
-- No dedicated Milestone view (milestones live naturally in Customer Overview)
-- No dedicated Risk view (same reasoning)
-
----
-
-## YAML-as-Database UX Implications
-
-### Benefits (already acknowledged in design)
-
-- Human-readable source of truth; portable
-- Drive version history is free audit trail
-- Schema validation at write time prevents corruption
-- No database to maintain, backup, or migrate
-
-### UX Implications to Design Around
-
-**1. Write latency is visible**
-Every inline edit triggers a Drive API write (read → modify → write full file). For a YAML file that might be 5-15KB, this round-trip is 200-800ms on a good connection. Users will notice if every checkbox click has a 500ms freeze.
-- Mitigation: Optimistic UI updates — update the UI immediately, write to Drive in the background, show a subtle "Saving..." → "Saved" indicator in the corner. Revert on error with a toast notification.
-
-**2. Validation errors must be actionable**
-If a Drive write is blocked because the modified YAML fails schema validation, the user must understand WHY and HOW to fix it, not just see an error code.
-- Mitigation: Inline validation messages tied to specific fields. The YAML Editor's Validate button is a fallback, not the primary error surface.
-
-**3. The YAML Editor is the escape hatch, not the primary interface**
-Users will be tempted to edit YAML directly for things that should have UI. The editor must be clearly labeled as "for advanced use" and should always warn about schema constraints.
-- Mitigation: Label the YAML Editor tab as "Advanced / Raw Editor." Consider a "back to normal view" link from within it.
-
-**4. ID assignment must never require user thought**
-Because IDs (A-001, X-001, R-001) are sequential and stored in YAML, the server must read the existing max ID and increment. Users must NEVER have to think about what ID to assign.
-- Mitigation: Already in spec (server-side ID assignment). This is correct — never expose ID input to the user.
-
-**5. Stale data from parallel Drive access**
-If the user opens the app in two browser tabs, or has Drive open alongside the app and edits the YAML directly, the app's in-memory state is stale. For a single-user tool this is an edge case but can cause data loss.
-- Mitigation: On every Drive write, perform the read step fresh (not cached). For YAML Editor writes, re-read from Drive on every Validate or Save click. No ETag locking needed — just always read fresh before write.
-
----
-
-## Atomic Drive Write Edge Cases
-
-The "read → modify in memory → write full YAML" approach is correct for single-user. Specific edge cases to handle:
-
-| Edge Case | Risk | Mitigation |
-|-----------|------|------------|
-| Network timeout during write | YAML on Drive is unchanged (write failed), but UI shows new state | Catch the write error, revert UI state, show toast: "Save failed — please retry" |
-| Write succeeds but read-back fails (verify step) | Hard to detect without a confirm-read; over-engineering for v1 | Skip verify-read in v1; Drive API 200 response is sufficient confirmation |
-| Drive API rate limit (write burst) | Rapid inline edits (user clicks through 5 checkboxes quickly) trigger multiple sequential writes | Debounce writes with a 300ms delay; batch checkbox clicks that occur in quick succession |
-| Drive file moved or deleted mid-session | Write call returns 404; user has no YAML | Catch 404 specifically, show a blocking error: "File not found in Drive — please check the Drive folder" |
-| YAML corruption from truncated write | Drive API write is atomic at the file level; partial writes do not occur | No mitigation needed — Drive API guarantees all-or-nothing file writes |
-| Large YAML (100+ actions over 12 months) | Write is still fast (files stay under 50KB); not a real concern for 1-10 customers | No mitigation needed for realistic dataset sizes |
-
----
-
-## Search and Filtering Expectations
-
-For a PM tool with this dataset size (1-10 customers, 10-50 actions each):
-
-**Action Manager (highest priority)**
-- Filter by status (Open / In Progress / Blocked / Completed) — dropdown or button group
-- Filter by workstream (ADR sub-workstreams, Biggy sub-workstreams) — dropdown
-- Filter by owner — dropdown populated from existing owner values in the YAML
-- Sort by any column (due date, ID, owner, status) — click column header
-- Text search within description — a simple input that filters rows client-side; no server call needed
-
-**Dashboard (cross-customer)**
-- Filter customer cards by status: "Show only At Risk" — a button group at top of grid
-- This is the only cross-customer filter needed for v1
-
-**Artifact Manager**
-- Filter by type, status — dropdowns
-- Text search on title/description
-
-**What is NOT needed**
-- Full-text search across the YAML body (overkill for this dataset)
-- Saved filter presets (single user, not worth the complexity)
-- Advanced query syntax (no need for "due:next-week AND owner:me AND workstream:ADR")
-
----
-
-## Keyboard Shortcuts Worth Considering
-
-For a power user doing daily PM work, these shortcuts pay dividends:
-
-| Shortcut | Action | Priority |
-|----------|--------|----------|
-| `N` | Add new action (when in Action Manager view) | HIGH |
-| `Enter` | Save inline edit and move focus to next row | HIGH |
-| `Escape` | Cancel inline edit without saving | HIGH |
-| `Tab` | Move between inline edit fields in a row | HIGH |
-| `Cmd/Ctrl + S` | Save in YAML Editor | HIGH (standard) |
-| `Cmd/Ctrl + K` | Open global search (if implemented) | MEDIUM |
-| `1-7` or `G then D/C/A...` | Navigate to view (Dashboard/Customer/Actions...) | LOW — nice-to-have |
-| `R` | Refresh current customer data from Drive | MEDIUM |
-
-Shortcuts to explicitly NOT implement in v1:
-- Vim-mode navigation (scope creep)
-- Customizable keybindings (single user, pick opinionated defaults)
-- Bulk selection with keyboard (low value vs complexity)
-
----
-
-## Notification and Reminder Patterns
-
-For a local single-user tool without a background process, traditional notification patterns (OS push notifications, email digests) are unavailable without daemon infrastructure. The correct pattern:
-
-**Dashboard-as-notification-surface (recommended)**
-The Dashboard IS the notification surface. Every time the user opens the app:
-- Cards sorted by risk (At Risk first) surface urgent customers without any notification
-- Open action count badge on each card quantifies urgency
-- Red overdue dates in Action Manager quantify what is late
-
-This is sufficient. The friction of opening the app is intentional — it creates a daily ritual, not interrupt-driven work.
-
-**Optional: Overdue Summary Panel**
-A collapsed "Overdue Actions" panel at the top of the Dashboard listing all overdue actions across customers (customer name, action ID, days overdue) would serve as the "catch-up" view for users returning after a few days away. LOW complexity — purely a filtered/aggregated view of already-loaded data.
-
-**What NOT to build:**
-- Browser push notifications (requires service worker, notification permissions, background process — enormous complexity for minimal gain in a local app you open intentionally)
-- Email reminders (out of scope)
-- OS-level alerts (requires native shell integration — out of scope entirely)
-- Scheduled cron reports (same problem — no background process architecture)
-
----
-
-## MVP Recommendation
-
-**Priority 1 — Must work at launch (per user's own statement)**
-1. Dashboard (customer grid sorted by risk, health summary per card)
-2. Customer Overview (workstream health, risks, milestones, action summary)
-3. Action Manager (open/complete actions, inline edit, Drive write)
-
-**Priority 2 — Needed to replace the current workflow**
-4. Weekly Update Form (structured history entry)
-5. Report Generator (Claude API weekly status report)
-
-**Priority 3 — Full replacement complete**
-6. Artifact Manager (manage deliverables)
-7. YAML Editor (escape hatch for edge cases)
-
-**Defer to v2**
-- History timeline view in Customer Overview
-- Cross-customer risk roll-up on Dashboard
-- Global search across all customers
-- Overdue summary panel on Dashboard
-- Owner-based filtering in Action Manager
-
-**Never build (for this tool)**
-- User authentication
-- Multi-user collaboration
-- In-app notifications
-- Gantt chart
-- Customer creation wizard
-- Report archive
+| Customer-facing read-only portal | External access requires auth, hosting security, a UX layer for non-power-users, and support — none of which exist | Email Weekly Customer Status output; portal is v3+ |
+| Multi-user / team collaboration | Concurrent write conflicts, permission models, notification routing for other users — all new complexity classes | Single-user first; the app is already valuable as a personal intelligence layer |
+| JWT/SSO authentication | No external users = no need; adds significant surface area | Environment variable or local config for API keys is sufficient |
+| In-app send (email/Slack directly from UI) | Sending from the app requires OAuth tokens, deliverability handling, and "oops I sent the wrong draft" recovery | Drafts Inbox generates the draft; user sends from their actual client with full control |
+| QBR / business-review deck generator | ELT External Status deck covers this need; QBR is a once-per-quarter edge case with high customization needs | Reuse ELT External Status + manual editing |
+| Hardcoded customer list | Code-level customer coupling makes every new account a deploy; violates the n-account requirement | All customers are rows in the projects table; onboarding is a UI action |
+| Real-time collaborative editing | No second user to collaborate with; adds WebSocket complexity for zero benefit | Optimistic UI with single-user writes is sufficient |
+| Native mobile app | PS delivery manager works at a desk; mobile adds a build target with no workflow benefit | Responsive web is acceptable minimum; native is waste |
+| Gantt drag-and-drop scheduling | PM tools that invest here get used for scheduling theater; PS timelines are driven by customer readiness, not Gantt perfection | Gantt view for status visibility is fine; make it read-only with explicit edit mode |
+| Notification email delivery (outbound from app) | Requires SMTP configuration, deliverability, bounce handling | In-app badges + morning briefing surfaced in dashboard are sufficient for single-user awareness |
+| Versioned document diffing | Append-only logs already provide an audit trail; diff UI adds rendering complexity for low practical use | Source tracing + append-only history is the audit story |
 
 ---
 
 ## Feature Dependencies
 
+Understanding which features are blocked by which others — critical for phase ordering.
+
 ```
-Dashboard → Customer Overview (navigation target for each card)
-Customer Overview → Action Manager (links to filtered view for that customer)
-Customer Overview → Report Generator (header button)
-Weekly Update Form → Customer Overview (history shown there eventually)
-Action Manager → Artifact Manager (linked_actions field cross-references)
-YAML Editor → All Views (writes raw YAML that all views read from)
-Report Generator → Claude API (external dependency — can fail independently)
-All Views → Drive API (single point of failure — must handle gracefully)
+PostgreSQL schema + migrations
+  → All features (everything is DB-backed)
+
+Project CRUD (add/close/archive)
+  → Dashboard health cards
+  → Per-project workspace tabs
+  → Cross-project risk heat map
+  → Cross-account watch list
+
+Action Tracker (DB + XLSX sync)
+  → Auto health scoring (overdue actions signal)
+  → Scheduled intelligence (tracker sweep)
+  → Customer Project Tracker skill
+
+Risk Register
+  → Auto health scoring (unresolved high risks signal)
+  → Cross-project risk heat map
+  → ELT External + Internal Status skills
+
+Milestone Tracker
+  → Auto health scoring (stalled milestones signal)
+  → Gantt timeline view
+
+Engagement History + Key Decisions
+  → Context Updater skill (writes here)
+  → Handoff Doc Generator skill (reads here)
+  → YAML context doc export
+
+Stakeholder Roster
+  → Team Engagement Map skill
+  → Meeting Summary skill (attendee attribution)
+
+Output Library
+  → All skill outputs (registration point)
+  → Regenerate workflow
+
+SKILL.md runtime loader
+  → All 15 skills
+  → Skill Launcher UI
+
+YAML ↔ DB round-trip (context doc export)
+  → All skills that consume context docs
+  → Context Updater round-trip fidelity
+  → Cowork compatibility constraint
+
+Drafts Inbox
+  → Weekly Customer Status skill
+  → Biggy Weekly Briefing skill (email + Slack drafts)
+  → Any skill that generates outbound copy
+
+Scheduled jobs infrastructure (cron)
+  → Morning Briefing background job
+  → Customer Project Tracker automated run
+  → Weekly Status Draft generation
+  → Biggy Weekly Briefing generation
+  → Cross-account health check
+
+Cross-project Knowledge Base
+  → Risk linkage (risks reference KB entries)
+  → Engagement history linkage
+  → Full-text search scope
+
+Full-text search
+  → Knowledge Base (requires KB to exist)
+  → All structured records (can be added incrementally)
 ```
+
+---
+
+## MVP Recommendation
+
+The tool has no value without project data and no daily use without AI outputs. The MVP must establish the full data foundation before the skill launcher has anything to run against.
+
+**Prioritize in this order:**
+
+1. **PostgreSQL schema + all migrations** — Everything else is blocked on this
+2. **Project CRUD + per-project workspace tabs** (Actions, Risks, Milestones, History, Decisions, Stakeholders) — These are the table stakes data surfaces
+3. **Dashboard health cards + auto-derived RAG scoring** — Daily driver; first thing opened each morning
+4. **YAML ↔ DB round-trip** — Required before any skill can run correctly; Cowork compatibility is non-negotiable
+5. **SKILL.md runtime loader + Skill Launcher** (start with 3-4 highest-value skills: Weekly Customer Status, Context Updater, Morning Briefing, Customer Project Tracker) — Proves the AI-native value proposition early
+6. **Drafts Inbox** — Gate before any outbound AI content reaches a client
+7. **Output Library** — Makes skill outputs findable and reusable
+8. **Scheduled jobs infrastructure + 6 cron jobs** — Unlocks "tool works while I sleep" differentiator
+9. **Remaining skills** (ELT decks, Team Engagement Map, Workflow Diagram, Handoff Doc, Meeting Summary) — Fill out the skill portfolio
+10. **Full-text search** — Becomes critical at 5+ active accounts; can defer until then
+
+**Defer to later milestones:**
+- Knowledge Base: High value but requires patterns to accumulate before search is useful; build in milestone 2
+- AI-assisted plan generation: Highest complexity, lowest urgency; defer to milestone 3
+- Gantt timeline view: Nice to have; milestone 2
+- Onboarding velocity / stall detection: Valuable but secondary to core data surfaces; milestone 2
 
 ---
 
 ## Sources
 
-- Analysis based on PROJECT.md specification (read 2026-03-04)
-- Domain expertise: established UX patterns for PM tools (Jira, Linear, Notion, Asana), customer success tooling (Gainsight, ChurnZero), YAML-backed config tools
-- Confidence: MEDIUM — no live web research available in this session; claims about patterns are from training knowledge (cutoff August 2025), not verified against current tooling landscape
-- Edge cases for Drive API atomic writes: based on Google Drive API v3 documented behavior (files.update is atomic at the API level); no live verification performed
+- **PRIMARY:** PROJECT.md specification (2026-03-18) — domain-authoritative, written by the PS delivery manager with direct domain expertise. HIGH confidence for feature naming and scope.
+- **SECONDARY:** Training knowledge of PS delivery tooling patterns (Gainsight, Vitally, Notion AI, Linear, Asana AI features, Salesforce PS cloud). MEDIUM confidence — used to validate "table stakes" categorizations only, not to contradict the specification.
+- **NOTE:** External web research was unavailable in this session. Feature landscape for established PM tools is well-understood from training data; AI-native scheduling and tone-separation patterns reflect current (2025-2026) industry trajectory. Flag for validation if tooling landscape evolves significantly before build starts.

@@ -1,17 +1,17 @@
 # Project Research Summary
 
-**Project:** BigPanda Project Intelligence App
-**Domain:** Local single-user React + Express PM tool with Google Drive YAML datastore and AI-powered report generation
-**Researched:** 2026-03-04
-**Confidence:** MEDIUM (no live web access during research; all findings from training data through August 2025 + direct PROJECT.md analysis)
+**Project:** BigPanda AI Project Management App (Full Rewrite)
+**Domain:** AI-native PS Delivery Management — single power user, n customer accounts, heavy AI output generation
+**Researched:** 2026-03-18
+**Confidence:** MEDIUM (stack HIGH where grounded in working codebase; architecture/pitfalls HIGH for established patterns; MCP specifics LOW)
 
 ## Executive Summary
 
-The BigPanda Project Intelligence App is a local single-user project management tool that replaces a manual workflow of disconnected Claude.ai projects and spreadsheets. Research confirms this is a well-understood domain with stable, proven technologies: a React + Vite frontend, an Express backend, Google Drive YAML files as the data store, and the Anthropic SDK for AI report generation. The architecture is deliberately simple — no database, no auth, no real-time sync — which is correct for the constraints. The key insight from combined research is that Google Drive's atomic file writes and version history provide a surprisingly robust persistence layer when paired with strict server-side schema validation.
+This is a full rewrite of a working 8-phase local web app — switching from Google Drive + React/Express/Vite to PostgreSQL + Next.js 14 App Router, while keeping the existing AI skill ecosystem intact. The recommended approach is a unified Next.js 14 monorepo with Drizzle ORM for type-safe DB access, BullMQ + Redis for scheduled background jobs, and the Anthropic SDK's native tool-use API for MCP integrations. The existing working codebase provides HIGH-confidence ground-truth versions for most key libraries (React 19, Tailwind 4, @anthropic-ai/sdk 0.78.0, pptxgenjs 4, Zod 4, TanStack Query 5, CodeMirror 6) — these are proven, running versions, not estimates.
 
-The recommended approach is to build in dependency order: Drive + YAML services first (they block everything), then the read surface (Dashboard, Customer Overview), then high-frequency writes (Action Manager), then the remaining structured views, and finally the AI-powered Report Generator and PPTX generation. This sequencing is driven by the architecture's dependency graph, not arbitrary preference. The most differentiating feature — Claude-powered report generation — is also the most isolated, so it can be validated end-to-end without disrupting core data management functionality.
+The AI-native differentiator depends critically on a SkillOrchestrator that reads SKILL.md files from disk at runtime (not bundled), assembles DB-derived context, and invokes Claude with token-budget guards. This orchestrator must be cleanly separated from Route Handlers so the same code path runs for both manual (SSE-streamed) and scheduled (BullMQ worker) invocations. Getting this separation wrong in Phase 5 taints the entire scheduled job infrastructure. The YAML context doc export must also carry forward the exact js-yaml settings from the prior build to preserve Cowork skill compatibility — this is a non-negotiable constraint.
 
-The top risks are concentrated in Phase 1 and cut across all three backend services: Google Drive service account scope misconfiguration produces misleading 403 errors; js-yaml's default schema silently coerces status field values (e.g., `on: true`) destroying data; and the React Router v6 nested route structure must be established up front or every view will be blank with no helpful error. All three are preventable at scaffold time if approached in the documented order. The Anthropic SDK version specified in PROJECT.md (`^0.20.0`) is severely outdated and must be updated before any code is written.
+The primary risks are: (1) Next.js serverless architecture killing cron jobs if not isolated in a dedicated worker process, (2) PostgreSQL connection pool exhaustion during concurrent scheduled job bursts, (3) Claude context window blowout on Customer Project Tracker batch runs across 10+ accounts, and (4) MCP client process stability (LOW confidence on current SDK state). The first three have well-documented mitigations. MCP needs a research spike before Phase 6.
 
 ---
 
@@ -19,205 +19,220 @@ The top risks are concentrated in Phase 1 and cut across all three backend servi
 
 ### Recommended Stack
 
-The frontend is React 18 + Vite 5 + Tailwind CSS v3 + React Router v6, chosen for stability over cutting-edge. Tailwind v4 and React Router v7 both have ecosystem gaps that would slow development. The backend is Express 4 on Node 20/22 LTS. State management uses TanStack Query v5 for all server data (Drive YAML) and plain React `useState` for UI state — Zustand is explicitly not needed at this scale.
-
-The critical library choices are: `js-yaml ^4.1.0` (stable, well-understood gotchas), `pptxgenjs ^3.12.x` (the only production-grade pure-JS PPTX generator), and `@anthropic-ai/sdk` at the current version (NOT the `^0.20.0` specified in PROJECT.md — run `npm view @anthropic-ai/sdk version` before starting). For the YAML editor, CodeMirror 6 is preferred over Monaco due to its ~10x smaller bundle size; Monaco is a full IDE core that is unnecessary for editing small YAML files.
+The stack is anchored by the existing working codebase. Ground-truth versions from running package.json files give HIGH confidence on all carry-forward libraries. New additions (Drizzle ORM, BullMQ, docx, ExcelJS, @slack/web-api) need `npm view <pkg> version` verification before pinning.
 
 **Core technologies:**
-- React 18.3 + Vite 5: UI framework and build tool — stable LTS-equivalent, avoids v19/v6 ecosystem lag
-- Express 4 + Node 20 LTS: HTTP server and runtime — well-documented, v5 ecosystem still catching up
-- TanStack Query v5: Server state cache — eliminates redundant Drive reads with `staleTime`, built-in loading/error states
-- `googleapis ^140.x` + `google-auth-library ^9.x`: Drive API client — official Google libraries; use `GoogleAuth` class, never cache raw tokens
-- `js-yaml ^4.1.0`: YAML parse/serialize — stable with documented gotchas; use `JSON_SCHEMA` to avoid boolean coercion
-- `pptxgenjs ^3.12.x`: PPTX generation — write-only, well-understood limitations around z-order and text overflow
-- `@anthropic-ai/sdk` (current version): Claude API — use streaming for ELT decks (10-20s generation), non-streaming for weekly status
-- CodeMirror 6 (`@codemirror/lang-yaml`): YAML editor — lightweight alternative to Monaco; ~200KB vs ~2MB
-- `zod ^3.23.x`: Schema validation — validate Claude JSON output before pptxgenjs; also validate YAML server-side
-- `concurrently + nodemon`: Dev tooling — run client + server together; auto-restart backend on changes
+- **Next.js 14 (App Router):** Unified frontend + API — replaces the Vite/Express split; server components, API routes, and streaming RSC in one repo
+- **React 19.2.0:** Confirmed working in existing client; do not downgrade to 18
+- **Tailwind CSS 4.2.1:** Confirmed in existing client; V4 uses CSS `@theme` directives — NO `tailwind.config.js`; `@tailwindcss/vite` plugin only
+- **TypeScript 5.x:** Standard for Next.js App Router; use strict mode throughout
+- **PostgreSQL 16.x + Drizzle ORM:** Primary data store; Drizzle preferred over Prisma (no binary engine, native Edge Runtime compat, plain TypeScript schema)
+- **`postgres` (porsager) driver:** Cleaner connection lifecycle than `pg`; avoids pool config footguns
+- **@anthropic-ai/sdk 0.78.0:** Confirmed running version — NOT ^0.20.0 (stale); streaming and tool-use API surface changed substantially from 0.20.x
+- **BullMQ + Redis:** Job queue for 6 scheduled skills; provides retry, persistence, job history — node-cron is unacceptable (no retry, no persistence, silent failure)
+- **pptxgenjs 4.0.1:** Confirmed v4 in existing build; requires `export const runtime = 'nodejs'` — cannot run in Edge Runtime
+- **Zod 4.3.6:** Confirmed v4; breaking changes from v3 (`z.record()`, `z.string().min(1)` replacing `.nonempty()`)
+- **TanStack Query 5.90.21:** Confirmed in existing client; `QueryClientProvider` must be in a client component
+- **CodeMirror 6:** Confirmed in existing client; use for YAML editor — do not switch to Monaco
+- **js-yaml 4.1.1:** Confirmed; must use `{ sortKeys: false, lineWidth: -1, schema: yaml.JSON_SCHEMA }` — non-negotiable for Cowork compatibility
+- **googleapis 171.4.0:** Confirmed working for Drive + Gmail; CJS import works in Next.js via standard `import { google } from 'googleapis'`
+- **docx 8.x + ExcelJS 4.x:** New additions for .docx/.xlsx generation; versions need `npm view` before pinning
+- **SSE via Next.js `ReadableStream`:** No library needed for real-time skill output streaming; WebSockets are incompatible with App Router serverless architecture
+
+**Critical version verification required before Phase 1:**
+```bash
+npm view drizzle-orm version
+npm view postgres version
+npm view drizzle-kit version
+npm view bullmq version
+npm view ioredis version
+npm view docx version
+npm view exceljs version
+npm view @slack/web-api version
+```
+
+See `.planning/research/STACK.md` for complete version table, conflict matrix, and installation commands.
+
+---
 
 ### Expected Features
 
-Research confirms the 7-view structure is sound and complete for MVP. The features split clearly into three tiers based on user workflow criticality.
+The feature set is defined by the PROJECT.md specification (domain-authoritative). External web research was unavailable; feature categorizations are validated against known PS delivery tooling patterns (Gainsight, Vitally, Linear AI).
 
-**Must have (table stakes):**
-- Dashboard with at-risk sorting and overdue action counts — cross-customer status at a glance
-- Customer Overview with workstream health, risks, milestones, action summary
-- Action Manager with inline editing, filter/sort, and Drive write with optimistic feedback
-- Consistent red/yellow/green status vocabulary across all 7 views — vocabulary is fixed by the YAML schema
-- Empty states with add prompts on every list section
-- Navigation breadcrumb (Dashboard > Customer Name > View)
-- Unsaved changes protection in YAML Editor (React Router v6 `useBlocker` hook)
-- Confirmation on destructive actions (retire/close) without modal — a confirmation row state
+**Must have (table stakes) — missing = product fails:**
+- Project health at a glance (auto-derived RAG from overdue actions + stalled milestones + unresolved high risks — never manual)
+- Per-project action tracker with inline editing + PA3_Action_Tracker.xlsx sync (contractual Cowork handshake)
+- Risk register with append-only mitigation log
+- Milestone tracker with completion history
+- Engagement history and key decisions (both append-only — contractual audit trail)
+- Stakeholder roster (BigPanda vs customer contacts)
+- Full-text search across all records spanning all projects
+- Output Library (indexed by account + skill type + date)
+- Settings (API keys, paths, schedule times — self-configurable without code changes)
+- Multi-account architecture (n projects with add/close/archive lifecycle)
 
-**Should have (competitive differentiators vs the current manual workflow):**
-- AI report generation (Claude API) — 60-second generation replaces 30-minute write-ups
-- Weekly Update Form as a structured ritual — eliminates hand-editing YAML indentation
-- Sequential human-readable IDs (A-001, R-001, X-001) — enables Slack/email references
-- Per-workstream progress bars on Customer Overview
-- Artifact linking to actions (expose `linked_actions` field in UI, not just YAML)
-- YAML Editor with schema validation button (escape hatch for power users)
+**Should have (AI-native differentiators) — what makes this valuable over a generic PM tool:**
+- Scheduled background intelligence: 6 cron jobs (Morning Briefing 8am, Health Check 8am, Slack/Gmail sweep 9am, Tracker Monday 7am, Weekly Status Thursday 4pm, Biggy Briefing Friday 9am)
+- Skill Launcher with 15 pre-built AI skills (SKILL.md read from disk at runtime, never bundled)
+- Tone separation: customer-facing vs internal outputs are enforced at skill level — never mix
+- Drafts Inbox: review queue for all outbound AI content before any send
+- Auto health scoring (data-derived, not manual — with manual override requiring justification)
+- Context Updater: 14-step structured update from meeting notes → DB → context doc (atomic)
+- Cross-project risk heat map (probability x impact, all accounts)
+- Cross-account watch list (escalated items needing daily attention)
+- Customer Project Tracker (Gmail/Slack/Gong sweep → DB update)
+- Knowledge Base (cross-project lessons learned, searchable after archive)
+- Source tracing on all records (required for Cowork skill confidence framing)
+- YAML ↔ DB round-trip (DB → YAML for Cowork compatibility, exact js-yaml settings required)
+- Team Engagement Map, Onboarding velocity view, AI-assisted plan generation
 
-**Defer to v2:**
-- History timeline view in Customer Overview (raw YAML `history` array is readable but no view renders it)
-- Cross-customer risk roll-up panel on Dashboard
-- Global search across all customer YAMLs
-- Overdue summary panel aggregating all overdue actions across customers
-- Owner-based filtering in Action Manager
+**Defer to later milestones (not v1):**
+- Knowledge Base (build after data accumulates — milestone 2)
+- AI-assisted plan generation (highest complexity, lowest urgency — milestone 3)
+- Gantt timeline view (read-only is fine for v1; drag-and-drop is scope theater)
+- Onboarding velocity / stall detection (valuable but secondary to core data surfaces)
 
-**Never build for this tool:**
-- User authentication, multi-user collaboration, in-app notifications
-- Gantt chart, customer creation wizard, report archive
-- Mobile/responsive design (desktop-only local tool)
-- Email sending, Slack/webhook integration
+**Anti-features (deliberately not building):**
+- Customer-facing portal, multi-user collaboration, JWT/SSO auth, in-app email/Slack send, QBR generator, real-time collaborative editing, native mobile app, versioned document diffing
+
+See `.planning/research/FEATURES.md` for full feature dependency graph and MVP prioritization order.
+
+---
 
 ### Architecture Approach
 
-The architecture is a client-server monorepo-lite: Vite React frontend proxies `/api` requests to Express, which owns all Drive reads/writes and Claude API calls. The frontend never touches Drive directly. All YAML mutations go through the atomic read-modify-validate-write cycle on the server. TanStack Query's `CustomerLayout` route fetches customer data once and passes it via `useOutletContext()` to all 6 child views — no redundant Drive reads on tab navigation. Reports use base64-in-JSON for PPTX delivery (simpler than streaming binary; size is 270KB-2.7MB which is fine on localhost).
+The architecture is a single-schema multi-tenant Next.js 14 App Router application with a strictly separated service layer. PostgreSQL is the single source of truth. BullMQ workers run as a separate persistent Node.js process alongside the Next.js server — this separation is mandatory, not optional. The SkillOrchestrator is the most critical component: it must be callable from both Route Handlers (manual SSE invocations) and BullMQ workers (scheduled runs) — if skill logic leaks into Route Handlers, the scheduled job path breaks.
 
 **Major components:**
-1. `driveService.js` — Google Drive API v3 reads/writes; owns auth lifecycle via `GoogleAuth` class; never caches raw tokens
-2. `yamlService.js` — js-yaml parse/serialize, schema validation, sequential ID assignment; the single source of schema truth
-3. `claudeService.js` — Anthropic SDK calls; streaming for ELT decks, non-streaming for weekly status
-4. `pptxService.js` — pptxgenjs PPTX builder; maps Claude-generated JSON to slide elements; owns z-order and text truncation
-5. Express routes (thin) — validate HTTP params, delegate to services, return responses; `asyncWrapper` middleware eliminates try/catch boilerplate
-6. React Query cache — `CustomerLayout` fetches once, child views consume via `useOutletContext()`; `staleTime: 30-60s` prevents redundant fetches
+1. **RSC Pages** — Server-side render of data-heavy read views (dashboard, workspace tabs); zero client JS for initial paint
+2. **Route Handlers (`/app/api/`)** — HTTP boundary only; input validation, dispatch to service layer; never contain business logic
+3. **DataService** — All DB access via Drizzle; enforces append-only rules, ID generation, source tracing; only component that touches PostgreSQL
+4. **SkillOrchestrator** — Loads SKILL.md from disk at invocation time, assembles DB context, invokes Anthropic SDK, streams result, persists draft; callable from both Route Handlers and workers
+5. **MCPClientPool** — Shared MCP client instance initialized at server startup; manages Slack/Gmail/Glean/Drive tool sessions; one pool, not one client per request
+6. **JobService** — Enqueues BullMQ jobs; exposes job status; manages cron schedule registration; does not contain skill logic
+7. **BullMQ Workers** — Separate Node.js process; calls SkillOrchestrator for scheduled runs; writes results to DB via DataService
+8. **FileGenerationService** — Produces .docx/.pptx/.xlsx/.html; registers artifact in DB outputs table; isolated to Node.js runtime routes
+
+**Key patterns:**
+- `export const runtime = 'nodejs'` on every Route Handler that touches skills, jobs, file generation, or SKILL.md reads — Edge Runtime is incompatible with all of these
+- Singleton DB connection pool with `global.__pgPool` to survive hot reload
+- `import 'server-only'` at the top of every file with DB queries or API keys — build-time guard against client bundle leakage
+- SSE via Next.js `ReadableStream` for manual skill invocations; 3-second polling for job status
+- PostgreSQL FTS (`tsvector`/`tsquery` with GIN index) for cross-project search — no separate search engine needed
+
+**Build order is strictly sequential for Phases 1-5:** Schema → App Shell → Write Surface → Job Infrastructure → Skill Engine. Phase 6 (MCP) and Phase 7 (file generation) can overlap after Phase 5 is stable.
+
+See `.planning/research/ARCHITECTURE.md` for full component boundary table, data flow diagrams, and anti-pattern list.
+
+---
 
 ### Critical Pitfalls
 
-1. **Drive service account wrong scope (C1)** — `drive.file` scope only covers service-account-owned files; human-created YAMLs return 403. Fix: always request `https://www.googleapis.com/auth/drive` (full scope). Add a `/api/health/drive` startup check to catch this immediately.
+**Top pitfalls ordered by blast radius:**
 
-2. **Drive token caching anti-pattern (C2)** — caching a raw access token causes silent failures after 60 minutes ("nothing saves after lunchtime"). Fix: always use `google.auth.GoogleAuth` class and pass the `auth` object to the Drive client; never extract and cache raw bearer tokens.
+1. **Cron jobs in Next.js Route Handlers** — Jobs silently stop running in any multi-process or serverless context; scheduler log appears on every HTTP request if misplaced. Prevention: dedicated worker process (`worker/index.ts`) launched alongside Next.js; BullMQ RepeatableJob, never `node-cron` inside API routes.
 
-3. **js-yaml type coercion destroys data (C4)** — `status: on` parses as `true` (boolean), writes back as `true`, permanently corrupting the schema. Fix: use `schema: yaml.JSON_SCHEMA` on load; validate all enum fields against allowed string values in `yamlService.js`.
+2. **PostgreSQL connection pool exhaustion** — `new Pool()` at module scope creates a new pool on every Route Handler cold start; exhausts `max_connections` during concurrent scheduled job bursts. Prevention: singleton pool pattern (`global.__pgPool`); set `max: 10`; PgBouncer in transaction mode if needed.
 
-4. **React Router v6 missing `<Outlet />` produces blank views (C13)** — forgetting `<Outlet />` in parent layouts causes child routes to render as empty content with no error. Fix: establish the full nested route structure in Phase 1 scaffold before building any view components.
+3. **Claude context window blowout** — Customer Project Tracker sweeping 30 days of Gmail + Slack + Gong for 10+ accounts can hit 80k-120k tokens per account; $50-200+ API bill from a single Monday batch. Prevention: `buildSkillContext()` utility that queries only skill-declared DB rows (not full project dump); token budget guard wrapping every API call; sequential (not parallel) batch execution.
 
-5. **Anthropic SDK version `^0.20.0` is severely outdated** — the PROJECT.md brief specifies a version that predates streaming improvements and tool use stabilization. Fix: run `npm view @anthropic-ai/sdk version` before writing any code and pin to the current version.
+4. **Missing `project_id` filter causing cross-account data contamination** — Silent bug that gets worse as account count grows. Prevention: PostgreSQL Row Level Security on every project-scoped table; `ProjectRepository` class that always injects `project_id`; two-project seed in all integration tests.
 
-**Additional high-priority pitfalls to address in Phase 1:**
-- Express body size limit (m4): set `express.json({ limit: '2mb' })` from day one — YAML Editor submits full YAML strings
-- CORS vs Vite proxy (C12): configure Vite proxy first; do NOT add `cors()` middleware as a reflex
-- Atomic write deep clone (M3): always `structuredClone(parsed)` before mutating; prevents writing partially-invalid objects to Drive
-- js-yaml `undefined` → omitted keys (m2): normalize to `null`/`[]` before serializing; missing fields cause silent UI bugs
+5. **SkillOrchestrator not separated from Route Handlers** — If skill logic is embedded in Route Handlers, BullMQ workers cannot call it, creating duplicate code paths that drift. Prevention: enforce the boundary before writing any skill logic in Phase 5; Route Handler calls `SkillOrchestrator.run()`; Worker calls `SkillOrchestrator.run()`.
+
+6. **YAML export round-trip drift** — Wrong js-yaml settings break Cowork skill compatibility silently. Prevention: carry forward `{ sortKeys: false, lineWidth: -1, schema: yaml.JSON_SCHEMA }` exactly; add round-trip test before any YAML export ships.
+
+7. **Append-only tables broken by accidental UPDATE** — Application-layer conventions drift. Prevention: `BEFORE UPDATE OR DELETE` trigger on `engagement_history` and `key_decisions` at migration time; no `PATCH` Route Handler for these tables.
+
+8. **SSE disconnect → duplicate skill run → double API cost** — User navigates away mid-stream; on reconnect triggers a new run. Prevention: write to `outputs` table during stream (not after); idempotency key on skill runs; poll job status on reconnect.
+
+9. **Prompt injection via DB content in skill prompts** — User-supplied meeting notes or swept Slack messages can override skill behavior; Context Updater writes to DB. Prevention: `<user_content>` delimiters in every prompt; schema-validated output before any DB write; diff review in Drafts Inbox.
+
+10. **MCP auth token leakage** — OAuth tokens embedded in stored skill outputs or logs. Prevention: tokens never passed to Claude; sanitize outputs before DB write; `server-only` import guard on all credential-handling modules.
+
+See `.planning/research/PITFALLS.md` for full pitfall list with detection and phase-specific warning table.
 
 ---
 
 ## Implications for Roadmap
 
-Based on the architecture dependency graph and pitfall phase warnings, the following 5-phase structure is recommended. This sequencing is driven by what blocks what, not by view priority.
+Based on the combined research, the architecture's component dependency graph and the FEATURES.md priority order converge on the same 8-phase structure suggested in ARCHITECTURE.md. The ordering is driven by hard dependencies: everything is blocked on the schema; skills are blocked on job infrastructure; MCP is blocked on skills.
 
-### Phase 1: Foundation — Backend Scaffold + Drive + YAML Services
+### Phase 1: Data Foundation
+**Rationale:** Every feature in FEATURES.md is blocked on PostgreSQL schema + migrations. Connection pooling, RLS policies, append-only triggers, and YAML export utilities must be built here — retrofitting them later is significantly more expensive.
+**Delivers:** PostgreSQL schema with all domain tables (actions, risks, milestones, history, decisions, stakeholders, artifacts, outputs, job_runs, drafts); DataService with full CRUD; YAML import script (existing context docs → DB); YAML export with correct js-yaml settings; health score computation logic; singleton connection pool; RLS policies; append-only triggers.
+**Addresses:** Multi-account architecture, action tracker, risk register, milestone tracker, engagement history, key decisions, stakeholder roster, YAML round-trip.
+**Avoids:** Pitfalls 2 (connection pool), 4 (missing project_id filter), 6 (YAML drift), 7 (append-only violation). These cannot be retroactively fixed without schema rewrites.
+**Research flag:** Standard patterns — skip research phase. PostgreSQL multi-tenant schema, Drizzle ORM migration workflow, and js-yaml configuration are well-documented.
 
-**Rationale:** Everything else depends on this. Drive auth failures and YAML schema bugs discovered late require rewrites. The riskiest, most blocking code must be written, tested, and health-checked first before any UI exists.
+### Phase 2: Next.js App Shell + Read Surface
+**Rationale:** With data in the DB, the app shell and read-only views can be built without mutation logic. SSR via React Server Components gives fast initial paint. Dashboard health cards and workspace tabs are the daily driver — establishing them early validates the data model.
+**Delivers:** Next.js project scaffold; `server-only` import guards; Route Handlers for read endpoints; RSC Dashboard with auto-derived RAG health cards; RSC workspace tabs (actions, risks, milestones, history, decisions, stakeholders); TanStack Query setup with `QueryClientProvider` in client component.
+**Uses:** Next.js 14 App Router, React 19, Tailwind 4 (CSS `@theme` directives), TanStack Query 5.
+**Avoids:** Pitfall 15 (server component credential leakage); Pitfall 13 (stale health scores during batch — add `last_updated` timestamps now).
+**Research flag:** Skip research phase. Next.js App Router RSC + Tailwind 4 + TanStack Query 5 setup is well-documented and proven in existing client.
 
-**Delivers:**
-- Working `driveService.js` with correct full Drive scope, `GoogleAuth` class (never raw tokens), and startup health-check endpoint
-- Working `yamlService.js` with `JSON_SCHEMA` parsing, enum validation, `structuredClone` before mutations, `lineWidth: -1` serialization, and schema constant as single source of truth
-- Express scaffold with `express.json({ limit: '2mb' })`, `asyncWrapper` middleware, `errorHandler.js`
-- Vite proxy configured (`/api` → `http://localhost:3001`) — CORS never needed
-- React Router v6 nested route structure established with all 7 view placeholders and correct `<Outlet />` composition
-- TanStack Query provider and `api.js` fetch wrapper
-- `.env` with `ANTHROPIC_API_KEY`, `GOOGLE_APPLICATION_CREDENTIALS`, `DRIVE_FOLDER_ID`
+### Phase 3: Write Surface + Action Tracker
+**Rationale:** Read-only views prove the data model; write surface proves data integrity. Inline editing, optimistic UI, and the PA3_Action_Tracker.xlsx dual-write are the contractual deliverables that validate the DB is correct.
+**Delivers:** Mutation Route Handlers for all domain entities; optimistic UI patterns in client components; inline editing in workspace tabs; PA3_Action_Tracker.xlsx dual-write with round-trip test.
+**Avoids:** Pitfall 5 (data isolation — verify `project_id` filter on every mutation); PA3 row format must be validated against exact column headers before phase closes.
+**Research flag:** Skip research phase. Optimistic UI with TanStack Query and ExcelJS xlsx generation are well-documented patterns.
 
-**Features addressed:** Atomic persistence, sequential ID assignment, schema validation
-**Pitfalls avoided:** C1, C2, C3, C4, C5, C6, C7, C12, C13, M3, m2, m4
+### Phase 4: Job Infrastructure
+**Rationale:** Skills (Phase 5) depend on BullMQ for async execution. The job infrastructure must exist and be verified stable before any skill logic is written — including the worker process lifecycle, job status table, and advisory locking pattern.
+**Delivers:** Redis setup (local via Homebrew); BullMQ worker process (`worker/index.ts`); `JobService` (enqueue, status); job status Route Handler + polling UI component; `scheduled_jobs` table with advisory lock pattern; cron schedule registration for all 6 scheduled jobs (initially no-op handlers).
+**Avoids:** Pitfall 1 (cron jobs in Next.js — worker process is the solution); Pitfall 6 (job overlap — advisory locks established here, not retrofitted).
+**Research flag:** Needs research spike on BullMQ v5 RepeatableJob cron syntax before implementation — major version may have changed the repeat job API.
 
-**Research flag:** NEEDS research-phase — Google Drive service account setup has several non-obvious steps (enabling Drive API in GCP, creating service account, granting folder access, choosing correct scope). The pitfalls here are hard to discover without experience.
+### Phase 5: Skill Engine
+**Rationale:** The AI-native value proposition lives here. `SkillOrchestrator` is the most critical component boundary — it must be callable identically from Route Handlers and workers before any skill is wired. Token budget guard and context chunking must be built before first skill runs.
+**Delivers:** `SkillOrchestrator` with `run(skillId, projectId)` method; `buildSkillContext()` utility with token budget guard; SKILL.md startup validation + pre-run file guard; Anthropic SDK streaming integration; SSE Route Handler (`export const runtime = 'nodejs'`); streaming UI panel (Skill Launcher); Drafts Inbox; `outputs` table status model with idempotency key; initial 4 skills wired: Weekly Customer Status, Context Updater, Morning Briefing, Customer Project Tracker (without MCP).
+**Avoids:** Pitfall 3 (context window blowout — token budget guard is Phase 5 prerequisite); Pitfall 8 (SSE disconnect — DB write during stream); Pitfall 9 (prompt injection — content delimiters on all prompts); Pitfall 10 (missing SKILL.md → startup validation).
+**Research flag:** Needs research phase. Anthropic SDK 0.78.x streaming with tool_use multi-turn requires API verification. Verify `buildSkillContext()` context assembly pattern against current SDK docs.
 
----
+### Phase 6: MCP Integrations
+**Rationale:** Customer Project Tracker is the highest-value scheduled job but depends on Slack/Gmail/Gong sweeps via MCP. MCP is isolated to Phase 6 because the client pool pattern has LOW confidence — it needs a research spike before implementation.
+**Delivers:** `MCPClientPool` (shared, initialized once at server startup); MCP connections for Slack, Gmail, Glean, Drive; tool-use flow in SkillOrchestrator; Customer Project Tracker skill fully wired with MCP; auth token sanitization before DB write.
+**Avoids:** Pitfall 4 (MCPClientPool shared — not one client per request); Pitfall 9 (MCP auth token leakage).
+**Research flag:** REQUIRES research phase. MCP SDK was actively evolving at training cutoff (August 2025). Verify `@modelcontextprotocol/sdk` current API, stdio vs HTTP transport preference, and connection lifecycle management in 2026 before writing any Phase 6 code.
 
-### Phase 2: Read Surface — Dashboard + Customer Overview
+### Phase 7: File Generation
+**Rationale:** Can overlap with Phase 6. pptxgenjs, docx, and ExcelJS generators are isolated to `FileGenerationService` — no dependency on MCP. ELT decks and meeting summaries complete the skill portfolio.
+**Delivers:** `FileGenerationService` with per-type generators (.docx, .pptx, .xlsx, .html); Output Library UI (indexed by account + skill type + date); archive-on-replace pattern; remaining 11 skills wired (ELT External/Internal Status, Team Engagement Map, Workflow Diagram, Handoff Doc Generator, Meeting Summary, Biggy Weekly Briefing, Onboarding Assessment, AI-Assist Plan, Knowledge Capture).
+**Avoids:** Pitfall 8 (file corruption — test every template in Microsoft Office before wiring into skill launcher; use `export const runtime = 'nodejs'` on all file generation routes).
+**Research flag:** Needs a validation spike: generate test PPTX and DOCX, open in Microsoft Office (not LibreOffice), verify no corruption. This is a known failure mode — do it before writing generation logic, not after.
 
-**Rationale:** Validates the Drive connection end-to-end with real data. Makes the app demonstrably useful. Unblocks all subsequent views by confirming the data model and React Query cache setup work correctly.
-
-**Delivers:**
-- `GET /api/customers` — parallel Drive reads for all customer YAMLs
-- `GET /api/customers/:id` — single customer YAML
-- Dashboard view: customer card grid sorted by risk, health summary, overdue action counts, filter by status
-- Customer Overview view: workstream health, per-workstream progress bars, top risks, upcoming milestones, recent action summary, navigation to child views
-- Navigation breadcrumb, `CustomerLayout` with `useOutletContext()` data passing
-
-**Features addressed:** Status visibility at a glance, cross-customer risk aggregation, empty states, navigation
-**Architecture implemented:** CustomerLayout data-fetch pattern, React Query `staleTime` caching
-**Pitfalls avoided:** Anti-Pattern 3 (multiple queries for same customer), redundant Drive reads
-
-**Research flag:** Standard patterns — no research-phase needed. React Query + React Router nested routes are well-documented.
-
----
-
-### Phase 3: Core Write Surface — Action Manager + Supporting Write Endpoints
-
-**Rationale:** Action Manager is the highest-frequency daily interaction. Validating the atomic write pattern (read → mutate → validate → write → invalidate cache) on the most-used view de-risks all subsequent write views. If this works correctly, every other write view follows the same pattern.
-
-**Delivers:**
-- Write routes for actions (`POST`, `PATCH`), risks (`POST`, `PATCH`), milestones (`POST`, `PATCH`)
-- Action Manager view: inline editing, filter by workstream/status/owner, sort by any column, text search within descriptions, overdue date highlighting, `N` / `Enter` / `Escape` keyboard shortcuts
-- Optimistic UI pattern: update React Query cache on success via `invalidateQueries`, show "Saving..." → "Saved" indicator, revert on failure
-- Sequential ID assignment for actions (server-side, never trust client IDs)
-
-**Features addressed:** Inline editing, sort/filter, overdue highlighting, confirmation on destructive actions
-**Pitfalls avoided:** M3 (atomic write edge cases), M4 (ID gaps after deletion), m3 (write feedback)
-
-**Research flag:** Standard patterns — atomic write and React Query mutation patterns are well-documented.
-
----
-
-### Phase 4: Remaining Structured Views — Weekly Update Form + Artifact Manager
-
-**Rationale:** These views share the same write pattern as Phase 3 but are lower-frequency interactions. Building them after Action Manager means the team is practiced with the write pattern. They are independent of each other and can be built in parallel.
-
-**Delivers:**
-- `POST /api/customers/:id/history` — append weekly update entry
-- `POST/PATCH /api/customers/:id/artifacts` — artifact CRUD with `linked_actions` cross-references
-- Weekly Update Form: structured form for this-week status, blockers, next-week plan; writes to `history` array; unsaved changes protection
-- Artifact Manager: add/update/retire artifacts, filter by type/status, text search, linked actions display
-- Customer Overview inline edits for risks and milestones
-
-**Features addressed:** Weekly Update Form as structured ritual, Artifact linking to actions, inline editing on Customer Overview
-**Pitfalls avoided:** m3 (write feedback), unsaved changes guard via `useBlocker`
-
-**Research flag:** Standard patterns — no research-phase needed.
-
----
-
-### Phase 5: AI Report Generator + PPTX Export
-
-**Rationale:** The most differentiating feature but also the most isolated — it depends on all data being correct (Phase 3-4) and has its own external API dependency (Claude). Building it last means it can be tested with real customer data. pptxgenjs has documented limitations (z-order, text overflow, font embedding) that require deliberate design, not incidental discovery.
-
-**Delivers:**
-- `claudeService.js`: streaming for ELT deck JSON generation, non-streaming for weekly status text; current SDK version (not `^0.20.0`)
-- `pptxService.js`: Claude JSON → pptxgenjs slide construction; explicit layer ordering (background → shapes → text); field truncation with `maxChars` per field; font constants (cross-platform safe fonts)
-- `POST /api/customers/:id/reports` route with 120-second route-level timeout
-- Report Generator view: one-click generation, disabled button on click (prevents double-submit), `AbortController` with 90s client timeout, elapsed timer display, PPTX base64 download trigger
-- YAML Editor view: CodeMirror 6 (`@codemirror/lang-yaml`, `@codemirror/lint`), lazy-loaded via `React.lazy()`, client-side validation on "Validate" button, schema warning banner, `useBlocker` for unsaved changes
-
-**Features addressed:** AI report generation (key differentiator), PPTX download, YAML editor escape hatch
-**Pitfalls avoided:** C8 (z-order), C9 (text overflow), C10 (font embedding), C11 (timeout/double-submit), M1 (Monaco bundle), M2 (PPTX headers)
-
-**Research flag:** NEEDS research-phase — Claude prompt engineering for structured JSON output (ELT deck schema), pptxgenjs current version status and any z-order fixes since training data cutoff, and streaming SSE pattern for long-running generation should be validated before implementation.
+### Phase 8: Cross-Project Features + Polish
+**Rationale:** Cross-project views (risk heat map, watch list, full-text search) require all project data to be populated. Knowledge Base benefits from accumulated patterns. These features have no hard Phase 7 predecessors but need substantial data to be useful.
+**Delivers:** PostgreSQL FTS across all tables (GIN index); cross-project risk heat map; cross-account watch list; Knowledge Base (searchable, linkable to risks/decisions); Dashboard cross-account panels; Drafts Inbox send/discard flow; settings validation for SKILL.md paths; onboarding velocity / stall detection.
+**Research flag:** Skip research phase. PostgreSQL FTS and cross-project query patterns are well-documented. UI polish is standard React work.
 
 ---
 
 ### Phase Ordering Rationale
 
-- Phase 1 before everything: Drive auth failures discovered late require full service rewrites. All 13 critical pitfalls with "Phase 1" warnings apply to the very first code written.
-- Phase 2 before writes: confirms the data model and cache architecture are correct with real Drive data before investing in write logic.
-- Phase 3 before Phase 4: Action Manager is the most-used view; validating the atomic write pattern here means Phase 4 views are low-risk.
-- Phase 5 last: Claude + pptxgenjs are isolated dependencies with their own failure modes; building last means they can be tested with complete, validated data from Phases 1-4.
-- YAML Editor in Phase 5 (not earlier): CodeMirror is a self-contained view requiring only the raw read/write endpoint (available after Phase 1); deferring it avoids Monaco/CodeMirror bundle investigation blocking core data views.
+- **Data-first (Phase 1):** RLS policies, connection pooling, append-only triggers, and YAML export are dramatically harder to retrofit than to build first. Every other phase touches the DB.
+- **Read before write (Phase 2 before 3):** Read surface validates the data model before mutations can corrupt it. Optimistic UI bugs are harder to diagnose without a known-good read baseline.
+- **Infrastructure before skills (Phase 4 before 5):** SkillOrchestrator being callable from workers is the single most critical architectural boundary. It cannot be established after skill logic is written.
+- **Skills before MCP (Phase 5 before 6):** Skills without MCP (DB-only context) are fully functional for most use cases. MCP adds the Slack/Gmail sweep dimension. Isolating MCP to Phase 6 reduces Phase 5 scope and lets the LOW-confidence MCP patterns be researched before use.
+- **File generation can overlap (Phase 7 with Phase 6):** FileGenerationService has no MCP dependency. ELT deck generation can proceed in parallel with MCP integration work.
+- **Cross-project last (Phase 8):** These features compound value from accumulated data. Full-text search with empty tables is not useful.
 
 ---
 
 ### Research Flags
 
-**Phases needing `/gsd:research-phase` during planning:**
-- **Phase 1:** Google Drive service account + GCP setup has multiple non-obvious failure modes (scope selection, folder sharing, API enablement in Cloud Console). Verify step-by-step setup against current GCP docs before coding.
-- **Phase 5:** Claude prompt engineering for structured JSON ELT deck output; pptxgenjs z-order improvements since mid-2025; Anthropic SDK streaming SSE pattern with current SDK version.
+**Requires research phase before implementation:**
+- **Phase 4:** BullMQ v5 RepeatableJob cron syntax — major version API may have changed
+- **Phase 5:** Anthropic SDK 0.78.x streaming + tool_use multi-turn pattern — verify current API surface; `buildSkillContext()` token estimation approach
+- **Phase 6:** MCP SDK current API, connection lifecycle, stdio vs HTTP transport — LOW confidence, actively evolving ecosystem
+- **Phase 7:** pptxgenjs v4 + docx v8 Microsoft Office compatibility — validation spike before generation logic is written
 
-**Phases with standard, well-documented patterns (skip research-phase):**
-- **Phase 2:** React Query + nested routes — stable, well-documented APIs with abundant examples.
-- **Phase 3:** Atomic write + React Query mutations — standard CRUD pattern; pitfalls are documented and preventable.
-- **Phase 4:** Same write pattern as Phase 3; no new architectural concerns.
+**Standard patterns (skip research phase):**
+- **Phase 1:** PostgreSQL schema design, Drizzle migration workflow, js-yaml configuration — well-documented; existing app provides proven patterns
+- **Phase 2:** Next.js App Router RSC, Tailwind 4, TanStack Query 5 — existing client codebase is ground truth
+- **Phase 3:** Optimistic UI with TanStack Query, ExcelJS xlsx writes — established patterns
+- **Phase 8:** PostgreSQL FTS, cross-project queries, React UI polish — standard
 
 ---
 
@@ -225,46 +240,43 @@ Based on the architecture dependency graph and pitfall phase warnings, the follo
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | MEDIUM | Core choices (React 18, Vite 5, Express 4, js-yaml, pptxgenjs) are HIGH confidence. Exact version numbers for `@anthropic-ai/sdk`, `googleapis`, Tailwind, Monaco/CodeMirror need live `npm view` verification before install. |
-| Features | MEDIUM | 7-view structure is well-analyzed against PROJECT.md. Feature prioritization is domain-expertise-based (no live user research). The v2 deferrals are opinionated — validate against user's actual daily workflow gaps. |
-| Architecture | HIGH | The architecture is a standard Vite + Express + React Query pattern with well-documented component boundaries. Data flow patterns are stable and independently verifiable. Confidence degraded only by CodeMirror vs Monaco choice (verify bundle sizes in current versions). |
-| Pitfalls | MEDIUM | Google Drive API auth pitfalls (C1-C3) and js-yaml coercion (C4-C7) are from stable, well-documented sources (HIGH confidence). pptxgenjs z-order (C8) and Monaco lazy loading (M1) behavior may have changed in versions released after August 2025 (LOW confidence on current behavior). |
+| Stack (carry-forward libraries) | HIGH | Read directly from working server/package.json and client/package.json — proven running versions |
+| Stack (new libraries: Drizzle, BullMQ, docx, ExcelJS) | MEDIUM | Architecture rationale is HIGH; version numbers need `npm view` before pinning |
+| Features | HIGH | Grounded in PROJECT.md specification (domain-authoritative, written by the PS delivery manager); external PS tool research MEDIUM but used only for validation |
+| Architecture | HIGH for core patterns; LOW for MCP | Next.js App Router, PostgreSQL multi-tenant, BullMQ worker separation are well-established; MCP client pool pattern was evolving at training cutoff |
+| Pitfalls | HIGH | All critical pitfalls are well-documented across multiple authoritative sources; MCP-specific pitfalls are MEDIUM |
 
-**Overall confidence:** MEDIUM
+**Overall confidence:** MEDIUM-HIGH. The foundation (schema, app shell, write surface, job infrastructure) can be built with HIGH confidence. Skill engine needs API verification (Phase 5). MCP integration is the highest-uncertainty area and needs a dedicated research spike (Phase 6).
 
 ### Gaps to Address
 
-- **Anthropic SDK current version:** PROJECT.md specifies `^0.20.0` which is at least 6 months outdated as of March 2026. Run `npm view @anthropic-ai/sdk version` before any code. The streaming pattern in STACK.md is structurally correct regardless of version, but API method signatures may differ.
-- **Tailwind v3 vs v4 decision:** Depends on what `npm create vite@latest` scaffolds by default in March 2026. Check the scaffold output before committing to v3 or v4 — the config structure changes completely between versions.
-- **React 18 vs React 19:** Same scaffold concern. React 19 may now be the default. Verify React Router v6 compatibility with whichever version is installed.
-- **pptxgenjs z-order current behavior:** C8 in PITFALLS.md notes this as a hard limitation. Verify against current pptxgenjs GitHub issues before designing the slide layout system — it may have been addressed.
-- **User workflow validation for v2 deferrals:** The research defers cross-customer risk roll-up, global search, and history timeline to v2. These are driven by complexity analysis, not actual user feedback. Validate with the user before finalizing the roadmap — if ELT prep with cross-customer risk roll-up is a daily need, it should move to Phase 2.
-- **YAML schema canonical definition:** The YAML schema is described in PROJECT.md but a machine-readable schema constant (used by `yamlService.js` validation) needs to be defined in Phase 1. This is a known gap — it requires reading the full schema spec from PROJECT.md and translating it to zod or a JS validation object before yamlService.js can be complete.
+- **MCP SDK current state (Phase 6 blocker):** As of training cutoff (August 2025), `@modelcontextprotocol/sdk` was actively evolving. Verify current connection management API, stdio vs HTTP transport preference, and whether the client pool pattern from ARCHITECTURE.md Q3 is still the recommended approach. Run this research before Phase 6 planning.
+- **BullMQ v5 RepeatableJob API (Phase 4):** Major version — verify `repeat: { cron: '0 8 * * *', tz: 'America/New_York' }` syntax is still correct in v5 before implementing scheduled jobs.
+- **pptxgenjs v4 + docx v8 Microsoft Office compatibility (Phase 7):** Generate test files early in Phase 7 and open in actual Microsoft Office. Known failure mode — do not defer this validation.
+- **Cowork skill context format (Phase 5):** SKILL.md files are read from disk and expect a specific YAML-like context format. Before wiring any skill, verify the `assembleContext()` output format matches what the existing Cowork skills expect — diff against the YAML files the previous app generated.
+- **Action ID gap behavior for Cowork (Phase 1):** PostgreSQL sequences create gaps on rollback. Confirm whether Cowork skills that read context docs tolerate ID gaps (A-001, A-002, A-004) or require sequential renumbering on export.
 
 ---
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- `.planning/PROJECT.md` — project requirements, YAML schema, view specifications (read directly)
-- Google Drive API v3 docs (https://developers.google.com/drive/api/guides/) — auth patterns, error codes, file atomicity guarantee
-- js-yaml README (https://github.com/nodeca/js-yaml) — schema options, round-trip behavior, known coercion rules
-- pptxgenjs docs (https://gitbrent.github.io/PptxGenJS/) — limitations, Buffer output, z-order behavior
-- React Router v6 docs (https://reactrouter.com/en/main/) — nested routes, `useOutletContext`, `useBlocker`
-- TanStack Query v5 docs (https://tanstack.com/query/v5/docs) — `staleTime`, `invalidateQueries`, `useMutation`
-- Express 4 docs (https://expressjs.com/en/api.html) — `mergeParams`, middleware patterns
-- MDN Web Docs — base64 download pattern, `AbortController`, `Blob`/`URL.createObjectURL`
+- `/Users/jmiloslavsky/Documents/Project Assistant Code/server/package.json` — proven server dependency versions (running code)
+- `/Users/jmiloslavsky/Documents/Project Assistant Code/client/package.json` — proven client dependency versions (running code)
+- `.planning/PROJECT.md` — requirements specification (domain-authoritative)
+- Next.js 14 App Router official documentation — RSC, Route Handlers, `runtime = 'nodejs'`, `server-only` package
+- PostgreSQL documentation — RLS, FTS (`tsvector`/`tsquery`), advisory locks, connection limits
 
 ### Secondary (MEDIUM confidence)
-- Training data through August 2025 — version trajectories for `@anthropic-ai/sdk` (^0.28.x by mid-2025), googleapis (~v134-140), Vite (5.x stable), Tailwind (v3 vs v4 decision)
-- Community consensus — CodeMirror 6 vs Monaco bundle size comparison; Vite proxy vs CORS pattern; pptxgenjs z-order ordering requirement
+- Training knowledge through August 2025 — BullMQ v5, Drizzle ORM, pptxgenjs v4, docx v8, ExcelJS v4
+- `.planning-archive-20260318/research/STACK.md` — previous research cycle (carry-forward context)
+- Anthropic SDK streaming and tool-use patterns — well-established but SDK version-sensitive
+- PS delivery tooling landscape (Gainsight, Vitally, Linear, Notion AI) — used for feature categorization validation only
 
-### Tertiary (LOW confidence — needs verification)
-- pptxgenjs z-order and text overflow current behavior (may have changed since August 2025 training cutoff)
-- `@monaco-editor/react` Vite 5 lazy loading compatibility (behavior reportedly changed in some Vite versions)
-- Anthropic SDK current default timeout values
+### Tertiary (LOW confidence)
+- MCP SDK client pool patterns — `@modelcontextprotocol/sdk` was actively evolving at training cutoff; verify before Phase 6
 
 ---
 
-*Research completed: 2026-03-04*
+*Research completed: 2026-03-18*
 *Ready for roadmap: yes*

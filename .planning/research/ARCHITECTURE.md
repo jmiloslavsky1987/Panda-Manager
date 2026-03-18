@@ -1,579 +1,416 @@
 # Architecture Patterns
 
-**Project:** BigPanda Project Intelligence App
-**Domain:** Local single-user React + Express app with Google Drive YAML datastore
-**Researched:** 2026-03-04
-**Overall confidence:** HIGH (stack is stable, well-documented; constraints are clear)
+**Project:** BigPanda AI Project Management App (Next.js 14 + PostgreSQL rewrite)
+**Researched:** 2026-03-18
+**Confidence:** MEDIUM — training knowledge, no external tool access during session; all claims based on well-established patterns for Next.js 14, BullMQ, Anthropic SDK, and PostgreSQL
 
 ---
 
 ## Recommended Architecture
 
+### System Overview
+
 ```
-Browser (React + Vite)
-  └── React Router v6 Layout Route
-        ├── Sidebar (customer nav, route links)
-        └── <Outlet /> → View routes
-              ├── /                   Dashboard
-              ├── /customers/:id      Customer Overview
-              ├── /customers/:id/actions   Action Manager
-              ├── /customers/:id/report    Report Generator
-              ├── /customers/:id/yaml      YAML Editor
-              ├── /customers/:id/artifacts Artifact Manager
-              └── /customers/:id/update    Weekly Update Form
-
-HTTP REST (JSON)
-
-Express Server (Node.js)
-  ├── routes/
-  │     ├── customers.js    (list, get YAML, write YAML)
-  │     ├── actions.js      (update, add, complete actions)
-  │     ├── risks.js        (add, update, close risks)
-  │     ├── milestones.js   (add, update milestones)
-  │     ├── artifacts.js    (add, update, retire artifacts)
-  │     ├── history.js      (add weekly update entry)
-  │     └── reports.js      (generate via Claude, build PPTX)
-  ├── services/
-  │     ├── driveService.js  (Google Drive API v3, read/write)
-  │     ├── yamlService.js   (parse, serialize, schema validate)
-  │     ├── claudeService.js (Anthropic SDK calls)
-  │     └── pptxService.js   (pptxgenjs PPTX builder)
-  └── middleware/
-        ├── errorHandler.js
-        └── asyncWrapper.js  (eliminates try/catch boilerplate)
-
-Google Drive API v3 (service account)
-  └── BigPanda/ProjectAssistant/[Customer]_Master_Status.yaml
+┌─────────────────────────────────────────────────────────────────────┐
+│  Browser (React / Next.js App Router)                               │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐  │
+│  │  Dashboard   │  │  Workspace   │  │  Skill Launcher / Drafts │  │
+│  │  (SSR/RSC)   │  │  (RSC+hooks) │  │  (streaming + polling)   │  │
+│  └──────┬───────┘  └──────┬───────┘  └────────────┬─────────────┘  │
+└─────────┼────────────────┼───────────────────────┼─────────────────┘
+          │  HTTP / SSE / WS│                       │ SSE stream
+┌─────────┼────────────────┼───────────────────────┼─────────────────┐
+│  Next.js 14 App Router API Layer (Route Handlers)                   │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐  │
+│  │  /api/data   │  │ /api/skills  │  │  /api/jobs (status poll) │  │
+│  │  (CRUD)      │  │ (invoke,     │  │  /api/stream (SSE)       │  │
+│  │              │  │  stream out) │  │                          │  │
+│  └──────┬───────┘  └──────┬───────┘  └────────────┬─────────────┘  │
+│         │                 │                        │                │
+│  ┌──────▼─────────────────▼────────────────────────▼─────────────┐ │
+│  │                   Service Layer                                │ │
+│  │  ┌─────────────┐  ┌────────────────┐  ┌────────────────────┐  │ │
+│  │  │ DataService  │  │ SkillOrchestra │  │  JobService         │  │ │
+│  │  │ (DB queries) │  │ (context+run)  │  │  (BullMQ enqueue)  │  │ │
+│  │  └──────┬──────┘  └───────┬────────┘  └────────┬───────────┘  │ │
+│  └─────────┼─────────────────┼─────────────────────┼─────────────┘ │
+└────────────┼─────────────────┼─────────────────────┼───────────────┘
+             │                 │                      │
+  ┌──────────▼──┐   ┌──────────▼────────┐   ┌────────▼───────────────┐
+  │ PostgreSQL  │   │  Anthropic SDK    │   │  BullMQ + Redis        │
+  │ (via Drizzle│   │  (claude-3-5 API) │   │  (job queue + cron)    │
+  │  or Prisma) │   │                  │   │                        │
+  └─────────────┘   │  ┌─────────────┐ │   └────────────────────────┘
+                    │  │  MCP Client │ │
+                    │  │  (Slack,    │ │
+                    │  │  Gmail,     │ │
+                    │  │  Glean,     │ │
+                    │  │  Drive)     │ │
+                    │  └─────────────┘ │
+                    └──────────────────┘
 ```
 
 ---
 
 ## Component Boundaries
 
-| Component | Responsibility | Communicates With | Does NOT Own |
-|-----------|---------------|-------------------|--------------|
-| React UI (views) | Render, user input, optimistic state | Express API over HTTP | Drive, YAML parsing |
-| React Query cache | Client-side YAML data cache, loading/error states | React views, API | Mutation logic |
-| Express routes | HTTP surface, validate req params, delegate to services | Services, send response | Business logic |
-| driveService.js | Google Drive API calls (list, read, write file) | yamlService, Google APIs | Schema knowledge |
-| yamlService.js | YAML parse/serialize, schema validation, ID assignment | driveService (via routes), route handlers | Drive I/O |
-| claudeService.js | Anthropic SDK streaming, prompt construction | reportRoute | YAML parsing |
-| pptxService.js | Build PPTX Buffer from Claude JSON, return to route | reportRoute | Claude calls |
-
-**Key boundary rule:** Routes are thin. They validate HTTP inputs, call one or two services, and return. All logic lives in services.
+| Component | Responsibility | Communicates With |
+|-----------|---------------|-------------------|
+| **RSC Pages** | Server-side render of data-heavy read views (dashboard, workspace tabs). Zero client JS for initial paint. | DataService (direct DB access in RSC), Job status via client hooks |
+| **Client Components** | Interactive state: forms, optimistic updates, streaming output panels, Kanban drag | Route Handlers via fetch/SSE |
+| **Route Handlers** (`/app/api/`)  | HTTP boundary. Auth guard, input validation, dispatch to service layer. Never contain business logic. | Service layer only |
+| **DataService** | All DB access. Encapsulates Drizzle/Prisma queries. Enforces append-only rules, ID generation, source tracing. | PostgreSQL |
+| **SkillOrchestrator** | Loads SKILL.md from disk, assembles context from DB, invokes Anthropic SDK, streams result, persists draft output. | DataService, Anthropic SDK, MCP Client |
+| **MCP Client** | Single shared client instance. Manages MCP tool sessions for Slack/Gmail/Glean/Drive. Tool results passed to skill context. | Anthropic SDK (tool_use blocks), external MCP servers |
+| **JobService** | Enqueues BullMQ jobs, exposes job status, handles cron schedule registration. Does not contain skill logic. | BullMQ/Redis, SkillOrchestrator (called from workers) |
+| **BullMQ Workers** | Separate Node.js worker processes. Call SkillOrchestrator for scheduled runs. Write results to DB. | SkillOrchestrator, DataService, BullMQ/Redis |
+| **FileGenerationService** | Produces .docx/.pptx/.xlsx/.html from structured data or AI output. Registers artifact in DB outputs table. | DataService (read context, write output record), local filesystem |
+| **PostgreSQL** | Single source of truth. All project data, skill outputs, job status, drafts. | DataService only (no direct external access) |
+| **Redis** | BullMQ job queue storage and job status cache. | JobService, BullMQ Workers |
 
 ---
 
 ## Data Flow
 
-### Read Path (Dashboard load)
+### 1. Manual Skill Invocation (user clicks "Run Tracker")
 
 ```
-User opens app
-  → React Query: queryFn calls GET /api/customers
-  → Express: driveService.listFiles() → Drive API
-  → driveService.readFile(id) for each YAML
-  → yamlService.parse() + yamlService.validate()
-  → Express returns array of parsed customer objects
-  → React Query caches result (staleTime: 60s)
-  → Dashboard renders from cache
+User click
+  → POST /api/skills/invoke { skillId, projectId }
+    → SkillOrchestrator.run(skillId, projectId)
+      → DataService.assembleContext(projectId)   // pulls all relevant tables
+      → fs.readFile(SKILL_PATH/skillId.SKILL.md) // read prompt from disk
+      → MCP.gatherToolInputs()                    // Slack/Gmail sweep if skill requires
+      → anthropic.messages.stream({ system: skill_prompt, messages: [context] })
+        → yields text chunks via SSE to browser
+      → on complete: DataService.saveDraft(output)
+        → outputs table row (type=draft, status=pending_review)
+  → Browser renders streaming output in Skill Launcher panel
+  → "Review & Send" button appears when stream ends
 ```
 
-### Write Path (atomic: all mutations)
+### 2. Scheduled Job (daily 8am Morning Briefing)
 
 ```
-User action (e.g., checkbox completes action)
-  → React Query useMutation: calls PATCH /api/customers/:id/actions/:actionId
-  → Express route: calls driveService.readFile() → gets current YAML string
-  → yamlService.parse() → in-memory object
-  → apply mutation (mark action complete, update IDs, timestamps)
-  → yamlService.validate() → reject if schema violated
-  → driveService.writeFile() → write full YAML string back to Drive
-  → return updated customer object
-  → React Query: onSuccess → queryClient.invalidateQueries(['customer', id])
-  → UI re-renders from fresh data
+BullMQ cron trigger (8:00 America/New_York)
+  → Worker picks up job
+    → SkillOrchestrator.run('morning-briefing', ALL_ACTIVE_PROJECTS)
+      → Same flow as manual but no SSE — result written directly to DB
+      → DataService.saveDraft(output, { source: 'scheduled', jobId })
+  → Dashboard health check on next page load: reads latest morning_briefing row
+  → In-app notification badge incremented via DB flag
 ```
 
-**Why invalidate instead of optimistic update:** With Drive as the source of truth and no real-time sync risk (single user, local app), invalidation-and-refetch on success is safer and simpler than maintaining optimistic state. The round-trip is ~300-800ms on local network — acceptable.
-
-### Report Generation Flow
+### 3. Cross-Project Health Scoring (auto-derived)
 
 ```
-User clicks Generate Report
-  → POST /api/customers/:id/reports { type: 'weekly_status' | 'elt_deck' | 'both' }
-  → Express: driveService.readFile() → yamlService.parse() → full YAML object
-  → claudeService.generate(yamlObject, reportType)
-       → Anthropic SDK: non-streaming for ELT (needs full JSON), streaming acceptable for weekly status
-  → For ELT: Claude returns JSON → pptxService.build(json) → Buffer
-  → Express: respond with { weeklyText?: string, pptxBase64?: string }
-  → Frontend: for PPTX, decode base64 → Blob → URL → anchor download
+DB trigger OR application-level after-write hook:
+  → On any action/risk/milestone write:
+    → DataService.computeProjectHealth(projectId)
+      → Query: overdue actions, open high-risks, stalled milestones
+      → Write: projects.rag_status, projects.health_score, projects.health_computed_at
+  → Dashboard RSC reads health score directly from DB (no AI call needed)
+```
+
+### 4. File Generation Pipeline
+
+```
+Skill output (structured JSON/markdown) OR user-triggered export
+  → FileGenerationService.generate({ type, projectId, skillOutput })
+    → For .docx: officegen or docx library → Buffer
+    → For .pptx: pptxgenjs (CJS) → Buffer
+    → For .xlsx: exceljs → Buffer
+    → For .html: template string or handlebars → string
+  → Write file to outputs directory (filesystem, configurable path)
+  → DataService.registerOutput({ projectId, type, filename, path, skillId, generatedAt })
+  → Response: { fileUrl: '/api/outputs/[id]', outputId }
+  → Browser: direct download link or inline HTML render
+```
+
+### 5. MCP Tool Calling (during skill run)
+
+```
+SkillOrchestrator assembles initial messages
+  → anthropic.messages.stream with tools array (MCP tool definitions)
+  → On tool_use block in stream:
+    → Pause stream processing
+    → MCP Client dispatches tool call to correct MCP server
+      → slack.search_messages({ query, ... })
+      → gmail.list_threads({ ... })
+      → drive.get_file({ fileId })
+    → Collect tool_results
+    → Continue stream with tool_results appended to messages
+  → Multi-turn until no more tool_use blocks
 ```
 
 ---
 
-## Key Architectural Decisions
+## Architectural Decisions
 
-### Decision 1: REST vs Alternatives
+### Q1: Claude AI Skill Invocation Layer
 
-**Recommendation: REST as specified, no change needed.**
+**Pattern: SkillOrchestrator with per-skill SKILL.md dispatch, not per-skill agents**
 
-**Why REST is correct here:**
-- Single consumer (this React app), single developer, local-only
-- No subscription/push requirements (single user cannot conflict with themselves)
-- No complex relational queries
-- Express REST is the simplest correct answer for CRUD over YAML files
+Do not create separate agent classes per skill (15 skills = 15 files, drift risk). Instead:
 
-**Alternatives considered:**
-- tRPC: Would eliminate the HTTP layer boilerplate and give end-to-end types. Genuinely better DX than plain REST for this stack. But adds a dependency and requires buy-in in both client and server. Not worth the migration cost if REST is already specified.
-- WebSocket: No use case — no multi-user, no real-time push needed.
-- GraphQL: Massively overengineered for this dataset size and access patterns.
+- One `SkillOrchestrator` class with a `run(skillId, projectId, options)` method.
+- SKILL.md loaded from disk at invocation time via `fs.readFile` — never bundled or cached in memory long-term. This preserves Cowork compatibility.
+- `assembleContext()` is the critical per-skill variation point. Each skill declares what context it needs (actions, risks, milestones, stakeholders, history, etc.) via a skill-config map (not embedded in SKILL.md). Context is fetched from DB, serialized to the same YAML-like format that Cowork skills expect.
+- Structured output: use `tool_use` with a `write_output` tool definition for skills that must produce structured JSON (Context Updater, Tracker). Plain streaming for document-generation skills (Status Email, Meeting Summary). Never use JSON mode for long documents — streaming is faster and handles token limits better.
+- Source tracing constraint: inject `source_trace` instructions into every system prompt to ensure AI output attributions are DB-derived.
 
-**Verdict:** REST is optimal. If tRPC is ever considered, it's the only justified upgrade.
+**Confidence: MEDIUM** — Pattern derived from Anthropic SDK streaming docs and established tool-use patterns. Verify `@anthropic-ai/sdk` version before Phase 5 (existing memory note confirmed).
+
+### Q2: Background Job Scheduling
+
+**Use BullMQ + Redis, not node-cron**
+
+Rationale:
+- node-cron runs in the Next.js server process. Next.js App Router can terminate and restart worker threads during deploys or hot reload, losing in-flight jobs. Critically, in production with multiple instances, cron jobs would fire on every instance simultaneously.
+- BullMQ with Redis provides: job deduplication, retry-on-failure, job status persistence (queryable from UI), graceful shutdown, and cron schedule management via `RepeatableJob`.
+- Workers run as separate Node.js processes (`/workers/index.ts`) started alongside the Next.js server.
+
+**Job status surfacing:** Each job writes a `job_runs` table row (jobId, skillId, projectId, status: queued|running|complete|failed, startedAt, completedAt, outputId). Route Handler `GET /api/jobs/[jobId]` polls this table. UI uses 3-second interval polling (not WebSocket) for job status — adequate for 10-30s jobs, simpler infrastructure.
+
+**Confidence: MEDIUM** — BullMQ is the established standard for Node.js job queues. Redis dependency is the only added infrastructure cost. For a local single-user app, `ioredis` connecting to a local Redis instance (or `redis` Docker container) is sufficient. Verify BullMQ v5 API (major version may have changed repeat job syntax).
+
+### Q3: MCP Tool Calling from Next.js Backend
+
+**Pattern: Shared MCP client pool initialized at server startup**
+
+- The Anthropic SDK's tool-use API is the integration point: define MCP tools as tool definitions in the `tools` array of the messages request. The SDK handles multi-turn automatically if you use `stream` with tool handling.
+- MCP servers (Slack, Gmail, Glean, Drive) run as separate processes communicating over stdio or HTTP. Use `@modelcontextprotocol/sdk` to connect.
+- Create one `MCPClientPool` module initialized at app startup (`/lib/mcp/pool.ts`). Exposes `callTool(server, toolName, params)`.
+- Skills that require MCP declare their tool dependencies in the skill-config map. SkillOrchestrator passes only the relevant tool definitions to Anthropic — do not pass all 40+ tools on every call.
+- Tool results must be stored in the job_runs record for auditability and replay.
+
+**Critical integration point:** MCP server process lifecycle management is non-trivial. The MCP server processes must be started before worker jobs attempt tool calls. Add health checks with automatic restart on failure. This is a known source of flakiness in early MCP integrations.
+
+**Confidence: LOW for MCP specifics** — MCP protocol specification and client SDK were evolving rapidly as of training cutoff (August 2025). Verify `@modelcontextprotocol/sdk` current API, connection management, and whether stdio vs HTTP transport is preferred for local servers in 2026.
+
+### Q4: Long-Running AI Skills (10-30s) — Streaming vs Polling vs WebSockets
+
+**Decision: Server-Sent Events (SSE) for manual invocations; polling for scheduled jobs**
+
+- **SSE via Next.js Route Handler** for user-triggered skill runs. Route Handler returns a `ReadableStream` with `Content-Type: text/event-stream`. Anthropic SDK's `.stream()` method yields text delta events that pipe directly. Browser uses `EventSource` or `fetch` with `ReadableStream`. This is the correct pattern for Next.js App Router.
+- **Do not use WebSockets** for skill streaming. WebSocket infrastructure (socket.io or ws) adds complexity and a server upgrade step. SSE is request/response, works through proxies, and is sufficient for unidirectional streaming.
+- **Polling for scheduled jobs.** Once a user triggers a manual run that queues a BullMQ job (vs. inline invocation), or for dashboard checking on overnight job results, 3-second polling against `GET /api/jobs/[jobId]` is the right model. Simpler than maintaining open connections.
+- **Streaming timeout handling:** Next.js App Router route handlers have a default 30-second edge function timeout. For local/self-hosted deployment, this is not a constraint (no edge runtime). Use Node.js runtime for all skill route handlers: `export const runtime = 'nodejs'`.
+
+**Confidence: HIGH** — SSE with Next.js App Router is well-documented. The `runtime = 'nodejs'` requirement for long-running routes is critical and a common source of timeout bugs.
+
+### Q5: Database Structure for N-Account Multi-Project with Cross-Project Search
+
+**Pattern: Single-schema multi-tenant with project_id foreign key on every domain table**
+
+```sql
+-- Core tenant table
+projects (id, customer_name, customer_id_prefix, status: active|closed|archived,
+          rag_status, health_score, health_computed_at, go_live_date, ...)
+
+-- Domain tables — all carry project_id
+actions      (id, project_id, action_id_text, ...)  -- A-CUST-NNN
+risks        (id, project_id, risk_id_text, ...)    -- R-CUST-NNN
+milestones   (id, project_id, milestone_id_text, ...)
+artifacts    (id, project_id, ...)
+history      (id, project_id, ...)   -- append-only
+decisions    (id, project_id, ...)   -- append-only
+stakeholders (id, project_id, ...)
+tasks        (id, project_id, workstream_id, ...)
+workstreams  (id, project_id, ...)
+outputs      (id, project_id, skill_id, file_type, filename, path, generated_at, ...)
+job_runs     (id, project_id, skill_id, status, started_at, completed_at, output_id)
+drafts       (id, project_id, skill_id, content, status: pending|sent|archived, ...)
+knowledge_base (id, linked_project_ids[], ...)  -- cross-project
+
+-- Full-text search
+CREATE INDEX idx_actions_fts ON actions USING GIN(to_tsvector('english', description || ' ' || notes));
+CREATE INDEX idx_risks_fts ON risks USING GIN(to_tsvector('english', description || ' ' || mitigation_notes));
+-- Repeat for decisions, history, stakeholders, tasks, knowledge_base
+```
+
+**Cross-project search:** Use PostgreSQL full-text search (no separate search engine needed for single-user workload). A `search_all` function queries each domain table with `project_id IN (SELECT id FROM projects WHERE status != 'archived' OR include_archived = true)` and UNIONs results. Each result row carries `project_id`, `source_table`, `matched_text`, `created_at`.
+
+**ID conventions:** `action_id_text` stores `A-KAISER-001` (the Cowork-compatible string). Primary key `id` is a serial integer for join efficiency. Never reuse `action_id_text` values — enforce with UNIQUE constraint.
+
+**Append-only enforcement:** `history` and `decisions` tables have no UPDATE-accessible route handler. DataService exposes only `appendHistory()` / `appendDecision()` — no `updateHistory()` exists.
+
+**Confidence: HIGH** — Standard PostgreSQL multi-tenant patterns. FTS approach well-established.
+
+### Q6: File Generation Pipeline (.docx/.pptx/.xlsx/.html)
+
+**Pattern: FileGenerationService with per-type generators, filesystem storage, DB registration**
+
+```
+/lib/files/
+  generators/
+    docx.ts      → uses `docx` library (maintained, ESM-compatible)
+    pptx.ts      → uses `pptxgenjs` (CJS — must use require() or createRequire workaround)
+    xlsx.ts      → uses `exceljs` (ESM-compatible)
+    html.ts      → template literals or Handlebars
+  FileGenerationService.ts   → dispatches to generator, writes to filesystem, registers in DB
+```
+
+**pptxgenjs CJS constraint:** This is carried over from the prior app (existing memory note confirmed). In a Next.js project, use `createRequire` from `module` to import pptxgenjs in a server-only context, or isolate it in a Route Handler that explicitly sets `runtime = 'nodejs'`. Do not attempt to use it in RSC or edge runtime.
+
+**Output storage:** Write files to a configurable base path (default `~/Documents/BigPanda Projects/outputs/`). Store relative path in DB. Serve via `GET /api/outputs/[id]` which reads the file and streams it with appropriate Content-Disposition.
+
+**Archive-on-replace:** When regenerating an output, the old row gets `status = 'archived'` and `archived_at = now()`. New row created. Query active outputs with `WHERE status = 'active'`.
+
+**Confidence: MEDIUM** — Library choices are based on prior project decisions (docx, pptxgenjs, exceljs). Verify current major versions before Phase implementation.
 
 ---
 
-### Decision 2: State Management — React Query for YAML Data
-
-**Recommendation: TanStack Query v5 (React Query) for server state. No Zustand.**
-
-**Rationale:**
-
-| Concern | Solution |
-|---------|----------|
-| Avoid redundant Drive fetches | React Query `staleTime: 60_000` (60s) — serves from cache within window |
-| Loading / error states per view | React Query `isLoading`, `isError`, `error` — built-in |
-| Invalidate cache after write | `queryClient.invalidateQueries(['customer', id])` on mutation success |
-| Cross-view shared state | QueryClient is global — Dashboard and Customer Overview share cache |
-| Form state (Report Generator, Weekly Update) | React `useState` — local, ephemeral, no caching needed |
-
-**Why not Zustand:**
-Zustand manages *client* state (UI flags, modal open/closed, sort order). It does not understand async, loading states, cache invalidation, or refetching. Adding Zustand for the YAML data would mean manually reimplementing exactly what React Query provides.
-
-**Correct split:**
-- TanStack Query: all YAML data fetched from the server
-- React `useState`/`useReducer`: form inputs, UI flags (collapsed sections, active tab, sort direction)
-- Zustand: not needed at this app scale; add only if global client-state complexity grows
-
-**staleTime tuning:**
-- Customer list (Dashboard): `staleTime: 60_000` — acceptable to be 60s stale; user can manually refresh
-- Individual customer YAML (detail views): `staleTime: 0` on mount after any write, otherwise `30_000`
-
----
-
-### Decision 3: Drive Caching — Read on Every Load vs Local Cache
-
-**Recommendation: React Query cache IS the caching layer. Do not add a separate server-side cache.**
-
-**Analysis:**
-
-The "read from Drive on every load" concern is valid but is already solved by React Query's `staleTime`. Here's the actual cost:
-
-- Google Drive API read of a single YAML file: ~150-400ms (LAN → internet → Drive → back)
-- With `staleTime: 30s`, navigating between Customer Overview tabs (Actions, Risks, Milestones) does NOT re-fetch; they all share the same cached query
-- Dashboard loads all YAMLs in parallel (Promise.all in Express): 1-2s for 10 customers — acceptable for a dashboard that loads once per session
-
-**Why NOT add server-side in-memory cache (e.g., node-cache):**
-- Introduces cache invalidation bugs: server cache says version N, Drive has version N+1 (if file was edited directly in Drive)
-- Single user, local app — there is no concurrency requiring a server cache
-- React Query already prevents redundant fetches within the stale window
-
-**What to do instead of server cache:**
-- Dashboard: fetch all YAMLs in parallel with `Promise.all` in the `/api/customers` endpoint
-- Add a "Refresh" button in the Dashboard that calls `queryClient.invalidateQueries(['customers'])`
-- That's it. No server-side caching needed.
-
-**Tradeoff acknowledged:** If the user has 50+ customers, parallel Drive reads would be slow. At 1-10 customers (stated constraint), this is a non-issue.
-
----
-
-### Decision 4: Atomic Write Pattern
-
-**Recommendation: Serialize all writes through the Express server; never write from the client directly.**
-
-**The pattern (server-side, per route):**
-
-```javascript
-// asyncWrapper eliminates boilerplate
-router.patch('/:id/actions/:actionId', asyncWrapper(async (req, res) => {
-  const yamlString = await driveService.readFile(req.params.id);
-  const data = yamlService.parse(yamlString);          // throws on invalid YAML
-
-  // Apply mutation to in-memory object
-  const action = data.actions.find(a => a.id === req.params.actionId);
-  if (!action) return res.status(404).json({ error: 'Action not found' });
-  Object.assign(action, req.body);                     // only allowed fields
-
-  yamlService.validate(data);                          // throws on schema violation
-
-  const newYamlString = yamlService.serialize(data);
-  await driveService.writeFile(req.params.id, newYamlString);
-
-  res.json(data);
-}));
-```
-
-**Why this is safe for single-user:**
-- Single user means no concurrent writes to the same file. The read-modify-write cycle has no race condition risk.
-- If concurrent writes were needed (multi-user), you'd need file locking or optimistic concurrency (ETag from Drive API). Not needed here.
-
-**Sequential ID assignment:**
-- Always assigned server-side in yamlService.js
-- Pattern: find existing IDs matching pattern (A-###, R-###, X-###), increment max
-- Never trust client-supplied IDs for new records
-
-**Error handling:**
-- Drive read fails → 502 to client
-- YAML parse fails → 500 with parse error detail
-- Schema validation fails → 422 with validation errors
-- Drive write fails → 500; data was NOT written (Drive API is transactional at the file level)
-
----
-
-### Decision 5: React Router v6 Nested Routes
-
-**Recommendation: Single layout route with `<Outlet>` for the sidebar pattern.**
-
-**Route structure:**
-
-```jsx
-// App.jsx
-<Routes>
-  <Route element={<AppLayout />}>           {/* Sidebar + Outlet */}
-    <Route index element={<Dashboard />} />
-    <Route path="customers/:customerId" element={<CustomerLayout />}>
-      <Route index element={<CustomerOverview />} />
-      <Route path="actions" element={<ActionManager />} />
-      <Route path="report" element={<ReportGenerator />} />
-      <Route path="yaml" element={<YAMLEditor />} />
-      <Route path="artifacts" element={<ArtifactManager />} />
-      <Route path="update" element={<WeeklyUpdateForm />} />
-    </Route>
-  </Route>
-</Routes>
-```
-
-**AppLayout.jsx:**
-```jsx
-function AppLayout() {
-  return (
-    <div className="flex h-screen">
-      <Sidebar />
-      <main className="flex-1 overflow-auto">
-        <Outlet />
-      </main>
-    </div>
-  );
-}
-```
-
-**CustomerLayout.jsx:**
-```jsx
-function CustomerLayout() {
-  const { customerId } = useParams();
-  // TanStack Query: fetch this customer once; all child routes share it
-  const { data: customer, isLoading } = useQuery({
-    queryKey: ['customer', customerId],
-    queryFn: () => api.getCustomer(customerId),
-  });
-
-  return (
-    <>
-      <CustomerHeader customer={customer} />
-      <CustomerNav customerId={customerId} />
-      <Outlet context={{ customer }} />  {/* pass data to child routes */}
-    </>
-  );
-}
-```
-
-**Key insight:** `CustomerLayout` owns the data fetch. All child routes (`ActionManager`, `YAMLEditor`, etc.) receive customer data via `useOutletContext()` — no redundant fetches when navigating between tabs.
-
-**Navigation guard for unsaved changes (YAML Editor):**
-React Router v6.4+ provides `useBlocker` hook. Use it in `YAMLEditor` to intercept navigation when `isDirty` is true and show a confirmation dialog.
-
----
-
-### Decision 6: Express Route Structure — Avoiding Duplication
-
-**Recommendation: Shared service layer + `asyncWrapper` middleware eliminates virtually all duplication.**
-
-**Directory structure:**
-
-```
-server/
-  routes/
-    customers.js      GET /api/customers, GET /api/customers/:id
-    actions.js        PATCH /api/customers/:id/actions/:actionId
-                      POST /api/customers/:id/actions
-    risks.js          POST /api/customers/:id/risks
-                      PATCH /api/customers/:id/risks/:riskId
-    milestones.js     POST /api/customers/:id/milestones
-                      PATCH /api/customers/:id/milestones/:milestoneId
-    artifacts.js      POST /api/customers/:id/artifacts
-                      PATCH /api/customers/:id/artifacts/:artifactId
-    history.js        POST /api/customers/:id/history
-    reports.js        POST /api/customers/:id/reports
-  services/
-    driveService.js
-    yamlService.js
-    claudeService.js
-    pptxService.js
-  middleware/
-    asyncWrapper.js   (wraps async route handlers, forwards errors to errorHandler)
-    errorHandler.js   (Express error middleware: catches, formats, responds)
-  index.js            (mount routes, middleware)
-```
-
-**The pattern that eliminates duplication (all write routes use this):**
-
-```javascript
-// middleware/asyncWrapper.js
-const asyncWrapper = (fn) => (req, res, next) => fn(req, res, next).catch(next);
-
-// Every write route follows: read → parse → mutate → validate → write → respond
-// The only thing that changes per route is the "mutate" step
-// This is a strategy pattern: inject the mutation function
-```
-
-**Router mounting in index.js:**
-```javascript
-app.use('/api/customers', customersRouter);
-// Note: actions, risks, etc. are nested; mount them with mergeParams
-// routes/actions.js: const router = express.Router({ mergeParams: true })
-// index.js: app.use('/api/customers/:id/actions', actionsRouter)
-```
-
-**`mergeParams: true` is essential** — child routers need access to `:id` from the parent path.
-
----
-
-### Decision 7: YAML Schema Validation — Server Only (Primary), Client Optional
-
-**Recommendation: Authoritative validation on the server in yamlService.js. Client-side validation only in the YAML Editor view.**
-
-**Rationale:**
-
-| Layer | Validates? | Why |
-|-------|-----------|-----|
-| Server (yamlService.js) | YES — always, on every write | Source of truth; prevents corrupt data reaching Drive |
-| Client (YAML Editor only) | YES — on "Validate" button click | UX: gives user feedback before round-trip |
-| Client (structured views) | NO | Form fields are constrained; schema violation is impossible |
-
-**For the structured views** (Action Manager, Risk section, etc.), the form inputs are bounded — you can only enter a string for "owner", a date for "due", etc. There is no way for a user to violate the YAML schema through the structured UI. Validating there is unnecessary complexity.
-
-**For the YAML Editor**, the user is editing raw YAML text. Client-side validation (on "Validate" button click, before save) is essential UX — it gives inline error feedback without requiring a Drive round-trip.
-
-**Implementation:**
-
-```javascript
-// yamlService.js
-const REQUIRED_TOP_LEVEL_KEYS = [
-  'customer', 'project', 'status', 'workstreams',
-  'actions', 'risks', 'milestones', 'artifacts', 'history'
-];
-
-function validate(data) {
-  const keys = Object.keys(data);
-  const missing = REQUIRED_TOP_LEVEL_KEYS.filter(k => !keys.includes(k));
-  const extra = keys.filter(k => !REQUIRED_TOP_LEVEL_KEYS.includes(k));
-  if (missing.length) throw new ValidationError(`Missing keys: ${missing.join(', ')}`);
-  if (extra.length) throw new ValidationError(`Extra keys not allowed: ${extra.join(', ')}`);
-  // ... per-section validation
-}
-```
-
-**Share validation logic:** Export `validate` from a shared module. The client bundles it for the YAML Editor's "Validate" button. The server always runs it in yamlService.js.
-
----
-
-### Decision 8: Monaco Editor vs CodeMirror 6
-
-**Recommendation: CodeMirror 6 for this use case.**
-
-**Comparison:**
-
-| Criterion | Monaco Editor | CodeMirror 6 |
-|-----------|--------------|--------------|
-| Bundle size | ~2MB+ (large; pulls in TypeScript worker) | ~200-400KB for YAML mode |
-| YAML support | Via monaco-yaml extension (good) | Via @codemirror/lang-yaml (official, good) |
-| React integration | @monaco-editor/react wrapper (unofficial) | @uiw/react-codemirror or direct (lighter) |
-| Inline error display | Excellent (uses VS Code markers) | Good (via lintGutter, lintSource) |
-| Mobile / small viewport | Poor (VS Code assumptions) | Good |
-| Theming | Complex (VS Code theme system) | Simple (CSS variables) |
-| Startup time | Slow (worker init) | Fast |
-| Use case fit | Large codebases, TypeScript IDE features | Embedded editors, lightweight |
-
-**For this app:**
-- The YAML editor is one of seven views, used occasionally
-- The YAML files are small (1-5KB per customer)
-- There is no need for TypeScript intellisense, multi-file navigation, or LSP
-- Bundle size matters for startup feel even on localhost
-- Tailwind CSS theming is much easier with CodeMirror 6's CSS variable approach
-
-**Recommendation: CodeMirror 6** with `@codemirror/lang-yaml` and `@codemirror/lint` for inline error display. Use `@uiw/react-codemirror` wrapper for clean React integration.
-
-**Confidence: MEDIUM** — this is a stable, well-known tradeoff. The recommendation is sound but tooling evolves; verify `@codemirror/lang-yaml` is current before installing.
-
----
-
-### Decision 9: PPTX Download Flow
-
-**Recommendation: Base64-encoded response body (not streaming, not temp file).**
-
-**Options compared:**
-
-| Approach | Pros | Cons | Verdict |
-|----------|------|------|---------|
-| **Base64 in JSON response** | Simple, no file I/O, works with fetch API | Increases payload by ~33%; fine for <5MB PPTX | **Use this** |
-| Streaming binary response | No size inflation | Requires different fetch handling (response.blob()), more complex error handling | Overkill here |
-| Temp file + download URL | Works with `<a href>` directly | Server must clean up temp files; adds file I/O | Unnecessary complexity |
-
-**Flow:**
-
-```javascript
-// Server: reports.js route
-const pptxBuffer = await pptxService.build(claudeJson);
-const base64 = pptxBuffer.toString('base64');
-res.json({
-  weeklyText: weeklyStatusText ?? null,
-  pptxBase64: base64 ?? null
-});
-
-// Client: ReportGenerator.jsx
-const { pptxBase64 } = await api.generateReport(customerId, reportType);
-const bytes = Uint8Array.from(atob(pptxBase64), c => c.charCodeAt(0));
-const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
-const url = URL.createObjectURL(blob);
-const a = document.createElement('a');
-a.href = url;
-a.download = `${customerName}_ELT_Deck.pptx`;
-a.click();
-URL.revokeObjectURL(url);
-```
-
-**PPTX file size:** ELT decks for implementation status are typically 200KB-2MB. Base64 adds 33% overhead → 270KB-2.7MB in the JSON response. On localhost, this is negligible.
-
-**Confidence: HIGH** — this is a well-established pattern for file downloads via fetch.
-
----
-
-## Build Order (Dependency Graph)
-
-The build order is driven by which components are blocked on others.
-
-```
-Layer 0 (no dependencies):
-  driveService.js         ← needs only Google Drive credentials
-  yamlService.js          ← needs only js-yaml library, YAML schema spec
-
-Layer 1 (depends on Layer 0):
-  Express routes/customers.js (GET list, GET by ID)  ← needs driveService + yamlService
-  API client (client/src/api.js)                     ← needs route contracts
-
-Layer 2 (depends on Layer 1):
-  React Query setup + CustomerLayout                 ← needs API client
-  Dashboard view                                     ← needs customer list endpoint
-
-Layer 3 (depends on Layer 2):
-  All write routes (actions, risks, milestones, artifacts, history)
-  Action Manager view        ← needs read + write endpoints
-  Customer Overview view     ← needs customer data + inline write endpoints
-
-Layer 4 (depends on Layer 3):
-  claudeService.js           ← needs full YAML data (from read route)
-  pptxService.js             ← needs Claude JSON output
-  Report Generator view      ← needs /reports endpoint
-
-Layer 5 (independent after Layer 1):
-  YAML Editor view           ← needs read + raw write endpoint
-  CodeMirror integration     ← can be stubbed/tested independently
-
-Layer 6 (independent after Layer 3):
-  Weekly Update Form         ← needs POST /history endpoint
-  Artifact Manager           ← needs artifact CRUD endpoints
-```
-
-**Recommended phase sequencing:**
-
-1. **Foundation first:** `driveService.js` + `yamlService.js` + schema validation. This is the riskiest code (Drive auth, YAML correctness) and blocks everything. Write and test it in isolation before any UI exists.
-
-2. **Read surface:** `GET /api/customers` + `GET /api/customers/:id` + React Query setup + Dashboard. This validates the Drive connection works end-to-end and makes the app demonstrably useful.
-
-3. **Core write surface:** Action Manager + the write endpoints it needs. This is the highest-frequency user interaction and validates the atomic write pattern.
-
-4. **Remaining structured views:** Customer Overview inline edits, Risks, Milestones, Weekly Update, Artifact Manager.
-
-5. **Report Generator:** Last because it depends on Claude API integration + pptxgenjs, which are isolated services that don't unblock other views.
-
-6. **YAML Editor:** Can be built in parallel with Layer 3+ (it's mostly self-contained once the raw read/write endpoints exist).
+## Component Boundaries (Formal)
+
+| Component | Inputs | Outputs | Must NOT |
+|-----------|--------|---------|---------|
+| RSC Pages | DB data via DataService, job status | Rendered HTML | Call Anthropic SDK directly, import client-only libs |
+| Route Handlers | HTTP requests | HTTP responses, SSE streams | Contain business logic, direct DB queries |
+| SkillOrchestrator | skillId, projectId, options | Draft output record, streaming chunks | Read from HTTP request, write HTTP response |
+| DataService | Query params, mutation payloads | Domain objects, DB records | Know about HTTP, Anthropic, or file system |
+| MCP Client Pool | toolName, params | Tool results | Block the calling thread (use async/await throughout) |
+| JobService | Job payload, schedule config | jobId, job status | Execute skill logic directly |
+| BullMQ Workers | Job payload from Redis | DB writes via DataService | Access HTTP request context |
+| FileGenerationService | Structured data, skill output | File buffer, registered output row | Stream over HTTP directly |
 
 ---
 
 ## Anti-Patterns to Avoid
 
-### Anti-Pattern 1: Writing YAML Directly from the Client
+### Anti-Pattern 1: Skill Logic in Route Handlers
+**What:** Building skill invocation directly inside `/app/api/skills/route.ts`
+**Why bad:** Cannot be called from BullMQ workers (no HTTP request context). Duplicate code paths for manual vs scheduled runs. Impossible to test in isolation.
+**Instead:** Route Handler calls `SkillOrchestrator.run()`. Worker calls `SkillOrchestrator.run()`. Same code path.
 
-**What goes wrong:** The client constructs a YAML string and POSTs it directly to a "write YAML" endpoint.
-**Why bad:** Bypasses schema validation, sequential ID enforcement, and audit trail. One bad client-side serialization corrupts the Drive file.
-**Instead:** Always send structured JSON mutations (e.g., `PATCH /actions/A-001 { status: 'complete' }`). The server owns all YAML construction.
+### Anti-Pattern 2: node-cron Inside Next.js Server
+**What:** Registering cron jobs in a file that gets imported during app startup
+**Why bad:** Fires on every Next.js instance in multi-process scenarios. Lost on server restart. No job history, no retry, no UI visibility.
+**Instead:** BullMQ RepeatableJob with Redis persistence.
 
-**Exception:** The YAML Editor (View 5) intentionally sends raw YAML text — but through a dedicated endpoint that validates the schema before writing.
+### Anti-Pattern 3: Streaming AI Output Without Persisting It
+**What:** Streaming skill output to browser but not saving intermediate/final result to DB
+**Why bad:** User cannot recover output after browser refresh. Scheduled jobs cannot store results.
+**Instead:** SkillOrchestrator accumulates full output, writes to `drafts` table on stream completion. Browser has the stream; DB has the record.
 
----
+### Anti-Pattern 4: One MCP Client Per Request
+**What:** Creating a new MCP client connection for every skill invocation
+**Why bad:** MCP server process startup cost on every request. Connection thrashing. Race conditions if two skills run simultaneously.
+**Instead:** Shared `MCPClientPool` initialized once at server startup, reused across all invocations.
 
-### Anti-Pattern 2: Server-Side In-Memory Cache for Drive Files
+### Anti-Pattern 5: Storing Full SKILL.md Content in DB
+**What:** Caching skill prompts in the database or in-memory at startup
+**Why bad:** Violates the SKILL.md-on-disk runtime-read constraint. Cowork edits to skill prompts won't take effect. Drift between DB version and filesystem version.
+**Instead:** Always `fs.readFile` at invocation time. Acceptable latency for a single-user app.
 
-**What goes wrong:** Express caches parsed YAML in memory. User edits a file directly in Drive (for debugging). The cache serves stale data. Mutations now write over the user's direct edit silently.
-**Why bad:** Single point of truth confusion; hard-to-debug data loss.
-**Instead:** Always read from Drive on every server request. Let React Query's `staleTime` handle client-side caching.
-
----
-
-### Anti-Pattern 3: Multiple Queries for the Same Customer in Child Routes
-
-**What goes wrong:** `ActionManager`, `CustomerOverview`, and `YAMLEditor` each call `useQuery(['customer', id])` with `staleTime: 0`. Every tab switch triggers a Drive read.
-**Why bad:** Slow and unnecessary. The data is already fresh from `CustomerLayout`.
-**Instead:** Fetch in `CustomerLayout` and pass via `useOutletContext()`. Child routes use context, not their own queries. If a child writes and invalidates the cache, `CustomerLayout` re-fetches once and all children get the updated context.
-
----
-
-### Anti-Pattern 4: Forgetting `mergeParams: true` on Express Child Routers
-
-**What goes wrong:** `actionsRouter` mounted at `/api/customers/:id/actions` cannot read `req.params.id` — it only sees its own route params.
-**Why bad:** Silent 404s or `undefined` customer ID passed to Drive.
-**Instead:** `const router = express.Router({ mergeParams: true })` on every child router.
+### Anti-Pattern 6: Edge Runtime for Skill Route Handlers
+**What:** Deploying skill invocation route handlers to edge runtime (default in some Next.js configs)
+**Why bad:** Edge runtime has no `fs` access (can't read SKILL.md), no Redis access, 30s timeout, no Node.js native modules.
+**Instead:** `export const runtime = 'nodejs'` in every route handler that touches skills, jobs, or file generation.
 
 ---
 
-### Anti-Pattern 5: Optimistic Updates Without Rollback
+## Build Order (Component Dependency Graph)
 
-**What goes wrong:** Action checkbox is optimistically checked, Drive write fails (auth expired, network blip), error is shown but checkbox stays checked. Data is now inconsistent.
-**Why bad:** UI shows completed; Drive has it open.
-**Instead:** For this app, prefer `invalidateQueries` on success (not optimistic). The 300-800ms wait is acceptable for a local tool. If optimistic updates are added later, implement the React Query `onError` rollback pattern with `context.previousData`.
+```
+Phase 1 — Data Foundation (no UI dependencies)
+  PostgreSQL schema + migrations
+  DataService (all domain CRUD)
+  YAML import script (existing → DB)
+  Action Tracker import (XLSX → DB)
+  Health score computation logic
+    ↓
+Phase 2 — Next.js App Shell + Read Surface
+  Next.js project scaffold (App Router, Tailwind, auth-optional)
+  Route Handlers for read-only data endpoints
+  RSC Dashboard (reads from DataService)
+  RSC Workspace tabs (actions, risks, milestones, etc.)
+  Context doc export (DB → YAML Markdown)
+    ↓
+Phase 3 — Write Surface + Action Tracker
+  Mutation Route Handlers (CRUD for actions, risks, milestones)
+  Optimistic UI patterns in Client Components
+  Inline editing in Workspace tabs
+  PA3_Action_Tracker.xlsx dual-write
+    ↓
+Phase 4 — Job Infrastructure
+  Redis setup
+  BullMQ worker process
+  JobService
+  Job status Route Handler + polling UI component
+  Cron schedule registration (6 scheduled jobs)
+    ↓
+Phase 5 — Skill Engine (depends on Phase 4 for async, Phase 2 for context)
+  SkillOrchestrator
+  Context assembly per skill
+  Anthropic SDK integration + streaming
+  SSE Route Handler
+  Streaming UI panel (Skill Launcher)
+    ↓
+Phase 6 — MCP Integrations (depends on Phase 5)
+  MCPClientPool
+  Slack MCP server connection
+  Gmail MCP server connection
+  Glean MCP server connection
+  Drive MCP server connection
+  Tool-use flow in SkillOrchestrator
+  Customer Project Tracker skill (primary MCP consumer)
+    ↓
+Phase 7 — File Generation (can overlap with Phase 5)
+  FileGenerationService
+  docx, pptx, xlsx, html generators
+  Output Library UI
+  Artifact registration in DB
+    ↓
+Phase 8 — Cross-Project Features + Polish
+  Full-text search across all tables
+  Cross-project Risk Heat Map
+  Knowledge Base
+  Dashboard cross-account panels
+  Drafts Inbox + send/discard flow
+```
+
+**Critical path:** Phases 1 → 2 → 3 → 4 → 5 are strictly sequential. Phase 6 (MCP) and Phase 7 (file gen) can overlap after Phase 5 is stable. Phase 8 has no hard predecessors but benefits from all data being populated.
+
+**Biggest blocking risk:** Phase 4 → 5 interface. If SkillOrchestrator is not cleanly separated from Route Handlers in Phase 5, it cannot be called from BullMQ workers. This architectural boundary must be enforced before any skill logic is written.
+
+---
+
+## Critical Integration Points
+
+| Integration | Risk Level | Notes |
+|-------------|------------|-------|
+| SKILL.md disk read at runtime | MEDIUM | Path must be configurable. Works in local deploy; would break in serverless. Confirm local Node.js deployment only. |
+| pptxgenjs CJS in Next.js | HIGH | Requires `createRequire` wrapper or dedicated API route with `runtime = 'nodejs'`. Test in Phase 7 setup before writing generation logic. |
+| BullMQ worker process lifecycle | MEDIUM | Workers must start with the app. Use a process manager (pm2) or a startup script. Hot reload must not restart workers. |
+| MCP client process stability | HIGH (LOW confidence) | MCP server processes crashing silently is a known pain point. Requires health check loop and automatic restart logic. |
+| Anthropic SDK streaming + tool_use | MEDIUM | Multi-turn tool_use with streaming requires careful message array management. Verify SDK version handles this correctly. |
+| PA3_Action_Tracker.xlsx dual-write | MEDIUM | Row format is contractual. Test export round-trip before Phase 3 is considered done. |
+| PostgreSQL FTS for cross-project search | LOW | Standard feature; no risk. May need query tuning for large history tables. |
 
 ---
 
 ## Scalability Considerations
 
-| Concern | At 1-10 customers (current) | At 50+ customers | At 100+ customers |
-|---------|----------------------------|-----------------|------------------|
-| Dashboard load | Parallel Drive reads, 1-2s — acceptable | Parallel reads still feasible; may hit Drive API rate limits | Paginate or batch; server-side caching justified |
-| YAML size | 5-20KB per file — trivial | Still trivial | Still trivial |
-| Claude API call | 10-20s — acceptable (loading state shown) | Same; no change | Same |
-| PPTX base64 | <3MB — fine on localhost | Same | Same |
-| Express concurrency | N/A (single user) | N/A (local app) | N/A (local app) |
+This is a single-user local application. Scalability considerations are secondary to correctness.
 
-**Conclusion:** No scalability work needed within stated constraints. The architecture is correct for 1-10 customers and would not need changing until 50+.
+| Concern | Single-User (current) | Future Team Scale |
+|---------|----------------------|-------------------|
+| DB connections | Direct pg connection pool, 5 connections sufficient | Add PgBouncer |
+| Job concurrency | 1-2 concurrent workers | Increase worker count, add job priority queues |
+| File storage | Local filesystem | S3/GCS with signed URLs |
+| Search | PostgreSQL FTS | Add pgvector for semantic search, or migrate to dedicated search |
+| Auth | None (single-user local) | NextAuth.js with team roles |
 
 ---
 
 ## Sources
 
-- React Router v6 nested routes / `<Outlet>` / `useOutletContext`: https://reactrouter.com/en/main/components/outlet (HIGH confidence — training data, stable API since v6.0)
-- TanStack Query v5 `staleTime`, `invalidateQueries`, `useMutation`: https://tanstack.com/query/v5/docs (HIGH confidence — training data, stable API)
-- Express `mergeParams`: https://expressjs.com/en/api.html#express.router (HIGH confidence — stable since Express 4)
-- CodeMirror 6 vs Monaco: community consensus, bundle size analysis — MEDIUM confidence (verify current package sizes before committing)
-- pptxgenjs Buffer output: https://gitbrent.github.io/PptxGenJS/docs/usage-nodejs.html (HIGH confidence — training data)
-- Google Drive API v3 file read/write: https://developers.google.com/drive/api/guides/manage-uploads (HIGH confidence — stable API)
-- Base64 download pattern: MDN Web Docs (HIGH confidence — stable Web API)
-- `useBlocker` hook for unsaved changes guard: React Router v6.4+ (MEDIUM confidence — verify hook is in current RR version)
+- Anthropic SDK streaming and tool_use patterns: training knowledge (MEDIUM confidence, verify `@anthropic-ai/sdk` current version)
+- BullMQ v5 RepeatableJob API: training knowledge (MEDIUM confidence, verify cron syntax in v5)
+- Next.js 14 App Router runtime configuration (`export const runtime = 'nodejs'`): training knowledge (HIGH confidence, well-established)
+- PostgreSQL full-text search: training knowledge (HIGH confidence, stable feature)
+- MCP SDK client pool pattern: training knowledge (LOW confidence, protocol was actively evolving at training cutoff)
+- pptxgenjs CJS interop: confirmed by prior project build (existing app memory)
+- PA3_Action_Tracker.xlsx row format: confirmed in PROJECT.md
+- SKILL.md runtime-read constraint: confirmed in PROJECT.md

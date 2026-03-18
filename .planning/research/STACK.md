@@ -1,15 +1,30 @@
 # Technology Stack
 
-**Project:** BigPanda Project Intelligence App
-**Researched:** 2026-03-04
+**Project:** BigPanda AI Project Management App (Full Rewrite)
+**Researched:** 2026-03-18
 **Research Mode:** Ecosystem — Stack Dimension
-**Tool Availability:** Read (project files only). Bash, WebSearch, WebFetch all denied by settings.local.json.
-**Knowledge Basis:** Training data through August 2025 + reasoning about version trajectories.
+**Knowledge Basis:** Existing working codebase (`server/package.json`, `client/package.json`) + training data through Aug 2025
 
-> IMPORTANT VERIFICATION NOTE: Live npm/web lookups were blocked by project permissions.
-> All version numbers marked HIGH confidence are from training data verified through Aug 2025.
-> Versions marked MEDIUM/LOW need `npm view <pkg> version` confirmation before pinning in package.json.
-> Priority verify: @anthropic-ai/sdk (brief says ^0.20.0 — this is WRONG; see below).
+> IMPORTANT VERIFICATION NOTE: External web/npm lookups were blocked by project settings.
+> All versions marked HIGH confidence are directly read from the WORKING codebase's installed
+> package.json files — these are the proven, running versions, not estimates.
+> Versions marked MEDIUM confidence apply to new libraries not yet installed (PostgreSQL layer,
+> BullMQ, MCP, docx, xlsx) — verify with `npm view <pkg> version` before pinning.
+
+---
+
+## Context: What Changed from the Previous Build
+
+The existing codebase (React/Vite/Express/Google Drive, 8 phases complete) used versions that
+were accurate as of early 2026. The rewrite switches:
+
+- **From** Google Drive as data store  **→ To** PostgreSQL as the source of truth
+- **From** React/Vite SPA + Express API **→ To** Next.js 14+ (App Router) unified
+- **From** Drive-sync YAML files **→ To** DB with YAML export for Cowork compatibility
+- **Adds** Background job scheduling, MCP tool calling, full-text search, real-time UI
+
+The existing `server/` and `client/` package.json files contain the ground-truth versions for
+all shared libraries. Those versions are used directly below.
 
 ---
 
@@ -17,267 +32,420 @@
 
 ### Core Frontend
 
-| Technology | Recommended Version | Purpose | Why |
-|------------|--------------------|---------|----|
-| React | ^18.3.x | UI framework | Stable LTS-equivalent. React 19 released Dec 2024 but ecosystem (React Router, some Tailwind plugins) lagged. For a local app with no deployment pressure, 18.3 is the lowest-risk choice. React 19 is viable if starting fresh in 2026 — evaluate based on Vite template defaults. |
-| Vite | ^5.4.x | Build tool / dev server | The de facto standard for React apps in 2025/2026. CRA is deprecated and unmaintained. Vite 5.x is stable. Vite 6 released late 2024 — check if stable before adopting. `npm create vite@latest` scaffolds correctly. |
-| Tailwind CSS | ^3.4.x | Utility CSS | v3 is battle-tested. Tailwind v4 entered beta/early release in 2025 with a new Rust-based engine and breaking config changes. For a greenfield project: use v4 only if the Vite integration is documented stable; otherwise v3.4 is the safe choice. |
-| React Router | ^6.26.x | Client-side routing | v6 is current stable. v7 (Remix merger) released late 2024. For a local single-page app with 7 views, React Router v6 is simple and well-understood. v7 adds complexity without benefit here. |
+| Technology | Proven Version | Purpose | Why |
+|------------|---------------|---------|-----|
+| Next.js | ^14.x (App Router) | Frontend framework + API routes | Decided. App Router co-locates server components, API routes, and streaming RSC in one repo. Eliminates the Vite proxy/Express split of the previous build. |
+| React | ^19.2.0 | UI framework | CONFIRMED working in existing codebase. React 19 is the current stable and the default scaffold. Not 18. |
+| Tailwind CSS | ^4.2.1 | Utility CSS | CONFIRMED working. V4 uses `@tailwindcss/vite` plugin (no separate PostCSS config). The old tailwind.config.js approach is replaced by CSS `@theme` directives. |
+| TypeScript | ^5.x | Type safety | Standard for Next.js projects. App Router and server components are typed by default. Use strict mode. |
 
-**Confidence:** HIGH for React 18 and Vite 5; MEDIUM for Tailwind and Router versions (likely incremented since Aug 2025).
+**Confidence:** HIGH (React 19, Tailwind 4 — directly from working codebase).
+
+**Tailwind v4 gotcha (HIGH confidence — proven in existing build):**
+V4 does NOT use `tailwind.config.js` by default. Configuration moves to CSS:
+```css
+/* app/globals.css */
+@import "tailwindcss";
+@theme {
+  --color-brand: #FF6B35;
+}
+```
+The `@tailwindcss/vite` plugin handles everything. No PostCSS config needed. Running
+`npx tailwindcss init` generates a v3-style config that is WRONG for v4.
+
+---
 
 ### Core Backend
 
+| Technology | Proven/Recommended Version | Purpose | Why |
+|------------|---------------------------|---------|-----|
+| Next.js API Routes | (same as frontend) | REST API + background triggers | App Router `route.ts` files replace the Express layer. No separate server process needed for API. |
+| Node.js | ^22.x LTS | Runtime | Next.js 14 requires Node 18.17+. Use 22.x (enters LTS Oct 2025) for all new work. |
+| Express | ^5.2.1 (existing) | NOT recommended for new build | Express 5 is confirmed working in the existing server. For the Next.js rewrite, API routes replace Express. If a standalone worker process is needed for BullMQ, use Express 5. |
+
+**Confidence:** HIGH.
+
+**Architecture decision — Express vs Next.js API Routes:**
+Keep BullMQ workers in a separate `worker/` process (Express 5 or standalone Node script)
+because Next.js serverless functions do not support long-running processes. Everything else
+(CRUD, AI invocation) goes in Next.js API routes.
+
+---
+
+### Database Layer
+
 | Technology | Recommended Version | Purpose | Why |
 |------------|--------------------|---------|----|
-| Node.js | ^20.x LTS or ^22.x | Runtime | v20 is the current LTS (Active until Apr 2026), v22 enters LTS Oct 2025. Use whichever is installed locally — no deployment means no infra constraint. |
-| Express | ^4.19.x | HTTP server | Express 5 was in RC through 2024. For a local app with no security exposure, either works, but Express 4 is the documented standard; avoid Express 5 until its ecosystem (body-parser, cors) fully catches up. |
-| cors | ^2.8.5 | CORS for dev | Required since frontend (Vite :5173) and backend (:3000) run on different ports in dev. |
-| dotenv | ^16.4.x | Env var loading | Standard. Load `.env` for GOOGLE_APPLICATION_CREDENTIALS path and ANTHROPIC_API_KEY. |
+| PostgreSQL | ^16.x | Primary data store | Decided. Full-text search (`tsvector`/`tsquery`) is built-in and eliminates the need for a separate search index for a single-user local app. JSONB columns handle semi-structured skill outputs. |
+| Drizzle ORM | ^0.30.x | Type-safe DB access | Preferred over Prisma for Next.js App Router. Drizzle schema is plain TypeScript, runs in Edge Runtime, and generates SQL that is readable. Prisma generates an opaque query engine binary that complicates local dev on macOS ARM. |
+| drizzle-kit | ^0.20.x | DB migrations | Drizzle's migration CLI. Generates SQL migration files you can inspect and run. |
+| postgres (npm) | ^3.4.x | pg driver | The `postgres` package (by porsager) is the recommended driver for Drizzle + PostgreSQL. Faster than `pg`, supports tagged template literals, and avoids the `pg` pool configuration footguns. |
 
-**Confidence:** HIGH for Express 4 and Node 20/22; MEDIUM for exact patch versions.
+**Confidence:** MEDIUM (Drizzle/postgres version numbers — need `npm view` before pinning; architecture rationale is HIGH).
 
-### Google Drive Integration
+**Drizzle ORM over Prisma — rationale:**
 
-| Technology | Recommended Version | Purpose | Why |
-|------------|--------------------|---------|----|
-| googleapis | ^140.x | Google Drive API v3 client | The official Google client. Monorepo package covering all Google APIs. Version was ~134-140 range through mid-2025 — increments frequently. |
-| google-auth-library | ^9.x | Service account auth | `googleapis` depends on this transitively, but pin it explicitly if you need `GoogleAuth` directly. |
+| Criterion | Drizzle | Prisma |
+|-----------|---------|--------|
+| Schema definition | TypeScript file, no DSL | Prisma schema DSL (separate language) |
+| Next.js App Router compat | Native (no binary dependency) | Requires workarounds for Edge Runtime |
+| Generated queries | Inspectable SQL | Opaque query engine |
+| Migration workflow | SQL files (drizzle-kit generate + push) | Prisma migrate (heavier tooling) |
+| macOS ARM | Works out of box | Binary engine download sometimes fails |
+| Bundle size | Small | Large (binary engine) |
 
-**Service Account Auth Pattern (HIGH confidence — official pattern, stable across versions):**
+**Full-text search strategy (PostgreSQL built-in):**
+```sql
+-- Add tsvector column to searchable tables
+ALTER TABLE actions ADD COLUMN search_vector tsvector
+  GENERATED ALWAYS AS (
+    to_tsvector('english', coalesce(description, '') || ' ' || coalesce(notes, ''))
+  ) STORED;
 
-```javascript
-// server/services/driveService.js
-const { google } = require('googleapis');
-const { GoogleAuth } = require('google-auth-library');
+CREATE INDEX actions_search_idx ON actions USING gin(search_vector);
 
-const auth = new GoogleAuth({
-  keyFile: process.env.GOOGLE_APPLICATION_CREDENTIALS,
-  scopes: ['https://www.googleapis.com/auth/drive'],
-});
+-- Query
+SELECT * FROM actions
+WHERE search_vector @@ plainto_tsquery('english', $1)
+ORDER BY ts_rank(search_vector, plainto_tsquery('english', $1)) DESC;
+```
+This covers the full-text search requirement across actions, risks, decisions, and history
+without adding Elasticsearch or MeiliSearch to the stack.
 
-const drive = google.drive({ version: 'v3', auth });
+---
 
-// List files in folder
-async function listCustomerFiles(folderId) {
-  const res = await drive.files.list({
-    q: `'${folderId}' in parents and name contains '_Master_Status.yaml' and trashed=false`,
-    fields: 'files(id, name, modifiedTime)',
+### Anthropic SDK (AI Invocation)
+
+| Technology | Proven Version | Purpose | Why |
+|------------|---------------|---------|-----|
+| @anthropic-ai/sdk | ^0.78.0 | Claude API client | CONFIRMED — this is the version running in production in the existing build. NOT ^0.20.0 (stale), NOT ^0.30.x (stale estimate). 0.78.0 is the ground-truth current version. |
+
+**Confidence:** HIGH (directly from running server/package.json).
+
+**SDK version delta warning:** The brief originally specified `^0.20.0`. The existing build
+already upgraded to `^0.78.0`. The API surface has changed substantially — streaming pattern,
+tool use API (now `tools` array with `tool_choice`), and the `beta` header for extended thinking.
+Do not copy code examples written for 0.20.x.
+
+**Streaming for long-running skills (HIGH confidence — proven pattern):**
+```typescript
+// app/api/skills/[skill]/route.ts
+import Anthropic from '@anthropic-ai/sdk';
+
+export async function POST(request: Request) {
+  const { customerId, skillName } = await request.json();
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      const messageStream = client.messages.stream({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 8192,
+        messages: [{ role: 'user', content: buildPrompt(customerId, skillName) }],
+      });
+
+      for await (const chunk of messageStream) {
+        if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ delta: chunk.delta.text })}\n\n`));
+        }
+      }
+      controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+      controller.close();
+    },
   });
-  return res.data.files;
-}
 
-// Read file content
-async function readYamlFile(fileId) {
-  const res = await drive.files.get(
-    { fileId, alt: 'media' },
-    { responseType: 'stream' }
-  );
-  // collect stream to string
-}
-
-// Atomic write: update existing file
-async function writeYamlFile(fileId, yamlContent) {
-  const { Readable } = require('stream');
-  await drive.files.update({
-    fileId,
-    media: {
-      mimeType: 'text/plain',
-      body: Readable.from([yamlContent]),
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
     },
   });
 }
 ```
 
-**Key gotcha:** `googleapis` uses `stream` for media downloads. Use `responseType: 'stream'` and collect chunks. Do NOT use `responseType: 'arraybuffer'` for text files — encoding issues appear.
+**MCP tool calling pattern:**
+The Anthropic SDK 0.78.x supports tool use natively. MCP (Model Context Protocol) tool calls
+map to the SDK's `tools` array. Each Slack/Gmail/Glean/Drive integration is a tool definition:
+```typescript
+const tools: Anthropic.Tool[] = [
+  {
+    name: 'search_slack',
+    description: 'Search Slack messages for a customer channel',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        customer_name: { type: 'string' },
+        days_back: { type: 'number' },
+      },
+      required: ['customer_name'],
+    },
+  },
+  // ... gmail_search, glean_search, drive_read
+];
 
-**Confidence:** HIGH for auth pattern; MEDIUM for exact googleapis version number.
+// Tool execution loop
+const response = await client.messages.create({
+  model: 'claude-sonnet-4-6',
+  max_tokens: 4096,
+  tools,
+  messages,
+});
 
-### Anthropic SDK
-
-| Technology | Recommended Version | Purpose | Why |
-|------------|--------------------|---------|----|
-| @anthropic-ai/sdk | ^0.30.x or later | Claude API | See critical note below. |
-
-**CRITICAL: The brief's `^0.20.0` is severely outdated.**
-
-Training data through Aug 2025 shows the SDK was at `^0.28.x` by mid-2025 and advancing rapidly. The `^0.20.0` pin in the project brief predates streaming improvements, tool use v2, and the messages API stabilization. **Do not use ^0.20.0.**
-
-Run `npm view @anthropic-ai/sdk version` to get the current version before starting. Expect it to be in the `^0.30.x` or higher range as of March 2026.
-
-**Streaming vs Non-Streaming for Long Reports:**
-
-Use **streaming** for ELT deck generation (the longest calls — Claude returning full JSON for PPTX). The report generator shows a loading state during "10-20 second generation" — streaming lets you show incremental progress or at least keep the connection alive without hitting Express timeout.
-
-Non-streaming is fine for Weekly Status reports where the output is shorter and latency is acceptable.
-
-```javascript
-// Streaming pattern (recommended for ELT decks)
-const Anthropic = require('@anthropic-ai/sdk');
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
-async function generateEltDeck(customerYaml, template, res) {
-  // res = Express response object, set as SSE stream
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-
-  const stream = await client.messages.stream({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 8192,
-    messages: [{ role: 'user', content: buildPrompt(customerYaml, template) }],
-  });
-
-  let fullText = '';
-  for await (const chunk of stream) {
-    if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
-      fullText += chunk.delta.text;
-      res.write(`data: ${JSON.stringify({ delta: chunk.delta.text })}\n\n`);
+if (response.stop_reason === 'tool_use') {
+  for (const block of response.content) {
+    if (block.type === 'tool_use') {
+      const result = await executeLocalTool(block.name, block.input);
+      // append tool_result to messages and continue loop
     }
   }
-  res.write(`data: ${JSON.stringify({ done: true, full: fullText })}\n\n`);
-  res.end();
 }
+```
 
-// Non-streaming pattern (weekly status, shorter outputs)
-async function generateWeeklyStatus(customerYaml, template) {
-  const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 4096,
-    messages: [{ role: 'user', content: buildPrompt(customerYaml, template) }],
+---
+
+### Background Job Scheduling
+
+| Technology | Recommended Version | Purpose | Why |
+|------------|--------------------|---------|----|
+| BullMQ | ^5.x | Job queue + scheduling | Preferred over node-cron for this use case. See decision matrix below. |
+| ioredis | ^5.x | Redis client (BullMQ dep) | BullMQ requires Redis. ioredis is the BullMQ-recommended client. |
+| Redis | ^7.x (local) | Queue backend | Required by BullMQ. Run locally via Homebrew (`brew install redis`) or Docker. |
+
+**Confidence:** MEDIUM (versions need `npm view` confirmation; architecture rationale is HIGH).
+
+**BullMQ vs node-cron — decision matrix:**
+
+| Criterion | BullMQ | node-cron |
+|-----------|--------|-----------|
+| Job persistence | YES — jobs survive server restart | NO — lost on restart |
+| Job history / logging | YES — completed/failed queue in Redis | NO |
+| Retry on failure | YES — configurable backoff | NO |
+| Concurrent jobs | YES — worker pools | Single-threaded |
+| Real-time job status | YES — events, progress | NO |
+| Dependencies | Redis required | None |
+| Complexity | Medium (queue + worker process) | Very low |
+| Good for 5-7 scheduled jobs | Overkill but correct | Fine |
+
+**Recommendation: BullMQ.** The scheduled jobs (Morning Briefing, Slack sweep, Weekly Status)
+call Claude and touch external APIs. They can fail (Claude timeout, Slack rate limit). BullMQ
+gives retries, visibility into failures, and the ability to see "last Morning Briefing ran at 8:02am,
+completed, 3 AI calls made." node-cron gives you a silent cron that fails invisibly.
+
+**The Redis requirement is the tradeoff.** For a local single-user app on macOS, Redis is
+`brew install redis` + `brew services start redis`. Not a burden.
+
+**Worker architecture:**
+```
+next-app/               ← Next.js (API routes, UI)
+worker/
+  index.ts              ← BullMQ worker process (separate `npm run worker`)
+  jobs/
+    morningBriefing.ts
+    slackSweep.ts
+    weeklyStatus.ts
+    healthCheck.ts
+  queues.ts             ← queue definitions shared with Next.js
+```
+
+Next.js enqueues jobs via `await jobQueue.add(...)`. The worker process pulls and executes.
+Both share the same Redis connection.
+
+---
+
+### MCP / External Integrations
+
+| Integration | Approach | SDK/Library | Why |
+|-------------|----------|-------------|-----|
+| Slack | Direct REST API | `@slack/web-api ^7.x` | MCP Slack server is available but adds an extra process. Direct API call from a BullMQ job is simpler for read-only sweep (search messages, read channels). |
+| Gmail | Google APIs | `googleapis ^171.4.0` | Already proven in existing build. `gmail.users.messages.list` with label filters. Same service account pattern as Drive. |
+| Google Drive | Google APIs | `googleapis ^171.4.0` | CONFIRMED working in existing build. Context doc export/import uses this. |
+| Glean | Glean REST API | Native fetch | Glean has a REST search API. No official Node SDK. Use `fetch` with `Authorization: Bearer` header. |
+| MCP protocol | Anthropic SDK tools array | `@anthropic-ai/sdk ^0.78.0` | SDK handles the tool-use protocol natively. No separate MCP server process needed for these integrations — implement tool executors as local async functions. |
+
+**Confidence:** MEDIUM (library versions); HIGH (architecture pattern).
+
+**googleapis version confirmed:** ^171.4.0 — directly from existing server/package.json.
+
+**Why no separate MCP server processes:** The project's integrations are read-only sweeps
+(search Slack, search Gmail, read Drive). Running separate MCP server processes for each adds
+operational complexity with no benefit for a single-user local app. The Anthropic SDK's `tools`
+array IS the MCP protocol — use it directly.
+
+---
+
+### File Generation
+
+| Output | Library | Version | Why |
+|--------|---------|---------|-----|
+| .pptx | pptxgenjs | ^4.0.1 | CONFIRMED — upgraded to v4 in existing build. V4 has ESM support and improved chart rendering. |
+| .docx | docx | ^8.x | The `docx` npm package is the standard for programmatic Word doc generation in Node.js. Pure JS, no binary deps. NOT mammoth (that's for reading). NOT officegen (abandoned 2019). |
+| .xlsx | ExcelJS | ^4.x | ExcelJS is the recommended library for writing Excel files with formatting. The action tracker export (PA3_Action_Tracker.xlsx format) requires cell formatting (bold headers, date cells, colored status). SheetJS (xlsx) is an alternative but ExcelJS is more ergonomic for writes. |
+| .html | Native template literals | N/A | Team Engagement Map and Workflow Diagram skills output self-contained HTML. Generate via template literal strings in the skill executor — no library needed. |
+
+**Confidence:** HIGH for pptxgenjs (proven); MEDIUM for docx and ExcelJS versions (need npm view).
+
+**pptxgenjs v4 breaking changes from v3 (IMPORTANT):**
+The existing archived STACK.md documented pptxgenjs as `^3.12.x`. The existing working build
+has `^4.0.1`. V4 is a major version — check the pptxgenjs changelog before assuming v3 code
+works in v4. Key changes: ESM-first export, some method signatures updated.
+
+**docx library pattern:**
+```typescript
+import { Document, Paragraph, TextRun, HeadingLevel } from 'docx';
+import { Packer } from 'docx';
+
+const doc = new Document({
+  sections: [{
+    properties: {},
+    children: [
+      new Paragraph({
+        heading: HeadingLevel.HEADING_1,
+        children: [new TextRun('Meeting Summary')],
+      }),
+    ],
+  }],
+});
+
+const buffer = await Packer.toBuffer(doc);
+// Return as API response or write to disk
+```
+
+---
+
+### Real-Time UI Updates
+
+| Technology | Recommended Version | Purpose | Why |
+|------------|--------------------|---------|----|
+| Server-Sent Events (SSE) | Native (Next.js `ReadableStream`) | Push job completion to UI | SSE is built into Next.js App Router via `ReadableStream` responses. No library needed. One-directional (server → client) is sufficient for "job completed" notifications. |
+| TanStack Query | ^5.90.21 | Client-side cache + polling fallback | CONFIRMED — already in existing client build. Use `refetchOnWindowFocus` and `staleTime` settings. For job status, poll the `GET /api/jobs/:id/status` endpoint every 3s as fallback when SSE connection drops. |
+
+**Confidence:** HIGH (TanStack Query version confirmed from existing codebase).
+
+**SSE vs WebSockets:**
+WebSockets require a persistent server connection, which conflicts with Next.js serverless
+architecture. SSE works with standard HTTP and is natively supported. For "job started →
+job completed" notifications, SSE is correct.
+
+**SSE pattern in Next.js App Router:**
+```typescript
+// app/api/jobs/stream/route.ts
+export async function GET() {
+  const encoder = new TextEncoder();
+  let intervalId: NodeJS.Timeout;
+
+  const stream = new ReadableStream({
+    start(controller) {
+      intervalId = setInterval(async () => {
+        const pendingJobs = await db.query.jobRuns.findMany({
+          where: eq(jobRuns.status, 'completed'),
+          orderBy: desc(jobRuns.completedAt),
+          limit: 5,
+        });
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(pendingJobs)}\n\n`));
+      }, 3000);
+    },
+    cancel() {
+      clearInterval(intervalId);
+    },
   });
-  return message.content[0].text;
-}
-```
 
-**Model:** `claude-sonnet-4-6` as specified in PROJECT.md. This is correct — it's the latest Sonnet at time of project definition.
-
-**Confidence:** MEDIUM for exact SDK version (need live check); HIGH for streaming pattern and model choice.
-
-### YAML Handling
-
-| Technology | Recommended Version | Purpose | Why |
-|------------|--------------------|---------|----|
-| js-yaml | ^4.1.0 | YAML parse and serialize | See analysis below. |
-
-**js-yaml vs Alternatives — Round-Trip Fidelity Analysis:**
-
-**Recommendation: js-yaml ^4.1.0. Do not switch.**
-
-Analysis:
-
-| Library | Round-Trip | Speed | Schema | Verdict |
-|---------|-----------|-------|--------|---------|
-| js-yaml | GOOD — preserves most scalar types, handles multi-line strings | Fast | Pluggable | USE THIS |
-| yaml (eemeli) | EXCELLENT — best round-trip, preserves comments and node positions | Slightly slower | JSON/YAML 1.2 | Alternative if comment preservation matters |
-| yamljs | POOR — known bugs, last updated 2017 | — | — | AVOID |
-| js-yaml-front-matter | Specialized for frontmatter only | — | — | AVOID |
-
-**js-yaml round-trip gotchas** (HIGH confidence — well-documented):
-
-1. **Scalar coercion**: `js-yaml` by default parses `yes`, `no`, `on`, `off` as booleans in YAML 1.1 spec. Use `{ schema: 'failsafe' }` or `{ schema: 'json' }` for strict string preservation if your YAML uses these words as literal strings.
-
-2. **Number coercion**: Values like `0001` (zero-padded) parse as integers. Use `YAML_FLOAT_SCHEMA` or quote values in source YAML.
-
-3. **Multi-line strings**: `js-yaml` preserves `|` (literal block) and `>` (folded) styles on parse, but `dump()` may reformat. If `progress_notes` or `description` fields use literal block style, serialize with `{ lineWidth: -1 }` to prevent unwanted wrapping.
-
-4. **`dump()` key ordering**: js-yaml sorts keys alphabetically by default. Use `{ sortKeys: false }` to preserve insertion order.
-
-**Recommended configuration:**
-
-```javascript
-const yaml = require('js-yaml');
-
-// Parse — strict JSON schema avoids boolean coercion surprises
-function parseYaml(content) {
-  return yaml.load(content, { schema: yaml.JSON_SCHEMA });
-}
-
-// Serialize — preserve key order, no line width truncation
-function serializeYaml(data) {
-  return yaml.dump(data, {
-    sortKeys: false,
-    lineWidth: -1,
-    noRefs: true,
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+    },
   });
 }
 ```
 
-**When to use `yaml` (eemeli) instead:** Only if you need to preserve inline comments in the YAML files (e.g., `# section header` comments). js-yaml strips comments on parse. The YAML schema in this project appears to be data-only (no comments expected), so js-yaml is sufficient.
-
-**Confidence:** HIGH for js-yaml recommendation and gotchas; HIGH for `yaml` (eemeli) as alternative.
-
-### PPTX Generation
-
-| Technology | Recommended Version | Purpose | Why |
-|------------|--------------------|---------|----|
-| pptxgenjs | ^3.12.x | Generate .pptx from JSON | The only production-grade pure-JS PPTX library for Node.js. |
-
-**pptxgenjs Current State and Known Limitations:**
-
-**Status:** Active, maintained. Version 3.x has been stable since 2022. No breaking 4.x release observed through Aug 2025. The library is the de facto standard for server-side PPTX generation in Node.js.
-
-**What works well:**
-- Text boxes, shapes, tables, images
-- Slide masters and layouts
-- Basic charts (bar, line, pie)
-- File generation as Buffer (for Express response) or file write
-
-**Known limitations** (HIGH confidence — from official docs and community):
-
-1. **No PPTX reading/parsing** — pptxgenjs is write-only. It cannot read an existing PPTX template with complex formatting and reproduce it. You must define slide structure in code.
-
-2. **Limited text formatting within a single text box** — Mixed bold/italic/color within a paragraph requires using the `text` array format, not a simple string. This is verbose but works.
-
-3. **Chart styling is basic** — No gradient fills, no custom data labels beyond basic. For the ELT deck use case (status slides, progress bars), shapes + text boxes are more reliable than charts.
-
-4. **Font embedding** — Fonts must be installed on the system or embedded. For local use on macOS, system fonts work fine.
-
-5. **No async streaming** — `pres.write('nodebuffer')` returns a Promise resolving to a Buffer. Send as Express response with `res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation')`.
-
-**Architecture recommendation for this project:** Claude returns structured JSON → Express `pptxService.js` maps JSON to pptxgenjs calls → returns Buffer → client triggers download. Keep the JSON schema simple: slides with `title`, `bullets`, `status`, `metrics` fields. Do NOT have Claude generate pptxgenjs code — have Claude generate data JSON and keep the PPTX layout logic in your service.
-
-```javascript
-// pptxService.js pattern
-const PptxGenJS = require('pptxgenjs');
-
-async function buildEltDeck(deckJson) {
-  const pres = new PptxGenJS();
-  pres.layout = 'LAYOUT_WIDE'; // 16:9
-
-  for (const slideData of deckJson.slides) {
-    const slide = pres.addSlide();
-    slide.addText(slideData.title, { x: 0.5, y: 0.3, w: '90%', fontSize: 28, bold: true });
-    // ... add content from slideData
-  }
-
-  return await pres.write('nodebuffer');
-}
-```
-
-**Confidence:** HIGH for library choice and limitations; MEDIUM for exact version number.
-
-### YAML Editor (Frontend)
-
-| Technology | Recommended Version | Purpose | Why |
-|------------|--------------------|---------|----|
-| @monaco-editor/react | ^4.6.x | YAML editor with syntax highlighting | Monaco (VS Code's editor) has first-class YAML support via the `monaco-yaml` plugin. Rich editing experience. |
-| monaco-yaml | ^5.x | YAML language support for Monaco | Adds schema validation, hover, autocomplete to Monaco. |
-
-**Alternative:** CodeMirror 6 (`@codemirror/lang-yaml`). Lighter weight, better mobile/tablet support, but Monaco gives VS Code-level UX which matches the "YAML Editor" view requirement.
-
-**Recommendation:** Use Monaco unless bundle size is a concern (it isn't for a local dev app).
-
-**Confidence:** MEDIUM — Monaco editor React wrapper versions move frequently; verify current version.
+---
 
 ### Supporting Libraries
 
-| Library | Recommended Version | Purpose | When to Use |
-|---------|--------------------|---------| ------------|
-| zod | ^3.23.x | Schema validation | Validate Claude JSON output before passing to pptxService. Also validate YAML structure server-side. Preferred over Joi for TypeScript-friendly API even in JS projects. |
-| date-fns | ^3.6.x | Date manipulation | Calculate "days to go-live", format dates. Smaller than moment.js, tree-shakeable. Do not use moment.js (deprecated). |
-| uuid | ^9.x | — | Not needed — IDs are sequential (A-###, X-###) per PROJECT.md spec. |
-| concurrently | ^8.x | Run frontend + backend together | `"dev": "concurrently \"npm run server\" \"npm run client\""` in root package.json. Standard for monorepo-lite local dev. |
-| nodemon | ^3.x | Backend auto-restart | Dev dependency. Watches `server/` directory. |
+| Library | Proven/Recommended Version | Purpose | When to Use |
+|---------|---------------------------|---------|-------------|
+| zod | ^4.3.6 | Schema validation | CONFIRMED. V4 is a major version bump — API is broadly compatible with v3 but some method names changed (`z.string().parse()` etc. stable). Validate all Claude JSON output, all API inputs. |
+| js-yaml | ^4.1.1 | YAML parse/serialize | CONFIRMED. For context doc export (DB → YAML frontmatter Markdown for Cowork skill compatibility). Use `JSON_SCHEMA` to prevent boolean coercion. |
+| clsx | ^2.1.1 | Conditional classNames | CONFIRMED. Standard for Tailwind utility class composition. |
+| date-fns | ^3.x | Date manipulation | Overdue action calculations, due date formatting. Lighter than dayjs, tree-shakeable. |
+| dotenv | ^17.3.1 | Env vars | CONFIRMED. For worker process (`.env` loading in standalone Node scripts). Next.js handles `.env.local` natively. |
+| nodemon | ^3.1.14 | Dev auto-restart | CONFIRMED (dev dep). For the BullMQ worker process in dev. |
+
+---
+
+## Stack Conflicts and Gotchas
+
+### Conflict 1: pptxgenjs CJS vs ESM in Next.js
+
+pptxgenjs v4 ships ESM but has CJS interop. Next.js App Router runs in Edge Runtime by default
+for some routes. pptxgenjs CANNOT run in Edge Runtime (no Node.js Buffer API).
+
+**Prevention:** Mark any route that generates PPTX as Node.js runtime:
+```typescript
+// app/api/skills/elt-deck/route.ts
+export const runtime = 'nodejs'; // Required for pptxgenjs
+```
+
+### Conflict 2: BullMQ Worker vs Next.js Process
+
+BullMQ workers must run as a persistent process — they cannot run inside Next.js API routes
+(which are request-scoped). The worker must be a separate `node worker/index.ts` process.
+Both processes share Redis for the job queue.
+
+**Prevention:** In `package.json`:
+```json
+{
+  "scripts": {
+    "dev": "concurrently \"next dev\" \"tsx watch worker/index.ts\"",
+    "worker": "tsx worker/index.ts"
+  }
+}
+```
+
+### Conflict 3: googleapis CJS in ESM Next.js
+
+`googleapis` is CJS. In Next.js (ESM), import via:
+```typescript
+import { google } from 'googleapis';
+```
+This works because Next.js handles CJS interop. Do NOT use `require()` inside App Router
+server components — it breaks.
+
+### Conflict 4: Drizzle schema vs Prisma if considering a switch
+
+Do not introduce Prisma. The binary query engine (`prisma-client`) downloads a platform-specific
+binary at postinstall time. On macOS ARM this sometimes fails in CI or fresh environments.
+Drizzle has no binary dependency — schema is pure TypeScript.
+
+### Conflict 5: Zod v4 breaking change
+
+Zod v4 (`^4.3.6` — confirmed in existing build) has some changes from v3:
+- `z.record()` now takes two args for key/value types (not one)
+- Error message formatting changed
+- `z.string().nonempty()` replaced by `z.string().min(1)`
+Do not copy v3 Zod patterns verbatim. Check the Zod v4 migration guide.
+
+### Conflict 6: React Router v7 vs Next.js App Router routing
+
+The existing client uses `react-router-dom ^7.13.1`. The Next.js rewrite uses Next.js App Router
+for routing — NOT react-router-dom. These are mutually exclusive. Remove react-router-dom
+entirely from the Next.js project.
+
+### Conflict 7: Next.js 14 App Router + TanStack Query setup
+
+TanStack Query 5.x requires a `QueryClientProvider` wrapper. In App Router, this must live in
+a client component (`'use client'`). The typical pattern:
+```typescript
+// app/providers.tsx
+'use client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+const queryClient = new QueryClient();
+export function Providers({ children }: { children: React.ReactNode }) {
+  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+}
+```
 
 ---
 
@@ -285,152 +453,165 @@ async function buildEltDeck(deckJson) {
 
 | Category | Recommended | Alternative | Why Not |
 |----------|-------------|-------------|---------|
-| Build tool | Vite 5 | Create React App | CRA is officially deprecated, maintenance stopped 2023 |
-| Build tool | Vite 5 | Next.js | Next.js SSR/SSG overhead is unnecessary for a local single-user app; adds complexity with no benefit |
-| CSS | Tailwind CSS | Styled Components / CSS Modules | Tailwind gives faster iteration for dashboard UIs; styled-components runtime cost unnecessary |
-| CSS | Tailwind CSS | Tailwind v4 | v4 breaking config changes; ecosystem (plugins, IDE support) still catching up as of early 2026 — verify before adopting |
-| HTTP client | fetch (built-in) | axios | Node 18+ and modern browsers have native fetch; axios adds no value for simple REST calls |
-| YAML | js-yaml | yaml (eemeli) | js-yaml is sufficient; eemeli/yaml only needed if comment preservation required |
-| YAML | js-yaml | yamljs | yamljs has known bugs and is unmaintained — hard avoid |
-| PPTX | pptxgenjs | officegen | officegen is unmaintained (last update 2019) — hard avoid |
-| PPTX | pptxgenjs | docx.js | docx.js generates Word, not PowerPoint |
-| DB | None (Drive as store) | SQLite | PROJECT.md design uses Drive as source of truth; SQLite adds complexity and sync issues |
-| Editor | Monaco | CodeMirror 6 | Both valid; Monaco preferred for VS Code-level UX; CodeMirror if bundle size matters |
-| Validation | zod | Joi | Joi is heavier; zod is modern, TypeScript-native, and has better ecosystem momentum |
-| State | React useState/useContext | Redux / Zustand | 7 views, single user, simple state — Context + useState is sufficient; avoid over-engineering |
-
----
-
-## Version Conflict Gotchas
-
-**Known issues to watch (MEDIUM confidence based on training data patterns):**
-
-1. **Tailwind v4 + Vite**: Tailwind v4 has a Vite plugin (`@tailwindcss/vite`) that replaces `tailwindcss` as a PostCSS plugin. If `npm create vite@latest` scaffolds with Tailwind v4 defaults, the config structure changes completely. Check which version the scaffolder installs.
-
-2. **React 18 vs React 19 + React Router**: React Router v6 works with both. React Router v7 requires React 18+. If scaffolder installs React 19, verify React Router compatibility.
-
-3. **googleapis + Node.js stream API**: googleapis v100+ uses the Node.js Streams API for media operations. Works fine on Node 18/20/22 but ensure you're not mixing legacy `stream` callbacks with async iterators.
-
-4. **pptxgenjs + ESM**: pptxgenjs ships CJS. If you configure your Express server as `"type": "module"` in package.json, use `import PptxGenJS from 'pptxgenjs'` (it has ESM interop) or keep the server as CJS (`require()`). The safest choice for a local Express app: keep everything CJS (no `"type": "module"`) to avoid interop headaches.
-
-5. **@monaco-editor/react peer dependencies**: This package requires `react` and `react-dom` as peers. Version mismatches between the Monaco wrapper and your React version can cause runtime errors. Pin the wrapper version that lists your React version as a peer.
-
----
-
-## Project Structure Recommendation
-
-```
-/
-├── client/                    # React app (Vite root)
-│   ├── src/
-│   │   ├── components/        # Shared UI components
-│   │   ├── views/             # Dashboard, CustomerOverview, ActionManager, etc.
-│   │   ├── services/          # API call functions (fetch wrappers)
-│   │   └── App.jsx
-│   ├── index.html
-│   ├── vite.config.js         # proxy: { '/api': 'http://localhost:3001' }
-│   └── package.json
-│
-├── server/                    # Express app
-│   ├── routes/                # Express routers
-│   ├── services/
-│   │   ├── driveService.js    # Google Drive read/write
-│   │   ├── yamlService.js     # js-yaml parse/serialize + schema validation
-│   │   ├── claudeService.js   # Anthropic SDK calls
-│   │   └── pptxService.js     # pptxgenjs deck builder
-│   └── index.js
-│
-├── .env                       # ANTHROPIC_API_KEY, GOOGLE_APPLICATION_CREDENTIALS, DRIVE_FOLDER_ID
-├── .gitignore                 # .env, credentials.json, node_modules
-└── package.json               # root: concurrently scripts
-```
-
-**Vite proxy configuration (eliminates CORS in dev):**
-
-```javascript
-// client/vite.config.js
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-
-export default defineConfig({
-  plugins: [react()],
-  server: {
-    port: 5173,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:3001',
-        changeOrigin: true,
-      },
-    },
-  },
-});
-```
-
-With the proxy, the frontend calls `/api/customers` and Vite forwards to Express at `:3001`. No CORS headers needed in Express for development.
+| ORM | Drizzle | Prisma | Binary engine download fails on macOS ARM; Edge Runtime incompatible |
+| ORM | Drizzle | TypeORM | Decorator-heavy, worse TypeScript inference than Drizzle |
+| Full-text search | PostgreSQL tsvector | Elasticsearch | Massive over-engineering for a local single-user app with 5K-50K records |
+| Full-text search | PostgreSQL tsvector | MeiliSearch | Adds another service to run locally; Postgres built-in is sufficient |
+| Job queue | BullMQ | node-cron | node-cron has no retry, no persistence, no job history — unacceptable for AI skill jobs |
+| Job queue | BullMQ | Agenda | Agenda uses MongoDB; adds a second DB |
+| Job queue | BullMQ | pg-boss | pg-boss uses PostgreSQL — eliminates Redis dep, but BullMQ has better observability tooling (BullMQ Board) |
+| Real-time | SSE | WebSockets | WebSockets require persistent connection; conflicts with Next.js serverless architecture |
+| Real-time | SSE | Pusher/Ably | External service dependency for a local app — unnecessary |
+| DOCX | docx (npm) | officegen | Abandoned 2019, security vulnerabilities |
+| XLSX | ExcelJS | SheetJS (xlsx) | SheetJS write API is more complex for formatted output; ExcelJS is more ergonomic |
+| XLSX | ExcelJS | csv-writer | CSV doesn't preserve formatting required by PA3 tracker format |
+| CSS | Tailwind v4 | Tailwind v3 | v4 is already installed and proven in the existing client; upgrading back to v3 would be a downgrade |
+| Editor | CodeMirror 6 | Monaco | CodeMirror is lighter, already installed and proven in the existing client build |
+| State | TanStack Query | Redux/Zustand | TanStack Query handles server state; local UI state uses React useState — no global state manager needed |
+| DB driver | postgres (porsager) | pg (node-postgres) | `pg` has connection pool config footguns; `postgres` (porsager) is simpler and faster |
 
 ---
 
 ## Installation
 
 ```bash
-# Root (dev tooling)
-npm install -D concurrently
+# Create Next.js app
+npx create-next-app@latest bigpanda-app --typescript --tailwind --app
 
-# Client
-cd client
-npm create vite@latest . -- --template react
-npm install react-router-dom @monaco-editor/react monaco-yaml tailwindcss postcss autoprefixer date-fns zod
-npx tailwindcss init -p
+# DB layer
+npm install drizzle-orm postgres
+npm install -D drizzle-kit
 
-# Server
-cd ../server
-npm init -y
-npm install express googleapis google-auth-library @anthropic-ai/sdk js-yaml pptxgenjs zod dotenv
-npm install -D nodemon
+# Anthropic + AI
+npm install @anthropic-ai/sdk
+
+# Job scheduling
+npm install bullmq ioredis
+
+# External integrations
+npm install googleapis google-auth-library @slack/web-api
+
+# File generation
+npm install pptxgenjs docx exceljs
+
+# Utilities
+npm install js-yaml zod clsx date-fns
+npm install -D tsx concurrently nodemon @types/js-yaml
+
+# Verify versions before pinning (REQUIRED before first install)
+npm view @anthropic-ai/sdk version        # Expect ~0.78.x
+npm view bullmq version                   # Expect ~5.x
+npm view drizzle-orm version              # Expect ~0.30.x
+npm view postgres version                 # Expect ~3.x (porsager driver)
+npm view docx version                     # Expect ~8.x
+npm view exceljs version                  # Expect ~4.x
+npm view @slack/web-api version           # Expect ~7.x
+```
+
+---
+
+## Project Structure
+
+```
+bigpanda-app/
+├── app/                         # Next.js App Router
+│   ├── layout.tsx               # Root layout with Providers
+│   ├── page.tsx                 # Dashboard (/)
+│   ├── customers/
+│   │   └── [id]/
+│   │       ├── page.tsx         # Customer Overview
+│   │       ├── actions/page.tsx
+│   │       ├── risks/page.tsx
+│   │       ├── milestones/page.tsx
+│   │       └── ...
+│   └── api/
+│       ├── customers/route.ts
+│       ├── skills/[skill]/route.ts   # export const runtime = 'nodejs'
+│       └── jobs/stream/route.ts      # SSE endpoint
+│
+├── db/
+│   ├── schema.ts                # Drizzle schema definitions
+│   ├── index.ts                 # DB connection
+│   └── migrations/              # drizzle-kit generated SQL
+│
+├── worker/
+│   ├── index.ts                 # BullMQ worker entry point
+│   ├── queues.ts                # Queue definitions (shared with app)
+│   └── jobs/
+│       ├── morningBriefing.ts
+│       ├── slackSweep.ts
+│       ├── weeklyStatus.ts
+│       └── healthCheck.ts
+│
+├── services/
+│   ├── anthropic.ts             # Claude API calls + tool execution
+│   ├── drive.ts                 # Google Drive read/write
+│   ├── gmail.ts                 # Gmail search
+│   ├── slack.ts                 # Slack search
+│   ├── yamlExport.ts            # DB → YAML for Cowork compatibility
+│   ├── pptxService.ts           # pptxgenjs deck builder
+│   ├── docxService.ts           # docx document builder
+│   └── xlsxService.ts           # ExcelJS action tracker
+│
+├── components/                  # React components
+├── .env.local                   # ANTHROPIC_API_KEY, DB_URL, SLACK_TOKEN
+└── package.json
 ```
 
 ---
 
 ## Critical Pre-Start Verification Checklist
 
-Before writing any code, run these to get current versions:
-
 ```bash
-npm view @anthropic-ai/sdk version          # Brief says ^0.20.0 — WRONG. Get actual current.
-npm view googleapis version                 # Frequently bumped
-npm view pptxgenjs version                  # Verify 3.x still current
-npm view tailwindcss version               # Verify v3 vs v4 decision
-npm view vite version                      # Verify v5 vs v6
-npm view react version                     # Verify 18 vs 19 default
-npm view @monaco-editor/react version      # Verify peer compat
+# These versions are CONFIRMED from the existing working build:
+# @anthropic-ai/sdk:  ^0.78.0   (NOT ^0.20.0 — the brief is stale)
+# googleapis:         ^171.4.0
+# pptxgenjs:          ^4.0.1    (NOT ^3.x — v4 is the installed version)
+# js-yaml:            ^4.1.1
+# zod:                ^4.3.6    (NOT ^3.x — v4 is the installed version)
+# express:            ^5.2.1    (for worker process only)
+# react:              ^19.2.0   (NOT 18)
+# tailwindcss:        ^4.2.1    (v4, uses @tailwindcss/vite, NO tailwind.config.js)
+# vite:               ^7.3.1    (NOT 5.x)
+# react-router-dom:   ^7.13.1   (existing client only — NOT used in Next.js rewrite)
+# TanStack Query:     ^5.90.21
+# codemirror:         ^6.0.2 + @codemirror/lang-yaml ^6.1.2
+
+# These need live npm view before pinning:
+npm view drizzle-orm version      # New: PostgreSQL ORM
+npm view postgres version         # New: PG driver (porsager)
+npm view drizzle-kit version      # New: migration CLI
+npm view bullmq version           # New: job queue
+npm view ioredis version          # New: Redis client for BullMQ
+npm view docx version             # New: .docx generation
+npm view exceljs version          # New: .xlsx generation
+npm view @slack/web-api version   # New: Slack integration
 ```
 
 ---
 
 ## Sources
 
-- Training data through August 2025 (no live web access available during this research session)
-- Project context: `.planning/PROJECT.md` (read directly)
-- Anthropic SDK changelog pattern: SDK was at ^0.24.x in early 2025, ^0.28.x by mid-2025 — ^0.20.0 is at minimum 6 months stale
-- js-yaml official docs: https://github.com/nodeca/js-yaml (schema options documented in README)
-- pptxgenjs official docs: https://gitbrent.github.io/PptxGenJS/
-- googleapis auth patterns: https://github.com/googleapis/google-auth-library-nodejs
-- Vite official docs: https://vitejs.dev/guide/
+- `/Users/jmiloslavsky/Documents/Project Assistant Code/server/package.json` — proven server dependencies (HIGH confidence — running code)
+- `/Users/jmiloslavsky/Documents/Project Assistant Code/client/package.json` — proven client dependencies (HIGH confidence — running code)
+- `.planning-archive-20260318/research/STACK.md` — previous research (MEDIUM confidence — training data Aug 2025)
+- `.planning/PROJECT.md` — requirements specification
+- Training data through August 2025 for new libraries (BullMQ, Drizzle, docx, ExcelJS)
 
 **Confidence Summary:**
 
 | Area | Confidence | Reason |
 |------|------------|--------|
-| @anthropic-ai/sdk version | LOW | ^0.20.0 is outdated; exact current version needs live check |
-| googleapis version | MEDIUM | ~v134-140 range as of mid-2025; needs live check |
-| pptxgenjs version | MEDIUM | 3.x stable through Aug 2025; likely still current |
-| Vite version | MEDIUM | 5.x stable; 6.x may be current by March 2026 |
-| React version | MEDIUM | 18.3 is safe default; 19 may now be default scaffold |
-| Tailwind version | MEDIUM | v3 vs v4 decision depends on scaffold defaults |
-| Express version | HIGH | v4 stable, v5 ecosystem still catching up |
-| js-yaml recommendation | HIGH | Stable library, well-documented gotchas |
-| js-yaml round-trip gotchas | HIGH | Well-documented in official sources |
-| pptxgenjs limitations | HIGH | Documented in official pptxgenjs docs |
-| Service account auth pattern | HIGH | Official pattern, stable across googleapis versions |
-| Streaming vs non-streaming | HIGH | Pattern well-established; applies to any SDK version |
-| Project structure | HIGH | Standard Vite + Express monorepo-lite pattern |
+| @anthropic-ai/sdk version (0.78.0) | HIGH | Read directly from working server/package.json |
+| React 19, Tailwind 4, Vite 7 | HIGH | Read directly from working client/package.json |
+| pptxgenjs v4, zod v4, express v5 | HIGH | Read directly from working package.json files |
+| googleapis v171, js-yaml v4 | HIGH | Read directly from working server/package.json |
+| TanStack Query v5, CodeMirror v6 | HIGH | Read directly from working client/package.json |
+| Next.js App Router as architecture | HIGH | Decided in PROJECT.md; standard for 2025/2026 |
+| PostgreSQL + Drizzle ORM | MEDIUM | Architecture rationale HIGH; version numbers need npm view |
+| BullMQ vs node-cron decision | HIGH | Architectural reasoning; version number MEDIUM |
+| docx, ExcelJS versions | MEDIUM | Library choice HIGH; versions need npm view |
+| @slack/web-api version | MEDIUM | Library choice HIGH; version needs npm view |
+| Tailwind v4 config pattern | HIGH | Proven in existing client build |
+| SSE for real-time updates | HIGH | Native Next.js App Router capability |
+| Drizzle over Prisma | HIGH | Architectural reasoning backed by known Prisma ARM issues |
