@@ -1,12 +1,12 @@
-# BigPanda Project Intelligence App
+# BigPanda AI Project Management App
 
 ## What This Is
 
-A local single-user web app for managing BigPanda customer implementation projects. It reads and writes customer YAML files stored in Google Drive, provides a clean UI for managing workstreams, action items, risks, milestones, and artifacts, and generates structured reports via the Claude API. It replaces a manual workflow currently split across multiple Claude.ai projects.
+An AI-native project management platform purpose-built for BigPanda's Professional Services delivery team. It replaces the current workflow of manually running individual Cowork skills by delivering a unified, persistent application where every customer project lives, every action is tracked, every communication is synthesized automatically, and every deliverable can be generated in one click from a live database. Supports n active customer accounts with full lifecycle management (add, close, archive).
 
 ## Core Value
 
-The dashboard gives instant health visibility across all customers — at-risk flagging, overall % complete, open action counts, high-severity risks — so nothing slips through the cracks.
+Every PS delivery intelligence the team has built — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
 
 ## Requirements
 
@@ -16,99 +16,122 @@ The dashboard gives instant health visibility across all customers — at-risk f
 
 ### Active
 
-**Dashboard (View 1)**
-- [ ] Customer cards in a grid sorted by risk: At Risk → On Track → Off Track
-- [ ] Each card shows: name, overall status badge, days to go-live, % complete, open action count, high-severity risk count
-- [ ] Clicking "View" navigates to Customer Overview
+#### Data Foundation
+- [ ] PostgreSQL database implementing the full schema from the briefing (projects, workstreams, actions, risks, milestones, artifacts, history, stakeholders, tasks, plan_templates, outputs, knowledge_base)
+- [ ] Migration scripts to import existing customer context docs (YAML → DB) and PA3_Action_Tracker.xlsx
+- [ ] Context doc export: DB → YAML frontmatter Markdown (round-trip fidelity with Cowork skills)
+- [ ] Multi-account architecture: add new projects, close completed ones, archive read-only
 
-**Customer Overview (View 2)**
-- [ ] Header: customer name, project name, overall status badge, go-live date, last updated date, "Generate Report" button
-- [ ] Workstream health section: ADR and Biggy cards side-by-side with sub-workstream rows (progress bar, %, status dot, progress note)
-- [ ] Open actions summary with count and 3 most overdue, linked to Action Manager
-- [ ] Risks section: sorted by severity (high first), inline add/edit/close risk entries
-- [ ] Milestones section: chronological list, inline add/edit milestone entries
+#### Dashboard
+- [ ] Today's Briefing panel (morning-briefing skill output, stored in DB, refreshable on demand)
+- [ ] Project Health cards — all active accounts showing auto-derived RAG status + one-line summary + open high-priority action count
+- [ ] Auto health scoring derived from overdue actions, stalled milestones, and unresolved high risks
+- [ ] Cross-project Risk Heat Map (probability × impact matrix across all active accounts)
+- [ ] Cross-Account Watch List (escalated/time-sensitive items across customers)
+- [ ] Recent Activity Feed (last 7 days: skill runs, file outputs, history entries)
+- [ ] Quick Action Bar (one-click: Run Tracker, Generate Briefing, Weekly Status Draft per account)
+- [ ] In-app notification badge for overdue actions, approaching go-live dates, new tracker results
+- [ ] Drafts Inbox — unified queue of all AI-generated drafts (emails, Slack) pending review before send
 
-**Action Manager (View 3)**
-- [ ] Open actions table with columns: checkbox, ID, description, owner, due, status, workstream, actions
-- [ ] Checkbox immediately completes action, writes updated YAML to Drive atomically
-- [ ] Inline editing for description, owner, due date, status (cycles on click), workstream
-- [ ] Overdue due dates render red
-- [ ] Inline "Add Action" row pinned to bottom; save assigns next sequential A-### ID
-- [ ] Sort by any column, filter by workstream and status
-- [ ] Completed actions table (collapsed by default) with Reopen button
-- [ ] All Drive writes are atomic: read → modify in memory → write full YAML
+#### Project Workspace (per account)
+- [ ] Overview tab — workstream progress bars, milestone timeline, auto-derived health status
+- [ ] Actions tab — filterable action tracker, inline editing (complete, add notes, change owner), syncs to PA3_Action_Tracker.xlsx
+- [ ] Risks tab — risk register with append-only mitigation log, severity/status editing
+- [ ] Milestones tab — milestone tracker with action links and completion history
+- [ ] Teams tab — team onboarding status table (ADR + Biggy tracks) with onboarding velocity view (time-in-phase, stall detection)
+- [ ] Architecture tab — Before BigPanda state and integration status documentation
+- [ ] Decisions tab — append-only key decisions and alignments, searchable
+- [ ] Engagement History tab — append-only history entries, add from notes/transcripts
+- [ ] Stakeholders tab — BigPanda and customer contacts roster
 
-**Report Generator (View 4)**
-- [ ] Report type selection: Weekly Customer Status, Internal ELT Deck, External ELT Deck, Both ELT Decks
-- [ ] Generate button triggers Claude API call with full customer YAML + template
-- [ ] Loading state shown during 10-20 second generation
-- [ ] Weekly Status: rendered preview + Copy to Clipboard + Download .txt
-- [ ] ELT Decks: Claude returns structured JSON → pptxService builds PPTX → Download PPTX button + slide-by-slide text preview
+#### Skill Launcher (15 skills)
+- [ ] Weekly Customer Status — generate customer-facing email from project context
+- [ ] Meeting Summary — paste notes → .docx + optional .mermaid diagram
+- [ ] ELT External Status — 5-slide .pptx (confidence-framed, partnership tone)
+- [ ] ELT Internal Status — internal .pptx (direct, surfaces blockers)
+- [ ] Team Engagement Map — self-contained HTML with business outcomes, ADR/Biggy flows, team status
+- [ ] Workflow Diagram — before/after HTML with two tabs
+- [ ] Biggy Weekly Briefing — .docx + email draft + Slack draft
+- [ ] Customer Project Tracker — Gmail/Slack/Gong sweep, updates DB and action tracker
+- [ ] Morning Briefing — per-meeting intelligence from calendar + context
+- [ ] Context Updater — paste notes → apply 14 update steps → write to DB → export context doc
+- [ ] Handoff Doc Generator — structured handoff/coverage doc from project context (open actions, risks, key decisions, key contacts)
+- [ ] XLSX, DOCX, PPTX core skills (callable internally by other skills)
 
-**YAML Editor (View 5)**
-- [ ] Monaco or CodeMirror editor with YAML syntax highlighting
-- [ ] Loads current YAML from Drive on mount
-- [ ] Validate button: runs schema check, shows errors inline
-- [ ] Save to Drive button: writes validated YAML back
-- [ ] Unsaved changes warning on navigation
+#### Output Library
+- [ ] All generated files registered in outputs table with customer, type, date, filename
+- [ ] Filter by account, skill/type, date range
+- [ ] HTML files render inline; .docx/.pptx open via system app
+- [ ] Regenerate: re-run generating skill, archive old file
 
-**Artifact Manager (View 6)**
-- [ ] Table/list of all artifacts for a customer (id, type, title, status, owner, last_updated)
-- [ ] Add artifact inline with next sequential X-### ID
-- [ ] Edit artifact fields inline: type, title, description, status, owner, related_topics, linked_actions
-- [ ] Retire/supersede artifacts (status change)
-- [ ] Atomic Drive write on every change
+#### Project Plan & Task Builder
+- [ ] Task creation with title, description, owner, due date, priority, type, linked milestone
+- [ ] Phase Board (Kanban) — workstream cards per delivery phase
+- [ ] Task Board (Trello-style) — scoped to phase/workstream; To Do / In Progress / Blocked / Done
+- [ ] Gantt Timeline — milestones and workstreams with dependency lines and status color-coding
+- [ ] Team swimlane view — tasks by team, current status, upcoming due dates
+- [ ] Task dependencies with blocker chain visualization
+- [ ] Bulk operations (reassign, reschedule, move phase)
+- [ ] Task templates: Biggy Activation, ADR Onboarding, Team Kickoff
+- [ ] Progress rollup: task completion → workstream percent_complete → project health
+- [ ] Excel plan import (KAISER_Biggy_Project_Plan format) and export
+- [ ] AI-assisted plan generation from context and weekly sprint summary
 
-**Weekly Update Form (View 7)**
-- [ ] Form to create a new history entry (current week)
-- [ ] Per-workstream inputs: status (green/yellow/red), percent_complete, progress_notes, blockers
-- [ ] Fields for decisions and outcomes for the week
-- [ ] On submit: prepends new history entry to YAML history array, writes to Drive atomically
+#### Cross-Project Knowledge Base
+- [ ] Shared lessons-learned layer spanning all accounts
+- [ ] Capture patterns, solutions, and customer-handling notes that apply across projects
+- [ ] Searchable and linkable to specific risks or engagement history entries
 
-**Backend & Services**
-- [ ] Express REST API with all endpoints defined in brief
-- [ ] Google Drive integration: list, read, write YAML files via service account
-- [ ] Claude API integration (claude-sonnet-4-6) for report generation
-- [ ] pptxgenjs PPTX builder from Claude JSON output
-- [ ] YAML parse/serialize with schema validation (no extra fields, all top-level keys required)
-- [ ] Action/Risk/Artifact sequential ID assignment enforced server-side
+#### Search
+- [ ] Full-text search across actions, risks, decisions, engagement history, stakeholders, artifacts, tasks, knowledge base
+- [ ] Filter by account, date range, data type
+- [ ] Results show matching record in context (which project, which section, which date)
+
+#### Scheduled Intelligence
+- [ ] Daily 8am: Morning Briefing background job (result stored in DB, surfaced in dashboard)
+- [ ] Daily 8am: Cross-account health check (flag status changes, approaching due dates)
+- [ ] Daily 9am: Overnight Slack + Gmail sweep
+- [ ] Monday 7am: Full Customer Project Tracker run (all active accounts)
+- [ ] Thursday 4pm: Weekly Status Draft generation for all active accounts
+- [ ] Friday 9am: Biggy Weekly Briefing generation
+
+#### Settings
+- [ ] Workspace path (default: ~/Documents/BigPanda Projects/)
+- [ ] Skill file location (default: ~/.claude/get-shit-done/)
+- [ ] Schedule times (configurable for each job)
+- [ ] Anthropic API key (stored securely)
 
 ### Out of Scope
 
-- Multi-user / authentication — local single-user app only
-- Real-time collaboration or sync
-- Mobile app / responsive design beyond desktop
-- Email sending from within the app (reports are copied/downloaded)
-- YAML versioning / undo history beyond Drive's built-in version history
-- Customer YAML creation wizard (new customers added manually to Drive)
+- Customer-facing read-only portal — external access adds auth complexity; email updates sufficient for v1
+- QBR deck generator — external ELT deck covers the need
+- JWT/SSO auth — single-user initially; add when expanding to full PS team
+- Hardcoded customer list — app is fully data-driven; Kaiser/AMEX/Merck are initial seed data only
 
 ## Context
 
-- Replaces a workflow split across multiple Claude.ai projects — the user currently manages implementation health manually
-- Small dataset: 1-10 active customer YAMLs; performance is not a bottleneck
-- All YAMLs live in a single Google Drive folder: `BigPanda/ProjectAssistant/`
-- File naming convention: `[Customer]_Master_Status.yaml`
-- Authentication via Google service account (credentials gitignored)
-- The workstream hierarchy is fixed and must exactly match the brief: ADR (Inbound Integrations, Configuration, Outbound Integrations, Workflow Configuration) and Biggy (Integrations, Workflow Configuration)
-- YAML schema is fixed — the app must never add or remove top-level keys
+This is a full rewrite of a previous Claude Code project assistant build (8 phases completed, React/Vite/Express/Google Drive architecture). The new architecture is Next.js 14 + PostgreSQL. The 14 Cowork skills (SKILL.md files at ~/.claude/get-shit-done/skills/) are the canonical feature specification — skill prompts must not be rewritten or simplified. SKILL.md files are read from disk at runtime (not bundled). All data model patterns (archive-on-replace, dual-write atomicity, append-only history, source tracing, ID conventions) are proven in the existing skill ecosystem and must be preserved. The PA3_Action_Tracker.xlsx row format (Customer | ID | Description | Owner | Due | Status | Last Updated | Notes) is contractual — Cowork skills depend on it exactly.
 
 ## Constraints
 
-- **Tech Stack**: React + Tailwind CSS frontend, Node.js + Express backend, Google Drive API v3, Anthropic SDK — all as specified in brief
-- **Runtime**: Local only — `npm run dev` opens at localhost:3000; no deployment target
-- **Model**: claude-sonnet-4-6 (upgraded from brief's claude-sonnet-4-5 to latest)
-- **YAML schema**: Immutable — enforce strictly in yamlService.js
-- **Drive writes**: Always atomic (read → modify → write full file); never partial writes
+- **Tech Stack**: Next.js 14+ / React / Tailwind CSS / Node.js / PostgreSQL — as specified in briefing
+- **Skill Fidelity**: SKILL.md files read from disk at runtime; prompts must not be modified
+- **Cowork Compatibility**: Exported context docs and action tracker must be readable by all Cowork skills without modification
+- **ID Conventions**: Action IDs: A-[CUSTOMER]-NNN, Risk IDs: R-[CUSTOMER]-NNN, Milestone IDs: M-[CUSTOMER]-NNN — globally unique, never reused
+- **Append-only**: Engagement History and Key Decisions are never modified, only added to
+- **Source Tracing**: Every action, risk, artifact, and decision must carry source_trace (origin file, date, verified vs. inferred)
+- **Tone Separation**: Customer-facing outputs are calm/partnership-framed; internal outputs are direct/analytical — never expose internal severity in external outputs
+- **No Invented Data**: AI agents must never invent percentages, dates, or facts — all numbers from DB
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| claude-sonnet-4-6 instead of claude-sonnet-4-5 | Latest model, better quality, same API surface | — Pending |
-| Added Artifact Manager view | YAML schema has full artifacts section with no UI coverage in original brief | — Pending |
-| Added inline risk/milestone editing to Customer Overview | Without it, every risk/milestone change requires YAML editor — too slow for daily use | — Pending |
-| Added Weekly Update form (View 7) | History entries are created weekly; YAML editor is too cumbersome for a recurring structured task | — Pending |
-| Dashboard is top priority | User identified it as the must-work-at-launch feature | — Pending |
+| Full rewrite (not evolution of existing app) | Next.js + PostgreSQL is a fundamentally different architecture from React/Vite/Express/Drive | — Pending |
+| SKILL.md files read from disk at runtime | Always current, no bundling drift, compatible with Cowork updates | — Pending |
+| Auto-derive health scoring (not manual) | Removes human inconsistency; flags disagreement between data signals and gut feel | — Pending |
+| n-account architecture (not hardcoded 3) | Business will grow; new PS engagements must be addable without code changes | — Pending |
+| Closed projects → archive (read-only) | Lessons learned and engagement history must remain searchable after project close | — Pending |
 
 ---
-*Last updated: 2026-03-04 after initialization*
+*Last updated: 2026-03-18 after initialization*
