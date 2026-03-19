@@ -164,6 +164,15 @@ export async function getProjectById(projectId: number): Promise<Project> {
 }
 
 /**
+ * Returns a single project with computed RAG health score. Throws if not found.
+ */
+export async function getProjectWithHealth(projectId: number): Promise<ProjectWithHealth> {
+  const project = await getProjectById(projectId);
+  const healthData = await computeHealth(projectId);
+  return { ...project, ...healthData };
+}
+
+/**
  * Returns data needed for the Dashboard page.
  */
 export async function getDashboardData(): Promise<DashboardData> {
