@@ -7,14 +7,14 @@
 
 ### Data Foundation
 
-- [ ] **DATA-01**: Database schema implements all tables from briefing (projects, workstreams, actions, risks, milestones, artifacts, history, stakeholders, tasks, plan_templates, outputs, knowledge_base) with PostgreSQL RLS enforced at DB layer
-- [ ] **DATA-02**: Append-only tables (engagement_history, key_decisions) are enforced by DB trigger — not application convention
-- [ ] **DATA-03**: Migration script imports all three existing customer context docs (YAML frontmatter → DB) with source tracing preserved
-- [ ] **DATA-04**: Migration script imports PA3_Action_Tracker.xlsx (two-sheet format) into actions table
-- [ ] **DATA-05**: Context doc export: DB → YAML frontmatter Markdown with exact js-yaml settings (sortKeys: false, lineWidth: -1, JSON_SCHEMA) — round-trip fidelity with Cowork skills
-- [ ] **DATA-06**: Multi-account architecture: user can add new projects, close completed ones (archived as read-only), with no hardcoded customer names anywhere in the codebase
-- [ ] **DATA-07**: Idempotency key and status field on outputs table (created immediately as 'running') to prevent duplicate skill runs on SSE reconnect
-- [ ] **DATA-08**: PostgreSQL connection pool implemented as singleton — no per-request pool creation
+- [x] **DATA-01**: Database schema implements all tables from briefing (projects, workstreams, actions, risks, milestones, artifacts, history, stakeholders, tasks, plan_templates, outputs, knowledge_base) with PostgreSQL RLS enforced at DB layer
+- [x] **DATA-02**: Append-only tables (engagement_history, key_decisions) are enforced by DB trigger — not application convention
+- [x] **DATA-03**: Migration script imports all three existing customer context docs (YAML frontmatter → DB) with source tracing preserved
+- [x] **DATA-04**: Migration script imports PA3_Action_Tracker.xlsx (two-sheet format) into actions table
+- [x] **DATA-05**: Context doc export: DB → YAML frontmatter Markdown with exact js-yaml settings (sortKeys: false, lineWidth: -1, JSON_SCHEMA) — round-trip fidelity with Cowork skills
+- [x] **DATA-06**: Multi-account architecture: user can add new projects, close completed ones (archived as read-only), with no hardcoded customer names anywhere in the codebase
+- [x] **DATA-07**: Idempotency key and status field on outputs table (created immediately as 'running') to prevent duplicate skill runs on SSE reconnect
+- [x] **DATA-08**: PostgreSQL connection pool implemented as singleton — no per-request pool creation
 
 ### Dashboard
 
@@ -105,10 +105,10 @@
 
 ### Settings
 
-- [ ] **SET-01**: Workspace path configuration (default: ~/Documents/BigPanda Projects/) — where output files are saved
-- [ ] **SET-02**: Skill file location configuration (default: ~/.claude/get-shit-done/) — where SKILL.md files are read from
-- [ ] **SET-03**: Schedule time configuration for each background job
-- [ ] **SET-04**: Anthropic API key stored securely (not in .env committed to git; system keychain or local secrets file)
+- [x] **SET-01**: Workspace path configuration (default: ~/Documents/BigPanda Projects/) — where output files are saved
+- [x] **SET-02**: Skill file location configuration (default: ~/.claude/get-shit-done/) — where SKILL.md files are read from
+- [x] **SET-03**: Schedule time configuration for each background job
+- [x] **SET-04**: Anthropic API key stored securely (not in .env committed to git; system keychain or local secrets file)
 
 ## v2 Requirements
 
@@ -145,18 +145,18 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | Phase 1 | Pending |
-| DATA-02 | Phase 1 | Pending |
-| DATA-03 | Phase 1 | Pending |
-| DATA-04 | Phase 1 | Pending |
-| DATA-05 | Phase 1 | Pending |
-| DATA-06 | Phase 1 | Pending |
-| DATA-07 | Phase 1 | Pending |
-| DATA-08 | Phase 1 | Pending |
-| SET-01 | Phase 1 | Pending |
-| SET-02 | Phase 1 | Pending |
-| SET-03 | Phase 1 | Pending |
-| SET-04 | Phase 1 | Pending |
+| DATA-01 | Phase 1 | Complete |
+| DATA-02 | Phase 1 | Complete |
+| DATA-03 | Phase 1 | Complete |
+| DATA-04 | Phase 1 | Complete |
+| DATA-05 | Phase 1 | Complete |
+| DATA-06 | Phase 1 | Complete |
+| DATA-07 | Phase 1 | Complete |
+| DATA-08 | Phase 1 | Complete |
+| SET-01 | Phase 1 | Complete |
+| SET-02 | Phase 1 | Complete |
+| SET-03 | Phase 1 | Complete |
+| SET-04 | Phase 1 | Complete |
 | DASH-01 | Phase 2 | Pending |
 | DASH-02 | Phase 2 | Pending |
 | DASH-03 | Phase 2 | Pending |
