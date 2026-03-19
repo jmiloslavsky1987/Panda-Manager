@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_plan: 5 of 6
+current_plan: 6 of 6
 status: in_progress
-stopped_at: Completed 01-04-PLAN.md (YAML export utility + DataService)
-last_updated: "2026-03-19T03:37:56.116Z"
+stopped_at: Completed 01-05-PLAN.md (YAML migration script)
+last_updated: "2026-03-19T14:31:12.828Z"
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 6
-  completed_plans: 4
+  completed_plans: 5
 ---
 
 # Project State
@@ -25,16 +25,16 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 ## Current Status
 
 **Phase:** 1 — Data Foundation (in progress)
-**Current Plan:** 5 of 6
-**Last action:** Completed 01-04 — YAML export utility (lib/yaml-export.ts) + DataService (bigpanda-app/lib/data-service.ts)
-**Next action:** Execute Plan 01-05 — Migration script
-**Stopped at:** Completed 01-04-PLAN.md (YAML export utility + DataService)
+**Current Plan:** 6 of 6
+**Last action:** Completed 01-05 — YAML context doc migration script (bigpanda-app/scripts/migrate-local.ts)
+**Next action:** Execute Plan 01-06 — xlsx supplement import (actions from PA3_Action_Tracker.xlsx)
+**Stopped at:** Completed 01-05-PLAN.md (YAML migration script)
 
 ## Phase Progress
 
 | Phase | Status |
 |-------|--------|
-| 1. Data Foundation | In progress (4/6 plans complete) |
+| 1. Data Foundation | In progress (5/6 plans complete) |
 | 2. App Shell + Read Surface | Not started |
 | 3. Write Surface + Plan Builder | Not started |
 | 4. Job Infrastructure | Not started |
@@ -45,7 +45,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 
 ## Active Work
 
-**Plan 01-05** — Migration script (reads YAML context docs + PA3_Action_Tracker.xlsx from /Documents/PM Application/)
+**Plan 01-06** — xlsx supplement import (actions from PA3_Action_Tracker.xlsx — depends on project rows from 01-05)
 
 ## Decisions
 
@@ -61,6 +61,9 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 - [Phase 01-04]: server-only omitted from lib/yaml-export.ts for test runner compat (same pattern as db/index.ts)
 - [Phase 01-04]: buildYamlDocument takes two args (project, sections) — Wave 0 stub updated during TDD RED
 - [Phase 01-04]: outputs.test.ts uses NODE_PATH=./bigpanda-app/node_modules workaround for js-yaml access
+- [Phase 01-05]: sanitizeYamlFrontmatter() added to handle AMEX source doc with unescaped double-quotes in YAML scalars
+- [Phase 01-05]: SOURCE_DIR hardcoded as ~/Documents/PM Application — NOT settings.workspace_path (output files only)
+- [Phase 01-05]: All migration DB tests remain RED until PostgreSQL installed (ECONNREFUSED expected)
 
 ## Performance Metrics
 
@@ -70,6 +73,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 | 01-data-foundation | 02 | 20min | 2/2 | 14 |
 | 01-data-foundation | 03 | 8min | 1/1 | 3 |
 | 01-data-foundation | 04 | 15min | 2/2 | 4 |
+| 01-data-foundation | 05 | 25min | 1/1 | 2 |
 
 ## Key Context for Next Session
 
@@ -86,6 +90,10 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 - **yaml-export ready:** lib/yaml-export.ts + bigpanda-app/lib/data-service.ts both committed and tested
 - **Pre-existing TS errors:** bigpanda-app/lib/settings.ts and app/api/settings/route.ts have 2 TS errors from 01-03 (see deferred-items.md)
 
+- **migration script ready:** bigpanda-app/scripts/migrate-local.ts committed — runs npx tsx scripts/migrate-local.ts once PostgreSQL is available
+- **AMEX YAML quirk:** sanitizeYamlFrontmatter() added to handle embedded unescaped double-quotes in AMEX source doc (R-AMEX-002 mitigation field)
+- **migration test runner:** Use `NODE_PATH=./bigpanda-app/node_modules npx tsx --test tests/migration.test.ts` (all DB tests remain RED until PostgreSQL installed)
+
 ---
 *Initialized: 2026-03-18*
-*Last updated: 2026-03-19 after completing 01-04 (YAML export utility + DataService)*
+*Last updated: 2026-03-19 after completing 01-05 (YAML migration script)*
