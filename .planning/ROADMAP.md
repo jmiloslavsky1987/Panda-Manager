@@ -33,7 +33,15 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Any attempted UPDATE or DELETE on engagement_history or key_decisions raises a PostgreSQL exception — not an application error, a DB-level rejection
   4. Opening the app with two active projects never returns rows from project B when querying project A (RLS enforced; missing project_id filter is an empty result, not wrong data)
   5. Settings UI reads and writes workspace path, skill file path, schedule times, and API key without touching code or .env
-**Plans**: TBD
+**Plans**: 6 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Wave 0: Test scaffolding (all test stubs + tsx install)
+- [ ] 01-02-PLAN.md — Wave 1: Next.js scaffold, Drizzle schema (12 tables), singleton pool, append-only triggers, RLS
+- [ ] 01-03-PLAN.md — Wave 1: Settings service (lib/settings.ts) and API route
+- [ ] 01-04-PLAN.md — Wave 2: YAML export utility and DataService outputs idempotency
+- [ ] 01-05-PLAN.md — Wave 3: Migration script — YAML import (KAISER, AMEX, Merck stub)
+- [ ] 01-06-PLAN.md — Wave 4: Migration script — xlsx supplement (all 5 sheets)
 
 ### Phase 2: App Shell + Read Surface
 **Goal**: The Next.js app is running with a working Dashboard showing auto-derived health for all active projects, and all 9 workspace tabs render live data from PostgreSQL — the daily driver is usable for read-only work before any write surface exists.
@@ -125,7 +133,7 @@ Phases 6 and 7 can overlap after Phase 5 is stable.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Data Foundation | 0/TBD | Not started | - |
+| 1. Data Foundation | 0/6 | Planned | - |
 | 2. App Shell + Read Surface | 0/TBD | Not started | - |
 | 3. Write Surface + Plan Builder | 0/TBD | Not started | - |
 | 4. Job Infrastructure | 0/TBD | Not started | - |
@@ -238,3 +246,4 @@ Phases 6 and 7 can overlap after Phase 5 is stable.
 
 *Roadmap created: 2026-03-18*
 *Requirements sourced from: .planning/REQUIREMENTS.md (defined 2026-03-18)*
+*Phase 1 planned: 2026-03-18 — 6 plans across 5 waves*
