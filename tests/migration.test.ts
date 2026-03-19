@@ -111,9 +111,14 @@ describe('migration script (Plan 01-05: YAML import)', () => {
   });
 });
 
-describe('migration script (Plan 01-06: xlsx supplement — SKIP until Plan 01-06)', () => {
-  test('KAISER actions have external_id format A-KAISER-NNN (requires xlsx import from Plan 01-06)', async () => {
-    // This test will pass only after Plan 01-06 (xlsx supplement) runs
+describe('migration script (Plan 01-06: xlsx supplement)', () => {
+  before(async () => {
+    // Run xlsx import after YAML migration (importXlsx supplements YAML data)
+    const { importXlsx } = await import('../bigpanda-app/scripts/migrate-local.js');
+    await importXlsx();
+  });
+
+  test('KAISER actions have external_id format A-KAISER-NNN (Open Actions sheet)', async () => {
     const rows = await sql`
       SELECT external_id FROM actions
       WHERE external_id LIKE 'A-KAISER-%'
@@ -125,6 +130,57 @@ describe('migration script (Plan 01-06: xlsx supplement — SKIP until Plan 01-0
       /^A-KAISER-\d{3}$/,
       `Expected external_id format A-KAISER-NNN, got ${rows[0].external_id}`
     );
+  });
+
+  test('actions table has rows with source=xlsx_open', async () => {
+    const rows = await sql`SELECT COUNT(*)::int AS count FROM actions WHERE source = 'xlsx_open'`;
+    assert.ok(rows[0].count >= 1, `Expected at least 1 xlsx_open action, got ${rows[0].count}`);
+  });
+
+  test('actions table has rows with source=xlsx_completed (Completed sheet)', async () => {
+    const rows = await sql`SELECT COUNT(*)::int AS count FROM actions WHERE source = 'xlsx_completed'`;
+    assert.ok(rows[0].count >= 1, `Expected at least 1 xlsx_completed action, got ${rows[0].count}`);
+  });
+
+  test('actions table has rows with type=question for Q-NNN IDs (Open Questions sheet)', async () => {
+    const rows = await sql`SELECT COUNT(*)::int AS count FROM actions WHERE type = 'question'`;
+    assert.ok(rows[0].count >= 1, `Expected at least 1 question action, got ${rows[0].count}`);
+  });
+
+  test('question actions have external_id format Q-KAISER-NNN or Q-AMEX-NNN', async () => {
+    const rows = await sql`SELECT external_id FROM actions WHERE type = 'question' LIMIT 1`;
+    assert.ok(rows.length >= 1, 'Expected at least one question action');
+    assert.match(
+      rows[0].external_id,
+      /^Q-[A-Z]+-\d+$/,
+      `Expected Q-CUSTOMER-NNN format, got ${rows[0].external_id}`
+    );
+  });
+
+  test('risks table has rows with source=xlsx_risks (Open Risks sheet)', async () => {
+    const rows = await sql`SELECT COUNT(*)::int AS count FROM risks WHERE source = 'xlsx_risks'`;
+    assert.ok(rows[0].count >= 1, `Expected at least 1 xlsx_risks row, got ${rows[0].count}`);
+  });
+
+  test('no customer value Kaiser (mixed-case) exists in DB — normalized to KAISER', async () => {
+    const rows = await sql`SELECT COUNT(*)::int AS count FROM projects WHERE customer = 'Kaiser'`;
+    assert.strictEqual(rows[0].count, 0, 'Expected no Kaiser (mixed-case) — should be normalized to KAISER');
+  });
+
+  test('xlsx import is idempotent: running importXlsx() twice produces same row counts', async () => {
+    const { importXlsx } = await import('../bigpanda-app/scripts/migrate-local.js');
+    const [beforeActions] = await sql`SELECT COUNT(*)::int AS count FROM actions`;
+    const [beforeRisks] = await sql`SELECT COUNT(*)::int AS count FROM risks`;
+
+    await importXlsx();
+
+    const [afterActions] = await sql`SELECT COUNT(*)::int AS count FROM actions`;
+    const [afterRisks] = await sql`SELECT COUNT(*)::int AS count FROM risks`;
+
+    assert.strictEqual(afterActions.count, beforeActions.count,
+      `Expected idempotent import: actions ${beforeActions.count} before vs ${afterActions.count} after second run`);
+    assert.strictEqual(afterRisks.count, beforeRisks.count,
+      `Expected idempotent import: risks ${beforeRisks.count} before vs ${afterRisks.count} after second run`);
   });
 });
 

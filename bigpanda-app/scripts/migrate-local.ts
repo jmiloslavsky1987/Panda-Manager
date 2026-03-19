@@ -20,6 +20,7 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import ExcelJS from 'exceljs';
 import { db } from '../db/index';
 import {
   projects,
@@ -27,6 +28,7 @@ import {
   risks,
   milestones,
   engagementHistory,
+  actions,
 } from '../db/schema';
 import { parseYaml } from '../../lib/yaml-export';
 import { eq, sql } from 'drizzle-orm';
@@ -478,6 +480,362 @@ export async function runMigration(): Promise<{ inserted: number; skipped: numbe
   return { inserted, skipped };
 }
 
+// ─── importXlsx ───────────────────────────────────────────────────────────────
+
+/**
+ * importXlsx — Supplement DB with data from PA3_Action_Tracker.xlsx
+ *
+ * Runs AFTER runMigration() (YAML import). YAML wins on all field conflicts:
+ * existing rows by external_id are never overwritten by xlsx data.
+ *
+ * Sheets handled (by name, never by index):
+ *   1. "Open Actions"     → actions table, source='xlsx_open', status='open'
+ *   2. "Open Risks"       → risks table, source='xlsx_risks'
+ *   3. "Open Questions"   → actions table, type='question', source='xlsx_questions'
+ *   4. "Workstream Notes" → workstreams table (UPDATE only — no insert)
+ *   5. "Completed"        → actions table, source='xlsx_completed', status='completed'
+ *
+ * All row data:
+ *   - Row 1: title row (skip)
+ *   - Row 2: column headers (use to build dynamic header→colIndex map)
+ *   - Row 3+: data rows
+ *
+ * Idempotency: deduped by (project_id, external_id) — safe to run multiple times.
+ *
+ * DATA-04: xlsx supplement import
+ */
+export async function importXlsx(): Promise<void> {
+  // ── Locate the xlsx file ──────────────────────────────────────────────────
+  let xlsxFiles: string[];
+  try {
+    xlsxFiles = fs.readdirSync(SOURCE_DIR).filter(
+      (f) => f.includes('PA3_Action_Tracker') && f.endsWith('.xlsx')
+    );
+  } catch (err) {
+    console.warn(`[migrate-xlsx] Cannot read SOURCE_DIR ${SOURCE_DIR} — skipping xlsx import`);
+    return;
+  }
+
+  if (xlsxFiles.length === 0) {
+    console.warn('[migrate-xlsx] PA3_Action_Tracker.xlsx not found in SOURCE_DIR — skipping');
+    return;
+  }
+
+  const xlsxPath = path.join(SOURCE_DIR, xlsxFiles[0]);
+  console.log(`[migrate-xlsx] Reading ${xlsxPath}`);
+
+  const workbook = new ExcelJS.Workbook();
+  try {
+    await workbook.xlsx.readFile(xlsxPath);
+  } catch (err) {
+    console.error('[migrate-xlsx] Failed to read xlsx file:', err);
+    throw err;
+  }
+
+  // ── Helper: build header → column-index map from row 2 ───────────────────
+  function buildHeaderMap(sheet: ExcelJS.Worksheet): Record<string, number> {
+    const headerRow = sheet.getRow(2);
+    const map: Record<string, number> = {};
+    headerRow.eachCell((cell, colNumber) => {
+      const key = String(cell.value ?? '').trim();
+      if (key) map[key] = colNumber;
+    });
+    return map;
+  }
+
+  // ── Helper: look up project_id by customer name (normalized to UPPERCASE) ─
+  async function getProjectId(customer: string): Promise<number | null> {
+    const norm = customer.trim().toUpperCase();
+    if (!norm) return null;
+    const result = await db
+      .select({ id: projects.id })
+      .from(projects)
+      .where(sql`UPPER(${projects.customer}) = ${norm}`)
+      .limit(1);
+    return result[0]?.id ?? null;
+  }
+
+  // ── Helper: collect data rows (skip title row 1 and header row 2) ─────────
+  function collectRows(sheet: ExcelJS.Worksheet): ExcelJS.Row[] {
+    const rows: ExcelJS.Row[] = [];
+    sheet.eachRow((row, idx) => {
+      if (idx > 2) rows.push(row);
+    });
+    return rows;
+  }
+
+  // ── Helper: safe cell string value ───────────────────────────────────────
+  function cellStr(row: ExcelJS.Row, colIndex: number | undefined): string | null {
+    if (colIndex === undefined) return null;
+    const cell = row.getCell(colIndex);
+    const val = cell.value;
+    if (val === null || val === undefined) return null;
+    // ExcelJS may return Date objects for date cells — convert to ISO string
+    if (val instanceof Date) return val.toISOString().split('T')[0];
+    const str = String(val).trim();
+    return str === '' ? null : str;
+  }
+
+  // ============================================================
+  // Sheet 1: Open Actions → actions table (source='xlsx_open')
+  // ============================================================
+  const openActionsSheet = workbook.getWorksheet('Open Actions');
+  if (openActionsSheet) {
+    const headers = buildHeaderMap(openActionsSheet);
+    const rows = collectRows(openActionsSheet);
+    let inserted = 0;
+    let skipped = 0;
+
+    for (const row of rows) {
+      const customer = cellStr(row, headers['Customer']);
+      const externalId = cellStr(row, headers['ID']);
+      if (!externalId || !customer) { skipped++; continue; }
+
+      const projectId = await getProjectId(customer);
+      if (!projectId) {
+        console.warn(`[migrate-xlsx] Open Actions: no project for customer '${customer}' — skipping ${externalId}`);
+        skipped++;
+        continue;
+      }
+
+      // Idempotency check
+      const existing = await db
+        .select({ id: actions.id })
+        .from(actions)
+        .where(sql`${actions.project_id} = ${projectId} AND ${actions.external_id} = ${externalId}`)
+        .limit(1);
+      if (existing.length > 0) { skipped++; continue; }
+
+      const description = cellStr(row, headers['Description']) ?? 'No description';
+      await db.insert(actions).values({
+        project_id: projectId,
+        external_id: externalId,
+        description,
+        owner: cellStr(row, headers['Owner']),
+        due: cellStr(row, headers['Due']),
+        status: 'open',
+        last_updated: cellStr(row, headers['Last Updated']),
+        notes: cellStr(row, headers['Notes']),
+        type: 'action',
+        source: 'xlsx_open',
+      });
+      inserted++;
+    }
+    console.log(`[migrate-xlsx] Open Actions: ${inserted} inserted, ${skipped} skipped`);
+  } else {
+    console.warn('[migrate-xlsx] Sheet "Open Actions" not found — skipping');
+  }
+
+  // ============================================================
+  // Sheet 2: Open Risks → risks table (source='xlsx_risks')
+  // ============================================================
+  const openRisksSheet = workbook.getWorksheet('Open Risks');
+  if (openRisksSheet) {
+    const headers = buildHeaderMap(openRisksSheet);
+    const rows = collectRows(openRisksSheet);
+    let inserted = 0;
+    let skipped = 0;
+
+    for (const row of rows) {
+      const customer = cellStr(row, headers['Customer']);
+      const externalId = cellStr(row, headers['ID']);
+      if (!externalId || !customer) { skipped++; continue; }
+
+      const projectId = await getProjectId(customer);
+      if (!projectId) {
+        console.warn(`[migrate-xlsx] Open Risks: no project for customer '${customer}' — skipping ${externalId}`);
+        skipped++;
+        continue;
+      }
+
+      // Idempotency check
+      const existing = await db
+        .select({ id: risks.id })
+        .from(risks)
+        .where(sql`${risks.project_id} = ${projectId} AND ${risks.external_id} = ${externalId}`)
+        .limit(1);
+      if (existing.length > 0) { skipped++; continue; }
+
+      const description = cellStr(row, headers['Description']) ?? 'No description';
+      const severityRaw = cellStr(row, headers['Severity'])?.toLowerCase() ?? null;
+      const severity =
+        severityRaw === 'low' || severityRaw === 'medium' ||
+        severityRaw === 'high' || severityRaw === 'critical'
+          ? (severityRaw as 'low' | 'medium' | 'high' | 'critical')
+          : null;
+
+      await db.insert(risks).values({
+        project_id: projectId,
+        external_id: externalId,
+        description,
+        severity,
+        owner: cellStr(row, headers['Owner']),
+        mitigation: cellStr(row, headers['Mitigation Summary']),
+        status: cellStr(row, headers['Status']),
+        source: 'xlsx_risks',
+      });
+      inserted++;
+    }
+    console.log(`[migrate-xlsx] Open Risks: ${inserted} inserted, ${skipped} skipped`);
+  } else {
+    console.warn('[migrate-xlsx] Sheet "Open Risks" not found — skipping');
+  }
+
+  // ============================================================
+  // Sheet 3: Open Questions → actions table (type='question', source='xlsx_questions')
+  // Q-NNN IDs stored as actions with type='question'
+  // ============================================================
+  const openQuestionsSheet = workbook.getWorksheet('Open Questions');
+  if (openQuestionsSheet) {
+    const headers = buildHeaderMap(openQuestionsSheet);
+    const rows = collectRows(openQuestionsSheet);
+    let inserted = 0;
+    let skipped = 0;
+
+    for (const row of rows) {
+      const customer = cellStr(row, headers['Customer']);
+      const externalId = cellStr(row, headers['ID']);
+      if (!externalId || !customer) { skipped++; continue; }
+
+      const projectId = await getProjectId(customer);
+      if (!projectId) {
+        console.warn(`[migrate-xlsx] Open Questions: no project for customer '${customer}' — skipping ${externalId}`);
+        skipped++;
+        continue;
+      }
+
+      // Idempotency check
+      const existing = await db
+        .select({ id: actions.id })
+        .from(actions)
+        .where(sql`${actions.project_id} = ${projectId} AND ${actions.external_id} = ${externalId}`)
+        .limit(1);
+      if (existing.length > 0) { skipped++; continue; }
+
+      // "Question" column contains the question text (mapped like Description)
+      const questionCol = headers['Question'] ?? headers['Description'];
+      const description = cellStr(row, questionCol) ?? 'No description';
+
+      await db.insert(actions).values({
+        project_id: projectId,
+        external_id: externalId,
+        description,
+        owner: cellStr(row, headers['Owner']),
+        status: 'open',
+        notes: cellStr(row, headers['Notes']),
+        type: 'question',
+        source: 'xlsx_questions',
+      });
+      inserted++;
+    }
+    console.log(`[migrate-xlsx] Open Questions: ${inserted} inserted, ${skipped} skipped`);
+  } else {
+    console.warn('[migrate-xlsx] Sheet "Open Questions" not found — skipping');
+  }
+
+  // ============================================================
+  // Sheet 4: Workstream Notes → UPDATE workstreams (never insert)
+  // Updates current_status, lead, last_updated for matching workstream rows
+  // ============================================================
+  const workstreamNotesSheet = workbook.getWorksheet('Workstream Notes');
+  if (workstreamNotesSheet) {
+    const headers = buildHeaderMap(workstreamNotesSheet);
+    const rows = collectRows(workstreamNotesSheet);
+    let updated = 0;
+    let skipped = 0;
+
+    for (const row of rows) {
+      const customer = cellStr(row, headers['Customer']);
+      const workstreamName = cellStr(row, headers['Workstream']);
+      if (!customer || !workstreamName) { skipped++; continue; }
+
+      const projectId = await getProjectId(customer);
+      if (!projectId) {
+        console.warn(`[migrate-xlsx] Workstream Notes: no project for customer '${customer}' — skipping`);
+        skipped++;
+        continue;
+      }
+
+      const current_status = cellStr(row, headers['Current Status Summary']);
+      const lead = cellStr(row, headers['Lead(s)']);
+      const last_updated = cellStr(row, headers['Last Updated']);
+
+      // UPDATE existing workstream row (LOWER-normalized name match) — never insert
+      const result = await db
+        .update(workstreams)
+        .set({
+          ...(current_status !== null ? { current_status } : {}),
+          ...(lead !== null ? { lead } : {}),
+          ...(last_updated !== null ? { last_updated } : {}),
+        })
+        .where(
+          sql`${workstreams.project_id} = ${projectId} AND LOWER(${workstreams.name}) = LOWER(${workstreamName})`
+        );
+
+      // drizzle update returns an object; check rowCount to determine if matched
+      const rowCount = (result as unknown as { rowCount?: number }).rowCount ?? 0;
+      if (rowCount > 0) {
+        updated++;
+      } else {
+        console.warn(`[migrate-xlsx] Workstream Notes: no matching workstream '${workstreamName}' for ${customer} — skipping`);
+        skipped++;
+      }
+    }
+    console.log(`[migrate-xlsx] Workstream Notes: ${updated} updated, ${skipped} skipped`);
+  } else {
+    console.warn('[migrate-xlsx] Sheet "Workstream Notes" not found — skipping');
+  }
+
+  // ============================================================
+  // Sheet 5: Completed → actions table (status='completed', source='xlsx_completed')
+  // Columns: Customer, ID, Description, Owner, Completed (date)
+  // ============================================================
+  const completedSheet = workbook.getWorksheet('Completed');
+  if (completedSheet) {
+    const headers = buildHeaderMap(completedSheet);
+    const rows = collectRows(completedSheet);
+    let inserted = 0;
+    let skipped = 0;
+
+    for (const row of rows) {
+      const customer = cellStr(row, headers['Customer']);
+      const externalId = cellStr(row, headers['ID']);
+      if (!externalId || !customer) { skipped++; continue; }
+
+      const projectId = await getProjectId(customer);
+      if (!projectId) {
+        console.warn(`[migrate-xlsx] Completed: no project for customer '${customer}' — skipping ${externalId}`);
+        skipped++;
+        continue;
+      }
+
+      // Idempotency check
+      const existing = await db
+        .select({ id: actions.id })
+        .from(actions)
+        .where(sql`${actions.project_id} = ${projectId} AND ${actions.external_id} = ${externalId}`)
+        .limit(1);
+      if (existing.length > 0) { skipped++; continue; }
+
+      const description = cellStr(row, headers['Description']) ?? 'No description';
+      await db.insert(actions).values({
+        project_id: projectId,
+        external_id: externalId,
+        description,
+        owner: cellStr(row, headers['Owner']),
+        due: cellStr(row, headers['Completed']), // 'Completed' date stored in due field
+        status: 'completed',
+        type: 'action',
+        source: 'xlsx_completed',
+      });
+      inserted++;
+    }
+    console.log(`[migrate-xlsx] Completed: ${inserted} inserted, ${skipped} skipped`);
+  } else {
+    console.warn('[migrate-xlsx] Sheet "Completed" not found — skipping');
+  }
+}
+
 // ─── Entry point ──────────────────────────────────────────────────────────────
 
 // Run migration when executed directly (not when imported as module)
@@ -489,12 +847,12 @@ const isMain =
     process.argv[1].endsWith('migrate-local.js'));
 
 if (isMain) {
-  runMigration()
-    .then(() => {
-      process.exit(0);
-    })
-    .catch((err) => {
-      console.error('[migrate] Fatal error:', err);
-      process.exit(1);
-    });
+  (async () => {
+    await runMigration();   // Phase 1: YAML context doc import
+    await importXlsx();     // Phase 2: xlsx supplement import
+    process.exit(0);
+  })().catch((err) => {
+    console.error('[migrate] Fatal error:', err);
+    process.exit(1);
+  });
 }
