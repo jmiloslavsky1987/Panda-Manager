@@ -1,0 +1,275 @@
+/* server-only omitted — see STATE.md 2026-03-19 01-02 */
+
+import { db } from '../db';
+import {
+  projects,
+  actions,
+  risks,
+  milestones,
+  workstreams,
+  engagementHistory,
+  keyDecisions,
+  stakeholders,
+  artifacts,
+  outputs,
+} from '../db/schema';
+import { eq, and, inArray, lt, ne, gt, or } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
+
+// ─── TypeScript Interfaces ────────────────────────────────────────────────────
+
+export type Project = typeof projects.$inferSelect;
+export type Action = typeof actions.$inferSelect;
+export type Risk = typeof risks.$inferSelect;
+export type Milestone = typeof milestones.$inferSelect;
+export type Workstream = typeof workstreams.$inferSelect;
+export type EngagementHistoryRow = typeof engagementHistory.$inferSelect;
+export type KeyDecision = typeof keyDecisions.$inferSelect;
+export type Stakeholder = typeof stakeholders.$inferSelect;
+export type Artifact = typeof artifacts.$inferSelect;
+export type Output = typeof outputs.$inferSelect;
+
+export interface ProjectWithHealth extends Project {
+  health: 'green' | 'yellow' | 'red';
+  overdueActions: number;
+  highRisks: number;
+  stalledMilestones: number;
+}
+
+export interface ActivityItem {
+  type: 'output' | 'history';
+  label: string;
+  date: Date;
+  project_id: number | null;
+}
+
+export interface DashboardData {
+  projects: ProjectWithHealth[];
+  recentActivity: ActivityItem[];
+  notifications: {
+    overdueCount: number;
+    approachingGoLive: string[];
+  };
+}
+
+export interface WorkspaceData {
+  workstreams: Workstream[];
+  actions: Action[];
+  risks: Risk[];
+  milestones: Milestone[];
+  engagementHistory: EngagementHistoryRow[];
+  keyDecisions: KeyDecision[];
+  stakeholders: Stakeholder[];
+  artifacts: Artifact[];
+}
+
+// ─── Helper: Compute health score ────────────────────────────────────────────
+
+async function computeHealth(projectId: number): Promise<{
+  health: 'green' | 'yellow' | 'red';
+  overdueActions: number;
+  highRisks: number;
+  stalledMilestones: number;
+}> {
+  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
+  // Count overdue actions: open or in_progress with a real due date that is past today
+  // Exclude 'TBD', 'N/A', and other non-date strings by checking format
+  const overdueResult = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(actions)
+    .where(
+      and(
+        eq(actions.project_id, projectId),
+        inArray(actions.status, ['open', 'in_progress']),
+        // Only real ISO-ish dates: must look like YYYY-MM-DD (10 chars starting with digit)
+        sql`length(${actions.due}) >= 10 AND ${actions.due} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}'`,
+        lt(actions.due, today),
+      )
+    );
+  const overdueActions = overdueResult[0]?.count ?? 0;
+
+  // Count stalled milestones: not completed, created 14+ days ago (no last_updated col)
+  const fourteenDaysAgo = new Date();
+  fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+
+  const stalledResult = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(milestones)
+    .where(
+      and(
+        eq(milestones.project_id, projectId),
+        ne(milestones.status, 'completed'),
+        lt(milestones.created_at, fourteenDaysAgo),
+      )
+    );
+  const stalledMilestones = stalledResult[0]?.count ?? 0;
+
+  // Count unresolved high/critical risks
+  const highRisksResult = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(risks)
+    .where(
+      and(
+        eq(risks.project_id, projectId),
+        inArray(risks.severity, ['high', 'critical']),
+        // status is not 'resolved' or 'closed'
+        sql`${risks.status} NOT IN ('resolved', 'closed')`,
+      )
+    );
+  const highRisks = highRisksResult[0]?.count ?? 0;
+
+  const score = overdueActions + stalledMilestones + highRisks;
+  const health: 'green' | 'yellow' | 'red' =
+    score >= 2 ? 'red' : score === 1 ? 'yellow' : 'green';
+
+  return { health, overdueActions, highRisks, stalledMilestones };
+}
+
+// ─── Query Functions ──────────────────────────────────────────────────────────
+
+/**
+ * Returns all active projects with computed RAG health score.
+ */
+export async function getActiveProjects(): Promise<ProjectWithHealth[]> {
+  const activeProjects = await db
+    .select()
+    .from(projects)
+    .where(eq(projects.status, 'active'));
+
+  const projectsWithHealth = await Promise.all(
+    activeProjects.map(async (p) => {
+      const healthData = await computeHealth(p.id);
+      return { ...p, ...healthData };
+    })
+  );
+
+  return projectsWithHealth;
+}
+
+/**
+ * Returns a single project by id. Throws if not found.
+ */
+export async function getProjectById(projectId: number): Promise<Project> {
+  const result = await db
+    .select()
+    .from(projects)
+    .where(eq(projects.id, projectId));
+
+  if (result.length === 0) {
+    throw new Error(`Project not found: ${projectId}`);
+  }
+
+  return result[0];
+}
+
+/**
+ * Returns data needed for the Dashboard page.
+ */
+export async function getDashboardData(): Promise<DashboardData> {
+  const activeProjects = await getActiveProjects();
+
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+  // Recent outputs
+  const recentOutputs = await db
+    .select()
+    .from(outputs)
+    .where(gt(outputs.created_at, sevenDaysAgo));
+
+  // Recent engagement history
+  const recentHistory = await db
+    .select()
+    .from(engagementHistory)
+    .where(gt(engagementHistory.created_at, sevenDaysAgo));
+
+  const activityItems: ActivityItem[] = [
+    ...recentOutputs.map((o) => ({
+      type: 'output' as const,
+      label: `${o.skill_name} output`,
+      date: o.created_at,
+      project_id: o.project_id,
+    })),
+    ...recentHistory.map((h) => ({
+      type: 'history' as const,
+      label: h.content.slice(0, 80),
+      date: h.created_at,
+      project_id: h.project_id,
+    })),
+  ];
+
+  // Sort by date DESC, limit 50
+  activityItems.sort((a, b) => b.date.getTime() - a.date.getTime());
+  const recentActivity = activityItems.slice(0, 50);
+
+  // Notifications
+  const overdueCount = activeProjects.reduce(
+    (sum, p) => sum + p.overdueActions,
+    0
+  );
+
+  const today = new Date();
+  const fourteenDaysFromNow = new Date();
+  fourteenDaysFromNow.setDate(today.getDate() + 14);
+
+  const approachingGoLive = activeProjects
+    .filter((p) => {
+      if (!p.go_live_target) return false;
+      // Try parsing — skip TBD/N/A strings
+      const d = new Date(p.go_live_target);
+      if (isNaN(d.getTime())) return false;
+      return d >= today && d <= fourteenDaysFromNow;
+    })
+    .map((p) => p.customer);
+
+  return {
+    projects: activeProjects,
+    recentActivity,
+    notifications: {
+      overdueCount,
+      approachingGoLive,
+    },
+  };
+}
+
+/**
+ * Returns all workspace tab data for a single project.
+ * Sets RLS session variable before parallel queries.
+ */
+export async function getWorkspaceData(projectId: number): Promise<WorkspaceData> {
+  // Set RLS session variable
+  await db.execute(sql`SET app.current_project_id = ${projectId}`);
+
+  // Run all 8 section queries in parallel
+  const [
+    workstreamsData,
+    actionsData,
+    risksData,
+    milestonesData,
+    historyData,
+    decisionsData,
+    stakeholdersData,
+    artifactsData,
+  ] = await Promise.all([
+    db.select().from(workstreams).where(eq(workstreams.project_id, projectId)),
+    db.select().from(actions).where(eq(actions.project_id, projectId)),
+    db.select().from(risks).where(eq(risks.project_id, projectId)),
+    db.select().from(milestones).where(eq(milestones.project_id, projectId)),
+    db.select().from(engagementHistory).where(eq(engagementHistory.project_id, projectId)),
+    db.select().from(keyDecisions).where(eq(keyDecisions.project_id, projectId)),
+    db.select().from(stakeholders).where(eq(stakeholders.project_id, projectId)),
+    db.select().from(artifacts).where(eq(artifacts.project_id, projectId)),
+  ]);
+
+  return {
+    workstreams: workstreamsData,
+    actions: actionsData,
+    risks: risksData,
+    milestones: milestonesData,
+    engagementHistory: historyData,
+    keyDecisions: decisionsData,
+    stakeholders: stakeholdersData,
+    artifacts: artifactsData,
+  };
+}
