@@ -13,7 +13,7 @@ This is a full rewrite of a working 8-phase local app — switching from Google 
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Data Foundation** - PostgreSQL schema, migrations, YAML round-trip, DataService, RLS, append-only triggers, singleton pool, Settings (completed 2026-03-19)
-- [ ] **Phase 2: App Shell + Read Surface** - Next.js scaffold, Dashboard, all 9 workspace tabs (read-only), RSC data loading
+- [x] **Phase 2: App Shell + Read Surface** - Next.js scaffold, Dashboard, all 9 workspace tabs (read-only), RSC data loading (completed 2026-03-19)
 - [ ] **Phase 3: Write Surface + Plan Builder** - Inline CRUD on all workspace tabs, PA3 xlsx dual-write, Project Plan & Task Builder
 - [ ] **Phase 4: Job Infrastructure** - BullMQ worker process, JobService, Redis, cron schedule registration, job status UI
 - [ ] **Phase 5: Skill Engine** - SkillOrchestrator, token budget guard, SSE streaming, Drafts Inbox, Output Library, first 4 skills wired
@@ -143,7 +143,7 @@ Phases 6 and 7 can overlap after Phase 5 is stable.
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Data Foundation | 6/6 | Complete   | 2026-03-19 |
-| 2. App Shell + Read Surface | 6/7 | In Progress|  |
+| 2. App Shell + Read Surface | 7/7 | Complete   | 2026-03-19 |
 | 3. Write Surface + Plan Builder | 0/TBD | Not started | - |
 | 4. Job Infrastructure | 0/TBD | Not started | - |
 | 5. Skill Engine | 0/TBD | Not started | - |
