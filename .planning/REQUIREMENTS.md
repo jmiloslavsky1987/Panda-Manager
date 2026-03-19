@@ -18,27 +18,27 @@
 
 ### Dashboard
 
-- [ ] **DASH-01**: Today's Briefing panel displays stored morning-briefing result; refreshable on demand
-- [ ] **DASH-02**: Project Health cards for all active accounts showing auto-derived RAG status, one-line summary, and open high-priority action count
-- [ ] **DASH-03**: Health score auto-derived from data signals: overdue actions, stalled milestones (no progress in 14+ days), and unresolved high-severity risks — no manual RAG entry required
+- [x] **DASH-01**: Today's Briefing panel displays stored morning-briefing result; refreshable on demand
+- [x] **DASH-02**: Project Health cards for all active accounts showing auto-derived RAG status, one-line summary, and open high-priority action count
+- [x] **DASH-03**: Health score auto-derived from data signals: overdue actions, stalled milestones (no progress in 14+ days), and unresolved high-severity risks — no manual RAG entry required
 - [ ] **DASH-04**: Cross-project Risk Heat Map (probability × impact matrix) across all active accounts visible on dashboard
 - [ ] **DASH-05**: Cross-Account Watch List showing escalated or time-sensitive items spanning multiple customers
-- [ ] **DASH-06**: Recent Activity Feed showing last 7 days of skill runs, file outputs, and history entries across all projects
-- [ ] **DASH-07**: Quick Action Bar with one-click buttons: Run Tracker, Generate Briefing, Weekly Status Draft (per active account)
-- [ ] **DASH-08**: In-app notification badge for overdue actions, approaching go-live dates (within 14 days), and new tracker results
+- [x] **DASH-06**: Recent Activity Feed showing last 7 days of skill runs, file outputs, and history entries across all projects
+- [x] **DASH-07**: Quick Action Bar with one-click buttons: Run Tracker, Generate Briefing, Weekly Status Draft (per active account)
+- [x] **DASH-08**: In-app notification badge for overdue actions, approaching go-live dates (within 14 days), and new tracker results
 - [ ] **DASH-09**: Drafts Inbox — unified queue of all AI-generated drafts (emails, Slack messages) pending review before send; no AI content reaches external parties without passing through this queue
 
 ### Project Workspace
 
-- [ ] **WORK-01**: Overview tab — workstream progress bars (ADR and Biggy tracks), milestone timeline, auto-derived health status, go-live target
+- [x] **WORK-01**: Overview tab — workstream progress bars (ADR and Biggy tracks), milestone timeline, auto-derived health status, go-live target
 - [ ] **WORK-02**: Actions tab — filterable by status/owner/due date, inline editing (complete, add notes, change owner), every save syncs to PA3_Action_Tracker.xlsx atomically (dual-write)
-- [ ] **WORK-03**: Risks tab — risk register with append-only mitigation log, inline severity/status editing, full mitigation history visible per risk
-- [ ] **WORK-04**: Milestones tab — milestone tracker with action links, status indicators, completion history
-- [ ] **WORK-05**: Teams tab — team onboarding status table (ADR + Biggy tracks) with onboarding velocity view showing time-in-phase and stall detection (team in same phase 14+ days with no logged activity)
-- [ ] **WORK-06**: Architecture tab — Before BigPanda state documentation and current integration status summary, editable inline
-- [ ] **WORK-07**: Decisions tab — append-only key decisions and alignments, searchable, never deletable
-- [ ] **WORK-08**: Engagement History tab — append-only history entries with date/source, add new entries from pasted notes or transcripts
-- [ ] **WORK-09**: Stakeholders tab — BigPanda and customer contacts roster with add/edit for name, role, email, Slack ID, notes
+- [x] **WORK-03**: Risks tab — risk register with append-only mitigation log, inline severity/status editing, full mitigation history visible per risk
+- [x] **WORK-04**: Milestones tab — milestone tracker with action links, status indicators, completion history
+- [x] **WORK-05**: Teams tab — team onboarding status table (ADR + Biggy tracks) with onboarding velocity view showing time-in-phase and stall detection (team in same phase 14+ days with no logged activity)
+- [x] **WORK-06**: Architecture tab — Before BigPanda state documentation and current integration status summary, editable inline
+- [x] **WORK-07**: Decisions tab — append-only key decisions and alignments, searchable, never deletable
+- [x] **WORK-08**: Engagement History tab — append-only history entries with date/source, add new entries from pasted notes or transcripts
+- [x] **WORK-09**: Stakeholders tab — BigPanda and customer contacts roster with add/edit for name, role, email, Slack ID, notes
 
 ### Skill Launcher
 
@@ -157,20 +157,20 @@
 | SET-02 | Phase 1 | Complete |
 | SET-03 | Phase 1 | Complete |
 | SET-04 | Phase 1 | Complete |
-| DASH-01 | Phase 2 | Pending |
-| DASH-02 | Phase 2 | Pending |
-| DASH-03 | Phase 2 | Pending |
-| DASH-06 | Phase 2 | Pending |
-| DASH-07 | Phase 2 | Pending |
-| DASH-08 | Phase 2 | Pending |
-| WORK-01 | Phase 2 | Pending |
-| WORK-03 | Phase 2 | Pending |
-| WORK-04 | Phase 2 | Pending |
-| WORK-05 | Phase 2 | Pending |
-| WORK-06 | Phase 2 | Pending |
-| WORK-07 | Phase 2 | Pending |
-| WORK-08 | Phase 2 | Pending |
-| WORK-09 | Phase 2 | Pending |
+| DASH-01 | Phase 2 | Complete |
+| DASH-02 | Phase 2 | Complete |
+| DASH-03 | Phase 2 | Complete |
+| DASH-06 | Phase 2 | Complete |
+| DASH-07 | Phase 2 | Complete |
+| DASH-08 | Phase 2 | Complete |
+| WORK-01 | Phase 2 | Complete |
+| WORK-03 | Phase 2 | Complete |
+| WORK-04 | Phase 2 | Complete |
+| WORK-05 | Phase 2 | Complete |
+| WORK-06 | Phase 2 | Complete |
+| WORK-07 | Phase 2 | Complete |
+| WORK-08 | Phase 2 | Complete |
+| WORK-09 | Phase 2 | Complete |
 | WORK-02 | Phase 3 | Pending |
 | PLAN-01 | Phase 3 | Pending |
 | PLAN-02 | Phase 3 | Pending |

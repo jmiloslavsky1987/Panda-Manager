@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** 02-01 complete — Playwright E2E stubs (Wave 0 RED baseline)
 **Last action:** Completed 02-01 — Playwright installed, 23 E2E test stubs written (all RED)
 **Next action:** 02-02 — App shell, layout, sidebar, routing
-**Stopped at:** Completed 02-02-PLAN.md (shadcn/ui install, query library, sidebar shell)
+**Stopped at:** Completed 02-01-PLAN.md (Playwright E2E stubs — Wave 0 RED baseline)
 
 ## Phase Progress
 
@@ -70,9 +70,6 @@ Phase 2 in progress. 02-01 complete (Playwright E2E stubs). Next: 02-02 (app she
 - **[2026-03-19] 02-01:** npm install --no-package-lock used for @playwright/test — invalid esbuild semver in package-lock.json blocks standard install
 - **[2026-03-19] 02-01:** E2E stubs use expect(false, 'stub').toBe(true) not test.fixme() — keeps tests RED and visible in report
 - **[2026-03-19] 02-01:** Requirement IDs in test names (DASH-01 etc.) — implementation plans use --grep to target specific tests
-- [Phase 02-02]: shadcn/ui initialized via components.json (non-interactive) to avoid Radix/Base selector prompt blocking --yes init
-- [Phase 02-02]: Stalled milestone heuristic uses created_at + 14 days as proxy (milestones table has no last_updated column)
-- [Phase 02-02]: Overdue action filter: regex on due text field to exclude TBD/N/A strings before date comparison
 
 ## Performance Metrics
 
@@ -85,7 +82,6 @@ Phase 2 in progress. 02-01 complete (Playwright E2E stubs). Next: 02-02 (app she
 | 01-data-foundation | 05 | 25min | 1/1 | 2 |
 | 01-data-foundation | 06 | 4min | 1/1 | 2 |
 | 02-app-shell-read-surface | 01 | 12min | 1/1 | 3 |
-| Phase 02-app-shell-read-surface P02 | 3min | 2 tasks | 13 files |
 
 ## Key Context for Next Session
 
