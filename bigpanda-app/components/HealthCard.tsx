@@ -23,7 +23,7 @@ export function HealthCard({ project }: HealthCardProps) {
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between gap-2">
           <span className="font-semibold text-zinc-900 truncate">{project.customer}</span>
-          <Badge className={rag.className}>{rag.label}</Badge>
+          <Badge data-testid="rag-badge" className={rag.className}>{rag.label}</Badge>
         </div>
         {project.name !== project.customer && (
           <p className="text-xs text-zinc-500 truncate">{project.name}</p>

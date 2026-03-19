@@ -247,8 +247,9 @@ export async function getDashboardData(): Promise<DashboardData> {
  * Sets RLS session variable before parallel queries.
  */
 export async function getWorkspaceData(projectId: number): Promise<WorkspaceData> {
-  // Set RLS session variable
-  await db.execute(sql`SET app.current_project_id = ${projectId}`);
+  // Set RLS session variable — SET does not support parameterized values in PostgreSQL,
+  // so we use sql.raw with the integer value directly (safe: projectId is number-typed).
+  await db.execute(sql.raw(`SET app.current_project_id = ${projectId}`));
 
   // Run all 8 section queries in parallel
   const [

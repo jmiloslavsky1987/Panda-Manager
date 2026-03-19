@@ -20,27 +20,22 @@ import { test, expect } from '@playwright/test';
 test.describe('Dashboard', () => {
   test('DASH-02/03: health cards render for all active projects', async ({ page }) => {
     await page.goto('/');
-    // Stub — app does not exist yet
-    expect(false, 'stub — implement Phase 2').toBe(true);
 
     const cards = page.locator('[data-testid="health-card"]');
-    await expect(cards).toHaveCount(1); // at least 1
+    const count = await cards.count();
+    expect(count, 'Expected at least one health card').toBeGreaterThanOrEqual(1);
     // Each card should have a RAG badge
     await expect(cards.first().locator('[data-testid="rag-badge"]')).toBeVisible();
   });
 
   test('DASH-01: Today Briefing panel is visible', async ({ page }) => {
     await page.goto('/');
-    // Stub — app does not exist yet
-    expect(false, 'stub — implement Phase 2').toBe(true);
 
     await expect(page.locator('[data-testid="briefing-panel"]')).toBeVisible();
   });
 
   test('DASH-06: Recent Activity Feed shows entries', async ({ page }) => {
     await page.goto('/');
-    // Stub — app does not exist yet
-    expect(false, 'stub — implement Phase 2').toBe(true);
 
     const feed = page.locator('[data-testid="activity-feed"]');
     await expect(feed).toBeVisible();
@@ -50,20 +45,16 @@ test.describe('Dashboard', () => {
 
   test('DASH-07: Quick Action Bar buttons are visible', async ({ page }) => {
     await page.goto('/');
-    // Stub — app does not exist yet
-    expect(false, 'stub — implement Phase 2').toBe(true);
 
     const bar = page.locator('[data-testid="quick-action-bar"]');
     await expect(bar).toBeVisible();
-    await expect(bar.getByText('Run Tracker')).toBeVisible();
-    await expect(bar.getByText('Generate Briefing')).toBeVisible();
-    await expect(bar.getByText('Weekly Status Draft')).toBeVisible();
+    await expect(bar.getByText('Run Tracker').first()).toBeVisible();
+    await expect(bar.getByText('Generate Briefing').first()).toBeVisible();
+    await expect(bar.getByText('Weekly Status Draft').first()).toBeVisible();
   });
 
   test('DASH-08: Notification badge appears for overdue actions', async ({ page }) => {
     await page.goto('/');
-    // Stub — app does not exist yet
-    expect(false, 'stub — implement Phase 2').toBe(true);
 
     // Badge lives in the page content area (not a header element) in Phase 2
     await expect(page.locator('[data-testid="notification-badge"]')).toBeVisible();
@@ -77,64 +68,48 @@ test.describe('Dashboard', () => {
 test.describe('Workspace tabs', () => {
   test('WORK-01: Overview tab renders workstream progress and milestone timeline', async ({ page }) => {
     await page.goto('/customer/1/overview');
-    // Stub — app does not exist yet
-    expect(false, 'stub — implement Phase 2').toBe(true);
 
     await expect(page.locator('[data-testid="overview-tab"]')).toBeVisible();
   });
 
   test('WORK-03: Risks tab renders risk register', async ({ page }) => {
     await page.goto('/customer/1/risks');
-    // Stub — app does not exist yet
-    expect(false, 'stub — implement Phase 2').toBe(true);
 
     await expect(page.locator('[data-testid="risks-tab"]')).toBeVisible();
   });
 
   test('WORK-04: Milestones tab renders milestone tracker', async ({ page }) => {
     await page.goto('/customer/1/milestones');
-    // Stub — app does not exist yet
-    expect(false, 'stub — implement Phase 2').toBe(true);
 
     await expect(page.locator('[data-testid="milestones-tab"]')).toBeVisible();
   });
 
   test('WORK-05: Teams tab renders onboarding status table', async ({ page }) => {
     await page.goto('/customer/1/teams');
-    // Stub — app does not exist yet
-    expect(false, 'stub — implement Phase 2').toBe(true);
 
     await expect(page.locator('[data-testid="teams-tab"]')).toBeVisible();
   });
 
   test('WORK-06: Architecture tab renders architecture state', async ({ page }) => {
     await page.goto('/customer/1/architecture');
-    // Stub — app does not exist yet
-    expect(false, 'stub — implement Phase 2').toBe(true);
 
     await expect(page.locator('[data-testid="architecture-tab"]')).toBeVisible();
   });
 
   test('WORK-07: Decisions tab renders key decisions', async ({ page }) => {
     await page.goto('/customer/1/decisions');
-    // Stub — app does not exist yet
-    expect(false, 'stub — implement Phase 2').toBe(true);
 
     await expect(page.locator('[data-testid="decisions-tab"]')).toBeVisible();
   });
 
   test('WORK-08: Engagement History tab renders history entries', async ({ page }) => {
     await page.goto('/customer/1/history');
-    // Stub — app does not exist yet
-    expect(false, 'stub — implement Phase 2').toBe(true);
 
     await expect(page.locator('[data-testid="history-tab"]')).toBeVisible();
   });
 
   test('WORK-09: Stakeholders tab renders contacts roster', async ({ page }) => {
     await page.goto('/customer/1/stakeholders');
-    // Stub — app does not exist yet
-    expect(false, 'stub — implement Phase 2').toBe(true);
 
     await expect(page.locator('[data-testid="stakeholders-tab"]')).toBeVisible();
   });
@@ -147,8 +122,6 @@ test.describe('Workspace tabs', () => {
 test.describe('Add Notes modal', () => {
   test('DASH engagement: Add Notes modal opens and accepts input', async ({ page }) => {
     await page.goto('/customer/1/overview');
-    // Stub — app does not exist yet
-    expect(false, 'stub — implement Phase 2').toBe(true);
 
     // Open modal
     await page.click('[data-testid="add-notes-btn"]');
@@ -183,9 +156,6 @@ test.describe('No console errors on tab load', () => {
 
   for (const path of tabPaths) {
     test(`No console errors: ${path}`, async ({ page }) => {
-      // Stub — app does not exist yet
-      expect(false, 'stub — implement Phase 2').toBe(true);
-
       const errors: string[] = [];
       page.on('console', (msg) => {
         if (msg.type() === 'error') {
