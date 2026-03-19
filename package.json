@@ -8,6 +8,10 @@
   },
   "devDependencies": {
     "concurrently": "^9.2.1",
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.14",
+    "tsx": "^4.21.0"
+  },
+  "dependencies": {
+    "postgres": "^3.4.8"
   }
 }
