@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: 02-03 complete — Dashboard RSC page (health cards, activity feed, quick action bar, notification badge)
 status: unknown
-stopped_at: Completed 02-06-PLAN.md (four remaining workspace tabs + AddNotesModal + POST /api/notes)
-last_updated: "2026-03-19T21:44:17.731Z"
+stopped_at: "Completed 02-05-PLAN.md (5 workspace tab pages: Overview, Actions, Risks, Milestones, Teams)"
+last_updated: "2026-03-19T21:44:38.907Z"
 progress:
   total_phases: 8
   completed_phases: 1
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** 02-03 complete — Dashboard RSC page (health cards, activity feed, quick action bar, notification badge)
 **Last action:** Completed 02-03 — Dashboard page with 4 RSC components, all DASH-01 through DASH-08 sections, data-testid attributes matching E2E spec
 **Next action:** 02-04 — Customer Overview page
-**Stopped at:** Completed 02-06-PLAN.md (four remaining workspace tabs + AddNotesModal + POST /api/notes)
+**Stopped at:** Completed 02-05-PLAN.md (5 workspace tab pages: Overview, Actions, Risks, Milestones, Teams)
 
 ## Phase Progress
 
@@ -76,6 +76,8 @@ Phase 2 in progress. 02-01 complete (E2E stubs), 02-02 complete (app shell + sid
 - [Phase 02-app-shell-read-surface]: 02-03: RAG badge uses inline className override on shadcn Badge — keeps variant config clean
 - [Phase 02-06]: append-only enforcement is dual-layer: DB triggers prevent UPDATE/DELETE, UI renders no edit/delete controls on decisions or history tabs
 - [Phase 02-06]: AddNotesModal owns the final data-testid='add-notes-btn'; plan 02-04 used 'add-notes-btn-placeholder' as previously recorded in STATE.md
+- [Phase 02-05]: searchParams typed as Promise in ActionsPage — required for Next.js 15 RSC compatibility
+- [Phase 02-05]: Date guards use regex before Date() parse — safely skips TBD/N/A TEXT date fields across all tab pages
 
 ## Performance Metrics
 
@@ -91,6 +93,7 @@ Phase 2 in progress. 02-01 complete (E2E stubs), 02-02 complete (app shell + sid
 | Phase 02-app-shell-read-surface P04 | 8min | 1 tasks | 5 files |
 | Phase 02-app-shell-read-surface P03 | 2min | 2 tasks | 5 files |
 | Phase 02-app-shell-read-surface P06 | 3min | 2 tasks | 7 files |
+| Phase 02-app-shell-read-surface P05 | 3min | 2 tasks | 6 files |
 
 ## Key Context for Next Session
 
