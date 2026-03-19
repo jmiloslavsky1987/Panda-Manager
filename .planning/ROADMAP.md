@@ -39,9 +39,9 @@ Plans:
 - [x] 01-01-PLAN.md — Wave 0: Test scaffolding (all test stubs + tsx install)
 - [x] 01-02-PLAN.md — Wave 1: Next.js scaffold, Drizzle schema (13 tables), singleton pool, append-only triggers, RLS (migration pending PostgreSQL setup)
 - [x] 01-03-PLAN.md — Wave 1: Settings service (lib/settings.ts) and API route
-- [ ] 01-04-PLAN.md — Wave 2: YAML export utility and DataService outputs idempotency
-- [ ] 01-05-PLAN.md — Wave 3: Migration script — YAML import (KAISER, AMEX, Merck stub)
-- [ ] 01-06-PLAN.md — Wave 4: Migration script — xlsx supplement (all 5 sheets)
+- [x] 01-04-PLAN.md — Wave 2: YAML export utility and DataService outputs idempotency
+- [x] 01-05-PLAN.md — Wave 3: Migration script — YAML import (KAISER, AMEX, Merck stub)
+- [x] 01-06-PLAN.md — Wave 4: Migration script — xlsx supplement (all 5 sheets)
 
 ### Phase 2: App Shell + Read Surface
 **Goal**: The Next.js app is running with a working Dashboard showing auto-derived health for all active projects, and all 9 workspace tabs render live data from PostgreSQL — the daily driver is usable for read-only work before any write surface exists.
@@ -53,7 +53,16 @@ Plans:
   3. Recent Activity Feed on the Dashboard shows skill runs, file outputs, and history entries from the last 7 days
   4. In-app notification badge appears for overdue actions and approaching go-live dates (within 14 days)
   5. Quick Action Bar buttons are visible and correctly scoped per active account (buttons are present; they do not yet fire skills)
-**Plans**: TBD
+**Plans**: 7 plans
+
+Plans:
+- [x] 02-01-PLAN.md — Wave 0: Playwright E2E test stubs for all Phase 2 behaviors (completed 2026-03-19)
+- [ ] 02-02-PLAN.md — Wave 1: shadcn/ui install + app shell (layout, sidebar, DB query library)
+- [ ] 02-03-PLAN.md — Wave 2: Dashboard page — health cards, activity feed, quick actions, notification badge
+- [ ] 02-04-PLAN.md — Wave 2: Workspace layout — project header, 9-tab navigation bar, redirect
+- [ ] 02-05-PLAN.md — Wave 3: Workspace tabs group A — Overview, Actions, Risks, Milestones, Teams
+- [ ] 02-06-PLAN.md — Wave 3: Workspace tabs group B — Architecture, Decisions, History, Stakeholders + Add Notes modal
+- [ ] 02-07-PLAN.md — Wave 4: Human verification checkpoint
 
 ### Phase 3: Write Surface + Plan Builder
 **Goal**: All workspace tabs support inline editing with optimistic UI, every action save atomically syncs to PA3_Action_Tracker.xlsx, and the Project Plan & Task Builder (Phase Board, Task Board, Gantt, swimlane, templates, Excel import/export) is fully operational.
@@ -134,7 +143,7 @@ Phases 6 and 7 can overlap after Phase 5 is stable.
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Data Foundation | 6/6 | Complete   | 2026-03-19 |
-| 2. App Shell + Read Surface | 0/TBD | Not started | - |
+| 2. App Shell + Read Surface | 2/7 | In Progress|  |
 | 3. Write Surface + Plan Builder | 0/TBD | Not started | - |
 | 4. Job Infrastructure | 0/TBD | Not started | - |
 | 5. Skill Engine | 0/TBD | Not started | - |
@@ -247,3 +256,4 @@ Phases 6 and 7 can overlap after Phase 5 is stable.
 *Roadmap created: 2026-03-18*
 *Requirements sourced from: .planning/REQUIREMENTS.md (defined 2026-03-18)*
 *Phase 1 planned: 2026-03-18 — 6 plans across 5 waves*
+*Phase 2 planned: 2026-03-19 — 7 plans across 5 waves (Wave 0–4)*

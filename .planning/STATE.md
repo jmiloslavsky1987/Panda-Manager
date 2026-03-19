@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_plan: 6 of 6
-status: phase_complete
-stopped_at: Completed 01-06-PLAN.md (xlsx supplement import — Phase 1 complete)
-last_updated: "2026-03-19T14:40:48.967Z"
+current_plan: 02-01 complete — Playwright E2E stubs (Wave 0 RED baseline)
+status: unknown
+stopped_at: Completed 02-01-PLAN.md (Playwright E2E stubs — Wave 0 RED baseline)
+last_updated: "2026-03-19T21:35:25.970Z"
 progress:
   total_phases: 8
   completed_phases: 1
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 13
+  completed_plans: 8
 ---
 
 # Project State
@@ -20,22 +20,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-18)
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
-**Current focus:** Phase 2 — App Shell + Read Surface (Phase 1 complete)
+**Current focus:** Phase 2 — App Shell + Read Surface (Plan 1/7 complete)
 
 ## Current Status
 
-**Phase:** 1 — Data Foundation (COMPLETE — 6/6 plans)
-**Current Plan:** Phase 1 complete — ready to begin Phase 2
-**Last action:** Completed 01-06 — xlsx supplement import (PA3_Action_Tracker.xlsx, all 5 sheets, importXlsx())
-**Next action:** Begin Phase 2 — App Shell + Read Surface
-**Stopped at:** Completed 01-06-PLAN.md (xlsx supplement import — Phase 1 complete)
+**Phase:** 2 — App Shell + Read Surface (IN PROGRESS — 1/7 plans)
+**Current Plan:** 02-01 complete — Playwright E2E stubs (Wave 0 RED baseline)
+**Last action:** Completed 02-01 — Playwright installed, 23 E2E test stubs written (all RED)
+**Next action:** 02-02 — App shell, layout, sidebar, routing
+**Stopped at:** Completed 02-02-PLAN.md (shadcn/ui install, query library, sidebar shell)
 
 ## Phase Progress
 
 | Phase | Status |
 |-------|--------|
 | 1. Data Foundation | COMPLETE (6/6 plans) |
-| 2. App Shell + Read Surface | Not started |
+| 2. App Shell + Read Surface | IN PROGRESS (1/7 plans) |
 | 3. Write Surface + Plan Builder | Not started |
 | 4. Job Infrastructure | Not started |
 | 5. Skill Engine | Not started |
@@ -45,7 +45,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 
 ## Active Work
 
-Phase 1 complete. Phase 2 — App Shell + Read Surface — is next.
+Phase 2 in progress. 02-01 complete (Playwright E2E stubs). Next: 02-02 (app shell + sidebar layout).
 
 ## Decisions
 
@@ -67,6 +67,12 @@ Phase 1 complete. Phase 2 — App Shell + Read Surface — is next.
 - [Phase 01-06]: Q-NNN IDs (Open Questions sheet) stored in actions table with type='question'
 - [Phase 01-06]: importXlsx() exported from migrate-local.ts for independent test runner access
 - [Phase 01-06]: Workstream Notes sheet: UPDATE only (no insert) — enriches YAML-sourced workstream rows
+- **[2026-03-19] 02-01:** npm install --no-package-lock used for @playwright/test — invalid esbuild semver in package-lock.json blocks standard install
+- **[2026-03-19] 02-01:** E2E stubs use expect(false, 'stub').toBe(true) not test.fixme() — keeps tests RED and visible in report
+- **[2026-03-19] 02-01:** Requirement IDs in test names (DASH-01 etc.) — implementation plans use --grep to target specific tests
+- [Phase 02-02]: shadcn/ui initialized via components.json (non-interactive) to avoid Radix/Base selector prompt blocking --yes init
+- [Phase 02-02]: Stalled milestone heuristic uses created_at + 14 days as proxy (milestones table has no last_updated column)
+- [Phase 02-02]: Overdue action filter: regex on due text field to exclude TBD/N/A strings before date comparison
 
 ## Performance Metrics
 
@@ -78,11 +84,15 @@ Phase 1 complete. Phase 2 — App Shell + Read Surface — is next.
 | 01-data-foundation | 04 | 15min | 2/2 | 4 |
 | 01-data-foundation | 05 | 25min | 1/1 | 2 |
 | 01-data-foundation | 06 | 4min | 1/1 | 2 |
+| 02-app-shell-read-surface | 01 | 12min | 1/1 | 3 |
+| Phase 02-app-shell-read-surface P02 | 3min | 2 tasks | 13 files |
 
 ## Key Context for Next Session
 
 - **Working directory:** `/Users/jmiloslavsky/Documents/Project Assistant Code`
-- **Wave 0 complete:** All 8 test stubs exist in tests/ — verify commands valid for Plans 01-02 through 01-06
+- **Wave 0 complete (Phase 1):** All 8 test stubs exist in tests/ — verify commands valid for Plans 01-02 through 01-06
+- **Wave 0 complete (Phase 2):** tests/e2e/phase2.spec.ts has 23 named RED tests — verify commands valid for Plans 02-02 through 02-07
+- **Playwright installed:** @playwright/test at project root, Chromium cached. Run: `npx playwright test tests/e2e/phase2.spec.ts --grep "DASH-01"`
 - **Research flags:** Phases 4, 5, 6, 7 require research spikes before planning (see ROADMAP.md)
 - **Critical pitfall:** BullMQ worker must be a dedicated process — never in-process cron
 - **Critical pitfall:** SkillOrchestrator must be separated from Route Handlers before Phase 5
@@ -103,4 +113,4 @@ Phase 1 complete. Phase 2 — App Shell + Read Surface — is next.
 
 ---
 *Initialized: 2026-03-18*
-*Last updated: 2026-03-19 after completing 01-06 (xlsx supplement import — Phase 1 COMPLETE)*
+*Last updated: 2026-03-19 after completing 02-01 (Playwright E2E stubs — Wave 0 RED baseline)*
