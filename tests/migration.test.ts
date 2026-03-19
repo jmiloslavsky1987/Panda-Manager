@@ -8,9 +8,10 @@
  *
  * NOTE: These tests require PostgreSQL running at DATABASE_URL.
  * Pre-established constraint: DB tests remain RED until PostgreSQL is installed.
+ * The migration script lives at bigpanda-app/scripts/migrate-local.ts.
  */
 
-import { test, describe } from 'node:test';
+import { test, describe, before } from 'node:test';
 import assert from 'node:assert/strict';
 import postgres from 'postgres';
 
@@ -18,11 +19,14 @@ const DATABASE_URL = process.env.DATABASE_URL ?? 'postgres://localhost:5432/bigp
 
 const sql = postgres(DATABASE_URL, { max: 1, connect_timeout: 5 });
 
+// Run migration once before all YAML import tests
 describe('migration script (Plan 01-05: YAML import)', () => {
-  test('projects table has exactly 3 rows after YAML migration (KAISER, AMEX, Merck)', async () => {
-    // Import and run the migration script
-    await import('../scripts/migrate-local.js');
+  before(async () => {
+    const { runMigration } = await import('../bigpanda-app/scripts/migrate-local.js');
+    await runMigration();
+  });
 
+  test('projects table has exactly 3 rows after YAML migration (KAISER, AMEX, Merck)', async () => {
     const rows = await sql`SELECT COUNT(*)::int AS count FROM projects`;
     assert.strictEqual(
       rows[0].count,
@@ -32,8 +36,6 @@ describe('migration script (Plan 01-05: YAML import)', () => {
   });
 
   test('all three expected customers exist: KAISER, AMEX, MERCK', async () => {
-    await import('../scripts/migrate-local.js');
-
     const rows = await sql`SELECT customer FROM projects ORDER BY customer`;
     const customers = rows.map((r: { customer: string }) => r.customer);
     assert.ok(customers.includes('KAISER'), 'Expected KAISER project');
@@ -41,9 +43,7 @@ describe('migration script (Plan 01-05: YAML import)', () => {
     assert.ok(customers.includes('MERCK'), 'Expected MERCK project');
   });
 
-  test('KAISER and AMEX projects have source=yaml', async () => {
-    await import('../scripts/migrate-local.js');
-
+  test('KAISER and AMEX projects have source_file set (source tracing)', async () => {
     const rows = await sql`
       SELECT customer, source_file FROM projects
       WHERE customer IN ('KAISER', 'AMEX')
@@ -55,9 +55,7 @@ describe('migration script (Plan 01-05: YAML import)', () => {
     }
   });
 
-  test('MERCK is a stub project (minimal data, source_file set)', async () => {
-    await import('../scripts/migrate-local.js');
-
+  test('MERCK is a stub project (status=active, source_file set)', async () => {
     const [merck] = await sql`
       SELECT name, customer, status, source_file FROM projects
       WHERE customer = 'MERCK'
@@ -69,8 +67,6 @@ describe('migration script (Plan 01-05: YAML import)', () => {
   });
 
   test('KAISER milestones have external_id format M-KAISER-NNN', async () => {
-    await import('../scripts/migrate-local.js');
-
     const rows = await sql`
       SELECT m.external_id FROM milestones m
       JOIN projects p ON p.id = m.project_id
@@ -86,8 +82,6 @@ describe('migration script (Plan 01-05: YAML import)', () => {
   });
 
   test('KAISER risks have external_id format R-KAISER-NNN', async () => {
-    await import('../scripts/migrate-local.js');
-
     const rows = await sql`
       SELECT r.external_id FROM risks r
       JOIN projects p ON p.id = r.project_id
@@ -103,11 +97,10 @@ describe('migration script (Plan 01-05: YAML import)', () => {
   });
 
   test('migration is idempotent: running twice produces same row count', async () => {
-    await import('../scripts/migrate-local.js');
+    const { runMigration } = await import('../bigpanda-app/scripts/migrate-local.js');
     const [before] = await sql`SELECT COUNT(*)::int AS count FROM projects`;
 
-    // Re-import triggers a second run (ES module cache — script must handle this)
-    await import('../scripts/migrate-local.js');
+    await runMigration();
     const [after] = await sql`SELECT COUNT(*)::int AS count FROM projects`;
 
     assert.strictEqual(
