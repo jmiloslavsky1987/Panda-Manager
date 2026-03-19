@@ -1,3 +1,18 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+current_plan: 4 of 6
+status: in_progress
+stopped_at: Completed 01-03-PLAN.md
+last_updated: "2026-03-19T03:08:00.000Z"
+progress:
+  total_phases: 8
+  completed_phases: 0
+  total_plans: 6
+  completed_plans: 3
+---
+
 # Project State
 
 ## Project Reference
@@ -10,16 +25,16 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 ## Current Status
 
 **Phase:** 1 — Data Foundation (in progress)
-**Current Plan:** 2 of 6
-**Last action:** Completed 01-01 — Wave 0 test scaffolding (8 RED test stubs + tsx install)
-**Next action:** Execute Plan 01-02 — Next.js scaffold, Drizzle schema (12 tables), singleton pool, append-only triggers, RLS
-**Stopped at:** Completed 01-01-PLAN.md
+**Current Plan:** 4 of 6
+**Last action:** Completed 01-03 — Settings service (readSettings/writeSettings, API route, .env.local isolation)
+**Next action:** Execute Plan 01-04 — YAML service
+**Stopped at:** Completed 01-03-PLAN.md
 
 ## Phase Progress
 
 | Phase | Status |
 |-------|--------|
-| 1. Data Foundation | In progress (1/6 plans complete) |
+| 1. Data Foundation | In progress (3/6 plans complete) |
 | 2. App Shell + Read Surface | Not started |
 | 3. Write Surface + Plan Builder | Not started |
 | 4. Job Infrastructure | Not started |
@@ -30,19 +45,22 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 
 ## Active Work
 
-**Plan 01-02** — Next.js scaffold + Drizzle schema (12 tables), singleton pool, append-only triggers, RLS
+**Plan 01-04** — YAML service (yaml-roundtrip tests)
 
 ## Decisions
 
 - **[2026-03-19] 01-01:** Used Node.js built-in test runner (node:test) — no Jest/Vitest needed
 - **[2026-03-19] 01-01:** DATABASE_URL defaults to postgres://localhost:5432/bigpanda_test in tests (prevents crash when env var unset)
 - **[2026-03-19] 01-01:** postgres and tsx installed at project root (not inside server/ or client/)
+- [Phase 01-03]: Settings library at both project root (test access) and bigpanda-app/lib/ (server-only for Next.js)
+- [Phase 01-03]: readSettings/writeSettings accept optional settingsPath arg for test isolation without mocking fs
 
 ## Performance Metrics
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
 | 01-data-foundation | 01 | 4min | 2/2 | 9 |
+| 01-data-foundation | 03 | 8min | 1/1 | 3 |
 
 ## Key Context for Next Session
 
@@ -56,4 +74,4 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 
 ---
 *Initialized: 2026-03-18*
-*Last updated: 2026-03-19 after completing 01-01 (Wave 0 test scaffolding)*
+*Last updated: 2026-03-19 after completing 01-03 (settings service + API route)*
