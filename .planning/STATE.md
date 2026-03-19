@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: 4 of 6
 status: in_progress
-stopped_at: Completed 01-03-PLAN.md
-last_updated: "2026-03-19T03:08:00.000Z"
+stopped_at: Completed 01-02-PLAN.md (out of sequence — 01-03 was done before 01-02)
+last_updated: "2026-03-19T03:55:00.000Z"
 progress:
   total_phases: 8
   completed_phases: 0
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 
 **Phase:** 1 — Data Foundation (in progress)
 **Current Plan:** 4 of 6
-**Last action:** Completed 01-03 — Settings service (readSettings/writeSettings, API route, .env.local isolation)
+**Last action:** Completed 01-02 — Next.js scaffold + Drizzle schema (13 tables, singleton pool, migration SQL, triggers, RLS)
 **Next action:** Execute Plan 01-04 — YAML service
-**Stopped at:** Completed 01-03-PLAN.md
+**Stopped at:** Completed 01-02-PLAN.md (note: 01-03 was already completed before 01-02 — sequence anomaly)
 
 ## Phase Progress
 
@@ -54,12 +54,17 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 - **[2026-03-19] 01-01:** postgres and tsx installed at project root (not inside server/ or client/)
 - [Phase 01-03]: Settings library at both project root (test access) and bigpanda-app/lib/ (server-only for Next.js)
 - [Phase 01-03]: readSettings/writeSettings accept optional settingsPath arg for test isolation without mocking fs
+- **[2026-03-19] 01-02:** db/ lives in bigpanda-app/db/ (plan-spec); pool.test.ts updated to import from '../bigpanda-app/db/'
+- **[2026-03-19] 01-02:** server-only import omitted from db/index.ts — next/compiled version throws unconditionally in Node.js test context
+- **[2026-03-19] 01-02:** FORCE ROW LEVEL SECURITY added to all 8 RLS tables — ensures tests pass regardless of DB user superuser status
+- **[2026-03-19] 01-02:** PostgreSQL not installed on this machine — migration requires user to install PostgreSQL and run drizzle-kit migrate
 
 ## Performance Metrics
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
 | 01-data-foundation | 01 | 4min | 2/2 | 9 |
+| 01-data-foundation | 02 | 20min | 2/2 | 14 |
 | 01-data-foundation | 03 | 8min | 1/1 | 3 |
 
 ## Key Context for Next Session
@@ -71,7 +76,9 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 - **Critical pitfall:** SkillOrchestrator must be separated from Route Handlers before Phase 5
 - **Cowork compatibility:** js-yaml settings `sortKeys: false, lineWidth: -1, JSON_SCHEMA` — non-negotiable
 - **Version ground-truth:** React 19, Vite 7, Tailwind 4, pptxgenjs v4, Anthropic SDK 0.78.x — read from existing package.json files
+- **DB setup required:** PostgreSQL not installed — user must install PostgreSQL, create bigpanda_test + bigpanda_app DBs, and run `cd bigpanda-app && DATABASE_URL=postgresql://localhost:5432/bigpanda_test npx drizzle-kit migrate`
+- **git add blocked:** bigpanda-app/db/ exists on disk but bash sandbox blocked staging; user should `git add bigpanda-app/db/`
 
 ---
 *Initialized: 2026-03-18*
-*Last updated: 2026-03-19 after completing 01-03 (settings service + API route)*
+*Last updated: 2026-03-19 after completing 01-02 (Drizzle schema, Next.js scaffold, migration SQL) — note 01-03 was completed before 01-02 in execution order*

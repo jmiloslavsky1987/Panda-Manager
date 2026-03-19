@@ -37,8 +37,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 Plans:
 - [x] 01-01-PLAN.md — Wave 0: Test scaffolding (all test stubs + tsx install)
-- [ ] 01-02-PLAN.md — Wave 1: Next.js scaffold, Drizzle schema (12 tables), singleton pool, append-only triggers, RLS
-- [ ] 01-03-PLAN.md — Wave 1: Settings service (lib/settings.ts) and API route
+- [x] 01-02-PLAN.md — Wave 1: Next.js scaffold, Drizzle schema (13 tables), singleton pool, append-only triggers, RLS (migration pending PostgreSQL setup)
+- [x] 01-03-PLAN.md — Wave 1: Settings service (lib/settings.ts) and API route
 - [ ] 01-04-PLAN.md — Wave 2: YAML export utility and DataService outputs idempotency
 - [ ] 01-05-PLAN.md — Wave 3: Migration script — YAML import (KAISER, AMEX, Merck stub)
 - [ ] 01-06-PLAN.md — Wave 4: Migration script — xlsx supplement (all 5 sheets)
