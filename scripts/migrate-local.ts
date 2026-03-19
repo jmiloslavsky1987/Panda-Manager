@@ -579,7 +579,7 @@ export async function importXlsx(): Promise<void> {
   // ============================================================
   // Sheet 1: Open Actions → actions table (source='xlsx_open')
   // ============================================================
-  const openActionsSheet = workbook.getWorksheet('Open Actions');
+  const openActionsSheet = workbook.getWorksheet('🔴 Open Actions') ?? workbook.getWorksheet('Open Actions');
   if (openActionsSheet) {
     const headers = buildHeaderMap(openActionsSheet);
     const rows = collectRows(openActionsSheet);
@@ -629,7 +629,7 @@ export async function importXlsx(): Promise<void> {
   // ============================================================
   // Sheet 2: Open Risks → risks table (source='xlsx_risks')
   // ============================================================
-  const openRisksSheet = workbook.getWorksheet('Open Risks');
+  const openRisksSheet = workbook.getWorksheet('⚠️ Open Risks') ?? workbook.getWorksheet('Open Risks');
   if (openRisksSheet) {
     const headers = buildHeaderMap(openRisksSheet);
     const rows = collectRows(openRisksSheet);
@@ -685,7 +685,7 @@ export async function importXlsx(): Promise<void> {
   // Sheet 3: Open Questions → actions table (type='question', source='xlsx_questions')
   // Q-NNN IDs stored as actions with type='question'
   // ============================================================
-  const openQuestionsSheet = workbook.getWorksheet('Open Questions');
+  const openQuestionsSheet = workbook.getWorksheet('❓ Open Questions') ?? workbook.getWorksheet('Open Questions');
   if (openQuestionsSheet) {
     const headers = buildHeaderMap(openQuestionsSheet);
     const rows = collectRows(openQuestionsSheet);
@@ -737,7 +737,7 @@ export async function importXlsx(): Promise<void> {
   // Sheet 4: Workstream Notes → UPDATE workstreams (never insert)
   // Updates current_status, lead, last_updated for matching workstream rows
   // ============================================================
-  const workstreamNotesSheet = workbook.getWorksheet('Workstream Notes');
+  const workstreamNotesSheet = workbook.getWorksheet('📋 Workstream Notes') ?? workbook.getWorksheet('Workstream Notes');
   if (workstreamNotesSheet) {
     const headers = buildHeaderMap(workstreamNotesSheet);
     const rows = collectRows(workstreamNotesSheet);
@@ -790,7 +790,7 @@ export async function importXlsx(): Promise<void> {
   // Sheet 5: Completed → actions table (status='completed', source='xlsx_completed')
   // Columns: Customer, ID, Description, Owner, Completed (date)
   // ============================================================
-  const completedSheet = workbook.getWorksheet('Completed');
+  const completedSheet = workbook.getWorksheet('✅ Completed') ?? workbook.getWorksheet('Completed');
   if (completedSheet) {
     const headers = buildHeaderMap(completedSheet);
     const rows = collectRows(completedSheet);
