@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: 02-01 complete — Playwright E2E stubs (Wave 0 RED baseline)
 status: unknown
-stopped_at: Completed 02-01-PLAN.md (Playwright E2E stubs — Wave 0 RED baseline)
-last_updated: "2026-03-19T21:35:25.970Z"
+stopped_at: Completed 02-03-PLAN.md (Dashboard RSC page — health cards, activity feed, quick action bar, notification badge)
+last_updated: "2026-03-19T21:39:34.128Z"
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 13
-  completed_plans: 8
+  completed_plans: 10
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** 02-01 complete — Playwright E2E stubs (Wave 0 RED baseline)
 **Last action:** Completed 02-01 — Playwright installed, 23 E2E test stubs written (all RED)
 **Next action:** 02-02 — App shell, layout, sidebar, routing
-**Stopped at:** Completed 02-01-PLAN.md (Playwright E2E stubs — Wave 0 RED baseline)
+**Stopped at:** Completed 02-03-PLAN.md (Dashboard RSC page — health cards, activity feed, quick action bar, notification badge)
 
 ## Phase Progress
 
@@ -70,6 +70,10 @@ Phase 2 in progress. 02-01 complete (Playwright E2E stubs). Next: 02-02 (app she
 - **[2026-03-19] 02-01:** npm install --no-package-lock used for @playwright/test — invalid esbuild semver in package-lock.json blocks standard install
 - **[2026-03-19] 02-01:** E2E stubs use expect(false, 'stub').toBe(true) not test.fixme() — keeps tests RED and visible in report
 - **[2026-03-19] 02-01:** Requirement IDs in test names (DASH-01 etc.) — implementation plans use --grep to target specific tests
+- [Phase 02-04]: getProjectWithHealth() added to queries.ts — thin wrapper combining getProjectById + computeHealth for workspace layout type correctness
+- [Phase 02-04]: data-testid='add-notes-btn-placeholder' used (not 'add-notes-btn') — plan 02-06 replaces FAB with AddNotesModal owning the final testid
+- [Phase 02-app-shell-read-surface]: 02-03: NotificationBadge in page header (not root layout) for Phase 2 — Phase 5 will hoist to layout when skill data available
+- [Phase 02-app-shell-read-surface]: 02-03: RAG badge uses inline className override on shadcn Badge — keeps variant config clean
 
 ## Performance Metrics
 
@@ -82,6 +86,8 @@ Phase 2 in progress. 02-01 complete (Playwright E2E stubs). Next: 02-02 (app she
 | 01-data-foundation | 05 | 25min | 1/1 | 2 |
 | 01-data-foundation | 06 | 4min | 1/1 | 2 |
 | 02-app-shell-read-surface | 01 | 12min | 1/1 | 3 |
+| Phase 02-app-shell-read-surface P04 | 8min | 1 tasks | 5 files |
+| Phase 02-app-shell-read-surface P03 | 2min | 2 tasks | 5 files |
 
 ## Key Context for Next Session
 
