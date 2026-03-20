@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Settings } from 'lucide-react';
+import { Library, Settings } from 'lucide-react';
 import { getActiveProjects } from '../lib/queries';
 import { SidebarProjectItem } from './SidebarProjectItem';
 
@@ -30,7 +30,15 @@ export async function Sidebar() {
             <SidebarProjectItem key={p.id} project={p} />
           ))}
         </ul>
-        <div className="px-4 mt-6 border-t border-zinc-700 pt-4">
+        <div className="px-4 mt-6 border-t border-zinc-700 pt-4 space-y-1">
+          <Link
+            href="/outputs"
+            className="flex items-center gap-2 text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 rounded px-2 py-1.5 text-sm transition-colors"
+            data-testid="sidebar-outputs-link"
+          >
+            <Library className="w-4 h-4" />
+            Outputs
+          </Link>
           <Link
             href="/settings"
             className="flex items-center gap-2 text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 rounded px-2 py-1.5 text-sm transition-colors"

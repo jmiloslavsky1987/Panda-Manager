@@ -17,6 +17,7 @@ import {
   text,
   integer,
   timestamp,
+  boolean,
   pgEnum,
   type AnyPgColumn,
 } from 'drizzle-orm/pg-core';
@@ -236,6 +237,7 @@ export const outputs = pgTable('outputs', {
   filepath: text('filepath'),
   created_at: timestamp('created_at').defaultNow().notNull(),
   completed_at: timestamp('completed_at'),
+  archived: boolean('archived').default(false).notNull(),
 });
 
 // ─── Table 12: plan_templates ─────────────────────────────────────────────────
