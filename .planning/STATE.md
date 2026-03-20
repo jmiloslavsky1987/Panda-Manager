@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: Completed 03-08-PLAN.md (Team Swimlane view — per-workstream rows with status columns and percent_complete progress bars)
-last_updated: "2026-03-20T14:23:51.556Z"
+stopped_at: Completed 03-07-PLAN.md (Gantt Timeline — frappe-gantt SVG chart with task bars and dependency arrows)
+last_updated: "2026-03-20T14:24:03.374Z"
 progress:
   total_phases: 8
   completed_phases: 2
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 02-07 — Full Phase 2 human verification passed; all 9 workspace tabs, RAG badges, Add Notes modal confirmed
 **Next action:** 02-CONTEXT.md → 03-01 — Begin Phase 3 (Write Surface + Plan Builder)
-**Stopped at:** Completed 03-08-PLAN.md (Team Swimlane view — per-workstream rows with status columns and percent_complete progress bars)
+**Stopped at:** Completed 03-07-PLAN.md (Gantt Timeline — frappe-gantt SVG chart with task bars and dependency arrows)
 
 ## Phase Progress
 
@@ -95,6 +95,8 @@ Phase 2 COMPLETE. All 7 plans executed: 02-01 (E2E stubs), 02-02 (app shell + si
 - [Phase 03-06]: Bulk toolbar in-place micro-forms for owner/due/phase — no modal overlay
 - [Phase 03-08]: Status change via select dropdown (click-to-move) rather than full @dnd-kit drag — plan explicitly permits this fallback for nested scrollable container complexity
 - [Phase 03-08]: Unassigned lane filtered out when no tasks have workstream_id=null — avoids empty row clutter
+- [Phase 03-07]: frappe-gantt has no @types package — added manual types/frappe-gantt.d.ts declaration file
+- [Phase 03-07]: Only single blocked_by dependency per task in Phase 3 — multi-dependency requires text[] column (Phase 4+ concern)
 
 ## Performance Metrics
 
@@ -119,6 +121,7 @@ Phase 2 COMPLETE. All 7 plans executed: 02-01 (E2E stubs), 02-02 (app shell + si
 | Phase 03-write-surface-+-plan-builder P05 | 2min | 2 tasks | 8 files |
 | Phase 03-write-surface-+-plan-builder P06 | 6min | 2 tasks | 10 files |
 | Phase 03-write-surface-+-plan-builder P08 | 2min | 2 tasks | 2 files |
+| Phase 03-write-surface-+-plan-builder P07 | 2min | 2 tasks | 4 files |
 
 ## Key Context for Next Session
 
