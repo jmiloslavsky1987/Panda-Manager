@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: App Shell + Read Surface** - Next.js scaffold, Dashboard, all 9 workspace tabs (read-only), RSC data loading (completed 2026-03-19)
 - [x] **Phase 3: Write Surface + Plan Builder** - Inline CRUD on all workspace tabs, PA3 xlsx dual-write, Project Plan & Task Builder (completed 2026-03-20)
 - [x] **Phase 4: Job Infrastructure** - BullMQ worker process, JobService, Redis, cron schedule registration, job status UI (completed 2026-03-20)
-- [ ] **Phase 5: Skill Engine** - SkillOrchestrator, token budget guard, SSE streaming, Drafts Inbox, Output Library, first 4 skills wired
+- [ ] **Phase 5: Skill Engine** - SkillOrchestrator, token budget guard, SSE streaming, Drafts Inbox, Output Library, first 5 skills wired
 - [ ] **Phase 6: MCP Integrations** - MCPClientPool, Slack/Gmail/Glean/Drive connections, Customer Project Tracker fully wired
 - [ ] **Phase 7: File Generation + Remaining Skills** - FileGenerationService (.docx/.pptx/.xlsx/.html), 11 remaining skills wired
 - [ ] **Phase 8: Cross-Project Features + Polish** - FTS, risk heat map, cross-account watch list, Knowledge Base, Drafts send/discard flow
@@ -107,7 +107,7 @@ Plans:
 - [ ] 04-05-PLAN.md — Wave 4: E2E green pass + human verification checkpoint
 
 ### Phase 5: Skill Engine
-**Goal**: The SkillOrchestrator is operational and cleanly separated from Route Handlers, streaming skills to the browser via SSE with a token budget guard in place, a Drafts Inbox gating all outbound AI content, and the four highest-value skills (Weekly Customer Status, Morning Briefing, Context Updater, Customer Project Tracker without MCP) fully wired and producing correct output.
+**Goal**: The SkillOrchestrator is operational and cleanly separated from Route Handlers, streaming skills to the browser via SSE with a token budget guard in place, a Drafts Inbox gating all outbound AI content, and the five highest-value skills (Weekly Customer Status, Meeting Summary, Morning Briefing, Context Updater, Handoff Doc Generator) fully wired and producing correct output.
 **Depends on**: Phase 4
 **Requirements**: SKILL-01, SKILL-02, SKILL-03, SKILL-04, SKILL-11, SKILL-12, SKILL-13, SKILL-14, DASH-09, OUT-01, OUT-02, OUT-03, OUT-04
 **Success Criteria** (what must be TRUE):
@@ -116,7 +116,15 @@ Plans:
   3. SKILL.md files are read from disk at invocation time; changing a SKILL.md file takes effect on the next skill run without restarting the app; missing SKILL.md files disable the skill in the UI with a human-readable error
   4. All AI-generated emails and Slack drafts appear in the Drafts Inbox before any external action — no AI content bypasses this queue
   5. The Output Library shows all generated skill outputs filterable by account, skill type, and date range; HTML outputs render inline; .docx and .pptx show open-with-system-app links
-**Plans**: TBD
+**Plans**: 6 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — Wave 0: SDK install + DB schema (skill_runs, skill_run_chunks, drafts) + migration SQL + SKILL.md stubs + E2E stubs
+- [ ] 05-02-PLAN.md — Wave 1: SkillOrchestrator + skill-context assembler + BullMQ skill-run handler + dispatch map
+- [ ] 05-03-PLAN.md — Wave 2: Skills tab UI (11th tab) + skill run page (SSE) + trigger API + SSE stream API
+- [ ] 05-04-PLAN.md — Wave 2: Drafts Inbox on Dashboard + Output Library page + outputs API + sidebar link (parallel with 05-03)
+- [ ] 05-05-PLAN.md — Wave 3: Wire 5 skill handlers + getSkillRuns query + getLatestMorningBriefing query
+- [ ] 05-06-PLAN.md — Wave 4: E2E green pass + human verification checkpoint
 
 ### Phase 6: MCP Integrations
 **Goal**: MCPClientPool is initialized once at server startup with Slack, Gmail, Glean, and Drive connections, and the Customer Project Tracker skill performs live sweeps of Gmail and Slack for the last 7 days, updates the actions table, and syncs to PA3_Action_Tracker.xlsx — the highest-value scheduled job is fully operational.
@@ -164,7 +172,7 @@ Phases 6 and 7 can overlap after Phase 5 is stable.
 | 2. App Shell + Read Surface | 7/7 | Complete   | 2026-03-19 |
 | 3. Write Surface + Plan Builder | 9/9 | Complete   | 2026-03-20 |
 | 4. Job Infrastructure | 5/5 | Complete   | 2026-03-20 |
-| 5. Skill Engine | 0/TBD | Not started | - |
+| 5. Skill Engine | 0/6 | Not started | - |
 | 6. MCP Integrations | 0/TBD | Not started | - |
 | 7. File Generation + Remaining Skills | 0/TBD | Not started | - |
 | 8. Cross-Project Features + Polish | 0/TBD | Not started | - |
@@ -275,3 +283,4 @@ Phases 6 and 7 can overlap after Phase 5 is stable.
 *Requirements sourced from: .planning/REQUIREMENTS.md (defined 2026-03-18)*
 *Phase 1 planned: 2026-03-18 — 6 plans across 5 waves*
 *Phase 2 planned: 2026-03-19 — 7 plans across 5 waves (Wave 0–4)*
+*Phase 5 planned: 2026-03-20 — 6 plans across 5 waves (Wave 0–4)*
