@@ -97,7 +97,14 @@ Plans:
   3. Manually triggering a no-op test job from the UI produces a completed job record in the database with correct timestamps
   4. Schedule times for all 6 jobs are configurable in Settings and take effect without a code deploy or server restart
   5. Two jobs scheduled to overlap cannot run simultaneously — the second job logs "skipped: advisory lock held" rather than starting a concurrent run
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — Wave 1: E2E test stubs for all Phase 4 behaviors (RED baseline)
+- [ ] 04-02-PLAN.md — Wave 2: Package installs + settings-core.ts + Redis connection + lock IDs + job_runs schema + migration
+- [ ] 04-03-PLAN.md — Wave 3: BullMQ worker entry point + scheduler registration + 6 no-op job handlers
+- [ ] 04-04-PLAN.md — Wave 3: /settings Jobs tab UI + API routes + Sidebar Settings link (parallel with 04-03)
+- [ ] 04-05-PLAN.md — Wave 4: E2E green pass + human verification checkpoint
 
 ### Phase 5: Skill Engine
 **Goal**: The SkillOrchestrator is operational and cleanly separated from Route Handlers, streaming skills to the browser via SSE with a token budget guard in place, a Drafts Inbox gating all outbound AI content, and the four highest-value skills (Weekly Customer Status, Morning Briefing, Context Updater, Customer Project Tracker without MCP) fully wired and producing correct output.
@@ -156,7 +163,7 @@ Phases 6 and 7 can overlap after Phase 5 is stable.
 | 1. Data Foundation | 6/6 | Complete   | 2026-03-19 |
 | 2. App Shell + Read Surface | 7/7 | Complete   | 2026-03-19 |
 | 3. Write Surface + Plan Builder | 9/9 | Complete   | 2026-03-20 |
-| 4. Job Infrastructure | 0/TBD | Not started | - |
+| 4. Job Infrastructure | 0/5 | Not started | - |
 | 5. Skill Engine | 0/TBD | Not started | - |
 | 6. MCP Integrations | 0/TBD | Not started | - |
 | 7. File Generation + Remaining Skills | 0/TBD | Not started | - |
