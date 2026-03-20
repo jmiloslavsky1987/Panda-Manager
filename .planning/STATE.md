@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: Completed 02-07-PLAN.md (Phase 2 COMPLETE — human verification approved, 23/23 E2E passing)
-last_updated: "2026-03-19T22:00:43.267Z"
+stopped_at: Completed 03-01-PLAN.md (Phase 3 Wave 0 RED baseline — 18 E2E stubs, all failing)
+last_updated: "2026-03-20T14:07:13.560Z"
 progress:
   total_phases: 8
   completed_phases: 2
-  total_plans: 13
-  completed_plans: 13
+  total_plans: 22
+  completed_plans: 15
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 02-07 — Full Phase 2 human verification passed; all 9 workspace tabs, RAG badges, Add Notes modal confirmed
 **Next action:** 02-CONTEXT.md → 03-01 — Begin Phase 3 (Write Surface + Plan Builder)
-**Stopped at:** Completed 02-07-PLAN.md (Phase 2 COMPLETE — human verification approved, 23/23 E2E passing)
+**Stopped at:** Completed 03-01-PLAN.md (Phase 3 Wave 0 RED baseline — 18 E2E stubs, all failing)
 
 ## Phase Progress
 
@@ -79,6 +79,7 @@ Phase 2 COMPLETE. All 7 plans executed: 02-01 (E2E stubs), 02-02 (app shell + si
 - [Phase 02-05]: searchParams typed as Promise in ActionsPage — required for Next.js 15 RSC compatibility
 - [Phase 02-05]: Date guards use regex before Date() parse — safely skips TBD/N/A TEXT date fields across all tab pages
 - [Phase 02-app-shell-read-surface]: 02-07: E2E suite activated (23/23 passing) before human checkpoint; human verified all 9 workspace tabs, RAG badges, Add Notes modal → DB
+- [Phase 03-01]: Wave 0 stub assertion placed as FIRST line in each test — visibly RED without server running
 
 ## Performance Metrics
 
@@ -96,6 +97,7 @@ Phase 2 COMPLETE. All 7 plans executed: 02-01 (E2E stubs), 02-02 (app shell + si
 | Phase 02-app-shell-read-surface P06 | 3min | 2 tasks | 7 files |
 | Phase 02-app-shell-read-surface P05 | 3min | 2 tasks | 6 files |
 | Phase 02-app-shell-read-surface P07 | 10min | 2 tasks | 1 files |
+| Phase 03-write-surface-+-plan-builder P01 | 2min | 1 tasks | 1 files |
 
 ## Key Context for Next Session
 

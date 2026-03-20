@@ -31,7 +31,7 @@
 ### Project Workspace
 
 - [x] **WORK-01**: Overview tab — workstream progress bars (ADR and Biggy tracks), milestone timeline, auto-derived health status, go-live target
-- [ ] **WORK-02**: Actions tab — filterable by status/owner/due date, inline editing (complete, add notes, change owner), every save syncs to PA3_Action_Tracker.xlsx atomically (dual-write)
+- [x] **WORK-02**: Actions tab — filterable by status/owner/due date, inline editing (complete, add notes, change owner), every save syncs to PA3_Action_Tracker.xlsx atomically (dual-write)
 - [x] **WORK-03**: Risks tab — risk register with append-only mitigation log, inline severity/status editing, full mitigation history visible per risk
 - [x] **WORK-04**: Milestones tab — milestone tracker with action links, status indicators, completion history
 - [x] **WORK-05**: Teams tab — team onboarding status table (ADR + Biggy tracks) with onboarding velocity view showing time-in-phase and stall detection (team in same phase 14+ days with no logged activity)
@@ -66,17 +66,17 @@
 
 ### Project Plan & Task Builder
 
-- [ ] **PLAN-01**: Task creation with title, description, owner, due date, priority (high/medium/low), type (technical/organizational/customer-facing), linked milestone
-- [ ] **PLAN-02**: Phase Board — Kanban-style with columns per delivery phase; workstream cards draggable between phases
-- [ ] **PLAN-03**: Task Board — scoped to phase/workstream; columns: To Do / In Progress / Blocked / Done
-- [ ] **PLAN-04**: Gantt Timeline — milestones and workstreams across configurable date range; color-coded by status; milestone dependency lines
-- [ ] **PLAN-05**: Team swimlane view — tasks organized by team with current status and upcoming due dates
-- [ ] **PLAN-06**: Task dependencies — mark task as blocked by another; dependency chains visualized in Gantt and Task Board
-- [ ] **PLAN-07**: Bulk operations — select multiple tasks, reassign owner, change due date, move to different phase
-- [ ] **PLAN-08**: Task templates — one-click instantiation for Biggy Activation, ADR Onboarding, Team Kickoff workstreams
-- [ ] **PLAN-09**: Progress rollup — task completion → workstream percent_complete → project health score automatically
-- [ ] **PLAN-10**: Excel plan import from .xlsx (KAISER_Biggy_Project_Plan format) mapping columns to task schema
-- [ ] **PLAN-11**: Plan export to .xlsx in the same format as the Kaiser plan
+- [x] **PLAN-01**: Task creation with title, description, owner, due date, priority (high/medium/low), type (technical/organizational/customer-facing), linked milestone
+- [x] **PLAN-02**: Phase Board — Kanban-style with columns per delivery phase; workstream cards draggable between phases
+- [x] **PLAN-03**: Task Board — scoped to phase/workstream; columns: To Do / In Progress / Blocked / Done
+- [x] **PLAN-04**: Gantt Timeline — milestones and workstreams across configurable date range; color-coded by status; milestone dependency lines
+- [x] **PLAN-05**: Team swimlane view — tasks organized by team with current status and upcoming due dates
+- [x] **PLAN-06**: Task dependencies — mark task as blocked by another; dependency chains visualized in Gantt and Task Board
+- [x] **PLAN-07**: Bulk operations — select multiple tasks, reassign owner, change due date, move to different phase
+- [x] **PLAN-08**: Task templates — one-click instantiation for Biggy Activation, ADR Onboarding, Team Kickoff workstreams
+- [x] **PLAN-09**: Progress rollup — task completion → workstream percent_complete → project health score automatically
+- [x] **PLAN-10**: Excel plan import from .xlsx (KAISER_Biggy_Project_Plan format) mapping columns to task schema
+- [x] **PLAN-11**: Plan export to .xlsx in the same format as the Kaiser plan
 - [ ] **PLAN-12**: AI-assisted plan generation — given current project context, generates suggested task list for next 2 weeks scoped to current phase and open blockers
 - [ ] **PLAN-13**: Weekly sprint summary — plain-English summary of last week's completions, this week's due tasks, and at-risk items
 
@@ -171,18 +171,18 @@
 | WORK-07 | Phase 2 | Complete |
 | WORK-08 | Phase 2 | Complete |
 | WORK-09 | Phase 2 | Complete |
-| WORK-02 | Phase 3 | Pending |
-| PLAN-01 | Phase 3 | Pending |
-| PLAN-02 | Phase 3 | Pending |
-| PLAN-03 | Phase 3 | Pending |
-| PLAN-04 | Phase 3 | Pending |
-| PLAN-05 | Phase 3 | Pending |
-| PLAN-06 | Phase 3 | Pending |
-| PLAN-07 | Phase 3 | Pending |
-| PLAN-08 | Phase 3 | Pending |
-| PLAN-09 | Phase 3 | Pending |
-| PLAN-10 | Phase 3 | Pending |
-| PLAN-11 | Phase 3 | Pending |
+| WORK-02 | Phase 3 | Complete |
+| PLAN-01 | Phase 3 | Complete |
+| PLAN-02 | Phase 3 | Complete |
+| PLAN-03 | Phase 3 | Complete |
+| PLAN-04 | Phase 3 | Complete |
+| PLAN-05 | Phase 3 | Complete |
+| PLAN-06 | Phase 3 | Complete |
+| PLAN-07 | Phase 3 | Complete |
+| PLAN-08 | Phase 3 | Complete |
+| PLAN-09 | Phase 3 | Complete |
+| PLAN-10 | Phase 3 | Complete |
+| PLAN-11 | Phase 3 | Complete |
 | SCHED-01 | Phase 4 | Pending |
 | SCHED-02 | Phase 4 | Pending |
 | SCHED-03 | Phase 4 | Pending |
