@@ -14,6 +14,7 @@ const TABS = [
   { label: 'Engagement History', segment: 'history' },
   { label: 'Stakeholders', segment: 'stakeholders' },
   { label: 'Plan', segment: 'plan', subRoute: true },   // 10th tab
+  { label: 'Skills', segment: 'skills', subRoute: true }, // 11th tab
 ] satisfies Array<{ label: string; segment: string; subRoute?: boolean }>
 
 interface WorkspaceTabsProps {
