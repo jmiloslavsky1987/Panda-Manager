@@ -40,3 +40,6 @@ CREATE TABLE drafts (
   created_at  TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at  TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
+-- Outputs archived column (needed for OUT-04 regenerate)
+ALTER TABLE outputs ADD COLUMN IF NOT EXISTS archived BOOLEAN NOT NULL DEFAULT FALSE;
