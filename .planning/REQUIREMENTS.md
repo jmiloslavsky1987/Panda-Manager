@@ -94,14 +94,14 @@
 
 ### Scheduled Intelligence
 
-- [ ] **SCHED-01**: BullMQ worker process as dedicated process alongside Next.js app — not in-process cron; persists across restarts; no duplicate firing on multi-instance deploy
-- [ ] **SCHED-02**: Daily 8am: Morning Briefing background job — result stored in DB, surfaced in dashboard
-- [ ] **SCHED-03**: Daily 8am: Cross-account health check — flag status changes, approaching due dates, overdue actions
-- [ ] **SCHED-04**: Daily 9am: Overnight Slack + Gmail sweep for customer messages
-- [ ] **SCHED-05**: Monday 7am: Full Customer Project Tracker run for all active accounts
-- [ ] **SCHED-06**: Thursday 4pm: Weekly Status Draft generation for all active accounts; creates Gmail drafts; notifies dashboard
-- [ ] **SCHED-07**: Friday 9am: Biggy Weekly Briefing generation; stores in Output Library
-- [ ] **SCHED-08**: All schedule times configurable via Settings; jobs have queryable status (pending/running/completed/failed) visible in UI
+- [x] **SCHED-01**: BullMQ worker process as dedicated process alongside Next.js app — not in-process cron; persists across restarts; no duplicate firing on multi-instance deploy
+- [x] **SCHED-02**: Daily 8am: Morning Briefing background job — result stored in DB, surfaced in dashboard
+- [x] **SCHED-03**: Daily 8am: Cross-account health check — flag status changes, approaching due dates, overdue actions
+- [x] **SCHED-04**: Daily 9am: Overnight Slack + Gmail sweep for customer messages
+- [x] **SCHED-05**: Monday 7am: Full Customer Project Tracker run for all active accounts
+- [x] **SCHED-06**: Thursday 4pm: Weekly Status Draft generation for all active accounts; creates Gmail drafts; notifies dashboard
+- [x] **SCHED-07**: Friday 9am: Biggy Weekly Briefing generation; stores in Output Library
+- [x] **SCHED-08**: All schedule times configurable via Settings; jobs have queryable status (pending/running/completed/failed) visible in UI
 
 ### Settings
 
@@ -183,14 +183,14 @@
 | PLAN-09 | Phase 3 | Complete |
 | PLAN-10 | Phase 3 | Complete |
 | PLAN-11 | Phase 3 | Complete |
-| SCHED-01 | Phase 4 | Pending |
-| SCHED-02 | Phase 4 | Pending |
-| SCHED-03 | Phase 4 | Pending |
-| SCHED-04 | Phase 4 | Pending |
-| SCHED-05 | Phase 4 | Pending |
-| SCHED-06 | Phase 4 | Pending |
-| SCHED-07 | Phase 4 | Pending |
-| SCHED-08 | Phase 4 | Pending |
+| SCHED-01 | Phase 4 | Complete |
+| SCHED-02 | Phase 4 | Complete |
+| SCHED-03 | Phase 4 | Complete |
+| SCHED-04 | Phase 4 | Complete |
+| SCHED-05 | Phase 4 | Complete |
+| SCHED-06 | Phase 4 | Complete |
+| SCHED-07 | Phase 4 | Complete |
+| SCHED-08 | Phase 4 | Complete |
 | SKILL-01 | Phase 5 | Pending |
 | SKILL-02 | Phase 5 | Pending |
 | SKILL-03 | Phase 5 | Pending |

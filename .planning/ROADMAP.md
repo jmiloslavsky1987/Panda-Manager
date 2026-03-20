@@ -163,7 +163,7 @@ Phases 6 and 7 can overlap after Phase 5 is stable.
 | 1. Data Foundation | 6/6 | Complete   | 2026-03-19 |
 | 2. App Shell + Read Surface | 7/7 | Complete   | 2026-03-19 |
 | 3. Write Surface + Plan Builder | 9/9 | Complete   | 2026-03-20 |
-| 4. Job Infrastructure | 0/5 | Not started | - |
+| 4. Job Infrastructure | 1/5 | In Progress|  |
 | 5. Skill Engine | 0/TBD | Not started | - |
 | 6. MCP Integrations | 0/TBD | Not started | - |
 | 7. File Generation + Remaining Skills | 0/TBD | Not started | - |

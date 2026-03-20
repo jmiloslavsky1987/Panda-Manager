@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
-status: complete
-stopped_at: "Completed 03-09-PLAN.md (Phase 3 COMPLETE — human verification approved)"
-last_updated: "2026-03-20T15:05:00.000Z"
+status: unknown
+stopped_at: Completed 04-01-PLAN.md (Phase 4 Wave-0 E2E RED stubs)
+last_updated: "2026-03-20T16:02:30.620Z"
 progress:
   total_phases: 8
   completed_phases: 3
-  total_plans: 22
-  completed_plans: 22
+  total_plans: 27
+  completed_plans: 23
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 03-09 — Phase 3 E2E green pass + human verification approved; all 12 Phase 3 requirements satisfied
 **Next action:** 03-CONTEXT.md → 04-01 — Begin Phase 4 (Job Infrastructure) — requires BullMQ v5 research spike first
-**Stopped at:** Completed 03-09-PLAN.md (Phase 3 COMPLETE — human verification approved)
+**Stopped at:** Completed 04-01-PLAN.md (Phase 4 Wave-0 E2E RED stubs)
 
 ## Phase Progress
 
@@ -101,6 +101,7 @@ Phase 3 COMPLETE. All 9 plans executed: 03-01 (E2E stubs), 03-02 (schema migrati
 - **[2026-03-20] 03-09:** SET LOCAL required (not SET) for RLS policy variables inside connection pool — SET LOCAL scopes to transaction, preventing context bleed across pool connections
 - **[2026-03-20] 03-09:** Zod TaskCreateSchema uses .nullish() not .optional() — HTML form fields submit null (not undefined), .optional() rejects null values
 - **[2026-03-20] 03-09:** Task API validation errors return error.message string — raw Zod error object serializes as {} causing [object Object] in UI
+- [Phase 04-job-infrastructure]: Wave-0 RED stub pattern (expect(false, 'stub').toBe(true) first line) used for Phase 4 stubs — consistent with 02-01 and 03-01
 
 ## Performance Metrics
 
@@ -127,6 +128,7 @@ Phase 3 COMPLETE. All 9 plans executed: 03-01 (E2E stubs), 03-02 (schema migrati
 | Phase 03-write-surface-+-plan-builder P08 | 2min | 2 tasks | 2 files |
 | Phase 03-write-surface-+-plan-builder P07 | 2min | 2 tasks | 4 files |
 | Phase 03-write-surface-+-plan-builder P09 | 35min | 2 tasks | 3 files |
+| Phase 04-job-infrastructure P01 | 5min | 1 tasks | 1 files |
 
 ## Key Context for Next Session
 
