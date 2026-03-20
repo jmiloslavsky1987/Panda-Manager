@@ -1,4 +1,5 @@
 import { getWorkspaceData } from '../../../../lib/queries'
+import { StakeholderEditModal } from '../../../../components/StakeholderEditModal'
 
 function truncate(str: string | null | undefined, max: number): string {
   if (!str) return ''
@@ -7,7 +8,8 @@ function truncate(str: string | null | undefined, max: number): string {
 
 export default async function StakeholdersPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const data = await getWorkspaceData(parseInt(id, 10))
+  const projectId = parseInt(id, 10)
+  const data = await getWorkspaceData(projectId)
   const stakeholders = data.stakeholders
 
   // Group by company: BigPanda first, then others
@@ -40,6 +42,33 @@ export default async function StakeholdersPage({ params }: { params: Promise<{ i
   // If no grouping possible (all same company or empty), fall back to flat list
   const useGroups = groups.length > 1
 
+  const renderRows = (rows: typeof stakeholders) =>
+    rows.map((s) => (
+      <StakeholderEditModal
+        key={s.id}
+        stakeholder={s}
+        projectId={projectId}
+        trigger={
+          <tr className="align-top border-b border-zinc-100 hover:bg-zinc-50 cursor-pointer">
+            <td className="py-3 pr-4 font-medium text-zinc-900 whitespace-nowrap">{s.name}</td>
+            <td className="py-3 pr-4 text-zinc-700">{s.role ?? '—'}</td>
+            <td className="py-3 pr-4 text-zinc-700">{s.company ?? '—'}</td>
+            <td className="py-3 pr-4 text-zinc-700">
+              {s.email ? (
+                <span className="text-blue-600">{s.email}</span>
+              ) : (
+                '—'
+              )}
+            </td>
+            <td className="py-3 pr-4 text-zinc-700">
+              {s.slack_id ? `@${s.slack_id.replace(/^@/, '')}` : '—'}
+            </td>
+            <td className="py-3 text-zinc-500">{truncate(s.notes, 80) || '—'}</td>
+          </tr>
+        }
+      />
+    ))
+
   const renderTable = (rows: typeof stakeholders) => (
     <table className="w-full text-sm border-collapse">
       <thead>
@@ -52,43 +81,31 @@ export default async function StakeholdersPage({ params }: { params: Promise<{ i
           <th className="pb-2">Notes</th>
         </tr>
       </thead>
-      <tbody className="divide-y divide-zinc-100">
-        {rows.map((s) => (
-          <tr key={s.id} className="align-top">
-            <td className="py-3 pr-4 font-medium text-zinc-900 whitespace-nowrap">{s.name}</td>
-            <td className="py-3 pr-4 text-zinc-700">{s.role ?? '—'}</td>
-            <td className="py-3 pr-4 text-zinc-700">{s.company ?? '—'}</td>
-            <td className="py-3 pr-4 text-zinc-700">
-              {s.email ? (
-                <a href={`mailto:${s.email}`} className="text-blue-600 hover:underline">
-                  {s.email}
-                </a>
-              ) : (
-                '—'
-              )}
-            </td>
-            <td className="py-3 pr-4 text-zinc-700">
-              {s.slack_id ? `@${s.slack_id.replace(/^@/, '')}` : '—'}
-            </td>
-            <td className="py-3 text-zinc-500">{truncate(s.notes, 80) || '—'}</td>
-          </tr>
-        ))}
+      <tbody>
+        {renderRows(rows)}
       </tbody>
     </table>
   )
 
   return (
     <div data-testid="stakeholders-tab" className="space-y-6">
-      <div>
+      <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-zinc-900">Stakeholders</h2>
-      </div>
-
-      <div className="rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-        Adding and editing stakeholders available in Phase 3
+        <StakeholderEditModal
+          projectId={projectId}
+          trigger={
+            <button
+              data-testid="add-stakeholder-btn"
+              className="rounded-md bg-zinc-900 text-white text-sm px-4 py-2 hover:bg-zinc-700 transition-colors"
+            >
+              + Add Stakeholder
+            </button>
+          }
+        />
       </div>
 
       {stakeholders.length === 0 ? (
-        <p className="text-sm text-zinc-500">No stakeholders recorded yet.</p>
+        <p className="text-sm text-zinc-500">No stakeholders recorded yet. Add the first one above.</p>
       ) : useGroups ? (
         <div className="space-y-8">
           {groups.map((group) => (
