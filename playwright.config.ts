@@ -9,5 +9,6 @@ export default defineConfig({
     command: 'cd bigpanda-app && npm run dev',
     url: 'http://localhost:3000',
     reuseExistingServer: true,
+    timeout: 120000,
   },
 });
