@@ -13,7 +13,8 @@ const TABS = [
   { label: 'Decisions', segment: 'decisions' },
   { label: 'Engagement History', segment: 'history' },
   { label: 'Stakeholders', segment: 'stakeholders' },
-]
+  { label: 'Plan', segment: 'plan', subRoute: true },   // 10th tab
+] satisfies Array<{ label: string; segment: string; subRoute?: boolean }>
 
 interface WorkspaceTabsProps {
   projectId: string | number
@@ -27,7 +28,9 @@ export function WorkspaceTabs({ projectId }: WorkspaceTabsProps) {
       <div className="flex flex-row px-6">
         {TABS.map((tab) => {
           const href = `/customer/${projectId}/${tab.segment}`
-          const isActive = pathname.endsWith('/' + tab.segment)
+          const isActive = tab.subRoute
+            ? pathname.includes('/' + tab.segment)
+            : pathname.endsWith('/' + tab.segment)
           return (
             <Link
               key={tab.segment}
