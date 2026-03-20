@@ -10,16 +10,16 @@ import { updateWorkstreamProgress } from '../../../lib/queries'
 const TaskCreateSchema = z.object({
   project_id: z.number(),
   title: z.string().min(1, 'Title is required'),
-  description: z.string().optional(),
-  owner: z.string().optional(),
-  due: z.string().optional(),
-  priority: z.string().optional(),
-  type: z.string().optional(),
-  phase: z.string().optional(),
-  workstream_id: z.number().optional(),
-  blocked_by: z.number().optional(),
-  milestone_id: z.number().optional(),
-  start_date: z.string().optional(),
+  description: z.string().nullish(),
+  owner: z.string().nullish(),
+  due: z.string().nullish(),
+  priority: z.string().nullish(),
+  type: z.string().nullish(),
+  phase: z.string().nullish(),
+  workstream_id: z.number().nullish(),
+  blocked_by: z.number().nullish(),
+  milestone_id: z.number().nullish(),
+  start_date: z.string().nullish(),
   status: z.string().default('todo'),
   source: z.string().default('manual'),
 })
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
 
   const parsed = TaskCreateSchema.safeParse(body)
   if (!parsed.success) {
-    return Response.json({ error: parsed.error.flatten() }, { status: 422 })
+    return Response.json({ error: parsed.error.issues.map(i => i.message).join(', ') }, { status: 422 })
   }
 
   const {
