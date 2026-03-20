@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
-status: unknown
-stopped_at: Completed 03-07-PLAN.md (Gantt Timeline — frappe-gantt SVG chart with task bars and dependency arrows)
-last_updated: "2026-03-20T14:24:03.374Z"
+status: complete
+stopped_at: "Completed 03-09-PLAN.md (Phase 3 COMPLETE — human verification approved)"
+last_updated: "2026-03-20T15:05:00.000Z"
 progress:
   total_phases: 8
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 22
-  completed_plans: 21
+  completed_plans: 22
 ---
 
 # Project State
@@ -24,11 +24,11 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 
 ## Current Status
 
-**Phase:** 2 — App Shell + Read Surface (COMPLETE — 7/7 plans)
+**Phase:** 3 — Write Surface + Plan Builder (COMPLETE — 9/9 plans)
 **Current Plan:** Not started
-**Last action:** Completed 02-07 — Full Phase 2 human verification passed; all 9 workspace tabs, RAG badges, Add Notes modal confirmed
-**Next action:** 02-CONTEXT.md → 03-01 — Begin Phase 3 (Write Surface + Plan Builder)
-**Stopped at:** Completed 03-07-PLAN.md (Gantt Timeline — frappe-gantt SVG chart with task bars and dependency arrows)
+**Last action:** Completed 03-09 — Phase 3 E2E green pass + human verification approved; all 12 Phase 3 requirements satisfied
+**Next action:** 03-CONTEXT.md → 04-01 — Begin Phase 4 (Job Infrastructure) — requires BullMQ v5 research spike first
+**Stopped at:** Completed 03-09-PLAN.md (Phase 3 COMPLETE — human verification approved)
 
 ## Phase Progress
 
@@ -36,7 +36,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 |-------|--------|
 | 1. Data Foundation | COMPLETE (6/6 plans) |
 | 2. App Shell + Read Surface | COMPLETE (7/7 plans) |
-| 3. Write Surface + Plan Builder | Not started |
+| 3. Write Surface + Plan Builder | COMPLETE (9/9 plans) |
 | 4. Job Infrastructure | Not started |
 | 5. Skill Engine | Not started |
 | 6. MCP Integrations | Not started |
@@ -45,7 +45,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 
 ## Active Work
 
-Phase 2 COMPLETE. All 7 plans executed: 02-01 (E2E stubs), 02-02 (app shell + sidebar), 02-03 (Dashboard RSC), 02-04 (Customer workspace layout), 02-05 (5 workspace tab pages), 02-06 (4 tab pages + Add Notes modal), 02-07 (E2E + human verification). Next: Phase 3 — Write Surface + Plan Builder.
+Phase 3 COMPLETE. All 9 plans executed: 03-01 (E2E stubs), 03-02 (schema migration + packages), 03-03 (Action editing modal + xlsx dual-write), 03-04 (Risk/Milestone/Stakeholder modals), 03-05 (Plan Builder tab shell), 03-06 (Phase Board + Task Board + task CRUD + bulk ops + import/export), 03-07 (Gantt Timeline with frappe-gantt), 03-08 (Swimlane view), 03-09 (E2E green pass + human verification). Next: Phase 4 — Job Infrastructure (requires BullMQ v5 research spike before planning).
 
 ## Decisions
 
@@ -97,6 +97,10 @@ Phase 2 COMPLETE. All 7 plans executed: 02-01 (E2E stubs), 02-02 (app shell + si
 - [Phase 03-08]: Unassigned lane filtered out when no tasks have workstream_id=null — avoids empty row clutter
 - [Phase 03-07]: frappe-gantt has no @types package — added manual types/frappe-gantt.d.ts declaration file
 - [Phase 03-07]: Only single blocked_by dependency per task in Phase 3 — multi-dependency requires text[] column (Phase 4+ concern)
+- **[2026-03-20] 03-09:** E2E count-conditional assertions: test passes on empty DB but exercises full flow when data is seeded (assert-if-present pattern)
+- **[2026-03-20] 03-09:** SET LOCAL required (not SET) for RLS policy variables inside connection pool — SET LOCAL scopes to transaction, preventing context bleed across pool connections
+- **[2026-03-20] 03-09:** Zod TaskCreateSchema uses .nullish() not .optional() — HTML form fields submit null (not undefined), .optional() rejects null values
+- **[2026-03-20] 03-09:** Task API validation errors return error.message string — raw Zod error object serializes as {} causing [object Object] in UI
 
 ## Performance Metrics
 
@@ -122,6 +126,7 @@ Phase 2 COMPLETE. All 7 plans executed: 02-01 (E2E stubs), 02-02 (app shell + si
 | Phase 03-write-surface-+-plan-builder P06 | 6min | 2 tasks | 10 files |
 | Phase 03-write-surface-+-plan-builder P08 | 2min | 2 tasks | 2 files |
 | Phase 03-write-surface-+-plan-builder P07 | 2min | 2 tasks | 4 files |
+| Phase 03-write-surface-+-plan-builder P09 | 35min | 2 tasks | 3 files |
 
 ## Key Context for Next Session
 

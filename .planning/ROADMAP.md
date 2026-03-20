@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Data Foundation** - PostgreSQL schema, migrations, YAML round-trip, DataService, RLS, append-only triggers, singleton pool, Settings (completed 2026-03-19)
 - [x] **Phase 2: App Shell + Read Surface** - Next.js scaffold, Dashboard, all 9 workspace tabs (read-only), RSC data loading (completed 2026-03-19)
-- [ ] **Phase 3: Write Surface + Plan Builder** - Inline CRUD on all workspace tabs, PA3 xlsx dual-write, Project Plan & Task Builder
+- [x] **Phase 3: Write Surface + Plan Builder** - Inline CRUD on all workspace tabs, PA3 xlsx dual-write, Project Plan & Task Builder (completed 2026-03-20)
 - [ ] **Phase 4: Job Infrastructure** - BullMQ worker process, JobService, Redis, cron schedule registration, job status UI
 - [ ] **Phase 5: Skill Engine** - SkillOrchestrator, token budget guard, SSE streaming, Drafts Inbox, Output Library, first 4 skills wired
 - [ ] **Phase 6: MCP Integrations** - MCPClientPool, Slack/Gmail/Glean/Drive connections, Customer Project Tracker fully wired
@@ -57,12 +57,12 @@ Plans:
 
 Plans:
 - [x] 02-01-PLAN.md — Wave 0: Playwright E2E test stubs for all Phase 2 behaviors (completed 2026-03-19)
-- [ ] 02-02-PLAN.md — Wave 1: shadcn/ui install + app shell (layout, sidebar, DB query library)
-- [ ] 02-03-PLAN.md — Wave 2: Dashboard page — health cards, activity feed, quick actions, notification badge
-- [ ] 02-04-PLAN.md — Wave 2: Workspace layout — project header, 9-tab navigation bar, redirect
-- [ ] 02-05-PLAN.md — Wave 3: Workspace tabs group A — Overview, Actions, Risks, Milestones, Teams
-- [ ] 02-06-PLAN.md — Wave 3: Workspace tabs group B — Architecture, Decisions, History, Stakeholders + Add Notes modal
-- [ ] 02-07-PLAN.md — Wave 4: Human verification checkpoint
+- [x] 02-02-PLAN.md — Wave 1: shadcn/ui install + app shell (layout, sidebar, DB query library)
+- [x] 02-03-PLAN.md — Wave 2: Dashboard page — health cards, activity feed, quick actions, notification badge
+- [x] 02-04-PLAN.md — Wave 2: Workspace layout — project header, 9-tab navigation bar, redirect
+- [x] 02-05-PLAN.md — Wave 3: Workspace tabs group A — Overview, Actions, Risks, Milestones, Teams
+- [x] 02-06-PLAN.md — Wave 3: Workspace tabs group B — Architecture, Decisions, History, Stakeholders + Add Notes modal
+- [x] 02-07-PLAN.md — Wave 4: Human verification checkpoint
 
 ### Phase 3: Write Surface + Plan Builder
 **Goal**: All workspace tabs support inline editing with optimistic UI, every action save atomically syncs to PA3_Action_Tracker.xlsx, and the Project Plan & Task Builder (Phase Board, Task Board, Gantt, swimlane, templates, Excel import/export) is fully operational.
@@ -77,15 +77,15 @@ Plans:
 **Plans**: 9 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Wave 0: E2E test stubs for all Phase 3 behaviors (RED baseline)
-- [ ] 03-02-PLAN.md — Wave 0: Schema migration (4 columns) + queries.ts update + package installs
-- [ ] 03-03-PLAN.md — Wave 1: Action editing modal + PATCH /api/actions/:id + xlsx dual-write (WORK-02)
-- [ ] 03-04-PLAN.md — Wave 1: Risk/Milestone/Stakeholder edit modals + API routes
-- [ ] 03-05-PLAN.md — Wave 2: Plan Builder tab shell — WorkspaceTabs 10th tab, nested layout, PlanTabs nav
-- [ ] 03-06-PLAN.md — Wave 2: Phase Board + Task Board + task CRUD + bulk ops + import/export
-- [ ] 03-07-PLAN.md — Wave 3: Gantt Timeline — frappe-gantt wrapper, task mapping, dependency arrows
-- [ ] 03-08-PLAN.md — Wave 3: Swimlane view — workstream rows, percent_complete bars, drag-to-update-status
-- [ ] 03-09-PLAN.md — Wave 4: E2E green pass + human verification checkpoint
+- [x] 03-01-PLAN.md — Wave 0: E2E test stubs for all Phase 3 behaviors (RED baseline)
+- [x] 03-02-PLAN.md — Wave 0: Schema migration (4 columns) + queries.ts update + package installs
+- [x] 03-03-PLAN.md — Wave 1: Action editing modal + PATCH /api/actions/:id + xlsx dual-write (WORK-02)
+- [x] 03-04-PLAN.md — Wave 1: Risk/Milestone/Stakeholder edit modals + API routes
+- [x] 03-05-PLAN.md — Wave 2: Plan Builder tab shell — WorkspaceTabs 10th tab, nested layout, PlanTabs nav
+- [x] 03-06-PLAN.md — Wave 2: Phase Board + Task Board + task CRUD + bulk ops + import/export
+- [x] 03-07-PLAN.md — Wave 3: Gantt Timeline — frappe-gantt wrapper, task mapping, dependency arrows
+- [x] 03-08-PLAN.md — Wave 3: Swimlane view — workstream rows, percent_complete bars, drag-to-update-status
+- [x] 03-09-PLAN.md — Wave 4: E2E green pass + human verification checkpoint
 
 ### Phase 4: Job Infrastructure
 **Goal**: A dedicated BullMQ worker process runs persistently alongside Next.js, all 6 scheduled jobs are registered with correct cron schedules and advisory locking, and job status is queryable from the UI — the scheduled intelligence platform is ready for skills to be wired in Phase 5.
@@ -155,7 +155,7 @@ Phases 6 and 7 can overlap after Phase 5 is stable.
 |-------|----------------|--------|-----------|
 | 1. Data Foundation | 6/6 | Complete   | 2026-03-19 |
 | 2. App Shell + Read Surface | 7/7 | Complete   | 2026-03-19 |
-| 3. Write Surface + Plan Builder | 5/9 | In Progress|  |
+| 3. Write Surface + Plan Builder | 9/9 | Complete   | 2026-03-20 |
 | 4. Job Infrastructure | 0/TBD | Not started | - |
 | 5. Skill Engine | 0/TBD | Not started | - |
 | 6. MCP Integrations | 0/TBD | Not started | - |
