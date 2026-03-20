@@ -21,6 +21,7 @@ import weeklyBriefing from './jobs/weekly-briefing';
 import contextUpdater from './jobs/context-updater';
 import ganttSnapshot  from './jobs/gantt-snapshot';
 import riskMonitor    from './jobs/risk-monitor';
+import skillRun       from './jobs/skill-run';
 
 const JOB_HANDLERS: Record<string, (job: Parameters<typeof actionSync>[0]) => Promise<{ status: string }>> = {
   'action-sync':     actionSync,
@@ -29,6 +30,7 @@ const JOB_HANDLERS: Record<string, (job: Parameters<typeof actionSync>[0]) => Pr
   'context-updater': contextUpdater,
   'gantt-snapshot':  ganttSnapshot,
   'risk-monitor':    riskMonitor,
+  'skill-run':       skillRun,
 };
 
 // Worker needs its own connection — NEVER share with Queue (BullMQ requirement)
