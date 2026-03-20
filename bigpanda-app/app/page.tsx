@@ -3,6 +3,7 @@ import { HealthCard } from '../components/HealthCard';
 import { ActivityFeed } from '../components/ActivityFeed';
 import { QuickActionBar } from '../components/QuickActionBar';
 import { NotificationBadge } from '../components/NotificationBadge';
+import { DraftsInbox } from '../components/DraftsInbox';
 
 export default async function DashboardPage() {
   const data = await getDashboardData();
@@ -52,6 +53,9 @@ export default async function DashboardPage() {
           </p>
         </section>
       )}
+
+      {/* Drafts Inbox — DASH-09 */}
+      <DraftsInbox />
     </div>
   );
 }
