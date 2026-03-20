@@ -15,8 +15,9 @@ import {
   tasks,
   planTemplates,
 } from '../db/schema';
-import { eq, and, inArray, lt, ne, gt, or } from 'drizzle-orm';
+import { eq, and, inArray, lt, ne, gt, or, desc } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
+import { skillRuns } from '../db/schema';
 
 // ─── TypeScript Interfaces ────────────────────────────────────────────────────
 
@@ -348,4 +349,37 @@ export async function updateWorkstreamProgress(workstreamId: number): Promise<vo
  */
 export async function getPlanTemplates(): Promise<PlanTemplate[]> {
   return db.select().from(planTemplates)
+}
+
+export type SkillRun = typeof skillRuns.$inferSelect;
+
+/**
+ * Get recent skill runs for a project (for Skills tab Recent Runs section).
+ */
+export async function getSkillRuns(projectId: number, limit = 10): Promise<SkillRun[]> {
+  return db
+    .select()
+    .from(skillRuns)
+    .where(eq(skillRuns.project_id, projectId))
+    .orderBy(desc(skillRuns.created_at))
+    .limit(limit);
+}
+
+/**
+ * Get the latest completed morning briefing output for the Dashboard panel.
+ * Returns null if no completed morning briefing exists.
+ */
+export async function getLatestMorningBriefing(): Promise<SkillRun | null> {
+  const [row] = await db
+    .select()
+    .from(skillRuns)
+    .where(
+      and(
+        eq(skillRuns.skill_name, 'morning-briefing'),
+        eq(skillRuns.status, 'completed')
+      )
+    )
+    .orderBy(desc(skillRuns.completed_at))
+    .limit(1);
+  return row ?? null;
 }
