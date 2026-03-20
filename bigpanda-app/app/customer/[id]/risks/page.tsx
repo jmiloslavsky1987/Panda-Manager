@@ -8,6 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from '../../../../components/ui/table'
+import { RiskEditModal } from '../../../../components/RiskEditModal'
 
 const SEVERITY_ORDER: Record<string, number> = {
   critical: 0,
@@ -75,22 +76,28 @@ export default async function RisksPage({
                     ? mitigationText.slice(0, 150) + '…'
                     : mitigationText
                 return (
-                  <TableRow key={risk.id} className={highlight ? 'bg-orange-50' : ''}>
-                    <TableCell className="font-mono text-xs text-zinc-500">
-                      {risk.external_id}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {risk.description.length > 100
-                        ? risk.description.slice(0, 100) + '…'
-                        : risk.description}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={`text-xs ${badgeClass}`}>{sevKey}</Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-zinc-600">{risk.owner ?? '—'}</TableCell>
-                    <TableCell className="text-sm text-zinc-600">{risk.status ?? '—'}</TableCell>
-                    <TableCell className="text-sm text-zinc-500">{truncatedMitigation || '—'}</TableCell>
-                  </TableRow>
+                  <RiskEditModal
+                    key={risk.id}
+                    risk={risk}
+                    trigger={
+                      <TableRow className={highlight ? 'bg-orange-50' : ''}>
+                        <TableCell className="font-mono text-xs text-zinc-500">
+                          {risk.external_id}
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {risk.description.length > 100
+                            ? risk.description.slice(0, 100) + '…'
+                            : risk.description}
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={`text-xs ${badgeClass}`}>{sevKey}</Badge>
+                        </TableCell>
+                        <TableCell className="text-sm text-zinc-600">{risk.owner ?? '—'}</TableCell>
+                        <TableCell className="text-sm text-zinc-600">{risk.status ?? '—'}</TableCell>
+                        <TableCell className="text-sm text-zinc-500">{truncatedMitigation || '—'}</TableCell>
+                      </TableRow>
+                    }
+                  />
                 )
               })
             )}
@@ -98,9 +105,8 @@ export default async function RisksPage({
         </Table>
       </div>
 
-      {/* Append-only info callout */}
       <div className="rounded-md bg-zinc-50 border border-zinc-200 px-4 py-3 text-sm text-zinc-500">
-        Mitigation entries are append-only — editing available in Phase 3.
+        Click any row to edit severity, status, or add a mitigation note. Mitigation entries are append-only.
       </div>
     </div>
   )

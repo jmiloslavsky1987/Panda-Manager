@@ -8,6 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from '../../../../components/ui/table'
+import { MilestoneEditModal } from '../../../../components/MilestoneEditModal'
 
 const statusBadgeColors: Record<string, string> = {
   completed: 'bg-green-100 text-green-800',
@@ -80,30 +81,40 @@ export default async function MilestonesPage({
                 const displayDate = m.target ?? m.date ?? '—'
                 const overdue = isOverdueMilestone(m.target ?? m.date, m.status)
                 return (
-                  <TableRow key={m.id}>
-                    <TableCell className="font-mono text-xs text-zinc-500">
-                      {m.external_id}
-                    </TableCell>
-                    <TableCell className="text-sm font-medium">{m.name}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap items-center gap-1">
-                        <Badge className={`text-xs ${badgeClass}`}>{m.status ?? 'Unknown'}</Badge>
-                        {overdue && (
-                          <Badge className="text-xs bg-red-100 text-red-700">Overdue</Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm text-zinc-600">{displayDate}</TableCell>
-                    <TableCell className="text-sm text-zinc-600">{m.owner ?? '—'}</TableCell>
-                    <TableCell className="text-sm text-zinc-400">
-                      {m.notes ? (m.notes.length > 80 ? m.notes.slice(0, 80) + '…' : m.notes) : '—'}
-                    </TableCell>
-                  </TableRow>
+                  <MilestoneEditModal
+                    key={m.id}
+                    milestone={m}
+                    trigger={
+                      <TableRow>
+                        <TableCell className="font-mono text-xs text-zinc-500">
+                          {m.external_id}
+                        </TableCell>
+                        <TableCell className="text-sm font-medium">{m.name}</TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap items-center gap-1">
+                            <Badge className={`text-xs ${badgeClass}`}>{m.status ?? 'Unknown'}</Badge>
+                            {overdue && (
+                              <Badge className="text-xs bg-red-100 text-red-700">Overdue</Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm text-zinc-600">{displayDate}</TableCell>
+                        <TableCell className="text-sm text-zinc-600">{m.owner ?? '—'}</TableCell>
+                        <TableCell className="text-sm text-zinc-400">
+                          {m.notes ? (m.notes.length > 80 ? m.notes.slice(0, 80) + '…' : m.notes) : '—'}
+                        </TableCell>
+                      </TableRow>
+                    }
+                  />
                 )
               })
             )}
           </TableBody>
         </Table>
+      </div>
+
+      <div className="rounded-md bg-zinc-50 border border-zinc-200 px-4 py-3 text-sm text-zinc-500">
+        Click any row to edit milestone status, target date, owner, or notes.
       </div>
     </div>
   )
