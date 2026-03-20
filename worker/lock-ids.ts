@@ -11,4 +11,5 @@ export const LOCK_IDS = {
   CONTEXT_UPDATER: 1004,
   GANTT_SNAPSHOT:  1005,
   RISK_MONITOR:    1006,
+  SKILL_RUN:       1007,  // Added Phase 5
 } as const;
