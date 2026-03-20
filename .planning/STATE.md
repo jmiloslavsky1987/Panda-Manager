@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: Completed 03-04-PLAN.md (Risk, Milestone, Stakeholder edit modals + API routes)
-last_updated: "2026-03-20T14:09:00.876Z"
+stopped_at: Completed 03-05-PLAN.md (Plan Builder tab shell — WorkspaceTabs 10 tabs, PlanTabs, plan layout + redirect + 4 stubs)
+last_updated: "2026-03-20T14:12:18.485Z"
 progress:
   total_phases: 8
   completed_phases: 2
   total_plans: 22
-  completed_plans: 17
+  completed_plans: 18
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 02-07 — Full Phase 2 human verification passed; all 9 workspace tabs, RAG badges, Add Notes modal confirmed
 **Next action:** 02-CONTEXT.md → 03-01 — Begin Phase 3 (Write Surface + Plan Builder)
-**Stopped at:** Completed 03-04-PLAN.md (Risk, Milestone, Stakeholder edit modals + API routes)
+**Stopped at:** Completed 03-05-PLAN.md (Plan Builder tab shell — WorkspaceTabs 10 tabs, PlanTabs, plan layout + redirect + 4 stubs)
 
 ## Phase Progress
 
@@ -88,6 +88,8 @@ Phase 2 COMPLETE. All 7 plans executed: 02-01 (E2E stubs), 02-02 (app shell + si
 - [Phase 03-03]: EBUSY/EPERM on xlsx writeFile returns human-readable Close in Excel message
 - [Phase 03-04]: Risk mitigation is append-only in both UI and API: new text is date-prefixed and appended to existing history
 - [Phase 03-04]: StakeholderEditModal dual-mode: no stakeholder prop = create (POST), with prop = edit (PATCH)
+- [Phase 03-05]: Used satisfies Array<...> (not as const) for TABS array to allow tab.subRoute access without TS union narrowing errors
+- [Phase 03-05]: subRoute: true flag on Plan tab entry enables pathname.includes active check for nested /plan/* routes
 
 ## Performance Metrics
 
@@ -109,6 +111,7 @@ Phase 2 COMPLETE. All 7 plans executed: 02-01 (E2E stubs), 02-02 (app shell + si
 | Phase 03-write-surface-+-plan-builder P02 | 8min | 2 tasks | 4 files |
 | Phase 03-write-surface-+-plan-builder P03 | 2min | 3 tasks | 3 files |
 | Phase 03-write-surface-+-plan-builder P04 | 4min | 2 tasks | 10 files |
+| Phase 03-write-surface-+-plan-builder P05 | 2min | 2 tasks | 8 files |
 
 ## Key Context for Next Session
 
