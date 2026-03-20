@@ -251,41 +251,43 @@ export async function getDashboardData(): Promise<DashboardData> {
  * Sets RLS session variable before parallel queries.
  */
 export async function getWorkspaceData(projectId: number): Promise<WorkspaceData> {
-  // Set RLS session variable — SET does not support parameterized values in PostgreSQL,
-  // so we use sql.raw with the integer value directly (safe: projectId is number-typed).
-  await db.execute(sql.raw(`SET app.current_project_id = ${projectId}`));
+  // All queries run inside a transaction so they share one connection.
+  // SET LOCAL pins app.current_project_id for the duration of the transaction —
+  // safe with connection pooling (pool hands same connection to all tx queries).
+  return await db.transaction(async (tx) => {
+    await tx.execute(sql.raw(`SET LOCAL app.current_project_id = ${projectId}`));
 
-  // Run all 8 section queries in parallel
-  const [
-    workstreamsData,
-    actionsData,
-    risksData,
-    milestonesData,
-    historyData,
-    decisionsData,
-    stakeholdersData,
-    artifactsData,
-  ] = await Promise.all([
-    db.select().from(workstreams).where(eq(workstreams.project_id, projectId)),
-    db.select().from(actions).where(eq(actions.project_id, projectId)),
-    db.select().from(risks).where(eq(risks.project_id, projectId)),
-    db.select().from(milestones).where(eq(milestones.project_id, projectId)),
-    db.select().from(engagementHistory).where(eq(engagementHistory.project_id, projectId)),
-    db.select().from(keyDecisions).where(eq(keyDecisions.project_id, projectId)),
-    db.select().from(stakeholders).where(eq(stakeholders.project_id, projectId)),
-    db.select().from(artifacts).where(eq(artifacts.project_id, projectId)),
-  ]);
+    const [
+      workstreamsData,
+      actionsData,
+      risksData,
+      milestonesData,
+      historyData,
+      decisionsData,
+      stakeholdersData,
+      artifactsData,
+    ] = await Promise.all([
+      tx.select().from(workstreams).where(eq(workstreams.project_id, projectId)),
+      tx.select().from(actions).where(eq(actions.project_id, projectId)),
+      tx.select().from(risks).where(eq(risks.project_id, projectId)),
+      tx.select().from(milestones).where(eq(milestones.project_id, projectId)),
+      tx.select().from(engagementHistory).where(eq(engagementHistory.project_id, projectId)),
+      tx.select().from(keyDecisions).where(eq(keyDecisions.project_id, projectId)),
+      tx.select().from(stakeholders).where(eq(stakeholders.project_id, projectId)),
+      tx.select().from(artifacts).where(eq(artifacts.project_id, projectId)),
+    ]);
 
-  return {
-    workstreams: workstreamsData,
-    actions: actionsData,
-    risks: risksData,
-    milestones: milestonesData,
-    engagementHistory: historyData,
-    keyDecisions: decisionsData,
-    stakeholders: stakeholdersData,
-    artifacts: artifactsData,
-  };
+    return {
+      workstreams: workstreamsData,
+      actions: actionsData,
+      risks: risksData,
+      milestones: milestonesData,
+      engagementHistory: historyData,
+      keyDecisions: decisionsData,
+      stakeholders: stakeholdersData,
+      artifacts: artifactsData,
+    };
+  });
 }
 
 /**
