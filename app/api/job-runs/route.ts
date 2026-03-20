@@ -1,7 +1,7 @@
 // bigpanda-app/app/api/job-runs/route.ts
 import { NextResponse } from 'next/server';
-import db from '../../../../db';
-import { jobRuns } from '../../../../db/schema';
+import db from '../../../db';
+import { jobRuns } from '../../../db/schema';
 import { desc } from 'drizzle-orm';
 
 const JOB_NAMES = [
