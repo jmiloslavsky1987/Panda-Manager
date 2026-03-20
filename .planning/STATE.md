@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: "Completed 04-02-PLAN.md (Phase 4 Wave-1 shared primitives: bullmq/ioredis install, settings-core, Redis factory, lock IDs, job_runs schema)"
-last_updated: "2026-03-20T16:07:25.664Z"
+stopped_at: "Completed 04-03-PLAN.md (Phase 4 Wave-2: BullMQ Worker entry point, scheduler, and 6 no-op job stubs)"
+last_updated: "2026-03-20T16:11:32.299Z"
 progress:
   total_phases: 8
   completed_phases: 3
   total_plans: 27
-  completed_plans: 24
+  completed_plans: 25
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 03-09 — Phase 3 E2E green pass + human verification approved; all 12 Phase 3 requirements satisfied
 **Next action:** 03-CONTEXT.md → 04-01 — Begin Phase 4 (Job Infrastructure) — requires BullMQ v5 research spike first
-**Stopped at:** Completed 04-02-PLAN.md (Phase 4 Wave-1 shared primitives: bullmq/ioredis install, settings-core, Redis factory, lock IDs, job_runs schema)
+**Stopped at:** Completed 04-03-PLAN.md (Phase 4 Wave-2: BullMQ Worker entry point, scheduler, and 6 no-op job stubs)
 
 ## Phase Progress
 
@@ -106,6 +106,9 @@ Phase 3 COMPLETE. All 9 plans executed: 03-01 (E2E stubs), 03-02 (schema migrati
 - [Phase 04-02]: maxRetriesPerRequest: null required on every IORedis instance used with BullMQ Worker — omitting causes silent EXECABORT failures
 - [Phase 04-02]: createRedisConnection() factory pattern: Queue and Worker each get their own IORedis instance — sharing causes protocol state corruption
 - [Phase 04-02]: Advisory lock IDs use pg_try_advisory_xact_lock (xact variant): auto-releases at transaction end, safe with connection pools
+- [Phase 04-03]: Static job dispatch map (not dynamic import) — tsx watch mode has module cache issues with dynamic import()
+- [Phase 04-03]: concurrency:1 on BullMQ Worker — prevents advisory lock contention within same process
+- [Phase 04-03]: settings-core imported in worker/index.ts (not lib/settings.ts) — server-only marker crashes worker process context
 
 ## Performance Metrics
 
@@ -134,6 +137,7 @@ Phase 3 COMPLETE. All 9 plans executed: 03-01 (E2E stubs), 03-02 (schema migrati
 | Phase 03-write-surface-+-plan-builder P09 | 35min | 2 tasks | 3 files |
 | Phase 04-job-infrastructure P01 | 5min | 1 tasks | 1 files |
 | Phase 04-job-infrastructure P02 | 2min | 2 tasks | 7 files |
+| Phase 04-job-infrastructure P03 | 6min | 2 tasks | 8 files |
 
 ## Key Context for Next Session
 
