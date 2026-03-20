@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: Completed 03-05-PLAN.md (Plan Builder tab shell — WorkspaceTabs 10 tabs, PlanTabs, plan layout + redirect + 4 stubs)
-last_updated: "2026-03-20T14:12:18.485Z"
+stopped_at: Completed 03-06-PLAN.md (Phase Board + Task Board — full CRUD, DnD, bulk ops, template picker, xlsx import/export)
+last_updated: "2026-03-20T14:20:23.261Z"
 progress:
   total_phases: 8
   completed_phases: 2
   total_plans: 22
-  completed_plans: 18
+  completed_plans: 19
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 02-07 — Full Phase 2 human verification passed; all 9 workspace tabs, RAG badges, Add Notes modal confirmed
 **Next action:** 02-CONTEXT.md → 03-01 — Begin Phase 3 (Write Surface + Plan Builder)
-**Stopped at:** Completed 03-05-PLAN.md (Plan Builder tab shell — WorkspaceTabs 10 tabs, PlanTabs, plan layout + redirect + 4 stubs)
+**Stopped at:** Completed 03-06-PLAN.md (Phase Board + Task Board — full CRUD, DnD, bulk ops, template picker, xlsx import/export)
 
 ## Phase Progress
 
@@ -90,6 +90,9 @@ Phase 2 COMPLETE. All 7 plans executed: 02-01 (E2E stubs), 02-02 (app shell + si
 - [Phase 03-04]: StakeholderEditModal dual-mode: no stakeholder prop = create (POST), with prop = edit (PATCH)
 - [Phase 03-05]: Used satisfies Array<...> (not as const) for TABS array to allow tab.subRoute access without TS union narrowing errors
 - [Phase 03-05]: subRoute: true flag on Plan tab entry enables pathname.includes active check for nested /plan/* routes
+- [Phase 03-06]: ExcelJS load() Buffer<ArrayBuffer> type mismatch with @types/node 20.x — used any cast at plan-import route; runtime correct
+- [Phase 03-06]: PhaseBoard derives columns from task.phase values dynamically; default phases Discovery/Design/Build/Test/Go-Live when no tasks
+- [Phase 03-06]: Bulk toolbar in-place micro-forms for owner/due/phase — no modal overlay
 
 ## Performance Metrics
 
@@ -112,6 +115,7 @@ Phase 2 COMPLETE. All 7 plans executed: 02-01 (E2E stubs), 02-02 (app shell + si
 | Phase 03-write-surface-+-plan-builder P03 | 2min | 3 tasks | 3 files |
 | Phase 03-write-surface-+-plan-builder P04 | 4min | 2 tasks | 10 files |
 | Phase 03-write-surface-+-plan-builder P05 | 2min | 2 tasks | 8 files |
+| Phase 03-write-surface-+-plan-builder P06 | 6min | 2 tasks | 10 files |
 
 ## Key Context for Next Session
 
