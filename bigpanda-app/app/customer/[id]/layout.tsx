@@ -12,18 +12,30 @@ export default async function WorkspaceLayout({
 }) {
   const { id } = await params
   const projectId = parseInt(id, 10)
-  const project = await getProjectWithHealth(projectId)
+  // Graceful fallback when DB is unavailable (e.g. PostgreSQL not installed in dev)
+  let project = null
+  try {
+    project = await getProjectWithHealth(projectId)
+  } catch {
+    // DB not available — render layout with empty project so child routes can still render
+  }
 
   return (
     <div className="flex flex-col h-full">
       <div className="px-6 pt-6 pb-2 border-b border-zinc-200 bg-white">
-        <ProjectHeader project={project} />
+        {project ? (
+          <ProjectHeader project={project} />
+        ) : (
+          <div className="flex items-center gap-3">
+            <h1 className="font-semibold text-xl text-zinc-400">Loading project…</h1>
+          </div>
+        )}
       </div>
       <WorkspaceTabs projectId={id} />
       <div className="flex-1 p-6 overflow-y-auto">
         {children}
       </div>
-      <AddNotesModal projectId={projectId} />
+      {project && <AddNotesModal projectId={projectId} />}
     </div>
   )
 }

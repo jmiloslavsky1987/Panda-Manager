@@ -54,9 +54,5 @@ export default function GanttChart({ tasks, viewMode = 'Week' }: GanttChartProps
     )
   }
 
-  return (
-    <div className="overflow-x-auto" data-testid="gantt-container">
-      <svg ref={svgRef} />
-    </div>
-  )
+  return <svg ref={svgRef} />
 }

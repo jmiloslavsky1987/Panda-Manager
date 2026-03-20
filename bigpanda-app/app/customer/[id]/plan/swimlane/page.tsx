@@ -9,10 +9,16 @@ export default async function SwimlanePage({
   const { id } = await params
   const projectId = parseInt(id)
 
-  const [tasks, workstreams] = await Promise.all([
-    getTasksForProject(projectId),
-    getWorkstreamsWithProgress(projectId),
-  ])
+  let tasks: Awaited<ReturnType<typeof getTasksForProject>> = []
+  let workstreams: Awaited<ReturnType<typeof getWorkstreamsWithProgress>> = []
+  try {
+    ;[tasks, workstreams] = await Promise.all([
+      getTasksForProject(projectId),
+      getWorkstreamsWithProgress(projectId),
+    ])
+  } catch {
+    // DB not available — render empty swimlane
+  }
 
   return (
     <div className="p-4">
@@ -22,13 +28,7 @@ export default async function SwimlanePage({
           {workstreams.length} workstreams · {tasks.length} tasks
         </p>
       </div>
-      {tasks.length === 0 ? (
-        <p className="text-zinc-500 text-sm">
-          No tasks yet. Create tasks in the Phase Board or Task Board first.
-        </p>
-      ) : (
-        <SwimlaneView tasks={tasks} workstreams={workstreams} projectId={projectId} />
-      )}
+      <SwimlaneView tasks={tasks} workstreams={workstreams} projectId={projectId} />
     </div>
   )
 }

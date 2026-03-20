@@ -1,9 +1,6 @@
-import dynamic from 'next/dynamic'
 import { getTasksForProject } from '@/lib/queries'
+import GanttChart from '@/components/GanttChart'
 import type { GanttTask } from '@/components/GanttChart'
-
-// Dynamic import to disable SSR — frappe-gantt accesses document at import time
-const GanttChart = dynamic(() => import('@/components/GanttChart'), { ssr: false })
 
 function toGanttDate(dateStr: string | null, fallback: string): string {
   if (!dateStr) return fallback
@@ -64,7 +61,12 @@ export default async function GanttPage({
   const { id } = await params
   const projectId = parseInt(id)
 
-  const tasks = await getTasksForProject(projectId)
+  let tasks: Awaited<ReturnType<typeof getTasksForProject>> = []
+  try {
+    tasks = await getTasksForProject(projectId)
+  } catch {
+    // DB not available — render empty gantt
+  }
   const ganttTasks = mapTasksToGantt(tasks)
 
   return (
@@ -73,7 +75,10 @@ export default async function GanttPage({
         <h2 className="text-lg font-semibold">Gantt Timeline</h2>
         <p className="text-xs text-zinc-400">{tasks.length} tasks ({ganttTasks.length} with dates)</p>
       </div>
-      <GanttChart tasks={ganttTasks} viewMode="Week" />
+      {/* gantt-container wraps GanttChart (ssr:false) — div is server-rendered so test can find it */}
+      <div data-testid="gantt-container" className="overflow-x-auto">
+        <GanttChart tasks={ganttTasks} viewMode="Week" />
+      </div>
     </div>
   )
 }

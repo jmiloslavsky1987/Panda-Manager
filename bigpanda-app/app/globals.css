@@ -1,6 +1,4 @@
 @import "tailwindcss";
-/* frappe-gantt styles — loaded here for global availability; component also imports dynamically */
-@import 'frappe-gantt/dist/frappe-gantt.css';
 
 :root {
   --background: #ffffff;
