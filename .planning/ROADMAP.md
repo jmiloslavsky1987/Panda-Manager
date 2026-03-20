@@ -74,7 +74,18 @@ Plans:
   3. A task created in the Task Builder appears on the Phase Board (Kanban) and Gantt Timeline; dragging a card between phases updates its phase assignment
   4. Importing a .xlsx project plan (KAISER_Biggy_Project_Plan format) populates tasks, and exporting produces a file with matching column headers
   5. Task completion rolls up to workstream percent_complete and the project health score updates accordingly
-**Plans**: TBD
+**Plans**: 9 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Wave 0: E2E test stubs for all Phase 3 behaviors (RED baseline)
+- [ ] 03-02-PLAN.md — Wave 0: Schema migration (4 columns) + queries.ts update + package installs
+- [ ] 03-03-PLAN.md — Wave 1: Action editing modal + PATCH /api/actions/:id + xlsx dual-write (WORK-02)
+- [ ] 03-04-PLAN.md — Wave 1: Risk/Milestone/Stakeholder edit modals + API routes
+- [ ] 03-05-PLAN.md — Wave 2: Plan Builder tab shell — WorkspaceTabs 10th tab, nested layout, PlanTabs nav
+- [ ] 03-06-PLAN.md — Wave 2: Phase Board + Task Board + task CRUD + bulk ops + import/export
+- [ ] 03-07-PLAN.md — Wave 3: Gantt Timeline — frappe-gantt wrapper, task mapping, dependency arrows
+- [ ] 03-08-PLAN.md — Wave 3: Swimlane view — workstream rows, percent_complete bars, drag-to-update-status
+- [ ] 03-09-PLAN.md — Wave 4: E2E green pass + human verification checkpoint
 
 ### Phase 4: Job Infrastructure
 **Goal**: A dedicated BullMQ worker process runs persistently alongside Next.js, all 6 scheduled jobs are registered with correct cron schedules and advisory locking, and job status is queryable from the UI — the scheduled intelligence platform is ready for skills to be wired in Phase 5.
@@ -144,7 +155,7 @@ Phases 6 and 7 can overlap after Phase 5 is stable.
 |-------|----------------|--------|-----------|
 | 1. Data Foundation | 6/6 | Complete   | 2026-03-19 |
 | 2. App Shell + Read Surface | 7/7 | Complete   | 2026-03-19 |
-| 3. Write Surface + Plan Builder | 0/TBD | Not started | - |
+| 3. Write Surface + Plan Builder | 0/9 | Not started | - |
 | 4. Job Infrastructure | 0/TBD | Not started | - |
 | 5. Skill Engine | 0/TBD | Not started | - |
 | 6. MCP Integrations | 0/TBD | Not started | - |
