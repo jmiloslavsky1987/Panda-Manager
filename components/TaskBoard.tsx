@@ -1,0 +1,376 @@
+'use client'
+
+import { useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
+import {
+  DndContext,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragOverlay,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import type { Task } from '@/lib/queries'
+import { TaskEditModal } from './TaskEditModal'
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface TaskBoardProps {
+  tasks: Task[]
+  projectId: number
+}
+
+// ─── Column config ────────────────────────────────────────────────────────────
+
+const COLUMNS: { id: string; label: string }[] = [
+  { id: 'todo', label: 'To Do' },
+  { id: 'in_progress', label: 'In Progress' },
+  { id: 'blocked', label: 'Blocked' },
+  { id: 'done', label: 'Done' },
+]
+
+const PRIORITY_COLORS: Record<string, string> = {
+  high: 'bg-red-100 text-red-700',
+  medium: 'bg-yellow-100 text-yellow-700',
+  low: 'bg-green-100 text-green-700',
+}
+
+// ─── Sortable Task Card ───────────────────────────────────────────────────────
+
+interface TaskCardProps {
+  task: Task
+  projectId: number
+  selected: boolean
+  onSelect: (id: number, checked: boolean) => void
+}
+
+function TaskCard({ task, projectId, selected, onSelect }: TaskCardProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: task.id,
+  })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      data-testid="task-card"
+      className="bg-white border border-zinc-200 rounded-lg p-3 shadow-sm flex flex-col gap-1.5"
+    >
+      <div className="flex items-start gap-2">
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={(e) => onSelect(task.id, e.target.checked)}
+          onClick={(e) => e.stopPropagation()}
+          className="mt-0.5 shrink-0"
+        />
+        <div className="flex-1 min-w-0 cursor-grab" {...attributes} {...listeners}>
+          <p className="text-sm font-medium text-zinc-900 leading-snug break-words">{task.title}</p>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-1.5 flex-wrap pl-6">
+        {task.owner && (
+          <span className="text-xs text-zinc-500">{task.owner}</span>
+        )}
+        {task.due && (
+          <span className="text-xs text-zinc-400">{task.due}</span>
+        )}
+        {task.priority && (
+          <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${PRIORITY_COLORS[task.priority] ?? 'bg-zinc-100 text-zinc-600'}`}>
+            {task.priority}
+          </span>
+        )}
+        {task.blocked_by && (
+          <span className="text-xs text-orange-600">⚠ blocked by #{task.blocked_by}</span>
+        )}
+      </div>
+
+      {/* Edit button */}
+      <div className="pl-6">
+        <TaskEditModal
+          task={task}
+          projectId={projectId}
+          trigger={
+            <button className="text-xs text-zinc-400 hover:text-zinc-700 underline-offset-2 hover:underline">
+              Edit
+            </button>
+          }
+        />
+      </div>
+    </div>
+  )
+}
+
+// ─── Bulk Toolbar ─────────────────────────────────────────────────────────────
+
+interface BulkToolbarProps {
+  selectedIds: number[]
+  onClear: () => void
+  onComplete: () => void
+}
+
+function BulkToolbar({ selectedIds, onClear, onComplete }: BulkToolbarProps) {
+  const [ownerInput, setOwnerInput] = useState('')
+  const [dueInput, setDueInput] = useState('')
+  const [phaseInput, setPhaseInput] = useState('')
+  const [mode, setMode] = useState<'owner' | 'due' | 'phase' | null>(null)
+
+  async function bulkUpdate(patch: Record<string, string>) {
+    await fetch('/api/tasks-bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ task_ids: selectedIds, patch }),
+    })
+    setMode(null)
+    onComplete()
+  }
+
+  return (
+    <div
+      data-testid="bulk-toolbar"
+      className="flex items-center gap-2 flex-wrap bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 mb-3"
+    >
+      <span className="text-sm font-medium text-zinc-700">{selectedIds.length} selected</span>
+
+      {mode === null ? (
+        <>
+          <button
+            onClick={() => setMode('owner')}
+            className="px-2.5 py-1 text-xs border border-zinc-300 rounded hover:bg-zinc-100"
+          >
+            Reassign Owner
+          </button>
+          <button
+            onClick={() => setMode('due')}
+            className="px-2.5 py-1 text-xs border border-zinc-300 rounded hover:bg-zinc-100"
+          >
+            Change Due Date
+          </button>
+          <button
+            onClick={() => setMode('phase')}
+            className="px-2.5 py-1 text-xs border border-zinc-300 rounded hover:bg-zinc-100"
+          >
+            Move to Phase
+          </button>
+        </>
+      ) : mode === 'owner' ? (
+        <form
+          onSubmit={(e) => { e.preventDefault(); bulkUpdate({ owner: ownerInput }) }}
+          className="flex items-center gap-1.5"
+        >
+          <input
+            autoFocus
+            value={ownerInput}
+            onChange={(e) => setOwnerInput(e.target.value)}
+            placeholder="New owner name"
+            className="border border-zinc-300 rounded px-2 py-1 text-xs"
+          />
+          <button type="submit" className="px-2 py-1 text-xs bg-zinc-900 text-white rounded">Apply</button>
+          <button type="button" onClick={() => setMode(null)} className="px-2 py-1 text-xs rounded hover:bg-zinc-100">Cancel</button>
+        </form>
+      ) : mode === 'due' ? (
+        <form
+          onSubmit={(e) => { e.preventDefault(); bulkUpdate({ due: dueInput }) }}
+          className="flex items-center gap-1.5"
+        >
+          <input
+            autoFocus
+            value={dueInput}
+            onChange={(e) => setDueInput(e.target.value)}
+            placeholder="YYYY-MM-DD or TBD"
+            className="border border-zinc-300 rounded px-2 py-1 text-xs"
+          />
+          <button type="submit" className="px-2 py-1 text-xs bg-zinc-900 text-white rounded">Apply</button>
+          <button type="button" onClick={() => setMode(null)} className="px-2 py-1 text-xs rounded hover:bg-zinc-100">Cancel</button>
+        </form>
+      ) : (
+        <form
+          onSubmit={(e) => { e.preventDefault(); bulkUpdate({ phase: phaseInput }) }}
+          className="flex items-center gap-1.5"
+        >
+          <input
+            autoFocus
+            value={phaseInput}
+            onChange={(e) => setPhaseInput(e.target.value)}
+            placeholder="Phase name"
+            className="border border-zinc-300 rounded px-2 py-1 text-xs"
+          />
+          <button type="submit" className="px-2 py-1 text-xs bg-zinc-900 text-white rounded">Apply</button>
+          <button type="button" onClick={() => setMode(null)} className="px-2 py-1 text-xs rounded hover:bg-zinc-100">Cancel</button>
+        </form>
+      )}
+
+      <button
+        onClick={onClear}
+        className="ml-auto text-xs text-zinc-400 hover:text-zinc-600"
+      >
+        Clear selection
+      </button>
+    </div>
+  )
+}
+
+// ─── TaskBoard ────────────────────────────────────────────────────────────────
+
+export function TaskBoard({ tasks: initialTasks, projectId }: TaskBoardProps) {
+  const router = useRouter()
+  const [tasks, setTasks] = useState<Task[]>(initialTasks)
+  const [selected, setSelected] = useState<Set<number>>(new Set())
+  const [activeId, setActiveId] = useState<number | null>(null)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  )
+
+  const handleSelect = useCallback((id: number, checked: boolean) => {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (checked) next.add(id)
+      else next.delete(id)
+      return next
+    })
+  }, [])
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    setActiveId(null)
+    if (!over || active.id === over.id) return
+
+    // over.id could be column ID or another task ID — find target column
+    const overId = String(over.id)
+    const columnId = COLUMNS.find((c) => c.id === overId)?.id
+      ?? tasks.find((t) => t.id === Number(overId))?.status
+
+    if (!columnId || columnId === tasks.find((t) => t.id === Number(active.id))?.status) return
+
+    const taskId = Number(active.id)
+
+    // Optimistic update
+    setTasks((prev) =>
+      prev.map((t) => (t.id === taskId ? { ...t, status: columnId } : t))
+    )
+
+    try {
+      const res = await fetch(`/api/tasks/${taskId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: columnId }),
+      })
+      if (!res.ok) throw new Error('PATCH failed')
+      router.refresh()
+    } catch {
+      // Revert on error
+      setTasks((prev) =>
+        prev.map((t) =>
+          t.id === taskId
+            ? { ...t, status: initialTasks.find((i) => i.id === taskId)?.status ?? t.status }
+            : t
+        )
+      )
+    }
+  }
+
+  const selectedIds = Array.from(selected)
+  const activeTask = activeId ? tasks.find((t) => t.id === activeId) : null
+
+  return (
+    <div data-testid="task-board" className="flex flex-col gap-3">
+      {/* Create Task button */}
+      <div className="flex items-center justify-between">
+        <TaskEditModal
+          projectId={projectId}
+          trigger={
+            <button
+              data-testid="create-task-btn"
+              className="px-3 py-1.5 text-sm font-medium text-white bg-zinc-900 rounded hover:bg-zinc-700"
+            >
+              + Add Task
+            </button>
+          }
+        />
+        <span className="text-sm text-zinc-500">{tasks.length} tasks</span>
+      </div>
+
+      {/* Bulk toolbar — shows when 2+ selected */}
+      {selectedIds.length >= 2 && (
+        <BulkToolbar
+          selectedIds={selectedIds}
+          onClear={() => setSelected(new Set())}
+          onComplete={() => {
+            setSelected(new Set())
+            router.refresh()
+          }}
+        />
+      )}
+
+      {/* Kanban columns */}
+      <DndContext
+        sensors={sensors}
+        onDragStart={(e) => setActiveId(Number(e.active.id))}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="grid grid-cols-4 gap-3">
+          {COLUMNS.map((col) => {
+            const colTasks = tasks.filter((t) => t.status === col.id)
+            return (
+              <div key={col.id} className="flex flex-col gap-2">
+                <div className="flex items-center justify-between px-1">
+                  <h3 className="text-sm font-semibold text-zinc-700">{col.label}</h3>
+                  <span className="text-xs text-zinc-400 bg-zinc-100 rounded px-1.5 py-0.5">
+                    {colTasks.length}
+                  </span>
+                </div>
+
+                <SortableContext
+                  id={col.id}
+                  items={colTasks.map((t) => t.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div
+                    data-column-id={col.id}
+                    className="flex flex-col gap-2 min-h-[120px] bg-zinc-50 rounded-lg p-2 border border-zinc-200"
+                  >
+                    {colTasks.map((task) => (
+                      <TaskCard
+                        key={task.id}
+                        task={task}
+                        projectId={projectId}
+                        selected={selected.has(task.id)}
+                        onSelect={handleSelect}
+                      />
+                    ))}
+                    {colTasks.length === 0 && (
+                      <p className="text-xs text-zinc-400 text-center py-4">No tasks</p>
+                    )}
+                  </div>
+                </SortableContext>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Drag overlay */}
+        <DragOverlay>
+          {activeTask && (
+            <div className="bg-white border border-zinc-300 rounded-lg p-3 shadow-lg text-sm font-medium text-zinc-900 opacity-90">
+              {activeTask.title}
+            </div>
+          )}
+        </DragOverlay>
+      </DndContext>
+    </div>
+  )
+}

@@ -1,4 +1,15 @@
+import { getTasksForProject } from '@/lib/queries'
+import { TaskBoard } from '@/components/TaskBoard'
+
 export default async function TaskBoardPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  return <div data-testid="task-board" className="p-4"><p className="text-zinc-500">Task Board — coming in plan 03-06</p></div>
+  const projectId = parseInt(id, 10)
+
+  const tasks = await getTasksForProject(projectId)
+
+  return (
+    <div className="p-4">
+      <TaskBoard tasks={tasks} projectId={projectId} />
+    </div>
+  )
 }
