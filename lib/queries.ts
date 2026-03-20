@@ -123,7 +123,23 @@ async function computeHealth(projectId: number): Promise<{
     );
   const highRisks = highRisksResult[0]?.count ?? 0;
 
-  const score = overdueActions + stalledMilestones + highRisks;
+  // Count workstreams with tracked progress that are critically behind (< 30%)
+  // Only workstreams that have had tasks assigned (percent_complete IS NOT NULL) contribute.
+  const stalledWorkstreamsResult = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(workstreams)
+    .where(
+      and(
+        eq(workstreams.project_id, projectId),
+        sql`${workstreams.percent_complete} IS NOT NULL`,
+        sql`${workstreams.percent_complete} < 30`,
+      )
+    );
+  const stalledWorkstreams = stalledWorkstreamsResult[0]?.count ?? 0;
+  // Contribute at most 1 point so a single behind team doesn't push to red alone
+  const workstreamSignal = stalledWorkstreams > 0 ? 1 : 0;
+
+  const score = overdueActions + stalledMilestones + highRisks + workstreamSignal;
   const health: 'green' | 'yellow' | 'red' =
     score >= 2 ? 'red' : score === 1 ? 'yellow' : 'green';
 
