@@ -275,3 +275,51 @@ export const jobRuns = pgTable('job_runs', {
   error_message: text('error_message'),
   triggered_by: text('triggered_by').default('scheduled').notNull(), // 'scheduled' | 'manual'
 });
+
+// ─── Enum: skill_run_status ───────────────────────────────────────────────────
+export const skillRunStatusEnum = pgEnum('skill_run_status', [
+  'pending', 'running', 'completed', 'failed',
+]);
+
+// ─── Table 15: skill_runs ─────────────────────────────────────────────────────
+export const skillRuns = pgTable('skill_runs', {
+  id: serial('id').primaryKey(),
+  run_id: text('run_id').notNull().unique(),       // UUID — idempotency key
+  project_id: integer('project_id').references(() => projects.id),
+  skill_name: text('skill_name').notNull(),
+  status: skillRunStatusEnum('status').default('pending').notNull(),
+  input: text('input'),                            // JSON: user-provided inputs
+  full_output: text('full_output'),                // aggregated on completion
+  error_message: text('error_message'),
+  started_at: timestamp('started_at'),
+  completed_at: timestamp('completed_at'),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+});
+
+// ─── Table 16: skill_run_chunks ───────────────────────────────────────────────
+export const skillRunChunks = pgTable('skill_run_chunks', {
+  id: serial('id').primaryKey(),
+  run_id: integer('run_id').notNull().references(() => skillRuns.id, { onDelete: 'cascade' }),
+  seq: integer('seq').notNull(),
+  chunk: text('chunk').notNull(),                  // text delta or '__DONE__' sentinel
+  created_at: timestamp('created_at').defaultNow().notNull(),
+});
+
+// ─── Enum: draft_status ───────────────────────────────────────────────────────
+export const draftStatusEnum = pgEnum('draft_status', [
+  'pending', 'dismissed', 'sent',
+]);
+
+// ─── Table 17: drafts ─────────────────────────────────────────────────────────
+export const drafts = pgTable('drafts', {
+  id: serial('id').primaryKey(),
+  project_id: integer('project_id').references(() => projects.id),
+  run_id: integer('run_id').references(() => skillRuns.id),
+  draft_type: text('draft_type').notNull(),        // 'email' | 'slack'
+  recipient: text('recipient'),
+  subject: text('subject'),
+  content: text('content').notNull(),
+  status: draftStatusEnum('status').default('pending').notNull(),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+  updated_at: timestamp('updated_at').defaultNow().notNull(),
+});
