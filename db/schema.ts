@@ -259,3 +259,19 @@ export const knowledgeBase = pgTable('knowledge_base', {
   source_trace: text('source_trace'),
   created_at: timestamp('created_at').defaultNow().notNull(),
 });
+
+// ─── Enum: job_run_status ──────────────────────────────────────────────────────
+export const jobRunStatusEnum = pgEnum('job_run_status', [
+  'pending', 'running', 'completed', 'failed', 'skipped',
+]);
+
+// ─── Table 14: job_runs ───────────────────────────────────────────────────────
+export const jobRuns = pgTable('job_runs', {
+  id: serial('id').primaryKey(),
+  job_name: text('job_name').notNull(),
+  status: jobRunStatusEnum('status').default('pending').notNull(),
+  started_at: timestamp('started_at').defaultNow().notNull(),
+  completed_at: timestamp('completed_at'),
+  error_message: text('error_message'),
+  triggered_by: text('triggered_by').default('scheduled').notNull(), // 'scheduled' | 'manual'
+});

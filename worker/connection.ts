@@ -1,0 +1,19 @@
+// bigpanda-app/worker/connection.ts
+/**
+ * Redis connection factory for BullMQ worker.
+ * CRITICAL: maxRetriesPerRequest: null is REQUIRED — without it, BullMQ Worker
+ * throws EXECABORT errors and silently stops processing jobs.
+ * Each caller (Queue, Worker) must get its own connection instance.
+ */
+import { Redis } from 'ioredis';
+
+export function createRedisConnection(): Redis {
+  const url = process.env.REDIS_URL ?? 'redis://localhost:6379';
+  return new Redis(url, {
+    maxRetriesPerRequest: null,  // REQUIRED for BullMQ Worker
+    enableReadyCheck: false,
+  });
+}
+
+// Shared connection for Queue clients (not for Worker — Worker needs its own)
+export const redisConnection = createRedisConnection();
