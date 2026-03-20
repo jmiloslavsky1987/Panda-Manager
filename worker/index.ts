@@ -15,22 +15,28 @@ import { registerAllSchedulers } from './scheduler';
 import { readSettings } from '../lib/settings-core';
 
 // Job handler dispatch map — avoids dynamic require which can fail with tsx
-import actionSync     from './jobs/action-sync';
-import healthRefresh  from './jobs/health-refresh';
-import weeklyBriefing from './jobs/weekly-briefing';
-import contextUpdater from './jobs/context-updater';
-import ganttSnapshot  from './jobs/gantt-snapshot';
-import riskMonitor    from './jobs/risk-monitor';
-import skillRun       from './jobs/skill-run';
+import actionSync            from './jobs/action-sync';
+import healthRefresh         from './jobs/health-refresh';
+import weeklyBriefing        from './jobs/weekly-briefing';
+import contextUpdater        from './jobs/context-updater';
+import ganttSnapshot         from './jobs/gantt-snapshot';
+import riskMonitor           from './jobs/risk-monitor';
+import skillRun              from './jobs/skill-run';
+import weeklyCustomerStatus  from './jobs/weekly-customer-status';
+import meetingSummary        from './jobs/meeting-summary';
+import handoffDocGenerator   from './jobs/handoff-doc-generator';
 
 const JOB_HANDLERS: Record<string, (job: Parameters<typeof actionSync>[0]) => Promise<{ status: string }>> = {
-  'action-sync':     actionSync,
-  'health-refresh':  healthRefresh,
-  'weekly-briefing': weeklyBriefing,
-  'context-updater': contextUpdater,
-  'gantt-snapshot':  ganttSnapshot,
-  'risk-monitor':    riskMonitor,
-  'skill-run':       skillRun,
+  'action-sync':            actionSync,
+  'health-refresh':         healthRefresh,
+  'weekly-briefing':        weeklyBriefing,
+  'context-updater':        contextUpdater,
+  'gantt-snapshot':         ganttSnapshot,
+  'risk-monitor':           riskMonitor,
+  'skill-run':              skillRun,
+  'weekly-customer-status': weeklyCustomerStatus,
+  'meeting-summary':        meetingSummary,
+  'handoff-doc-generator':  handoffDocGenerator,
 };
 
 // Worker needs its own connection — NEVER share with Queue (BullMQ requirement)
