@@ -26,7 +26,7 @@
 - [x] **DASH-06**: Recent Activity Feed showing last 7 days of skill runs, file outputs, and history entries across all projects
 - [x] **DASH-07**: Quick Action Bar with one-click buttons: Run Tracker, Generate Briefing, Weekly Status Draft (per active account)
 - [x] **DASH-08**: In-app notification badge for overdue actions, approaching go-live dates (within 14 days), and new tracker results
-- [ ] **DASH-09**: Drafts Inbox — unified queue of all AI-generated drafts (emails, Slack messages) pending review before send; no AI content reaches external parties without passing through this queue
+- [x] **DASH-09**: Drafts Inbox — unified queue of all AI-generated drafts (emails, Slack messages) pending review before send; no AI content reaches external parties without passing through this queue
 
 ### Project Workspace
 
@@ -42,27 +42,27 @@
 
 ### Skill Launcher
 
-- [ ] **SKILL-01**: SkillOrchestrator service cleanly separated from HTTP Route Handlers — same code path for manual (SSE) and BullMQ-worker (scheduled) invocations
-- [ ] **SKILL-02**: Token budget guard in context assembly — estimates token count before Claude call, truncates or summarizes low-priority context sections if over budget
-- [ ] **SKILL-03**: Weekly Customer Status — select account → generate customer-facing email from DB context; copy to clipboard or save as file; optionally creates Gmail draft
-- [ ] **SKILL-04**: Meeting Summary — paste notes/transcript + select account → generate .docx + optional .mermaid diagram; registers entry in engagement history
+- [x] **SKILL-01**: SkillOrchestrator service cleanly separated from HTTP Route Handlers — same code path for manual (SSE) and BullMQ-worker (scheduled) invocations
+- [x] **SKILL-02**: Token budget guard in context assembly — estimates token count before Claude call, truncates or summarizes low-priority context sections if over budget
+- [x] **SKILL-03**: Weekly Customer Status — select account → generate customer-facing email from DB context; copy to clipboard or save as file; optionally creates Gmail draft
+- [x] **SKILL-04**: Meeting Summary — paste notes/transcript + select account → generate .docx + optional .mermaid diagram; registers entry in engagement history
 - [ ] **SKILL-05**: ELT External Status — select account + month → generate 5-slide .pptx (confidence-framed, partnership tone, no internal severity language)
 - [ ] **SKILL-06**: ELT Internal Status — select account + date → generate internal .pptx (direct tone, surfaces blockers)
 - [ ] **SKILL-07**: Team Engagement Map — select account → generate self-contained HTML (business outcomes, ADR/Biggy flows, team status table)
 - [ ] **SKILL-08**: Workflow Diagram — select account → generate before/after HTML with two tabs
 - [ ] **SKILL-09**: Biggy Weekly Briefing — select modules → generate .docx + email draft + Slack draft (three outputs in one run)
 - [ ] **SKILL-10**: Customer Project Tracker — run for one account or all active; sweeps Gmail/Slack/Gong for last 7 days; updates actions table and PA3_Action_Tracker.xlsx; shows structured report
-- [ ] **SKILL-11**: Morning Briefing — fetch today's calendar via Glean, synthesize per-meeting context, store result in DB, display in Dashboard Briefing panel
-- [ ] **SKILL-12**: Context Updater — paste notes/transcript + select account → apply all 14 update steps → write to DB → export updated context doc to file; registers in engagement history
-- [ ] **SKILL-13**: Handoff Doc Generator — select account → generate structured handoff/coverage doc covering open actions, risks, key decisions, key contacts, and current workstream status
-- [ ] **SKILL-14**: SKILL.md files read from disk at runtime (skill_path configurable in settings); prompts never modified or simplified in code
+- [x] **SKILL-11**: Morning Briefing — fetch today's calendar via Glean, synthesize per-meeting context, store result in DB, display in Dashboard Briefing panel
+- [x] **SKILL-12**: Context Updater — paste notes/transcript + select account → apply all 14 update steps → write to DB → export updated context doc to file; registers in engagement history
+- [x] **SKILL-13**: Handoff Doc Generator — select account → generate structured handoff/coverage doc covering open actions, risks, key decisions, key contacts, and current workstream status
+- [x] **SKILL-14**: SKILL.md files read from disk at runtime (skill_path configurable in settings); prompts never modified or simplified in code
 
 ### Output Library
 
-- [ ] **OUT-01**: All generated files registered in outputs table with account, skill/type, filename, filepath, created_at
-- [ ] **OUT-02**: Output Library view filterable by account, skill type, and date range
-- [ ] **OUT-03**: HTML output files render inline in the app; .docx and .pptx open via system default app
-- [ ] **OUT-04**: Regenerate action re-runs the generating skill with same or updated context; old file archived, new one registered
+- [x] **OUT-01**: All generated files registered in outputs table with account, skill/type, filename, filepath, created_at
+- [x] **OUT-02**: Output Library view filterable by account, skill type, and date range
+- [x] **OUT-03**: HTML output files render inline in the app; .docx and .pptx open via system default app
+- [x] **OUT-04**: Regenerate action re-runs the generating skill with same or updated context; old file archived, new one registered
 
 ### Project Plan & Task Builder
 
@@ -191,19 +191,19 @@
 | SCHED-06 | Phase 4 | Complete |
 | SCHED-07 | Phase 4 | Complete |
 | SCHED-08 | Phase 4 | Complete |
-| SKILL-01 | Phase 5 | Pending |
-| SKILL-02 | Phase 5 | Pending |
-| SKILL-03 | Phase 5 | Pending |
-| SKILL-04 | Phase 5 | Pending |
-| SKILL-11 | Phase 5 | Pending |
-| SKILL-12 | Phase 5 | Pending |
-| SKILL-13 | Phase 5 | Pending |
-| SKILL-14 | Phase 5 | Pending |
-| DASH-09 | Phase 5 | Pending |
-| OUT-01 | Phase 5 | Pending |
-| OUT-02 | Phase 5 | Pending |
-| OUT-03 | Phase 5 | Pending |
-| OUT-04 | Phase 5 | Pending |
+| SKILL-01 | Phase 5 | Complete |
+| SKILL-02 | Phase 5 | Complete |
+| SKILL-03 | Phase 5 | Complete |
+| SKILL-04 | Phase 5 | Complete |
+| SKILL-11 | Phase 5 | Complete |
+| SKILL-12 | Phase 5 | Complete |
+| SKILL-13 | Phase 5 | Complete |
+| SKILL-14 | Phase 5 | Complete |
+| DASH-09 | Phase 5 | Complete |
+| OUT-01 | Phase 5 | Complete |
+| OUT-02 | Phase 5 | Complete |
+| OUT-03 | Phase 5 | Complete |
+| OUT-04 | Phase 5 | Complete |
 | SKILL-10 | Phase 6 | Pending |
 | DASH-04 | Phase 6 | Pending |
 | DASH-05 | Phase 6 | Pending |

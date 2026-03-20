@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: "Completed 04-05-PLAN.md (Phase 4 Wave-4: E2E green pass + human verification — Phase 4 COMPLETE)"
-last_updated: "2026-03-20T17:49:19.051Z"
+stopped_at: "Completed 05-01-PLAN.md — Phase 5 Wave 0 foundation: SDK installed, DB schema extended, migration SQL written, SKILL.md stubs created, 13 RED E2E stubs"
+last_updated: "2026-03-20T18:48:41.644Z"
 progress:
   total_phases: 8
   completed_phases: 4
-  total_plans: 27
-  completed_plans: 27
+  total_plans: 33
+  completed_plans: 28
 ---
 
 # Project State
@@ -20,15 +20,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-18)
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
-**Current focus:** Phase 4 — Job Infrastructure (COMPLETE); Next: Phase 5 — Skill Engine
+**Current focus:** Phase 5 — Skill Engine (context gathered; ready to plan)
 
 ## Current Status
 
-**Phase:** 4 — Job Infrastructure (COMPLETE — 5/5 plans)
+**Phase:** 5 — Skill Engine (context gathered, planning ready)
 **Current Plan:** Not started
-**Last action:** Completed 04-05 — Phase 4 E2E green pass + human verification approved; all 8 SCHED requirements satisfied
-**Next action:** 04-CONTEXT.md → 05-01 — Begin Phase 5 (Skill Engine) — requires Anthropic SDK streaming research spike first
-**Stopped at:** Completed 04-05-PLAN.md (Phase 4 Wave-4: E2E green pass + human verification — Phase 4 COMPLETE)
+**Last action:** Completed 05-CONTEXT.md — all 4 gray areas discussed (Skill Launcher, Streaming Output, Drafts Inbox, Output Library + SKILL.md)
+**Next action:** `/gsd:plan-phase 5` — will research Anthropic SDK 0.78.x streaming + SSE patterns, then plan
+**Stopped at:** Completed 05-01-PLAN.md — Phase 5 Wave 0 foundation: SDK installed, DB schema extended, migration SQL written, SKILL.md stubs created, 13 RED E2E stubs
 
 ## Phase Progress
 
@@ -38,7 +38,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 | 2. App Shell + Read Surface | COMPLETE (7/7 plans) |
 | 3. Write Surface + Plan Builder | COMPLETE (9/9 plans) |
 | 4. Job Infrastructure | COMPLETE (5/5 plans) |
-| 5. Skill Engine | Not started |
+| 5. Skill Engine | Context gathered (0/TBD plans) |
 | 6. MCP Integrations | Not started |
 | 7. File Generation + Remaining Skills | Not started |
 | 8. Cross-Project Features + Polish | Not started |
@@ -115,6 +115,9 @@ Phase 4 COMPLETE. All 5 plans executed: 04-01 (E2E stubs — RED baseline), 04-0
 - [Phase 04-05]: assert-if-present for SCHED-08 Trigger Now result: test passes if Redis unavailable (CI-safe) but verifies triggered_by if last_run exists
 - [Phase 04-05]: createApiRedisConnection() factory with maxRetriesPerRequest:1, connectTimeout:3s: trigger API fails fast when Redis unavailable instead of hanging 35s
 - [Phase 04-05]: DOM nesting fix in edit modals: React.cloneElement() instead of wrapping tr triggers in div containers
+- [Phase 05-01]: npm install --no-package-lock for @anthropic-ai/sdk — consistent with 02-01/03-02 pattern (invalid esbuild semver in package-lock.json)
+- [Phase 05-01]: skill_run_chunks.run_id is INTEGER FK referencing skill_runs.id for ON DELETE CASCADE support
+- [Phase 05-01]: SKILL.md files contain real stub prompts (not empty files) — downstream plans refine during skill wiring
 
 ## Performance Metrics
 
@@ -146,6 +149,7 @@ Phase 4 COMPLETE. All 5 plans executed: 04-01 (E2E stubs — RED baseline), 04-0
 | Phase 04-job-infrastructure P03 | 6min | 2 tasks | 8 files |
 | Phase 04-job-infrastructure P04 | 8min | 2 tasks | 4 files |
 | Phase 04-job-infrastructure P05 | 20min | 2 tasks | 1 files |
+| Phase 05-skill-engine P01 | 3min | 2 tasks | 9 files |
 
 ## Key Context for Next Session
 
