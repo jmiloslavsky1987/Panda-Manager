@@ -1,14 +1,7 @@
 import Link from 'next/link'
 import { getWorkspaceData } from '../../../../lib/queries'
 import { Badge } from '../../../../components/ui/badge'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '../../../../components/ui/table'
+import { ActionEditModal } from '../../../../components/ActionEditModal'
 
 const PAGE_SIZE = 50
 
@@ -86,60 +79,59 @@ export default async function ActionsPage({
 
       {/* Count */}
       <p className="text-sm text-zinc-500">
-        Showing {displayed.length} of {filtered.length} action{filtered.length !== 1 ? 's' : ''}
+        Showing {displayed.length} of {filtered.length} action
+        {filtered.length !== 1 ? 's' : ''}
         {statusFilter && ` (filtered: ${statusFilter.replace('_', ' ')})`}
       </p>
 
-      {/* Table */}
-      <div className="rounded-md border border-zinc-200 overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[120px]">ID</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead className="w-[120px]">Owner</TableHead>
-              <TableHead className="w-[120px]">Due</TableHead>
-              <TableHead className="w-[140px]">Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {displayed.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center text-zinc-400 py-8">
-                  No actions found.
-                </TableCell>
-              </TableRow>
-            ) : (
-              displayed.map((action) => {
-                const overdue = isOverdue(action.due, action.status)
-                const statusKey = action.status
-                const badgeClass = statusBadgeColors[statusKey] ?? 'bg-zinc-100 text-zinc-600'
-                return (
-                  <TableRow key={action.id} className={overdue ? 'bg-red-50' : ''}>
-                    <TableCell className="font-mono text-xs text-zinc-500">
-                      {action.external_id}
-                    </TableCell>
-                    <TableCell className="text-sm">{action.description}</TableCell>
-                    <TableCell className="text-sm text-zinc-600">{action.owner ?? '—'}</TableCell>
-                    <TableCell className="text-sm text-zinc-600">
-                      {action.due ?? '—'}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap items-center gap-1">
-                        <Badge className={`text-xs ${badgeClass}`}>
+      {/* Action cards with inline edit modal */}
+      <div className="space-y-2">
+        {displayed.length === 0 ? (
+          <p className="text-zinc-500 text-sm">No actions found.</p>
+        ) : (
+          displayed.map((action) => {
+            const overdue = isOverdue(action.due, action.status)
+            const statusKey = action.status
+            const badgeClass = statusBadgeColors[statusKey] ?? 'bg-zinc-100 text-zinc-600'
+
+            return (
+              <ActionEditModal
+                key={action.id}
+                action={action}
+                trigger={
+                  <div
+                    className={`border rounded p-3 hover:bg-zinc-50 transition-colors ${
+                      overdue ? 'border-red-200 bg-red-50 hover:bg-red-100' : 'border-zinc-200'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-xs text-zinc-400">
+                        {action.external_id}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <span
+                          className={`text-xs px-2 py-0.5 rounded-full ${badgeClass}`}
+                        >
                           {statusKey.replace('_', ' ')}
-                        </Badge>
+                        </span>
                         {overdue && (
-                          <Badge className="text-xs bg-red-100 text-red-700">Overdue</Badge>
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700">
+                            Overdue
+                          </span>
                         )}
                       </div>
-                    </TableCell>
-                  </TableRow>
-                )
-              })
-            )}
-          </TableBody>
-        </Table>
+                    </div>
+                    <p className="text-sm mt-1 text-zinc-800">{action.description}</p>
+                    <div className="flex gap-4 mt-1 text-xs text-zinc-500">
+                      <span>Owner: {action.owner ?? '—'}</span>
+                      <span>Due: {action.due ?? '—'}</span>
+                    </div>
+                  </div>
+                }
+              />
+            )
+          })
+        )}
       </div>
     </div>
   )
