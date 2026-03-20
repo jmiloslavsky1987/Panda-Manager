@@ -12,6 +12,8 @@ import {
   stakeholders,
   artifacts,
   outputs,
+  tasks,
+  planTemplates,
 } from '../db/schema';
 import { eq, and, inArray, lt, ne, gt, or } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
@@ -28,6 +30,8 @@ export type KeyDecision = typeof keyDecisions.$inferSelect;
 export type Stakeholder = typeof stakeholders.$inferSelect;
 export type Artifact = typeof artifacts.$inferSelect;
 export type Output = typeof outputs.$inferSelect;
+export type Task = typeof tasks.$inferSelect;
+export type PlanTemplate = typeof planTemplates.$inferSelect;
 
 export interface ProjectWithHealth extends Project {
   health: 'green' | 'yellow' | 'red';
@@ -282,4 +286,48 @@ export async function getWorkspaceData(projectId: number): Promise<WorkspaceData
     stakeholders: stakeholdersData,
     artifacts: artifactsData,
   };
+}
+
+/**
+ * Returns all tasks for a project, ordered by created_at.
+ * Includes blocked_by, milestone_id, start_date from Phase 3 migration.
+ */
+export async function getTasksForProject(projectId: number): Promise<Task[]> {
+  return db.select().from(tasks).where(eq(tasks.project_id, projectId))
+    .orderBy(tasks.created_at)
+}
+
+/**
+ * Returns workstreams for a project with percent_complete.
+ * Used by progress rollup (PLAN-09).
+ */
+export async function getWorkstreamsWithProgress(projectId: number): Promise<Workstream[]> {
+  return db.select().from(workstreams).where(eq(workstreams.project_id, projectId))
+}
+
+/**
+ * Updates workstream percent_complete based on completed task ratio.
+ * Called after any task status change. PLAN-09 progress rollup.
+ * percent_complete = (completed tasks / total tasks) * 100, rounded.
+ */
+export async function updateWorkstreamProgress(workstreamId: number): Promise<void> {
+  const allTasks = await db.select({ status: tasks.status })
+    .from(tasks)
+    .where(eq(tasks.workstream_id, workstreamId))
+
+  if (allTasks.length === 0) return
+
+  const completed = allTasks.filter(t => t.status === 'done' || t.status === 'completed').length
+  const pct = Math.round((completed / allTasks.length) * 100)
+
+  await db.update(workstreams)
+    .set({ percent_complete: pct })
+    .where(eq(workstreams.id, workstreamId))
+}
+
+/**
+ * Returns all plan templates (for PLAN-08 template instantiation).
+ */
+export async function getPlanTemplates(): Promise<PlanTemplate[]> {
+  return db.select().from(planTemplates)
 }
