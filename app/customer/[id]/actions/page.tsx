@@ -35,9 +35,14 @@ export default async function ActionsPage({
   const sp = await searchParams
   const statusFilter = sp.status ?? ''
   const projectId = parseInt(id, 10)
-  const data = await getWorkspaceData(projectId)
+  let data: Awaited<ReturnType<typeof getWorkspaceData>> | null = null
+  try {
+    data = await getWorkspaceData(projectId)
+  } catch {
+    // DB not available — render empty state
+  }
 
-  const allActions = data.actions
+  const allActions = data?.actions ?? []
   const filtered = statusFilter
     ? allActions.filter((a) => a.status === statusFilter)
     : allActions

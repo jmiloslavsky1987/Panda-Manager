@@ -5,10 +5,16 @@ export default async function PhaseBoardPage({ params }: { params: Promise<{ id:
   const { id } = await params
   const projectId = parseInt(id, 10)
 
-  const [tasks, templates] = await Promise.all([
-    getTasksForProject(projectId),
-    getPlanTemplates(),
-  ])
+  let tasks: Awaited<ReturnType<typeof getTasksForProject>> = []
+  let templates: Awaited<ReturnType<typeof getPlanTemplates>> = []
+  try {
+    ;[tasks, templates] = await Promise.all([
+      getTasksForProject(projectId),
+      getPlanTemplates(),
+    ])
+  } catch {
+    // DB not available — render empty board
+  }
 
   return (
     <div className="p-4">
