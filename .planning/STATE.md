@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: "Completed 04-04-PLAN.md (Phase 4 Wave-3: Settings UI — /settings page, job-runs API, jobs/trigger API, Sidebar link)"
-last_updated: "2026-03-20T16:14:46.673Z"
+stopped_at: "Completed 04-05-PLAN.md (Phase 4 Wave-4: E2E green pass + human verification — Phase 4 COMPLETE)"
+last_updated: "2026-03-20T17:49:19.051Z"
 progress:
   total_phases: 8
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 27
-  completed_plans: 26
+  completed_plans: 27
 ---
 
 # Project State
@@ -20,15 +20,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-18)
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
-**Current focus:** Phase 3 — Write Surface + Plan Builder
+**Current focus:** Phase 4 — Job Infrastructure (COMPLETE); Next: Phase 5 — Skill Engine
 
 ## Current Status
 
-**Phase:** 3 — Write Surface + Plan Builder (COMPLETE — 9/9 plans)
+**Phase:** 4 — Job Infrastructure (COMPLETE — 5/5 plans)
 **Current Plan:** Not started
-**Last action:** Completed 03-09 — Phase 3 E2E green pass + human verification approved; all 12 Phase 3 requirements satisfied
-**Next action:** 03-CONTEXT.md → 04-01 — Begin Phase 4 (Job Infrastructure) — requires BullMQ v5 research spike first
-**Stopped at:** Completed 04-04-PLAN.md (Phase 4 Wave-3: Settings UI — /settings page, job-runs API, jobs/trigger API, Sidebar link)
+**Last action:** Completed 04-05 — Phase 4 E2E green pass + human verification approved; all 8 SCHED requirements satisfied
+**Next action:** 04-CONTEXT.md → 05-01 — Begin Phase 5 (Skill Engine) — requires Anthropic SDK streaming research spike first
+**Stopped at:** Completed 04-05-PLAN.md (Phase 4 Wave-4: E2E green pass + human verification — Phase 4 COMPLETE)
 
 ## Phase Progress
 
@@ -37,7 +37,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 | 1. Data Foundation | COMPLETE (6/6 plans) |
 | 2. App Shell + Read Surface | COMPLETE (7/7 plans) |
 | 3. Write Surface + Plan Builder | COMPLETE (9/9 plans) |
-| 4. Job Infrastructure | Not started |
+| 4. Job Infrastructure | COMPLETE (5/5 plans) |
 | 5. Skill Engine | Not started |
 | 6. MCP Integrations | Not started |
 | 7. File Generation + Remaining Skills | Not started |
@@ -45,7 +45,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 
 ## Active Work
 
-Phase 3 COMPLETE. All 9 plans executed: 03-01 (E2E stubs), 03-02 (schema migration + packages), 03-03 (Action editing modal + xlsx dual-write), 03-04 (Risk/Milestone/Stakeholder modals), 03-05 (Plan Builder tab shell), 03-06 (Phase Board + Task Board + task CRUD + bulk ops + import/export), 03-07 (Gantt Timeline with frappe-gantt), 03-08 (Swimlane view), 03-09 (E2E green pass + human verification). Next: Phase 4 — Job Infrastructure (requires BullMQ v5 research spike before planning).
+Phase 4 COMPLETE. All 5 plans executed: 04-01 (E2E stubs — RED baseline), 04-02 (BullMQ packages + settings-core + Redis connection + job_runs schema), 04-03 (BullMQ worker entry point + 6 cron scheduler registrations + no-op job handlers), 04-04 (/settings Jobs tab UI + job-runs API + trigger API + Sidebar Settings link), 04-05 (E2E green pass — all 8 SCHED tests GREEN + human verification approved). Next: Phase 5 — Skill Engine (requires Anthropic SDK 0.78.x streaming research spike before planning).
 
 ## Decisions
 
@@ -112,6 +112,9 @@ Phase 3 COMPLETE. All 9 plans executed: 03-01 (E2E stubs), 03-02 (schema migrati
 - [Phase 04-04]: Settings page is Client Component (not RSC) — data fetched via useEffect to keep DB imports server-side only
 - [Phase 04-04]: Cron schedules hardcoded in JOB_DISPLAY map (UI constants) — Redis scheduler state not surfaced to API in Phase 4, editable in Phase 5+
 - [Phase 04-04]: queue.add() with unique jobId (manual-{name}-{timestamp}) prevents duplicate manual triggers within same second
+- [Phase 04-05]: assert-if-present for SCHED-08 Trigger Now result: test passes if Redis unavailable (CI-safe) but verifies triggered_by if last_run exists
+- [Phase 04-05]: createApiRedisConnection() factory with maxRetriesPerRequest:1, connectTimeout:3s: trigger API fails fast when Redis unavailable instead of hanging 35s
+- [Phase 04-05]: DOM nesting fix in edit modals: React.cloneElement() instead of wrapping tr triggers in div containers
 
 ## Performance Metrics
 
@@ -142,6 +145,7 @@ Phase 3 COMPLETE. All 9 plans executed: 03-01 (E2E stubs), 03-02 (schema migrati
 | Phase 04-job-infrastructure P02 | 2min | 2 tasks | 7 files |
 | Phase 04-job-infrastructure P03 | 6min | 2 tasks | 8 files |
 | Phase 04-job-infrastructure P04 | 8min | 2 tasks | 4 files |
+| Phase 04-job-infrastructure P05 | 20min | 2 tasks | 1 files |
 
 ## Key Context for Next Session
 

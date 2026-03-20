@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Data Foundation** - PostgreSQL schema, migrations, YAML round-trip, DataService, RLS, append-only triggers, singleton pool, Settings (completed 2026-03-19)
 - [x] **Phase 2: App Shell + Read Surface** - Next.js scaffold, Dashboard, all 9 workspace tabs (read-only), RSC data loading (completed 2026-03-19)
 - [x] **Phase 3: Write Surface + Plan Builder** - Inline CRUD on all workspace tabs, PA3 xlsx dual-write, Project Plan & Task Builder (completed 2026-03-20)
-- [ ] **Phase 4: Job Infrastructure** - BullMQ worker process, JobService, Redis, cron schedule registration, job status UI
+- [x] **Phase 4: Job Infrastructure** - BullMQ worker process, JobService, Redis, cron schedule registration, job status UI (completed 2026-03-20)
 - [ ] **Phase 5: Skill Engine** - SkillOrchestrator, token budget guard, SSE streaming, Drafts Inbox, Output Library, first 4 skills wired
 - [ ] **Phase 6: MCP Integrations** - MCPClientPool, Slack/Gmail/Glean/Drive connections, Customer Project Tracker fully wired
 - [ ] **Phase 7: File Generation + Remaining Skills** - FileGenerationService (.docx/.pptx/.xlsx/.html), 11 remaining skills wired
@@ -163,7 +163,7 @@ Phases 6 and 7 can overlap after Phase 5 is stable.
 | 1. Data Foundation | 6/6 | Complete   | 2026-03-19 |
 | 2. App Shell + Read Surface | 7/7 | Complete   | 2026-03-19 |
 | 3. Write Surface + Plan Builder | 9/9 | Complete   | 2026-03-20 |
-| 4. Job Infrastructure | 4/5 | In Progress|  |
+| 4. Job Infrastructure | 5/5 | Complete   | 2026-03-20 |
 | 5. Skill Engine | 0/TBD | Not started | - |
 | 6. MCP Integrations | 0/TBD | Not started | - |
 | 7. File Generation + Remaining Skills | 0/TBD | Not started | - |
