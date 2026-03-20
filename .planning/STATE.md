@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: Completed 03-02-PLAN.md (schema extensions + Phase 3 packages)
-last_updated: "2026-03-20T14:07:48.580Z"
+stopped_at: Completed 03-04-PLAN.md (Risk, Milestone, Stakeholder edit modals + API routes)
+last_updated: "2026-03-20T14:09:00.876Z"
 progress:
   total_phases: 8
   completed_phases: 2
   total_plans: 22
-  completed_plans: 16
+  completed_plans: 17
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 02-07 — Full Phase 2 human verification passed; all 9 workspace tabs, RAG badges, Add Notes modal confirmed
 **Next action:** 02-CONTEXT.md → 03-01 — Begin Phase 3 (Write Surface + Plan Builder)
-**Stopped at:** Completed 03-02-PLAN.md (schema extensions + Phase 3 packages)
+**Stopped at:** Completed 03-04-PLAN.md (Risk, Milestone, Stakeholder edit modals + API routes)
 
 ## Phase Progress
 
@@ -86,6 +86,8 @@ Phase 2 COMPLETE. All 7 plans executed: 02-01 (E2E stubs), 02-02 (app shell + si
 - [Phase 03-03]: Card-based layout replaces table rows in actions page — avoids span-inside-tr DOM nesting issues when wrapping with ActionEditModal trigger
 - [Phase 03-03]: xlsx write is skipped gracefully when file not found (dev environment without tracker)
 - [Phase 03-03]: EBUSY/EPERM on xlsx writeFile returns human-readable Close in Excel message
+- [Phase 03-04]: Risk mitigation is append-only in both UI and API: new text is date-prefixed and appended to existing history
+- [Phase 03-04]: StakeholderEditModal dual-mode: no stakeholder prop = create (POST), with prop = edit (PATCH)
 
 ## Performance Metrics
 
@@ -106,6 +108,7 @@ Phase 2 COMPLETE. All 7 plans executed: 02-01 (E2E stubs), 02-02 (app shell + si
 | Phase 03-write-surface-+-plan-builder P01 | 2min | 1 tasks | 1 files |
 | Phase 03-write-surface-+-plan-builder P02 | 8min | 2 tasks | 4 files |
 | Phase 03-write-surface-+-plan-builder P03 | 2min | 3 tasks | 3 files |
+| Phase 03-write-surface-+-plan-builder P04 | 4min | 2 tasks | 10 files |
 
 ## Key Context for Next Session
 
