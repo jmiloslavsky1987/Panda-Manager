@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: Completed 05-02-PLAN.md — SkillOrchestrator + skill-context + BullMQ skill-run handler
-last_updated: "2026-03-20T18:52:58.317Z"
+stopped_at: Completed 05-04-PLAN.md — Drafts Inbox on Dashboard + Output Library page
+last_updated: "2026-03-20T18:58:17.293Z"
 progress:
   total_phases: 8
   completed_phases: 4
   total_plans: 33
-  completed_plans: 29
+  completed_plans: 30
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 05-CONTEXT.md — all 4 gray areas discussed (Skill Launcher, Streaming Output, Drafts Inbox, Output Library + SKILL.md)
 **Next action:** `/gsd:plan-phase 5` — will research Anthropic SDK 0.78.x streaming + SSE patterns, then plan
-**Stopped at:** Completed 05-02-PLAN.md — SkillOrchestrator + skill-context + BullMQ skill-run handler
+**Stopped at:** Completed 05-04-PLAN.md — Drafts Inbox on Dashboard + Output Library page
 
 ## Phase Progress
 
@@ -120,6 +120,10 @@ Phase 4 COMPLETE. All 5 plans executed: 04-01 (E2E stubs — RED baseline), 04-0
 - [Phase 05-01]: SKILL.md files contain real stub prompts (not empty files) — downstream plans refine during skill wiring
 - [Phase 05-skill-engine]: SkillOrchestrator uses __dirname-anchored SKILLS_DIR in worker context for reliable SKILL.md path resolution regardless of cwd
 - [Phase 05-skill-engine]: full_output reconstructed from skill_run_chunks rows instead of stream.accumulated to avoid SDK version incompatibility
+- [Phase 05-04]: DraftsInbox is a Client Component imported into RSC Dashboard — client-side fetch required for optimistic dismiss without full page reload
+- [Phase 05-04]: outputs.archived column appended to existing 0004 migration (ALTER TABLE IF NOT EXISTS) — avoids new migration file for a single column addition
+- [Phase 05-04]: Regenerate flow in Output Library: POST skill/run -> PATCH archive old -> router.push to new run page — all client-side sequential
+- [Phase 05-04]: system-open endpoint uses GET semantics with no request body — idempotent, natural REST fit for opening a file
 
 ## Performance Metrics
 
@@ -153,6 +157,7 @@ Phase 4 COMPLETE. All 5 plans executed: 04-01 (E2E stubs — RED baseline), 04-0
 | Phase 04-job-infrastructure P05 | 20min | 2 tasks | 1 files |
 | Phase 05-skill-engine P01 | 3min | 2 tasks | 9 files |
 | Phase 05-skill-engine P02 | 3min | 2 tasks | 5 files |
+| Phase 05-skill-engine P04 | 3min | 2 tasks | 11 files |
 
 ## Key Context for Next Session
 
