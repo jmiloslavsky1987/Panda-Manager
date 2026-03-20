@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: Completed 04-01-PLAN.md (Phase 4 Wave-0 E2E RED stubs)
-last_updated: "2026-03-20T16:02:30.620Z"
+stopped_at: "Completed 04-02-PLAN.md (Phase 4 Wave-1 shared primitives: bullmq/ioredis install, settings-core, Redis factory, lock IDs, job_runs schema)"
+last_updated: "2026-03-20T16:07:25.664Z"
 progress:
   total_phases: 8
   completed_phases: 3
   total_plans: 27
-  completed_plans: 23
+  completed_plans: 24
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 03-09 — Phase 3 E2E green pass + human verification approved; all 12 Phase 3 requirements satisfied
 **Next action:** 03-CONTEXT.md → 04-01 — Begin Phase 4 (Job Infrastructure) — requires BullMQ v5 research spike first
-**Stopped at:** Completed 04-01-PLAN.md (Phase 4 Wave-0 E2E RED stubs)
+**Stopped at:** Completed 04-02-PLAN.md (Phase 4 Wave-1 shared primitives: bullmq/ioredis install, settings-core, Redis factory, lock IDs, job_runs schema)
 
 ## Phase Progress
 
@@ -102,6 +102,10 @@ Phase 3 COMPLETE. All 9 plans executed: 03-01 (E2E stubs), 03-02 (schema migrati
 - **[2026-03-20] 03-09:** Zod TaskCreateSchema uses .nullish() not .optional() — HTML form fields submit null (not undefined), .optional() rejects null values
 - **[2026-03-20] 03-09:** Task API validation errors return error.message string — raw Zod error object serializes as {} causing [object Object] in UI
 - [Phase 04-job-infrastructure]: Wave-0 RED stub pattern (expect(false, 'stub').toBe(true) first line) used for Phase 4 stubs — consistent with 02-01 and 03-01
+- [Phase 04-02]: settings-core.ts / settings.ts split: worker-safe core module + server-only wrapper preserves all existing Next.js imports
+- [Phase 04-02]: maxRetriesPerRequest: null required on every IORedis instance used with BullMQ Worker — omitting causes silent EXECABORT failures
+- [Phase 04-02]: createRedisConnection() factory pattern: Queue and Worker each get their own IORedis instance — sharing causes protocol state corruption
+- [Phase 04-02]: Advisory lock IDs use pg_try_advisory_xact_lock (xact variant): auto-releases at transaction end, safe with connection pools
 
 ## Performance Metrics
 
@@ -129,6 +133,7 @@ Phase 3 COMPLETE. All 9 plans executed: 03-01 (E2E stubs), 03-02 (schema migrati
 | Phase 03-write-surface-+-plan-builder P07 | 2min | 2 tasks | 4 files |
 | Phase 03-write-surface-+-plan-builder P09 | 35min | 2 tasks | 3 files |
 | Phase 04-job-infrastructure P01 | 5min | 1 tasks | 1 files |
+| Phase 04-job-infrastructure P02 | 2min | 2 tasks | 7 files |
 
 ## Key Context for Next Session
 
