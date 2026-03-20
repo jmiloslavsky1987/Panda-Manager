@@ -1,7 +1,7 @@
 // bigpanda-app/app/api/jobs/trigger/route.ts
 import { NextResponse } from 'next/server';
 import { Queue } from 'bullmq';
-import { createRedisConnection } from '../../../../worker/connection';
+import { createApiRedisConnection } from '../../../../worker/connection';
 
 export async function POST(request: Request) {
   try {
@@ -11,7 +11,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'jobName is required' }, { status: 400 });
     }
 
-    const queue = new Queue('scheduled-jobs', { connection: createRedisConnection() });
+    const queue = new Queue('scheduled-jobs', { connection: createApiRedisConnection() });
     await queue.add(
       jobName,
       { triggeredBy: 'manual' },

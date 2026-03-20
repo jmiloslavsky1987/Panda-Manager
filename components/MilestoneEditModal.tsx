@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, cloneElement, isValidElement } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Dialog,
@@ -52,9 +52,10 @@ export function MilestoneEditModal({ milestone, trigger }: MilestoneEditModalPro
 
   return (
     <>
-      <div onClick={() => setOpen(true)} className="cursor-pointer">
-        {trigger}
-      </div>
+      {isValidElement(trigger)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ? cloneElement(trigger as React.ReactElement<any>, { onClick: () => setOpen(true), className: ['cursor-pointer', (trigger as React.ReactElement<any>).props.className].filter(Boolean).join(' ') })
+        : <div onClick={() => setOpen(true)} className="cursor-pointer">{trigger}</div>}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent data-testid="milestone-edit-modal">
           <DialogHeader>
