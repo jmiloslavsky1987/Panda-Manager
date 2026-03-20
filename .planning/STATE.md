@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: "Completed 04-03-PLAN.md (Phase 4 Wave-2: BullMQ Worker entry point, scheduler, and 6 no-op job stubs)"
-last_updated: "2026-03-20T16:11:32.299Z"
+stopped_at: "Completed 04-04-PLAN.md (Phase 4 Wave-3: Settings UI — /settings page, job-runs API, jobs/trigger API, Sidebar link)"
+last_updated: "2026-03-20T16:14:46.673Z"
 progress:
   total_phases: 8
   completed_phases: 3
   total_plans: 27
-  completed_plans: 25
+  completed_plans: 26
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 03-09 — Phase 3 E2E green pass + human verification approved; all 12 Phase 3 requirements satisfied
 **Next action:** 03-CONTEXT.md → 04-01 — Begin Phase 4 (Job Infrastructure) — requires BullMQ v5 research spike first
-**Stopped at:** Completed 04-03-PLAN.md (Phase 4 Wave-2: BullMQ Worker entry point, scheduler, and 6 no-op job stubs)
+**Stopped at:** Completed 04-04-PLAN.md (Phase 4 Wave-3: Settings UI — /settings page, job-runs API, jobs/trigger API, Sidebar link)
 
 ## Phase Progress
 
@@ -109,6 +109,9 @@ Phase 3 COMPLETE. All 9 plans executed: 03-01 (E2E stubs), 03-02 (schema migrati
 - [Phase 04-03]: Static job dispatch map (not dynamic import) — tsx watch mode has module cache issues with dynamic import()
 - [Phase 04-03]: concurrency:1 on BullMQ Worker — prevents advisory lock contention within same process
 - [Phase 04-03]: settings-core imported in worker/index.ts (not lib/settings.ts) — server-only marker crashes worker process context
+- [Phase 04-04]: Settings page is Client Component (not RSC) — data fetched via useEffect to keep DB imports server-side only
+- [Phase 04-04]: Cron schedules hardcoded in JOB_DISPLAY map (UI constants) — Redis scheduler state not surfaced to API in Phase 4, editable in Phase 5+
+- [Phase 04-04]: queue.add() with unique jobId (manual-{name}-{timestamp}) prevents duplicate manual triggers within same second
 
 ## Performance Metrics
 
@@ -138,6 +141,7 @@ Phase 3 COMPLETE. All 9 plans executed: 03-01 (E2E stubs), 03-02 (schema migrati
 | Phase 04-job-infrastructure P01 | 5min | 1 tasks | 1 files |
 | Phase 04-job-infrastructure P02 | 2min | 2 tasks | 7 files |
 | Phase 04-job-infrastructure P03 | 6min | 2 tasks | 8 files |
+| Phase 04-job-infrastructure P04 | 8min | 2 tasks | 4 files |
 
 ## Key Context for Next Session
 
