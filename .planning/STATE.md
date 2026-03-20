@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: Completed 05-03-PLAN.md — Skills tab UI + skill API routes + SSE run page
-last_updated: "2026-03-20T18:59:08.904Z"
+stopped_at: Completed 05-05-PLAN.md — 5 skill handlers wired to SkillOrchestrator + queries added
+last_updated: "2026-03-20T19:03:31.123Z"
 progress:
   total_phases: 8
   completed_phases: 4
   total_plans: 33
-  completed_plans: 31
+  completed_plans: 32
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 05-CONTEXT.md — all 4 gray areas discussed (Skill Launcher, Streaming Output, Drafts Inbox, Output Library + SKILL.md)
 **Next action:** `/gsd:plan-phase 5` — will research Anthropic SDK 0.78.x streaming + SSE patterns, then plan
-**Stopped at:** Completed 05-03-PLAN.md — Skills tab UI + skill API routes + SSE run page
+**Stopped at:** Completed 05-05-PLAN.md — 5 skill handlers wired to SkillOrchestrator + queries added
 
 ## Phase Progress
 
@@ -126,6 +126,8 @@ Phase 4 COMPLETE. All 5 plans executed: 04-01 (E2E stubs — RED baseline), 04-0
 - [Phase 05-04]: system-open endpoint uses GET semantics with no request body — idempotent, natural REST fit for opening a file
 - [Phase 05-03]: Stream route at runs/[runId]/stream/ is one extra directory level deep — import paths to db/ require 6 ../ not 5 (corrected during Task 1 verification)
 - [Phase 05-03]: SSE deduplication pattern: skill run page fetches run status before subscribing to EventSource — completed runs show full_output without opening SSE connection
+- [Phase 05-05]: Scheduled handlers create their own skill_runs row; on-demand handlers receive runId from skill-run.ts via job.data
+- [Phase 05-05]: Weekly Customer Status inserts into drafts table (draft_type='email') after orchestrator completion for Drafts Inbox review
 
 ## Performance Metrics
 
@@ -161,6 +163,7 @@ Phase 4 COMPLETE. All 5 plans executed: 04-01 (E2E stubs — RED baseline), 04-0
 | Phase 05-skill-engine P02 | 3min | 2 tasks | 5 files |
 | Phase 05-skill-engine P04 | 3min | 2 tasks | 11 files |
 | Phase 05-skill-engine P03 | 4min | 2 tasks | 7 files |
+| Phase 05-skill-engine P05 | 2min | 1 tasks | 8 files |
 
 ## Key Context for Next Session
 
