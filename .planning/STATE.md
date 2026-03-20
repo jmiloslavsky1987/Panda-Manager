@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: Completed 03-01-PLAN.md (Phase 3 Wave 0 RED baseline — 18 E2E stubs, all failing)
-last_updated: "2026-03-20T14:07:13.560Z"
+stopped_at: Completed 03-02-PLAN.md (schema extensions + Phase 3 packages)
+last_updated: "2026-03-20T14:07:48.580Z"
 progress:
   total_phases: 8
   completed_phases: 2
   total_plans: 22
-  completed_plans: 15
+  completed_plans: 16
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 02-07 — Full Phase 2 human verification passed; all 9 workspace tabs, RAG badges, Add Notes modal confirmed
 **Next action:** 02-CONTEXT.md → 03-01 — Begin Phase 3 (Write Surface + Plan Builder)
-**Stopped at:** Completed 03-01-PLAN.md (Phase 3 Wave 0 RED baseline — 18 E2E stubs, all failing)
+**Stopped at:** Completed 03-02-PLAN.md (schema extensions + Phase 3 packages)
 
 ## Phase Progress
 
@@ -80,6 +80,12 @@ Phase 2 COMPLETE. All 7 plans executed: 02-01 (E2E stubs), 02-02 (app shell + si
 - [Phase 02-05]: Date guards use regex before Date() parse — safely skips TBD/N/A TEXT date fields across all tab pages
 - [Phase 02-app-shell-read-surface]: 02-07: E2E suite activated (23/23 passing) before human checkpoint; human verified all 9 workspace tabs, RAG badges, Add Notes modal → DB
 - [Phase 03-01]: Wave 0 stub assertion placed as FIRST line in each test — visibly RED without server running
+- [Phase 03-02]: AnyPgColumn import required for self-referential FK (tasks.blocked_by references tasks.id)
+- [Phase 03-02]: Migration SQL written manually (not via drizzle-kit generate) — DB not available in dev environment
+- [Phase 03-02]: npm install --no-package-lock used for Phase 3 packages — invalid esbuild semver pattern (same as 02-01)
+- [Phase 03-03]: Card-based layout replaces table rows in actions page — avoids span-inside-tr DOM nesting issues when wrapping with ActionEditModal trigger
+- [Phase 03-03]: xlsx write is skipped gracefully when file not found (dev environment without tracker)
+- [Phase 03-03]: EBUSY/EPERM on xlsx writeFile returns human-readable Close in Excel message
 
 ## Performance Metrics
 
@@ -98,6 +104,8 @@ Phase 2 COMPLETE. All 7 plans executed: 02-01 (E2E stubs), 02-02 (app shell + si
 | Phase 02-app-shell-read-surface P05 | 3min | 2 tasks | 6 files |
 | Phase 02-app-shell-read-surface P07 | 10min | 2 tasks | 1 files |
 | Phase 03-write-surface-+-plan-builder P01 | 2min | 1 tasks | 1 files |
+| Phase 03-write-surface-+-plan-builder P02 | 8min | 2 tasks | 4 files |
+| Phase 03-write-surface-+-plan-builder P03 | 2min | 3 tasks | 3 files |
 
 ## Key Context for Next Session
 
