@@ -60,7 +60,6 @@ test.describe('Phase 5.1: Onboarding Dashboard', () => {
   });
 
   test('OVER-04: Step owner field is editable and YAML round-trip via yaml-export endpoint returns 200', async ({ page }) => {
-    expect(false, 'stub: OVER-04 not yet implemented').toBe(true);
     await page.goto('/customer/1/overview');
     // Assert-if-present: DB-dependent — only test edit when phase cards exist
     const phaseCount = await page.locator('[data-testid="phase-card"]').count();
