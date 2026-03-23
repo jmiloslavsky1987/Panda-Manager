@@ -137,7 +137,15 @@ Plans:
   2. Clicking a step's status badge cycles it (not-started → in-progress → complete → blocked); the change persists to DB immediately; an update note can be appended
   3. Integration tracker cards show the 4-stage pipeline bar correctly for each tool; status and notes are editable inline
   4. Running the migration script against a context doc that has `onboarding_phases` and `integrations` YAML sections imports the data; saving an edit in-app writes back to the YAML file
-**Plans**: TBD
+**Plans**: 6 plans
+
+Plans:
+- [ ] 05.1-01-PLAN.md — Wave 0: E2E test stubs for all Phase 5.1 behaviors (RED baseline)
+- [ ] 05.1-02-PLAN.md — Wave 1: DB schema (3 new tables + 2 enums) + migration SQL 0005
+- [ ] 05.1-03-PLAN.md — Wave 2: Onboarding + integrations API routes (GET + PATCH)
+- [ ] 05.1-04-PLAN.md — Wave 2: OnboardingDashboard client component + replace overview page (parallel with 03)
+- [ ] 05.1-05-PLAN.md — Wave 3: YAML import script + yaml-export POST route (OVER-04)
+- [ ] 05.1-06-PLAN.md — Wave 4: E2E green pass + human verification checkpoint
 
 ### Phase 5.2: Time Tracking [INSERTED]
 **Goal**: Every customer workspace has a dedicated Time tab for logging hours against a project; entries are viewable, editable, and exportable as CSV.
@@ -196,7 +204,7 @@ Phases 5.1 and 5.2 can run in parallel. Phases 6 and 7 can overlap after Phase 5
 | 3. Write Surface + Plan Builder | 9/9 | Complete   | 2026-03-20 |
 | 4. Job Infrastructure | 5/5 | Complete   | 2026-03-20 |
 | 5. Skill Engine | 6/6 | Complete   | 2026-03-23 |
-| 5.1 Onboarding Dashboard [INSERTED] | 0/TBD | Not started | - |
+| 5.1 Onboarding Dashboard [INSERTED] | 0/6 | Not started | - |
 | 5.2 Time Tracking [INSERTED] | 0/TBD | Not started | - |
 | 6. MCP Integrations | 0/TBD | Not started | - |
 | 7. File Generation + Remaining Skills | 0/TBD | Not started | - |
