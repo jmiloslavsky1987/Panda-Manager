@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Phase:** 5 — Skill Engine — COMPLETE
 **Current Plan:** None (phase complete)
 **Last action:** Completed 05-06-PLAN.md — 13/13 E2E tests GREEN, all 8 human verification steps approved
-**Next action:** `/gsd:plan-phase 6` — MCP Integrations (requires research spike first: MCP SDK API, Slack/Gmail/Glean/Drive connections)
+**Next action:** `/gsd:plan-phase 5.1` — Onboarding Dashboard (replaces Overview tab; new DB tables; YAML round-trip)
 **Stopped at:** Phase 5 complete — 6/6 plans done
 
 ## Phase Progress
@@ -39,6 +39,8 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 | 3. Write Surface + Plan Builder | COMPLETE (9/9 plans) |
 | 4. Job Infrastructure | COMPLETE (5/5 plans) |
 | 5. Skill Engine | COMPLETE (6/6 plans) |
+| 5.1 Onboarding Dashboard [INSERTED] | Not started |
+| 5.2 Time Tracking [INSERTED] | Not started |
 | 6. MCP Integrations | Not started |
 | 7. File Generation + Remaining Skills | Not started |
 | 8. Cross-Project Features + Polish | Not started |

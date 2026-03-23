@@ -30,7 +30,7 @@
 
 ### Project Workspace
 
-- [x] **WORK-01**: Overview tab — workstream progress bars (ADR and Biggy tracks), milestone timeline, auto-derived health status, go-live target
+- [x] **WORK-01**: Overview tab — workstream progress bars (ADR and Biggy tracks), milestone timeline, auto-derived health status, go-live target *(superseded by OVER-01 in Phase 5.1 — original implementation complete, replaced by onboarding dashboard)*
 - [x] **WORK-02**: Actions tab — filterable by status/owner/due date, inline editing (complete, add notes, change owner), every save syncs to PA3_Action_Tracker.xlsx atomically (dual-write)
 - [x] **WORK-03**: Risks tab — risk register with append-only mitigation log, inline severity/status editing, full mitigation history visible per risk
 - [x] **WORK-04**: Milestones tab — milestone tracker with action links, status indicators, completion history
@@ -39,6 +39,19 @@
 - [x] **WORK-07**: Decisions tab — append-only key decisions and alignments, searchable, never deletable
 - [x] **WORK-08**: Engagement History tab — append-only history entries with date/source, add new entries from pasted notes or transcripts
 - [x] **WORK-09**: Stakeholders tab — BigPanda and customer contacts roster with add/edit for name, role, email, Slack ID, notes
+
+### Onboarding Dashboard
+
+- [ ] **OVER-01**: Overview tab replaced with a dynamic onboarding status dashboard — shows onboarding phases/steps with filter/search controls, integration tracker, risks & blockers, milestone timeline, executive summary, and animated progress ring (% of steps complete); all data drawn live from PostgreSQL
+- [ ] **OVER-02**: Onboarding phases and steps editable in-app — step status (not-started / in-progress / complete / blocked), owner, and append-only update notes per step; phases themselves are static labels (not added/deleted frequently)
+- [ ] **OVER-03**: Integration tracker — per-customer list of tools with 4-stage pipeline (Not Connected → Configured → Validated → Production) plus blocked state; tool name, category, status, and notes editable in-app
+- [ ] **OVER-04**: `onboarding_phases` and `integrations` YAML sections imported by migration script when present in context doc; in-app status/owner/notes edits written back to the project YAML context doc on save
+
+### Time Tracking
+
+- [ ] **TIME-01**: Time tab (12th workspace tab) — time log for the project showing entries table (date, hours, description), total hours in header, filterable by date range
+- [ ] **TIME-02**: Add, edit, and delete time entries — entry fields: date (defaults to today), hours (decimal, e.g. 1.5), free-text description
+- [ ] **TIME-03**: Export time entries for a project as CSV with columns: date, hours, description, project name
 
 ### Skill Launcher
 
@@ -204,6 +217,13 @@
 | OUT-02 | Phase 5 | Complete |
 | OUT-03 | Phase 5 | Complete |
 | OUT-04 | Phase 5 | Complete |
+| OVER-01 | Phase 5.1 | Pending |
+| OVER-02 | Phase 5.1 | Pending |
+| OVER-03 | Phase 5.1 | Pending |
+| OVER-04 | Phase 5.1 | Pending |
+| TIME-01 | Phase 5.2 | Pending |
+| TIME-02 | Phase 5.2 | Pending |
+| TIME-03 | Phase 5.2 | Pending |
 | SKILL-10 | Phase 6 | Pending |
 | DASH-04 | Phase 6 | Pending |
 | DASH-05 | Phase 6 | Pending |
@@ -222,12 +242,12 @@
 | SRCH-03 | Phase 8 | Pending |
 
 **Coverage:**
-- v1 requirements enumerated: 75 (DATA:8, DASH:9, WORK:9, SKILL:14, OUT:4, PLAN:13, KB:3, SRCH:3, SCHED:8, SET:4)
-- Mapped to phases: 75
+- v1 requirements enumerated: 82 (DATA:8, DASH:9, WORK:9, OVER:4, TIME:3, SKILL:14, OUT:4, PLAN:13, KB:3, SRCH:3, SCHED:8, SET:4)
+- Mapped to phases: 82
 - Unmapped: 0
 
-> Note: Original REQUIREMENTS.md stated 69 v1 requirements. Enumeration counts 75. All enumerated requirements are mapped; no orphans exist. The discrepancy should be reconciled on next requirements review.
+> Note: Added OVER-01–04 (Onboarding Dashboard) and TIME-01–03 (Time Tracking) on 2026-03-23. WORK-01 marked superseded by OVER-01 — original implementation remains complete, replaced in Phase 5.1.
 
 ---
 *Requirements defined: 2026-03-18*
-*Last updated: 2026-03-18 — traceability table updated to match ROADMAP.md phase assignments*
+*Last updated: 2026-03-23 — added OVER and TIME requirement groups; inserted Phase 5.1 and 5.2*

@@ -17,6 +17,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Write Surface + Plan Builder** - Inline CRUD on all workspace tabs, PA3 xlsx dual-write, Project Plan & Task Builder (completed 2026-03-20)
 - [x] **Phase 4: Job Infrastructure** - BullMQ worker process, JobService, Redis, cron schedule registration, job status UI (completed 2026-03-20)
 - [x] **Phase 5: Skill Engine** - SkillOrchestrator, token budget guard, SSE streaming, Drafts Inbox, Output Library, first 5 skills wired (completed 2026-03-23)
+- [ ] **Phase 5.1: Onboarding Dashboard** [INSERTED] - Replace Overview tab with dynamic onboarding status dashboard; new onboarding_phases, onboarding_steps, integrations tables; YAML round-trip
+- [ ] **Phase 5.2: Time Tracking** [INSERTED] - 12th workspace tab; time_entries table; add/edit/delete entries; CSV export
 - [ ] **Phase 6: MCP Integrations** - MCPClientPool, Slack/Gmail/Glean/Drive connections, Customer Project Tracker fully wired
 - [ ] **Phase 7: File Generation + Remaining Skills** - FileGenerationService (.docx/.pptx/.xlsx/.html), 11 remaining skills wired
 - [ ] **Phase 8: Cross-Project Features + Polish** - FTS, risk heat map, cross-account watch list, Knowledge Base, Drafts send/discard flow
@@ -126,6 +128,27 @@ Plans:
 - [x] 05-05-PLAN.md — Wave 3: Wire 5 skill handlers + getSkillRuns query + getLatestMorningBriefing query
 - [x] 05-06-PLAN.md — Wave 4: E2E green pass + human verification checkpoint
 
+### Phase 5.1: Onboarding Dashboard [INSERTED]
+**Goal**: The Overview tab is replaced with a dynamic onboarding status dashboard matching the Vanguard ADR/IA design — showing onboarding phases/steps with filter/search, integration tracker, risks, milestones, and executive summary, all drawn from live PostgreSQL data and fully editable in-app, with YAML round-trip sync.
+**Depends on**: Phase 5
+**Requirements**: OVER-01, OVER-02, OVER-03, OVER-04
+**Success Criteria** (what must be TRUE):
+  1. Navigating to any customer Overview tab shows the onboarding dashboard with phases/steps, integration tracker, risk cards, milestone timeline, and progress ring — all data live from PostgreSQL, not hardcoded
+  2. Clicking a step's status badge cycles it (not-started → in-progress → complete → blocked); the change persists to DB immediately; an update note can be appended
+  3. Integration tracker cards show the 4-stage pipeline bar correctly for each tool; status and notes are editable inline
+  4. Running the migration script against a context doc that has `onboarding_phases` and `integrations` YAML sections imports the data; saving an edit in-app writes back to the YAML file
+**Plans**: TBD
+
+### Phase 5.2: Time Tracking [INSERTED]
+**Goal**: Every customer workspace has a dedicated Time tab for logging hours against a project; entries are viewable, editable, and exportable as CSV.
+**Depends on**: Phase 5 (can be built in parallel with 5.1)
+**Requirements**: TIME-01, TIME-02, TIME-03
+**Success Criteria** (what must be TRUE):
+  1. The Time tab (12th workspace tab) shows a table of all time entries for the project with total hours displayed in the header
+  2. Clicking "Log Time" opens a modal; submitting with date, hours (decimal accepted), and description creates a new entry immediately visible in the table
+  3. Entries can be edited and deleted; exporting produces a valid CSV file with columns: date, hours, description, project name
+**Plans**: TBD
+
 ### Phase 6: MCP Integrations
 **Goal**: MCPClientPool is initialized once at server startup with Slack, Gmail, Glean, and Drive connections, and the Customer Project Tracker skill performs live sweeps of Gmail and Slack for the last 7 days, updates the actions table, and syncs to PA3_Action_Tracker.xlsx — the highest-value scheduled job is fully operational.
 **Depends on**: Phase 5
@@ -163,8 +186,8 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
-Phases 6 and 7 can overlap after Phase 5 is stable.
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 5.1 → 5.2 → 6 → 7 → 8
+Phases 5.1 and 5.2 can run in parallel. Phases 6 and 7 can overlap after Phase 5.2 is stable.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -173,6 +196,8 @@ Phases 6 and 7 can overlap after Phase 5 is stable.
 | 3. Write Surface + Plan Builder | 9/9 | Complete   | 2026-03-20 |
 | 4. Job Infrastructure | 5/5 | Complete   | 2026-03-20 |
 | 5. Skill Engine | 6/6 | Complete   | 2026-03-23 |
+| 5.1 Onboarding Dashboard [INSERTED] | 0/TBD | Not started | - |
+| 5.2 Time Tracking [INSERTED] | 0/TBD | Not started | - |
 | 6. MCP Integrations | 0/TBD | Not started | - |
 | 7. File Generation + Remaining Skills | 0/TBD | Not started | - |
 | 8. Cross-Project Features + Polish | 0/TBD | Not started | - |
@@ -254,6 +279,13 @@ Phases 6 and 7 can overlap after Phase 5 is stable.
 | SKILL-09 | Phase 7 |
 | PLAN-12 | Phase 7 |
 | PLAN-13 | Phase 7 |
+| OVER-01 | Phase 5.1 |
+| OVER-02 | Phase 5.1 |
+| OVER-03 | Phase 5.1 |
+| OVER-04 | Phase 5.1 |
+| TIME-01 | Phase 5.2 |
+| TIME-02 | Phase 5.2 |
+| TIME-03 | Phase 5.2 |
 | KB-01 | Phase 8 |
 | KB-02 | Phase 8 |
 | KB-03 | Phase 8 |
@@ -261,9 +293,9 @@ Phases 6 and 7 can overlap after Phase 5 is stable.
 | SRCH-02 | Phase 8 |
 | SRCH-03 | Phase 8 |
 
-**Total mapped: 75 requirements across 8 phases**
+**Total mapped: 82 requirements across 10 phases**
 
-> Note: REQUIREMENTS.md states 69 v1 requirements but the enumerated list counts 75 (DATA:8, DASH:9, WORK:9, SKILL:14, OUT:4, PLAN:13, KB:3, SRCH:3, SCHED:8, SET:4). All enumerated requirements are mapped. No orphans.
+> Added OVER-01–04 (Onboarding Dashboard, Phase 5.1) and TIME-01–03 (Time Tracking, Phase 5.2) on 2026-03-23. Total was 75; now 82.
 
 ---
 
