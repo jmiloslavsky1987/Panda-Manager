@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: None (phase complete)
 status: unknown
-stopped_at: "Completed 05.1-06-PLAN.md — E2E phase gate: 4/4 GREEN + human verification approved; Phase 5.1 COMPLETE"
-last_updated: "2026-03-23T20:34:17.390Z"
+stopped_at: Completed 05.1-08-PLAN.md — sticky header project summary (OVER-01); 2/2 tasks complete
+last_updated: "2026-03-23T20:57:53.931Z"
 progress:
   total_phases: 10
   completed_phases: 6
-  total_plans: 39
-  completed_plans: 39
+  total_plans: 41
+  completed_plans: 41
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** None (phase complete)
 **Last action:** Completed 05-06-PLAN.md — 13/13 E2E tests GREEN, all 8 human verification steps approved
 **Next action:** `/gsd:plan-phase 5.1` — Onboarding Dashboard (replaces Overview tab; new DB tables; YAML round-trip)
-**Stopped at:** Completed 05.1-06-PLAN.md — E2E phase gate: 4/4 GREEN + human verification approved; Phase 5.1 COMPLETE
+**Stopped at:** Completed 05.1-08-PLAN.md — sticky header project summary (OVER-01); 2/2 tasks complete
 
 ## Phase Progress
 
@@ -144,6 +144,10 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 - [Phase 05.1-05]: import-onboarding.ts uses existence-check (not onConflictDoNothing) for idempotency — no UNIQUE constraint on (project_id, name) in onboarding schema
 - [Phase 05.1-05]: yaml-export route imports lib/yaml-export from ../../../../../../lib/yaml-export (6 levels up) — @/ alias resolves to bigpanda-app/ not project root
 - [Phase 05.1-06]: All 4 OVER tests activated with no skips — assert-if-present pattern ensures CI-safety while exercising full flow when DB is seeded
+- [Phase 05.1-07]: StepOwnerField span→input transition requires click() before fill() — Playwright fill() requires input element, not span
+- [Phase 05.1-07]: yaml-export endpoint is /api/projects/[projectId]/yaml-export (not /api/yaml-export)
+- [Phase 05.1-08]: No RLS on GET /api/projects/[projectId] — projects table has no row-level security policies; simple SELECT by id correct
+- [Phase 05.1-08]: status_summary used as executive summary — no separate engagement_summary DB column exists; desired_outcomes deferred
 
 ## Performance Metrics
 
@@ -186,6 +190,8 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 | Phase 05.1-onboarding-dashboard P04 | 8 | 2 tasks | 3 files |
 | Phase 05.1-onboarding-dashboard P05 | 2min | 2 tasks | 3 files |
 | Phase 05.1-onboarding-dashboard P06 | 5min | 2 tasks | 1 files |
+| Phase 05.1-onboarding-dashboard P07 | 2min | 1 tasks | 1 files |
+| Phase 05.1-onboarding-dashboard P08 | 8min | 2 tasks | 2 files |
 
 ## Key Context for Next Session
 
