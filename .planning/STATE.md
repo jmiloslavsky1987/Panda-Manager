@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: None (phase complete)
 status: unknown
-stopped_at: "Completed 05.1-05-PLAN.md — YAML round-trip: import-onboarding.ts seed script + yaml-export POST route"
-last_updated: "2026-03-23T20:17:08.030Z"
+stopped_at: "Completed 05.1-06-PLAN.md — E2E phase gate: 4/4 GREEN + human verification approved; Phase 5.1 COMPLETE"
+last_updated: "2026-03-23T20:34:17.390Z"
 progress:
   total_phases: 10
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 39
-  completed_plans: 38
+  completed_plans: 39
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** None (phase complete)
 **Last action:** Completed 05-06-PLAN.md — 13/13 E2E tests GREEN, all 8 human verification steps approved
 **Next action:** `/gsd:plan-phase 5.1` — Onboarding Dashboard (replaces Overview tab; new DB tables; YAML round-trip)
-**Stopped at:** Completed 05.1-05-PLAN.md — YAML round-trip: import-onboarding.ts seed script + yaml-export POST route
+**Stopped at:** Completed 05.1-06-PLAN.md — E2E phase gate: 4/4 GREEN + human verification approved; Phase 5.1 COMPLETE
 
 ## Phase Progress
 
@@ -143,6 +143,7 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 - [Phase 05.1-04]: StepOwnerField extracted as sub-component to keep inline edit state local without prop-drilling
 - [Phase 05.1-05]: import-onboarding.ts uses existence-check (not onConflictDoNothing) for idempotency — no UNIQUE constraint on (project_id, name) in onboarding schema
 - [Phase 05.1-05]: yaml-export route imports lib/yaml-export from ../../../../../../lib/yaml-export (6 levels up) — @/ alias resolves to bigpanda-app/ not project root
+- [Phase 05.1-06]: All 4 OVER tests activated with no skips — assert-if-present pattern ensures CI-safety while exercising full flow when DB is seeded
 
 ## Performance Metrics
 
@@ -184,6 +185,7 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 | Phase 05.1-onboarding-dashboard P03 | 5min | 2 tasks | 4 files |
 | Phase 05.1-onboarding-dashboard P04 | 8 | 2 tasks | 3 files |
 | Phase 05.1-onboarding-dashboard P05 | 2min | 2 tasks | 3 files |
+| Phase 05.1-onboarding-dashboard P06 | 5min | 2 tasks | 1 files |
 
 ## Key Context for Next Session
 
