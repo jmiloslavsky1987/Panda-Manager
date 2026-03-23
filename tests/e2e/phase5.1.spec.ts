@@ -66,9 +66,10 @@ test.describe('Phase 5.1: Onboarding Dashboard', () => {
     if (phaseCount > 0) {
       // Locate first step owner field and update it
       const ownerField = page.locator('[data-testid="step-owner"]').first();
+      await ownerField.click();
       await ownerField.fill('Test Owner');
       // POST to yaml-export endpoint to verify YAML write-back
-      const res = await page.request.post('/api/yaml-export', {
+      const res = await page.request.post('/api/projects/1/yaml-export', {
         data: { projectId: 1 },
         timeout: 10000,
       });
