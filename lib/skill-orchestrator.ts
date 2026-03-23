@@ -24,12 +24,16 @@ export interface SkillRunParams {
 }
 
 export class SkillOrchestrator {
-  private client: Anthropic;
-
-  constructor() {
-    this.client = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
-    });
+  // Lazy client — created on first use so ANTHROPIC_API_KEY is read at call time,
+  // not at module load time (which happens before env-loader sets process.env).
+  private _client: Anthropic | null = null;
+  private get client(): Anthropic {
+    if (!this._client) {
+      this._client = new Anthropic({
+        apiKey: process.env.ANTHROPIC_API_KEY,
+      });
+    }
+    return this._client;
   }
 
   async run(params: SkillRunParams): Promise<void> {
