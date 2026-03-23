@@ -19,6 +19,7 @@ import {
   timestamp,
   boolean,
   pgEnum,
+  jsonb,
   type AnyPgColumn,
 } from 'drizzle-orm/pg-core';
 
@@ -325,3 +326,49 @@ export const drafts = pgTable('drafts', {
   created_at: timestamp('created_at').defaultNow().notNull(),
   updated_at: timestamp('updated_at').defaultNow().notNull(),
 });
+
+// ─── Phase 5.1: Onboarding Dashboard ─────────────────────────────────────────
+
+export const onboardingStepStatusEnum = pgEnum('onboarding_step_status', [
+  'not-started', 'in-progress', 'complete', 'blocked',
+])
+
+export const integrationStatusEnum = pgEnum('integration_status', [
+  'not-connected', 'configured', 'validated', 'production', 'blocked',
+])
+
+export const onboardingPhases = pgTable('onboarding_phases', {
+  id: serial('id').primaryKey(),
+  project_id: integer('project_id').notNull().references(() => projects.id),
+  name: text('name').notNull(),
+  display_order: integer('display_order').notNull().default(0),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+})
+
+export const onboardingSteps = pgTable('onboarding_steps', {
+  id: serial('id').primaryKey(),
+  phase_id: integer('phase_id').notNull().references(() => onboardingPhases.id),
+  project_id: integer('project_id').notNull().references(() => projects.id),
+  name: text('name').notNull(),
+  description: text('description'),
+  status: onboardingStepStatusEnum('status').default('not-started').notNull(),
+  owner: text('owner'),
+  dependencies: text('dependencies').array().default([]),
+  updates: jsonb('updates').default([]).notNull(),
+  display_order: integer('display_order').notNull().default(0),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+  updated_at: timestamp('updated_at').defaultNow().notNull(),
+})
+
+export const integrations = pgTable('integrations', {
+  id: serial('id').primaryKey(),
+  project_id: integer('project_id').notNull().references(() => projects.id),
+  tool: text('tool').notNull(),
+  category: text('category'),
+  status: integrationStatusEnum('status').default('not-connected').notNull(),
+  color: text('color'),
+  notes: text('notes'),
+  display_order: integer('display_order').notNull().default(0),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+  updated_at: timestamp('updated_at').defaultNow().notNull(),
+})
