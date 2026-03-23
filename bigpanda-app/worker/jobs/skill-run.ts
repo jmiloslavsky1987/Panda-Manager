@@ -8,9 +8,9 @@
 
 import type { Job } from 'bullmq';
 import path from 'path';
-import { sql } from 'drizzle-orm';
+import { sql, eq } from 'drizzle-orm';
 import db from '../../db';
-import { skillRuns } from '../../db/schema';
+import { skillRuns, outputs, drafts } from '../../db/schema';
 import { SkillOrchestrator } from '../../lib/skill-orchestrator';
 
 // Worker-context skills directory — anchored to this file's location, not cwd
@@ -39,6 +39,35 @@ export default async function skillRunJob(job: Job): Promise<{ status: string }>
     await db.update(skillRuns)
       .set({ status: 'completed', completed_at: new Date() })
       .where(sql`id = ${runId}`);
+
+    // Read full output for post-run side effects
+    const [completedRun] = await db.select().from(skillRuns).where(eq(skillRuns.id, runId));
+    const outputText = completedRun?.full_output ?? '';
+    const runUuid = completedRun?.run_id ?? '';
+
+    // Register in Output Library for all skills
+    if (outputText) {
+      await db.insert(outputs).values({
+        project_id: projectId,
+        skill_name: skillName,
+        idempotency_key: runUuid,
+        status: 'complete',
+        content: outputText,
+        completed_at: new Date(),
+      }).onConflictDoNothing();
+    }
+
+    // Write to Drafts Inbox for skills that produce email-style output
+    if (outputText && skillName === 'weekly-customer-status') {
+      await db.insert(drafts).values({
+        project_id: projectId,
+        run_id: runId,
+        draft_type: 'email',
+        subject: 'Weekly Customer Status',
+        content: outputText,
+        status: 'pending',
+      });
+    }
 
     return { status: 'completed' };
   } catch (err) {

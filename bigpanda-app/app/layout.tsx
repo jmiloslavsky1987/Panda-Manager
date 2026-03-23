@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Sidebar } from '../components/Sidebar';
+import { Toaster } from 'sonner';
 
 export const metadata: Metadata = {
   title: 'BigPanda PS',
@@ -23,6 +24,7 @@ export default function RootLayout({
         <main className="ml-60 flex-1 min-h-screen overflow-y-auto">
           {children}
         </main>
+        <Toaster position="bottom-right" richColors />
       </body>
     </html>
   );

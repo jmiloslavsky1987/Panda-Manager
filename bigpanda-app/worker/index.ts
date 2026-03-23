@@ -9,6 +9,9 @@
  * Import: settings-core (NOT lib/settings — has server-only marker)
  */
 
+// MUST be first import — loads .env.local before db/index.ts reads DATABASE_URL
+import './env-loader';
+
 import { Worker } from 'bullmq';
 import { createRedisConnection } from './connection';
 import { registerAllSchedulers } from './scheduler';

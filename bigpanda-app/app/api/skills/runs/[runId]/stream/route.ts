@@ -9,7 +9,7 @@ import { skillRuns, skillRunChunks } from '../../../../../../db/schema';
 import { eq, gt, and, asc } from 'drizzle-orm';
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ runId: string }> }
 ) {
   const { runId } = await params;
@@ -21,7 +21,12 @@ export async function GET(
     return new Response('Not found', { status: 404 });
   }
   const dbRunId = run.id;
-  let lastSeq = -1;
+
+  // Resume from Last-Event-ID on reconnect — prevents duplicate output on dropped connections.
+  // Browser sends the last `id:` value it received as the Last-Event-ID header automatically.
+  const lastEventId = req.headers.get('Last-Event-ID');
+  let lastSeq = lastEventId ? parseInt(lastEventId, 10) : -1;
+  if (isNaN(lastSeq)) lastSeq = -1;
 
   const stream = new ReadableStream({
     start(controller) {
@@ -43,12 +48,13 @@ export async function GET(
             for (const chunk of chunks) {
               lastSeq = chunk.seq;
               if (chunk.chunk === '__DONE__') {
-                controller.enqueue(encoder.encode('event: done\ndata: {}\n\n'));
+                controller.enqueue(encoder.encode(`id: ${chunk.seq}\nevent: done\ndata: {}\n\n`));
                 controller.close();
                 return;
               }
+              // id: field enables browser Last-Event-ID tracking for reconnect resume
               controller.enqueue(
-                encoder.encode(`data: ${JSON.stringify({ text: chunk.chunk })}\n\n`)
+                encoder.encode(`id: ${chunk.seq}\ndata: ${JSON.stringify({ text: chunk.chunk })}\n\n`)
               );
             }
 

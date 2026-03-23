@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: App Shell + Read Surface** - Next.js scaffold, Dashboard, all 9 workspace tabs (read-only), RSC data loading (completed 2026-03-19)
 - [x] **Phase 3: Write Surface + Plan Builder** - Inline CRUD on all workspace tabs, PA3 xlsx dual-write, Project Plan & Task Builder (completed 2026-03-20)
 - [x] **Phase 4: Job Infrastructure** - BullMQ worker process, JobService, Redis, cron schedule registration, job status UI (completed 2026-03-20)
-- [ ] **Phase 5: Skill Engine** - SkillOrchestrator, token budget guard, SSE streaming, Drafts Inbox, Output Library, first 5 skills wired
+- [x] **Phase 5: Skill Engine** - SkillOrchestrator, token budget guard, SSE streaming, Drafts Inbox, Output Library, first 5 skills wired (completed 2026-03-23)
 - [ ] **Phase 6: MCP Integrations** - MCPClientPool, Slack/Gmail/Glean/Drive connections, Customer Project Tracker fully wired
 - [ ] **Phase 7: File Generation + Remaining Skills** - FileGenerationService (.docx/.pptx/.xlsx/.html), 11 remaining skills wired
 - [ ] **Phase 8: Cross-Project Features + Polish** - FTS, risk heat map, cross-account watch list, Knowledge Base, Drafts send/discard flow
@@ -119,12 +119,12 @@ Plans:
 **Plans**: 6 plans
 
 Plans:
-- [ ] 05-01-PLAN.md — Wave 0: SDK install + DB schema (skill_runs, skill_run_chunks, drafts) + migration SQL + SKILL.md stubs + E2E stubs
-- [ ] 05-02-PLAN.md — Wave 1: SkillOrchestrator + skill-context assembler + BullMQ skill-run handler + dispatch map
-- [ ] 05-03-PLAN.md — Wave 2: Skills tab UI (11th tab) + skill run page (SSE) + trigger API + SSE stream API
-- [ ] 05-04-PLAN.md — Wave 2: Drafts Inbox on Dashboard + Output Library page + outputs API + sidebar link (parallel with 05-03)
-- [ ] 05-05-PLAN.md — Wave 3: Wire 5 skill handlers + getSkillRuns query + getLatestMorningBriefing query
-- [ ] 05-06-PLAN.md — Wave 4: E2E green pass + human verification checkpoint
+- [x] 05-01-PLAN.md — Wave 0: SDK install + DB schema (skill_runs, skill_run_chunks, drafts) + migration SQL + SKILL.md stubs + E2E stubs
+- [x] 05-02-PLAN.md — Wave 1: SkillOrchestrator + skill-context assembler + BullMQ skill-run handler + dispatch map
+- [x] 05-03-PLAN.md — Wave 2: Skills tab UI (11th tab) + skill run page (SSE) + trigger API + SSE stream API
+- [x] 05-04-PLAN.md — Wave 2: Drafts Inbox on Dashboard + Output Library page + outputs API + sidebar link (parallel with 05-03)
+- [x] 05-05-PLAN.md — Wave 3: Wire 5 skill handlers + getSkillRuns query + getLatestMorningBriefing query
+- [x] 05-06-PLAN.md — Wave 4: E2E green pass + human verification checkpoint
 
 ### Phase 6: MCP Integrations
 **Goal**: MCPClientPool is initialized once at server startup with Slack, Gmail, Glean, and Drive connections, and the Customer Project Tracker skill performs live sweeps of Gmail and Slack for the last 7 days, updates the actions table, and syncs to PA3_Action_Tracker.xlsx — the highest-value scheduled job is fully operational.
@@ -172,7 +172,7 @@ Phases 6 and 7 can overlap after Phase 5 is stable.
 | 2. App Shell + Read Surface | 7/7 | Complete   | 2026-03-19 |
 | 3. Write Surface + Plan Builder | 9/9 | Complete   | 2026-03-20 |
 | 4. Job Infrastructure | 5/5 | Complete   | 2026-03-20 |
-| 5. Skill Engine | 5/6 | In Progress|  |
+| 5. Skill Engine | 6/6 | Complete   | 2026-03-23 |
 | 6. MCP Integrations | 0/TBD | Not started | - |
 | 7. File Generation + Remaining Skills | 0/TBD | Not started | - |
 | 8. Cross-Project Features + Polish | 0/TBD | Not started | - |

@@ -3,11 +3,15 @@
 // Skill run detail page — checks run status before subscribing to SSE.
 // If run is already completed, shows full_output without re-triggering.
 // Uses native EventSource for real-time streaming.
+// On SSE 'done', re-fetches full_output from DB to avoid client-side accumulation bugs.
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import ReactMarkdown from 'react-markdown';
 
 type RunStatus = 'loading' | 'streaming' | 'done' | 'failed';
+
+type RunResponse = { status?: string; skill_name?: string; full_output?: string; error_message?: string };
 
 export default function SkillRunPage() {
   const params = useParams();
@@ -22,7 +26,7 @@ export default function SkillRunPage() {
     // Check if run already complete — prevents duplicate SSE subscription on page return
     fetch(`/api/skills/runs/${runId}`)
       .then(r => r.json())
-      .then((run: { status?: string; skill_name?: string; full_output?: string; error_message?: string }) => {
+      .then((run: RunResponse) => {
         setSkillName(run.skill_name ?? '');
 
         if (run.status === 'completed') {
@@ -47,9 +51,17 @@ export default function SkillRunPage() {
           setStatus('streaming');
         };
 
+        // On done: re-fetch full_output from DB — authoritative source, eliminates
+        // any client-side accumulation bugs from SSE reconnects.
         es.addEventListener('done', () => {
-          setStatus('done');
           es.close();
+          fetch(`/api/skills/runs/${runId}`)
+            .then(r => r.json())
+            .then((completed: RunResponse) => {
+              setOutput(completed.full_output ?? '');
+              setStatus('done');
+            })
+            .catch(() => setStatus('done')); // keep streaming output on fetch failure
         });
 
         es.onerror = () => {
@@ -103,9 +115,24 @@ export default function SkillRunPage() {
       {/* Output area */}
       <div
         data-testid="skill-output"
-        className="bg-zinc-50 border border-zinc-200 rounded-lg p-4 font-mono text-sm whitespace-pre-wrap min-h-32"
+        className="bg-white border border-zinc-200 rounded-lg p-6 min-h-32"
       >
-        {output || (status === 'loading' ? 'Loading output...' : '')}
+        {status === 'loading' && (
+          <p className="text-zinc-400 text-sm">Loading output...</p>
+        )}
+        {status === 'streaming' && !output && (
+          <p className="text-zinc-400 text-sm">Waiting for output...</p>
+        )}
+        {status === 'streaming' && output && (
+          // During streaming show raw text — markdown rendering on every keystroke is expensive
+          <pre className="font-mono text-sm whitespace-pre-wrap text-zinc-800">{output}</pre>
+        )}
+        {(status === 'done' || status === 'failed') && output && (
+          // Completed: render markdown
+          <div className="prose prose-zinc prose-sm max-w-none">
+            <ReactMarkdown>{output}</ReactMarkdown>
+          </div>
+        )}
       </div>
 
       {/* Streaming hint */}
