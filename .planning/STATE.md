@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: None (phase complete)
 status: unknown
-stopped_at: Completed 05.1-01-PLAN.md — Wave 0 RED baseline E2E stubs for OVER-01 through OVER-04
-last_updated: "2026-03-23T20:08:16.092Z"
+stopped_at: Completed 05.1-02-PLAN.md — schema + migration for onboarding dashboard
+last_updated: "2026-03-23T20:08:23.338Z"
 progress:
   total_phases: 10
   completed_phases: 5
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** None (phase complete)
 **Last action:** Completed 05-06-PLAN.md — 13/13 E2E tests GREEN, all 8 human verification steps approved
 **Next action:** `/gsd:plan-phase 5.1` — Onboarding Dashboard (replaces Overview tab; new DB tables; YAML round-trip)
-**Stopped at:** Completed 05.1-01-PLAN.md — Wave 0 RED baseline E2E stubs for OVER-01 through OVER-04
+**Stopped at:** Completed 05.1-02-PLAN.md — schema + migration for onboarding dashboard
 
 ## Phase Progress
 
@@ -134,6 +134,8 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 - [Phase 05-06]: assert-if-present pattern for Redis/Anthropic-dependent E2E tests — structural UI assertions always pass, live-call assertions skip gracefully when infra unavailable
 - [Phase 05.1-01]: Wave 0 stub assertion placed as FIRST line in each test — visibly RED without server running (consistent with 02-01 and 03-01 pattern)
 - [Phase 05.1-01]: Requirement IDs in test names (OVER-01 etc.) — implementation plans use --grep to target specific tests
+- [Phase 05.1-02]: jsonb added to existing drizzle-orm/pg-core import — no second import block
+- [Phase 05.1-02]: Enum values use hyphens (not-started, in-progress) matching reference HTML data-status attributes per CONTEXT.md
 
 ## Performance Metrics
 
