@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: None (phase complete)
 status: unknown
-stopped_at: Completed 05.1-03-PLAN.md — 4 API routes for onboarding phases/steps and integrations
-last_updated: "2026-03-23T20:11:28.896Z"
+stopped_at: Completed 05.1-04-PLAN.md — OnboardingDashboard component + thin RSC overview shell
+last_updated: "2026-03-23T20:13:02.199Z"
 progress:
   total_phases: 10
   completed_phases: 5
   total_plans: 39
-  completed_plans: 36
+  completed_plans: 37
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** None (phase complete)
 **Last action:** Completed 05-06-PLAN.md — 13/13 E2E tests GREEN, all 8 human verification steps approved
 **Next action:** `/gsd:plan-phase 5.1` — Onboarding Dashboard (replaces Overview tab; new DB tables; YAML round-trip)
-**Stopped at:** Completed 05.1-03-PLAN.md — 4 API routes for onboarding phases/steps and integrations
+**Stopped at:** Completed 05.1-04-PLAN.md — OnboardingDashboard component + thin RSC overview shell
 
 ## Phase Progress
 
@@ -138,6 +138,9 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 - [Phase 05.1-02]: Enum values use hyphens (not-started, in-progress) matching reference HTML data-status attributes per CONTEXT.md
 - [Phase 05.1-03]: JSONB append uses sql template tag pattern to preserve existing array entries; plain .set() would overwrite
 - [Phase 05.1-03]: All routes use @/db alias imports — consistent with must_haves constraint and avoids deep relative path issues
+- [Phase 05.1-04]: useRef omitted — sticky header is pure CSS; no programmatic scroll management needed
+- [Phase 05.1-04]: Risks/milestones fetch falls back to empty array on 404 — no GET routes added (out of scope per plan)
+- [Phase 05.1-04]: StepOwnerField extracted as sub-component to keep inline edit state local without prop-drilling
 
 ## Performance Metrics
 
@@ -177,6 +180,7 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 | Phase 05.1-onboarding-dashboard P01 | 3min | 1 tasks | 1 files |
 | Phase 05.1-onboarding-dashboard P02 | 1min | 2 tasks | 2 files |
 | Phase 05.1-onboarding-dashboard P03 | 5min | 2 tasks | 4 files |
+| Phase 05.1-onboarding-dashboard P04 | 8 | 2 tasks | 3 files |
 
 ## Key Context for Next Session
 

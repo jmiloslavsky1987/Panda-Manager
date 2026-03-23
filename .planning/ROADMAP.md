@@ -204,7 +204,7 @@ Phases 5.1 and 5.2 can run in parallel. Phases 6 and 7 can overlap after Phase 5
 | 3. Write Surface + Plan Builder | 9/9 | Complete   | 2026-03-20 |
 | 4. Job Infrastructure | 5/5 | Complete   | 2026-03-20 |
 | 5. Skill Engine | 6/6 | Complete   | 2026-03-23 |
-| 5.1 Onboarding Dashboard [INSERTED] | 3/6 | In Progress|  |
+| 5.1 Onboarding Dashboard [INSERTED] | 4/6 | In Progress|  |
 | 5.2 Time Tracking [INSERTED] | 0/TBD | Not started | - |
 | 6. MCP Integrations | 0/TBD | Not started | - |
 | 7. File Generation + Remaining Skills | 0/TBD | Not started | - |
