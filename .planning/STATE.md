@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_plan: Not started
-status: phase_complete
-stopped_at: Completed 05-06-PLAN.md — E2E 13/13 GREEN + human verification approved
-last_updated: "2026-03-23T11:30:00.000Z"
+current_plan: None (phase complete)
+status: unknown
+stopped_at: Completed 05.1-01-PLAN.md — Wave 0 RED baseline E2E stubs for OVER-01 through OVER-04
+last_updated: "2026-03-23T20:08:16.092Z"
 progress:
-  total_phases: 8
+  total_phases: 10
   completed_phases: 5
-  total_plans: 34
-  completed_plans: 34
+  total_plans: 39
+  completed_plans: 35
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** None (phase complete)
 **Last action:** Completed 05-06-PLAN.md — 13/13 E2E tests GREEN, all 8 human verification steps approved
 **Next action:** `/gsd:plan-phase 5.1` — Onboarding Dashboard (replaces Overview tab; new DB tables; YAML round-trip)
-**Stopped at:** Phase 5 complete — 6/6 plans done
+**Stopped at:** Completed 05.1-01-PLAN.md — Wave 0 RED baseline E2E stubs for OVER-01 through OVER-04
 
 ## Phase Progress
 
@@ -132,6 +132,8 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 - [Phase 05-05]: Weekly Customer Status inserts into drafts table (draft_type='email') after orchestrator completion for Drafts Inbox review
 - [Phase 05-06]: skill-run.ts generic handler now writes to outputs (all skills) and drafts (weekly-customer-status) after orchestrator completes — on-demand runs now match scheduled handler behavior
 - [Phase 05-06]: assert-if-present pattern for Redis/Anthropic-dependent E2E tests — structural UI assertions always pass, live-call assertions skip gracefully when infra unavailable
+- [Phase 05.1-01]: Wave 0 stub assertion placed as FIRST line in each test — visibly RED without server running (consistent with 02-01 and 03-01 pattern)
+- [Phase 05.1-01]: Requirement IDs in test names (OVER-01 etc.) — implementation plans use --grep to target specific tests
 
 ## Performance Metrics
 
@@ -168,6 +170,8 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 | Phase 05-skill-engine P04 | 3min | 2 tasks | 11 files |
 | Phase 05-skill-engine P03 | 4min | 2 tasks | 7 files |
 | Phase 05-skill-engine P05 | 2min | 1 tasks | 8 files |
+| Phase 05.1-onboarding-dashboard P01 | 3min | 1 tasks | 1 files |
+| Phase 05.1-onboarding-dashboard P02 | 1min | 2 tasks | 2 files |
 
 ## Key Context for Next Session
 

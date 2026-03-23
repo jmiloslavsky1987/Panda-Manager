@@ -42,10 +42,10 @@
 
 ### Onboarding Dashboard
 
-- [ ] **OVER-01**: Overview tab replaced with a dynamic onboarding status dashboard — shows onboarding phases/steps with filter/search controls, integration tracker, risks & blockers, milestone timeline, executive summary, and animated progress ring (% of steps complete); all data drawn live from PostgreSQL
-- [ ] **OVER-02**: Onboarding phases and steps editable in-app — step status (not-started / in-progress / complete / blocked), owner, and append-only update notes per step; phases themselves are static labels (not added/deleted frequently)
-- [ ] **OVER-03**: Integration tracker — per-customer list of tools with 4-stage pipeline (Not Connected → Configured → Validated → Production) plus blocked state; tool name, category, status, and notes editable in-app
-- [ ] **OVER-04**: `onboarding_phases` and `integrations` YAML sections imported by migration script when present in context doc; in-app status/owner/notes edits written back to the project YAML context doc on save
+- [x] **OVER-01**: Overview tab replaced with a dynamic onboarding status dashboard — shows onboarding phases/steps with filter/search controls, integration tracker, risks & blockers, milestone timeline, executive summary, and animated progress ring (% of steps complete); all data drawn live from PostgreSQL
+- [x] **OVER-02**: Onboarding phases and steps editable in-app — step status (not-started / in-progress / complete / blocked), owner, and append-only update notes per step; phases themselves are static labels (not added/deleted frequently)
+- [x] **OVER-03**: Integration tracker — per-customer list of tools with 4-stage pipeline (Not Connected → Configured → Validated → Production) plus blocked state; tool name, category, status, and notes editable in-app
+- [x] **OVER-04**: `onboarding_phases` and `integrations` YAML sections imported by migration script when present in context doc; in-app status/owner/notes edits written back to the project YAML context doc on save
 
 ### Time Tracking
 
@@ -217,10 +217,10 @@
 | OUT-02 | Phase 5 | Complete |
 | OUT-03 | Phase 5 | Complete |
 | OUT-04 | Phase 5 | Complete |
-| OVER-01 | Phase 5.1 | Pending |
-| OVER-02 | Phase 5.1 | Pending |
-| OVER-03 | Phase 5.1 | Pending |
-| OVER-04 | Phase 5.1 | Pending |
+| OVER-01 | Phase 5.1 | Complete |
+| OVER-02 | Phase 5.1 | Complete |
+| OVER-03 | Phase 5.1 | Complete |
+| OVER-04 | Phase 5.1 | Complete |
 | TIME-01 | Phase 5.2 | Pending |
 | TIME-02 | Phase 5.2 | Pending |
 | TIME-03 | Phase 5.2 | Pending |
