@@ -49,6 +49,14 @@ interface Milestone {
   status: string | null
 }
 
+interface ProjectSummary {
+  id: number
+  name: string
+  customer: string
+  status_summary: string | null
+  go_live_target: string | null
+}
+
 interface OnboardingDashboardProps {
   projectId: number
 }
@@ -198,6 +206,7 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
   const [integrations, setIntegrations] = useState<Integration[]>([])
   const [risks, setRisks] = useState<Risk[]>([])
   const [milestones, setMilestones] = useState<Milestone[]>([])
+  const [projectSummary, setProjectSummary] = useState<ProjectSummary | null>(null)
   const [loading, setLoading] = useState(true)
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
@@ -213,8 +222,9 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
       fetch(`/api/projects/${projectId}/milestones`).then((r) =>
         r.ok ? r.json() : { milestones: [] }
       ),
+      fetch(`/api/projects/${projectId}`).then((r) => (r.ok ? r.json() : { project: null })),
     ])
-      .then(([ob, ig, rk, ml]) => {
+      .then(([ob, ig, rk, ml, ps]) => {
         const fetchedPhases: PhaseWithSteps[] = ob.phases ?? []
         const fetchedIntegrations: Integration[] = ig.integrations ?? []
         const fetchedRisks: Risk[] = rk.risks ?? rk ?? []
@@ -224,6 +234,7 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
         setIntegrations(fetchedIntegrations)
         setRisks(Array.isArray(fetchedRisks) ? fetchedRisks : [])
         setMilestones(Array.isArray(fetchedMilestones) ? fetchedMilestones : [])
+        setProjectSummary(ps.project ?? null)
 
         // Default: collapse complete phases
         const collapseMap: Record<number, boolean> = {}
@@ -349,11 +360,23 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
         ) : (
           <>
             <ProgressRing pct={pct} />
-            <div>
-              <p className="text-sm font-semibold text-zinc-900">
+            <div data-testid="project-summary" className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-zinc-900 truncate">
+                {projectSummary?.customer ?? 'Loading…'}
+              </p>
+              <p className="text-xs text-zinc-500">
                 {completedSteps} of {totalSteps} steps complete
               </p>
-              <p className="text-xs text-zinc-500">Onboarding progress</p>
+              {projectSummary?.status_summary && (
+                <p className="text-xs text-zinc-500 line-clamp-2 mt-0.5">
+                  {projectSummary.status_summary}
+                </p>
+              )}
+              {projectSummary?.go_live_target && (
+                <span className="inline-block mt-1 text-[10px] bg-zinc-100 text-zinc-600 rounded px-1.5 py-0.5">
+                  Go-Live: {projectSummary.go_live_target}
+                </span>
+              )}
             </div>
           </>
         )}
