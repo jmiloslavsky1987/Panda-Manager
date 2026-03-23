@@ -19,7 +19,6 @@ import { test, expect } from '@playwright/test';
 test.describe('Phase 5.1: Onboarding Dashboard', () => {
 
   test('OVER-01: Overview tab shows onboarding dashboard with progress ring and integration tracker', async ({ page }) => {
-    expect(false, 'stub: OVER-01 not yet implemented').toBe(true);
     await page.goto('/customer/1/overview');
     // Structural: always passes once implemented
     await expect(page.locator('[data-testid="onboarding-dashboard"]')).toBeVisible();
@@ -33,7 +32,6 @@ test.describe('Phase 5.1: Onboarding Dashboard', () => {
   });
 
   test('OVER-02: Step status badge is clickable and reflects updated status; notes field present', async ({ page }) => {
-    expect(false, 'stub: OVER-02 not yet implemented').toBe(true);
     await page.goto('/customer/1/overview');
     // Assert-if-present: DB-dependent — only test interaction when phase cards exist
     const phaseCount = await page.locator('[data-testid="phase-card"]').count();
@@ -50,7 +48,6 @@ test.describe('Phase 5.1: Onboarding Dashboard', () => {
   });
 
   test('OVER-03: Integration tracker visible; integration cards show pipeline bar and notes', async ({ page }) => {
-    expect(false, 'stub: OVER-03 not yet implemented').toBe(true);
     await page.goto('/customer/1/overview');
     // Structural: integration tracker always visible once implemented
     await expect(page.locator('[data-testid="integration-tracker"]')).toBeVisible();
