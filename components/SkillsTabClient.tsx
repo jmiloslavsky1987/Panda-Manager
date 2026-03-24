@@ -13,6 +13,12 @@ const WIRED_SKILLS = new Set([
   'morning-briefing',
   'context-updater',
   'handoff-doc-generator',
+  'customer-project-tracker',
+  'elt-external-status',       // Phase 7
+  'elt-internal-status',       // Phase 7
+  'team-engagement-map',       // Phase 7
+  'workflow-diagram',          // Phase 7
+  // DO NOT add 'biggy-weekly-briefing' — remains grayed out per locked decision
 ]);
 
 // Skills requiring user-provided input before running
