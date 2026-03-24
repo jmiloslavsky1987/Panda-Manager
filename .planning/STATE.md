@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: Completed 06-mcp-integrations-06-02-PLAN.md (DASH-04 + DASH-05)
-last_updated: "2026-03-24T18:17:17.827Z"
+stopped_at: Completed 06-mcp-integrations-06-03-PLAN.md (MCPServerConfig + MCPClientPool)
+last_updated: "2026-03-24T18:33:44.830Z"
 progress:
   total_phases: 10
   completed_phases: 7
   total_plans: 53
-  completed_plans: 48
+  completed_plans: 49
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 05-06-PLAN.md — 13/13 E2E tests GREEN, all 8 human verification steps approved
 **Next action:** `/gsd:plan-phase 5.1` — Onboarding Dashboard (replaces Overview tab; new DB tables; YAML round-trip)
-**Stopped at:** Completed 06-mcp-integrations-06-02-PLAN.md (DASH-04 + DASH-05)
+**Stopped at:** Completed 06-mcp-integrations-06-03-PLAN.md (MCPServerConfig + MCPClientPool)
 
 ## Phase Progress
 
@@ -164,6 +164,8 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 - [Phase 06-mcp-integrations]: Unit test stubs use node:test assert.fail() — plans 06-03 and 06-05 activate by removing assert.fail() and adding real test bodies
 - [Phase 06-mcp-integrations]: RiskHeatMap groups statuses dynamically from query results (not hardcoded) to handle inconsistent status casing in real data
 - [Phase 06-mcp-integrations]: WatchList includes IS NULL OR != 'resolved' for status filter since risks.status is nullable TEXT
+- [Phase 06-mcp-integrations]: getServersForSkill accepts optional settingsPath param for testability without mocking the module
+- [Phase 06-mcp-integrations]: mcp-config.ts imports from settings-core (not settings.ts) — worker processes cannot import server-only modules
 
 ## Performance Metrics
 
@@ -213,6 +215,7 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 | Phase 05.2-time-tracking P04 | 5min | 2 tasks | 4 files |
 | Phase 06-mcp-integrations P01 | 5min | 2 tasks | 3 files |
 | Phase 06-mcp-integrations P02 | 227 | 2 tasks | 6 files |
+| Phase 06-mcp-integrations P03 | 12 | 2 tasks | 4 files |
 
 ## Key Context for Next Session
 
