@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: Completed 05.2-04-PLAN.md — Time tab registered, RSC page shell, TimeTab + TimeEntryModal UI; 2/2 tasks complete
-last_updated: "2026-03-24T16:57:31.511Z"
+stopped_at: "Completed 06-01-PLAN.md — Wave 0 RED stubs: 4 E2E + 4 unit test stubs, all RED; 2/2 tasks complete"
+last_updated: "2026-03-24T18:06:37.717Z"
 progress:
   total_phases: 10
   completed_phases: 7
-  total_plans: 46
-  completed_plans: 46
+  total_plans: 53
+  completed_plans: 47
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 05-06-PLAN.md — 13/13 E2E tests GREEN, all 8 human verification steps approved
 **Next action:** `/gsd:plan-phase 5.1` — Onboarding Dashboard (replaces Overview tab; new DB tables; YAML round-trip)
-**Stopped at:** Completed 05.2-04-PLAN.md — Time tab registered, RSC page shell, TimeTab + TimeEntryModal UI; 2/2 tasks complete
+**Stopped at:** Completed 06-01-PLAN.md — Wave 0 RED stubs: 4 E2E + 4 unit test stubs, all RED; 2/2 tasks complete
 
 ## Phase Progress
 
@@ -160,6 +160,8 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 - [Phase 05.2-04]: Inline add form above table (not modal) — TimeEntryModal used for EDIT only; avoids modal-within-table nesting issues
 - [Phase 05.2-04]: refreshCount state pattern triggers re-fetch after mutations without router.refresh() in client components
 - [Phase 05.2-04]: fromDate/toDate sent as query params — server-side filter; no redundant client-side filtering
+- [Phase 06-mcp-integrations]: Wave 0 stub pattern consistent with all prior phases: expect(false, 'stub').toBe(true) as first line — visibly RED without server running
+- [Phase 06-mcp-integrations]: Unit test stubs use node:test assert.fail() — plans 06-03 and 06-05 activate by removing assert.fail() and adding real test bodies
 
 ## Performance Metrics
 
@@ -207,6 +209,7 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 | Phase 05.2-time-tracking P01 | 3min | 1 tasks | 1 files |
 | Phase 05.2-time-tracking P02 | 2min | 2 tasks | 2 files |
 | Phase 05.2-time-tracking P04 | 5min | 2 tasks | 4 files |
+| Phase 06-mcp-integrations P01 | 5min | 2 tasks | 3 files |
 
 ## Key Context for Next Session
 
