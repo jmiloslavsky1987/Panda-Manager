@@ -13,6 +13,14 @@ type RunStatus = 'loading' | 'streaming' | 'done' | 'failed';
 
 type RunResponse = { status?: string; skill_name?: string; full_output?: string; error_message?: string };
 
+type OutputRow = { id: number; filepath: string | null };
+
+function getAppLabel(skillName: string): string {
+  if (skillName === 'elt-external-status' || skillName === 'elt-internal-status') return 'PowerPoint';
+  if (skillName === 'team-engagement-map' || skillName === 'workflow-diagram') return 'Browser';
+  return 'Finder';
+}
+
 export default function SkillRunPage() {
   const params = useParams();
   const runId = params.runId as string;
@@ -20,7 +28,23 @@ export default function SkillRunPage() {
   const [output, setOutput] = useState('');
   const [status, setStatus] = useState<RunStatus>('loading');
   const [skillName, setSkillName] = useState('');
+  const [outputId, setOutputId] = useState<number | null>(null);
+  const [outputFilepath, setOutputFilepath] = useState<string | null>(null);
   const esRef = useRef<EventSource | null>(null);
+
+  // Fetch the corresponding outputs row for this run to surface the "Open in app" button
+  function fetchOutputRow(skill: string) {
+    fetch(`/api/outputs?projectId=${projectId}&skillType=${encodeURIComponent(skill)}`)
+      .then(r => r.json())
+      .then((rows: OutputRow[]) => {
+        const row = rows.find(r => r.filepath);
+        if (row) {
+          setOutputId(row.id);
+          setOutputFilepath(row.filepath);
+        }
+      })
+      .catch(() => { /* output row unavailable — button stays hidden */ });
+  }
 
   useEffect(() => {
     // Check if run already complete — prevents duplicate SSE subscription on page return
@@ -32,6 +56,7 @@ export default function SkillRunPage() {
         if (run.status === 'completed') {
           setOutput(run.full_output ?? '');
           setStatus('done');
+          fetchOutputRow(run.skill_name ?? '');
           return;
         }
 
@@ -60,6 +85,7 @@ export default function SkillRunPage() {
             .then((completed: RunResponse) => {
               setOutput(completed.full_output ?? '');
               setStatus('done');
+              fetchOutputRow(completed.skill_name ?? skillName);
             })
             .catch(() => setStatus('done')); // keep streaming output on fetch failure
         });
@@ -140,6 +166,17 @@ export default function SkillRunPage() {
         <p className="mt-2 text-xs text-zinc-400">
           Output is streaming in real-time. You can navigate away — the run continues in the background.
         </p>
+      )}
+
+      {/* Open in app button — shown when run is done and a file artifact was produced */}
+      {status === 'done' && outputFilepath && outputId && (
+        <button
+          onClick={() => fetch(`/api/outputs/${outputId}/open`)}
+          className="mt-4 px-4 py-2 text-sm bg-zinc-900 text-white rounded hover:bg-zinc-700"
+          data-testid="open-in-app-btn"
+        >
+          Open in {getAppLabel(skillName)}
+        </button>
       )}
     </div>
   );
