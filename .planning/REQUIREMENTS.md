@@ -21,8 +21,8 @@
 - [x] **DASH-01**: Today's Briefing panel displays stored morning-briefing result; refreshable on demand
 - [x] **DASH-02**: Project Health cards for all active accounts showing auto-derived RAG status, one-line summary, and open high-priority action count
 - [x] **DASH-03**: Health score auto-derived from data signals: overdue actions, stalled milestones (no progress in 14+ days), and unresolved high-severity risks — no manual RAG entry required
-- [ ] **DASH-04**: Cross-project Risk Heat Map (probability × impact matrix) across all active accounts visible on dashboard
-- [ ] **DASH-05**: Cross-Account Watch List showing escalated or time-sensitive items spanning multiple customers
+- [x] **DASH-04**: Cross-project Risk Heat Map (probability × impact matrix) across all active accounts visible on dashboard
+- [x] **DASH-05**: Cross-Account Watch List showing escalated or time-sensitive items spanning multiple customers
 - [x] **DASH-06**: Recent Activity Feed showing last 7 days of skill runs, file outputs, and history entries across all projects
 - [x] **DASH-07**: Quick Action Bar with one-click buttons: Run Tracker, Generate Briefing, Weekly Status Draft (per active account)
 - [x] **DASH-08**: In-app notification badge for overdue actions, approaching go-live dates (within 14 days), and new tracker results
@@ -49,9 +49,9 @@
 
 ### Time Tracking
 
-- [ ] **TIME-01**: Time tab (12th workspace tab) — time log for the project showing entries table (date, hours, description), total hours in header, filterable by date range
-- [ ] **TIME-02**: Add, edit, and delete time entries — entry fields: date (defaults to today), hours (decimal, e.g. 1.5), free-text description
-- [ ] **TIME-03**: Export time entries for a project as CSV with columns: date, hours, description, project name
+- [x] **TIME-01**: Time tab (12th workspace tab) — time log for the project showing entries table (date, hours, description), total hours in header, filterable by date range
+- [x] **TIME-02**: Add, edit, and delete time entries — entry fields: date (defaults to today), hours (decimal, e.g. 1.5), free-text description
+- [x] **TIME-03**: Export time entries for a project as CSV with columns: date, hours, description, project name
 
 ### Skill Launcher
 
@@ -59,12 +59,12 @@
 - [x] **SKILL-02**: Token budget guard in context assembly — estimates token count before Claude call, truncates or summarizes low-priority context sections if over budget
 - [x] **SKILL-03**: Weekly Customer Status — select account → generate customer-facing email from DB context; copy to clipboard or save as file; optionally creates Gmail draft
 - [x] **SKILL-04**: Meeting Summary — paste notes/transcript + select account → generate .docx + optional .mermaid diagram; registers entry in engagement history
-- [ ] **SKILL-05**: ELT External Status — select account + month → generate 5-slide .pptx (confidence-framed, partnership tone, no internal severity language)
-- [ ] **SKILL-06**: ELT Internal Status — select account + date → generate internal .pptx (direct tone, surfaces blockers)
-- [ ] **SKILL-07**: Team Engagement Map — select account → generate self-contained HTML (business outcomes, ADR/Biggy flows, team status table)
-- [ ] **SKILL-08**: Workflow Diagram — select account → generate before/after HTML with two tabs
+- [x] **SKILL-05**: ELT External Status — select account + month → generate 5-slide .pptx (confidence-framed, partnership tone, no internal severity language)
+- [x] **SKILL-06**: ELT Internal Status — select account + date → generate internal .pptx (direct tone, surfaces blockers)
+- [x] **SKILL-07**: Team Engagement Map — select account → generate self-contained HTML (business outcomes, ADR/Biggy flows, team status table)
+- [x] **SKILL-08**: Workflow Diagram — select account → generate before/after HTML with two tabs
 - [ ] **SKILL-09**: Biggy Weekly Briefing — select modules → generate .docx + email draft + Slack draft (three outputs in one run)
-- [ ] **SKILL-10**: Customer Project Tracker — run for one account or all active; sweeps Gmail/Slack/Gong for last 7 days; updates actions table and PA3_Action_Tracker.xlsx; shows structured report
+- [x] **SKILL-10**: Customer Project Tracker — run for one account or all active; sweeps Gmail/Slack/Gong for last 7 days; updates actions table and PA3_Action_Tracker.xlsx; shows structured report
 - [x] **SKILL-11**: Morning Briefing — fetch today's calendar via Glean, synthesize per-meeting context, store result in DB, display in Dashboard Briefing panel
 - [x] **SKILL-12**: Context Updater — paste notes/transcript + select account → apply all 14 update steps → write to DB → export updated context doc to file; registers in engagement history
 - [x] **SKILL-13**: Handoff Doc Generator — select account → generate structured handoff/coverage doc covering open actions, risks, key decisions, key contacts, and current workstream status
@@ -90,8 +90,8 @@
 - [x] **PLAN-09**: Progress rollup — task completion → workstream percent_complete → project health score automatically
 - [x] **PLAN-10**: Excel plan import from .xlsx (KAISER_Biggy_Project_Plan format) mapping columns to task schema
 - [x] **PLAN-11**: Plan export to .xlsx in the same format as the Kaiser plan
-- [ ] **PLAN-12**: AI-assisted plan generation — given current project context, generates suggested task list for next 2 weeks scoped to current phase and open blockers
-- [ ] **PLAN-13**: Weekly sprint summary — plain-English summary of last week's completions, this week's due tasks, and at-risk items
+- [x] **PLAN-12**: AI-assisted plan generation — given current project context, generates suggested task list for next 2 weeks scoped to current phase and open blockers
+- [x] **PLAN-13**: Weekly sprint summary — plain-English summary of last week's completions, this week's due tasks, and at-risk items
 
 ### Cross-Project Knowledge Base
 
@@ -221,19 +221,19 @@
 | OVER-02 | Phase 5.1 | Complete |
 | OVER-03 | Phase 5.1 | Complete |
 | OVER-04 | Phase 5.1 | Complete |
-| TIME-01 | Phase 5.2 | Pending |
-| TIME-02 | Phase 5.2 | Pending |
-| TIME-03 | Phase 5.2 | Pending |
-| SKILL-10 | Phase 6 | Pending |
-| DASH-04 | Phase 6 | Pending |
-| DASH-05 | Phase 6 | Pending |
-| SKILL-05 | Phase 7 | Pending |
-| SKILL-06 | Phase 7 | Pending |
-| SKILL-07 | Phase 7 | Pending |
-| SKILL-08 | Phase 7 | Pending |
+| TIME-01 | Phase 5.2 | Complete |
+| TIME-02 | Phase 5.2 | Complete |
+| TIME-03 | Phase 5.2 | Complete |
+| SKILL-10 | Phase 6 | Complete |
+| DASH-04 | Phase 6 | Complete |
+| DASH-05 | Phase 6 | Complete |
+| SKILL-05 | Phase 7 | Complete |
+| SKILL-06 | Phase 7 | Complete |
+| SKILL-07 | Phase 7 | Complete |
+| SKILL-08 | Phase 7 | Complete |
 | SKILL-09 | Phase 7 | Pending |
-| PLAN-12 | Phase 7 | Pending |
-| PLAN-13 | Phase 7 | Pending |
+| PLAN-12 | Phase 7 | Complete |
+| PLAN-13 | Phase 7 | Complete |
 | KB-01 | Phase 8 | Pending |
 | KB-02 | Phase 8 | Pending |
 | KB-03 | Phase 8 | Pending |
