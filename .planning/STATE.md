@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: "Completed 07-01-PLAN.md — Wave 0 RED baseline: 6 Playwright + 11 vitest stubs all failing"
-last_updated: "2026-03-24T20:13:38.412Z"
+stopped_at: "Completed 07-02-PLAN.md — FileGenerationService: 4 modules, 6 vitest tests GREEN"
+last_updated: "2026-03-24T20:18:31.594Z"
 progress:
   total_phases: 10
   completed_phases: 8
   total_plans: 60
-  completed_plans: 54
+  completed_plans: 55
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 05-06-PLAN.md — 13/13 E2E tests GREEN, all 8 human verification steps approved
 **Next action:** `/gsd:plan-phase 5.1` — Onboarding Dashboard (replaces Overview tab; new DB tables; YAML round-trip)
-**Stopped at:** Completed 07-01-PLAN.md — Wave 0 RED baseline: 6 Playwright + 11 vitest stubs all failing
+**Stopped at:** Completed 07-02-PLAN.md — FileGenerationService: 4 modules, 6 vitest tests GREEN
 
 ## Phase Progress
 
@@ -171,6 +171,9 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 - [Phase 06-05]: Use StreamLike structural type alias rather than @ts-ignore to resolve MessageStream/BetaMessageStream union type incompatibility in skill-orchestrator.ts
 - [Phase 06-mcp-integrations]: customer-project-tracker uses fixed 0 9 * * * cron outside settings JOB_SCHEDULE_MAP (no AppSettings.schedule key for this skill)
 - [Phase 07-01]: vitest ^4.1.1 installed in bigpanda-app with --no-package-lock; Wave 0 stub pattern (expect(false, 'stub').toBe(true) as first line) consistent with all prior phases
+- [Phase 07-02]: readSettings() is async — buildOutputPath must await it; plan snippet showed sync call which is incorrect
+- [Phase 07-02]: pptxgenjs installed with --no-package-lock (consistent with all Phase 2+ installs)
+- [Phase 07-02]: workspace_path /Documents/PM Application treated as relative-to-homedir (not absolute) — matches DEFAULTS in settings-core.ts
 
 ## Performance Metrics
 
@@ -225,6 +228,7 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 | Phase 06 P05 | 18 | 1 tasks | 2 files |
 | Phase 06-mcp-integrations P06 | 2 | 2 tasks | 5 files |
 | Phase 07-file-generation-remaining-skills P01 | 4min | 2 tasks | 7 files |
+| Phase 07-file-generation-remaining-skills P02 | 3min | 2 tasks | 7 files |
 
 ## Key Context for Next Session
 

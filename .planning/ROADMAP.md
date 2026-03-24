@@ -232,7 +232,7 @@ Phases 5.1 and 5.2 can run in parallel. Phases 6 and 7 can overlap after Phase 5
 | 5.1 Onboarding Dashboard [INSERTED] | 8/8 | Complete   | 2026-03-23 |
 | 5.2 Time Tracking [INSERTED] | 2/5 | In Progress|  |
 | 6. MCP Integrations | 5/7 | In Progress|  |
-| 7. File Generation + Remaining Skills | 1/7 | In Progress|  |
+| 7. File Generation + Remaining Skills | 2/7 | In Progress|  |
 | 8. Cross-Project Features + Polish | 0/TBD | Not started | - |
 
 ---
