@@ -12,6 +12,15 @@ import * as fsPromises from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
+export interface MCPServerConfig {
+  id: string;           // uuid — stable identifier for UI keying
+  name: string;         // e.g. "glean", "slack", "gmail"
+  url: string;          // e.g. "https://bigpanda-be.glean.com/mcp/default"
+  apiKey: string;       // bearer token / OAuth user token
+  enabled: boolean;     // soft-disable without removing
+  allowedTools?: string[]; // optional allowlist; empty = all tools enabled
+}
+
 export interface AppSettings {
   workspace_path: string;
   skill_path: string;
@@ -23,6 +32,7 @@ export interface AppSettings {
     weekly_status: string;
     biggy_briefing: string;
   };
+  mcp_servers: MCPServerConfig[];
 }
 
 export const SETTINGS_PATH = path.join(os.homedir(), '.bigpanda-app', 'settings.json');
@@ -38,6 +48,7 @@ export const DEFAULTS: AppSettings = {
     weekly_status: '0 16 * * 4',
     biggy_briefing: '0 9 * * 5',
   },
+  mcp_servers: [],
 };
 
 export async function readSettings(settingsPath: string = SETTINGS_PATH): Promise<AppSettings> {
@@ -51,6 +62,7 @@ export async function readSettings(settingsPath: string = SETTINGS_PATH): Promis
         ...DEFAULTS.schedule,
         ...(parsed.schedule ?? {}),
       },
+      mcp_servers: parsed.mcp_servers ?? DEFAULTS.mcp_servers,
     };
   } catch (err: unknown) {
     const nodeErr = err as NodeJS.ErrnoException;
@@ -78,7 +90,7 @@ export async function writeSettings(
     },
   };
 
-  const safe = merged as Record<string, unknown>;
+  const safe = merged as unknown as Record<string, unknown>;
   delete safe['api_key'];
   delete safe['ANTHROPIC_API_KEY'];
 

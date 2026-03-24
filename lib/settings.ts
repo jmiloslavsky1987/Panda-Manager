@@ -10,6 +10,7 @@
 import 'server-only';
 
 export {
+  type MCPServerConfig,
   type AppSettings,
   SETTINGS_PATH,
   DEFAULTS,
