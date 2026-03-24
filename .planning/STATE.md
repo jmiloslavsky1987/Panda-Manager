@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: Completed 05.2-03-PLAN.md — GET/POST and PATCH/DELETE API routes for time-entries; 2/2 tasks complete
-last_updated: "2026-03-24T14:46:00.000Z"
+stopped_at: Completed 05.2-04-PLAN.md — Time tab registered, RSC page shell, TimeTab + TimeEntryModal UI; 2/2 tasks complete
+last_updated: "2026-03-24T16:39:35Z"
 progress:
   total_phases: 10
   completed_phases: 6
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 05-06-PLAN.md — 13/13 E2E tests GREEN, all 8 human verification steps approved
 **Next action:** `/gsd:plan-phase 5.1` — Onboarding Dashboard (replaces Overview tab; new DB tables; YAML round-trip)
-**Stopped at:** Completed 05.2-03-PLAN.md — GET/POST and PATCH/DELETE API routes for time-entries; 2/2 tasks complete
+**Stopped at:** Completed 05.2-04-PLAN.md — Time tab registered, RSC page shell, TimeTab + TimeEntryModal UI; 2/2 tasks complete
 
 ## Phase Progress
 
@@ -157,6 +157,9 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 - [Phase 05.2-03]: and(...conditions) array pattern for dynamic WHERE filters — avoids conditional query variable reassignment
 - [Phase 05.2-03]: PATCH and DELETE WHERE includes both entry_id and project_id — defense-in-depth scoping on top of RLS
 - [Phase 05.2-03]: GET returns { entries: [] } not 404 when no time entries — empty state is valid
+- [Phase 05.2-04]: Inline add form above table (not modal) — TimeEntryModal used for EDIT only; avoids modal-within-table nesting issues
+- [Phase 05.2-04]: refreshCount state pattern triggers re-fetch after mutations without router.refresh() in client components
+- [Phase 05.2-04]: fromDate/toDate sent as query params — server-side filter; no redundant client-side filtering
 
 ## Performance Metrics
 
@@ -203,6 +206,7 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 | Phase 05.1-onboarding-dashboard P08 | 8min | 2 tasks | 2 files |
 | Phase 05.2-time-tracking P01 | 3min | 1 tasks | 1 files |
 | Phase 05.2-time-tracking P02 | 2min | 2 tasks | 2 files |
+| Phase 05.2-time-tracking P04 | 5min | 2 tasks | 4 files |
 
 ## Key Context for Next Session
 
