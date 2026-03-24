@@ -372,3 +372,18 @@ export const integrations = pgTable('integrations', {
   created_at: timestamp('created_at').defaultNow().notNull(),
   updated_at: timestamp('updated_at').defaultNow().notNull(),
 })
+
+// ─── Phase 5.2: Time Tracking ─────────────────────────────────────────────────
+
+export const timeEntries = pgTable('time_entries', {
+  id:          serial('id').primaryKey(),
+  project_id:  integer('project_id').notNull().references(() => projects.id),
+  date:        text('date').notNull(),         // ISO: 'YYYY-MM-DD'
+  hours:       text('hours').notNull(),        // decimal string: '1.5' — use parseFloat() in JS
+  description: text('description').notNull(),
+  created_at:  timestamp('created_at').defaultNow().notNull(),
+  updated_at:  timestamp('updated_at').defaultNow().notNull(),
+})
+
+export type TimeEntry = typeof timeEntries.$inferSelect
+export type TimeEntryInsert = typeof timeEntries.$inferInsert
