@@ -1,5 +1,6 @@
 import { getTasksForProject, getPlanTemplates } from '@/lib/queries'
 import { PhaseBoard } from '@/components/PhaseBoard'
+import { AiPlanPanel } from '@/components/AiPlanPanel'
 
 export default async function PhaseBoardPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -18,6 +19,7 @@ export default async function PhaseBoardPage({ params }: { params: Promise<{ id:
 
   return (
     <div className="p-4">
+      <AiPlanPanel projectId={projectId} />
       <PhaseBoard tasks={tasks} projectId={projectId} templates={templates} />
     </div>
   )
