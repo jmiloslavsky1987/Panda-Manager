@@ -173,7 +173,16 @@ Plans:
   2. MCPClientPool is a single shared instance — running Customer Project Tracker for all active accounts sequentially does not create a new MCP client connection per account
   3. The cross-project Risk Heat Map on the Dashboard displays risks from all active accounts on a probability-by-impact matrix with no data from archived projects leaking in
   4. The Cross-Account Watch List on the Dashboard shows escalated and time-sensitive items that span multiple active customer accounts
-**Plans**: TBD
+**Plans**: 7 plans
+
+Plans:
+- [ ] 06-01-PLAN.md — Wave 0: E2E test stubs for all Phase 6 behaviors (RED baseline)
+- [ ] 06-02-PLAN.md — Wave 1: DASH-04 Risk Heat Map + DASH-05 Cross-Account Watch List (parallel)
+- [ ] 06-03-PLAN.md — Wave 1: Settings schema + MCPClientPool config registry (parallel with 02)
+- [ ] 06-04-PLAN.md — Wave 2: Settings UI MCP Servers tab + mcp-test endpoint
+- [ ] 06-05-PLAN.md — Wave 3: SkillOrchestrator MCP extension (beta.messages.stream branch)
+- [ ] 06-06-PLAN.md — Wave 4: SKILL-10 Customer Project Tracker — SKILL.md + handler + registration
+- [ ] 06-07-PLAN.md — Wave 5: E2E activation + human verification checkpoint
 
 ### Phase 7: File Generation + Remaining Skills
 **Goal**: FileGenerationService produces Office-compatible .docx, .pptx, .xlsx, and self-contained .html files, and all 11 remaining AI skills (ELT External/Internal Status, Team Engagement Map, Workflow Diagram, Meeting Summary, Biggy Weekly Briefing, Handoff Doc Generator, and AI-assisted plan generation) are wired and producing files that open without corruption in Microsoft Office.
@@ -213,7 +222,7 @@ Phases 5.1 and 5.2 can run in parallel. Phases 6 and 7 can overlap after Phase 5
 | 5. Skill Engine | 6/6 | Complete   | 2026-03-23 |
 | 5.1 Onboarding Dashboard [INSERTED] | 8/8 | Complete   | 2026-03-23 |
 | 5.2 Time Tracking [INSERTED] | 2/5 | In Progress|  |
-| 6. MCP Integrations | 0/TBD | Not started | - |
+| 6. MCP Integrations | 0/7 | Not started | - |
 | 7. File Generation + Remaining Skills | 0/TBD | Not started | - |
 | 8. Cross-Project Features + Polish | 0/TBD | Not started | - |
 
