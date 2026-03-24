@@ -16,7 +16,7 @@ const JOB_SCHEDULE_MAP: Record<string, keyof AppSettings['schedule']> = {
 };
 
 /**
- * Registers or updates all 6 job schedulers.
+ * Registers or updates all job schedulers.
  * Idempotent — safe to call on every restart and in the 60s polling loop.
  * upsertJobScheduler with the same scheduler ID updates in place — no duplicates.
  */
@@ -34,4 +34,16 @@ export async function registerAllSchedulers(settings: AppSettings): Promise<void
     );
     console.log(`[scheduler] registered ${jobName} → ${cronPattern}`);
   }
+
+  // customer-project-tracker: daily at 9am — fixed schedule (no settings key)
+  await jobQueue.upsertJobScheduler(
+    'customer-project-tracker',
+    { pattern: '0 9 * * *' },
+    {
+      name: 'customer-project-tracker',
+      data: { triggeredBy: 'scheduled' },
+      opts: { removeOnComplete: 100, removeOnFail: 50 },
+    }
+  );
+  console.log('[scheduler] registered customer-project-tracker → 0 9 * * *');
 }
