@@ -16,15 +16,13 @@ import { test, expect } from '@playwright/test';
 test.describe('Phase 6: MCP Integrations', () => {
 
   test('DASH-04: Risk Heat Map panel visible on Dashboard', async ({ page }) => {
-    expect(false, 'stub').toBe(true);
-    // When implemented: navigate to /, assert data-testid="risk-heat-map" exists
+    // Navigate to /, assert data-testid="risk-heat-map" exists
     await page.goto('/');
     await expect(page.locator('[data-testid="risk-heat-map"]')).toBeVisible();
   });
 
   test('DASH-05: Cross-Account Watch List panel visible on Dashboard', async ({ page }) => {
-    expect(false, 'stub').toBe(true);
-    // When implemented: navigate to /, assert data-testid="watch-list" exists
+    // Navigate to /, assert data-testid="watch-list" exists
     await page.goto('/');
     await expect(page.locator('[data-testid="watch-list"]')).toBeVisible();
   });
