@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: "Completed 06-01-PLAN.md — Wave 0 RED stubs: 4 E2E + 4 unit test stubs, all RED; 2/2 tasks complete"
-last_updated: "2026-03-24T18:06:37.717Z"
+stopped_at: Completed 06-mcp-integrations-06-02-PLAN.md (DASH-04 + DASH-05)
+last_updated: "2026-03-24T18:17:17.827Z"
 progress:
   total_phases: 10
   completed_phases: 7
   total_plans: 53
-  completed_plans: 47
+  completed_plans: 48
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 05-06-PLAN.md — 13/13 E2E tests GREEN, all 8 human verification steps approved
 **Next action:** `/gsd:plan-phase 5.1` — Onboarding Dashboard (replaces Overview tab; new DB tables; YAML round-trip)
-**Stopped at:** Completed 06-01-PLAN.md — Wave 0 RED stubs: 4 E2E + 4 unit test stubs, all RED; 2/2 tasks complete
+**Stopped at:** Completed 06-mcp-integrations-06-02-PLAN.md (DASH-04 + DASH-05)
 
 ## Phase Progress
 
@@ -162,6 +162,8 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 - [Phase 05.2-04]: fromDate/toDate sent as query params — server-side filter; no redundant client-side filtering
 - [Phase 06-mcp-integrations]: Wave 0 stub pattern consistent with all prior phases: expect(false, 'stub').toBe(true) as first line — visibly RED without server running
 - [Phase 06-mcp-integrations]: Unit test stubs use node:test assert.fail() — plans 06-03 and 06-05 activate by removing assert.fail() and adding real test bodies
+- [Phase 06-mcp-integrations]: RiskHeatMap groups statuses dynamically from query results (not hardcoded) to handle inconsistent status casing in real data
+- [Phase 06-mcp-integrations]: WatchList includes IS NULL OR != 'resolved' for status filter since risks.status is nullable TEXT
 
 ## Performance Metrics
 
@@ -210,6 +212,7 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 | Phase 05.2-time-tracking P02 | 2min | 2 tasks | 2 files |
 | Phase 05.2-time-tracking P04 | 5min | 2 tasks | 4 files |
 | Phase 06-mcp-integrations P01 | 5min | 2 tasks | 3 files |
+| Phase 06-mcp-integrations P02 | 227 | 2 tasks | 6 files |
 
 ## Key Context for Next Session
 
