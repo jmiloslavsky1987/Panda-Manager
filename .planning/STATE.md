@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: Completed 07-05-PLAN.md — AiPlanPanel + generate-plan route + 2 vitest tests GREEN
-last_updated: "2026-03-24T20:33:45.778Z"
+stopped_at: Completed 07-06-PLAN.md — SprintSummaryPanel + sprint-summary API route + migration 0007 + 3 vitest tests GREEN
+last_updated: "2026-03-24T20:37:35.416Z"
 progress:
   total_phases: 10
   completed_phases: 8
   total_plans: 60
-  completed_plans: 58
+  completed_plans: 59
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 05-06-PLAN.md — 13/13 E2E tests GREEN, all 8 human verification steps approved
 **Next action:** `/gsd:plan-phase 5.1` — Onboarding Dashboard (replaces Overview tab; new DB tables; YAML round-trip)
-**Stopped at:** Completed 07-05-PLAN.md — AiPlanPanel + generate-plan route + 2 vitest tests GREEN
+**Stopped at:** Completed 07-06-PLAN.md — SprintSummaryPanel + sprint-summary API route + migration 0007 + 3 vitest tests GREEN
 
 ## Phase Progress
 
@@ -183,6 +183,9 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 - [Phase 07-05]: SkillOrchestrator mock uses real ES class syntax (not vi.fn().mockImplementation) — arrow function factories are not constructors when used with new
 - [Phase 07-05]: vitest.config.ts needs resolve.alias for @/ path — route handler tests import @/db and @/lib/ which require the alias
 - [Phase 07-05]: Proposed tasks NOT written to tasks table by generate-plan route — only skill_runs row; tasks written only on explicit Commit click
+- [Phase 07-06]: sprint-summary output stored in projects.sprint_summary — no outputs table insert (PLAN-13: not in Output Library)
+- [Phase 07-06]: Transient skill_run row created for orchestrator tracking — does not surface in Output Library since no outputs row is written
+- [Phase 07-06]: SprintSummaryPanel open=true initial state prevents hydration mismatch — Client Component initialized identically on server and client
 
 ## Performance Metrics
 
@@ -241,6 +244,7 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 | Phase 07-file-generation-remaining-skills P03 | 8min | 2 tasks | 6 files |
 | Phase 07-file-generation-remaining-skills P04 | 3min | 2 tasks | 3 files |
 | Phase 07-file-generation-remaining-skills P05 | 5min | 2 tasks | 7 files |
+| Phase 07-file-generation-remaining-skills P06 | 2min | 2 tasks | 7 files |
 
 ## Key Context for Next Session
 
