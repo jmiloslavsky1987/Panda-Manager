@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: Completed 07-03-PLAN.md — 4 SKILL.md files authored, 4 skills enabled in WIRED_SKILLS, Open in app button added to run page
-last_updated: "2026-03-24T20:22:32.608Z"
+stopped_at: Completed 07-04-PLAN.md — FILE_SKILLS wired into skill-run.ts, generateFile() called post-orchestrator, docx installed
+last_updated: "2026-03-24T20:26:34.824Z"
 progress:
   total_phases: 10
   completed_phases: 8
   total_plans: 60
-  completed_plans: 56
+  completed_plans: 57
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 05-06-PLAN.md — 13/13 E2E tests GREEN, all 8 human verification steps approved
 **Next action:** `/gsd:plan-phase 5.1` — Onboarding Dashboard (replaces Overview tab; new DB tables; YAML round-trip)
-**Stopped at:** Completed 07-03-PLAN.md — 4 SKILL.md files authored, 4 skills enabled in WIRED_SKILLS, Open in app button added to run page
+**Stopped at:** Completed 07-04-PLAN.md — FILE_SKILLS wired into skill-run.ts, generateFile() called post-orchestrator, docx installed
 
 ## Phase Progress
 
@@ -177,6 +177,9 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 - [Phase 07-03]: customer-project-tracker added to WIRED_SKILLS — was in ALL_SKILLS but missing from the enabled set; plan target state includes it
 - [Phase 07-03]: fetchOutputRow queries /api/outputs by project_id + skill_name (most recent); no idempotency_key filter needed for Phase 7 single-active-run pattern
 - [Phase 07-03]: biggy-weekly-briefing excluded from WIRED_SKILLS per locked decision; comment added to set for future maintainability
+- [Phase 07-04]: FILE_SKILLS exported from skill-run.ts for testability without leaking into app layer
+- [Phase 07-04]: generateFile() called post-orchestrator — pure Claude streaming layer stays clean
+- [Phase 07-04]: Generation errors caught and logged; output row still inserted with raw content (graceful degradation)
 
 ## Performance Metrics
 
@@ -233,6 +236,7 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 | Phase 07-file-generation-remaining-skills P01 | 4min | 2 tasks | 7 files |
 | Phase 07-file-generation-remaining-skills P02 | 3min | 2 tasks | 7 files |
 | Phase 07-file-generation-remaining-skills P03 | 8min | 2 tasks | 6 files |
+| Phase 07-file-generation-remaining-skills P04 | 3min | 2 tasks | 3 files |
 
 ## Key Context for Next Session
 
