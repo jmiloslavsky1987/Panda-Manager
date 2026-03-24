@@ -9,7 +9,17 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import * as fsPromises from 'node:fs/promises';
 import * as path from 'node:path';
-import { readSettings, writeSettings, AppSettings } from '../../lib/settings';
+import { readSettings, writeSettings, AppSettings, MCPServerConfig } from '../../lib/settings';
+
+// Zod schema for a single MCP server entry
+const mcpServerSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  url: z.string(),
+  apiKey: z.string(),
+  enabled: z.boolean(),
+  allowedTools: z.array(z.string()).optional(),
+});
 
 // Zod schema: all AppSettings fields are optional, plus optional api_key
 const settingsUpdateSchema = z.object({
@@ -25,6 +35,7 @@ const settingsUpdateSchema = z.object({
       biggy_briefing: z.string().optional(),
     })
     .optional(),
+  mcp_servers: z.array(mcpServerSchema).optional(),
   api_key: z.string().optional(),
 });
 
@@ -36,8 +47,15 @@ export async function GET() {
   const settings = await readSettings();
   const has_api_key = Boolean(process.env.ANTHROPIC_API_KEY);
 
+  // Mask apiKey in mcp_servers — show only last 4 chars
+  const mcp_servers = (settings.mcp_servers ?? []).map((s: MCPServerConfig) => ({
+    ...s,
+    apiKey: s.apiKey.length > 4 ? `\u2022\u2022\u2022\u2022${s.apiKey.slice(-4)}` : s.apiKey,
+  }));
+
   return NextResponse.json({
     ...settings,
+    mcp_servers,
     has_api_key,
   });
 }
@@ -58,7 +76,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const { api_key, ...settingsFields } = parsed.data;
+  const { api_key, mcp_servers, ...settingsFields } = parsed.data;
 
   // Write api_key to .env.local only — never to settings.json
   if (api_key !== undefined) {
@@ -84,9 +102,15 @@ export async function POST(request: Request) {
     await fsPromises.writeFile(envLocalPath, updated, 'utf-8');
   }
 
+  // Write mcp_servers wholesale (replace array) when present
+  const mergedFields: Partial<AppSettings> = { ...settingsFields as Partial<AppSettings> };
+  if (mcp_servers !== undefined) {
+    mergedFields.mcp_servers = mcp_servers;
+  }
+
   // Write remaining non-sensitive fields to settings.json
-  if (Object.keys(settingsFields).length > 0) {
-    await writeSettings(settingsFields as Partial<AppSettings>);
+  if (Object.keys(mergedFields).length > 0) {
+    await writeSettings(mergedFields);
   }
 
   return NextResponse.json({ ok: true });
