@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   DndContext,
@@ -166,6 +166,9 @@ export function PhaseBoard({ tasks: initialTasks, projectId, templates }: PhaseB
   const router = useRouter()
   const [tasks, setTasks] = useState<Task[]>(initialTasks)
   const [activeId, setActiveId] = useState<number | null>(null)
+
+  // Sync when server re-fetches (e.g. after router.refresh() from AiPlanPanel commit)
+  useEffect(() => { setTasks(initialTasks) }, [initialTasks])
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
