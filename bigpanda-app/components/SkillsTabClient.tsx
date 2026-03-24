@@ -156,6 +156,7 @@ export function SkillsTabClient({ projectId, recentRuns }: SkillsTabClientProps)
           return (
             <div
               key={skill.name}
+              data-testid="skill-card"
               data-skill={skill.name}
               className={`flex flex-col gap-2 px-4 py-3 bg-white ${!isWired ? 'opacity-60' : ''}`}
             >
