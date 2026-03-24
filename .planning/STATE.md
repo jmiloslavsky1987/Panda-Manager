@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: "Paused at checkpoint:human-verify in 07-07-PLAN.md — 6 phase7 E2E tests GREEN; awaiting human verification of UI and file generation"
-last_updated: "2026-03-24T20:51:24.718Z"
+stopped_at: Completed 07-07-PLAN.md — Phase 7 COMPLETE, all 6 E2E tests GREEN, human verification approved
+last_updated: "2026-03-24T21:57:00.275Z"
 progress:
   total_phases: 10
   completed_phases: 9
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 05-06-PLAN.md — 13/13 E2E tests GREEN, all 8 human verification steps approved
 **Next action:** `/gsd:plan-phase 5.1` — Onboarding Dashboard (replaces Overview tab; new DB tables; YAML round-trip)
-**Stopped at:** Paused at checkpoint:human-verify in 07-07-PLAN.md — 6 phase7 E2E tests GREEN; awaiting human verification of UI and file generation
+**Stopped at:** Completed 07-07-PLAN.md — Phase 7 COMPLETE, all 6 E2E tests GREEN, human verification approved
 
 ## Phase Progress
 
@@ -189,6 +189,8 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 - [Phase 07-07]: Route slug conflict fixed — generate-plan and sprint-summary routes moved from [id] to [projectId]
 - [Phase 07-07]: skills/page.tsx wraps getSkillRuns in try/catch — consistent with board page pattern for DB-unavailable resilience
 - [Phase 07-07]: assert-if-present used for PLAN-12 — generate-plan-btn assertion passes structurally without API key
+- [Phase 07-07]: PhaseBoard useEffect(setTasks, [initialTasks]) syncs local DnD state when prop changes after router.refresh()
+- [Phase 07-07]: router.refresh() in AiPlanPanel after AI plan commit triggers RSC re-render without navigation side-effects
 
 ## Performance Metrics
 
@@ -249,6 +251,7 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 | Phase 07-file-generation-remaining-skills P05 | 5min | 2 tasks | 7 files |
 | Phase 07-file-generation-remaining-skills P06 | 2min | 2 tasks | 7 files |
 | Phase 07-file-generation-remaining-skills P07 | 736s | 1 tasks | 4 files |
+| Phase 07-file-generation-remaining-skills P07 | 40min | 2 tasks | 6 files |
 
 ## Key Context for Next Session
 
