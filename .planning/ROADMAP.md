@@ -194,7 +194,16 @@ Plans:
   3. Biggy Weekly Briefing produces three outputs in one run (.docx plus email draft plus Slack draft) all of which appear in the Drafts Inbox and Output Library
   4. AI-assisted plan generation proposes a task list for the next 2 weeks scoped to the current phase and open blockers — proposed tasks require human approval before committing to the database
   5. Regenerating any output archives the old file and registers the new one in the Output Library; the old file remains accessible under an "archived" filter
-**Plans**: TBD
+**Plans**: 7 plans
+
+Plans:
+- [ ] 07-01-PLAN.md — Wave 0: E2E Playwright stubs + vitest install + vitest unit stubs
+- [ ] 07-02-PLAN.md — Wave 1: FileGenerationService (lib/file-gen/types, pptx, html, index)
+- [ ] 07-03-PLAN.md — Wave 1: 4 SKILL.md files + WIRED_SKILLS update + "Open in app" button (parallel)
+- [ ] 07-04-PLAN.md — Wave 2: skill-run.ts FILE_SKILLS extension + docx install
+- [ ] 07-05-PLAN.md — Wave 3: PLAN-12 generate-plan API + AiPlanPanel + board page
+- [ ] 07-06-PLAN.md — Wave 3: PLAN-13 sprint-summary API + SprintSummaryPanel + migration 0007 (parallel)
+- [ ] 07-07-PLAN.md — Wave 4: E2E activation + human verification checkpoint
 
 ### Phase 8: Cross-Project Features + Polish
 **Goal**: Full-text search spans all structured records across all projects, the Knowledge Base is searchable and linkable, and all cross-project dashboard panels are live with data — the app functions as a complete portfolio-level intelligence layer.
@@ -223,7 +232,7 @@ Phases 5.1 and 5.2 can run in parallel. Phases 6 and 7 can overlap after Phase 5
 | 5.1 Onboarding Dashboard [INSERTED] | 8/8 | Complete   | 2026-03-23 |
 | 5.2 Time Tracking [INSERTED] | 2/5 | In Progress|  |
 | 6. MCP Integrations | 5/7 | In Progress|  |
-| 7. File Generation + Remaining Skills | 0/TBD | Not started | - |
+| 7. File Generation + Remaining Skills | 0/7 | Not started | - |
 | 8. Cross-Project Features + Polish | 0/TBD | Not started | - |
 
 ---
