@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: Completed 07-04-PLAN.md — FILE_SKILLS wired into skill-run.ts, generateFile() called post-orchestrator, docx installed
-last_updated: "2026-03-24T20:26:34.824Z"
+stopped_at: Completed 07-05-PLAN.md — AiPlanPanel + generate-plan route + 2 vitest tests GREEN
+last_updated: "2026-03-24T20:33:45.778Z"
 progress:
   total_phases: 10
   completed_phases: 8
   total_plans: 60
-  completed_plans: 57
+  completed_plans: 58
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 05-06-PLAN.md — 13/13 E2E tests GREEN, all 8 human verification steps approved
 **Next action:** `/gsd:plan-phase 5.1` — Onboarding Dashboard (replaces Overview tab; new DB tables; YAML round-trip)
-**Stopped at:** Completed 07-04-PLAN.md — FILE_SKILLS wired into skill-run.ts, generateFile() called post-orchestrator, docx installed
+**Stopped at:** Completed 07-05-PLAN.md — AiPlanPanel + generate-plan route + 2 vitest tests GREEN
 
 ## Phase Progress
 
@@ -180,6 +180,9 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 - [Phase 07-04]: FILE_SKILLS exported from skill-run.ts for testability without leaking into app layer
 - [Phase 07-04]: generateFile() called post-orchestrator — pure Claude streaming layer stays clean
 - [Phase 07-04]: Generation errors caught and logged; output row still inserted with raw content (graceful degradation)
+- [Phase 07-05]: SkillOrchestrator mock uses real ES class syntax (not vi.fn().mockImplementation) — arrow function factories are not constructors when used with new
+- [Phase 07-05]: vitest.config.ts needs resolve.alias for @/ path — route handler tests import @/db and @/lib/ which require the alias
+- [Phase 07-05]: Proposed tasks NOT written to tasks table by generate-plan route — only skill_runs row; tasks written only on explicit Commit click
 
 ## Performance Metrics
 
@@ -237,6 +240,7 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 | Phase 07-file-generation-remaining-skills P02 | 3min | 2 tasks | 7 files |
 | Phase 07-file-generation-remaining-skills P03 | 8min | 2 tasks | 6 files |
 | Phase 07-file-generation-remaining-skills P04 | 3min | 2 tasks | 3 files |
+| Phase 07-file-generation-remaining-skills P05 | 5min | 2 tasks | 7 files |
 
 ## Key Context for Next Session
 
