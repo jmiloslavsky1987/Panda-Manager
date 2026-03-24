@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: Completed 05.1-08-PLAN.md — sticky header project summary (OVER-01); 2/2 tasks complete
-last_updated: "2026-03-23T21:03:14.694Z"
+stopped_at: Completed 05.2-01-PLAN.md — Wave 0 RED E2E stubs for TIME-01/02/03; 1/1 tasks complete
+last_updated: "2026-03-24T13:59:32.940Z"
 progress:
   total_phases: 10
   completed_phases: 6
-  total_plans: 41
-  completed_plans: 41
+  total_plans: 46
+  completed_plans: 42
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 05-06-PLAN.md — 13/13 E2E tests GREEN, all 8 human verification steps approved
 **Next action:** `/gsd:plan-phase 5.1` — Onboarding Dashboard (replaces Overview tab; new DB tables; YAML round-trip)
-**Stopped at:** Completed 05.1-08-PLAN.md — sticky header project summary (OVER-01); 2/2 tasks complete
+**Stopped at:** Completed 05.2-01-PLAN.md — Wave 0 RED E2E stubs for TIME-01/02/03; 1/1 tasks complete
 
 ## Phase Progress
 
@@ -148,6 +148,8 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 - [Phase 05.1-07]: yaml-export endpoint is /api/projects/[projectId]/yaml-export (not /api/yaml-export)
 - [Phase 05.1-08]: No RLS on GET /api/projects/[projectId] — projects table has no row-level security policies; simple SELECT by id correct
 - [Phase 05.1-08]: status_summary used as executive summary — no separate engagement_summary DB column exists; desired_outcomes deferred
+- [Phase 05.2-01]: Wave 0 stub assertion as FIRST line in each test — visibly RED without server running (consistent with 02-01, 03-01, 04-01, 05.1-01)
+- [Phase 05.2-01]: Requirement IDs (TIME-01/02/03) in test names for --grep targeting in implementation plans
 
 ## Performance Metrics
 
@@ -192,6 +194,7 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 | Phase 05.1-onboarding-dashboard P06 | 5min | 2 tasks | 1 files |
 | Phase 05.1-onboarding-dashboard P07 | 2min | 1 tasks | 1 files |
 | Phase 05.1-onboarding-dashboard P08 | 8min | 2 tasks | 2 files |
+| Phase 05.2-time-tracking P01 | 3min | 1 tasks | 1 files |
 
 ## Key Context for Next Session
 

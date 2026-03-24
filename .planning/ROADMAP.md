@@ -155,7 +155,14 @@ Plans:
   1. The Time tab (12th workspace tab) shows a table of all time entries for the project with total hours displayed in the header
   2. Clicking "Log Time" opens a modal; submitting with date, hours (decimal accepted), and description creates a new entry immediately visible in the table
   3. Entries can be edited and deleted; exporting produces a valid CSV file with columns: date, hours, description, project name
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 05.2-01-PLAN.md — Wave 0: Playwright E2E stubs for TIME-01, TIME-02, TIME-03 (RED baseline)
+- [ ] 05.2-02-PLAN.md — Wave 1: DB schema (timeEntries table) + migration SQL 0006
+- [ ] 05.2-03-PLAN.md — Wave 2: API routes — GET/POST time-entries + PATCH/DELETE time-entries/[entryId]
+- [ ] 05.2-04-PLAN.md — Wave 2: WorkspaceTabs 12th tab + RSC page + TimeTab client component + TimeEntryModal (parallel with 03)
+- [ ] 05.2-05-PLAN.md — Wave 3: E2E green pass + human verification checkpoint
 
 ### Phase 6: MCP Integrations
 **Goal**: MCPClientPool is initialized once at server startup with Slack, Gmail, Glean, and Drive connections, and the Customer Project Tracker skill performs live sweeps of Gmail and Slack for the last 7 days, updates the actions table, and syncs to PA3_Action_Tracker.xlsx — the highest-value scheduled job is fully operational.
@@ -205,7 +212,7 @@ Phases 5.1 and 5.2 can run in parallel. Phases 6 and 7 can overlap after Phase 5
 | 4. Job Infrastructure | 5/5 | Complete   | 2026-03-20 |
 | 5. Skill Engine | 6/6 | Complete   | 2026-03-23 |
 | 5.1 Onboarding Dashboard [INSERTED] | 8/8 | Complete   | 2026-03-23 |
-| 5.2 Time Tracking [INSERTED] | 0/TBD | Not started | - |
+| 5.2 Time Tracking [INSERTED] | 0/5 | Not started | - |
 | 6. MCP Integrations | 0/TBD | Not started | - |
 | 7. File Generation + Remaining Skills | 0/TBD | Not started | - |
 | 8. Cross-Project Features + Polish | 0/TBD | Not started | - |
@@ -324,3 +331,4 @@ Phases 5.1 and 5.2 can run in parallel. Phases 6 and 7 can overlap after Phase 5
 *Phase 1 planned: 2026-03-18 — 6 plans across 5 waves*
 *Phase 2 planned: 2026-03-19 — 7 plans across 5 waves (Wave 0–4)*
 *Phase 5 planned: 2026-03-20 — 6 plans across 5 waves (Wave 0–4)*
+*Phase 5.2 planned: 2026-03-23 — 5 plans across 4 waves (Wave 0–3)*
