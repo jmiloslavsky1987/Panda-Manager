@@ -65,6 +65,8 @@ export const projects = pgTable('projects', {
   source_file: text('source_file'),
   created_at: timestamp('created_at').defaultNow().notNull(),
   updated_at: timestamp('updated_at').defaultNow().notNull(),
+  sprint_summary: text('sprint_summary'),
+  sprint_summary_at: timestamp('sprint_summary_at', { withTimezone: true }),
 });
 
 // ─── Table 2: workstreams ─────────────────────────────────────────────────────
