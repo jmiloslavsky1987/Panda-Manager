@@ -9,7 +9,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import * as fsPromises from 'node:fs/promises';
 import * as path from 'node:path';
-import { readSettings, writeSettings, AppSettings, MCPServerConfig } from '../../lib/settings';
+import { readSettings, writeSettings, AppSettings, MCPServerConfig } from '@/lib/settings';
 
 // Zod schema for a single MCP server entry
 const mcpServerSchema = z.object({
