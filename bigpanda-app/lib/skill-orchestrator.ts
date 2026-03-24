@@ -11,6 +11,7 @@ import db from '../db';
 import { skillRuns, skillRunChunks } from '../db/schema';
 import { eq, sql } from 'drizzle-orm';
 import { buildSkillContext } from './skill-context';
+import type { MCPServerConfig } from './settings-core';
 
 const TOKEN_BUDGET = 80_000;
 const MODEL = 'claude-sonnet-4-6';
@@ -21,6 +22,7 @@ export interface SkillRunParams {
   runId: number;        // DB serial ID of the skill_runs row
   input?: Record<string, string>; // e.g. { transcript: '...' }
   skillsDir?: string;   // override default skills directory (for testing)
+  mcpServers?: MCPServerConfig[]; // optional; [] and undefined both mean non-MCP path
 }
 
 export class SkillOrchestrator {
@@ -79,12 +81,53 @@ export class SkillOrchestrator {
     }
 
     // 4. Stream from Claude, write chunks to DB incrementally
-    const stream = this.client.messages.stream({
-      model: MODEL,
-      max_tokens: 8192,
-      system: systemPrompt,
-      messages,
-    });
+    const useMCP = (params.mcpServers?.length ?? 0) > 0;
+
+    // NOTE: intentionally log server count, NOT server names/tokens
+    console.log(`[skill-orchestrator] ${params.skillName} mcp_enabled: ${useMCP} servers: ${params.mcpServers?.length ?? 0}`);
+
+    // StreamLike: minimal structural type shared by both MessageStream and BetaMessageStream.
+    // The SDK exposes compatible .on('text',...) and .finalMessage() on both, but the union
+    // type is not callable due to differing generics — cast to this shared interface.
+    type StreamLike = {
+      on(event: 'text', listener: (text: string) => void): unknown;
+      finalMessage(): Promise<unknown>;
+    };
+
+    const stream: StreamLike = useMCP
+      ? this.client.beta.messages.stream(
+          {
+            model: MODEL,
+            max_tokens: 8192,
+            system: systemPrompt,
+            messages,
+            mcp_servers: params.mcpServers!.map(s => ({
+              type: 'url' as const,
+              url: s.url,
+              name: s.name,
+              authorization_token: s.apiKey,
+            })),
+            tools: params.mcpServers!.map(s => ({
+              type: 'mcp_toolset' as const,
+              mcp_server_name: s.name,
+              ...(s.allowedTools?.length
+                ? {
+                    default_config: { enabled: false },
+                    configs: Object.fromEntries(
+                      s.allowedTools.map(t => [t, { enabled: true }])
+                    ),
+                  }
+                : {}),
+            })),
+          },
+          { headers: { 'anthropic-beta': 'mcp-client-2025-11-20' } }
+        )
+      : this.client.messages.stream({
+          model: MODEL,
+          max_tokens: 8192,
+          system: systemPrompt,
+          messages,
+        });
 
     let seqNum = 0;
     // Batch chunks: flush every 10 text deltas or on stream end
