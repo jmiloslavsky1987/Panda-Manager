@@ -7,7 +7,12 @@ export default async function SkillsPage({ params }: { params: Promise<{ id: str
   const { id } = await params;
   const projectId = parseInt(id);
 
-  const recentRuns = await getSkillRuns(projectId, 10);
+  let recentRuns: Awaited<ReturnType<typeof getSkillRuns>> = [];
+  try {
+    recentRuns = await getSkillRuns(projectId, 10);
+  } catch {
+    // DB not available — render empty recent runs list
+  }
 
   return <SkillsTabClient projectId={projectId} recentRuns={recentRuns} />;
 }

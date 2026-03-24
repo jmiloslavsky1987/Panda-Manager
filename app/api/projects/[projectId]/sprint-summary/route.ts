@@ -10,10 +10,10 @@ const SKILLS_DIR = path.join(process.cwd(), 'skills');
 // GET — return stored sprint summary (or null if not yet generated)
 export async function GET(
   _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
-  const { id } = await params;
-  const projectId = parseInt(id, 10);
+  const { projectId: projectIdStr } = await params;
+  const projectId = parseInt(projectIdStr, 10);
   if (isNaN(projectId)) return NextResponse.json({ error: 'Invalid project id' }, { status: 400 });
 
   const [project] = await db.select({
@@ -30,10 +30,10 @@ export async function GET(
 // POST — generate new summary via Claude, overwrite stored value, return result
 export async function POST(
   _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
-  const { id } = await params;
-  const projectId = parseInt(id, 10);
+  const { projectId: projectIdStr } = await params;
+  const projectId = parseInt(projectIdStr, 10);
   if (isNaN(projectId)) return NextResponse.json({ error: 'Invalid project id' }, { status: 400 });
 
   try {

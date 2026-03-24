@@ -9,10 +9,10 @@ const SKILLS_DIR = path.join(process.cwd(), 'skills');
 
 export async function POST(
   _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
-  const { id } = await params;
-  const projectId = parseInt(id, 10);
+  const { projectId: projectIdStr } = await params;
+  const projectId = parseInt(projectIdStr, 10);
   if (isNaN(projectId)) {
     return NextResponse.json({ error: 'Invalid project id' }, { status: 400 });
   }
