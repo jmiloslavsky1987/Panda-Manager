@@ -4,6 +4,8 @@ import { ActivityFeed } from '../components/ActivityFeed';
 import { QuickActionBar } from '../components/QuickActionBar';
 import { NotificationBadge } from '../components/NotificationBadge';
 import { DraftsInbox } from '../components/DraftsInbox';
+import { RiskHeatMap } from '../components/RiskHeatMap';
+import { WatchList } from '../components/WatchList';
 
 export default async function DashboardPage() {
   const [data, latestBriefing] = await Promise.all([
@@ -27,6 +29,18 @@ export default async function DashboardPage() {
         ) : (
           <p className="text-zinc-500 text-sm italic">No briefing yet — will run at 8am</p>
         )}
+      </section>
+
+      {/* Cross-Project Risk Heat Map — DASH-04 */}
+      <section data-testid="risk-heat-map-section">
+        <h2 className="font-medium text-zinc-700 mb-4">Risk Heat Map</h2>
+        <RiskHeatMap />
+      </section>
+
+      {/* Cross-Account Watch List — DASH-05 */}
+      <section data-testid="watch-list-section">
+        <h2 className="font-medium text-zinc-700 mb-4">Escalated Risks</h2>
+        <WatchList />
       </section>
 
       {/* Health cards grid — DASH-02/03 */}
