@@ -28,8 +28,7 @@ test.describe('Phase 6: MCP Integrations', () => {
   });
 
   test('SKILL-10: Customer Project Tracker skill exists and is triggerable', async ({ page }) => {
-    expect(false, 'stub').toBe(true);
-    // When implemented: navigate to Skills tab for any project, assert skill-card[data-skill="customer-project-tracker"] exists
+    // Navigate to Skills tab for any project, assert skill-card[data-skill="customer-project-tracker"] exists
     await page.goto('/customer/1/skills');
     await expect(page.locator('[data-skill="customer-project-tracker"]')).toBeVisible();
   });
