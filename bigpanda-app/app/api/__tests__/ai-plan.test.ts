@@ -13,17 +13,16 @@ vi.mock('@/db', () => ({
   },
 }));
 
-// Mock SkillOrchestrator so no real Anthropic call is made
-vi.mock('@/lib/skill-orchestrator', () => ({
-  SkillOrchestrator: vi.fn().mockImplementation(() => ({
-    run: vi.fn().mockResolvedValue(undefined),
-  })),
-}));
-
-// Mock queries (getProjectById not actually used by the route but imported)
-vi.mock('@/lib/queries', () => ({
-  getProjectById: vi.fn().mockResolvedValue({ id: 1, name: 'Test' }),
-}));
+// Mock SkillOrchestrator as a real class so `new SkillOrchestrator()` works
+vi.mock('@/lib/skill-orchestrator', () => {
+  return {
+    SkillOrchestrator: class MockSkillOrchestrator {
+      async run() {
+        return undefined;
+      }
+    },
+  };
+});
 
 import db from '@/db';
 import { POST } from '../projects/[id]/generate-plan/route';
@@ -77,10 +76,29 @@ describe('generate-plan API route', () => {
   });
 
   it('PLAN-12: POST /api/projects/[id]/generate-plan returns 200 with tasks array', async () => {
-    expect(false, 'stub').toBe(true);
+    const req = buildRequest('1');
+    const res = await POST(req, { params: Promise.resolve({ id: '1' }) });
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body).toHaveProperty('tasks');
+    expect(Array.isArray(body.tasks)).toBe(true);
+    expect(body.tasks).toHaveLength(1);
+    expect(body.tasks[0].title).toBe('Configure SNMP integration');
+    expect(body.tasks[0].priority).toBe('high');
   });
 
   it('proposed tasks are not written to DB until commit', async () => {
-    expect(false, 'stub').toBe(true);
+    const req = buildRequest('1');
+    await POST(req, { params: Promise.resolve({ id: '1' }) });
+
+    // The route must NOT insert into the tasks table — only into skill_runs
+    // db.insert is called once (for skill_runs), never for tasks table
+    const insertMock = db.insert as ReturnType<typeof vi.fn>;
+    expect(insertMock).toHaveBeenCalledTimes(1);
+
+    // Verify the single insert was into skillRuns (not tasks)
+    const { skillRuns } = await import('@/db/schema');
+    expect(insertMock).toHaveBeenCalledWith(skillRuns);
   });
 });
