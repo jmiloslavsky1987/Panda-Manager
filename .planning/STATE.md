@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: Completed 07-06-PLAN.md — SprintSummaryPanel + sprint-summary API route + migration 0007 + 3 vitest tests GREEN
-last_updated: "2026-03-24T20:37:35.416Z"
+stopped_at: "Paused at checkpoint:human-verify in 07-07-PLAN.md — 6 phase7 E2E tests GREEN; awaiting human verification of UI and file generation"
+last_updated: "2026-03-24T20:51:24.718Z"
 progress:
   total_phases: 10
-  completed_phases: 8
+  completed_phases: 9
   total_plans: 60
-  completed_plans: 59
+  completed_plans: 60
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 05-06-PLAN.md — 13/13 E2E tests GREEN, all 8 human verification steps approved
 **Next action:** `/gsd:plan-phase 5.1` — Onboarding Dashboard (replaces Overview tab; new DB tables; YAML round-trip)
-**Stopped at:** Completed 07-06-PLAN.md — SprintSummaryPanel + sprint-summary API route + migration 0007 + 3 vitest tests GREEN
+**Stopped at:** Paused at checkpoint:human-verify in 07-07-PLAN.md — 6 phase7 E2E tests GREEN; awaiting human verification of UI and file generation
 
 ## Phase Progress
 
@@ -186,6 +186,9 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 - [Phase 07-06]: sprint-summary output stored in projects.sprint_summary — no outputs table insert (PLAN-13: not in Output Library)
 - [Phase 07-06]: Transient skill_run row created for orchestrator tracking — does not surface in Output Library since no outputs row is written
 - [Phase 07-06]: SprintSummaryPanel open=true initial state prevents hydration mismatch — Client Component initialized identically on server and client
+- [Phase 07-07]: Route slug conflict fixed — generate-plan and sprint-summary routes moved from [id] to [projectId]
+- [Phase 07-07]: skills/page.tsx wraps getSkillRuns in try/catch — consistent with board page pattern for DB-unavailable resilience
+- [Phase 07-07]: assert-if-present used for PLAN-12 — generate-plan-btn assertion passes structurally without API key
 
 ## Performance Metrics
 
@@ -245,6 +248,7 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 | Phase 07-file-generation-remaining-skills P04 | 3min | 2 tasks | 3 files |
 | Phase 07-file-generation-remaining-skills P05 | 5min | 2 tasks | 7 files |
 | Phase 07-file-generation-remaining-skills P06 | 2min | 2 tasks | 7 files |
+| Phase 07-file-generation-remaining-skills P07 | 736s | 1 tasks | 4 files |
 
 ## Key Context for Next Session
 
