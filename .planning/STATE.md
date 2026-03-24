@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: Completed 06-mcp-integrations plan 05
-last_updated: "2026-03-24T19:19:29.161Z"
+stopped_at: Completed 06-06-PLAN.md — SKILL-10 fully wired
+last_updated: "2026-03-24T19:31:48.745Z"
 progress:
   total_phases: 10
   completed_phases: 7
   total_plans: 53
-  completed_plans: 51
+  completed_plans: 52
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 05-06-PLAN.md — 13/13 E2E tests GREEN, all 8 human verification steps approved
 **Next action:** `/gsd:plan-phase 5.1` — Onboarding Dashboard (replaces Overview tab; new DB tables; YAML round-trip)
-**Stopped at:** Completed 06-mcp-integrations plan 05
+**Stopped at:** Completed 06-06-PLAN.md — SKILL-10 fully wired
 
 ## Phase Progress
 
@@ -169,6 +169,7 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 - [Phase 06-mcp-integrations]: mcp_servers replaced wholesale on POST — no partial merge to avoid stale entry drift
 - [Phase 06-mcp-integrations]: data-testid='mcp-servers-form' on always-rendered wrapper so E2E test passes after tab click without opening form
 - [Phase 06-05]: Use StreamLike structural type alias rather than @ts-ignore to resolve MessageStream/BetaMessageStream union type incompatibility in skill-orchestrator.ts
+- [Phase 06-mcp-integrations]: customer-project-tracker uses fixed 0 9 * * * cron outside settings JOB_SCHEDULE_MAP (no AppSettings.schedule key for this skill)
 
 ## Performance Metrics
 
@@ -221,6 +222,7 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 | Phase 06-mcp-integrations P03 | 12 | 2 tasks | 4 files |
 | Phase 06-mcp-integrations P04 | 18 | 2 tasks | 4 files |
 | Phase 06 P05 | 18 | 1 tasks | 2 files |
+| Phase 06-mcp-integrations P06 | 2 | 2 tasks | 5 files |
 
 ## Key Context for Next Session
 
