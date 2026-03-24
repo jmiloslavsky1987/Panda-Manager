@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: Completed 05.2-02-PLAN.md — timeEntries Drizzle schema + 0006_time_tracking.sql migration; 2/2 tasks complete
-last_updated: "2026-03-24T14:13:53.810Z"
+stopped_at: Completed 05.2-03-PLAN.md — GET/POST and PATCH/DELETE API routes for time-entries; 2/2 tasks complete
+last_updated: "2026-03-24T14:46:00.000Z"
 progress:
   total_phases: 10
   completed_phases: 6
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 05-06-PLAN.md — 13/13 E2E tests GREEN, all 8 human verification steps approved
 **Next action:** `/gsd:plan-phase 5.1` — Onboarding Dashboard (replaces Overview tab; new DB tables; YAML round-trip)
-**Stopped at:** Completed 05.2-02-PLAN.md — timeEntries Drizzle schema + 0006_time_tracking.sql migration; 2/2 tasks complete
+**Stopped at:** Completed 05.2-03-PLAN.md — GET/POST and PATCH/DELETE API routes for time-entries; 2/2 tasks complete
 
 ## Phase Progress
 
@@ -154,6 +154,9 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 - [Phase 05.2-02]: date stored as TEXT not DATE — consistent with all other date fields in the schema
 - [Phase 05.2-02]: No RLS on time_entries — single-user app; plain WHERE project_id = N is sufficient (established Phase 5.1)
 - [Phase 05.2-02]: Migration 0006 written manually — drizzle-kit generate not available (consistent with Phase 03-02 decision)
+- [Phase 05.2-03]: and(...conditions) array pattern for dynamic WHERE filters — avoids conditional query variable reassignment
+- [Phase 05.2-03]: PATCH and DELETE WHERE includes both entry_id and project_id — defense-in-depth scoping on top of RLS
+- [Phase 05.2-03]: GET returns { entries: [] } not 404 when no time entries — empty state is valid
 
 ## Performance Metrics
 
