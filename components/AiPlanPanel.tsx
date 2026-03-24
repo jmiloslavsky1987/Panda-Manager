@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
@@ -26,6 +27,7 @@ const PRIORITY_COLOR: Record<string, string> = {
 };
 
 export function AiPlanPanel({ projectId }: AiPlanPanelProps) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [tasks, setTasks] = useState<ProposedTask[] | null>(null);
   const [selected, setSelected] = useState<Set<number>>(new Set());
@@ -78,6 +80,7 @@ export function AiPlanPanel({ projectId }: AiPlanPanelProps) {
     setTasks(null);
     setSelected(new Set());
     setCommitting(false);
+    router.refresh();
   }
 
   function handleDiscard() {
