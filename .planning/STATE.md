@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: "Completed 07-02-PLAN.md — FileGenerationService: 4 modules, 6 vitest tests GREEN"
-last_updated: "2026-03-24T20:18:31.594Z"
+stopped_at: Completed 07-03-PLAN.md — 4 SKILL.md files authored, 4 skills enabled in WIRED_SKILLS, Open in app button added to run page
+last_updated: "2026-03-24T20:22:32.608Z"
 progress:
   total_phases: 10
   completed_phases: 8
   total_plans: 60
-  completed_plans: 55
+  completed_plans: 56
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 05-06-PLAN.md — 13/13 E2E tests GREEN, all 8 human verification steps approved
 **Next action:** `/gsd:plan-phase 5.1` — Onboarding Dashboard (replaces Overview tab; new DB tables; YAML round-trip)
-**Stopped at:** Completed 07-02-PLAN.md — FileGenerationService: 4 modules, 6 vitest tests GREEN
+**Stopped at:** Completed 07-03-PLAN.md — 4 SKILL.md files authored, 4 skills enabled in WIRED_SKILLS, Open in app button added to run page
 
 ## Phase Progress
 
@@ -174,6 +174,9 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 - [Phase 07-02]: readSettings() is async — buildOutputPath must await it; plan snippet showed sync call which is incorrect
 - [Phase 07-02]: pptxgenjs installed with --no-package-lock (consistent with all Phase 2+ installs)
 - [Phase 07-02]: workspace_path /Documents/PM Application treated as relative-to-homedir (not absolute) — matches DEFAULTS in settings-core.ts
+- [Phase 07-03]: customer-project-tracker added to WIRED_SKILLS — was in ALL_SKILLS but missing from the enabled set; plan target state includes it
+- [Phase 07-03]: fetchOutputRow queries /api/outputs by project_id + skill_name (most recent); no idempotency_key filter needed for Phase 7 single-active-run pattern
+- [Phase 07-03]: biggy-weekly-briefing excluded from WIRED_SKILLS per locked decision; comment added to set for future maintainability
 
 ## Performance Metrics
 
@@ -229,6 +232,7 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 | Phase 06-mcp-integrations P06 | 2 | 2 tasks | 5 files |
 | Phase 07-file-generation-remaining-skills P01 | 4min | 2 tasks | 7 files |
 | Phase 07-file-generation-remaining-skills P02 | 3min | 2 tasks | 7 files |
+| Phase 07-file-generation-remaining-skills P03 | 8min | 2 tasks | 6 files |
 
 ## Key Context for Next Session
 
