@@ -35,8 +35,7 @@ test.describe('Phase 6: MCP Integrations', () => {
   });
 
   test('MCP: Settings page has MCP Servers tab', async ({ page }) => {
-    expect(false, 'stub').toBe(true);
-    // When implemented: navigate to /settings, click "MCP Servers" tab, assert form is visible
+    // Navigate to /settings, click "MCP Servers" tab, assert form is visible
     await page.goto('/settings');
     await page.getByRole('tab', { name: 'MCP Servers' }).click();
     await expect(page.locator('[data-testid="mcp-servers-form"]')).toBeVisible();
