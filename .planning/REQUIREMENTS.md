@@ -95,15 +95,15 @@
 
 ### Cross-Project Knowledge Base
 
-- [ ] **KB-01**: Shared knowledge base spanning all accounts — capture patterns, solutions, and customer-handling notes that apply across projects
-- [ ] **KB-02**: Knowledge base entries are searchable and linkable to specific risks or engagement history entries
-- [ ] **KB-03**: Knowledge base entries carry source_trace (which project, which event, date captured)
+- [x] **KB-01**: Shared knowledge base spanning all accounts — capture patterns, solutions, and customer-handling notes that apply across projects
+- [x] **KB-02**: Knowledge base entries are searchable and linkable to specific risks or engagement history entries
+- [x] **KB-03**: Knowledge base entries carry source_trace (which project, which event, date captured)
 
 ### Search
 
-- [ ] **SRCH-01**: Full-text search using PostgreSQL tsvector/tsquery across actions, risks, decisions, engagement history, stakeholders, artifacts, tasks, and knowledge base
-- [ ] **SRCH-02**: Search filterable by account, date range, and data type
-- [ ] **SRCH-03**: Search results show matching record in full context (which project, which section, which date)
+- [x] **SRCH-01**: Full-text search using PostgreSQL tsvector/tsquery across actions, risks, decisions, engagement history, stakeholders, artifacts, tasks, and knowledge base
+- [x] **SRCH-02**: Search filterable by account, date range, and data type
+- [x] **SRCH-03**: Search results show matching record in full context (which project, which section, which date)
 
 ### Scheduled Intelligence
 
@@ -234,12 +234,12 @@
 | SKILL-09 | Phase 7 | Pending |
 | PLAN-12 | Phase 7 | Complete |
 | PLAN-13 | Phase 7 | Complete |
-| KB-01 | Phase 8 | Pending |
-| KB-02 | Phase 8 | Pending |
-| KB-03 | Phase 8 | Pending |
-| SRCH-01 | Phase 8 | Pending |
-| SRCH-02 | Phase 8 | Pending |
-| SRCH-03 | Phase 8 | Pending |
+| KB-01 | Phase 8 | Complete |
+| KB-02 | Phase 8 | Complete |
+| KB-03 | Phase 8 | Complete |
+| SRCH-01 | Phase 8 | Complete |
+| SRCH-02 | Phase 8 | Complete |
+| SRCH-03 | Phase 8 | Complete |
 
 **Coverage:**
 - v1 requirements enumerated: 82 (DATA:8, DASH:9, WORK:9, OVER:4, TIME:3, SKILL:14, OUT:4, PLAN:13, KB:3, SRCH:3, SCHED:8, SET:4)
