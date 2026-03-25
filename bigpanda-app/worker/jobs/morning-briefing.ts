@@ -7,6 +7,7 @@ import { sql, eq } from 'drizzle-orm';
 import db from '../../db';
 import { skillRuns, outputs } from '../../db/schema';
 import { SkillOrchestrator } from '../../lib/skill-orchestrator';
+import { MCPClientPool } from '../../lib/mcp-config';
 import { getActiveProjects } from '../../lib/queries';
 
 const orchestrator = new SkillOrchestrator();
@@ -28,11 +29,14 @@ export default async function morningBriefingJob(job: Job): Promise<{ status: st
     }).returning({ id: skillRuns.id });
 
     try {
+      const mcpServers = await MCPClientPool.getInstance().getServersForSkill('morning-briefing');
+
       await orchestrator.run({
         skillName: 'morning-briefing',
         projectId: project.id,
         runId: runRow.id,
         skillsDir: SKILLS_DIR,
+        mcpServers,
       });
 
       const [completedRun] = await db.select().from(skillRuns).where(eq(skillRuns.id, runRow.id));
