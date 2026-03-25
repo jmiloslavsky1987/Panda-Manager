@@ -389,7 +389,7 @@ export async function getLatestMorningBriefing(): Promise<SkillRun | null> {
 
 export interface SearchResult {
   id: number;
-  table: string;        // 'actions' | 'risks' | 'key_decisions' | 'engagement_history' | 'stakeholders' | 'tasks' | 'artifacts' | 'knowledge_base'
+  table: string;        // 'actions' | 'risks' | 'key_decisions' | 'engagement_history' | 'stakeholders' | 'tasks' | 'artifacts' | 'knowledge_base' | 'onboarding_steps' | 'onboarding_phases' | 'integrations' | 'time_entries'
   section: string;      // human-readable: 'Actions' | 'Risks' | ...
   project_id: number | null;
   project_name: string; // project.name, or 'Knowledge Base' for null project_id
@@ -400,7 +400,7 @@ export interface SearchResult {
 }
 
 /**
- * Full-text search across all 8 project data tables using PostgreSQL tsvector/tsquery.
+ * Full-text search across all 12 project data tables using PostgreSQL tsvector/tsquery.
  *
  * Filters:
  *   - q:       Required, min 2 chars — used with plainto_tsquery
@@ -622,6 +622,94 @@ export async function searchAllRecords(params: {
       WHERE kb.search_vec @@ plainto_tsquery('english', '${safeQ}')
         ${kbAccountFilter}
         ${kbDateBounds}
+    `);
+  }
+
+  // ─── 9. onboarding_steps ──────────────────────────────────────────────────
+  if (!type || type === 'onboarding_steps') {
+    arms.push(`
+      SELECT
+        os.id,
+        'onboarding_steps'::text AS "table",
+        'Onboarding Steps'::text AS section,
+        os.project_id,
+        p.name AS project_name,
+        p.customer,
+        os.updated_at::text AS date,
+        os.name AS title,
+        SUBSTRING(COALESCE(os.owner, ''), 1, 200) AS snippet
+      FROM onboarding_steps os
+      JOIN projects p ON p.id = os.project_id
+      WHERE p.status = 'active'
+        AND os.search_vec @@ plainto_tsquery('english', '${safeQ}')
+        ${accountFilter('p.customer')}
+        ${dateBounds('os.updated_at::text')}
+    `);
+  }
+
+  // ─── 10. onboarding_phases ────────────────────────────────────────────────
+  if (!type || type === 'onboarding_phases') {
+    arms.push(`
+      SELECT
+        op.id,
+        'onboarding_phases'::text AS "table",
+        'Onboarding Phases'::text AS section,
+        op.project_id,
+        p.name AS project_name,
+        p.customer,
+        op.created_at::text AS date,
+        op.name AS title,
+        ''::text AS snippet
+      FROM onboarding_phases op
+      JOIN projects p ON p.id = op.project_id
+      WHERE p.status = 'active'
+        AND op.search_vec @@ plainto_tsquery('english', '${safeQ}')
+        ${accountFilter('p.customer')}
+        ${dateBounds('op.created_at::text')}
+    `);
+  }
+
+  // ─── 11. integrations ─────────────────────────────────────────────────────
+  if (!type || type === 'integrations') {
+    arms.push(`
+      SELECT
+        i.id,
+        'integrations'::text AS "table",
+        'Integrations'::text AS section,
+        i.project_id,
+        p.name AS project_name,
+        p.customer,
+        i.updated_at::text AS date,
+        i.tool AS title,
+        SUBSTRING(COALESCE(i.notes, ''), 1, 200) AS snippet
+      FROM integrations i
+      JOIN projects p ON p.id = i.project_id
+      WHERE p.status = 'active'
+        AND i.search_vec @@ plainto_tsquery('english', '${safeQ}')
+        ${accountFilter('p.customer')}
+        ${dateBounds('i.updated_at::text')}
+    `);
+  }
+
+  // ─── 12. time_entries ─────────────────────────────────────────────────────
+  if (!type || type === 'time_entries') {
+    arms.push(`
+      SELECT
+        te.id,
+        'time_entries'::text AS "table",
+        'Time Entries'::text AS section,
+        te.project_id,
+        p.name AS project_name,
+        p.customer,
+        te.date AS date,
+        te.description AS title,
+        ''::text AS snippet
+      FROM time_entries te
+      JOIN projects p ON p.id = te.project_id
+      WHERE p.status = 'active'
+        AND te.search_vec @@ plainto_tsquery('english', '${safeQ}')
+        ${accountFilter('p.customer')}
+        ${dateBounds('te.date')}
     `);
   }
 
