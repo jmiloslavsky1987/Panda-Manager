@@ -18,6 +18,13 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import type { Task, PlanTemplate } from '@/lib/queries'
 import { TaskEditModal } from './TaskEditModal'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from './ui/dialog'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -97,65 +104,6 @@ function PhaseCard({ task, projectId }: PhaseCardProps) {
           </button>
         }
       />
-    </div>
-  )
-}
-
-// ─── Template Picker ──────────────────────────────────────────────────────────
-
-interface TemplatePickerProps {
-  templates: PlanTemplate[]
-  projectId: number
-  onClose: () => void
-  onCreated: () => void
-}
-
-function TemplatePicker({ templates, projectId, onClose, onCreated }: TemplatePickerProps) {
-  const [loading, setLoading] = useState(false)
-
-  async function applyTemplate(template: PlanTemplate) {
-    if (!template.data) return
-    setLoading(true)
-    try {
-      const parsed = JSON.parse(template.data) as { tasks?: Array<Record<string, unknown>> }
-      const templateTasks = parsed.tasks ?? []
-
-      for (const t of templateTasks) {
-        await fetch('/api/tasks', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...t, project_id: projectId, source: 'template' }),
-        })
-      }
-      onCreated()
-      onClose()
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <div
-      data-testid="template-picker"
-      className="absolute top-full left-0 mt-1 z-50 bg-white border border-zinc-200 rounded-lg shadow-lg min-w-[220px] py-1"
-    >
-      {templates.length === 0 ? (
-        <p className="px-4 py-3 text-sm text-zinc-400">No templates configured</p>
-      ) : (
-        templates.map((tpl) => (
-          <button
-            key={tpl.id}
-            onClick={() => applyTemplate(tpl)}
-            disabled={loading}
-            className="w-full text-left px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
-          >
-            {tpl.name}
-            {tpl.template_type && (
-              <span className="ml-2 text-xs text-zinc-400">({tpl.template_type})</span>
-            )}
-          </button>
-        ))
-      )}
     </div>
   )
 }
@@ -264,23 +212,55 @@ export function PhaseBoard({ tasks: initialTasks, projectId, templates }: PhaseB
         />
 
         {/* Templates */}
-        <div className="relative">
-          <button
-            data-testid="template-btn"
-            onClick={() => setTemplatePickerOpen((v) => !v)}
-            className="px-3 py-1.5 text-sm border border-zinc-300 rounded hover:bg-zinc-50"
-          >
-            Templates
-          </button>
-          {templatePickerOpen && (
-            <TemplatePicker
-              templates={templates}
-              projectId={projectId}
-              onClose={() => setTemplatePickerOpen(false)}
-              onCreated={() => router.refresh()}
-            />
-          )}
-        </div>
+        <Dialog open={templatePickerOpen} onOpenChange={setTemplatePickerOpen}>
+          <DialogTrigger asChild>
+            <button
+              data-testid="template-btn"
+              className="px-3 py-1.5 text-sm border border-zinc-300 rounded hover:bg-zinc-50"
+            >
+              Templates
+            </button>
+          </DialogTrigger>
+          <DialogContent data-testid="template-picker" className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Plan Templates</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-2 py-2">
+              {templates.length === 0 ? (
+                <p className="text-sm text-zinc-500">No templates configured</p>
+              ) : (
+                templates.map((tpl) => {
+                  const taskCount = tpl.data
+                    ? (JSON.parse(tpl.data) as { tasks?: unknown[] }).tasks?.length ?? 0
+                    : 0;
+                  return (
+                    <button
+                      key={tpl.id}
+                      onClick={async () => {
+                        if (!tpl.data) return;
+                        const parsed = JSON.parse(tpl.data) as { tasks?: Array<Record<string, unknown>> };
+                        const templateTasks = parsed.tasks ?? [];
+                        for (const t of templateTasks) {
+                          await fetch('/api/tasks', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ ...t, project_id: projectId, source: 'template' }),
+                          });
+                        }
+                        setTemplatePickerOpen(false);
+                        router.refresh();
+                      }}
+                      className="w-full text-left px-3 py-2 rounded border border-zinc-200 hover:bg-zinc-50 text-sm"
+                    >
+                      <span className="font-medium">{tpl.name}</span>
+                      <span className="ml-2 text-xs text-zinc-400">({taskCount} tasks)</span>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Export */}
         <button
