@@ -348,12 +348,14 @@ Plans:
   2. Dashboard shows an "Action Velocity" mini-chart: actions completed per week over the last 4 weeks, with a trend indicator (up/down/flat)
   3. Dashboard or per-project Overview shows open risk count trend (last 4 weeks) — indicating whether risk exposure is growing or shrinking
   4. Time tab includes a capacity planning row: configurable weekly hour target vs. actual hours logged, showing over/under allocation per week
-**Plans**: 3 plans
+**Plans**: 5 plans
 
 Plans:
-- [ ] 14-01-PLAN.md — Wave 1: Time tab weekly rollup + capacity planning (DB aggregation queries + UI)
-- [ ] 14-02-PLAN.md — Wave 2: Action velocity chart + risk trend indicator on Dashboard
-- [ ] 14-03-PLAN.md — Wave 3: E2E green pass + human verification checkpoint
+- [ ] 14-01-PLAN.md — Wave 0: E2E test stubs for all Phase 14 success criteria
+- [ ] 14-02-PLAN.md — Wave 1: DB migration (weekly_hour_target) + computeProjectAnalytics() foundation
+- [ ] 14-03-PLAN.md — Wave 2: Time tab weekly summary + capacity planning (API + UI)
+- [ ] 14-04-PLAN.md — Wave 2: HealthCard velocity chart + risk trend indicator (UI only)
+- [ ] 14-05-PLAN.md — Wave 3: E2E green pass + human verification checkpoint
 
 ## Coverage
 
