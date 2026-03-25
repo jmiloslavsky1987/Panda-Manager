@@ -253,8 +253,9 @@ export const planTemplates = pgTable('plan_templates', {
   created_at: timestamp('created_at').defaultNow().notNull(),
 });
 
-// ─── Table 13: knowledge_base — scaffolded for Phase 8 ───────────────────────
-// No append-only trigger or RLS policy — Phase 8 (KB-01, KB-02, KB-03) will configure.
+// ─── Table 13: knowledge_base — Phase 8 KB-02, KB-03 linkability added ───────
+// linked_risk_id, linked_history_id, linked_date added via migration 0008_fts_and_kb.sql
+// search_vec (tsvector) is DB-only — managed by trigger, queried via raw SQL; not in Drizzle schema
 
 export const knowledgeBase = pgTable('knowledge_base', {
   id: serial('id').primaryKey(),
@@ -262,8 +263,14 @@ export const knowledgeBase = pgTable('knowledge_base', {
   title: text('title').notNull(),
   content: text('content').notNull(),
   source_trace: text('source_trace'),
+  linked_risk_id: integer('linked_risk_id').references(() => risks.id),
+  linked_history_id: integer('linked_history_id').references(() => engagementHistory.id),
+  linked_date: text('linked_date'),
   created_at: timestamp('created_at').defaultNow().notNull(),
 });
+
+export type KnowledgeBaseEntry = typeof knowledgeBase.$inferSelect;
+export type KnowledgeBaseInsert = typeof knowledgeBase.$inferInsert;
 
 // ─── Enum: job_run_status ──────────────────────────────────────────────────────
 export const jobRunStatusEnum = pgEnum('job_run_status', [
