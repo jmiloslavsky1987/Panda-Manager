@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { getWorkspaceData } from '../../../../lib/queries'
 
 const SOURCE_STYLES: Record<string, string> = {
@@ -16,8 +17,14 @@ export default async function HistoryPage({ params }: { params: Promise<{ id: st
 
   return (
     <div data-testid="history-tab" className="space-y-6">
-      <div>
+      <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-zinc-900">Engagement History</h2>
+        <Link
+          href={`/customer/${id}/skills`}
+          className="px-3 py-1.5 text-sm font-medium text-white bg-zinc-900 rounded hover:bg-zinc-700"
+        >
+          Generate Meeting Summary
+        </Link>
       </div>
 
       <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
