@@ -14,6 +14,7 @@ import {
   outputs,
   tasks,
   planTemplates,
+  knowledgeBase,
 } from '../db/schema';
 import { eq, and, inArray, lt, ne, gt, or, desc } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
@@ -382,4 +383,270 @@ export async function getLatestMorningBriefing(): Promise<SkillRun | null> {
     .orderBy(desc(skillRuns.completed_at))
     .limit(1);
   return row ?? null;
+}
+
+// ─── Full-Text Search ─────────────────────────────────────────────────────────
+
+export interface SearchResult {
+  id: number;
+  table: string;        // 'actions' | 'risks' | 'key_decisions' | 'engagement_history' | 'stakeholders' | 'tasks' | 'artifacts' | 'knowledge_base'
+  section: string;      // human-readable: 'Actions' | 'Risks' | ...
+  project_id: number | null;
+  project_name: string; // project.name, or 'Knowledge Base' for null project_id
+  customer: string;     // project.customer, or '' for null project_id
+  date: string | null;
+  title: string;        // primary text field
+  snippet: string;      // secondary text, truncated to 200 chars
+}
+
+/**
+ * Full-text search across all 8 project data tables using PostgreSQL tsvector/tsquery.
+ *
+ * Filters:
+ *   - q:       Required, min 2 chars — used with plainto_tsquery
+ *   - account: Case-insensitive ILIKE match on projects.customer
+ *   - type:    Exact table name match (e.g. 'actions', 'risks')
+ *   - from/to: ISO date strings — inclusive bounds on the table's primary date field
+ *
+ * Returns up to 100 results ordered by date DESC.
+ * Archived projects excluded (projects.status = 'active') except knowledge_base entries
+ * with null project_id which are always included (KB-03 spec).
+ */
+export async function searchAllRecords(params: {
+  q: string;
+  account?: string;
+  type?: string;
+  from?: string;
+  to?: string;
+}): Promise<SearchResult[]> {
+  const { q, account, type, from, to } = params;
+
+  // Guard: no full-table scans on empty / single-char queries
+  if (!q || q.trim().length < 2) return [];
+
+  // Sanitize: replace single quotes to prevent SQL injection in raw template
+  const safeQ = q.replace(/'/g, "''");
+  const safeAccount = account ? account.replace(/'/g, "''") : null;
+
+  // Build individual UNION arms. Each arm returns the same 9-column shape.
+  // Arms are omitted when type filter is set and doesn't match.
+  const arms: string[] = [];
+
+  // Helper: wrap a value so it appears as a SQL literal
+  function dateBounds(dateCol: string): string {
+    const parts: string[] = [];
+    if (from) parts.push(`${dateCol} >= '${from.replace(/'/g, "''")}'`);
+    if (to)   parts.push(`${dateCol} <= '${to.replace(/'/g, "''")}'`);
+    return parts.length ? ' AND ' + parts.join(' AND ') : '';
+  }
+
+  function accountFilter(customerCol: string): string {
+    return safeAccount ? ` AND ${customerCol} ILIKE '%${safeAccount}%'` : '';
+  }
+
+  // ─── 1. actions ───────────────────────────────────────────────────────────
+  if (!type || type === 'actions') {
+    arms.push(`
+      SELECT
+        a.id,
+        'actions'::text AS "table",
+        'Actions'::text AS section,
+        a.project_id,
+        p.name AS project_name,
+        p.customer,
+        a.due AS date,
+        a.description AS title,
+        SUBSTRING(COALESCE(a.notes, ''), 1, 200) AS snippet
+      FROM actions a
+      JOIN projects p ON p.id = a.project_id
+      WHERE p.status = 'active'
+        AND a.search_vec @@ plainto_tsquery('english', '${safeQ}')
+        ${accountFilter('p.customer')}
+        ${dateBounds('a.due')}
+    `);
+  }
+
+  // ─── 2. risks ─────────────────────────────────────────────────────────────
+  if (!type || type === 'risks') {
+    arms.push(`
+      SELECT
+        r.id,
+        'risks'::text AS "table",
+        'Risks'::text AS section,
+        r.project_id,
+        p.name AS project_name,
+        p.customer,
+        r.last_updated AS date,
+        r.description AS title,
+        SUBSTRING(COALESCE(r.mitigation, ''), 1, 200) AS snippet
+      FROM risks r
+      JOIN projects p ON p.id = r.project_id
+      WHERE p.status = 'active'
+        AND r.search_vec @@ plainto_tsquery('english', '${safeQ}')
+        ${accountFilter('p.customer')}
+        ${dateBounds('r.last_updated')}
+    `);
+  }
+
+  // ─── 3. key_decisions ─────────────────────────────────────────────────────
+  if (!type || type === 'key_decisions') {
+    arms.push(`
+      SELECT
+        kd.id,
+        'key_decisions'::text AS "table",
+        'Key Decisions'::text AS section,
+        kd.project_id,
+        p.name AS project_name,
+        p.customer,
+        kd.date AS date,
+        kd.decision AS title,
+        SUBSTRING(COALESCE(kd.context, ''), 1, 200) AS snippet
+      FROM key_decisions kd
+      JOIN projects p ON p.id = kd.project_id
+      WHERE p.status = 'active'
+        AND kd.search_vec @@ plainto_tsquery('english', '${safeQ}')
+        ${accountFilter('p.customer')}
+        ${dateBounds('kd.date')}
+    `);
+  }
+
+  // ─── 4. engagement_history ────────────────────────────────────────────────
+  if (!type || type === 'engagement_history') {
+    arms.push(`
+      SELECT
+        eh.id,
+        'engagement_history'::text AS "table",
+        'Engagement History'::text AS section,
+        eh.project_id,
+        p.name AS project_name,
+        p.customer,
+        eh.date AS date,
+        SUBSTRING(eh.content, 1, 120) AS title,
+        SUBSTRING(eh.content, 1, 200) AS snippet
+      FROM engagement_history eh
+      JOIN projects p ON p.id = eh.project_id
+      WHERE p.status = 'active'
+        AND eh.search_vec @@ plainto_tsquery('english', '${safeQ}')
+        ${accountFilter('p.customer')}
+        ${dateBounds('eh.date')}
+    `);
+  }
+
+  // ─── 5. stakeholders ──────────────────────────────────────────────────────
+  if (!type || type === 'stakeholders') {
+    arms.push(`
+      SELECT
+        s.id,
+        'stakeholders'::text AS "table",
+        'Stakeholders'::text AS section,
+        s.project_id,
+        p.name AS project_name,
+        p.customer,
+        NULL::text AS date,
+        s.name AS title,
+        SUBSTRING(COALESCE(s.role, '') || ' ' || COALESCE(s.notes, ''), 1, 200) AS snippet
+      FROM stakeholders s
+      JOIN projects p ON p.id = s.project_id
+      WHERE p.status = 'active'
+        AND s.search_vec @@ plainto_tsquery('english', '${safeQ}')
+        ${accountFilter('p.customer')}
+    `);
+  }
+
+  // ─── 6. tasks ─────────────────────────────────────────────────────────────
+  if (!type || type === 'tasks') {
+    arms.push(`
+      SELECT
+        t.id,
+        'tasks'::text AS "table",
+        'Tasks'::text AS section,
+        t.project_id,
+        p.name AS project_name,
+        p.customer,
+        t.due AS date,
+        t.title AS title,
+        SUBSTRING(COALESCE(t.description, ''), 1, 200) AS snippet
+      FROM tasks t
+      JOIN projects p ON p.id = t.project_id
+      WHERE p.status = 'active'
+        AND t.search_vec @@ plainto_tsquery('english', '${safeQ}')
+        ${accountFilter('p.customer')}
+        ${dateBounds('t.due')}
+    `);
+  }
+
+  // ─── 7. artifacts ─────────────────────────────────────────────────────────
+  if (!type || type === 'artifacts') {
+    arms.push(`
+      SELECT
+        a.id,
+        'artifacts'::text AS "table",
+        'Artifacts'::text AS section,
+        a.project_id,
+        p.name AS project_name,
+        p.customer,
+        NULL::text AS date,
+        a.name AS title,
+        SUBSTRING(COALESCE(a.description, ''), 1, 200) AS snippet
+      FROM artifacts a
+      JOIN projects p ON p.id = a.project_id
+      WHERE p.status = 'active'
+        AND a.search_vec @@ plainto_tsquery('english', '${safeQ}')
+        ${accountFilter('p.customer')}
+    `);
+  }
+
+  // ─── 8. knowledge_base ────────────────────────────────────────────────────
+  // KB-03: entries with null project_id are always included (cross-project knowledge).
+  // Entries from archived projects remain searchable (KB-03 spec).
+  // Account filter only applies when project_id IS NOT NULL.
+  if (!type || type === 'knowledge_base') {
+    const kbAccountFilter = safeAccount
+      ? ` AND (kb.project_id IS NULL OR p2.customer ILIKE '%${safeAccount}%')`
+      : '';
+    const kbDateBounds = dateBounds('kb.linked_date');
+
+    arms.push(`
+      SELECT
+        kb.id,
+        'knowledge_base'::text AS "table",
+        'Knowledge Base'::text AS section,
+        kb.project_id,
+        COALESCE(p2.name, 'Knowledge Base') AS project_name,
+        COALESCE(p2.customer, '') AS customer,
+        kb.linked_date AS date,
+        kb.title AS title,
+        SUBSTRING(kb.content, 1, 200) AS snippet
+      FROM knowledge_base kb
+      LEFT JOIN projects p2 ON p2.id = kb.project_id
+      WHERE kb.search_vec @@ plainto_tsquery('english', '${safeQ}')
+        ${kbAccountFilter}
+        ${kbDateBounds}
+    `);
+  }
+
+  if (arms.length === 0) return [];
+
+  const unionQuery = arms.join('\nUNION ALL\n');
+  const finalQuery = `
+    SELECT * FROM (
+      ${unionQuery}
+    ) combined
+    ORDER BY date DESC NULLS LAST
+    LIMIT 100
+  `;
+
+  const rows = await db.execute(sql.raw(finalQuery));
+
+  return (rows as unknown as Array<Record<string, unknown>>).map((row) => ({
+    id: Number(row.id),
+    table: String(row.table),
+    section: String(row.section),
+    project_id: row.project_id != null ? Number(row.project_id) : null,
+    project_name: String(row.project_name ?? ''),
+    customer: String(row.customer ?? ''),
+    date: row.date != null ? String(row.date) : null,
+    title: String(row.title ?? ''),
+    snippet: String(row.snippet ?? ''),
+  }));
 }
