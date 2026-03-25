@@ -254,7 +254,7 @@ Phases 5.1 and 5.2 can run in parallel. Phases 6 and 7 can overlap after Phase 5
 | 11. Health Score Wire | 1/1 | Complete    | 2026-03-25 |
 | 12. Complete Workspace Write Surface | 4/4 | Complete    | 2026-03-25 |
 | 13. Skill UX + Draft Polish | 4/4 | Complete    | 2026-03-25 |
-| 14. Time + Project Analytics | 3/5 | In Progress|  |
+| 14. Time + Project Analytics | 4/5 | In Progress|  |
 
 ---
 
