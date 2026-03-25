@@ -253,7 +253,7 @@ Phases 5.1 and 5.2 can run in parallel. Phases 6 and 7 can overlap after Phase 5
 | 10. FTS Expansion + Code Polish | 2/2 | Complete    | 2026-03-25 |
 | 11. Health Score Wire | 1/1 | Complete    | 2026-03-25 |
 | 12. Complete Workspace Write Surface | 4/4 | Complete    | 2026-03-25 |
-| 13. Skill UX + Draft Polish | 4/4 | Complete   | 2026-03-25 |
+| 13. Skill UX + Draft Polish | 4/4 | Complete    | 2026-03-25 |
 | 14. Time + Project Analytics | 0/3 | Pending | |
 
 ---
@@ -334,7 +334,7 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
-- [ ] 13-01-PLAN.md — Wave 0: E2E test stubs (11 RED stubs covering all Phase 13 behaviors)
+- [x] 13-01-PLAN.md — Wave 0: E2E test stubs (11 RED stubs covering all Phase 13 behaviors) (completed 2026-03-25)
 - [ ] 13-02-PLAN.md — Wave 1: Skill launch buttons (History + Stakeholders) + search date filter fix
 - [ ] 13-03-PLAN.md — Wave 1: DraftEditModal + DraftsInbox refactor + PATCH extension + TemplatePicker Dialog upgrade
 - [ ] 13-04-PLAN.md — Wave 2: E2E green pass + human verification checkpoint
