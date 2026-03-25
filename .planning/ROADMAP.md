@@ -371,11 +371,12 @@ Plans:
   2. A "Export YAML" button in the workspace UI (ProjectHeader or layout) triggers a POST to `/api/projects/[id]/yaml-export` and writes the context doc to disk
   3. `morning-briefing.ts`, `weekly-customer-status.ts`, and `context-updater.ts` use `resolveSkillsDir(settings.skill_path)` instead of a hardcoded `__dirname`-relative path
   4. The search filter TYPE_OPTIONS includes all 12 FTS tables: adds `onboarding_steps`, `onboarding_phases`, `integrations`, `time_entries`
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
-- [ ] 15-01-PLAN.md — Wave 1: Scheduler registration fix + YAML export UI + resolveSkillsDir() in 3 handlers + search TYPE_OPTIONS update
-- [ ] 15-02-PLAN.md — Wave 2: E2E green pass + human verification checkpoint
+- [ ] 15-01-PLAN.md — Wave 0: Failing test scaffolds (scheduler-map.test.ts + search-type-options.test.ts)
+- [ ] 15-02-PLAN.md — Wave 1: Scheduler registration fix + resolveSkillsDir() in 3 handlers + search TYPE_OPTIONS update
+- [ ] 15-03-PLAN.md — Wave 2: Full suite GREEN + human verification checkpoint
 
 ### Phase 16: Verification Retrofit
 **Goal**: Phases 01, 04, 05, 05.2, and 06 each have a VERIFICATION.md produced by gsd-verifier — closing 31 orphaned requirements that were implemented but never formally verified.
