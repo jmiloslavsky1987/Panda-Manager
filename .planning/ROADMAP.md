@@ -22,6 +22,12 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 6: MCP Integrations** - MCPClientPool, Slack/Gmail/Glean/Drive connections, Customer Project Tracker fully wired
 - [x] **Phase 7: File Generation + Remaining Skills** - FileGenerationService (.docx/.pptx/.xlsx/.html), 11 remaining skills wired (completed 2026-03-24)
 - [x] **Phase 8: Cross-Project Features + Polish** - FTS, risk heat map, cross-account watch list, Knowledge Base, Drafts send/discard flow (completed 2026-03-25)
+- [ ] **Phase 9: MCP Injection Fix** - Wire MCPClientPool into all 4 skill job handlers; closes INT-MCP-01 from v1.0 audit
+- [ ] **Phase 10: FTS Expansion + Code Polish** - FTS coverage for 4 missing tables, skill path setting wired, /skills/custom link fixed; closes INT-FTS-01/INT-SET-01/INT-UI-01
+- [ ] **Phase 11: Health Score Wire** - workstream.percent_complete feeds computeHealth(); closes PLAN-09 gap
+- [ ] **Phase 12: Complete Workspace Write Surface** - Artifacts tab, Decisions write UI, Architecture inline edit, Teams percent_complete edit
+- [ ] **Phase 13: Skill UX + Draft Polish** - Contextual skill launch buttons, draft editing, search date filter, plan template library
+- [ ] **Phase 14: Time + Project Analytics** - Time entry rollup, action velocity, risk trends, capacity planning view
 
 ## Phase Details
 
@@ -185,13 +191,13 @@ Plans:
 - [ ] 06-07-PLAN.md — Wave 5: E2E activation + human verification checkpoint
 
 ### Phase 7: File Generation + Remaining Skills
-**Goal**: FileGenerationService produces Office-compatible .docx, .pptx, .xlsx, and self-contained .html files, and all 11 remaining AI skills (ELT External/Internal Status, Team Engagement Map, Workflow Diagram, Meeting Summary, Biggy Weekly Briefing, Handoff Doc Generator, and AI-assisted plan generation) are wired and producing files that open without corruption in Microsoft Office.
+**Goal**: FileGenerationService produces Office-compatible .docx, .pptx, .xlsx, and self-contained .html files, and all 10 remaining AI skills (ELT External/Internal Status, Team Engagement Map, Workflow Diagram, Meeting Summary, Handoff Doc Generator, and AI-assisted plan generation) are wired and producing files that open without corruption in Microsoft Office. *(Note: SKILL-09 Biggy Weekly Briefing deferred to v2.)*
 **Depends on**: Phase 5 (can overlap with Phase 6)
-**Requirements**: SKILL-05, SKILL-06, SKILL-07, SKILL-08, SKILL-09, PLAN-12, PLAN-13
+**Requirements**: SKILL-05, SKILL-06, SKILL-07, SKILL-08, PLAN-12, PLAN-13
 **Success Criteria** (what must be TRUE):
   1. Running ELT External Status for any account produces a .pptx file that opens without a corruption dialog in Microsoft PowerPoint and uses confidence-framed, partnership-tone language with no internal severity language
   2. Running Meeting Summary produces a .docx that opens without corruption in Microsoft Word and registers a new entry in the account's engagement history
-  3. Biggy Weekly Briefing produces three outputs in one run (.docx plus email draft plus Slack draft) all of which appear in the Drafts Inbox and Output Library
+  3. ~~Biggy Weekly Briefing produces three outputs in one run~~ *(SKILL-09 deferred to v2)*
   4. AI-assisted plan generation proposes a task list for the next 2 weeks scoped to the current phase and open blockers — proposed tasks require human approval before committing to the database
   5. Regenerating any output archives the old file and registers the new one in the Output Library; the old file remains accessible under an "archived" filter
 **Plans**: 7 plans
@@ -243,8 +249,110 @@ Phases 5.1 and 5.2 can run in parallel. Phases 6 and 7 can overlap after Phase 5
 | 6. MCP Integrations | 5/7 | In Progress|  |
 | 7. File Generation + Remaining Skills | 7/7 | Complete   | 2026-03-24 |
 | 8. Cross-Project Features + Polish | 7/7 | Complete   | 2026-03-25 |
+| 9. MCP Injection Fix | 0/2 | Pending | |
+| 10. FTS Expansion + Code Polish | 0/2 | Pending | |
+| 11. Health Score Wire | 0/1 | Pending | |
+| 12. Complete Workspace Write Surface | 0/4 | Pending | |
+| 13. Skill UX + Draft Polish | 0/3 | Pending | |
+| 14. Time + Project Analytics | 0/3 | Pending | |
 
 ---
+
+### Phase 9: MCP Injection Fix
+**Goal**: All three MCP-dependent skill job handlers (morning-briefing, context-updater, weekly-customer-status) and the generic skill-run handler correctly inject MCP servers before invoking the orchestrator — no skill silently runs without its declared MCP context.
+**Depends on**: Phase 8
+**Requirements**: SKILL-01, SKILL-03, SKILL-04, SKILL-11, SKILL-12
+**Gap Closure**: Closes INT-MCP-01, FLOW-MCP-01, FLOW-MCP-02 from v1.0 audit
+**Success Criteria** (what must be TRUE):
+  1. Morning Briefing, Context Updater, and Weekly Customer Status job handlers all call `MCPClientPool.getServersForSkill(skillName)` before `orchestrator.run()` — confirmed by code inspection and test
+  2. The generic `skill-run.ts` handler (UI-triggered) also injects MCP servers when the skill has a declared mapping in `SKILL_MCP_MAP`
+  3. Skills without MCP mappings are unaffected — no regression on skills that run without MCP
+  4. MCP injection matches the pattern already working in `customer-project-tracker.ts`
+**Plans**: 2 plans
+
+Plans:
+- [ ] 09-01-PLAN.md — Wave 1: Add MCPClientPool.getServersForSkill() to morning-briefing.ts, context-updater.ts, weekly-customer-status.ts, skill-run.ts
+- [ ] 09-02-PLAN.md — Wave 2: E2E/unit test confirming injection + human verification checkpoint
+
+### Phase 10: FTS Expansion + Code Polish
+**Goal**: Full-text search covers all 12 project-scoped tables including Phase 5.1 and 5.2 additions; the skill file path setting is actually honored; and the orphaned /skills/custom navigation link is fixed.
+**Depends on**: Phase 8
+**Requirements**: SRCH-01, SET-02
+**Gap Closure**: Closes INT-FTS-01, INT-SET-01, INT-UI-01, FLOW-SRCH-01 from v1.0 audit
+**Success Criteria** (what must be TRUE):
+  1. Searching for a term that appears in an onboarding step owner or integration note returns results from those tables in the global search page
+  2. Searching for a time entry description returns that entry in search results
+  3. skill-run.ts reads the SKILL.md file path from `settings.skill_files_path` when set, falling back to the default path when not configured
+  4. Clicking the /skills/custom link no longer returns a 404 — link is removed or redirected
+**Plans**: 2 plans
+
+Plans:
+- [ ] 10-01-PLAN.md — Wave 1: Migration 0009 (search_vec + GIN + trigger for 4 tables) + searchAllRecords() UNION ALL arms + SET-02 skill path fix + /skills/custom link fix
+- [ ] 10-02-PLAN.md — Wave 2: E2E green pass + human verification checkpoint
+
+### Phase 11: Health Score Wire
+**Goal**: Task completion in the Plan Builder propagates all the way to the Dashboard health card — completing tasks in a workstream lowers the health risk score when workstreams fall behind, making the health card a true reflection of delivery progress.
+**Depends on**: Phase 8
+**Requirements**: PLAN-09
+**Gap Closure**: Closes PLAN-09 gap confirmed in Phase 03 VERIFICATION.md
+**Success Criteria** (what must be TRUE):
+  1. A workstream with 0% completion on active tasks contributes a negative signal to computeHealth() — the health score for a project with no task progress is lower than one with 100% complete workstreams
+  2. The Dashboard health card RAG status reflects task progress within 1 reload of completing tasks
+  3. No regression on existing health signals (overdue actions, stalled milestones, high risks still factor in)
+**Plans**: 1 plan
+
+Plans:
+- [ ] 11-01-PLAN.md — Wave 1: Wire workstreams.percent_complete into computeHealth() + update health card test
+
+### Phase 12: Complete Workspace Write Surface
+**Goal**: Every workspace tab that was built read-only in Phase 2 now has a working write surface — Artifacts get their own tab, Decisions can be appended to, Architecture can be edited inline, and Teams shows editable workstream progress.
+**Depends on**: Phase 3
+**Requirements**: (new capability — no existing REQ-IDs; extends WORK-* coverage)
+**Success Criteria** (what must be TRUE):
+  1. Artifacts tab lists all project artifacts (X-NNN format) with name, status, owner, and linked milestone; new artifacts can be created and edited
+  2. Decisions tab has an "Add Decision" button that opens a modal and appends a new key_decision record — the decision appears in the append-only timeline immediately
+  3. Architecture tab allows inline editing of workstream state, lead name, and description — saves persist to DB
+  4. Teams tab shows workstream.percent_complete as an editable progress bar; updating it saves to DB and triggers a health score recalculation
+  5. All "available in Phase 3" placeholder banners are removed
+**Plans**: 4 plans
+
+Plans:
+- [ ] 12-01-PLAN.md — Wave 0: E2E test stubs for all Phase 12 behaviors (RED baseline)
+- [ ] 12-02-PLAN.md — Wave 1: Artifacts tab — DB API routes + ArtifactEditModal + 13th workspace tab
+- [ ] 12-03-PLAN.md — Wave 2: Decisions "Add Decision" modal + Architecture inline edit + Teams percent_complete edit + stale banner cleanup
+- [ ] 12-04-PLAN.md — Wave 3: E2E green pass + human verification checkpoint
+
+### Phase 13: Skill UX + Draft Polish
+**Goal**: Skills are launchable directly from the workspace context where they're most relevant, drafts are editable before sending, the search date filter works, and the plan template library is accessible in the PhaseBoard.
+**Depends on**: Phase 5, Phase 8
+**Requirements**: (new capability — improves usability of SKILL-03/04/05/06/07/08/12/13, DASH-09, SRCH-01/02)
+**Success Criteria** (what must be TRUE):
+  1. "Generate Meeting Summary" button on the History tab opens the skill launcher pre-scoped to that project; "Create Handoff Doc" button on Stakeholders tab does the same
+  2. Selecting a draft in the Drafts Inbox shows an Edit modal — the user can modify subject, body, and recipient before sending or dismissing
+  3. The date range filter on the /search page filters results to entries created within the selected range
+  4. A "Templates" button in PhaseBoard opens a modal listing saved plan_templates; selecting one instantiates its tasks into the current project
+**Plans**: 3 plans
+
+Plans:
+- [ ] 13-01-PLAN.md — Wave 1: Contextual skill launch buttons on History tab, Stakeholders tab, and Dashboard quick actions
+- [ ] 13-02-PLAN.md — Wave 2: Draft editing modal + search date filter implementation + plan template library UI
+- [ ] 13-03-PLAN.md — Wave 3: E2E green pass + human verification checkpoint
+
+### Phase 14: Time + Project Analytics
+**Goal**: Time entries are summarized by week and month in the Time tab, the Dashboard gains an action velocity chart and risk trend indicator, and a capacity planning view shows hours logged vs. weekly target — turning captured data into actionable intelligence.
+**Depends on**: Phase 5.2, Phase 8
+**Requirements**: (new capability — extends TIME-01/02/03 and DASH-02/03 coverage)
+**Success Criteria** (what must be TRUE):
+  1. Time tab header shows total hours for the project plus a weekly summary table (sum by week for the last 8 weeks)
+  2. Dashboard shows an "Action Velocity" mini-chart: actions completed per week over the last 4 weeks, with a trend indicator (up/down/flat)
+  3. Dashboard or per-project Overview shows open risk count trend (last 4 weeks) — indicating whether risk exposure is growing or shrinking
+  4. Time tab includes a capacity planning row: configurable weekly hour target vs. actual hours logged, showing over/under allocation per week
+**Plans**: 3 plans
+
+Plans:
+- [ ] 14-01-PLAN.md — Wave 1: Time tab weekly rollup + capacity planning (DB aggregation queries + UI)
+- [ ] 14-02-PLAN.md — Wave 2: Action velocity chart + risk trend indicator on Dashboard
+- [ ] 14-03-PLAN.md — Wave 3: E2E green pass + human verification checkpoint
 
 ## Coverage
 
@@ -335,7 +443,17 @@ Phases 5.1 and 5.2 can run in parallel. Phases 6 and 7 can overlap after Phase 5
 | SRCH-02 | Phase 8 |
 | SRCH-03 | Phase 8 |
 
-**Total mapped: 82 requirements across 10 phases**
+| SKILL-01 | Phase 9 |
+| SKILL-03 | Phase 9 |
+| SKILL-04 | Phase 9 |
+| SKILL-11 | Phase 9 |
+| SKILL-12 | Phase 9 |
+| SRCH-01 | Phase 10 |
+| SET-02 | Phase 10 |
+| PLAN-09 | Phase 11 |
+| SKILL-09 | v2 (deferred) |
+
+**Total mapped: 81 v1 requirements across 14 phases** (SKILL-09 moved to v2)
 
 > Added OVER-01–04 (Onboarding Dashboard, Phase 5.1) and TIME-01–03 (Time Tracking, Phase 5.2) on 2026-03-23. Total was 75; now 82.
 
@@ -359,3 +477,4 @@ Phases 5.1 and 5.2 can run in parallel. Phases 6 and 7 can overlap after Phase 5
 *Phase 2 planned: 2026-03-19 — 7 plans across 5 waves (Wave 0–4)*
 *Phase 5 planned: 2026-03-20 — 6 plans across 5 waves (Wave 0–4)*
 *Phase 5.2 planned: 2026-03-23 — 5 plans across 4 waves (Wave 0–3)*
+*Phases 9–14 added: 2026-03-24 — gap closure phases from v1.0 audit + high-value feature additions; SKILL-09 moved to v2*

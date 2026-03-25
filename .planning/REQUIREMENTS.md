@@ -55,18 +55,18 @@
 
 ### Skill Launcher
 
-- [x] **SKILL-01**: SkillOrchestrator service cleanly separated from HTTP Route Handlers — same code path for manual (SSE) and BullMQ-worker (scheduled) invocations
+- [ ] **SKILL-01**: SkillOrchestrator service cleanly separated from HTTP Route Handlers — same code path for manual (SSE) and BullMQ-worker (scheduled) invocations
 - [x] **SKILL-02**: Token budget guard in context assembly — estimates token count before Claude call, truncates or summarizes low-priority context sections if over budget
-- [x] **SKILL-03**: Weekly Customer Status — select account → generate customer-facing email from DB context; copy to clipboard or save as file; optionally creates Gmail draft
-- [x] **SKILL-04**: Meeting Summary — paste notes/transcript + select account → generate .docx + optional .mermaid diagram; registers entry in engagement history
+- [ ] **SKILL-03**: Weekly Customer Status — select account → generate customer-facing email from DB context; copy to clipboard or save as file; optionally creates Gmail draft
+- [ ] **SKILL-04**: Meeting Summary — paste notes/transcript + select account → generate .docx + optional .mermaid diagram; registers entry in engagement history
 - [x] **SKILL-05**: ELT External Status — select account + month → generate 5-slide .pptx (confidence-framed, partnership tone, no internal severity language)
 - [x] **SKILL-06**: ELT Internal Status — select account + date → generate internal .pptx (direct tone, surfaces blockers)
 - [x] **SKILL-07**: Team Engagement Map — select account → generate self-contained HTML (business outcomes, ADR/Biggy flows, team status table)
 - [x] **SKILL-08**: Workflow Diagram — select account → generate before/after HTML with two tabs
-- [ ] **SKILL-09**: Biggy Weekly Briefing — select modules → generate .docx + email draft + Slack draft (three outputs in one run)
+- ~~**SKILL-09**: Biggy Weekly Briefing~~ *(moved to v2 — see v2 Requirements)*
 - [x] **SKILL-10**: Customer Project Tracker — run for one account or all active; sweeps Gmail/Slack/Gong for last 7 days; updates actions table and PA3_Action_Tracker.xlsx; shows structured report
-- [x] **SKILL-11**: Morning Briefing — fetch today's calendar via Glean, synthesize per-meeting context, store result in DB, display in Dashboard Briefing panel
-- [x] **SKILL-12**: Context Updater — paste notes/transcript + select account → apply all 14 update steps → write to DB → export updated context doc to file; registers in engagement history
+- [ ] **SKILL-11**: Morning Briefing — fetch today's calendar via Glean, synthesize per-meeting context, store result in DB, display in Dashboard Briefing panel
+- [ ] **SKILL-12**: Context Updater — paste notes/transcript + select account → apply all 14 update steps → write to DB → export updated context doc to file; registers in engagement history
 - [x] **SKILL-13**: Handoff Doc Generator — select account → generate structured handoff/coverage doc covering open actions, risks, key decisions, key contacts, and current workstream status
 - [x] **SKILL-14**: SKILL.md files read from disk at runtime (skill_path configurable in settings); prompts never modified or simplified in code
 
@@ -87,7 +87,7 @@
 - [x] **PLAN-06**: Task dependencies — mark task as blocked by another; dependency chains visualized in Gantt and Task Board
 - [x] **PLAN-07**: Bulk operations — select multiple tasks, reassign owner, change due date, move to different phase
 - [x] **PLAN-08**: Task templates — one-click instantiation for Biggy Activation, ADR Onboarding, Team Kickoff workstreams
-- [x] **PLAN-09**: Progress rollup — task completion → workstream percent_complete → project health score automatically
+- [ ] **PLAN-09**: Progress rollup — task completion → workstream percent_complete → project health score automatically
 - [x] **PLAN-10**: Excel plan import from .xlsx (KAISER_Biggy_Project_Plan format) mapping columns to task schema
 - [x] **PLAN-11**: Plan export to .xlsx in the same format as the Kaiser plan
 - [x] **PLAN-12**: AI-assisted plan generation — given current project context, generates suggested task list for next 2 weeks scoped to current phase and open blockers
@@ -101,7 +101,7 @@
 
 ### Search
 
-- [x] **SRCH-01**: Full-text search using PostgreSQL tsvector/tsquery across actions, risks, decisions, engagement history, stakeholders, artifacts, tasks, and knowledge base
+- [ ] **SRCH-01**: Full-text search using PostgreSQL tsvector/tsquery across actions, risks, decisions, engagement history, stakeholders, artifacts, tasks, and knowledge base
 - [x] **SRCH-02**: Search filterable by account, date range, and data type
 - [x] **SRCH-03**: Search results show matching record in full context (which project, which section, which date)
 
@@ -119,11 +119,15 @@
 ### Settings
 
 - [x] **SET-01**: Workspace path configuration (default: ~/Documents/BigPanda Projects/) — where output files are saved
-- [x] **SET-02**: Skill file location configuration (default: ~/.claude/get-shit-done/) — where SKILL.md files are read from
+- [ ] **SET-02**: Skill file location configuration (default: ~/.claude/get-shit-done/) — where SKILL.md files are read from
 - [x] **SET-03**: Schedule time configuration for each background job
 - [x] **SET-04**: Anthropic API key stored securely (not in .env committed to git; system keychain or local secrets file)
 
 ## v2 Requirements
+
+### Deferred from v1
+
+- **SKILL-09**: Biggy Weekly Briefing — select modules → generate .docx + email draft + Slack draft (three outputs in one run); deferred from Phase 7 — no SKILL.md, no handler, not in WIRED_SKILLS
 
 ### Team Expansion
 
@@ -167,7 +171,7 @@
 | DATA-07 | Phase 1 | Complete |
 | DATA-08 | Phase 1 | Complete |
 | SET-01 | Phase 1 | Complete |
-| SET-02 | Phase 1 | Complete |
+| SET-02 | Phase 10 | Pending |
 | SET-03 | Phase 1 | Complete |
 | SET-04 | Phase 1 | Complete |
 | DASH-01 | Phase 2 | Complete |
@@ -193,7 +197,7 @@
 | PLAN-06 | Phase 3 | Complete |
 | PLAN-07 | Phase 3 | Complete |
 | PLAN-08 | Phase 3 | Complete |
-| PLAN-09 | Phase 3 | Complete |
+| PLAN-09 | Phase 11 | Pending |
 | PLAN-10 | Phase 3 | Complete |
 | PLAN-11 | Phase 3 | Complete |
 | SCHED-01 | Phase 4 | Complete |
@@ -204,12 +208,12 @@
 | SCHED-06 | Phase 4 | Complete |
 | SCHED-07 | Phase 4 | Complete |
 | SCHED-08 | Phase 4 | Complete |
-| SKILL-01 | Phase 5 | Complete |
+| SKILL-01 | Phase 9 | Pending |
 | SKILL-02 | Phase 5 | Complete |
-| SKILL-03 | Phase 5 | Complete |
-| SKILL-04 | Phase 5 | Complete |
-| SKILL-11 | Phase 5 | Complete |
-| SKILL-12 | Phase 5 | Complete |
+| SKILL-03 | Phase 9 | Pending |
+| SKILL-04 | Phase 9 | Pending |
+| SKILL-11 | Phase 9 | Pending |
+| SKILL-12 | Phase 9 | Pending |
 | SKILL-13 | Phase 5 | Complete |
 | SKILL-14 | Phase 5 | Complete |
 | DASH-09 | Phase 5 | Complete |
@@ -231,23 +235,23 @@
 | SKILL-06 | Phase 7 | Complete |
 | SKILL-07 | Phase 7 | Complete |
 | SKILL-08 | Phase 7 | Complete |
-| SKILL-09 | Phase 7 | Pending |
+| SKILL-09 | v2 | Deferred |
 | PLAN-12 | Phase 7 | Complete |
 | PLAN-13 | Phase 7 | Complete |
 | KB-01 | Phase 8 | Complete |
 | KB-02 | Phase 8 | Complete |
 | KB-03 | Phase 8 | Complete |
-| SRCH-01 | Phase 8 | Complete |
+| SRCH-01 | Phase 10 | Pending |
 | SRCH-02 | Phase 8 | Complete |
 | SRCH-03 | Phase 8 | Complete |
 
 **Coverage:**
-- v1 requirements enumerated: 82 (DATA:8, DASH:9, WORK:9, OVER:4, TIME:3, SKILL:14, OUT:4, PLAN:13, KB:3, SRCH:3, SCHED:8, SET:4)
-- Mapped to phases: 82
+- v1 requirements enumerated: 81 (DATA:8, DASH:9, WORK:9, OVER:4, TIME:3, SKILL:13, OUT:4, PLAN:13, KB:3, SRCH:3, SCHED:8, SET:4) — SKILL-09 moved to v2
+- Mapped to phases: 81
 - Unmapped: 0
 
 > Note: Added OVER-01–04 (Onboarding Dashboard) and TIME-01–03 (Time Tracking) on 2026-03-23. WORK-01 marked superseded by OVER-01 — original implementation remains complete, replaced in Phase 5.1.
 
 ---
 *Requirements defined: 2026-03-18*
-*Last updated: 2026-03-23 — added OVER and TIME requirement groups; inserted Phase 5.1 and 5.2*
+*Last updated: 2026-03-24 — SKILL-09 moved to v2; PLAN-09/SET-02/SKILL-01/03/04/11/12/SRCH-01 reset to Pending and reassigned to gap closure phases 9–11*
