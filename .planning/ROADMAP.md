@@ -21,7 +21,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 5.2: Time Tracking** [INSERTED] - 12th workspace tab; time_entries table; add/edit/delete entries; CSV export
 - [ ] **Phase 6: MCP Integrations** - MCPClientPool, Slack/Gmail/Glean/Drive connections, Customer Project Tracker fully wired
 - [x] **Phase 7: File Generation + Remaining Skills** - FileGenerationService (.docx/.pptx/.xlsx/.html), 11 remaining skills wired (completed 2026-03-24)
-- [ ] **Phase 8: Cross-Project Features + Polish** - FTS, risk heat map, cross-account watch list, Knowledge Base, Drafts send/discard flow
+- [x] **Phase 8: Cross-Project Features + Polish** - FTS, risk heat map, cross-account watch list, Knowledge Base, Drafts send/discard flow (completed 2026-03-25)
 
 ## Phase Details
 
@@ -242,7 +242,7 @@ Phases 5.1 and 5.2 can run in parallel. Phases 6 and 7 can overlap after Phase 5
 | 5.2 Time Tracking [INSERTED] | 2/5 | In Progress|  |
 | 6. MCP Integrations | 5/7 | In Progress|  |
 | 7. File Generation + Remaining Skills | 7/7 | Complete   | 2026-03-24 |
-| 8. Cross-Project Features + Polish | 6/7 | In Progress|  |
+| 8. Cross-Project Features + Polish | 7/7 | Complete   | 2026-03-25 |
 
 ---
 
