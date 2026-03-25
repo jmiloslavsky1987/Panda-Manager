@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { getWorkspaceData } from '../../../../lib/queries'
 import { StakeholderEditModal } from '../../../../components/StakeholderEditModal'
 
@@ -91,17 +92,25 @@ export default async function StakeholdersPage({ params }: { params: Promise<{ i
     <div data-testid="stakeholders-tab" className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-zinc-900">Stakeholders</h2>
-        <StakeholderEditModal
-          projectId={projectId}
-          trigger={
-            <button
-              data-testid="add-stakeholder-btn"
-              className="rounded-md bg-zinc-900 text-white text-sm px-4 py-2 hover:bg-zinc-700 transition-colors"
-            >
-              + Add Stakeholder
-            </button>
-          }
-        />
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/customer/${id}/skills`}
+            className="px-3 py-1.5 text-sm font-medium text-zinc-700 border border-zinc-300 rounded hover:bg-zinc-50"
+          >
+            Create Handoff Doc
+          </Link>
+          <StakeholderEditModal
+            projectId={projectId}
+            trigger={
+              <button
+                data-testid="add-stakeholder-btn"
+                className="rounded-md bg-zinc-900 text-white text-sm px-4 py-2 hover:bg-zinc-700 transition-colors"
+              >
+                + Add Stakeholder
+              </button>
+            }
+          />
+        </div>
       </div>
 
       {stakeholders.length === 0 ? (
