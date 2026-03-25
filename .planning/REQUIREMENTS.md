@@ -55,18 +55,18 @@
 
 ### Skill Launcher
 
-- [ ] **SKILL-01**: SkillOrchestrator service cleanly separated from HTTP Route Handlers — same code path for manual (SSE) and BullMQ-worker (scheduled) invocations
+- [x] **SKILL-01**: SkillOrchestrator service cleanly separated from HTTP Route Handlers — same code path for manual (SSE) and BullMQ-worker (scheduled) invocations
 - [x] **SKILL-02**: Token budget guard in context assembly — estimates token count before Claude call, truncates or summarizes low-priority context sections if over budget
-- [ ] **SKILL-03**: Weekly Customer Status — select account → generate customer-facing email from DB context; copy to clipboard or save as file; optionally creates Gmail draft
-- [ ] **SKILL-04**: Meeting Summary — paste notes/transcript + select account → generate .docx + optional .mermaid diagram; registers entry in engagement history
+- [x] **SKILL-03**: Weekly Customer Status — select account → generate customer-facing email from DB context; copy to clipboard or save as file; optionally creates Gmail draft
+- [x] **SKILL-04**: Meeting Summary — paste notes/transcript + select account → generate .docx + optional .mermaid diagram; registers entry in engagement history
 - [x] **SKILL-05**: ELT External Status — select account + month → generate 5-slide .pptx (confidence-framed, partnership tone, no internal severity language)
 - [x] **SKILL-06**: ELT Internal Status — select account + date → generate internal .pptx (direct tone, surfaces blockers)
 - [x] **SKILL-07**: Team Engagement Map — select account → generate self-contained HTML (business outcomes, ADR/Biggy flows, team status table)
 - [x] **SKILL-08**: Workflow Diagram — select account → generate before/after HTML with two tabs
 - ~~**SKILL-09**: Biggy Weekly Briefing~~ *(moved to v2 — see v2 Requirements)*
 - [x] **SKILL-10**: Customer Project Tracker — run for one account or all active; sweeps Gmail/Slack/Gong for last 7 days; updates actions table and PA3_Action_Tracker.xlsx; shows structured report
-- [ ] **SKILL-11**: Morning Briefing — fetch today's calendar via Glean, synthesize per-meeting context, store result in DB, display in Dashboard Briefing panel
-- [ ] **SKILL-12**: Context Updater — paste notes/transcript + select account → apply all 14 update steps → write to DB → export updated context doc to file; registers in engagement history
+- [x] **SKILL-11**: Morning Briefing — fetch today's calendar via Glean, synthesize per-meeting context, store result in DB, display in Dashboard Briefing panel
+- [x] **SKILL-12**: Context Updater — paste notes/transcript + select account → apply all 14 update steps → write to DB → export updated context doc to file; registers in engagement history
 - [x] **SKILL-13**: Handoff Doc Generator — select account → generate structured handoff/coverage doc covering open actions, risks, key decisions, key contacts, and current workstream status
 - [x] **SKILL-14**: SKILL.md files read from disk at runtime (skill_path configurable in settings); prompts never modified or simplified in code
 
@@ -208,12 +208,12 @@
 | SCHED-06 | Phase 4 | Complete |
 | SCHED-07 | Phase 4 | Complete |
 | SCHED-08 | Phase 4 | Complete |
-| SKILL-01 | Phase 9 | Pending |
+| SKILL-01 | Phase 9 | Complete |
 | SKILL-02 | Phase 5 | Complete |
-| SKILL-03 | Phase 9 | Pending |
-| SKILL-04 | Phase 9 | Pending |
-| SKILL-11 | Phase 9 | Pending |
-| SKILL-12 | Phase 9 | Pending |
+| SKILL-03 | Phase 9 | Complete |
+| SKILL-04 | Phase 9 | Complete |
+| SKILL-11 | Phase 9 | Complete |
+| SKILL-12 | Phase 9 | Complete |
 | SKILL-13 | Phase 5 | Complete |
 | SKILL-14 | Phase 5 | Complete |
 | DASH-09 | Phase 5 | Complete |

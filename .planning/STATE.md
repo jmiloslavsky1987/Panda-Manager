@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: "Completed 08-07-PLAN.md — Phase 8 E2E gate: 6/6 tests GREEN, human verified search UI + Knowledge Base, Phase 8 COMPLETE"
-last_updated: "2026-03-25T02:52:54.061Z"
+stopped_at: "Completed 09-01-PLAN.md — Wave 0 RED test scaffold: 5/5 tests failing with correct assertion errors for MCPClientPool injection gap"
+last_updated: "2026-03-25T04:38:59.884Z"
 progress:
-  total_phases: 10
+  total_phases: 16
   completed_phases: 10
-  total_plans: 67
-  completed_plans: 67
+  total_plans: 69
+  completed_plans: 68
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 05-06-PLAN.md — 13/13 E2E tests GREEN, all 8 human verification steps approved
 **Next action:** `/gsd:plan-phase 5.1` — Onboarding Dashboard (replaces Overview tab; new DB tables; YAML round-trip)
-**Stopped at:** Completed 08-07-PLAN.md — Phase 8 E2E gate: 6/6 tests GREEN, human verified search UI + Knowledge Base, Phase 8 COMPLETE
+**Stopped at:** Completed 09-01-PLAN.md — Wave 0 RED test scaffold: 5/5 tests failing with correct assertion errors for MCPClientPool injection gap
 
 ## Phase Progress
 
@@ -204,6 +204,8 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 - [Phase 08-06]: Inline input forms for link-to-risk/history on entry card — no modal overlay per plan scope guidance
 - [Phase 08-06]: Knowledge Base sidebar link placed above Outputs in the bottom nav group with BookOpen icon
 - [Phase 08-07]: assert-if-present used for all 6 Phase 8 E2E tests — structural testid assertions always pass; content assertions conditional on seeded data
+- [Phase 09-01]: db mock insert chain includes .returning() support — scheduled handlers use .returning() while outputs inserts use .onConflictDoNothing(); both methods needed in same mock
+- [Phase 09-01]: vi.resetModules() in beforeEach ensures each test gets a fresh handler import, preventing stale module cache from causing false positives
 
 ## Performance Metrics
 
@@ -272,6 +274,7 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 | Phase 08-cross-project-features-+-polish P05 | 6min | 2 tasks | 3 files |
 | Phase 08-cross-project-features-+-polish P06 | 2min | 2 tasks | 4 files |
 | Phase 08-cross-project-features-+-polish P07 | 15min | 2 tasks | 1 files |
+| Phase 09-mcp-injection-fix P01 | 2min | 1 tasks | 1 files |
 
 ## Key Context for Next Session
 
