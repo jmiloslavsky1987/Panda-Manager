@@ -9,7 +9,12 @@ export async function PATCH(
 ) {
   const { id } = await params;
   const draftId = parseInt(id);
-  const body = await request.json() as { action: 'edit' | 'dismiss'; content?: string };
+  const body = await request.json() as {
+    action: 'edit' | 'dismiss';
+    content?: string;
+    subject?: string;
+    recipient?: string;
+  };
 
   if (body.action === 'dismiss') {
     await db.update(drafts)
@@ -18,9 +23,13 @@ export async function PATCH(
     return NextResponse.json({ ok: true });
   }
 
-  if (body.action === 'edit' && body.content !== undefined) {
+  if (body.action === 'edit') {
+    const updateFields: Record<string, unknown> = { updated_at: new Date() };
+    if (body.content !== undefined) updateFields.content = body.content;
+    if (body.subject !== undefined) updateFields.subject = body.subject;
+    if (body.recipient !== undefined) updateFields.recipient = body.recipient;
     await db.update(drafts)
-      .set({ content: body.content, updated_at: new Date() })
+      .set(updateFields as Partial<typeof drafts.$inferInsert> & { updated_at: Date })
       .where(eq(drafts.id, draftId));
     return NextResponse.json({ ok: true });
   }
