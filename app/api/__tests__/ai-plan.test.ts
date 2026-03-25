@@ -25,7 +25,7 @@ vi.mock('@/lib/skill-orchestrator', () => {
 });
 
 import db from '@/db';
-import { POST } from '../projects/[id]/generate-plan/route';
+import { POST } from '../projects/[projectId]/generate-plan/route';
 import { NextRequest } from 'next/server';
 
 // ---------------------------------------------------------------------------
@@ -77,7 +77,7 @@ describe('generate-plan API route', () => {
 
   it('PLAN-12: POST /api/projects/[id]/generate-plan returns 200 with tasks array', async () => {
     const req = buildRequest('1');
-    const res = await POST(req, { params: Promise.resolve({ id: '1' }) });
+    const res = await POST(req, { params: Promise.resolve({ projectId: '1' }) });
     const body = await res.json();
 
     expect(res.status).toBe(200);
@@ -90,7 +90,7 @@ describe('generate-plan API route', () => {
 
   it('proposed tasks are not written to DB until commit', async () => {
     const req = buildRequest('1');
-    await POST(req, { params: Promise.resolve({ id: '1' }) });
+    await POST(req, { params: Promise.resolve({ projectId: '1' }) });
 
     // The route must NOT insert into the tasks table — only into skill_runs
     // db.insert is called once (for skill_runs), never for tasks table
