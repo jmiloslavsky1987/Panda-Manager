@@ -40,6 +40,7 @@ export interface ProjectWithHealth extends Project {
   overdueActions: number;
   highRisks: number;
   stalledMilestones: number;
+  stalledWorkstreams: number;
 }
 
 export interface ActivityItem {
@@ -76,6 +77,7 @@ async function computeHealth(projectId: number): Promise<{
   overdueActions: number;
   highRisks: number;
   stalledMilestones: number;
+  stalledWorkstreams: number;
 }> {
   const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 
@@ -145,7 +147,7 @@ async function computeHealth(projectId: number): Promise<{
   const health: 'green' | 'yellow' | 'red' =
     score >= 2 ? 'red' : score === 1 ? 'yellow' : 'green';
 
-  return { health, overdueActions, highRisks, stalledMilestones };
+  return { health, overdueActions, highRisks, stalledMilestones, stalledWorkstreams };
 }
 
 // ─── Query Functions ──────────────────────────────────────────────────────────
