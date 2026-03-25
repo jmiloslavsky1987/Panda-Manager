@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: Completed 12-01-PLAN.md — 12 RED E2E stubs established for Phase 12 write-surface
-last_updated: "2026-03-25T18:24:38.998Z"
+stopped_at: Completed 12-02-PLAN.md
+last_updated: "2026-03-25T18:28:24.602Z"
 progress:
   total_phases: 16
   completed_phases: 13
   total_plans: 76
-  completed_plans: 73
+  completed_plans: 74
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 05-06-PLAN.md — 13/13 E2E tests GREEN, all 8 human verification steps approved
 **Next action:** `/gsd:plan-phase 5.1` — Onboarding Dashboard (replaces Overview tab; new DB tables; YAML round-trip)
-**Stopped at:** Completed 12-01-PLAN.md — 12 RED E2E stubs established for Phase 12 write-surface
+**Stopped at:** Completed 12-02-PLAN.md
 
 ## Phase Progress
 
@@ -216,6 +216,9 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 - [Phase 11-health-score-wire]: buildSelectMock uses per-call index cycling for predictable query sequencing in health tests
 - [Phase 11-health-score-wire]: stalledWorkstreams: number added to ProjectWithHealth interface after stalledMilestones — semantic ordering
 - [Phase 12]: Wave 0 stubs contain zero navigation or page interaction code — thin stubs only, grep tags match VALIDATION.md map
+- [Phase 12-02]: source='ui' injected in POST handler — artifacts.source is NOT NULL in schema, plan omitted it
+- [Phase 12-02]: Div-grid rows instead of tr in artifacts page — avoids React DOM nesting warning from Dialog wrapping table rows
+- [Phase 12-02]: Native HTML input/textarea in ArtifactEditModal — shadcn Input/Label/Textarea don't exist in project, using ActionEditModal pattern
 
 ## Performance Metrics
 
@@ -292,6 +295,7 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 | Phase 10-fts-expansion-+-code-polish P02 | checkpoint-resume | 2 tasks | 3 files |
 | Phase 11-health-score-wire P01 | 3min | 3 tasks | 5 files |
 | Phase 12 P01 | 5 | 1 tasks | 1 files |
+| Phase 12-complete-workspace-write-surface P02 | 15 | 2 tasks | 5 files |
 
 ## Key Context for Next Session
 
