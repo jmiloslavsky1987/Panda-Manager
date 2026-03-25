@@ -1,4 +1,5 @@
 import { getWorkspaceData } from '../../../../lib/queries'
+import { ArchitectureEditModal } from '@/components/ArchitectureEditModal'
 
 export default async function ArchitecturePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -12,10 +13,6 @@ export default async function ArchitecturePage({ params }: { params: Promise<{ i
         <p className="text-sm text-zinc-500 mt-1">Source: imported from customer YAML context document</p>
       </div>
 
-      <div className="rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-        Inline editing available in Phase 3
-      </div>
-
       {workstreams.length === 0 ? (
         <p className="text-sm text-zinc-500">No workstreams recorded yet.</p>
       ) : (
@@ -26,17 +23,20 @@ export default async function ArchitecturePage({ params }: { params: Promise<{ i
               className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm space-y-3"
             >
               <div className="flex items-center gap-3">
-                <span className="text-base font-semibold text-zinc-900">{ws.name}</span>
-                {ws.track && (
-                  <span className="inline-flex items-center rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700">
-                    {ws.track}
-                  </span>
-                )}
-                {ws.current_status && (
-                  <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                    {ws.current_status}
-                  </span>
-                )}
+                <div className="flex items-center gap-3 flex-1">
+                  <span className="text-base font-semibold text-zinc-900">{ws.name}</span>
+                  {ws.track && (
+                    <span className="inline-flex items-center rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700">
+                      {ws.track}
+                    </span>
+                  )}
+                  {ws.current_status && (
+                    <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                      {ws.current_status}
+                    </span>
+                  )}
+                </div>
+                <ArchitectureEditModal workstream={{ id: ws.id, name: ws.name, state: ws.state ?? null, lead: ws.lead ?? null }} />
               </div>
 
               {ws.lead && (
