@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: Completed 13-01-PLAN.md
-last_updated: "2026-03-25T19:39:04.090Z"
+stopped_at: Completed 13-02-PLAN.md
+last_updated: "2026-03-25T19:42:15.583Z"
 progress:
   total_phases: 16
   completed_phases: 14
   total_plans: 80
-  completed_plans: 77
+  completed_plans: 78
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 12-04-PLAN.md — 12/12 E2E tests GREEN, all write surfaces human-verified
 **Next action:** Advance to next phase per ROADMAP.md
-**Stopped at:** Completed 13-01-PLAN.md
+**Stopped at:** Completed 13-02-PLAN.md
 
 ## Phase Progress
 
@@ -225,6 +225,8 @@ Phase 12 COMPLETE. All 4 plans executed: 12-01 (RED E2E stubs for 12 write-surfa
 - [Phase 12-03]: Workstreams PATCH route does NOT call updateWorkstreamProgress() — direct percent_complete write and task-derived rollup are independent paths
 - [Phase 12-04]: Phase gate pattern enforced: 12/12 E2E GREEN + human sign-off before Phase 12 marked COMPLETE
 - [Phase 13-01]: 11 Wave 0 stubs: 3 skill-launch tests + 8 draft/search/template tests; descriptions tuned to match VALIDATION.md grep patterns
+- [Phase 13-02]: Skill launch buttons use plain next/link Link (RSC-safe, no client JS)
+- [Phase 13-02]: to_char() applied at dateBounds() call sites for timestamp arms; SELECT ::text cast kept for display
 
 ## Performance Metrics
 
@@ -304,6 +306,7 @@ Phase 12 COMPLETE. All 4 plans executed: 12-01 (RED E2E stubs for 12 write-surfa
 | Phase 12-complete-workspace-write-surface P02 | 15 | 2 tasks | 5 files |
 | Phase 12 P03 | 4 | 2 tasks | 8 files |
 | Phase 13-skill-ux-+-draft-polish P01 | 8 | 1 tasks | 1 files |
+| Phase 13-skill-ux-+-draft-polish P02 | 12 | 2 tasks | 3 files |
 
 ## Key Context for Next Session
 

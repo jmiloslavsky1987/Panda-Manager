@@ -253,7 +253,7 @@ Phases 5.1 and 5.2 can run in parallel. Phases 6 and 7 can overlap after Phase 5
 | 10. FTS Expansion + Code Polish | 2/2 | Complete    | 2026-03-25 |
 | 11. Health Score Wire | 1/1 | Complete    | 2026-03-25 |
 | 12. Complete Workspace Write Surface | 4/4 | Complete    | 2026-03-25 |
-| 13. Skill UX + Draft Polish | 1/4 | In Progress|  |
+| 13. Skill UX + Draft Polish | 2/4 | In Progress|  |
 | 14. Time + Project Analytics | 0/3 | Pending | |
 
 ---
