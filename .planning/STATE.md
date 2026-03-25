@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: Completed 12-02-PLAN.md
-last_updated: "2026-03-25T18:28:24.602Z"
+stopped_at: Completed 12-03-PLAN.md
+last_updated: "2026-03-25T18:34:18.591Z"
 progress:
   total_phases: 16
   completed_phases: 13
   total_plans: 76
-  completed_plans: 74
+  completed_plans: 75
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 05-06-PLAN.md — 13/13 E2E tests GREEN, all 8 human verification steps approved
 **Next action:** `/gsd:plan-phase 5.1` — Onboarding Dashboard (replaces Overview tab; new DB tables; YAML round-trip)
-**Stopped at:** Completed 12-02-PLAN.md
+**Stopped at:** Completed 12-03-PLAN.md
 
 ## Phase Progress
 
@@ -219,6 +219,10 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 - [Phase 12-02]: source='ui' injected in POST handler — artifacts.source is NOT NULL in schema, plan omitted it
 - [Phase 12-02]: Div-grid rows instead of tr in artifacts page — avoids React DOM nesting warning from Dialog wrapping table rows
 - [Phase 12-02]: Native HTML input/textarea in ArtifactEditModal — shadcn Input/Label/Textarea don't exist in project, using ActionEditModal pattern
+- [Phase 12-03]: AddDecisionModal extracted to components/ (not inline) — decisions/page.tsx must stay async RSC in Next.js 15
+- [Phase 12-03]: WorkstreamTableClient replaces shadcn Table in teams/page.tsx — native HTML table enables range inputs in cells without adding use client to the page
+- [Phase 12-03]: Architecture state NOT trimmed on save — whitespace-pre-wrap content must round-trip exactly
+- [Phase 12-03]: Workstreams PATCH route does NOT call updateWorkstreamProgress() — direct percent_complete write and task-derived rollup are independent paths
 
 ## Performance Metrics
 
@@ -296,6 +300,7 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 | Phase 11-health-score-wire P01 | 3min | 3 tasks | 5 files |
 | Phase 12 P01 | 5 | 1 tasks | 1 files |
 | Phase 12-complete-workspace-write-surface P02 | 15 | 2 tasks | 5 files |
+| Phase 12 P03 | 4 | 2 tasks | 8 files |
 
 ## Key Context for Next Session
 
