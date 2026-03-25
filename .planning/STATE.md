@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: Completed 14-04-PLAN.md
-last_updated: "2026-03-25T21:28:31.774Z"
+stopped_at: Completed 14-05-PLAN.md
+last_updated: "2026-03-25T21:42:52.582Z"
 progress:
   total_phases: 16
-  completed_phases: 15
+  completed_phases: 16
   total_plans: 85
-  completed_plans: 84
+  completed_plans: 85
 ---
 
 # Project State
@@ -24,11 +24,11 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 
 ## Current Status
 
-**Phase:** 13 — Skill UX + Draft Polish — COMPLETE
+**Phase:** 14 — Time + Project Analytics — COMPLETE
 **Current Plan:** Not started
-**Last action:** Completed 13-04-PLAN.md — 11/11 E2E tests GREEN, all 5 UX scenarios human-verified
+**Last action:** Completed 14-05-PLAN.md — 6/6 E2E tests GREEN, human verification approved
 **Next action:** Advance to next phase per ROADMAP.md
-**Stopped at:** Completed 14-04-PLAN.md
+**Stopped at:** Completed 14-05-PLAN.md
 
 ## Phase Progress
 
@@ -44,10 +44,11 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 | 6. MCP Integrations | Not started |
 | 7. File Generation + Remaining Skills | Not started |
 | 8. Cross-Project Features + Polish | Not started |
+| 14. Time + Project Analytics [INSERTED] | COMPLETE (5/5 plans) |
 
 ## Active Work
 
-Phase 13 COMPLETE. All 4 plans executed: 13-01 (11 RED E2E stubs), 13-02 (skill launch buttons on History/Stakeholders tabs + search date filter fix), 13-03 (DraftEditModal + TemplatePicker Dialog), 13-04 (11/11 E2E tests GREEN + fixture endpoints for drafts/plan-templates + human verification approved). Next: advance to next phase per ROADMAP.md.
+Phase 14 COMPLETE. All 5 plans executed: 14-01 (E2E stubs RED), 14-02 (analytics DB schema + computeProjectAnalytics()), 14-03 (TimeTab weekly summary + capacity planning header), 14-04 (HealthCard velocity chart + risk trend), 14-05 (6/6 E2E tests GREEN + human verification approved). Next: advance to next phase per ROADMAP.md.
 
 ## Decisions
 
@@ -236,6 +237,8 @@ Phase 13 COMPLETE. All 4 plans executed: 13-01 (11 RED E2E stubs), 13-02 (skill 
 - [Phase 14-02]: riskTrend compares openRiskCount now vs risks created >7 days ago still open
 - [Phase 14-time-+-project-analytics]: tx.execute<T> requires T extends Record<string, unknown>; RowList iterable directly (for...of), no .rows property
 - [Phase 14-04]: maxCount computed once outside map for efficiency in velocity bar chart
+- [Phase 14-05]: sql.raw() required for PostgreSQL SET LOCAL GUC parameters — parameterized syntax is invalid for session-level settings
+- [Phase 14-05]: actions table uses created_at not updated_at — velocity week grouping queries must reference created_at
 
 ## Performance Metrics
 
