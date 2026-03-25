@@ -252,7 +252,7 @@ Phases 5.1 and 5.2 can run in parallel. Phases 6 and 7 can overlap after Phase 5
 | 9. MCP Injection Fix | 2/2 | Complete   | 2026-03-25 |
 | 10. FTS Expansion + Code Polish | 2/2 | Complete    | 2026-03-25 |
 | 11. Health Score Wire | 1/1 | Complete    | 2026-03-25 |
-| 12. Complete Workspace Write Surface | 4/4 | Complete   | 2026-03-25 |
+| 12. Complete Workspace Write Surface | 4/4 | Complete    | 2026-03-25 |
 | 13. Skill UX + Draft Polish | 0/3 | Pending | |
 | 14. Time + Project Analytics | 0/3 | Pending | |
 
@@ -317,7 +317,7 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
-- [ ] 12-01-PLAN.md — Wave 0: E2E test stubs for all Phase 12 behaviors (RED baseline)
+- [x] 12-01-PLAN.md — Wave 0: E2E test stubs for all Phase 12 behaviors (RED baseline) (completed 2026-03-25)
 - [ ] 12-02-PLAN.md — Wave 1: Artifacts tab — DB API routes + ArtifactEditModal + 13th workspace tab
 - [ ] 12-03-PLAN.md — Wave 2: Decisions "Add Decision" modal + Architecture inline edit + Teams percent_complete edit + stale banner cleanup
 - [ ] 12-04-PLAN.md — Wave 3: E2E green pass + human verification checkpoint
