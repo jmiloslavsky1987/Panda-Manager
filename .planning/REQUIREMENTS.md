@@ -87,7 +87,7 @@
 - [x] **PLAN-06**: Task dependencies — mark task as blocked by another; dependency chains visualized in Gantt and Task Board
 - [x] **PLAN-07**: Bulk operations — select multiple tasks, reassign owner, change due date, move to different phase
 - [x] **PLAN-08**: Task templates — one-click instantiation for Biggy Activation, ADR Onboarding, Team Kickoff workstreams
-- [ ] **PLAN-09**: Progress rollup — task completion → workstream percent_complete → project health score automatically
+- [x] **PLAN-09**: Progress rollup — task completion → workstream percent_complete → project health score automatically
 - [x] **PLAN-10**: Excel plan import from .xlsx (KAISER_Biggy_Project_Plan format) mapping columns to task schema
 - [x] **PLAN-11**: Plan export to .xlsx in the same format as the Kaiser plan
 - [x] **PLAN-12**: AI-assisted plan generation — given current project context, generates suggested task list for next 2 weeks scoped to current phase and open blockers
@@ -197,7 +197,7 @@
 | PLAN-06 | Phase 3 | Complete |
 | PLAN-07 | Phase 3 | Complete |
 | PLAN-08 | Phase 3 | Complete |
-| PLAN-09 | Phase 11 | Pending |
+| PLAN-09 | Phase 11 | Complete |
 | PLAN-10 | Phase 3 | Complete |
 | PLAN-11 | Phase 3 | Complete |
 | SCHED-01 | Phase 4 | Complete |

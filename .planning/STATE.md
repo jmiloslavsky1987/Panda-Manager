@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: Phase 11 context gathered
-last_updated: "2026-03-25T16:48:06.422Z"
+stopped_at: Completed 11-01-PLAN.md — awaiting human verify checkpoint (Task 4)
+last_updated: "2026-03-25T17:02:30.050Z"
 progress:
   total_phases: 16
-  completed_phases: 12
-  total_plans: 71
-  completed_plans: 71
+  completed_phases: 13
+  total_plans: 72
+  completed_plans: 72
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 05-06-PLAN.md — 13/13 E2E tests GREEN, all 8 human verification steps approved
 **Next action:** `/gsd:plan-phase 5.1` — Onboarding Dashboard (replaces Overview tab; new DB tables; YAML round-trip)
-**Stopped at:** Phase 11 context gathered
+**Stopped at:** Completed 11-01-PLAN.md — awaiting human verify checkpoint (Task 4)
 
 ## Phase Progress
 
@@ -213,6 +213,8 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 - [Phase 10-02]: [Phase 10-02] resolveSkillsDir accepts optional dirnameRef param defaulting to __dirname — enables deterministic unit testing
 - [Phase 10-02]: resolveSkillsDir() extracted from skillRunJob() and exported — avoids mocking full dependency chain; same observable behavior; cleaner per plan recommendation
 - [Phase 10-02]: resolveSkillsDir accepts optional dirnameRef param defaulting to __dirname — enables deterministic unit testing
+- [Phase 11-health-score-wire]: buildSelectMock uses per-call index cycling for predictable query sequencing in health tests
+- [Phase 11-health-score-wire]: stalledWorkstreams: number added to ProjectWithHealth interface after stalledMilestones — semantic ordering
 
 ## Performance Metrics
 
@@ -287,6 +289,7 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 | Phase 10-fts-expansion-+-code-polish P01 | 7min | 3 tasks | 6 files |
 | Phase 10-fts-expansion-+-code-polish P02 | 5min | 1 tasks | 3 files |
 | Phase 10-fts-expansion-+-code-polish P02 | checkpoint-resume | 2 tasks | 3 files |
+| Phase 11-health-score-wire P01 | 3min | 3 tasks | 5 files |
 
 ## Key Context for Next Session
 
