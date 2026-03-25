@@ -254,7 +254,7 @@ Phases 5.1 and 5.2 can run in parallel. Phases 6 and 7 can overlap after Phase 5
 | 11. Health Score Wire | 1/1 | Complete    | 2026-03-25 |
 | 12. Complete Workspace Write Surface | 4/4 | Complete    | 2026-03-25 |
 | 13. Skill UX + Draft Polish | 4/4 | Complete    | 2026-03-25 |
-| 14. Time + Project Analytics | 5/5 | Complete   | 2026-03-25 |
+| 14. Time + Project Analytics | 5/5 | Complete    | 2026-03-25 |
 
 ---
 
@@ -351,7 +351,7 @@ Plans:
 **Plans**: 5 plans
 
 Plans:
-- [ ] 14-01-PLAN.md — Wave 0: E2E test stubs for all Phase 14 success criteria
+- [x] 14-01-PLAN.md — Wave 0: E2E test stubs for all Phase 14 success criteria (completed 2026-03-25)
 - [ ] 14-02-PLAN.md — Wave 1: DB migration (weekly_hour_target) + computeProjectAnalytics() foundation
 - [ ] 14-03-PLAN.md — Wave 2: Time tab weekly summary + capacity planning (API + UI)
 - [ ] 14-04-PLAN.md — Wave 2: HealthCard velocity chart + risk trend indicator (UI only)
