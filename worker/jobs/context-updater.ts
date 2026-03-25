@@ -8,6 +8,7 @@ import db from '../../db';
 import { skillRuns, outputs } from '../../db/schema';
 import { LOCK_IDS } from '../lock-ids';
 import { SkillOrchestrator } from '../../lib/skill-orchestrator';
+import { MCPClientPool } from '../../lib/mcp-config';
 import { getActiveProjects } from '../../lib/queries';
 
 const orchestrator = new SkillOrchestrator();
@@ -40,12 +41,15 @@ export default async function contextUpdaterJob(job: Job): Promise<{ status: str
     }).returning({ id: skillRuns.id });
 
     try {
+      const mcpServers = await MCPClientPool.getInstance().getServersForSkill('context-updater');
+
       await orchestrator.run({
         skillName: 'context-updater',
         projectId: project.id,
         runId: runRow.id,
         input,
         skillsDir: SKILLS_DIR,
+        mcpServers,
       });
 
       const [completedRun] = await db.select().from(skillRuns).where(eq(skillRuns.id, runRow.id));

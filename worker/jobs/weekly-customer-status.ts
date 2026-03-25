@@ -7,6 +7,7 @@ import { sql, eq } from 'drizzle-orm';
 import db from '../../db';
 import { skillRuns, outputs, drafts } from '../../db/schema';
 import { SkillOrchestrator } from '../../lib/skill-orchestrator';
+import { MCPClientPool } from '../../lib/mcp-config';
 import { getActiveProjects } from '../../lib/queries';
 
 const orchestrator = new SkillOrchestrator();
@@ -29,11 +30,14 @@ export default async function weeklyCustomerStatusJob(job: Job): Promise<{ statu
     }).returning({ id: skillRuns.id });
 
     try {
+      const mcpServers = await MCPClientPool.getInstance().getServersForSkill('weekly-customer-status');
+
       await orchestrator.run({
         skillName: 'weekly-customer-status',
         projectId: project.id,
         runId: runRow.id,
         skillsDir: SKILLS_DIR,
+        mcpServers,
       });
 
       // Read full output after orchestrator completes
