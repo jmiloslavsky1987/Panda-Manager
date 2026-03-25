@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: Completed 09-02-PLAN.md — all 4 handlers MCP-injected, 5/5 tests GREEN, 18/18 full suite GREEN, human-verify approved
-last_updated: "2026-03-25T15:18:13.366Z"
+stopped_at: Completed 10-01-PLAN.md — 3/3 tasks complete, migration 0009, 12-arm FTS, skill_path fix, /skills/custom link removed
+last_updated: "2026-03-25T15:42:31.343Z"
 progress:
   total_phases: 16
   completed_phases: 11
-  total_plans: 69
-  completed_plans: 69
+  total_plans: 71
+  completed_plans: 70
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 05-06-PLAN.md — 13/13 E2E tests GREEN, all 8 human verification steps approved
 **Next action:** `/gsd:plan-phase 5.1` — Onboarding Dashboard (replaces Overview tab; new DB tables; YAML round-trip)
-**Stopped at:** Completed 09-02-PLAN.md — all 4 handlers MCP-injected, 5/5 tests GREEN, 18/18 full suite GREEN, human-verify approved
+**Stopped at:** Completed 10-01-PLAN.md — 3/3 tasks complete, migration 0009, 12-arm FTS, skill_path fix, /skills/custom link removed
 
 ## Phase Progress
 
@@ -208,6 +208,7 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 - [Phase 09-01]: vi.resetModules() in beforeEach ensures each test gets a fresh handler import, preventing stale module cache from causing false positives
 - [Phase 09-02]: Two-line MCP injection pattern (import MCPClientPool + getServersForSkill before orchestrator.run) applied uniformly to all 4 handlers matching customer-project-tracker.ts reference
 - [Phase 09-02]: skill-run.ts uses dynamic getServersForSkill(skillName) variable — not hardcoded string — enabling runtime MCP resolution for any skill dispatched on-demand
+- [Phase 10-01]: [Phase 10] SET-02 skill_path fix intentionally scoped to skill-run.ts (generic on-demand handler) only — scheduled handlers retain __dirname anchor; future phases can extend if needed
 
 ## Performance Metrics
 
@@ -279,6 +280,7 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 | Phase 09-mcp-injection-fix P01 | 2min | 1 tasks | 1 files |
 | Phase 09-mcp-injection-fix P02 | 1min | 2 tasks | 4 files |
 | Phase 09-mcp-injection-fix P02 | 4min | 3 tasks | 4 files |
+| Phase 10-fts-expansion-+-code-polish P01 | 7min | 3 tasks | 6 files |
 
 ## Key Context for Next Session
 

@@ -101,7 +101,7 @@
 
 ### Search
 
-- [ ] **SRCH-01**: Full-text search using PostgreSQL tsvector/tsquery across actions, risks, decisions, engagement history, stakeholders, artifacts, tasks, and knowledge base
+- [x] **SRCH-01**: Full-text search using PostgreSQL tsvector/tsquery across actions, risks, decisions, engagement history, stakeholders, artifacts, tasks, and knowledge base
 - [x] **SRCH-02**: Search filterable by account, date range, and data type
 - [x] **SRCH-03**: Search results show matching record in full context (which project, which section, which date)
 
@@ -119,7 +119,7 @@
 ### Settings
 
 - [x] **SET-01**: Workspace path configuration (default: ~/Documents/BigPanda Projects/) — where output files are saved
-- [ ] **SET-02**: Skill file location configuration (default: ~/.claude/get-shit-done/) — where SKILL.md files are read from
+- [x] **SET-02**: Skill file location configuration (default: ~/.claude/get-shit-done/) — where SKILL.md files are read from
 - [x] **SET-03**: Schedule time configuration for each background job
 - [x] **SET-04**: Anthropic API key stored securely (not in .env committed to git; system keychain or local secrets file)
 
@@ -171,7 +171,7 @@
 | DATA-07 | Phase 1 | Complete |
 | DATA-08 | Phase 1 | Complete |
 | SET-01 | Phase 1 | Complete |
-| SET-02 | Phase 10 | Pending |
+| SET-02 | Phase 10 | Complete |
 | SET-03 | Phase 1 | Complete |
 | SET-04 | Phase 1 | Complete |
 | DASH-01 | Phase 2 | Complete |
@@ -241,7 +241,7 @@
 | KB-01 | Phase 8 | Complete |
 | KB-02 | Phase 8 | Complete |
 | KB-03 | Phase 8 | Complete |
-| SRCH-01 | Phase 10 | Pending |
+| SRCH-01 | Phase 10 | Complete |
 | SRCH-02 | Phase 8 | Complete |
 | SRCH-03 | Phase 8 | Complete |
 

@@ -250,7 +250,7 @@ Phases 5.1 and 5.2 can run in parallel. Phases 6 and 7 can overlap after Phase 5
 | 7. File Generation + Remaining Skills | 7/7 | Complete   | 2026-03-24 |
 | 8. Cross-Project Features + Polish | 7/7 | Complete   | 2026-03-25 |
 | 9. MCP Injection Fix | 2/2 | Complete   | 2026-03-25 |
-| 10. FTS Expansion + Code Polish | 0/2 | Pending | |
+| 10. FTS Expansion + Code Polish | 1/2 | In Progress|  |
 | 11. Health Score Wire | 0/1 | Pending | |
 | 12. Complete Workspace Write Surface | 0/4 | Pending | |
 | 13. Skill UX + Draft Polish | 0/3 | Pending | |
