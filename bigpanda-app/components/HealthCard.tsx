@@ -17,6 +17,8 @@ const ragConfig: Record<
 
 export function HealthCard({ project }: HealthCardProps) {
   const rag = ragConfig[project.health];
+  const { velocityWeeks, actionTrend, openRiskCount, riskTrend } = project;
+  const maxCount = Math.max(...velocityWeeks, 1);
 
   return (
     <Card data-testid="health-card" className="flex flex-col">
@@ -48,6 +50,41 @@ export function HealthCard({ project }: HealthCardProps) {
           </span>
           <span className={project.stalledWorkstreams > 0 ? 'text-orange-600 font-medium' : ''}>
             {project.stalledWorkstreams} stalled workstream{project.stalledWorkstreams !== 1 ? 's' : ''}
+          </span>
+        </div>
+        <div className="mt-3 pt-3 border-t border-zinc-100" data-testid="velocity-chart">
+          <div className="flex items-end gap-1 h-8">
+            {velocityWeeks.map((count, i) => {
+              const pct = Math.max((count / maxCount) * 100, count > 0 ? 10 : 3);
+              return (
+                <div
+                  key={i}
+                  className="flex-1 bg-zinc-300 rounded-sm"
+                  style={{ height: `${pct}%` }}
+                  title={`${count} completed`}
+                  data-testid="velocity-bar"
+                />
+              );
+            })}
+            <span
+              className="text-xs text-zinc-500 ml-1 self-center"
+              data-testid="action-trend"
+            >
+              {actionTrend === 'up' ? '↑' : actionTrend === 'down' ? '↓' : '→'}
+            </span>
+          </div>
+          <p className="text-xs text-zinc-400 mt-1">
+            {velocityWeeks.every(w => w === 0)
+              ? 'No completions yet'
+              : 'Action velocity (4w)'}
+          </p>
+        </div>
+        <div className="mt-2 flex items-center gap-1.5" data-testid="risk-trend">
+          <span className="text-xs text-zinc-600">
+            {openRiskCount} open risk{openRiskCount !== 1 ? 's' : ''}
+          </span>
+          <span className="text-xs text-zinc-400">
+            {riskTrend === 'up' ? '↑' : riskTrend === 'down' ? '↓' : '→'}
           </span>
         </div>
       </CardContent>
