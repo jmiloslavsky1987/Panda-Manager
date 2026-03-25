@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: Completed 10-02-PLAN.md Task 1 (RED->GREEN) — awaiting human verification checkpoint (Task 2)
-last_updated: "2026-03-25T15:48:55.848Z"
+stopped_at: Completed 10-02-PLAN.md — Phase 10 complete (SRCH-01 + SET-02 + INT-UI-01 verified by human)
+last_updated: "2026-03-25T16:33:01.992Z"
 progress:
   total_phases: 16
   completed_phases: 12
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 05-06-PLAN.md — 13/13 E2E tests GREEN, all 8 human verification steps approved
 **Next action:** `/gsd:plan-phase 5.1` — Onboarding Dashboard (replaces Overview tab; new DB tables; YAML round-trip)
-**Stopped at:** Completed 10-02-PLAN.md Task 1 (RED->GREEN) — awaiting human verification checkpoint (Task 2)
+**Stopped at:** Completed 10-02-PLAN.md — Phase 10 complete (SRCH-01 + SET-02 + INT-UI-01 verified by human)
 
 ## Phase Progress
 
@@ -211,6 +211,8 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 - [Phase 10-01]: [Phase 10] SET-02 skill_path fix intentionally scoped to skill-run.ts (generic on-demand handler) only — scheduled handlers retain __dirname anchor; future phases can extend if needed
 - [Phase 10-02]: [Phase 10-02] resolveSkillsDir() extracted from skillRunJob() and exported — avoids mocking full dependency chain; same observable behavior; cleaner per plan recommendation
 - [Phase 10-02]: [Phase 10-02] resolveSkillsDir accepts optional dirnameRef param defaulting to __dirname — enables deterministic unit testing
+- [Phase 10-02]: resolveSkillsDir() extracted from skillRunJob() and exported — avoids mocking full dependency chain; same observable behavior; cleaner per plan recommendation
+- [Phase 10-02]: resolveSkillsDir accepts optional dirnameRef param defaulting to __dirname — enables deterministic unit testing
 
 ## Performance Metrics
 
@@ -284,6 +286,7 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 | Phase 09-mcp-injection-fix P02 | 4min | 3 tasks | 4 files |
 | Phase 10-fts-expansion-+-code-polish P01 | 7min | 3 tasks | 6 files |
 | Phase 10-fts-expansion-+-code-polish P02 | 5min | 1 tasks | 3 files |
+| Phase 10-fts-expansion-+-code-polish P02 | checkpoint-resume | 2 tasks | 3 files |
 
 ## Key Context for Next Session
 

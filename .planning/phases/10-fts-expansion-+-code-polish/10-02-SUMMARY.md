@@ -52,7 +52,7 @@ completed: 2026-03-25
 - **Duration:** ~5 min
 - **Started:** 2026-03-25T15:44:00Z
 - **Completed:** 2026-03-25T15:49:00Z
-- **Tasks:** 1/1 automated (Task 2 is checkpoint)
+- **Tasks:** 2/2 (1 automated TDD + 1 human verification)
 - **Files modified:** 3
 
 ## Accomplishments
@@ -66,6 +66,7 @@ completed: 2026-03-25
 Each task was committed atomically:
 
 1. **Task 1: Activate E2E tests + unit tests (RED → GREEN)** - `942dc85` (feat)
+2. **Task 2: Human verification — FTS expansion + SET-02 + link removal** - human-approved
 
 **Plan metadata:** (final docs commit — see below)
 
@@ -90,11 +91,25 @@ None. Pre-existing E2E failures (DASH-01, WORK-01, PLAN-07, SKILL-14) confirmed 
 
 None — test-only changes; no infrastructure changes required.
 
+## Human Verification
+
+Task 2 (human-verify checkpoint) passed with all 6 checks confirmed by user on 2026-03-25:
+
+1. FTS for onboarding steps — results showed "Onboarding Steps" section label
+2. FTS for time entries — results showed "Time Entries" section label
+3. FTS for integrations — integration tool names returned correctly
+4. SET-02 skill path honored — server log confirmed /tmp/test-skills path resolution
+5. /skills/custom link removed — no "Run custom skill" anchor present in skills tab
+6. Full E2E suite — 84 tests passing, no regressions
+
+SRCH-01 and SET-02 marked Complete in REQUIREMENTS.md.
+
 ## Next Phase Readiness
 
-- Task 2 (human verification checkpoint) awaits user sign-off on 6 verification steps
-- Once approved, SRCH-01 and SET-02 can be marked complete in REQUIREMENTS.md
-- Phase 10 will be complete after human verification passes
+- Phase 10 complete — all 3 gaps (FTS coverage expansion, skill path runtime resolution, broken nav link) closed
+- SRCH-01 and SET-02 marked Complete in REQUIREMENTS.md
+- 84 E2E tests passing; full test suite healthy
+- Ready for Phase 11 (PLAN-09 progress rollup) or next planned phase
 
 ---
 *Phase: 10-fts-expansion-+-code-polish*
