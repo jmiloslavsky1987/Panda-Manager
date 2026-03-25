@@ -22,7 +22,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 6: MCP Integrations** - MCPClientPool, Slack/Gmail/Glean/Drive connections, Customer Project Tracker fully wired
 - [x] **Phase 7: File Generation + Remaining Skills** - FileGenerationService (.docx/.pptx/.xlsx/.html), 11 remaining skills wired (completed 2026-03-24)
 - [x] **Phase 8: Cross-Project Features + Polish** - FTS, risk heat map, cross-account watch list, Knowledge Base, Drafts send/discard flow (completed 2026-03-25)
-- [ ] **Phase 9: MCP Injection Fix** - Wire MCPClientPool into all 4 skill job handlers; closes INT-MCP-01 from v1.0 audit
+- [x] **Phase 9: MCP Injection Fix** - Wire MCPClientPool into all 4 skill job handlers; closes INT-MCP-01 from v1.0 audit (completed 2026-03-25)
 - [ ] **Phase 10: FTS Expansion + Code Polish** - FTS coverage for 4 missing tables, skill path setting wired, /skills/custom link fixed; closes INT-FTS-01/INT-SET-01/INT-UI-01
 - [ ] **Phase 11: Health Score Wire** - workstream.percent_complete feeds computeHealth(); closes PLAN-09 gap
 - [ ] **Phase 12: Complete Workspace Write Surface** - Artifacts tab, Decisions write UI, Architecture inline edit, Teams percent_complete edit
@@ -249,7 +249,7 @@ Phases 5.1 and 5.2 can run in parallel. Phases 6 and 7 can overlap after Phase 5
 | 6. MCP Integrations | 5/7 | In Progress|  |
 | 7. File Generation + Remaining Skills | 7/7 | Complete   | 2026-03-24 |
 | 8. Cross-Project Features + Polish | 7/7 | Complete   | 2026-03-25 |
-| 9. MCP Injection Fix | 0/2 | Pending | |
+| 9. MCP Injection Fix | 2/2 | Complete   | 2026-03-25 |
 | 10. FTS Expansion + Code Polish | 0/2 | Pending | |
 | 11. Health Score Wire | 0/1 | Pending | |
 | 12. Complete Workspace Write Surface | 0/4 | Pending | |
