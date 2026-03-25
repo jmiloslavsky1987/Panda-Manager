@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: Completed 08-02-PLAN.md — FTS infrastructure migration + KB link columns
-last_updated: "2026-03-25T02:19:14.542Z"
+stopped_at: "Completed 08-03-PLAN.md — Full-text search API: GET /api/search + searchAllRecords()"
+last_updated: "2026-03-25T02:22:56.011Z"
 progress:
   total_phases: 10
   completed_phases: 9
   total_plans: 67
-  completed_plans: 62
+  completed_plans: 63
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 05-06-PLAN.md — 13/13 E2E tests GREEN, all 8 human verification steps approved
 **Next action:** `/gsd:plan-phase 5.1` — Onboarding Dashboard (replaces Overview tab; new DB tables; YAML round-trip)
-**Stopped at:** Completed 08-02-PLAN.md — FTS infrastructure migration + KB link columns
+**Stopped at:** Completed 08-03-PLAN.md — Full-text search API: GET /api/search + searchAllRecords()
 
 ## Phase Progress
 
@@ -195,6 +195,8 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 - [Phase 08-01]: Requirement IDs (SRCH-01/02/03, KB-01/02/03) in test names for --grep targeting in activation plans
 - [Phase 08-02]: search_vec (tsvector) excluded from Drizzle schema — trigger-managed, queried via raw SQL; adding it causes PgVectorType inference issues
 - [Phase 08-02]: Per-table trigger functions (tsvector_update_{table}) chosen over shared function — each table has its own field list for independent maintainability
+- [Phase 08-03]: Raw SQL UNION ALL via sql.raw() for tsvector full-text search across 8 tables — Drizzle has no native tsquery support
+- [Phase 08-03]: knowledge_base arm uses LEFT JOIN — null project_id entries always searchable per KB-03 spec; account filter skips null-project entries
 
 ## Performance Metrics
 
@@ -258,6 +260,7 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 | Phase 07-file-generation-remaining-skills P07 | 40min | 2 tasks | 6 files |
 | Phase 08-cross-project-features-+-polish P01 | 10min | 1 tasks | 1 files |
 | Phase 08-cross-project-features-+-polish P02 | 2min | 2 tasks | 2 files |
+| Phase 08-cross-project-features-+-polish P03 | 2min | 2 tasks | 2 files |
 
 ## Key Context for Next Session
 
