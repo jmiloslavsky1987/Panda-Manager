@@ -136,6 +136,14 @@ export function TimeTab({ projectId }: TimeTabProps) {
   const [showAddForm, setShowAddForm] = useState(false)
   const [refreshCount, setRefreshCount] = useState(0)
 
+  // Analytics state
+  const [weeklyRollup, setWeeklyRollup] = useState<{ weekLabel: string; hours: number; variance: number | null }[]>([])
+  const [weeklyTarget, setWeeklyTarget] = useState<number | null>(null)
+  const [totalHoursThisWeek, setTotalHoursThisWeek] = useState<number>(0)
+  const [editingTarget, setEditingTarget] = useState(false)
+  const [targetInput, setTargetInput] = useState('')
+  const [summaryExpanded, setSummaryExpanded] = useState(true)
+
   useEffect(() => {
     setLoading(true)
     const params = new URLSearchParams()
@@ -150,7 +158,28 @@ export function TimeTab({ projectId }: TimeTabProps) {
         setProjectName(data.projectName ?? '')
       })
       .finally(() => setLoading(false))
+
+    fetch(`/api/projects/${projectId}/analytics`)
+      .then((r) => r.json())
+      .then((data) => {
+        setWeeklyRollup(data.weeklyRollup ?? [])
+        setWeeklyTarget(data.weeklyTarget ?? null)
+        setTotalHoursThisWeek(data.totalHoursThisWeek ?? 0)
+      })
   }, [projectId, fromDate, toDate, refreshCount])
+
+  async function handleSaveTarget() {
+    const val = parseFloat(targetInput)
+    if (!isNaN(val) && val > 0) {
+      await fetch(`/api/projects/${projectId}/analytics`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ weekly_hour_target: val }),
+      })
+      setWeeklyTarget(val)
+    }
+    setEditingTarget(false)
+  }
 
   const totalHours = entries.reduce((sum, e) => sum + parseFloat(e.hours), 0).toFixed(2)
 
@@ -177,6 +206,46 @@ export function TimeTab({ projectId }: TimeTabProps) {
           >
             {totalHours} hrs total
           </span>
+
+          {/* Capacity planning: weekly target inline editor */}
+          <span className="text-sm text-zinc-500">|</span>
+          <span className="text-sm text-zinc-600">
+            Target:{' '}
+            {editingTarget ? (
+              <input
+                autoFocus
+                type="number"
+                step="0.5"
+                min="0"
+                value={targetInput}
+                onChange={(e) => setTargetInput(e.target.value)}
+                onBlur={handleSaveTarget}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSaveTarget()
+                  if (e.key === 'Escape') setEditingTarget(false)
+                }}
+                className="border border-zinc-300 rounded px-2 py-0.5 text-sm w-16 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+                data-testid="weekly-target"
+              />
+            ) : (
+              <button
+                onClick={() => { setEditingTarget(true); setTargetInput(String(weeklyTarget ?? '')) }}
+                className="text-sm text-zinc-600 hover:underline cursor-pointer"
+                data-testid="weekly-target"
+              >
+                {weeklyTarget != null ? `${weeklyTarget} hrs` : 'Set target'}
+              </button>
+            )}
+          </span>
+          {weeklyTarget != null && (
+            <span className="text-sm text-zinc-500">
+              This week: {totalHoursThisWeek.toFixed(1)} hrs
+              {' '}
+              <span className={totalHoursThisWeek >= weeklyTarget ? 'text-green-600' : 'text-zinc-400'}>
+                ({totalHoursThisWeek >= weeklyTarget ? '+' : ''}{(totalHoursThisWeek - weeklyTarget).toFixed(1)})
+              </span>
+            </span>
+          )}
 
           {/* Date range filter */}
           <div className="flex items-center gap-2 text-sm">
@@ -234,6 +303,50 @@ export function TimeTab({ projectId }: TimeTabProps) {
           onCancel={() => setShowAddForm(false)}
         />
       )}
+
+      {/* Weekly Summary collapsible */}
+      <div className="mb-6">
+        <button
+          className="flex items-center gap-2 text-sm font-medium text-zinc-700 mb-3"
+          onClick={() => setSummaryExpanded((e) => !e)}
+        >
+          <span>{summaryExpanded ? '▾' : '▸'}</span>
+          Weekly Summary
+        </button>
+        {summaryExpanded && (
+          <div data-testid="weekly-summary">
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr className="border-b border-zinc-200">
+                  <th className="text-left py-1.5 text-zinc-500 font-normal">Week</th>
+                  <th className="text-right py-1.5 text-zinc-500 font-normal">Hours</th>
+                  {weeklyTarget != null && (
+                    <th className="text-right py-1.5 text-zinc-500 font-normal">vs Target</th>
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {weeklyRollup.map((row, i) => (
+                  <tr key={i} className="border-b border-zinc-100" data-testid="weekly-summary-row">
+                    <td className="py-1.5 text-zinc-700">{row.weekLabel}</td>
+                    <td className="py-1.5 text-right text-zinc-700">{row.hours.toFixed(1)}</td>
+                    {weeklyTarget != null && (
+                      <td className={`py-1.5 text-right text-xs ${row.variance != null && row.variance >= 0 ? 'text-green-600' : 'text-zinc-400'}`}>
+                        {row.variance != null ? `${row.variance >= 0 ? '+' : ''}${row.variance.toFixed(1)}` : '—'}
+                      </td>
+                    )}
+                  </tr>
+                ))}
+                {weeklyRollup.length === 0 && (
+                  <tr>
+                    <td colSpan={weeklyTarget != null ? 3 : 2} className="py-3 text-zinc-400 text-center">No time entries in the last 8 weeks</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
       {/* Table */}
       {loading ? (
