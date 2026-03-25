@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: Completed 13-02-PLAN.md
-last_updated: "2026-03-25T19:42:15.583Z"
+stopped_at: Completed 13-03-PLAN.md
+last_updated: "2026-03-25T19:46:57.034Z"
 progress:
   total_phases: 16
   completed_phases: 14
   total_plans: 80
-  completed_plans: 78
+  completed_plans: 79
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 12-04-PLAN.md — 12/12 E2E tests GREEN, all write surfaces human-verified
 **Next action:** Advance to next phase per ROADMAP.md
-**Stopped at:** Completed 13-02-PLAN.md
+**Stopped at:** Completed 13-03-PLAN.md
 
 ## Phase Progress
 
@@ -227,6 +227,9 @@ Phase 12 COMPLETE. All 4 plans executed: 12-01 (RED E2E stubs for 12 write-surfa
 - [Phase 13-01]: 11 Wave 0 stubs: 3 skill-launch tests + 8 draft/search/template tests; descriptions tuned to match VALIDATION.md grep patterns
 - [Phase 13-02]: Skill launch buttons use plain next/link Link (RSC-safe, no client JS)
 - [Phase 13-02]: to_char() applied at dateBounds() call sites for timestamp arms; SELECT ::text cast kept for display
+- [Phase 13-03]: DraftEditModal uses parent-controlled open state (no DialogTrigger) because trigger is the entire card div
+- [Phase 13-03]: PATCH edit action no longer requires content to be present; partial update sets only fields provided in body
+- [Phase 13-03]: TemplatePicker sub-component removed; logic inlined into PhaseBoard Dialog with task counts per template row
 
 ## Performance Metrics
 
@@ -307,6 +310,7 @@ Phase 12 COMPLETE. All 4 plans executed: 12-01 (RED E2E stubs for 12 write-surfa
 | Phase 12 P03 | 4 | 2 tasks | 8 files |
 | Phase 13-skill-ux-+-draft-polish P01 | 8 | 1 tasks | 1 files |
 | Phase 13-skill-ux-+-draft-polish P02 | 12 | 2 tasks | 3 files |
+| Phase 13-skill-ux-+-draft-polish P03 | 15 | 3 tasks | 4 files |
 
 ## Key Context for Next Session
 
