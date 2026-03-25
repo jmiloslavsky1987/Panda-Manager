@@ -71,7 +71,7 @@ None.
 | 1 | Create health.test.ts unit stub (Wave 0 RED) | fbca5c6 | COMPLETE |
 | 2 | Wire stalledWorkstreams through queries.ts, HealthCard, and DELETE rollup | 3aa2f8c | COMPLETE |
 | 3 | Replace PLAN-09 E2E stub with real assertion | 752e0e3 | COMPLETE |
-| 4 | Human verify checkpoint | — | AWAITING |
+| 4 | Human verify checkpoint | — | COMPLETE (approved 2026-03-25) |
 
 ## Self-Check: PASSED
 
