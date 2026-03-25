@@ -214,7 +214,16 @@ Plans:
   2. Search results are filterable by account, date range, and data type — filtering by account returns only that account's records
   3. Knowledge Base entries can be created, linked to a specific risk or engagement history entry, and carry source_trace (which project, which event, date captured); entries from archived projects remain searchable
   4. Knowledge Base entries appear in global search results and are linkable from risk and engagement history records
-**Plans**: TBD
+**Plans**: 7 plans
+
+Plans:
+- [ ] 08-01-PLAN.md — Wave 1: E2E test stubs for all Phase 8 behaviors (RED baseline)
+- [ ] 08-02-PLAN.md — Wave 2: DB migration 0008 — FTS tsvector columns, GIN indexes, triggers, KB link columns
+- [ ] 08-03-PLAN.md — Wave 3: Search API (GET /api/search) + searchAllRecords() query function (parallel)
+- [ ] 08-04-PLAN.md — Wave 3: Knowledge Base API (GET/POST /api/knowledge-base + PATCH/DELETE /[id]) (parallel)
+- [ ] 08-05-PLAN.md — Wave 4: Search UI — SearchBar in layout + /search results page with filter panel (parallel)
+- [ ] 08-06-PLAN.md — Wave 4: Knowledge Base UI — /knowledge-base page + AddKbEntryModal + KnowledgeBaseEntry card (parallel)
+- [ ] 08-07-PLAN.md — Wave 5: E2E activation + human verification checkpoint
 
 ## Progress
 
@@ -233,7 +242,7 @@ Phases 5.1 and 5.2 can run in parallel. Phases 6 and 7 can overlap after Phase 5
 | 5.2 Time Tracking [INSERTED] | 2/5 | In Progress|  |
 | 6. MCP Integrations | 5/7 | In Progress|  |
 | 7. File Generation + Remaining Skills | 7/7 | Complete   | 2026-03-24 |
-| 8. Cross-Project Features + Polish | 0/TBD | Not started | - |
+| 8. Cross-Project Features + Polish | 0/7 | Not started | - |
 
 ---
 
