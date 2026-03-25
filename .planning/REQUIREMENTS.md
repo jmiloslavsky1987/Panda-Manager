@@ -7,22 +7,22 @@
 
 ### Data Foundation
 
-- [x] **DATA-01**: Database schema implements all tables from briefing (projects, workstreams, actions, risks, milestones, artifacts, history, stakeholders, tasks, plan_templates, outputs, knowledge_base) with PostgreSQL RLS enforced at DB layer
-- [x] **DATA-02**: Append-only tables (engagement_history, key_decisions) are enforced by DB trigger — not application convention
-- [x] **DATA-03**: Migration script imports all three existing customer context docs (YAML frontmatter → DB) with source tracing preserved
-- [x] **DATA-04**: Migration script imports PA3_Action_Tracker.xlsx (two-sheet format) into actions table
-- [x] **DATA-05**: Context doc export: DB → YAML frontmatter Markdown with exact js-yaml settings (sortKeys: false, lineWidth: -1, JSON_SCHEMA) — round-trip fidelity with Cowork skills
-- [x] **DATA-06**: Multi-account architecture: user can add new projects, close completed ones (archived as read-only), with no hardcoded customer names anywhere in the codebase
-- [x] **DATA-07**: Idempotency key and status field on outputs table (created immediately as 'running') to prevent duplicate skill runs on SSE reconnect
-- [x] **DATA-08**: PostgreSQL connection pool implemented as singleton — no per-request pool creation
+- [ ] **DATA-01**: Database schema implements all tables from briefing (projects, workstreams, actions, risks, milestones, artifacts, history, stakeholders, tasks, plan_templates, outputs, knowledge_base) with PostgreSQL RLS enforced at DB layer
+- [ ] **DATA-02**: Append-only tables (engagement_history, key_decisions) are enforced by DB trigger — not application convention
+- [ ] **DATA-03**: Migration script imports all three existing customer context docs (YAML frontmatter → DB) with source tracing preserved
+- [ ] **DATA-04**: Migration script imports PA3_Action_Tracker.xlsx (two-sheet format) into actions table
+- [ ] **DATA-05**: Context doc export: DB → YAML frontmatter Markdown with exact js-yaml settings (sortKeys: false, lineWidth: -1, JSON_SCHEMA) — round-trip fidelity with Cowork skills
+- [ ] **DATA-06**: Multi-account architecture: user can add new projects, close completed ones (archived as read-only), with no hardcoded customer names anywhere in the codebase
+- [ ] **DATA-07**: Idempotency key and status field on outputs table (created immediately as 'running') to prevent duplicate skill runs on SSE reconnect
+- [ ] **DATA-08**: PostgreSQL connection pool implemented as singleton — no per-request pool creation
 
 ### Dashboard
 
 - [x] **DASH-01**: Today's Briefing panel displays stored morning-briefing result; refreshable on demand
 - [x] **DASH-02**: Project Health cards for all active accounts showing auto-derived RAG status, one-line summary, and open high-priority action count
 - [x] **DASH-03**: Health score auto-derived from data signals: overdue actions, stalled milestones (no progress in 14+ days), and unresolved high-severity risks — no manual RAG entry required
-- [x] **DASH-04**: Cross-project Risk Heat Map (probability × impact matrix) across all active accounts visible on dashboard
-- [x] **DASH-05**: Cross-Account Watch List showing escalated or time-sensitive items spanning multiple customers
+- [ ] **DASH-04**: Cross-project Risk Heat Map (probability × impact matrix) across all active accounts visible on dashboard
+- [ ] **DASH-05**: Cross-Account Watch List showing escalated or time-sensitive items spanning multiple customers
 - [x] **DASH-06**: Recent Activity Feed showing last 7 days of skill runs, file outputs, and history entries across all projects
 - [x] **DASH-07**: Quick Action Bar with one-click buttons: Run Tracker, Generate Briefing, Weekly Status Draft (per active account)
 - [x] **DASH-08**: In-app notification badge for overdue actions, approaching go-live dates (within 14 days), and new tracker results
@@ -49,14 +49,14 @@
 
 ### Time Tracking
 
-- [x] **TIME-01**: Time tab (12th workspace tab) — time log for the project showing entries table (date, hours, description), total hours in header, filterable by date range
-- [x] **TIME-02**: Add, edit, and delete time entries — entry fields: date (defaults to today), hours (decimal, e.g. 1.5), free-text description
-- [x] **TIME-03**: Export time entries for a project as CSV with columns: date, hours, description, project name
+- [ ] **TIME-01**: Time tab (12th workspace tab) — time log for the project showing entries table (date, hours, description), total hours in header, filterable by date range
+- [ ] **TIME-02**: Add, edit, and delete time entries — entry fields: date (defaults to today), hours (decimal, e.g. 1.5), free-text description
+- [ ] **TIME-03**: Export time entries for a project as CSV with columns: date, hours, description, project name
 
 ### Skill Launcher
 
 - [x] **SKILL-01**: SkillOrchestrator service cleanly separated from HTTP Route Handlers — same code path for manual (SSE) and BullMQ-worker (scheduled) invocations
-- [x] **SKILL-02**: Token budget guard in context assembly — estimates token count before Claude call, truncates or summarizes low-priority context sections if over budget
+- [ ] **SKILL-02**: Token budget guard in context assembly — estimates token count before Claude call, truncates or summarizes low-priority context sections if over budget
 - [x] **SKILL-03**: Weekly Customer Status — select account → generate customer-facing email from DB context; copy to clipboard or save as file; optionally creates Gmail draft
 - [x] **SKILL-04**: Meeting Summary — paste notes/transcript + select account → generate .docx + optional .mermaid diagram; registers entry in engagement history
 - [x] **SKILL-05**: ELT External Status — select account + month → generate 5-slide .pptx (confidence-framed, partnership tone, no internal severity language)
@@ -64,18 +64,18 @@
 - [x] **SKILL-07**: Team Engagement Map — select account → generate self-contained HTML (business outcomes, ADR/Biggy flows, team status table)
 - [x] **SKILL-08**: Workflow Diagram — select account → generate before/after HTML with two tabs
 - ~~**SKILL-09**: Biggy Weekly Briefing~~ *(moved to v2 — see v2 Requirements)*
-- [x] **SKILL-10**: Customer Project Tracker — run for one account or all active; sweeps Gmail/Slack/Gong for last 7 days; updates actions table and PA3_Action_Tracker.xlsx; shows structured report
+- [ ] **SKILL-10**: Customer Project Tracker — run for one account or all active; sweeps Gmail/Slack/Gong for last 7 days; updates actions table and PA3_Action_Tracker.xlsx; shows structured report
 - [x] **SKILL-11**: Morning Briefing — fetch today's calendar via Glean, synthesize per-meeting context, store result in DB, display in Dashboard Briefing panel
 - [x] **SKILL-12**: Context Updater — paste notes/transcript + select account → apply all 14 update steps → write to DB → export updated context doc to file; registers in engagement history
 - [x] **SKILL-13**: Handoff Doc Generator — select account → generate structured handoff/coverage doc covering open actions, risks, key decisions, key contacts, and current workstream status
-- [x] **SKILL-14**: SKILL.md files read from disk at runtime (skill_path configurable in settings); prompts never modified or simplified in code
+- [ ] **SKILL-14**: SKILL.md files read from disk at runtime (skill_path configurable in settings); prompts never modified or simplified in code
 
 ### Output Library
 
-- [x] **OUT-01**: All generated files registered in outputs table with account, skill/type, filename, filepath, created_at
-- [x] **OUT-02**: Output Library view filterable by account, skill type, and date range
-- [x] **OUT-03**: HTML output files render inline in the app; .docx and .pptx open via system default app
-- [x] **OUT-04**: Regenerate action re-runs the generating skill with same or updated context; old file archived, new one registered
+- [ ] **OUT-01**: All generated files registered in outputs table with account, skill/type, filename, filepath, created_at
+- [ ] **OUT-02**: Output Library view filterable by account, skill type, and date range
+- [ ] **OUT-03**: HTML output files render inline in the app; .docx and .pptx open via system default app
+- [ ] **OUT-04**: Regenerate action re-runs the generating skill with same or updated context; old file archived, new one registered
 
 ### Project Plan & Task Builder
 
@@ -107,21 +107,21 @@
 
 ### Scheduled Intelligence
 
-- [x] **SCHED-01**: BullMQ worker process as dedicated process alongside Next.js app — not in-process cron; persists across restarts; no duplicate firing on multi-instance deploy
-- [x] **SCHED-02**: Daily 8am: Morning Briefing background job — result stored in DB, surfaced in dashboard
-- [x] **SCHED-03**: Daily 8am: Cross-account health check — flag status changes, approaching due dates, overdue actions
-- [x] **SCHED-04**: Daily 9am: Overnight Slack + Gmail sweep for customer messages
-- [x] **SCHED-05**: Monday 7am: Full Customer Project Tracker run for all active accounts
-- [x] **SCHED-06**: Thursday 4pm: Weekly Status Draft generation for all active accounts; creates Gmail drafts; notifies dashboard
-- [x] **SCHED-07**: Friday 9am: Biggy Weekly Briefing generation; stores in Output Library
-- [x] **SCHED-08**: All schedule times configurable via Settings; jobs have queryable status (pending/running/completed/failed) visible in UI
+- [ ] **SCHED-01**: BullMQ worker process as dedicated process alongside Next.js app — not in-process cron; persists across restarts; no duplicate firing on multi-instance deploy
+- [ ] **SCHED-02**: Daily 8am: Morning Briefing background job — result stored in DB, surfaced in dashboard
+- [ ] **SCHED-03**: Daily 8am: Cross-account health check — flag status changes, approaching due dates, overdue actions
+- [ ] **SCHED-04**: Daily 9am: Overnight Slack + Gmail sweep for customer messages
+- [ ] **SCHED-05**: Monday 7am: Full Customer Project Tracker run for all active accounts
+- [ ] **SCHED-06**: Thursday 4pm: Weekly Status Draft generation for all active accounts; creates Gmail drafts; notifies dashboard
+- [ ] **SCHED-07**: Friday 9am: Biggy Weekly Briefing generation; stores in Output Library
+- [ ] **SCHED-08**: All schedule times configurable via Settings; jobs have queryable status (pending/running/completed/failed) visible in UI
 
 ### Settings
 
-- [x] **SET-01**: Workspace path configuration (default: ~/Documents/BigPanda Projects/) — where output files are saved
+- [ ] **SET-01**: Workspace path configuration (default: ~/Documents/BigPanda Projects/) — where output files are saved
 - [x] **SET-02**: Skill file location configuration (default: ~/.claude/get-shit-done/) — where SKILL.md files are read from
-- [x] **SET-03**: Schedule time configuration for each background job
-- [x] **SET-04**: Anthropic API key stored securely (not in .env committed to git; system keychain or local secrets file)
+- [ ] **SET-03**: Schedule time configuration for each background job
+- [ ] **SET-04**: Anthropic API key stored securely (not in .env committed to git; system keychain or local secrets file)
 
 ## v2 Requirements
 
@@ -162,18 +162,18 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | Phase 1 | Complete |
-| DATA-02 | Phase 1 | Complete |
-| DATA-03 | Phase 1 | Complete |
-| DATA-04 | Phase 1 | Complete |
-| DATA-05 | Phase 1 | Complete |
-| DATA-06 | Phase 1 | Complete |
-| DATA-07 | Phase 1 | Complete |
-| DATA-08 | Phase 1 | Complete |
-| SET-01 | Phase 1 | Complete |
+| DATA-01 | Phase 16 | Pending |
+| DATA-02 | Phase 16 | Pending |
+| DATA-03 | Phase 16 | Pending |
+| DATA-04 | Phase 16 | Pending |
+| DATA-05 | Phase 15/16 | Pending |
+| DATA-06 | Phase 16 | Pending |
+| DATA-07 | Phase 16 | Pending |
+| DATA-08 | Phase 16 | Pending |
+| SET-01 | Phase 16 | Pending |
 | SET-02 | Phase 10 | Complete |
-| SET-03 | Phase 1 | Complete |
-| SET-04 | Phase 1 | Complete |
+| SET-03 | Phase 16 | Pending |
+| SET-04 | Phase 16 | Pending |
 | DASH-01 | Phase 2 | Complete |
 | DASH-02 | Phase 2 | Complete |
 | DASH-03 | Phase 2 | Complete |
@@ -200,37 +200,37 @@
 | PLAN-09 | Phase 11 | Complete |
 | PLAN-10 | Phase 3 | Complete |
 | PLAN-11 | Phase 3 | Complete |
-| SCHED-01 | Phase 4 | Complete |
-| SCHED-02 | Phase 4 | Complete |
-| SCHED-03 | Phase 4 | Complete |
-| SCHED-04 | Phase 4 | Complete |
-| SCHED-05 | Phase 4 | Complete |
-| SCHED-06 | Phase 4 | Complete |
-| SCHED-07 | Phase 4 | Complete |
-| SCHED-08 | Phase 4 | Complete |
+| SCHED-01 | Phase 15/16 | Pending |
+| SCHED-02 | Phase 16 | Pending |
+| SCHED-03 | Phase 15/16 | Pending |
+| SCHED-04 | Phase 16 | Pending |
+| SCHED-05 | Phase 16 | Pending |
+| SCHED-06 | Phase 16 | Pending |
+| SCHED-07 | Phase 16 | Pending |
+| SCHED-08 | Phase 16 | Pending |
 | SKILL-01 | Phase 9 | Complete |
-| SKILL-02 | Phase 5 | Complete |
+| SKILL-02 | Phase 16 | Pending |
 | SKILL-03 | Phase 9 | Complete |
 | SKILL-04 | Phase 9 | Complete |
 | SKILL-11 | Phase 9 | Complete |
 | SKILL-12 | Phase 9 | Complete |
 | SKILL-13 | Phase 5 | Complete |
-| SKILL-14 | Phase 5 | Complete |
+| SKILL-14 | Phase 15/16 | Pending |
 | DASH-09 | Phase 5 | Complete |
-| OUT-01 | Phase 5 | Complete |
-| OUT-02 | Phase 5 | Complete |
-| OUT-03 | Phase 5 | Complete |
-| OUT-04 | Phase 5 | Complete |
+| OUT-01 | Phase 16 | Pending |
+| OUT-02 | Phase 16 | Pending |
+| OUT-03 | Phase 16 | Pending |
+| OUT-04 | Phase 16 | Pending |
 | OVER-01 | Phase 5.1 | Complete |
 | OVER-02 | Phase 5.1 | Complete |
 | OVER-03 | Phase 5.1 | Complete |
 | OVER-04 | Phase 5.1 | Complete |
-| TIME-01 | Phase 5.2 | Complete |
-| TIME-02 | Phase 5.2 | Complete |
-| TIME-03 | Phase 5.2 | Complete |
-| SKILL-10 | Phase 6 | Complete |
-| DASH-04 | Phase 6 | Complete |
-| DASH-05 | Phase 6 | Complete |
+| TIME-01 | Phase 16 | Pending |
+| TIME-02 | Phase 16 | Pending |
+| TIME-03 | Phase 16 | Pending |
+| SKILL-10 | Phase 16 | Pending |
+| DASH-04 | Phase 16 | Pending |
+| DASH-05 | Phase 16 | Pending |
 | SKILL-05 | Phase 7 | Complete |
 | SKILL-06 | Phase 7 | Complete |
 | SKILL-07 | Phase 7 | Complete |
@@ -249,9 +249,10 @@
 - v1 requirements enumerated: 81 (DATA:8, DASH:9, WORK:9, OVER:4, TIME:3, SKILL:13, OUT:4, PLAN:13, KB:3, SRCH:3, SCHED:8, SET:4) — SKILL-09 moved to v2
 - Mapped to phases: 81
 - Unmapped: 0
+- Verified (3-source): 50/81 — 31 pending gap closure via Phases 15–16
 
 > Note: Added OVER-01–04 (Onboarding Dashboard) and TIME-01–03 (Time Tracking) on 2026-03-23. WORK-01 marked superseded by OVER-01 — original implementation remains complete, replaced in Phase 5.1.
 
 ---
 *Requirements defined: 2026-03-18*
-*Last updated: 2026-03-24 — SKILL-09 moved to v2; PLAN-09/SET-02/SKILL-01/03/04/11/12/SRCH-01 reset to Pending and reassigned to gap closure phases 9–11*
+*Last updated: 2026-03-25 — 31 orphaned requirements reset to Pending and assigned to gap closure phases 15–16 per v1.0-MILESTONE-AUDIT.md; Phase 5.2/6 ROADMAP checkboxes corrected*

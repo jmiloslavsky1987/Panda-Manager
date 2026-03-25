@@ -18,8 +18,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: Job Infrastructure** - BullMQ worker process, JobService, Redis, cron schedule registration, job status UI (completed 2026-03-20)
 - [x] **Phase 5: Skill Engine** - SkillOrchestrator, token budget guard, SSE streaming, Drafts Inbox, Output Library, first 5 skills wired (completed 2026-03-23)
 - [x] **Phase 5.1: Onboarding Dashboard** [INSERTED] - Replace Overview tab with dynamic onboarding status dashboard; new onboarding_phases, onboarding_steps, integrations tables; YAML round-trip (completed 2026-03-23)
-- [ ] **Phase 5.2: Time Tracking** [INSERTED] - 12th workspace tab; time_entries table; add/edit/delete entries; CSV export
-- [ ] **Phase 6: MCP Integrations** - MCPClientPool, Slack/Gmail/Glean/Drive connections, Customer Project Tracker fully wired
+- [x] **Phase 5.2: Time Tracking** [INSERTED] - 12th workspace tab; time_entries table; add/edit/delete entries; CSV export (completed 2026-03-23)
+- [x] **Phase 6: MCP Integrations** - MCPClientPool, Slack/Gmail/Glean/Drive connections, Customer Project Tracker fully wired (completed 2026-03-24)
 - [x] **Phase 7: File Generation + Remaining Skills** - FileGenerationService (.docx/.pptx/.xlsx/.html), 11 remaining skills wired (completed 2026-03-24)
 - [x] **Phase 8: Cross-Project Features + Polish** - FTS, risk heat map, cross-account watch list, Knowledge Base, Drafts send/discard flow (completed 2026-03-25)
 - [x] **Phase 9: MCP Injection Fix** - Wire MCPClientPool into all 4 skill job handlers; closes INT-MCP-01 from v1.0 audit (completed 2026-03-25)
@@ -28,6 +28,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 12: Complete Workspace Write Surface** - Artifacts tab, Decisions write UI, Architecture inline edit, Teams percent_complete edit (completed 2026-03-25)
 - [x] **Phase 13: Skill UX + Draft Polish** - Contextual skill launch buttons, draft editing, search date filter, plan template library (completed 2026-03-25)
 - [x] **Phase 14: Time + Project Analytics** - Time entry rollup, action velocity, risk trends, capacity planning view (completed 2026-03-25)
+- [ ] **Phase 15: Scheduler + UI Fixes** - Fix morning-briefing/weekly-customer-status scheduler registration, add YAML export UI, apply resolveSkillsDir() to 3 handlers, fix search filter for 4 new FTS tables
+- [ ] **Phase 16: Verification Retrofit** - Retroactive VERIFICATION.md for phases 01, 04, 05, 05.2, 06; closes 31 orphaned requirements
 
 ## Phase Details
 
@@ -245,8 +247,8 @@ Phases 5.1 and 5.2 can run in parallel. Phases 6 and 7 can overlap after Phase 5
 | 4. Job Infrastructure | 5/5 | Complete   | 2026-03-20 |
 | 5. Skill Engine | 6/6 | Complete   | 2026-03-23 |
 | 5.1 Onboarding Dashboard [INSERTED] | 8/8 | Complete   | 2026-03-23 |
-| 5.2 Time Tracking [INSERTED] | 2/5 | In Progress|  |
-| 6. MCP Integrations | 5/7 | In Progress|  |
+| 5.2 Time Tracking [INSERTED] | 5/5 | Complete   | 2026-03-23 |
+| 6. MCP Integrations | 7/7 | Complete   | 2026-03-24 |
 | 7. File Generation + Remaining Skills | 7/7 | Complete   | 2026-03-24 |
 | 8. Cross-Project Features + Polish | 7/7 | Complete   | 2026-03-25 |
 | 9. MCP Injection Fix | 2/2 | Complete   | 2026-03-25 |
@@ -255,6 +257,8 @@ Phases 5.1 and 5.2 can run in parallel. Phases 6 and 7 can overlap after Phase 5
 | 12. Complete Workspace Write Surface | 4/4 | Complete    | 2026-03-25 |
 | 13. Skill UX + Draft Polish | 4/4 | Complete    | 2026-03-25 |
 | 14. Time + Project Analytics | 5/5 | Complete    | 2026-03-25 |
+| 15. Scheduler + UI Fixes | 0/2 | Pending     |  |
+| 16. Verification Retrofit | 0/5 | Pending     |  |
 
 ---
 
@@ -356,6 +360,42 @@ Plans:
 - [ ] 14-03-PLAN.md — Wave 2: Time tab weekly summary + capacity planning (API + UI)
 - [ ] 14-04-PLAN.md — Wave 2: HealthCard velocity chart + risk trend indicator (UI only)
 - [ ] 14-05-PLAN.md — Wave 3: E2E green pass + human verification checkpoint
+
+### Phase 15: Scheduler + UI Fixes
+**Goal**: All scheduled jobs fire on their intended cron schedule, YAML export is reachable from the workspace UI, skill path resolution is consistent across all job handlers, and the search filter covers all 12 FTS tables — closing the 4 integration gaps found by the v1.0 audit.
+**Depends on**: Phase 14
+**Requirements**: SCHED-01, SCHED-03, DATA-05, OVER-04, SET-02, SKILL-03, SKILL-11, SKILL-14, SRCH-02, SRCH-03
+**Gap Closure**: Closes integration gaps from v1.0-MILESTONE-AUDIT.md: scheduler gap, YAML export UI gap, skill path inconsistency, search filter gap
+**Success Criteria** (what must be TRUE):
+  1. `morning-briefing` and `weekly-customer-status` are present in `JOB_SCHEDULE_MAP` in `scheduler.ts` and fire at their configured times; `action-sync` naming clarified
+  2. A "Export YAML" button in the workspace UI (ProjectHeader or layout) triggers a POST to `/api/projects/[id]/yaml-export` and writes the context doc to disk
+  3. `morning-briefing.ts`, `weekly-customer-status.ts`, and `context-updater.ts` use `resolveSkillsDir(settings.skill_path)` instead of a hardcoded `__dirname`-relative path
+  4. The search filter TYPE_OPTIONS includes all 12 FTS tables: adds `onboarding_steps`, `onboarding_phases`, `integrations`, `time_entries`
+**Plans**: 2 plans
+
+Plans:
+- [ ] 15-01-PLAN.md — Wave 1: Scheduler registration fix + YAML export UI + resolveSkillsDir() in 3 handlers + search TYPE_OPTIONS update
+- [ ] 15-02-PLAN.md — Wave 2: E2E green pass + human verification checkpoint
+
+### Phase 16: Verification Retrofit
+**Goal**: Phases 01, 04, 05, 05.2, and 06 each have a VERIFICATION.md produced by gsd-verifier — closing 31 orphaned requirements that were implemented but never formally verified.
+**Depends on**: Phase 15
+**Requirements**: DATA-01..08, SET-01/03/04, SCHED-01..08, SKILL-02/10/14, OUT-01..04, TIME-01..03, DASH-04/05
+**Gap Closure**: Closes 31 orphaned requirements from v1.0-MILESTONE-AUDIT.md (5 unverified phases)
+**Success Criteria** (what must be TRUE):
+  1. `phases/01-data-foundation/01-VERIFICATION.md` exists with status passed or human_needed and covers DATA-01..08, SET-01/03/04
+  2. `phases/04-job-infrastructure/04-VERIFICATION.md` exists covering SCHED-01..08
+  3. `phases/05-skill-engine/05-VERIFICATION.md` exists covering SKILL-02/14, OUT-01..04
+  4. `phases/05.2-time-tracking/05.2-VERIFICATION.md` exists covering TIME-01..03
+  5. `phases/06-mcp-integrations/06-VERIFICATION.md` exists covering SKILL-10, DASH-04/05
+**Plans**: 5 plans (one retroactive verification run per unverified phase)
+
+Plans:
+- [ ] 16-01-PLAN.md — Verify Phase 01: Data Foundation (DATA-01..08, SET-01/03/04)
+- [ ] 16-02-PLAN.md — Verify Phase 04: Job Infrastructure (SCHED-01..08)
+- [ ] 16-03-PLAN.md — Verify Phase 05: Skill Engine (SKILL-02/14, OUT-01..04)
+- [ ] 16-04-PLAN.md — Verify Phase 05.2: Time Tracking (TIME-01..03)
+- [ ] 16-05-PLAN.md — Verify Phase 06: MCP Integrations (SKILL-10, DASH-04/05)
 
 ## Coverage
 
