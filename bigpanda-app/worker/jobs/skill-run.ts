@@ -12,6 +12,7 @@ import { sql, eq } from 'drizzle-orm';
 import db from '../../db';
 import { skillRuns, outputs, drafts } from '../../db/schema';
 import { SkillOrchestrator } from '../../lib/skill-orchestrator';
+import { MCPClientPool } from '../../lib/mcp-config';
 import { generateFile } from '../../lib/file-gen';
 import { getProjectById } from '../../lib/queries';
 
@@ -45,7 +46,9 @@ export default async function skillRunJob(job: Job): Promise<{ status: string }>
     .where(sql`id = ${runId}`);
 
   try {
-    await orchestrator.run({ skillName, projectId, runId, input, skillsDir: SKILLS_DIR });
+    const mcpServers = await MCPClientPool.getInstance().getServersForSkill(skillName);
+
+    await orchestrator.run({ skillName, projectId, runId, input, skillsDir: SKILLS_DIR, mcpServers });
 
     await db.update(skillRuns)
       .set({ status: 'completed', completed_at: new Date() })
