@@ -645,7 +645,7 @@ export async function searchAllRecords(params: {
       WHERE p.status = 'active'
         AND os.search_vec @@ plainto_tsquery('english', '${safeQ}')
         ${accountFilter('p.customer')}
-        ${dateBounds('os.updated_at::text')}
+        ${dateBounds("to_char(os.updated_at, 'YYYY-MM-DD')")}
     `);
   }
 
@@ -667,7 +667,7 @@ export async function searchAllRecords(params: {
       WHERE p.status = 'active'
         AND op.search_vec @@ plainto_tsquery('english', '${safeQ}')
         ${accountFilter('p.customer')}
-        ${dateBounds('op.created_at::text')}
+        ${dateBounds("to_char(op.created_at, 'YYYY-MM-DD')")}
     `);
   }
 
@@ -689,7 +689,7 @@ export async function searchAllRecords(params: {
       WHERE p.status = 'active'
         AND i.search_vec @@ plainto_tsquery('english', '${safeQ}')
         ${accountFilter('p.customer')}
-        ${dateBounds('i.updated_at::text')}
+        ${dateBounds("to_char(i.updated_at, 'YYYY-MM-DD')")}
     `);
   }
 
