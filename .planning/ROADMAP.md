@@ -331,12 +331,13 @@ Plans:
   2. Selecting a draft in the Drafts Inbox shows an Edit modal — the user can modify subject, body, and recipient before sending or dismissing
   3. The date range filter on the /search page filters results to entries created within the selected range
   4. A "Templates" button in PhaseBoard opens a modal listing saved plan_templates; selecting one instantiates its tasks into the current project
-**Plans**: 3 plans
+**Plans**: 4 plans
 
 Plans:
-- [ ] 13-01-PLAN.md — Wave 1: Contextual skill launch buttons on History tab, Stakeholders tab, and Dashboard quick actions
-- [ ] 13-02-PLAN.md — Wave 2: Draft editing modal + search date filter implementation + plan template library UI
-- [ ] 13-03-PLAN.md — Wave 3: E2E green pass + human verification checkpoint
+- [ ] 13-01-PLAN.md — Wave 0: E2E test stubs (11 RED stubs covering all Phase 13 behaviors)
+- [ ] 13-02-PLAN.md — Wave 1: Skill launch buttons (History + Stakeholders) + search date filter fix
+- [ ] 13-03-PLAN.md — Wave 1: DraftEditModal + DraftsInbox refactor + PATCH extension + TemplatePicker Dialog upgrade
+- [ ] 13-04-PLAN.md — Wave 2: E2E green pass + human verification checkpoint
 
 ### Phase 14: Time + Project Analytics
 **Goal**: Time entries are summarized by week and month in the Time tab, the Dashboard gains an action velocity chart and risk trend indicator, and a capacity planning view shows hours logged vs. weekly target — turning captured data into actionable intelligence.
