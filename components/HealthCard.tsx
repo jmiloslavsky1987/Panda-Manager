@@ -46,6 +46,9 @@ export function HealthCard({ project }: HealthCardProps) {
           >
             {project.highRisks} high risk{project.highRisks !== 1 ? 's' : ''}
           </span>
+          <span className={project.stalledWorkstreams > 0 ? 'text-orange-600 font-medium' : ''}>
+            {project.stalledWorkstreams} stalled workstream{project.stalledWorkstreams !== 1 ? 's' : ''}
+          </span>
         </div>
       </CardContent>
     </Card>

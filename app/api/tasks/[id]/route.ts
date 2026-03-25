@@ -97,9 +97,21 @@ export async function DELETE(
   }
 
   try {
+    // Fetch workstream_id before deletion for post-delete rollup
+    const [existing] = await db
+      .select({ workstream_id: tasks.workstream_id })
+      .from(tasks)
+      .where(eq(tasks.id, taskId))
+      .limit(1)
+
     await db
       .delete(tasks)
       .where(eq(tasks.id, taskId))
+
+    // PLAN-09 progress rollup: recalculate workstream percent_complete after task deletion
+    if (existing?.workstream_id) {
+      await updateWorkstreamProgress(existing.workstream_id)
+    }
 
     return Response.json({ ok: true })
   } catch (err) {
