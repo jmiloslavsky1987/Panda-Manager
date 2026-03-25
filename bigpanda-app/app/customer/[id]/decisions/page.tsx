@@ -1,8 +1,10 @@
 import { getWorkspaceData } from '../../../../lib/queries'
+import { AddDecisionModal } from '@/components/AddDecisionModal'
 
 export default async function DecisionsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const data = await getWorkspaceData(parseInt(id, 10))
+  const projectId = parseInt(id, 10)
+  const data = await getWorkspaceData(projectId)
 
   const decisions = [...data.keyDecisions].sort(
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -10,12 +12,9 @@ export default async function DecisionsPage({ params }: { params: Promise<{ id: 
 
   return (
     <div data-testid="decisions-tab" className="space-y-6">
-      <div>
+      <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-zinc-900">Key Decisions</h2>
-      </div>
-
-      <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-        Key decisions are append-only. Adding new decisions available in Phase 3.
+        <AddDecisionModal projectId={projectId} />
       </div>
 
       {decisions.length === 0 ? (

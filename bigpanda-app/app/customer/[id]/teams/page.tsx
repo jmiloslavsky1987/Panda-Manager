@@ -1,13 +1,6 @@
 import { getWorkspaceData } from '../../../../lib/queries'
 import { Badge } from '../../../../components/ui/badge'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '../../../../components/ui/table'
+import { WorkstreamTableClient } from '@/components/WorkstreamTableClient'
 
 const STALL_DAYS = 14
 
@@ -20,64 +13,6 @@ function isStalled(lastUpdated: string | null | undefined, state: string | null 
   const cutoff = new Date()
   cutoff.setDate(cutoff.getDate() - STALL_DAYS)
   return d < cutoff
-}
-
-function WorkstreamTable({
-  streams,
-  trackLabel,
-  trackBadgeClass,
-}: {
-  streams: { id: number; name: string; state: string | null; current_status: string | null; lead: string | null; last_updated: string | null }[]
-  trackLabel: string
-  trackBadgeClass: string
-}) {
-  return (
-    <div className="space-y-2">
-      <h3 className="text-sm font-semibold text-zinc-700 flex items-center gap-2">
-        <Badge className={`text-xs ${trackBadgeClass}`}>{trackLabel}</Badge>
-      </h3>
-      {streams.length === 0 ? (
-        <p className="text-sm text-zinc-400 px-1">No workstreams in this track.</p>
-      ) : (
-        <div className="rounded-md border border-zinc-200 overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Workstream</TableHead>
-                <TableHead className="w-[140px]">State / Status</TableHead>
-                <TableHead className="w-[120px]">Lead</TableHead>
-                <TableHead className="w-[130px]">Last Updated</TableHead>
-                <TableHead className="w-[160px]">Stall Indicator</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {streams.map((ws) => {
-                const stateDisplay = ws.state ?? ws.current_status ?? '—'
-                const stalled = isStalled(ws.last_updated, ws.state ?? ws.current_status)
-                return (
-                  <TableRow key={ws.id}>
-                    <TableCell className="text-sm font-medium">{ws.name}</TableCell>
-                    <TableCell className="text-sm text-zinc-600">{stateDisplay}</TableCell>
-                    <TableCell className="text-sm text-zinc-600">{ws.lead ?? '—'}</TableCell>
-                    <TableCell className="text-sm text-zinc-500">{ws.last_updated ?? '—'}</TableCell>
-                    <TableCell>
-                      {stalled ? (
-                        <Badge className="text-xs bg-amber-100 text-amber-800">
-                          Stalled 14+ days
-                        </Badge>
-                      ) : (
-                        <span className="text-xs text-zinc-300">—</span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-    </div>
-  )
 }
 
 export default async function TeamsPage({
@@ -103,22 +38,39 @@ export default async function TeamsPage({
         </p>
       </div>
 
-      <WorkstreamTable
-        streams={adrStreams}
-        trackLabel="ADR Track"
-        trackBadgeClass="bg-blue-100 text-blue-800"
-      />
-      <WorkstreamTable
-        streams={biggyStreams}
-        trackLabel="Biggy Track"
-        trackBadgeClass="bg-purple-100 text-purple-800"
-      />
-      {otherStreams.length > 0 && (
-        <WorkstreamTable
-          streams={otherStreams}
-          trackLabel="Other"
-          trackBadgeClass="bg-zinc-100 text-zinc-700"
+      {/* ADR Track */}
+      <div className="space-y-2">
+        <h3 className="text-sm font-semibold text-zinc-700 flex items-center gap-2">
+          <Badge className="text-xs bg-blue-100 text-blue-800">ADR Track</Badge>
+        </h3>
+        <WorkstreamTableClient
+          streams={adrStreams}
+          emptyMessage="No workstreams in this track."
         />
+      </div>
+
+      {/* Biggy Track */}
+      <div className="space-y-2">
+        <h3 className="text-sm font-semibold text-zinc-700 flex items-center gap-2">
+          <Badge className="text-xs bg-purple-100 text-purple-800">Biggy Track</Badge>
+        </h3>
+        <WorkstreamTableClient
+          streams={biggyStreams}
+          emptyMessage="No workstreams in this track."
+        />
+      </div>
+
+      {/* Other Track */}
+      {otherStreams.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-sm font-semibold text-zinc-700 flex items-center gap-2">
+            <Badge className="text-xs bg-zinc-100 text-zinc-700">Other</Badge>
+          </h3>
+          <WorkstreamTableClient
+            streams={otherStreams}
+            emptyMessage="No workstreams in this track."
+          />
+        </div>
       )}
 
       {workstreams.length === 0 && (
