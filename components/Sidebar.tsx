@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Library, Settings } from 'lucide-react';
+import { BookOpen, Library, Settings } from 'lucide-react';
 import { getActiveProjects } from '../lib/queries';
 import { SidebarProjectItem } from './SidebarProjectItem';
 
@@ -31,6 +31,14 @@ export async function Sidebar() {
           ))}
         </ul>
         <div className="px-4 mt-6 border-t border-zinc-700 pt-4 space-y-1">
+          <Link
+            href="/knowledge-base"
+            className="flex items-center gap-2 text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 rounded px-2 py-1.5 text-sm transition-colors"
+            data-testid="sidebar-knowledge-base-link"
+          >
+            <BookOpen className="w-4 h-4" />
+            Knowledge Base
+          </Link>
           <Link
             href="/outputs"
             className="flex items-center gap-2 text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 rounded px-2 py-1.5 text-sm transition-colors"
