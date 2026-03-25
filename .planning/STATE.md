@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: Completed 08-01-PLAN.md — Phase 8 Wave 0 RED baseline, 6 E2E stubs failing at stub assertion
-last_updated: "2026-03-25T02:16:26.479Z"
+stopped_at: Completed 08-02-PLAN.md — FTS infrastructure migration + KB link columns
+last_updated: "2026-03-25T02:19:14.542Z"
 progress:
   total_phases: 10
   completed_phases: 9
   total_plans: 67
-  completed_plans: 61
+  completed_plans: 62
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 05-06-PLAN.md — 13/13 E2E tests GREEN, all 8 human verification steps approved
 **Next action:** `/gsd:plan-phase 5.1` — Onboarding Dashboard (replaces Overview tab; new DB tables; YAML round-trip)
-**Stopped at:** Completed 08-01-PLAN.md — Phase 8 Wave 0 RED baseline, 6 E2E stubs failing at stub assertion
+**Stopped at:** Completed 08-02-PLAN.md — FTS infrastructure migration + KB link columns
 
 ## Phase Progress
 
@@ -193,6 +193,8 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 - [Phase 07-07]: router.refresh() in AiPlanPanel after AI plan commit triggers RSC re-render without navigation side-effects
 - [Phase 08-01]: Wave 0 stub assertion placed as FIRST line in each test — visibly RED without server running (consistent with 02-01 through 07-01)
 - [Phase 08-01]: Requirement IDs (SRCH-01/02/03, KB-01/02/03) in test names for --grep targeting in activation plans
+- [Phase 08-02]: search_vec (tsvector) excluded from Drizzle schema — trigger-managed, queried via raw SQL; adding it causes PgVectorType inference issues
+- [Phase 08-02]: Per-table trigger functions (tsvector_update_{table}) chosen over shared function — each table has its own field list for independent maintainability
 
 ## Performance Metrics
 
@@ -255,6 +257,7 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 | Phase 07-file-generation-remaining-skills P07 | 736s | 1 tasks | 4 files |
 | Phase 07-file-generation-remaining-skills P07 | 40min | 2 tasks | 6 files |
 | Phase 08-cross-project-features-+-polish P01 | 10min | 1 tasks | 1 files |
+| Phase 08-cross-project-features-+-polish P02 | 2min | 2 tasks | 2 files |
 
 ## Key Context for Next Session
 
