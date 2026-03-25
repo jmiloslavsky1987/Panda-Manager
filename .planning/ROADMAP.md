@@ -26,7 +26,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 10: FTS Expansion + Code Polish** - FTS coverage for 4 missing tables, skill path setting wired, /skills/custom link fixed; closes INT-FTS-01/INT-SET-01/INT-UI-01 (completed 2026-03-25)
 - [x] **Phase 11: Health Score Wire** - workstream.percent_complete feeds computeHealth(); closes PLAN-09 gap (completed 2026-03-25)
 - [x] **Phase 12: Complete Workspace Write Surface** - Artifacts tab, Decisions write UI, Architecture inline edit, Teams percent_complete edit (completed 2026-03-25)
-- [ ] **Phase 13: Skill UX + Draft Polish** - Contextual skill launch buttons, draft editing, search date filter, plan template library
+- [x] **Phase 13: Skill UX + Draft Polish** - Contextual skill launch buttons, draft editing, search date filter, plan template library (completed 2026-03-25)
 - [ ] **Phase 14: Time + Project Analytics** - Time entry rollup, action velocity, risk trends, capacity planning view
 
 ## Phase Details
@@ -253,7 +253,7 @@ Phases 5.1 and 5.2 can run in parallel. Phases 6 and 7 can overlap after Phase 5
 | 10. FTS Expansion + Code Polish | 2/2 | Complete    | 2026-03-25 |
 | 11. Health Score Wire | 1/1 | Complete    | 2026-03-25 |
 | 12. Complete Workspace Write Surface | 4/4 | Complete    | 2026-03-25 |
-| 13. Skill UX + Draft Polish | 3/4 | In Progress|  |
+| 13. Skill UX + Draft Polish | 4/4 | Complete   | 2026-03-25 |
 | 14. Time + Project Analytics | 0/3 | Pending | |
 
 ---

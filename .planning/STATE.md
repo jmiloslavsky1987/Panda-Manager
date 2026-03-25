@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_plan: Not started
+current_plan: 13-04 COMPLETE
 status: unknown
-stopped_at: Completed 13-03-PLAN.md
-last_updated: "2026-03-25T19:46:57.034Z"
+stopped_at: Completed 13-04-PLAN.md
+last_updated: "2026-03-25T20:01:14.918Z"
 progress:
   total_phases: 16
-  completed_phases: 14
+  completed_phases: 15
   total_plans: 80
-  completed_plans: 79
+  completed_plans: 80
 ---
 
 # Project State
@@ -24,11 +24,11 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 
 ## Current Status
 
-**Phase:** 12 — Complete Workspace Write Surface — COMPLETE
-**Current Plan:** Not started
-**Last action:** Completed 12-04-PLAN.md — 12/12 E2E tests GREEN, all write surfaces human-verified
+**Phase:** 13 — Skill UX + Draft Polish — COMPLETE
+**Current Plan:** 13-04 COMPLETE
+**Last action:** Completed 13-04-PLAN.md — 11/11 E2E tests GREEN, all 5 UX scenarios human-verified
 **Next action:** Advance to next phase per ROADMAP.md
-**Stopped at:** Completed 13-03-PLAN.md
+**Stopped at:** Completed 13-04-PLAN.md
 
 ## Phase Progress
 
@@ -47,7 +47,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 
 ## Active Work
 
-Phase 12 COMPLETE. All 4 plans executed: 12-01 (RED E2E stubs for 12 write-surface behaviors), 12-02 (Artifacts tab + ArtifactEditModal + /api/artifacts routes), 12-03 (AddDecisionModal + ArchitectureEditModal + WorkstreamTableClient slider + /api/decisions + /api/workstreams/[id] + banner removal), 12-04 (12/12 E2E tests GREEN + human verification approved). Next: advance to next phase per ROADMAP.md.
+Phase 13 COMPLETE. All 4 plans executed: 13-01 (11 RED E2E stubs), 13-02 (skill launch buttons on History/Stakeholders tabs + search date filter fix), 13-03 (DraftEditModal + TemplatePicker Dialog), 13-04 (11/11 E2E tests GREEN + fixture endpoints for drafts/plan-templates + human verification approved). Next: advance to next phase per ROADMAP.md.
 
 ## Decisions
 
@@ -230,6 +230,7 @@ Phase 12 COMPLETE. All 4 plans executed: 12-01 (RED E2E stubs for 12 write-surfa
 - [Phase 13-03]: DraftEditModal uses parent-controlled open state (no DialogTrigger) because trigger is the entire card div
 - [Phase 13-03]: PATCH edit action no longer requires content to be present; partial update sets only fields provided in body
 - [Phase 13-03]: TemplatePicker sub-component removed; logic inlined into PhaseBoard Dialog with task counts per template row
+- [Phase 13-04]: POST /api/drafts and GET/POST/DELETE /api/plan-templates added as E2E fixture endpoints — required for test isolation since tests need known DB state
 
 ## Performance Metrics
 
@@ -311,6 +312,7 @@ Phase 12 COMPLETE. All 4 plans executed: 12-01 (RED E2E stubs for 12 write-surfa
 | Phase 13-skill-ux-+-draft-polish P01 | 8 | 1 tasks | 1 files |
 | Phase 13-skill-ux-+-draft-polish P02 | 12 | 2 tasks | 3 files |
 | Phase 13-skill-ux-+-draft-polish P03 | 15 | 3 tasks | 4 files |
+| Phase 13-skill-ux-+-draft-polish P04 | 65 | 2 tasks | 4 files |
 
 ## Key Context for Next Session
 
