@@ -28,7 +28,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 12: Complete Workspace Write Surface** - Artifacts tab, Decisions write UI, Architecture inline edit, Teams percent_complete edit (completed 2026-03-25)
 - [x] **Phase 13: Skill UX + Draft Polish** - Contextual skill launch buttons, draft editing, search date filter, plan template library (completed 2026-03-25)
 - [x] **Phase 14: Time + Project Analytics** - Time entry rollup, action velocity, risk trends, capacity planning view (completed 2026-03-25)
-- [ ] **Phase 15: Scheduler + UI Fixes** - Fix morning-briefing/weekly-customer-status scheduler registration, add YAML export UI, apply resolveSkillsDir() to 3 handlers, fix search filter for 4 new FTS tables
+- [ ] **Phase 15: Scheduler + UI Fixes** - Fix morning-briefing/weekly-customer-status scheduler registration, apply resolveSkillsDir() to 3 handlers, fix search filter for 4 new FTS tables (YAML export deferred to future phase)
 - [ ] **Phase 16: Verification Retrofit** - Retroactive VERIFICATION.md for phases 01, 04, 05, 05.2, 06; closes 31 orphaned requirements
 
 ## Phase Details
@@ -362,15 +362,15 @@ Plans:
 - [ ] 14-05-PLAN.md — Wave 3: E2E green pass + human verification checkpoint
 
 ### Phase 15: Scheduler + UI Fixes
-**Goal**: All scheduled jobs fire on their intended cron schedule, YAML export is reachable from the workspace UI, skill path resolution is consistent across all job handlers, and the search filter covers all 12 FTS tables — closing the 4 integration gaps found by the v1.0 audit.
+**Goal**: All scheduled jobs fire on their intended cron schedule, skill path resolution is consistent across all job handlers, and the search filter covers all 12 FTS tables — closing 3 of the 4 integration gaps found by the v1.0 audit. (YAML export UI gap deferred to a future phase.)
 **Depends on**: Phase 14
-**Requirements**: SCHED-01, SCHED-03, DATA-05, OVER-04, SET-02, SKILL-03, SKILL-11, SKILL-14, SRCH-02, SRCH-03
-**Gap Closure**: Closes integration gaps from v1.0-MILESTONE-AUDIT.md: scheduler gap, YAML export UI gap, skill path inconsistency, search filter gap
+**Requirements**: SCHED-01, SCHED-03, SET-02, SKILL-03, SKILL-11, SKILL-14, SRCH-02, SRCH-03
+**Deferred**: DATA-05, OVER-04 (YAML round-trip export UI) — moved to a future dedicated phase
+**Gap Closure**: Closes integration gaps from v1.0-MILESTONE-AUDIT.md: scheduler gap, skill path inconsistency, search filter gap
 **Success Criteria** (what must be TRUE):
-  1. `morning-briefing` and `weekly-customer-status` are present in `JOB_SCHEDULE_MAP` in `scheduler.ts` and fire at their configured times; `action-sync` naming clarified
-  2. A "Export YAML" button in the workspace UI (ProjectHeader or layout) triggers a POST to `/api/projects/[id]/yaml-export` and writes the context doc to disk
-  3. `morning-briefing.ts`, `weekly-customer-status.ts`, and `context-updater.ts` use `resolveSkillsDir(settings.skill_path)` instead of a hardcoded `__dirname`-relative path
-  4. The search filter TYPE_OPTIONS includes all 12 FTS tables: adds `onboarding_steps`, `onboarding_phases`, `integrations`, `time_entries`
+  1. `morning-briefing` and `weekly-customer-status` are present in `JOB_SCHEDULE_MAP` in `scheduler.ts` and fire at their configured times; phantom entries `action-sync` and `weekly-briefing` removed
+  2. `morning-briefing.ts`, `weekly-customer-status.ts`, and `context-updater.ts` use `resolveSkillsDir(settings.skill_path)` instead of a hardcoded `__dirname`-relative path
+  3. The search filter TYPE_OPTIONS includes all 12 FTS tables: adds `onboarding_steps`, `onboarding_phases`, `integrations`, `time_entries`
 **Plans**: 3 plans
 
 Plans:
