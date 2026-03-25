@@ -30,6 +30,26 @@ export const FILE_SKILLS = new Set([
   'workflow-diagram',
 ]);
 
+/**
+ * resolveSkillsDir — Pure helper for SET-02 path resolution.
+ * Exported for unit testing without mocking the full job dependency chain.
+ *
+ * Rules:
+ *   1. If skillPath is set and absolute → use it as-is
+ *   2. If skillPath is set but relative → resolve from homedir
+ *   3. If skillPath is empty/whitespace → fall back to __dirname-relative path
+ */
+export function resolveSkillsDir(skillPath: string, dirnameRef: string = __dirname): string {
+  const trimmed = skillPath.trim();
+  if (!trimmed) {
+    return path.join(dirnameRef, '../../skills');
+  }
+  if (trimmed.startsWith('/')) {
+    return trimmed;
+  }
+  return path.join(os.homedir(), trimmed);
+}
+
 export default async function skillRunJob(job: Job): Promise<{ status: string }> {
   const { runId, skillName, projectId, input } = job.data as {
     runId: number;
@@ -47,11 +67,7 @@ export default async function skillRunJob(job: Job): Promise<{ status: string }>
     // SET-02: resolve SKILLS_DIR at runtime from settings.skill_path
     // Falls back to __dirname-relative path (Phase 05 decision: worker context anchor)
     const settings = await readSettings();
-    const SKILLS_DIR = settings.skill_path && settings.skill_path.trim()
-      ? (settings.skill_path.startsWith('/')
-          ? settings.skill_path
-          : path.join(os.homedir(), settings.skill_path))
-      : path.join(__dirname, '../../skills');
+    const SKILLS_DIR = resolveSkillsDir(settings.skill_path ?? '');
 
     const mcpServers = await MCPClientPool.getInstance().getServersForSkill(skillName);
 
