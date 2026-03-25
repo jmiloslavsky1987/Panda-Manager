@@ -25,7 +25,7 @@ vi.mock('@/lib/skill-orchestrator', () => {
 });
 
 import db from '@/db';
-import { GET, POST } from '../projects/[id]/sprint-summary/route';
+import { GET, POST } from '../projects/[projectId]/sprint-summary/route';
 import { NextRequest } from 'next/server';
 
 // ---------------------------------------------------------------------------
@@ -62,7 +62,7 @@ describe('sprint-summary API route', () => {
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({ from: mockFrom });
 
     const req = buildGetRequest('1');
-    const res = await GET(req, { params: Promise.resolve({ id: '1' }) });
+    const res = await GET(req, { params: Promise.resolve({ projectId: '1' }) });
     const body = await res.json();
 
     expect(res.status).toBe(200);
@@ -80,7 +80,7 @@ describe('sprint-summary API route', () => {
     (db.select as ReturnType<typeof vi.fn>).mockReturnValue({ from: mockFrom });
 
     const req = buildGetRequest('2');
-    const res = await GET(req, { params: Promise.resolve({ id: '2' }) });
+    const res = await GET(req, { params: Promise.resolve({ projectId: '2' }) });
     const body = await res.json();
 
     expect(res.status).toBe(200);
@@ -109,7 +109,7 @@ describe('sprint-summary API route', () => {
     (db.update as ReturnType<typeof vi.fn>).mockReturnValue({ set: mockSet });
 
     const req = buildPostRequest('1');
-    const res = await POST(req, { params: Promise.resolve({ id: '1' }) });
+    const res = await POST(req, { params: Promise.resolve({ projectId: '1' }) });
     const body = await res.json();
 
     expect(res.status).toBe(200);
