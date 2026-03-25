@@ -271,8 +271,8 @@ Phases 5.1 and 5.2 can run in parallel. Phases 6 and 7 can overlap after Phase 5
 **Plans**: 2 plans
 
 Plans:
-- [ ] 09-01-PLAN.md — Wave 1: Test scaffold (mcp-injection.test.ts — RED baseline for SKILL-01/03/04/11/12 + non-MCP regression)
-- [ ] 09-02-PLAN.md — Wave 2: Fix all 4 handlers (add MCPClientPool import + getServersForSkill call) + human verification checkpoint
+- [x] 09-01-PLAN.md — Wave 1: Test scaffold (mcp-injection.test.ts — RED baseline for SKILL-01/03/04/11/12 + non-MCP regression)
+- [x] 09-02-PLAN.md — Wave 2: Fix all 4 handlers (add MCPClientPool import + getServersForSkill call) + human verification checkpoint
 
 ### Phase 10: FTS Expansion + Code Polish
 **Goal**: Full-text search covers all 12 project-scoped tables including Phase 5.1 and 5.2 additions; the skill file path setting is actually honored; and the orphaned /skills/custom navigation link is fixed.
