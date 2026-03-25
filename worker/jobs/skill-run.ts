@@ -8,6 +8,7 @@
 
 import type { Job } from 'bullmq';
 import path from 'path';
+import os from 'os';
 import { sql, eq } from 'drizzle-orm';
 import db from '../../db';
 import { skillRuns, outputs, drafts } from '../../db/schema';
@@ -15,10 +16,7 @@ import { SkillOrchestrator } from '../../lib/skill-orchestrator';
 import { MCPClientPool } from '../../lib/mcp-config';
 import { generateFile } from '../../lib/file-gen';
 import { getProjectById } from '../../lib/queries';
-
-// Worker-context skills directory — anchored to this file's location, not cwd
-// This ensures SKILL.md files are resolved correctly regardless of npm run invocation directory.
-const SKILLS_DIR = path.join(__dirname, '../../skills');
+import { readSettings } from '../../lib/settings-core';
 
 // Singleton orchestrator — reused across job invocations within the same worker process
 const orchestrator = new SkillOrchestrator();
@@ -46,6 +44,15 @@ export default async function skillRunJob(job: Job): Promise<{ status: string }>
     .where(sql`id = ${runId}`);
 
   try {
+    // SET-02: resolve SKILLS_DIR at runtime from settings.skill_path
+    // Falls back to __dirname-relative path (Phase 05 decision: worker context anchor)
+    const settings = await readSettings();
+    const SKILLS_DIR = settings.skill_path && settings.skill_path.trim()
+      ? (settings.skill_path.startsWith('/')
+          ? settings.skill_path
+          : path.join(os.homedir(), settings.skill_path))
+      : path.join(__dirname, '../../skills');
+
     const mcpServers = await MCPClientPool.getInstance().getServersForSkill(skillName);
 
     await orchestrator.run({ skillName, projectId, runId, input, skillsDir: SKILLS_DIR, mcpServers });

@@ -250,15 +250,6 @@ export function SkillsTabClient({ projectId, recentRuns }: SkillsTabClientProps)
         </div>
       )}
 
-      {/* ── Run custom skill — power-user de-emphasized link ─────────────── */}
-      <div className="mt-8">
-        <a
-          href={`/customer/${projectId}/skills/custom`}
-          className="text-xs text-zinc-400 hover:text-zinc-600 underline underline-offset-2"
-        >
-          Run custom skill
-        </a>
-      </div>
     </div>
   );
 }
