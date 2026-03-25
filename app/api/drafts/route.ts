@@ -25,3 +25,28 @@ export async function GET() {
 
   return NextResponse.json(pending);
 }
+
+export async function POST(request: Request) {
+  const body = await request.json() as {
+    draft_type: string;
+    content: string;
+    subject?: string;
+    recipient?: string;
+    project_id?: number;
+  };
+
+  if (!body.draft_type || !body.content) {
+    return NextResponse.json({ error: 'draft_type and content are required' }, { status: 400 });
+  }
+
+  const [draft] = await db.insert(drafts).values({
+    draft_type: body.draft_type,
+    content: body.content,
+    subject: body.subject ?? null,
+    recipient: body.recipient ?? null,
+    project_id: body.project_id ?? null,
+    status: 'pending',
+  }).returning();
+
+  return NextResponse.json(draft, { status: 201 });
+}
