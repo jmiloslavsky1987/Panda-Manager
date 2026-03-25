@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: "Completed 08-04-PLAN.md — Knowledge Base CRUD API: GET/POST /api/knowledge-base + PATCH/DELETE /api/knowledge-base/[id]"
-last_updated: "2026-03-25T02:25:58.775Z"
+stopped_at: "Completed 08-05-PLAN.md — Search UI: SearchBar in layout + /search page with filter panel"
+last_updated: "2026-03-25T02:28:59.060Z"
 progress:
   total_phases: 10
   completed_phases: 9
   total_plans: 67
-  completed_plans: 64
+  completed_plans: 65
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 05-06-PLAN.md — 13/13 E2E tests GREEN, all 8 human verification steps approved
 **Next action:** `/gsd:plan-phase 5.1` — Onboarding Dashboard (replaces Overview tab; new DB tables; YAML round-trip)
-**Stopped at:** Completed 08-04-PLAN.md — Knowledge Base CRUD API: GET/POST /api/knowledge-base + PATCH/DELETE /api/knowledge-base/[id]
+**Stopped at:** Completed 08-05-PLAN.md — Search UI: SearchBar in layout + /search page with filter panel
 
 ## Phase Progress
 
@@ -199,6 +199,8 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 - [Phase 08-03]: knowledge_base arm uses LEFT JOIN — null project_id entries always searchable per KB-03 spec; account filter skips null-project entries
 - [Phase 08-04]: GET /api/knowledge-base delegates to searchAllRecords when q>=2 chars — reuses FTS infrastructure from 08-03 rather than duplicating tsquery logic
 - [Phase 08-04]: POST /api/knowledge-base auto-builds source_trace as 'Project: {customer} | Date: {today}' satisfying KB-03 when client omits it but project_id is supplied
+- [Phase 08-05]: search-results container only rendered when results.length > 0 — avoids empty data-testid container interfering with E2E selectors
+- [Phase 08-05]: Filter state kept local (not URL-synced) — only search query in URL; simplifies navigation without losing filter state
 
 ## Performance Metrics
 
@@ -264,6 +266,7 @@ Phase 5 COMPLETE. All 6 plans executed: 05-01 (SDK + schema + SKILL.md stubs + E
 | Phase 08-cross-project-features-+-polish P02 | 2min | 2 tasks | 2 files |
 | Phase 08-cross-project-features-+-polish P03 | 2min | 2 tasks | 2 files |
 | Phase 08-cross-project-features-+-polish P04 | 2min | 2 tasks | 2 files |
+| Phase 08-cross-project-features-+-polish P05 | 6min | 2 tasks | 3 files |
 
 ## Key Context for Next Session
 
