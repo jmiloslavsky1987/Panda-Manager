@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { DraftEditModal } from './DraftEditModal';
 
 interface Draft {
   id: number;
@@ -15,8 +16,7 @@ interface Draft {
 
 export function DraftsInbox() {
   const [drafts, setDrafts] = useState<Draft[]>([]);
-  const [expandedId, setExpandedId] = useState<number | null>(null);
-  const [editContent, setEditContent] = useState<Record<number, string>>({});
+  const [modalDraft, setModalDraft] = useState<Draft | null>(null);
 
   const loadDrafts = async () => {
     const res = await fetch('/api/drafts');
@@ -34,18 +34,6 @@ export function DraftsInbox() {
     setDrafts(prev => prev.filter(d => d.id !== id));
   };
 
-  const save = async (id: number) => {
-    const content = editContent[id];
-    if (!content) return;
-    await fetch(`/api/drafts/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'edit', content }),
-    });
-    setDrafts(prev => prev.map(d => d.id === id ? { ...d, content } : d));
-    setExpandedId(null);
-  };
-
   return (
     <section data-testid="drafts-inbox" className="mt-6">
       <h2 className="text-base font-semibold text-zinc-900 mb-3">Drafts Inbox</h2>
@@ -54,7 +42,12 @@ export function DraftsInbox() {
       ) : (
         <div className="space-y-2">
           {drafts.map(draft => (
-            <div key={draft.id} data-testid="draft-item" className="border border-zinc-200 rounded-lg p-3 bg-white">
+            <div
+              key={draft.id}
+              data-testid="draft-item"
+              className="border border-zinc-200 rounded-lg p-3 bg-white cursor-pointer hover:bg-zinc-50"
+              onClick={() => setModalDraft(draft)}
+            >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
@@ -62,31 +55,14 @@ export function DraftsInbox() {
                     {draft.project_name && <span className="text-xs text-zinc-400">— {draft.project_name}</span>}
                     {draft.subject && <span className="text-sm font-medium text-zinc-800 truncate">{draft.subject}</span>}
                   </div>
-                  {expandedId === draft.id ? (
-                    <div>
-                      <textarea
-                        className="w-full text-sm border border-zinc-200 rounded p-2 min-h-24 focus:outline-none focus:ring-1 focus:ring-zinc-400"
-                        value={editContent[draft.id] ?? draft.content}
-                        onChange={e => setEditContent(prev => ({ ...prev, [draft.id]: e.target.value }))}
-                      />
-                      <div className="flex gap-2 mt-1">
-                        <button onClick={() => save(draft.id)} className="text-xs px-2 py-1 bg-zinc-900 text-white rounded">Save</button>
-                        <button onClick={() => setExpandedId(null)} className="text-xs px-2 py-1 border border-zinc-200 rounded">Cancel</button>
-                      </div>
-                    </div>
-                  ) : (
-                    <p
-                      className="text-sm text-zinc-700 line-clamp-2 cursor-pointer hover:line-clamp-none"
-                      onClick={() => {
-                        setExpandedId(draft.id);
-                        setEditContent(prev => ({ ...prev, [draft.id]: draft.content }));
-                      }}
-                    >
-                      {draft.content}
-                    </p>
-                  )}
+                  <p className="text-sm text-zinc-700 line-clamp-2">
+                    {draft.content}
+                  </p>
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
+                <div
+                  className="flex items-center gap-1 shrink-0"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <button
                     onClick={() => { navigator.clipboard.writeText(draft.content); toast.success('Copied to clipboard'); }}
                     className="text-xs px-2 py-1 border border-zinc-200 rounded hover:bg-zinc-50"
@@ -108,6 +84,22 @@ export function DraftsInbox() {
             </div>
           ))}
         </div>
+      )}
+
+      {modalDraft && (
+        <DraftEditModal
+          draft={modalDraft}
+          open={true}
+          onOpenChange={(v) => { if (!v) setModalDraft(null); }}
+          onSaved={(updated) => {
+            setDrafts(prev => prev.map(d => d.id === updated.id ? updated : d));
+            setModalDraft(null);
+          }}
+          onDismissed={(id) => {
+            setDrafts(prev => prev.filter(d => d.id !== id));
+            setModalDraft(null);
+          }}
+        />
       )}
     </section>
   );
