@@ -41,6 +41,11 @@ export interface ProjectWithHealth extends Project {
   highRisks: number;
   stalledMilestones: number;
   stalledWorkstreams: number;
+  // Phase 14 analytics:
+  velocityWeeks: number[];       // [oldest, ..., newest] — 4 elements
+  actionTrend: 'up' | 'flat' | 'down';
+  openRiskCount: number;
+  riskTrend: 'up' | 'flat' | 'down';
 }
 
 export interface ActivityItem {
@@ -68,6 +73,97 @@ export interface WorkspaceData {
   keyDecisions: KeyDecision[];
   stakeholders: Stakeholder[];
   artifacts: Artifact[];
+}
+
+// ─── Helper: Compute trend direction ─────────────────────────────────────────
+
+function computeTrend(current: number, prior: number): 'up' | 'flat' | 'down' {
+  const diff = current - prior;
+  if (Math.abs(diff) <= 1) return 'flat';
+  return diff > 0 ? 'up' : 'down';
+}
+
+// ─── Helper: Compute project analytics (Phase 14) ────────────────────────────
+
+export async function computeProjectAnalytics(projectId: number): Promise<{
+  velocityWeeks: number[];
+  actionTrend: 'up' | 'flat' | 'down';
+  openRiskCount: number;
+  riskTrend: 'up' | 'flat' | 'down';
+}> {
+  return await db.transaction(async (tx) => {
+    await tx.execute(sql`SET LOCAL app.current_project_id = ${projectId}`);
+
+    // ── Velocity: completed actions per week over last 4 weeks ──────────────
+    const velocityRows = await tx.execute<{ week_start: string; count: number }>(
+      sql`
+        SELECT
+          date_trunc('week', updated_at)::date::text AS week_start,
+          count(*)::int AS count
+        FROM actions
+        WHERE project_id = ${projectId}
+          AND status = 'completed'
+          AND updated_at >= now() - interval '4 weeks'
+        GROUP BY week_start
+        ORDER BY week_start ASC
+      `
+    );
+
+    // Build lookup from SQL results
+    const lookup = new Map<string, number>();
+    for (const row of velocityRows) {
+      lookup.set(row.week_start, Number(row.count));
+    }
+
+    // Generate 4 expected week-start dates (Monday of each of last 4 weeks)
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+    const daysToMonday = (dayOfWeek + 6) % 7;
+    const thisMonday = new Date(today);
+    thisMonday.setDate(today.getDate() - daysToMonday);
+    thisMonday.setHours(0, 0, 0, 0);
+
+    const velocityWeeks: number[] = [];
+    // oldest first: -3w, -2w, -1w, current
+    for (let i = 3; i >= 0; i--) {
+      const slotDate = new Date(thisMonday);
+      slotDate.setDate(thisMonday.getDate() - i * 7);
+      const key = slotDate.toISOString().split('T')[0]; // YYYY-MM-DD
+      velocityWeeks.push(lookup.get(key) ?? 0);
+    }
+
+    // actionTrend: compare current week vs prior week
+    const currentWeek = velocityWeeks[3] ?? 0;
+    const priorWeek = velocityWeeks[2] ?? 0;
+    const actionTrend = computeTrend(currentWeek, priorWeek);
+
+    // ── Open risk count (now) ───────────────────────────────────────────────
+    const openNowRows = await tx.execute<{ count: number }>(
+      sql`
+        SELECT count(*)::int AS count
+        FROM risks
+        WHERE project_id = ${projectId}
+          AND status NOT IN ('resolved', 'closed', 'accepted')
+      `
+    );
+    const openRiskCount = Number(openNowRows[0]?.count ?? 0);
+
+    // ── Open risk count (last week: created before 7 days ago, still open) ──
+    const openLastWeekRows = await tx.execute<{ count: number }>(
+      sql`
+        SELECT count(*)::int AS count
+        FROM risks
+        WHERE project_id = ${projectId}
+          AND status NOT IN ('resolved', 'closed', 'accepted')
+          AND created_at < now() - interval '7 days'
+      `
+    );
+    const openLastWeek = Number(openLastWeekRows[0]?.count ?? 0);
+
+    const riskTrend = computeTrend(openRiskCount, openLastWeek);
+
+    return { velocityWeeks, actionTrend, openRiskCount, riskTrend };
+  });
 }
 
 // ─── Helper: Compute health score ────────────────────────────────────────────
@@ -164,7 +260,8 @@ export async function getActiveProjects(): Promise<ProjectWithHealth[]> {
   const projectsWithHealth = await Promise.all(
     activeProjects.map(async (p) => {
       const healthData = await computeHealth(p.id);
-      return { ...p, ...healthData };
+      const analyticsData = await computeProjectAnalytics(p.id);
+      return { ...p, ...healthData, ...analyticsData };
     })
   );
 
@@ -193,7 +290,8 @@ export async function getProjectById(projectId: number): Promise<Project> {
 export async function getProjectWithHealth(projectId: number): Promise<ProjectWithHealth> {
   const project = await getProjectById(projectId);
   const healthData = await computeHealth(projectId);
-  return { ...project, ...healthData };
+  const analyticsData = await computeProjectAnalytics(projectId);
+  return { ...project, ...healthData, ...analyticsData };
 }
 
 /**
