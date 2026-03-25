@@ -16,6 +16,7 @@ const TABS = [
   { label: 'Plan', segment: 'plan', subRoute: true },   // 10th tab
   { label: 'Skills', segment: 'skills', subRoute: true }, // 11th tab
   { label: 'Time', segment: 'time' },                    // 12th tab
+  { label: 'Artifacts', segment: 'artifacts' },          // 13th tab
 ] satisfies Array<{ label: string; segment: string; subRoute?: boolean }>
 
 interface WorkspaceTabsProps {
