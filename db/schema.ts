@@ -16,6 +16,7 @@ import {
   serial,
   text,
   integer,
+  numeric,
   timestamp,
   boolean,
   pgEnum,
@@ -67,6 +68,7 @@ export const projects = pgTable('projects', {
   updated_at: timestamp('updated_at').defaultNow().notNull(),
   sprint_summary: text('sprint_summary'),
   sprint_summary_at: timestamp('sprint_summary_at', { withTimezone: true }),
+  weekly_hour_target: numeric('weekly_hour_target', { precision: 5, scale: 2 }),
 });
 
 // ─── Table 2: workstreams ─────────────────────────────────────────────────────
