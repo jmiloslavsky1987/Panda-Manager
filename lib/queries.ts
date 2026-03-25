@@ -92,18 +92,18 @@ export async function computeProjectAnalytics(projectId: number): Promise<{
   riskTrend: 'up' | 'flat' | 'down';
 }> {
   return await db.transaction(async (tx) => {
-    await tx.execute(sql`SET LOCAL app.current_project_id = ${projectId}`);
+    await tx.execute(sql.raw(`SET LOCAL app.current_project_id = ${projectId}`));
 
     // ── Velocity: completed actions per week over last 4 weeks ──────────────
     const velocityRows = await tx.execute<{ week_start: string; count: number }>(
       sql`
         SELECT
-          date_trunc('week', updated_at)::date::text AS week_start,
+          date_trunc('week', created_at)::date::text AS week_start,
           count(*)::int AS count
         FROM actions
         WHERE project_id = ${projectId}
           AND status = 'completed'
-          AND updated_at >= now() - interval '4 weeks'
+          AND created_at >= now() - interval '4 weeks'
         GROUP BY week_start
         ORDER BY week_start ASC
       `
