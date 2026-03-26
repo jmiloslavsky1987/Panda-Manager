@@ -12,6 +12,7 @@ const SKILL_MCP_MAP: Record<string, string[]> = {
   'morning-briefing':         ['glean', 'gmail', 'slack'],
   'context-updater':          ['gmail', 'glean'],
   'weekly-customer-status':   ['glean', 'gmail'],
+  'discovery-scan':           ['slack', 'gmail', 'glean', 'gong'],
 };
 
 export class MCPClientPool {
