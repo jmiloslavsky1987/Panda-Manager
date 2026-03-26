@@ -31,3 +31,29 @@ export async function GET(
 
   return NextResponse.json({ project: rows[0] })
 }
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ projectId: string }> }
+) {
+  const { projectId } = await params
+  const numericId = parseInt(projectId, 10)
+  if (isNaN(numericId)) {
+    return NextResponse.json({ error: 'Invalid projectId' }, { status: 400 })
+  }
+
+  const body = await req.json()
+  const { status } = body
+
+  const updated = await db
+    .update(projects)
+    .set({ status, updated_at: new Date() })
+    .where(eq(projects.id, numericId))
+    .returning({ id: projects.id })
+
+  if (updated.length === 0) {
+    return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+  }
+
+  return NextResponse.json({ ok: true })
+}
