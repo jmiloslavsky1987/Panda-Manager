@@ -26,18 +26,18 @@
 ### INGESTION — Document Ingestion
 *Net new — no file upload or AI extraction capability exists today.*
 
-- [ ] **ING-01**: User can upload one or more files (PDF, DOCX, PPTX, XLSX, MD, TXT) via drag-and-drop or file browse from the project Artifacts tab
-- [ ] **ING-02**: Platform validates file type and size (max 50 MB per file) before accepting upload; shows a clear error on rejection
-- [ ] **ING-03**: Uploaded files are stored on disk at the configured workspace path and an Artifact record is created in the DB with ingestion_status: pending
-- [ ] **ING-04**: Claude extracts structured project data from the document targeting all entity types: actions, risks, decisions, stakeholders, milestones, tasks, architecture notes, engagement history, business outcomes, team data
-- [ ] **ING-05**: Extraction results are shown as a structured preview grouped by destination tab, with a confidence indicator per item and the source text excerpt
-- [ ] **ING-06**: User can approve, edit, or reject each extracted item individually before it is written to the DB
-- [ ] **ING-07**: User can bulk-approve all extracted items in one action after reviewing the preview
-- [ ] **ING-08**: Platform detects conflicts with existing records and prompts: merge, replace, or skip — not a silent overwrite
-- [ ] **ING-09**: Confirmed items are written to the appropriate DB tables with source attribution (filename, upload timestamp) and the artifact_id as source reference
-- [ ] **ING-10**: Each ingestion event is logged: filename, upload time, items extracted, approved, rejected; artifact.ingestion_log_json updated
-- [ ] **ING-11**: Uploading a new version of a previously ingested document triggers the preview-and-confirm flow — no silent overwrite of existing data
-- [ ] **ING-12**: Incremental uploads only surface net-new items not already present in the DB — already-ingested data is not re-presented
+- [x] **ING-01**: User can upload one or more files (PDF, DOCX, PPTX, XLSX, MD, TXT) via drag-and-drop or file browse from the project Artifacts tab
+- [x] **ING-02**: Platform validates file type and size (max 50 MB per file) before accepting upload; shows a clear error on rejection
+- [x] **ING-03**: Uploaded files are stored on disk at the configured workspace path and an Artifact record is created in the DB with ingestion_status: pending
+- [x] **ING-04**: Claude extracts structured project data from the document targeting all entity types: actions, risks, decisions, stakeholders, milestones, tasks, architecture notes, engagement history, business outcomes, team data
+- [x] **ING-05**: Extraction results are shown as a structured preview grouped by destination tab, with a confidence indicator per item and the source text excerpt
+- [x] **ING-06**: User can approve, edit, or reject each extracted item individually before it is written to the DB
+- [x] **ING-07**: User can bulk-approve all extracted items in one action after reviewing the preview
+- [x] **ING-08**: Platform detects conflicts with existing records and prompts: merge, replace, or skip — not a silent overwrite
+- [x] **ING-09**: Confirmed items are written to the appropriate DB tables with source attribution (filename, upload timestamp) and the artifact_id as source reference
+- [x] **ING-10**: Each ingestion event is logged: filename, upload time, items extracted, approved, rejected; artifact.ingestion_log_json updated
+- [x] **ING-11**: Uploading a new version of a previously ingested document triggers the preview-and-confirm flow — no silent overwrite of existing data
+- [x] **ING-12**: Incremental uploads only surface net-new items not already present in the DB — already-ingested data is not re-presented
 
 ### DISC — External Discovery Scan
 *Net new — MCP connectors (Slack, Gmail, Glean, Gong) exist and are unchanged; scan logic and review queue are new.*
@@ -181,18 +181,18 @@
 | SCHEMA-09 | Phase 17 | Complete |
 | SCHEMA-10 | Phase 17 | Complete |
 | SCHEMA-11 | Phase 17 | Complete |
-| ING-01 | Phase 18 | Pending |
-| ING-02 | Phase 18 | Pending |
-| ING-03 | Phase 18 | Pending |
-| ING-04 | Phase 18 | Pending |
-| ING-05 | Phase 18 | Pending |
-| ING-06 | Phase 18 | Pending |
-| ING-07 | Phase 18 | Pending |
-| ING-08 | Phase 18 | Pending |
-| ING-09 | Phase 18 | Pending |
-| ING-10 | Phase 18 | Pending |
-| ING-11 | Phase 18 | Pending |
-| ING-12 | Phase 18 | Pending |
+| ING-01 | Phase 18 | Complete |
+| ING-02 | Phase 18 | Complete |
+| ING-03 | Phase 18 | Complete |
+| ING-04 | Phase 18 | Complete |
+| ING-05 | Phase 18 | Complete |
+| ING-06 | Phase 18 | Complete |
+| ING-07 | Phase 18 | Complete |
+| ING-08 | Phase 18 | Complete |
+| ING-09 | Phase 18 | Complete |
+| ING-10 | Phase 18 | Complete |
+| ING-11 | Phase 18 | Complete |
+| ING-12 | Phase 18 | Complete |
 | DISC-01 | Phase 19 | Pending |
 | DISC-02 | Phase 19 | Pending |
 | DISC-03 | Phase 19 | Pending |

@@ -4,12 +4,12 @@ milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
 current_plan: Not started
 status: unknown
-last_updated: "2026-03-26T04:59:39.189Z"
+last_updated: "2026-03-26T06:26:47.003Z"
 progress:
   total_phases: 26
   completed_phases: 19
-  total_plans: 96
-  completed_plans: 96
+  total_plans: 102
+  completed_plans: 97
 ---
 
 # Project State
@@ -282,6 +282,9 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - [Phase 17]: scheduled_jobs is a CREATE TABLE (new table), not ALTER TABLE — CONTEXT.md noted ALTER but PLAN.md correctly specifies CREATE
 - [Phase 17]: workflow_steps RLS uses subquery EXISTS pattern (not direct project_id) since it has no project_id FK, only workflow_id
 - [Phase 17-schema-extensions]: v2.0 enums placed before tables in enums section (not appended at end) — artifacts table references ingestionStatusEnum which requires prior const declaration to avoid TDZ error
+- [Phase 18-01]: Wave 0 stub pattern: expect(false, 'stub').toBe(true) in every test body — tests fail RED without importing not-yet-existing production modules
+- [Phase 18-01]: AnyPgColumn forward reference for actions/risks/milestones source_artifact_id FK — tables defined before artifacts in schema.ts
+- [Phase 18-01]: Append-only tables (key_decisions, engagement_history) receive source attribution columns — ADD COLUMN does not trigger append-only enforcement
 
 ## Performance Metrics
 
@@ -377,6 +380,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 | Phase 16 P05 | 15 | 1 tasks | 1 files |
 | Phase 17 P02 | 7 | 1 tasks | 1 files |
 | Phase 17-schema-extensions P03 | 6 | 1 tasks | 1 files |
+| Phase 18-document-ingestion P01 | 3 | 2 tasks | 8 files |
 
 ## Key Context for Next Session
 
