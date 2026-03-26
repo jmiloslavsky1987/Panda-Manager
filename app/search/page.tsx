@@ -15,7 +15,7 @@ interface SearchResult {
   snippet: string | null;
 }
 
-const TYPE_OPTIONS = [
+export const TYPE_OPTIONS = [
   { value: '', label: 'All Types' },
   { value: 'actions', label: 'Actions' },
   { value: 'risks', label: 'Risks' },
@@ -25,6 +25,10 @@ const TYPE_OPTIONS = [
   { value: 'tasks', label: 'Tasks' },
   { value: 'artifacts', label: 'Artifacts' },
   { value: 'knowledge_base', label: 'Knowledge Base' },
+  { value: 'onboarding_steps',  label: 'Onboarding Steps' },
+  { value: 'onboarding_phases', label: 'Onboarding Phases' },
+  { value: 'integrations',      label: 'Integrations' },
+  { value: 'time_entries',      label: 'Time Entries' },
 ];
 
 export default function SearchPage() {
