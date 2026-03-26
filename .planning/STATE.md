@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
-current_plan: 19-05 COMPLETE
-status: unknown
-last_updated: "2026-03-26T20:06:56.785Z"
+current_plan: 19.1-05 COMPLETE
+status: in_progress
+last_updated: "2026-03-26T20:08:00Z"
 progress:
   total_phases: 27
   completed_phases: 20
   total_plans: 116
-  completed_plans: 113
+  completed_plans: 114
 ---
 
 # Project State
@@ -23,10 +23,10 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 
 ## Current Status
 
-**Phase:** Phase 19 — External Discovery Scan (5/6 plans done)
-**Current Plan:** 19-05 COMPLETE
-**Last action:** 2026-03-26 — 19-05 executed; ScanForUpdatesButton wired, scan-config API, discovery-scan BullMQ job + daily cron, dedup.test.ts GREEN; DISC-01/02/03/04 satisfied
-**Next action:** /gsd:execute-phase 19 (plan 19-06) to complete Phase 19
+**Phase:** Phase 19.1 — Source Integrations (5/8 plans done)
+**Current Plan:** 19.1-05 COMPLETE
+**Last action:** 2026-03-26 — 19.1-05 executed; resolveAdapter factory implemented, discovery-scanner refactored to use adapter pattern (no direct anthropic.beta MCP calls), scan route wired with source_credentials + userTokens, source-credentials API route in place; SRC-06/07/08 satisfied
+**Next action:** /gsd:execute-phase 19.1 (plan 19.1-06) — Source Connections UI
 
 ## Phase Progress
 
@@ -78,6 +78,9 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - **[2026-03-26] 18-06:** 80k-char chunking for large text documents: split on newline boundary, Claude extraction per chunk, dedup+merge results
 - **[2026-03-26] 18-06:** jsonrepair as fallback after native JSON.parse — Claude occasionally returns malformed JSON; jsonrepair recovers partial output
 - **[2026-03-26] 18-06:** approve route requires artifactId from upload response, not prop-level — track lastExtractedArtifactId in modal state as fallback for drop-zone flow
+- **[2026-03-26] 19.1-05:** resolveAdapter: REST credentials take priority over MCP fallback — REST checked first; MCP only if no REST creds configured
+- **[2026-03-26] 19.1-05:** Adapter constructors use creds object pattern (not positional args) — Wave 1 implementations all take `creds: { ... }` object, plan spec showed positional args; factory updated to match
+- **[2026-03-26] 19.1-05:** DiscoveryScanParams extended with source_credentials + userTokens — both required for adapter routing; existingProjectSummary also added for Claude dedup context
 - **[2026-03-26] 17-01:** Wave 0 RED pattern: import 15 unexported names from schema.ts — Vitest resolves them as undefined; toBeDefined() fails RED — valid TDD starting point for Phase 17 schema additions
 - **[2026-03-26] 15-03:** Scheduler runtime verification accepted via unit tests when Bull Board not accessible — structural correctness sufficient for Phase 15 closure
 - **[2026-03-26] 15-01:** Unexported symbol imports yield undefined in Vitest — TypeError at test body counts as RED (valid test failure)
