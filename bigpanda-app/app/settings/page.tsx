@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import * as Tabs from '@radix-ui/react-tabs';
 
 const JOB_DISPLAY: Record<string, { label: string; schedule: string }> = {
@@ -112,6 +113,8 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
 
   // Source Connections state
+  const searchParams = useSearchParams();
+  const gmailError = searchParams.get('gmail_error');
   const [sourceStatus, setSourceStatus] = useState<SourceCredentialStatus>({});
   const [gmailStatus, setGmailStatus] = useState<GmailStatus>({ connected: false, email: null });
   const [gmailDisconnecting, setGmailDisconnecting] = useState(false);
@@ -804,6 +807,11 @@ export default function SettingsPage() {
                     <code className="font-mono">gmail.readonly</code> scope is requested &mdash; the
                     app cannot send emails.
                   </p>
+                  {gmailError && (
+                    <p className="text-xs text-red-600 mb-3 p-2 bg-red-50 rounded border border-red-200">
+                      {gmailError}
+                    </p>
+                  )}
                   <a
                     href="/api/oauth/gmail"
                     className="inline-block px-4 py-2 text-sm bg-zinc-900 text-white rounded hover:bg-zinc-700"
