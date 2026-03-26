@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: AI Ingestion & Enhanced Operations
 current_plan: Not started
-status: defining_requirements
+status: roadmap_ready
 stopped_at: ""
 last_updated: "2026-03-25T00:00:00.000Z"
 progress:
-  total_phases: 0
+  total_phases: 8
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -17,17 +17,17 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-18)
+See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
-**Current focus:** Phase 5 — Skill Engine (context gathered; ready to plan)
+**Current focus:** Phase 17 — Schema Extensions (roadmap complete; ready to plan)
 
 ## Current Status
 
-**Phase:** Not started (defining requirements)
+**Phase:** Phase 17 — Schema Extensions (not yet started)
 **Current Plan:** —
-**Last action:** 2026-03-25 — Milestone v2.0 started
-**Next action:** Define requirements → create roadmap → /gsd:plan-phase [N]
+**Last action:** 2026-03-25 — v2.0 roadmap created; 96/96 requirements mapped across Phases 17–24
+**Next action:** /gsd:plan-phase 17
 
 ## Phase Progress
 
@@ -38,20 +38,41 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 | 3. Write Surface + Plan Builder | COMPLETE (9/9 plans) |
 | 4. Job Infrastructure | COMPLETE (5/5 plans) |
 | 5. Skill Engine | COMPLETE (6/6 plans) |
-| 5.1 Onboarding Dashboard [INSERTED] | Not started |
-| 5.2 Time Tracking [INSERTED] | Not started |
-| 6. MCP Integrations | Not started |
-| 7. File Generation + Remaining Skills | Not started |
-| 8. Cross-Project Features + Polish | Not started |
-| 14. Time + Project Analytics [INSERTED] | COMPLETE (5/5 plans) |
-| 15. Scheduler + UI Fixes [INSERTED] | COMPLETE (3/3 plans) |
+| 5.1 Onboarding Dashboard [INSERTED] | COMPLETE (8/8 plans) |
+| 5.2 Time Tracking [INSERTED] | COMPLETE (5/5 plans) |
+| 6. MCP Integrations | COMPLETE (7/7 plans) |
+| 7. File Generation + Remaining Skills | COMPLETE (7/7 plans) |
+| 8. Cross-Project Features + Polish | COMPLETE (7/7 plans) |
+| 9. MCP Injection Fix | COMPLETE (2/2 plans) |
+| 10. FTS Expansion + Code Polish | COMPLETE (2/2 plans) |
+| 11. Health Score Wire | COMPLETE (1/1 plans) |
+| 12. Complete Workspace Write Surface | COMPLETE (4/4 plans) |
+| 13. Skill UX + Draft Polish | COMPLETE (4/4 plans) |
+| 14. Time + Project Analytics | COMPLETE (5/5 plans) |
+| 15. Scheduler + UI Fixes | COMPLETE (3/3 plans) |
+| 16. Verification Retrofit | COMPLETE (5/5 plans) |
+| 17. Schema Extensions | Not started |
+| 18. Document Ingestion | Not started |
+| 19. External Discovery Scan | Not started |
+| 20. Project Initiation Wizard | Not started |
+| 21. Teams Tab + Architecture Tab | Not started |
+| 22. Source Badges + Audit Log | Not started |
+| 23. Time Tracking Advanced | Not started |
+| 24. Scheduler Enhanced | Not started |
 
 ## Active Work
 
-Phase 15 COMPLETE (3/3 plans). All v1.0 integration gap fixes shipped and verified: phantom BullMQ scheduler entries removed, 3 job handlers migrated to settings-driven resolveSkillsDir, search type filter expanded with 4 missing FTS options. All 34 tests GREEN.
+v1.0 COMPLETE (Phases 1–16). v2.0 roadmap created 2026-03-25. 96/96 v2.0 requirements mapped across 8 new phases (17–24). Phase 17 Schema Extensions is the entry point — all other v2.0 phases depend on it.
+
+Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (parallel)
 
 ## Decisions
 
+- **[2026-03-25] v2.0 roadmap:** Phases 18 and 19 (Document Ingestion and External Discovery) assigned to parallel wave after Phase 17 — both depend only on Schema, not on each other
+- **[2026-03-25] v2.0 roadmap:** TEAMS and ARCH grouped into single Phase 21 — share data model (business_outcomes, e2e_workflows, focus_areas, architecture_integrations, before_state, team_onboarding_status) and deliver complementary views together
+- **[2026-03-25] v2.0 roadmap:** AUDIT (Phase 22) placed after Phases 18/19 — source badges are only meaningful once ingestion and discovery are operational; thin phase, no blocker on 21
+- **[2026-03-25] v2.0 roadmap:** SCHED requirements renamed to v2 SCHED (Phase 24) — these are distinct from v1 SCHED requirements (Phases 4/15) and represent the enhanced configurable scheduler UI
+- **[2026-03-25] v2.0 roadmap:** Research flag added for Phase 18 (Anthropic SDK document input API) and Phase 23 (Google Calendar OAuth in Next.js 14 App Router)
 - **[2026-03-26] 15-03:** Scheduler runtime verification accepted via unit tests when Bull Board not accessible — structural correctness sufficient for Phase 15 closure
 - **[2026-03-26] 15-01:** Unexported symbol imports yield undefined in Vitest — TypeError at test body counts as RED (valid test failure)
 - **[2026-03-26] 15-01:** Wave 0 TDD RED pattern: write tests against unexported/wrong-value symbols; Plan 02 adds exports + fixes
@@ -354,27 +375,22 @@ Phase 15 COMPLETE (3/3 plans). All v1.0 integration gap fixes shipped and verifi
 ## Key Context for Next Session
 
 - **Working directory:** `/Users/jmiloslavsky/Documents/Project Assistant Code`
+- **v2.0 milestone:** Roadmap complete. 96/96 requirements mapped. Phase 17 is the entry point.
+- **Next command:** `/gsd:plan-phase 17`
+- **Execution order:** 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (parallel)
+- **Research flags before planning:** Phase 18 (Anthropic SDK document input API for PDF/DOCX/PPTX), Phase 23 (Google Calendar OAuth in Next.js 14 App Router)
+- **v1.0 ground truth versions:** React 19, Next.js 14, Tailwind 4, Anthropic SDK 0.78.x, BullMQ, Drizzle ORM — read from existing bigpanda-app/package.json
+- **DB migration pattern (established):** Write SQL manually to bigpanda-app/db/migrations/ — drizzle-kit generate not available; no PostgreSQL in dev environment
+- **Test runner pattern (established):** Wave 0 stubs use `expect(false, 'stub').toBe(true)` as first assertion; Requirement IDs in test names for --grep targeting
+- **npm install pattern (established):** Always use `--no-package-lock` — invalid esbuild semver in package-lock.json blocks standard install
 - **Wave 0 complete (Phase 1):** All 8 test stubs exist in tests/ — verify commands valid for Plans 01-02 through 01-06
 - **Phase 2 E2E: ALL GREEN:** tests/e2e/phase2.spec.ts has 23 passing tests — full read surface verified by human on 2026-03-19
 - **Playwright installed:** @playwright/test at project root, Chromium cached. Run: `npx playwright test tests/e2e/phase2.spec.ts --grep "DASH-01"`
-- **Research flags:** Phases 4, 5, 6, 7 require research spikes before planning (see ROADMAP.md)
 - **Critical pitfall:** BullMQ worker must be a dedicated process — never in-process cron
 - **Critical pitfall:** SkillOrchestrator must be separated from Route Handlers before Phase 5
 - **Cowork compatibility:** js-yaml settings `sortKeys: false, lineWidth: -1, JSON_SCHEMA` — non-negotiable
-- **Version ground-truth:** React 19, Vite 7, Tailwind 4, pptxgenjs v4, Anthropic SDK 0.78.x — read from existing package.json files
 - **DB setup required:** PostgreSQL not installed — user must install PostgreSQL, create bigpanda_test + bigpanda_app DBs, and run `cd bigpanda-app && DATABASE_URL=postgresql://localhost:5432/bigpanda_test npx drizzle-kit migrate`
-- **git add blocked:** bigpanda-app/db/ exists on disk but bash sandbox blocked staging; user should `git add bigpanda-app/db/`
-- **Test runner:** Use `NODE_PATH=./bigpanda-app/node_modules npx tsx --test tests/yaml-roundtrip.test.ts` (js-yaml in bigpanda-app/node_modules only; npm install fails due to invalid esbuild semver in package-lock.json)
-- **yaml-export ready:** lib/yaml-export.ts + bigpanda-app/lib/data-service.ts both committed and tested
-- **Pre-existing TS errors:** bigpanda-app/lib/settings.ts and app/api/settings/route.ts have 2 TS errors from 01-03 (see deferred-items.md)
-
-- **migration script ready:** bigpanda-app/scripts/migrate-local.ts committed — runs npx tsx scripts/migrate-local.ts once PostgreSQL is available
-- **AMEX YAML quirk:** sanitizeYamlFrontmatter() added to handle embedded unescaped double-quotes in AMEX source doc (R-AMEX-002 mitigation field)
-- **migration test runner:** Use `NODE_PATH=./bigpanda-app/node_modules npx tsx --test tests/migration.test.ts` (all DB tests remain RED until PostgreSQL installed)
-- **Phase 1 COMPLETE:** All 6 plans executed — DB schema, YAML export, DataService, YAML migration, xlsx supplement all done
-- **xlsx import ready:** bigpanda-app/scripts/migrate-local.ts exports importXlsx() — handles all 5 PA3_Action_Tracker sheets
-- **Two-phase migration:** runMigration() (YAML) then importXlsx() (xlsx supplement) — YAML wins on conflicts
 
 ---
 *Initialized: 2026-03-18*
-*Last updated: 2026-03-19 after completing 02-01 (Playwright E2E stubs — Wave 0 RED baseline)*
+*v2.0 roadmap added: 2026-03-25 — 8 phases (17–24), 96/96 requirements mapped*

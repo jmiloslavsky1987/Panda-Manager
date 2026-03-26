@@ -168,25 +168,120 @@
 
 ## Traceability
 
-*Populated by roadmapper agent.*
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SCHEMA-01 through SCHEMA-11 | TBD | Pending |
-| ING-01 through ING-12 | TBD | Pending |
-| DISC-01 through DISC-17 | TBD | Pending |
-| WIZ-01 through WIZ-09 | TBD | Pending |
-| TTADV-01 through TTADV-19 | TBD | Pending |
-| SCHED-01 through SCHED-12 | TBD | Pending |
-| AUDIT-01 through AUDIT-03 | TBD | Pending |
-| TEAMS-01 through TEAMS-11 | TBD | Pending |
-| ARCH-01 through ARCH-12 | TBD | Pending |
+| SCHEMA-01 | Phase 17 | Pending |
+| SCHEMA-02 | Phase 17 | Pending |
+| SCHEMA-03 | Phase 17 | Pending |
+| SCHEMA-04 | Phase 17 | Pending |
+| SCHEMA-05 | Phase 17 | Pending |
+| SCHEMA-06 | Phase 17 | Pending |
+| SCHEMA-07 | Phase 17 | Pending |
+| SCHEMA-08 | Phase 17 | Pending |
+| SCHEMA-09 | Phase 17 | Pending |
+| SCHEMA-10 | Phase 17 | Pending |
+| SCHEMA-11 | Phase 17 | Pending |
+| ING-01 | Phase 18 | Pending |
+| ING-02 | Phase 18 | Pending |
+| ING-03 | Phase 18 | Pending |
+| ING-04 | Phase 18 | Pending |
+| ING-05 | Phase 18 | Pending |
+| ING-06 | Phase 18 | Pending |
+| ING-07 | Phase 18 | Pending |
+| ING-08 | Phase 18 | Pending |
+| ING-09 | Phase 18 | Pending |
+| ING-10 | Phase 18 | Pending |
+| ING-11 | Phase 18 | Pending |
+| ING-12 | Phase 18 | Pending |
+| DISC-01 | Phase 19 | Pending |
+| DISC-02 | Phase 19 | Pending |
+| DISC-03 | Phase 19 | Pending |
+| DISC-04 | Phase 19 | Pending |
+| DISC-05 | Phase 19 | Pending |
+| DISC-06 | Phase 19 | Pending |
+| DISC-07 | Phase 19 | Pending |
+| DISC-08 | Phase 19 | Pending |
+| DISC-09 | Phase 19 | Pending |
+| DISC-10 | Phase 19 | Pending |
+| DISC-11 | Phase 19 | Pending |
+| DISC-12 | Phase 19 | Pending |
+| DISC-13 | Phase 19 | Pending |
+| DISC-14 | Phase 19 | Pending |
+| DISC-15 | Phase 19 | Pending |
+| DISC-16 | Phase 19 | Pending |
+| DISC-17 | Phase 19 | Pending |
+| WIZ-01 | Phase 20 | Pending |
+| WIZ-02 | Phase 20 | Pending |
+| WIZ-03 | Phase 20 | Pending |
+| WIZ-04 | Phase 20 | Pending |
+| WIZ-05 | Phase 20 | Pending |
+| WIZ-06 | Phase 20 | Pending |
+| WIZ-07 | Phase 20 | Pending |
+| WIZ-08 | Phase 20 | Pending |
+| WIZ-09 | Phase 20 | Pending |
+| TEAMS-01 | Phase 21 | Pending |
+| TEAMS-02 | Phase 21 | Pending |
+| TEAMS-03 | Phase 21 | Pending |
+| TEAMS-04 | Phase 21 | Pending |
+| TEAMS-05 | Phase 21 | Pending |
+| TEAMS-06 | Phase 21 | Pending |
+| TEAMS-07 | Phase 21 | Pending |
+| TEAMS-08 | Phase 21 | Pending |
+| TEAMS-09 | Phase 21 | Pending |
+| TEAMS-10 | Phase 21 | Pending |
+| TEAMS-11 | Phase 21 | Pending |
+| ARCH-01 | Phase 21 | Pending |
+| ARCH-02 | Phase 21 | Pending |
+| ARCH-03 | Phase 21 | Pending |
+| ARCH-04 | Phase 21 | Pending |
+| ARCH-05 | Phase 21 | Pending |
+| ARCH-06 | Phase 21 | Pending |
+| ARCH-07 | Phase 21 | Pending |
+| ARCH-08 | Phase 21 | Pending |
+| ARCH-09 | Phase 21 | Pending |
+| ARCH-10 | Phase 21 | Pending |
+| ARCH-11 | Phase 21 | Pending |
+| ARCH-12 | Phase 21 | Pending |
+| AUDIT-01 | Phase 22 | Pending |
+| AUDIT-02 | Phase 22 | Pending |
+| AUDIT-03 | Phase 22 | Pending |
+| TTADV-01 | Phase 23 | Pending |
+| TTADV-02 | Phase 23 | Pending |
+| TTADV-03 | Phase 23 | Pending |
+| TTADV-04 | Phase 23 | Pending |
+| TTADV-05 | Phase 23 | Pending |
+| TTADV-06 | Phase 23 | Pending |
+| TTADV-07 | Phase 23 | Pending |
+| TTADV-08 | Phase 23 | Pending |
+| TTADV-09 | Phase 23 | Pending |
+| TTADV-10 | Phase 23 | Pending |
+| TTADV-11 | Phase 23 | Pending |
+| TTADV-12 | Phase 23 | Pending |
+| TTADV-13 | Phase 23 | Pending |
+| TTADV-14 | Phase 23 | Pending |
+| TTADV-15 | Phase 23 | Pending |
+| TTADV-16 | Phase 23 | Pending |
+| TTADV-17 | Phase 23 | Pending |
+| TTADV-18 | Phase 23 | Pending |
+| TTADV-19 | Phase 23 | Pending |
+| SCHED-01 | Phase 24 | Pending |
+| SCHED-02 | Phase 24 | Pending |
+| SCHED-03 | Phase 24 | Pending |
+| SCHED-04 | Phase 24 | Pending |
+| SCHED-05 | Phase 24 | Pending |
+| SCHED-06 | Phase 24 | Pending |
+| SCHED-07 | Phase 24 | Pending |
+| SCHED-08 | Phase 24 | Pending |
+| SCHED-09 | Phase 24 | Pending |
+| SCHED-10 | Phase 24 | Pending |
+| SCHED-11 | Phase 24 | Pending |
+| SCHED-12 | Phase 24 | Pending |
 
 **Coverage:**
 - v2.0 requirements: 96 total
-- Mapped to phases: 0 (roadmap pending)
-- Unmapped: 96 ⚠️
+- Mapped to phases: 96
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-25*
-*Last updated: 2026-03-25 after initial v2.0 definition*
+*Last updated: 2026-03-25 — traceability populated by roadmapper agent; all 96 requirements mapped to Phases 17–24*

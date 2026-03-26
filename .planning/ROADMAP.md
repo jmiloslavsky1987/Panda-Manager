@@ -31,6 +31,17 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 15: Scheduler + UI Fixes** - Fix morning-briefing/weekly-customer-status scheduler registration, apply resolveSkillsDir() to 3 handlers, fix search filter for 4 new FTS tables (YAML export deferred to future phase) (completed 2026-03-26)
 - [x] **Phase 16: Verification Retrofit** - Retroactive VERIFICATION.md for phases 01, 04, 05, 05.2, 06; closes 31 orphaned requirements (completed 2026-03-26)
 
+### v2.0 — AI Ingestion & Enhanced Operations
+
+- [ ] **Phase 17: Schema Extensions** - 8 new DB tables (discovery_items, audit_log, business_outcomes, e2e_workflows, focus_areas, architecture_integrations, before_state, team_onboarding_status); extend time_entries, artifacts, scheduled_jobs
+- [ ] **Phase 18: Document Ingestion** - File upload (PDF/DOCX/PPTX/XLSX/MD/TXT), Claude extraction, structured preview, approve/edit/reject per item, conflict detection, source attribution, incremental dedup
+- [ ] **Phase 19: External Discovery Scan** - Manual + scheduled MCP scan (Slack/Gmail/Glean/Gong), Claude analysis, Review Queue UI, approve/dismiss flow, conflict diff view, dismissal history
+- [ ] **Phase 20: Project Initiation Wizard** - Guided new-project wizard (7 steps): project creation, collateral upload + ingestion pipeline, extraction preview, manual fill, time tracking config, completeness score, launch
+- [ ] **Phase 21: Teams Tab + Architecture Tab** - Full DB-powered 5-section Team Engagement Map view; full DB-powered 2-tab Workflow Diagram; inline edit for all sections; skill exports updated to read from DB
+- [ ] **Phase 22: Source Badges + Audit Log** - Source attribution badges on all workspace tab records (Manual/Ingested/Discovered); audit_log writes on all data mutations; deletion confirmation dialog
+- [ ] **Phase 23: Time Tracking Advanced** - Approval workflow, Google Calendar OAuth import, admin config (capacity/categories/exemptions), bulk operations, submission reminders, export with audit fields
+- [ ] **Phase 24: Scheduler Enhanced** - Create Job wizard (all 12 skills), configurable frequency/timezone/skill-params, enable/disable, run history log, failure notifications, Scheduler sidebar link
+
 ## Phase Details
 
 ### Phase 1: Data Foundation
@@ -233,35 +244,6 @@ Plans:
 - [ ] 08-06-PLAN.md — Wave 4: Knowledge Base UI — /knowledge-base page + AddKbEntryModal + KnowledgeBaseEntry card (parallel)
 - [ ] 08-07-PLAN.md — Wave 5: E2E activation + human verification checkpoint
 
-## Progress
-
-**Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 5.1 → 5.2 → 6 → 7 → 8
-Phases 5.1 and 5.2 can run in parallel. Phases 6 and 7 can overlap after Phase 5.2 is stable.
-
-| Phase | Plans Complete | Status | Completed |
-|-------|----------------|--------|-----------|
-| 1. Data Foundation | 6/6 | Complete   | 2026-03-19 |
-| 2. App Shell + Read Surface | 7/7 | Complete   | 2026-03-19 |
-| 3. Write Surface + Plan Builder | 9/9 | Complete   | 2026-03-20 |
-| 4. Job Infrastructure | 5/5 | Complete   | 2026-03-20 |
-| 5. Skill Engine | 6/6 | Complete   | 2026-03-23 |
-| 5.1 Onboarding Dashboard [INSERTED] | 8/8 | Complete   | 2026-03-23 |
-| 5.2 Time Tracking [INSERTED] | 5/5 | Complete   | 2026-03-23 |
-| 6. MCP Integrations | 7/7 | Complete   | 2026-03-24 |
-| 7. File Generation + Remaining Skills | 7/7 | Complete   | 2026-03-24 |
-| 8. Cross-Project Features + Polish | 7/7 | Complete   | 2026-03-25 |
-| 9. MCP Injection Fix | 2/2 | Complete   | 2026-03-25 |
-| 10. FTS Expansion + Code Polish | 2/2 | Complete    | 2026-03-25 |
-| 11. Health Score Wire | 1/1 | Complete    | 2026-03-25 |
-| 12. Complete Workspace Write Surface | 4/4 | Complete    | 2026-03-25 |
-| 13. Skill UX + Draft Polish | 4/4 | Complete    | 2026-03-25 |
-| 14. Time + Project Analytics | 5/5 | Complete    | 2026-03-25 |
-| 15. Scheduler + UI Fixes | 3/3 | Complete    | 2026-03-26 |
-| 16. Verification Retrofit | 5/5 | Complete    | 2026-03-26 |
-
----
-
 ### Phase 9: MCP Injection Fix
 **Goal**: All three MCP-dependent skill job handlers (morning-briefing, context-updater, weekly-customer-status) and the generic skill-run handler correctly inject MCP servers before invoking the orchestrator — no skill silently runs without its declared MCP context.
 **Depends on**: Phase 8
@@ -398,6 +380,142 @@ Plans:
 - [ ] 16-04-PLAN.md — Verify Phase 05.2: Time Tracking (TIME-01..03)
 - [ ] 16-05-PLAN.md — Verify Phase 06: MCP Integrations (SKILL-10, DASH-04/05)
 
+---
+
+## v2.0 Phase Details
+
+### Phase 17: Schema Extensions
+**Goal**: All new v2.0 database tables exist and all extended columns are in place — every subsequent v2.0 phase builds on a schema that will not change under it.
+**Depends on**: Phase 16
+**Requirements**: SCHEMA-01, SCHEMA-02, SCHEMA-03, SCHEMA-04, SCHEMA-05, SCHEMA-06, SCHEMA-07, SCHEMA-08, SCHEMA-09, SCHEMA-10, SCHEMA-11
+**Success Criteria** (what must be TRUE):
+  1. The `discovery_items` table exists with all specified columns and accepts inserts with status values pending/approved/dismissed; the `audit_log` table exists and accepts inserts with before_json/after_json as valid JSONB
+  2. `time_entries` rows have the submitted_on, approved_on, rejected_on, and locked columns; `artifacts` rows have ingestion_status and ingestion_log_json; `scheduled_jobs` rows have last_run_outcome, run_history_json, timezone, and skill_params_json
+  3. The five new project-scoped tables (business_outcomes, e2e_workflows with workflow_steps, focus_areas, architecture_integrations, before_state, team_onboarding_status) all exist and accept seed rows scoped to a project_id without foreign-key violations
+  4. A migration rollback followed by re-apply leaves the DB in identical state — no data corruption or duplicate column errors
+**Plans**: TBD
+
+### Phase 18: Document Ingestion
+**Goal**: Users can upload any supported document into a project, Claude extracts structured data across all entity types, and after reviewing a grouped preview the user's approved items land in the correct DB tables with full source attribution — no data is written without explicit human confirmation.
+**Depends on**: Phase 17
+**Requirements**: ING-01, ING-02, ING-03, ING-04, ING-05, ING-06, ING-07, ING-08, ING-09, ING-10, ING-11, ING-12
+**Success Criteria** (what must be TRUE):
+  1. Dragging a PDF, DOCX, PPTX, XLSX, MD, or TXT file onto the Artifacts tab uploads it, stores it on disk, and creates an Artifact record with ingestion_status: pending — files over 50 MB are rejected with a clear error message before upload completes
+  2. After upload, Claude's extraction results appear as a structured preview grouped by destination tab (Actions, Risks, Decisions, etc.) with a confidence indicator and source text excerpt per item — no DB writes have occurred yet
+  3. Approving all items in the preview (individually or in bulk) writes them to the correct tables with source attribution showing the filename and upload timestamp; rejected items are not written
+  4. Re-uploading a document that was previously ingested triggers the preview flow again and only surfaces items not already present in the DB — no re-presentation of already-ingested data
+  5. When an extracted item conflicts with an existing record, a merge/replace/skip prompt appears before any write — no silent overwrites
+**Plans**: TBD
+
+### Phase 19: External Discovery Scan
+**Goal**: Users can trigger a scan across any combination of Slack, Gmail, Glean, and Gong for a project; Claude analyzes the results and surfaces structured findings in a Review Queue where each item can be approved or dismissed; approved items land in the DB with source attribution.
+**Depends on**: Phase 17 (can be built in parallel with Phase 18 after Phase 17 is complete)
+**Requirements**: DISC-01, DISC-02, DISC-03, DISC-04, DISC-05, DISC-06, DISC-07, DISC-08, DISC-09, DISC-10, DISC-11, DISC-12, DISC-13, DISC-14, DISC-15, DISC-16, DISC-17
+**Success Criteria** (what must be TRUE):
+  1. Clicking "Scan for Updates" on a project runs the configured sources (Slack/Gmail/Glean/Gong) and completes without error; an in-app notification appears when items are pending review
+  2. The Review Queue page shows each pending item with: source tool, date found, source excerpt, suggested destination tab/field, and Claude's extracted value — items remain in the queue until explicitly acted upon
+  3. Approving a queue item writes it to the correct DB table (e.g., an extracted action goes to the actions table) with source attribution showing the source tool and scan timestamp
+  4. Dismissing a queue item sets its status to dismissed and it moves to dismissal history — it does not reappear in the active queue on the next scan
+  5. When a discovered item conflicts with an existing record, a side-by-side diff view is shown before the merge/replace/skip prompt — no silent overwrites
+**Plans**: TBD
+
+### Phase 20: Project Initiation Wizard
+**Goal**: New projects are created through a guided multi-step wizard that ingests collateral documents, extracts data via the ingestion pipeline, and computes a completeness score — replacing direct DB seeding as the primary new-project flow.
+**Depends on**: Phase 18 (wizard uses the ingestion pipeline)
+**Requirements**: WIZ-01, WIZ-02, WIZ-03, WIZ-04, WIZ-05, WIZ-06, WIZ-07, WIZ-08, WIZ-09
+**Success Criteria** (what must be TRUE):
+  1. Clicking "New Project" on the Dashboard opens the wizard; completing step 1 (project name, customer, dates, description) creates the Project record and initializes all tab data structures in the DB — the project appears in the Dashboard immediately
+  2. Uploading collateral files in the wizard (SOW, Kickoff Deck, etc.) triggers the ingestion pipeline for each file and presents a combined extraction preview grouped by destination tab; no data is written until the user approves
+  3. The wizard's manual-entry step allows adding actions, risks, stakeholders, and other items via inline forms for items not captured in uploaded documents
+  4. Clicking "Launch Project" on the completeness summary step sets project status to Active and navigates to the project Overview tab
+  5. The Project Completeness Score (0–100%) is visible on the Overview tab; projects below 60% show a banner identifying which tabs have no populated records
+**Plans**: TBD
+
+### Phase 21: Teams Tab + Architecture Tab
+**Goal**: The Teams tab renders a rich, DB-powered 5-section Team Engagement Map view and the Architecture tab renders a rich, DB-powered 2-tab Workflow Diagram — both fully editable inline, with their respective skills updated to export from DB rather than static data.
+**Depends on**: Phase 17
+**Requirements**: TEAMS-01, TEAMS-02, TEAMS-03, TEAMS-04, TEAMS-05, TEAMS-06, TEAMS-07, TEAMS-08, TEAMS-09, TEAMS-10, TEAMS-11, ARCH-01, ARCH-02, ARCH-03, ARCH-04, ARCH-05, ARCH-06, ARCH-07, ARCH-08, ARCH-09, ARCH-10, ARCH-11, ARCH-12
+**Success Criteria** (what must be TRUE):
+  1. The Teams tab renders all 5 sections (Business Value & Outcomes, Architecture, End-to-End Workflows, Teams & Engagement Status, Top Focus Areas) with real DB data; any section with insufficient data shows a yellow warning banner — no generic placeholder copy appears
+  2. The Architecture tab renders the Before BigPanda tab (5-phase flow + customer-specific pain point cards) and the Current & Future State tab (ADR Track + Biggy AI Track with full-width amber divider + Team Onboarding Status table) — all content sourced from DB, not hardcoded
+  3. Users can add and edit business outcomes, E2E workflow steps, focus areas, team card data, integration nodes, before-state data, and team onboarding rows directly within the Teams and Architecture tabs; saves persist immediately with optimistic UI
+  4. Running the team-engagement-map skill generates a self-contained HTML export of the 5-section view using live DB data; running the workflow-diagram skill generates a self-contained HTML export of the 2-tab diagram using live DB data
+  5. Design tokens are applied consistently — ADR blue (#1e40af), Biggy purple (#6d28d9), E2E green (#065f46), and all status pill colors (Live/In Progress/Pilot/Planned) match the specified hex values in both the tab view and skill exports
+**Plans**: TBD
+
+### Phase 22: Source Badges + Audit Log
+**Goal**: Every workspace record displays where it came from (Manual, Ingested, or Discovered), every data mutation is written to the audit log, and deletions require explicit confirmation — the full data provenance trail is complete.
+**Depends on**: Phase 17, Phase 18, Phase 19 (badges are only meaningful after ingestion and discovery are operational)
+**Requirements**: AUDIT-01, AUDIT-02, AUDIT-03
+**Success Criteria** (what must be TRUE):
+  1. Every record on the Actions, Risks, Decisions, Milestones, Stakeholders, Engagement History, and Artifacts tabs shows a source badge — "Manual" for user-entered records, "Ingested — [filename]" for document-ingested records, "Discovered — [source tool]" for discovery-approved records
+  2. Creating, editing, or deleting any workspace record produces a corresponding row in audit_log with the correct entity_type, entity_id, action, actor_id, before_json, after_json, and timestamp — verifiable by querying audit_log directly
+  3. Attempting to delete any workspace record opens a confirmation dialog; confirming the deletion writes the delete event to audit_log before the record is removed
+**Plans**: TBD
+
+### Phase 23: Time Tracking Advanced
+**Goal**: The Time tab gains an approval workflow, Google Calendar import, and admin configuration — transforming basic time logging into a team-grade time management system with submission reminders, locked entries, and bulk operations.
+**Depends on**: Phase 17 (requires extended time_entries schema from SCHEMA-03)
+**Requirements**: TTADV-01, TTADV-02, TTADV-03, TTADV-04, TTADV-05, TTADV-06, TTADV-07, TTADV-08, TTADV-09, TTADV-10, TTADV-11, TTADV-12, TTADV-13, TTADV-14, TTADV-15, TTADV-16, TTADV-17, TTADV-18, TTADV-19
+**Success Criteria** (what must be TRUE):
+  1. A user can submit their timesheet for the current week; the approver can approve or reject individual entries and approve in bulk; approved entries are locked and cannot be edited without an explicit approver override
+  2. Authenticating with Google Calendar via OAuth and importing the current week's events creates draft time entries on the correct event dates; each imported event is auto-matched to a project by attendee comparison; the user can override any match or mark an event as non-project activity
+  3. Admin can configure weekly capacity, working days, submission due date, custom categories, project restrictions, and exempt users from Settings > Time Tracking — all settings persist and take effect immediately
+  4. Submission reminder notifications are sent before the due date and again when overdue (exempt users excluded); approval and rejection notifications reach the submitting user with a summary
+  5. The time entry table supports grouping by project, team member, status, or phase with billable/non-billable subtotals; export to CSV and Excel includes audit fields (submitted/approved/rejected on/by)
+**Plans**: TBD
+
+### Phase 24: Scheduler Enhanced
+**Goal**: The Scheduler page is a full self-service job management UI — users can create, configure, enable/disable, and manually trigger any of the 12 skills as scheduled jobs, with run history logs and failure notifications built in.
+**Depends on**: Phase 17 (requires extended scheduled_jobs schema from SCHEMA-05)
+**Requirements**: SCHED-01, SCHED-02, SCHED-03, SCHED-04, SCHED-05, SCHED-06, SCHED-07, SCHED-08, SCHED-09, SCHED-10, SCHED-11, SCHED-12
+**Success Criteria** (what must be TRUE):
+  1. Opening the Scheduler page (accessible from the sidebar) shows all configured jobs with their last run timestamp, last run outcome (success/failure/partial), and next run time — jobs created, edited, or deleted here are reflected immediately without a server restart
+  2. The Create Job wizard guides through skill selection, scope (global/per-project), frequency (once/daily/weekly/bi-weekly/monthly/custom cron), time with timezone, and skill-specific parameters; all 12 skills are available in the skill picker
+  3. Disabling a job retains its config and run history but stops it from running; manually triggering a job fires it immediately regardless of its next scheduled time
+  4. Each job's run history shows per-run timestamp, outcome, duration, and links to output artifacts or error messages; failed runs generate an in-app notification with an error summary
+**Plans**: TBD
+
+---
+
+## Progress
+
+**Execution Order:**
+v1.0 phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 5.1 → 5.2 → 6 → 7 → 8 → 9 → 10 → 11 → 12 → 13 → 14 → 15 → 16
+v2.0 phases execute: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (parallel)
+Phases 18 and 19 can run in parallel after Phase 17. Phases 23 and 24 are independent of each other.
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 1. Data Foundation | 6/6 | Complete   | 2026-03-19 |
+| 2. App Shell + Read Surface | 7/7 | Complete   | 2026-03-19 |
+| 3. Write Surface + Plan Builder | 9/9 | Complete   | 2026-03-20 |
+| 4. Job Infrastructure | 5/5 | Complete   | 2026-03-20 |
+| 5. Skill Engine | 6/6 | Complete   | 2026-03-23 |
+| 5.1 Onboarding Dashboard [INSERTED] | 8/8 | Complete   | 2026-03-23 |
+| 5.2 Time Tracking [INSERTED] | 5/5 | Complete   | 2026-03-23 |
+| 6. MCP Integrations | 7/7 | Complete   | 2026-03-24 |
+| 7. File Generation + Remaining Skills | 7/7 | Complete   | 2026-03-24 |
+| 8. Cross-Project Features + Polish | 7/7 | Complete   | 2026-03-25 |
+| 9. MCP Injection Fix | 2/2 | Complete   | 2026-03-25 |
+| 10. FTS Expansion + Code Polish | 2/2 | Complete    | 2026-03-25 |
+| 11. Health Score Wire | 1/1 | Complete    | 2026-03-25 |
+| 12. Complete Workspace Write Surface | 4/4 | Complete    | 2026-03-25 |
+| 13. Skill UX + Draft Polish | 4/4 | Complete    | 2026-03-25 |
+| 14. Time + Project Analytics | 5/5 | Complete    | 2026-03-25 |
+| 15. Scheduler + UI Fixes | 3/3 | Complete    | 2026-03-26 |
+| 16. Verification Retrofit | 5/5 | Complete    | 2026-03-26 |
+| 17. Schema Extensions | 0/TBD | Not started | - |
+| 18. Document Ingestion | 0/TBD | Not started | - |
+| 19. External Discovery Scan | 0/TBD | Not started | - |
+| 20. Project Initiation Wizard | 0/TBD | Not started | - |
+| 21. Teams Tab + Architecture Tab | 0/TBD | Not started | - |
+| 22. Source Badges + Audit Log | 0/TBD | Not started | - |
+| 23. Time Tracking Advanced | 0/TBD | Not started | - |
+| 24. Scheduler Enhanced | 0/TBD | Not started | - |
+
+---
+
 ## Coverage
 
 **Requirement-to-phase mapping (all v1 requirements):**
@@ -501,6 +619,119 @@ Plans:
 
 > Added OVER-01–04 (Onboarding Dashboard, Phase 5.1) and TIME-01–03 (Time Tracking, Phase 5.2) on 2026-03-23. Total was 75; now 82.
 
+**v2.0 requirement-to-phase mapping:**
+
+| Requirement | Phase |
+|-------------|-------|
+| SCHEMA-01 | Phase 17 |
+| SCHEMA-02 | Phase 17 |
+| SCHEMA-03 | Phase 17 |
+| SCHEMA-04 | Phase 17 |
+| SCHEMA-05 | Phase 17 |
+| SCHEMA-06 | Phase 17 |
+| SCHEMA-07 | Phase 17 |
+| SCHEMA-08 | Phase 17 |
+| SCHEMA-09 | Phase 17 |
+| SCHEMA-10 | Phase 17 |
+| SCHEMA-11 | Phase 17 |
+| ING-01 | Phase 18 |
+| ING-02 | Phase 18 |
+| ING-03 | Phase 18 |
+| ING-04 | Phase 18 |
+| ING-05 | Phase 18 |
+| ING-06 | Phase 18 |
+| ING-07 | Phase 18 |
+| ING-08 | Phase 18 |
+| ING-09 | Phase 18 |
+| ING-10 | Phase 18 |
+| ING-11 | Phase 18 |
+| ING-12 | Phase 18 |
+| DISC-01 | Phase 19 |
+| DISC-02 | Phase 19 |
+| DISC-03 | Phase 19 |
+| DISC-04 | Phase 19 |
+| DISC-05 | Phase 19 |
+| DISC-06 | Phase 19 |
+| DISC-07 | Phase 19 |
+| DISC-08 | Phase 19 |
+| DISC-09 | Phase 19 |
+| DISC-10 | Phase 19 |
+| DISC-11 | Phase 19 |
+| DISC-12 | Phase 19 |
+| DISC-13 | Phase 19 |
+| DISC-14 | Phase 19 |
+| DISC-15 | Phase 19 |
+| DISC-16 | Phase 19 |
+| DISC-17 | Phase 19 |
+| WIZ-01 | Phase 20 |
+| WIZ-02 | Phase 20 |
+| WIZ-03 | Phase 20 |
+| WIZ-04 | Phase 20 |
+| WIZ-05 | Phase 20 |
+| WIZ-06 | Phase 20 |
+| WIZ-07 | Phase 20 |
+| WIZ-08 | Phase 20 |
+| WIZ-09 | Phase 20 |
+| TEAMS-01 | Phase 21 |
+| TEAMS-02 | Phase 21 |
+| TEAMS-03 | Phase 21 |
+| TEAMS-04 | Phase 21 |
+| TEAMS-05 | Phase 21 |
+| TEAMS-06 | Phase 21 |
+| TEAMS-07 | Phase 21 |
+| TEAMS-08 | Phase 21 |
+| TEAMS-09 | Phase 21 |
+| TEAMS-10 | Phase 21 |
+| TEAMS-11 | Phase 21 |
+| ARCH-01 | Phase 21 |
+| ARCH-02 | Phase 21 |
+| ARCH-03 | Phase 21 |
+| ARCH-04 | Phase 21 |
+| ARCH-05 | Phase 21 |
+| ARCH-06 | Phase 21 |
+| ARCH-07 | Phase 21 |
+| ARCH-08 | Phase 21 |
+| ARCH-09 | Phase 21 |
+| ARCH-10 | Phase 21 |
+| ARCH-11 | Phase 21 |
+| ARCH-12 | Phase 21 |
+| AUDIT-01 | Phase 22 |
+| AUDIT-02 | Phase 22 |
+| AUDIT-03 | Phase 22 |
+| TTADV-01 | Phase 23 |
+| TTADV-02 | Phase 23 |
+| TTADV-03 | Phase 23 |
+| TTADV-04 | Phase 23 |
+| TTADV-05 | Phase 23 |
+| TTADV-06 | Phase 23 |
+| TTADV-07 | Phase 23 |
+| TTADV-08 | Phase 23 |
+| TTADV-09 | Phase 23 |
+| TTADV-10 | Phase 23 |
+| TTADV-11 | Phase 23 |
+| TTADV-12 | Phase 23 |
+| TTADV-13 | Phase 23 |
+| TTADV-14 | Phase 23 |
+| TTADV-15 | Phase 23 |
+| TTADV-16 | Phase 23 |
+| TTADV-17 | Phase 23 |
+| TTADV-18 | Phase 23 |
+| TTADV-19 | Phase 23 |
+| SCHED-01 | Phase 24 |
+| SCHED-02 | Phase 24 |
+| SCHED-03 | Phase 24 |
+| SCHED-04 | Phase 24 |
+| SCHED-05 | Phase 24 |
+| SCHED-06 | Phase 24 |
+| SCHED-07 | Phase 24 |
+| SCHED-08 | Phase 24 |
+| SCHED-09 | Phase 24 |
+| SCHED-10 | Phase 24 |
+| SCHED-11 | Phase 24 |
+| SCHED-12 | Phase 24 |
+
+**v2.0 coverage: 96/96 requirements mapped across Phases 17–24**
+
 ---
 
 ## Research Flags (for plan-phase)
@@ -511,6 +742,9 @@ Plans:
 | Phase 5 | YES — before planning | Anthropic SDK 0.78.x streaming + tool_use multi-turn pattern; verify buildSkillContext() context assembly against current SDK docs |
 | Phase 6 | YES — before planning | MCP SDK current API is LOW confidence; connection lifecycle and stdio vs HTTP transport preference must be verified in 2026 before any Phase 6 code |
 | Phase 7 | YES — spike at start | Generate test .pptx and .docx and open in actual Microsoft Office before writing generation logic; known failure mode |
+| Phase 18 | YES — before planning | Anthropic SDK file upload / document extraction API: verify multimodal document input format for PDF/DOCX/PPTX in current SDK version |
+| Phase 19 | No — MCP connectors already proven in Phase 6 | Discovery scan uses existing MCPClientPool; new logic is Claude analysis + Review Queue UI |
+| Phase 23 | YES — before planning | Google Calendar OAuth flow in Next.js 14 App Router: verify google-auth-library or next-auth approach for calendar read scope |
 | Phase 1, 2, 3, 8 | No — skip research | Standard patterns; existing codebase provides ground-truth versions |
 
 ---
@@ -522,3 +756,4 @@ Plans:
 *Phase 5 planned: 2026-03-20 — 6 plans across 5 waves (Wave 0–4)*
 *Phase 5.2 planned: 2026-03-23 — 5 plans across 4 waves (Wave 0–3)*
 *Phases 9–14 added: 2026-03-24 — gap closure phases from v1.0 audit + high-value feature additions; SKILL-09 moved to v2*
+*v2.0 Phases 17–24 added: 2026-03-25 — AI Ingestion & Enhanced Operations milestone; 96/96 requirements mapped*
