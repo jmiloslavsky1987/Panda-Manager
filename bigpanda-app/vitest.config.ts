@@ -5,6 +5,11 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: false,
+    alias: {
+      // 'server-only' is a Next.js build guard that has no runtime content.
+      // In vitest (node env) it must be stubbed so tests can import server modules.
+      'server-only': path.resolve(__dirname, 'tests/__mocks__/server-only.ts'),
+    },
   },
   resolve: {
     alias: {
