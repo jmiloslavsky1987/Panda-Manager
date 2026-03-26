@@ -576,3 +576,19 @@ export const scheduledJobs = pgTable('scheduled_jobs', {
   created_at:        timestamp('created_at').defaultNow().notNull(),
   updated_at:        timestamp('updated_at').defaultNow().notNull(),
 });
+
+// ─── Table: user_source_tokens (Phase 19.1) ─────────────────────────────────
+export const userSourceTokens = pgTable('user_source_tokens', {
+  id:            serial('id').primaryKey(),
+  user_id:       text('user_id').notNull().default('default'),
+  source:        text('source').notNull(),
+  access_token:  text('access_token'),
+  refresh_token: text('refresh_token').notNull(),
+  expires_at:    timestamp('expires_at', { withTimezone: true }),
+  email:         text('email'),
+  created_at:    timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updated_at:    timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export type UserSourceToken = typeof userSourceTokens.$inferSelect;
+export type UserSourceTokenInsert = typeof userSourceTokens.$inferInsert;
