@@ -4,12 +4,12 @@ milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
 current_plan: Not started
 status: unknown
-last_updated: "2026-03-26T18:30:41.424Z"
+last_updated: "2026-03-26T18:35:48.406Z"
 progress:
   total_phases: 26
   completed_phases: 20
   total_plans: 108
-  completed_plans: 103
+  completed_plans: 104
 ---
 
 # Project State
@@ -304,6 +304,9 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - [Phase 18-document-ingestion]: Demand-driven SSE extraction: IngestionModal only fires extraction when user navigates to a file, not preemptively for all files on upload — prevents wasted Claude API calls
 - [Phase 19-01]: Wave 0 stub imports: vitest globals=false requires explicit import { expect } from 'vitest' — no production module imports
 - [Phase 19-01]: source_excerpt stores raw text from source triggering discovery; scan_id groups items from one scan run; both nullable in migration 0013
+- [Phase 19]: Anthropic beta MCP API for per-source fetch — beta.messages.create with mcp_servers + mcp-client-2025-11-20 header
+- [Phase 19]: jsonrepair fallback in discovery-scanner (same as 18-06) for malformed Claude JSON
+- [Phase 19]: Dedup on dismissed status only in scan route (DISC-15) — pending/approved not blocked
 
 ## Performance Metrics
 
