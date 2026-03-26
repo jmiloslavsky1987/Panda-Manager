@@ -4,12 +4,12 @@ milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
 current_plan: 19-05 COMPLETE
 status: unknown
-last_updated: "2026-03-26T19:57:30.449Z"
+last_updated: "2026-03-26T19:58:36.293Z"
 progress:
   total_phases: 27
   completed_phases: 20
   total_plans: 116
-  completed_plans: 110
+  completed_plans: 111
 ---
 
 # Project State
@@ -321,6 +321,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - [Phase 19.1]: user_source_tokens UNIQUE(user_id, source) with DEFAULT user_id='default' — single-user-compatible, forward-compatible with future multi-user auth
 - [Phase 19.1-03]: GleanAdapter constructor uses creds object pattern to match Plan 01 test stubs; actAsEmail missing warns but proceeds
 - [Phase 19.1-03]: MCPAdapter created as parallel module — discovery-scanner.ts left intact until Plan 19.1-05 refactor to preserve SRC-07 backward compatibility
+- [Phase 19.1-04]: prompt=consent required in generateAuthUrl to guarantee refresh_token is always returned — without it subsequent connects after revocation would permanently break GmailAdapter
 
 ## Performance Metrics
 
@@ -427,6 +428,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 | Phase 19-external-discovery-scan P05 | 4 | 2 tasks | 7 files |
 | Phase 19.1 P01 | 3 | 3 tasks | 8 files |
 | Phase 19.1-source-integrations P03 | 8 | 2 tasks | 2 files |
+| Phase 19.1-source-integrations P04 | 4 | 2 tasks | 7 files |
 
 ## Key Context for Next Session
 
