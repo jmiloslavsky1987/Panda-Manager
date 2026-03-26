@@ -48,6 +48,8 @@ export function IngestionModal({ open, onOpenChange, projectId, artifactId, init
   const [currentFileIndex, setCurrentFileIndex] = useState(0)
   const [reviewItems, setReviewItems] = useState<ReviewItem[]>([])
   const [filteredCount, setFilteredCount] = useState<number>(0)
+  // Track the artifact ID used during extraction (drop-zone flow has no prop-level artifactId)
+  const [lastExtractedArtifactId, setLastExtractedArtifactId] = useState<number | null>(null)
   const [extractionMessage, setExtractionMessage] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
   // Ref prevents double-firing in React StrictMode
@@ -193,6 +195,7 @@ export function IngestionModal({ open, onOpenChange, projectId, artifactId, init
       })
 
       setReviewItems(prev => [...prev, ...items])
+      setLastExtractedArtifactId(artifactIdForExtract)
       setFileStatuses(prev => prev.map((f, i) =>
         i === idx ? { ...f, status: 'done' } : f
       ))
@@ -243,7 +246,7 @@ export function IngestionModal({ open, onOpenChange, projectId, artifactId, init
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           projectId,
-          artifactId,
+          artifactId: artifactId ?? lastExtractedArtifactId,
           items: approvedItems,
           totalExtracted: reviewItems.length,
         }),
