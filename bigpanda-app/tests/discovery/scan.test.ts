@@ -3,66 +3,56 @@ import type { MCPServerConfig } from '../../lib/settings-core';
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
+// Shared mock state (defined before the mock factory so they are accessible inside)
+const mockStreamTextPayload = JSON.stringify([
+  {
+    source: 'slack',
+    content: 'Deployment blocked by LDAP config',
+    suggested_field: 'risk',
+    source_excerpt: 'Deployment blocked by LDAP config — needs IT ticket',
+    source_url: 'https://slack.example.com/messages/C123',
+  },
+]);
+
+const mockMcpResponse = {
+  content: [
+    {
+      type: 'text',
+      text: 'Slack message: LDAP config issue blocking deployment. Link: https://slack.example.com/messages/C123',
+    },
+  ],
+  stop_reason: 'end_turn',
+};
+
 vi.mock('@anthropic-ai/sdk', () => {
-  const mockStream = {
-    on: vi.fn((event: string, cb: (text: string) => void) => {
-      if (event === 'text') {
-        cb(JSON.stringify([
-          {
-            source: 'slack',
-            content: 'Deployment blocked by LDAP config',
-            suggested_field: 'risk',
-            source_excerpt: 'Deployment blocked by LDAP config — needs IT ticket',
-            source_url: 'https://slack.example.com/messages/C123',
-          },
-        ]));
-      }
-      return mockStream;
-    }),
-    finalMessage: vi.fn().mockResolvedValue({}),
-  };
-
-  const mockCreate = vi.fn().mockResolvedValue({
-    content: [
-      {
-        type: 'text',
-        text: JSON.stringify([
-          {
-            source: 'slack',
-            content: 'Deployment blocked by LDAP config',
-            suggested_field: 'risk',
-            source_excerpt: 'Deployment blocked by LDAP config — needs IT ticket',
-            source_url: 'https://slack.example.com/messages/C123',
-          },
-        ]),
-      },
-    ],
-  });
-
-  // Mock for MCP source fetch calls (non-streaming)
-  const mockMcpCreate = vi.fn().mockResolvedValue({
-    content: [
-      {
-        type: 'text',
-        text: 'Slack message: LDAP config issue blocking deployment. Link: https://slack.example.com/messages/C123',
-      },
-    ],
-    stop_reason: 'end_turn',
-  });
-
-  return {
-    default: vi.fn().mockImplementation(() => ({
-      beta: {
-        messages: {
-          create: mockMcpCreate,
-        },
-      },
+  // Build the mock class inside the factory
+  class MockAnthropic {
+    beta = {
       messages: {
-        create: mockCreate,
-        stream: vi.fn(() => mockStream),
+        create: vi.fn().mockResolvedValue(mockMcpResponse),
       },
-    })),
-  };
+    };
+
+    messages = {
+      create: vi.fn().mockResolvedValue({ content: [] }),
+      stream: vi.fn(() => {
+        const listeners: Record<string, Array<(arg: string) => void>> = {};
+        const streamObj = {
+          on(event: string, cb: (text: string) => void) {
+            if (!listeners[event]) listeners[event] = [];
+            listeners[event].push(cb);
+            // Immediately fire 'text' with mock payload
+            if (event === 'text') cb(mockStreamTextPayload);
+            return streamObj;
+          },
+          finalMessage: vi.fn().mockResolvedValue({}),
+        };
+        return streamObj;
+      }),
+    };
+  }
+
+  return { default: MockAnthropic };
 });
 
 vi.mock('../../lib/mcp-config', () => ({
