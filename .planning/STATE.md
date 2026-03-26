@@ -4,12 +4,12 @@ milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
 current_plan: Not started
 status: unknown
-last_updated: "2026-03-26T18:35:48.406Z"
+last_updated: "2026-03-26T18:36:36.642Z"
 progress:
   total_phases: 26
   completed_phases: 20
   total_plans: 108
-  completed_plans: 104
+  completed_plans: 105
 ---
 
 # Project State
@@ -307,6 +307,8 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - [Phase 19]: Anthropic beta MCP API for per-source fetch — beta.messages.create with mcp_servers + mcp-client-2025-11-20 header
 - [Phase 19]: jsonrepair fallback in discovery-scanner (same as 18-06) for malformed Claude JSON
 - [Phase 19]: Dedup on dismissed status only in scan route (DISC-15) — pending/approved not blocked
+- [Phase 19-external-discovery-scan]: Discovery approve has no conflict detection — discovery items are user-curated scan results, not documents needing dedup semantics
+- [Phase 19-external-discovery-scan]: Dismiss uses inArray batch UPDATE; approve iterates per item to fetch suggested_field and route to correct entity table
 
 ## Performance Metrics
 
@@ -408,6 +410,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 | Phase 18-document-ingestion P04 | 5min | 1 tasks | 3 files |
 | Phase 18-document-ingestion P05 | 4 | 2 tasks | 6 files |
 | Phase 19-external-discovery-scan P01 | 8 | 2 tasks | 7 files |
+| Phase 19-external-discovery-scan P03 | 5 | 2 tasks | 7 files |
 
 ## Key Context for Next Session
 
