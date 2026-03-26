@@ -393,7 +393,7 @@ export async function POST(request: NextRequest): Promise<Response> {
           let fullText = '';
           const claudeStream = client.messages.stream({
             model: 'claude-sonnet-4-6',
-            max_tokens: 8192,
+            max_tokens: 16384,
             system: EXTRACTION_SYSTEM,
             messages: [{ role: 'user', content: userContent }],
           });

@@ -47,6 +47,7 @@ export function IngestionModal({ open, onOpenChange, projectId, artifactId, init
   const [fileStatuses, setFileStatuses] = useState<FileStatus[]>([])
   const [currentFileIndex, setCurrentFileIndex] = useState(0)
   const [reviewItems, setReviewItems] = useState<ReviewItem[]>([])
+  const [filteredCount, setFilteredCount] = useState<number>(0)
   const [extractionMessage, setExtractionMessage] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
   // Ref prevents double-firing in React StrictMode
@@ -60,6 +61,7 @@ export function IngestionModal({ open, onOpenChange, projectId, artifactId, init
     setFileStatuses(acceptedFiles.map(f => ({ name: f.name, status: 'pending' })))
     setCurrentFileIndex(0)
     setReviewItems([])
+    setFilteredCount(0)
     setError(null)
 
     const formData = new FormData()
@@ -163,6 +165,9 @@ export function IngestionModal({ open, onOpenChange, projectId, artifactId, init
                     accumulated.push(item)
                   } else if (parsed.type === 'complete') {
                     // Bulk completion — extract route sends all items in one event
+                    if (parsed.filteredCount) {
+                      setFilteredCount(prev => prev + (parsed.filteredCount as number))
+                    }
                     for (const raw of (parsed.items ?? [])) {
                       accumulated.push({
                         ...(raw as ExtractionItem),
@@ -344,11 +349,18 @@ export function IngestionModal({ open, onOpenChange, projectId, artifactId, init
 
               {/* Reviewing stage: extraction preview */}
               {stage === 'reviewing' && (
-                <ExtractionPreview
-                  items={reviewItems}
-                  onItemChange={handleItemChange}
-                  onApprove={handleApprove}
-                />
+                <>
+                  {filteredCount > 0 && (
+                    <div className="mb-3 px-3 py-2 bg-zinc-100 border border-zinc-200 rounded text-xs text-zinc-500">
+                      <span className="font-medium text-zinc-700">{filteredCount} item{filteredCount !== 1 ? 's' : ''} already in your project</span> — skipped as duplicates and not shown below.
+                    </div>
+                  )}
+                  <ExtractionPreview
+                    items={reviewItems}
+                    onItemChange={handleItemChange}
+                    onApprove={handleApprove}
+                  />
+                </>
               )}
 
               {/* Submitting stage */}
