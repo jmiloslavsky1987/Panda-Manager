@@ -9,6 +9,14 @@ vi.mock('@/db', () => ({
   db: {
     select: vi.fn(),
     update: vi.fn(),
+    // computeProjectAnalytics uses db.transaction — mock it to invoke the callback
+    // with a tx that has execute() returning empty results (zero velocity / zero risks)
+    transaction: vi.fn().mockImplementation(async (fn: (tx: unknown) => unknown) => {
+      const tx = {
+        execute: vi.fn().mockResolvedValue([]),
+      };
+      return fn(tx);
+    }),
   },
 }));
 
