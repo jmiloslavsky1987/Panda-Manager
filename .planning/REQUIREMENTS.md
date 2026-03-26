@@ -49,9 +49,9 @@
 
 ### Time Tracking
 
-- [ ] **TIME-01**: Time tab (12th workspace tab) — time log for the project showing entries table (date, hours, description), total hours in header, filterable by date range
-- [ ] **TIME-02**: Add, edit, and delete time entries — entry fields: date (defaults to today), hours (decimal, e.g. 1.5), free-text description
-- [ ] **TIME-03**: Export time entries for a project as CSV with columns: date, hours, description, project name
+- [x] **TIME-01**: Time tab (12th workspace tab) — time log for the project showing entries table (date, hours, description), total hours in header, filterable by date range
+- [x] **TIME-02**: Add, edit, and delete time entries — entry fields: date (defaults to today), hours (decimal, e.g. 1.5), free-text description
+- [x] **TIME-03**: Export time entries for a project as CSV with columns: date, hours, description, project name
 
 ### Skill Launcher
 
@@ -225,9 +225,9 @@
 | OVER-02 | Phase 5.1 | Complete |
 | OVER-03 | Phase 5.1 | Complete |
 | OVER-04 | Phase 5.1 | Complete |
-| TIME-01 | Phase 16 | Pending |
-| TIME-02 | Phase 16 | Pending |
-| TIME-03 | Phase 16 | Pending |
+| TIME-01 | Phase 16 | Complete |
+| TIME-02 | Phase 16 | Complete |
+| TIME-03 | Phase 16 | Complete |
 | SKILL-10 | Phase 16 | Pending |
 | DASH-04 | Phase 16 | Pending |
 | DASH-05 | Phase 16 | Pending |
