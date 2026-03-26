@@ -44,21 +44,21 @@
 
 - [ ] **DISC-01**: User can manually trigger a discovery scan for any project via a "Scan for Updates" button in the project sidebar
 - [ ] **DISC-02**: Discovery scan can be configured as a recurring scheduled job per project via the Scheduler (SCHED-01)
-- [ ] **DISC-03**: Per-project scan configuration defines which sources to include: Slack, Gmail, Glean, Gong (any combination)
+- [x] **DISC-03**: Per-project scan configuration defines which sources to include: Slack, Gmail, Glean, Gong (any combination)
 - [ ] **DISC-04**: Platform shows an in-app notification when a scan completes and items are pending review
 - [x] **DISC-05**: Slack scan: searches configured channels for messages mentioning the project or customer name since the last scan timestamp; retrieves full thread context for matching messages
 - [x] **DISC-06**: Gmail scan: searches inbox for emails matching project or customer keywords since the last scan timestamp; retrieves full email threads
 - [x] **DISC-07**: Glean scan: searches for documents and content matching the project name since the last scan timestamp
 - [x] **DISC-08**: Gong scan: retrieves call transcripts for the customer since the last scan timestamp
 - [x] **DISC-09**: Claude analyzes all scan results and identifies: action items, decisions, risks, blockers, status updates — outputs structured DiscoveryItem records
-- [ ] **DISC-10**: Review Queue page accessible from the project sidebar and from a global notification badge showing pending item count
+- [x] **DISC-10**: Review Queue page accessible from the project sidebar and from a global notification badge showing pending item count
 - [x] **DISC-11**: Each queue item displays: source tool, date found, source excerpt, suggested destination tab/field, Claude's extracted value
-- [ ] **DISC-12**: User can Approve, Edit then Approve, or Dismiss each queue item individually
-- [ ] **DISC-13**: User can bulk-approve all items in the queue in one action
+- [x] **DISC-12**: User can Approve, Edit then Approve, or Dismiss each queue item individually
+- [x] **DISC-13**: User can bulk-approve all items in the queue in one action
 - [x] **DISC-14**: Approved items are written to the appropriate DB tables with source attribution (source tool, scan timestamp)
 - [x] **DISC-15**: Dismissed items are retained in dismissal history (status = dismissed) — not permanently deleted
 - [x] **DISC-16**: Queue items have no expiry — they remain pending until explicitly acted upon
-- [ ] **DISC-17**: When a discovered item conflicts with an existing record, a side-by-side diff view is shown before the merge/replace/skip prompt
+- [x] **DISC-17**: When a discovered item conflicts with an existing record, a side-by-side diff view is shown before the merge/replace/skip prompt
 
 ### WIZ — Project Initiation Wizard
 *Net new — projects are currently created by manually seeding the DB; there is no guided onboarding flow.*
@@ -195,21 +195,21 @@
 | ING-12 | Phase 18 | Complete |
 | DISC-01 | Phase 19 | Pending |
 | DISC-02 | Phase 19 | Pending |
-| DISC-03 | Phase 19 | Pending |
+| DISC-03 | Phase 19 | Complete |
 | DISC-04 | Phase 19 | Pending |
 | DISC-05 | Phase 19 | Complete |
 | DISC-06 | Phase 19 | Complete |
 | DISC-07 | Phase 19 | Complete |
 | DISC-08 | Phase 19 | Complete |
 | DISC-09 | Phase 19 | Complete |
-| DISC-10 | Phase 19 | Pending |
+| DISC-10 | Phase 19 | Complete |
 | DISC-11 | Phase 19 | Complete |
-| DISC-12 | Phase 19 | Pending |
-| DISC-13 | Phase 19 | Pending |
+| DISC-12 | Phase 19 | Complete |
+| DISC-13 | Phase 19 | Complete |
 | DISC-14 | Phase 19 | Complete |
 | DISC-15 | Phase 19 | Complete |
 | DISC-16 | Phase 19 | Complete |
-| DISC-17 | Phase 19 | Pending |
+| DISC-17 | Phase 19 | Complete |
 | WIZ-01 | Phase 20 | Pending |
 | WIZ-02 | Phase 20 | Pending |
 | WIZ-03 | Phase 20 | Pending |

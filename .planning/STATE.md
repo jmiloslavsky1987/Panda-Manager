@@ -4,12 +4,12 @@ milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
 current_plan: Not started
 status: unknown
-last_updated: "2026-03-26T18:36:36.642Z"
+last_updated: "2026-03-26T18:40:50.323Z"
 progress:
   total_phases: 26
   completed_phases: 20
   total_plans: 108
-  completed_plans: 105
+  completed_plans: 106
 ---
 
 # Project State
@@ -309,6 +309,8 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - [Phase 19]: Dedup on dismissed status only in scan route (DISC-15) — pending/approved not blocked
 - [Phase 19-external-discovery-scan]: Discovery approve has no conflict detection — discovery items are user-curated scan results, not documents needing dedup semantics
 - [Phase 19-external-discovery-scan]: Dismiss uses inArray batch UPDATE; approve iterates per item to fetch suggested_field and route to correct entity table
+- [Phase 19-04]: WorkspaceTabs useEffect fetches queue count client-side on mount — badge is non-critical, errors silently ignored
+- [Phase 19-04]: DiffView triggered by 409 from approve route — current approve route doesn't return 409 but DiffView is wired for when it does
 
 ## Performance Metrics
 
@@ -411,6 +413,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 | Phase 18-document-ingestion P05 | 4 | 2 tasks | 6 files |
 | Phase 19-external-discovery-scan P01 | 8 | 2 tasks | 7 files |
 | Phase 19-external-discovery-scan P03 | 5 | 2 tasks | 7 files |
+| Phase 19-external-discovery-scan P04 | 10 | 2 tasks | 5 files |
 
 ## Key Context for Next Session
 
