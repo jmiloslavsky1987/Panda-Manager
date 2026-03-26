@@ -1,7 +1,6 @@
 // bigpanda-app/worker/jobs/weekly-customer-status.ts
 // Scheduled BullMQ handler — delegates to SkillOrchestrator + writes email draft
 import type { Job } from 'bullmq';
-import path from 'path';
 import { randomUUID } from 'crypto';
 import { sql, eq } from 'drizzle-orm';
 import db from '../../db';
@@ -9,11 +8,15 @@ import { skillRuns, outputs, drafts } from '../../db/schema';
 import { SkillOrchestrator } from '../../lib/skill-orchestrator';
 import { MCPClientPool } from '../../lib/mcp-config';
 import { getActiveProjects } from '../../lib/queries';
+import { readSettings } from '../../lib/settings-core';
+import { resolveSkillsDir } from './skill-run';
 
 const orchestrator = new SkillOrchestrator();
-const SKILLS_DIR = path.join(__dirname, '../../skills');
 
 export default async function weeklyCustomerStatusJob(job: Job): Promise<{ status: string }> {
+  const settings = await readSettings();
+  const SKILLS_DIR = resolveSkillsDir(settings.skill_path ?? '');
+
   // Scheduled: run for all active projects (or specific projectId from job.data)
   const projects = job.data?.projectId
     ? [{ id: job.data.projectId as number }]
