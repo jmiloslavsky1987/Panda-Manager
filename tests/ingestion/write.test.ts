@@ -66,15 +66,15 @@ describe('Ingestion write and logging (ING-09, ING-10)', () => {
     // Stub: DB select returns no existing record (no conflict)
     const mockWhere = vi.fn().mockResolvedValue([]);
     const mockFrom = vi.fn().mockReturnValue({ where: mockWhere });
-    vi.mocked(db.select).mockReturnValue({ from: mockFrom } as ReturnType<typeof db.select>);
+    vi.mocked(db.select).mockReturnValue({ from: mockFrom } as any);
 
     // Stub: DB insert returns inserted row
     const mockValues = vi.fn().mockResolvedValue([{ id: 1 }]);
-    vi.mocked(db.insert).mockReturnValue({ values: mockValues } as ReturnType<typeof db.insert>);
+    vi.mocked(db.insert).mockReturnValue({ values: mockValues } as any);
 
     // Stub: DB update for artifact log
     const mockSet = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) });
-    vi.mocked(db.update).mockReturnValue({ set: mockSet } as ReturnType<typeof db.update>);
+    vi.mocked(db.update).mockReturnValue({ set: mockSet } as any);
 
     // Stub: select for artifact record
     const mockArtifactWhere = vi.fn().mockResolvedValue([{
@@ -83,8 +83,8 @@ describe('Ingestion write and logging (ING-09, ING-10)', () => {
     }]);
     const mockArtifactFrom = vi.fn().mockReturnValue({ where: mockArtifactWhere });
     vi.mocked(db.select)
-      .mockReturnValueOnce({ from: mockArtifactFrom } as ReturnType<typeof db.select>) // artifact fetch
-      .mockReturnValue({ from: mockFrom } as ReturnType<typeof db.select>);             // conflict checks
+      .mockReturnValueOnce({ from: mockArtifactFrom } as any) // artifact fetch
+      .mockReturnValue({ from: mockFrom } as any);             // conflict checks
 
     const req = buildRequest({
       artifactId: 10,
@@ -119,13 +119,13 @@ describe('Ingestion write and logging (ING-09, ING-10)', () => {
     }]);
     const mockArtifactFrom = vi.fn().mockReturnValue({ where: mockArtifactWhere });
     vi.mocked(db.select)
-      .mockReturnValueOnce({ from: mockArtifactFrom } as ReturnType<typeof db.select>)
-      .mockReturnValue({ from: mockFrom } as ReturnType<typeof db.select>);
+      .mockReturnValueOnce({ from: mockArtifactFrom } as any)
+      .mockReturnValue({ from: mockFrom } as any);
 
     const mockValues = vi.fn().mockResolvedValue([{ id: 1 }]);
-    vi.mocked(db.insert).mockReturnValue({ values: mockValues } as ReturnType<typeof db.insert>);
+    vi.mocked(db.insert).mockReturnValue({ values: mockValues } as any);
     const mockSet = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) });
-    vi.mocked(db.update).mockReturnValue({ set: mockSet } as ReturnType<typeof db.update>);
+    vi.mocked(db.update).mockReturnValue({ set: mockSet } as any);
 
     const req = buildRequest({
       artifactId: 10,
@@ -154,13 +154,13 @@ describe('Ingestion write and logging (ING-09, ING-10)', () => {
     }]);
     const mockArtifactFrom = vi.fn().mockReturnValue({ where: mockArtifactWhere });
     vi.mocked(db.select)
-      .mockReturnValueOnce({ from: mockArtifactFrom } as ReturnType<typeof db.select>)
-      .mockReturnValue({ from: mockFrom } as ReturnType<typeof db.select>);
+      .mockReturnValueOnce({ from: mockArtifactFrom } as any)
+      .mockReturnValue({ from: mockFrom } as any);
 
     const mockValues = vi.fn().mockResolvedValue([{ id: 1 }]);
-    vi.mocked(db.insert).mockReturnValue({ values: mockValues } as ReturnType<typeof db.insert>);
+    vi.mocked(db.insert).mockReturnValue({ values: mockValues } as any);
     const mockSet = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) });
-    vi.mocked(db.update).mockReturnValue({ set: mockSet } as ReturnType<typeof db.update>);
+    vi.mocked(db.update).mockReturnValue({ set: mockSet } as any);
 
     const req = buildRequest({
       artifactId: 10,
@@ -189,14 +189,14 @@ describe('Ingestion write and logging (ING-09, ING-10)', () => {
     }]);
     const mockArtifactFrom = vi.fn().mockReturnValue({ where: mockArtifactWhere });
     vi.mocked(db.select)
-      .mockReturnValueOnce({ from: mockArtifactFrom } as ReturnType<typeof db.select>)
-      .mockReturnValue({ from: mockFrom } as ReturnType<typeof db.select>);
+      .mockReturnValueOnce({ from: mockArtifactFrom } as any)
+      .mockReturnValue({ from: mockFrom } as any);
 
     const mockValues = vi.fn().mockResolvedValue([{ id: 1 }]);
-    vi.mocked(db.insert).mockReturnValue({ values: mockValues } as ReturnType<typeof db.insert>);
+    vi.mocked(db.insert).mockReturnValue({ values: mockValues } as any);
     const mockWhereUpdate = vi.fn().mockResolvedValue([]);
     const mockSet = vi.fn().mockReturnValue({ where: mockWhereUpdate });
-    vi.mocked(db.update).mockReturnValue({ set: mockSet } as ReturnType<typeof db.update>);
+    vi.mocked(db.update).mockReturnValue({ set: mockSet } as any);
 
     const req = buildRequest({
       artifactId: 10,
@@ -227,14 +227,14 @@ describe('Ingestion write and logging (ING-09, ING-10)', () => {
     }]);
     const mockArtifactFrom = vi.fn().mockReturnValue({ where: mockArtifactWhere });
     vi.mocked(db.select)
-      .mockReturnValueOnce({ from: mockArtifactFrom } as ReturnType<typeof db.select>)
-      .mockReturnValue({ from: mockFrom } as ReturnType<typeof db.select>);
+      .mockReturnValueOnce({ from: mockArtifactFrom } as any)
+      .mockReturnValue({ from: mockFrom } as any);
 
     const mockValues = vi.fn().mockResolvedValue([{ id: 1 }]);
-    vi.mocked(db.insert).mockReturnValue({ values: mockValues } as ReturnType<typeof db.insert>);
+    vi.mocked(db.insert).mockReturnValue({ values: mockValues } as any);
     const mockWhereUpdate = vi.fn().mockResolvedValue([]);
     const mockSet = vi.fn().mockReturnValue({ where: mockWhereUpdate });
-    vi.mocked(db.update).mockReturnValue({ set: mockSet } as ReturnType<typeof db.update>);
+    vi.mocked(db.update).mockReturnValue({ set: mockSet } as any);
 
     const req = buildRequest({
       artifactId: 10,
