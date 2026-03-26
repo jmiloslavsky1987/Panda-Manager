@@ -63,8 +63,8 @@ export function IngestionModal({ open, onOpenChange, projectId, artifactId, init
     setError(null)
 
     const formData = new FormData()
-    formData.append('projectId', String(projectId))
-    if (artifactId != null) formData.append('artifactId', String(artifactId))
+    formData.append('project_id', String(projectId))
+    if (artifactId != null) formData.append('artifact_id', String(artifactId))
     acceptedFiles.forEach(f => formData.append('files', f))
 
     let uploadedIds: string[] = []
@@ -72,8 +72,8 @@ export function IngestionModal({ open, onOpenChange, projectId, artifactId, init
       const res = await fetch('/api/ingestion/upload', { method: 'POST', body: formData })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Upload failed')
-      // Expect { fileIds: string[] } — one per uploaded file in order
-      uploadedIds = data.fileIds ?? acceptedFiles.map((_: File, i: number) => String(i))
+      // API returns { artifacts: [{ id, name, ingestion_status }] }
+      uploadedIds = (data.artifacts ?? []).map((a: { id: number }) => String(a.id))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed')
       return
@@ -114,45 +114,65 @@ export function IngestionModal({ open, onOpenChange, projectId, artifactId, init
     ))
     setExtractionMessage(`Extracting ${file.name}…`)
 
-    const fileId = file.fileId ?? ''
-    const params = new URLSearchParams({ fileId, projectId: String(projectId) })
-    if (artifactId != null) params.set('artifactId', String(artifactId))
+    const artifactIdForExtract = file.fileId ? Number(file.fileId) : (artifactId ?? null)
+    if (!artifactIdForExtract) {
+      setError(`No artifact ID available for ${file.name}`)
+      return
+    }
 
     try {
-      const es = new EventSource(`/api/ingestion/extract?${params}`)
+      // Extract route is POST+SSE — use fetch streaming (EventSource is GET-only)
+      const res = await fetch('/api/ingestion/extract', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ artifactId: artifactIdForExtract, projectId }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error ?? `Extraction failed (${res.status})`)
+      }
 
       const items: ReviewItem[] = await new Promise((resolve, reject) => {
         const accumulated: ReviewItem[] = []
+        const reader = res.body!.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
 
-        es.onmessage = (event) => {
+        async function pump() {
           try {
-            const parsed = JSON.parse(event.data)
-            if (parsed.type === 'progress') {
-              setExtractionMessage(parsed.message ?? `Extracting ${file.name}…`)
-            } else if (parsed.type === 'item') {
-              const item: ReviewItem = {
-                ...(parsed.item as ExtractionItem),
-                approved: true,
-                edited: false,
-                conflict: parsed.item.conflict,
+            while (true) {
+              const { done, value } = await reader.read()
+              if (done) { resolve(accumulated); break }
+              buffer += decoder.decode(value, { stream: true })
+              const lines = buffer.split('\n')
+              buffer = lines.pop() ?? ''
+              for (const line of lines) {
+                if (!line.startsWith('data: ')) continue
+                try {
+                  const parsed = JSON.parse(line.slice(6))
+                  if (parsed.type === 'progress') {
+                    setExtractionMessage(parsed.message ?? `Extracting ${file.name}…`)
+                  } else if (parsed.type === 'item') {
+                    const item: ReviewItem = {
+                      ...(parsed.item as ExtractionItem),
+                      approved: true,
+                      edited: false,
+                      conflict: parsed.item.conflict,
+                    }
+                    accumulated.push(item)
+                  } else if (parsed.type === 'done') {
+                    resolve(accumulated); return
+                  } else if (parsed.type === 'error') {
+                    reject(new Error(parsed.message ?? 'Extraction error')); return
+                  }
+                } catch { /* ignore malformed SSE frames */ }
               }
-              accumulated.push(item)
-            } else if (parsed.type === 'done') {
-              resolve(accumulated)
-              es.close()
-            } else if (parsed.type === 'error') {
-              reject(new Error(parsed.message ?? 'Extraction error'))
-              es.close()
             }
-          } catch {
-            // ignore malformed SSE frames
+          } catch (err) {
+            reject(err)
           }
         }
-
-        es.onerror = () => {
-          reject(new Error(`Extraction failed for ${file.name}`))
-          es.close()
-        }
+        pump()
       })
 
       setReviewItems(prev => [...prev, ...items])
