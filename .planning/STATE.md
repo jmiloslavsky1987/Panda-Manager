@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: Completed 16-04-PLAN.md — Phase 05.2 Time Tracking verification passed 3/3
-last_updated: "2026-03-26T02:14:50.927Z"
+stopped_at: Completed 16-01-PLAN.md — Phase 01 retroactive verification written to 01-VERIFICATION.md
+last_updated: "2026-03-26T02:14:57.062Z"
 progress:
   total_phases: 18
   completed_phases: 17
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 15-03-PLAN.md — Phase 15 human verification approved; all 34 tests GREEN, search UI confirmed, scheduler verified via unit tests
 **Next action:** Determine next phase (see ROADMAP.md)
-**Stopped at:** Completed 16-04-PLAN.md — Phase 05.2 Time Tracking verification passed 3/3
+**Stopped at:** Completed 16-01-PLAN.md — Phase 01 retroactive verification written to 01-VERIFICATION.md
 
 ## Phase Progress
 
@@ -249,6 +249,8 @@ Phase 15 COMPLETE (3/3 plans). All v1.0 integration gap fixes shipped and verifi
 - [Phase 15]: Scheduler runtime verification accepted via unit tests when Bull Board not accessible — structural correctness sufficient for Phase 15 closure
 - [Phase 16-04]: Phase 05.2 TIME-01/02/03 all SATISFIED in live codebase — STATE.md 'Not started' was a state tracking error; ROADMAP.md completion date 2026-03-23 is correct
 - [Phase 16-04]: 2 Phase 05.2 human verifications remain open: CSV browser download trigger, live date range filter with seeded DB — these are verification steps, not implementation gaps
+- [Phase 16-01]: 10/11 Phase 01 requirements verified by code structure inspection — PostgreSQL unavailability does not invalidate code-level evidence
+- [Phase 16-01]: SET-04 API key secrecy requires human git audit — cannot confirm from source files alone; code protections in place (defensive delete, gitignore, API route never returns key value)
 
 ## Performance Metrics
 
