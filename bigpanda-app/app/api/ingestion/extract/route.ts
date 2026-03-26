@@ -24,6 +24,25 @@ import { extractDocumentText } from '@/lib/document-extractor';
 
 export const dynamic = 'force-dynamic';
 
+const CHUNK_CHAR_LIMIT = 80_000; // ~20k tokens; leaves headroom for system prompt + JSON output
+
+function splitIntoChunks(text: string, limit: number): string[] {
+  if (text.length <= limit) return [text];
+  const chunks: string[] = [];
+  let start = 0;
+  while (start < text.length) {
+    let end = start + limit;
+    if (end < text.length) {
+      // Break at a paragraph boundary to avoid cutting mid-sentence
+      const boundary = text.lastIndexOf('\n\n', end);
+      if (boundary > start) end = boundary;
+    }
+    chunks.push(text.slice(start, end).trim());
+    start = end;
+  }
+  return chunks.filter(c => c.length > 0);
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type EntityType =
@@ -363,74 +382,97 @@ export async function POST(request: NextRequest): Promise<Response> {
 
           sendEvent({ type: 'progress', message: 'Sending to Claude for entity extraction…' });
 
-          // 5. Build Claude message content
+          // 5. Build Claude client
           const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-          const userContent: Anthropic.MessageParam['content'] = [];
-
-          if (extractResult.kind === 'pdf') {
-            userContent.push({
-              type: 'document',
-              source: {
-                type: 'base64',
-                media_type: 'application/pdf',
-                data: extractResult.base64,
-              },
-            } as Anthropic.DocumentBlockParam);
-          } else {
-            userContent.push({
-              type: 'text',
-              text: `Document content:\n\n${extractResult.content}`,
+          // Helper: run one Claude streaming call and return accumulated text
+          const runClaudeCall = async (content: Anthropic.MessageParam['content']): Promise<string> => {
+            let fullText = '';
+            const claudeStream = client.messages.stream({
+              model: 'claude-sonnet-4-6',
+              max_tokens: 16384,
+              system: EXTRACTION_SYSTEM,
+              messages: [{ role: 'user', content }],
             });
-          }
+            claudeStream.on('text', (text: string) => { fullText += text; });
+            await claudeStream.finalMessage();
+            return fullText;
+          };
 
-          userContent.push({
-            type: 'text',
-            text: `Extract all structured project data from the document above. Output only the JSON array.`,
-          });
-
-          // 6. Stream Claude response — accumulate full text, do NOT parse mid-stream
-          let fullText = '';
-          const claudeStream = client.messages.stream({
-            model: 'claude-sonnet-4-6',
-            max_tokens: 16384,
-            system: EXTRACTION_SYSTEM,
-            messages: [{ role: 'user', content: userContent }],
-          });
-
-          claudeStream.on('text', (text: string) => {
-            fullText += text;
-          });
-
-          await claudeStream.finalMessage();
-
-          sendEvent({ type: 'progress', message: 'Parsing extraction results…' });
-
-          // 7. Parse complete JSON response (pitfall 3: never parse mid-stream)
-          // Robust extraction: strip fences, then fall back to finding first [...] in response.
-          let rawItems: ExtractionItem[] = [];
-          try {
-            // Strip markdown fences, then use jsonrepair to fix common LLM JSON issues
-            // (unescaped quotes, trailing commas, truncated arrays, special chars from DOCX)
-            const stripped = fullText.trim()
+          // Helper: parse a Claude response string into ExtractionItem[]
+          const parseClaudeResponse = (text: string): ExtractionItem[] => {
+            const stripped = text.trim()
               .replace(/^```(?:json)?\s*/i, '')
               .replace(/\s*```\s*$/, '')
               .trim();
             const repaired = jsonrepair(stripped);
             const parsed = JSON.parse(repaired);
-            if (Array.isArray(parsed)) {
-              rawItems = parsed as ExtractionItem[];
+            return Array.isArray(parsed) ? (parsed as ExtractionItem[]) : [];
+          };
+
+          // 6. Extract — PDF as a single native document block; text split into chunks
+          let allRawItems: ExtractionItem[] = [];
+
+          if (extractResult.kind === 'pdf') {
+            // PDF: single call, Claude handles it natively — no chunking needed
+            const userContent: Anthropic.MessageParam['content'] = [
+              {
+                type: 'document',
+                source: {
+                  type: 'base64',
+                  media_type: 'application/pdf',
+                  data: extractResult.base64,
+                },
+              } as Anthropic.DocumentBlockParam,
+              {
+                type: 'text',
+                text: `Extract all structured project data from the document above. Output only the JSON array.`,
+              },
+            ];
+            const fullText = await runClaudeCall(userContent);
+            sendEvent({ type: 'progress', message: 'Parsing extraction results…' });
+            try {
+              allRawItems = parseClaudeResponse(fullText);
+            } catch (e) {
+              console.error('[extract] JSON parse failed after repair attempt. Claude output (first 500 chars):', fullText.slice(0, 500));
+              sendEvent({ type: 'error', message: 'Claude returned non-JSON output' });
+              await db.update(artifacts).set({ ingestion_status: 'failed' }).where(eq(artifacts.id, artifactId));
+              controller.close();
+              return;
             }
-          } catch (e) {
-            console.error('[extract] JSON parse failed after repair attempt. Claude output (first 500 chars):', fullText.slice(0, 500));
-            sendEvent({ type: 'error', message: 'Claude returned non-JSON output' });
-            await db
-              .update(artifacts)
-              .set({ ingestion_status: 'failed' })
-              .where(eq(artifacts.id, artifactId));
-            controller.close();
-            return;
+          } else {
+            // Text: split into chunks and call Claude sequentially for each
+            const chunks = splitIntoChunks(extractResult.content, CHUNK_CHAR_LIMIT);
+            const totalChunks = chunks.length;
+
+            for (let i = 0; i < chunks.length; i++) {
+              sendEvent({ type: 'progress', message: `Extracting chunk ${i + 1} of ${totalChunks}…` });
+
+              const userContent: Anthropic.MessageParam['content'] = [
+                {
+                  type: 'text',
+                  text: `Document content:\n\n${chunks[i]}`,
+                },
+                {
+                  type: 'text',
+                  text: `Extract all structured project data from the document above. Output only the JSON array.`,
+                },
+              ];
+
+              const fullText = await runClaudeCall(userContent);
+
+              try {
+                const chunkItems = parseClaudeResponse(fullText);
+                allRawItems.push(...chunkItems);
+              } catch (e) {
+                console.error(`[extract] JSON parse failed for chunk ${i + 1}. Claude output (first 500 chars):`, fullText.slice(0, 500));
+                // Skip this chunk rather than aborting the whole extraction
+              }
+            }
           }
+
+          // 7. All chunks processed — allRawItems is the merged set
+          const rawItems = allRawItems;
 
           sendEvent({ type: 'progress', message: `Deduplicating ${rawItems.length} extracted items…` });
 
