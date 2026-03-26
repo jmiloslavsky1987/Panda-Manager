@@ -33,8 +33,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 ### v2.0 — AI Ingestion & Enhanced Operations
 
-- [x] **Phase 17: Schema Extensions** - 8 new DB tables (discovery_items, audit_log, business_outcomes, e2e_workflows, focus_areas, architecture_integrations, before_state, team_onboarding_status); extend time_entries, artifacts, scheduled_jobs (completed 2026-03-26)
-- [ ] **Phase 18: Document Ingestion** - File upload (PDF/DOCX/PPTX/XLSX/MD/TXT), Claude extraction, structured preview, approve/edit/reject per item, conflict detection, source attribution, incremental dedup
+- [ ] **Phase 17: Schema Extensions** - 8 new DB tables (discovery_items, audit_log, business_outcomes, e2e_workflows, focus_areas, architecture_integrations, before_state, team_onboarding_status); extend time_entries, artifacts, scheduled_jobs (2/3 plans complete)
+- [x] **Phase 18: Document Ingestion** - File upload (PDF/DOCX/PPTX/XLSX/MD/TXT), Claude extraction, structured preview, approve/edit/reject per item, conflict detection, source attribution, incremental dedup (completed 2026-03-26)
 - [ ] **Phase 19: External Discovery Scan** - Manual + scheduled MCP scan (Slack/Gmail/Glean/Gong), Claude analysis, Review Queue UI, approve/dismiss flow, conflict diff view, dismissal history
 - [ ] **Phase 20: Project Initiation Wizard** - Guided new-project wizard (7 steps): project creation, collateral upload + ingestion pipeline, extraction preview, manual fill, time tracking config, completeness score, launch
 - [ ] **Phase 21: Teams Tab + Architecture Tab** - Full DB-powered 5-section Team Engagement Map view; full DB-powered 2-tab Workflow Diagram; inline edit for all sections; skill exports updated to read from DB
@@ -413,12 +413,12 @@ Plans:
 **Plans**: 6 plans
 
 Plans:
-- [ ] 18-01-PLAN.md — Wave 0: Test scaffolds (all 12 ING stubs) + migration 0012 (source_artifact_id + ingested_at on entity tables)
-- [ ] 18-02-PLAN.md — Wave 1: Upload API (/api/ingestion/upload) + document-extractor lib
-- [ ] 18-03-PLAN.md — Wave 1: Extract API (/api/ingestion/extract) — Claude extraction with SSE streaming + dedup filter
-- [ ] 18-04-PLAN.md — Wave 2: Approve API (/api/ingestion/approve) — conflict detection + source attribution writes + ingestion log
-- [ ] 18-05-PLAN.md — Wave 3: Ingestion UI components (IngestionModal, Stepper, ExtractionPreview, ItemRow, EditForm)
-- [ ] 18-06-PLAN.md — Wave 4: ArtifactsDropZone wired onto Artifacts tab + human verification checkpoint
+- [x] 18-01-PLAN.md — Wave 0: Test scaffolds (all 12 ING stubs) + migration 0012 (source_artifact_id + ingested_at on entity tables)
+- [x] 18-02-PLAN.md — Wave 1: Upload API (/api/ingestion/upload) + document-extractor lib
+- [x] 18-03-PLAN.md — Wave 1: Extract API (/api/ingestion/extract) — Claude extraction with SSE streaming + dedup filter
+- [x] 18-04-PLAN.md — Wave 2: Approve API (/api/ingestion/approve) — conflict detection + source attribution writes + ingestion log
+- [x] 18-05-PLAN.md — Wave 3: Ingestion UI components (IngestionModal, Stepper, ExtractionPreview, ItemRow, EditForm)
+- [x] 18-06-PLAN.md — Wave 4: ArtifactsDropZone wired onto Artifacts tab + human verification checkpoint
 
 ### Phase 19: External Discovery Scan
 **Goal**: Users can trigger a scan across any combination of Slack, Gmail, Glean, and Gong for a project; Claude analyzes the results and surfaces structured findings in a Review Queue where each item can be approved or dismissed; approved items land in the DB with source attribution.
