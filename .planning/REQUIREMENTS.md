@@ -1,258 +1,192 @@
 # Requirements: BigPanda AI Project Management App
 
-**Defined:** 2026-03-18
+**Defined:** 2026-03-25
+**Milestone:** v2.0 — AI Ingestion & Enhanced Operations
 **Core Value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
 
-## v1 Requirements
+---
 
-### Data Foundation
+## v2.0 Requirements
 
-- [x] **DATA-01**: Database schema implements all tables from briefing (projects, workstreams, actions, risks, milestones, artifacts, history, stakeholders, tasks, plan_templates, outputs, knowledge_base) with PostgreSQL RLS enforced at DB layer
-- [x] **DATA-02**: Append-only tables (engagement_history, key_decisions) are enforced by DB trigger — not application convention
-- [x] **DATA-03**: Migration script imports all three existing customer context docs (YAML frontmatter → DB) with source tracing preserved
-- [x] **DATA-04**: Migration script imports PA3_Action_Tracker.xlsx (two-sheet format) into actions table
-- [x] **DATA-05**: Context doc export: DB → YAML frontmatter Markdown with exact js-yaml settings (sortKeys: false, lineWidth: -1, JSON_SCHEMA) — round-trip fidelity with Cowork skills
-- [x] **DATA-06**: Multi-account architecture: user can add new projects, close completed ones (archived as read-only), with no hardcoded customer names anywhere in the codebase
-- [x] **DATA-07**: Idempotency key and status field on outputs table (created immediately as 'running') to prevent duplicate skill runs on SSE reconnect
-- [x] **DATA-08**: PostgreSQL connection pool implemented as singleton — no per-request pool creation
+### SCHEMA — Data Model Extensions
+*Foundation for all other v2.0 features. Must land in the first phase.*
 
-### Dashboard
+- [ ] **SCHEMA-01**: DB gains `discovery_items` table (id, project_id, source, content, suggested_field, suggested_value, status: pending/approved/dismissed, scan_timestamp, source_url)
+- [ ] **SCHEMA-02**: DB gains `audit_log` table (id, entity_type, entity_id, action, actor_id, before_json, after_json, timestamp)
+- [ ] **SCHEMA-03**: `time_entries` extended with submitted_on, submitted_by, approved_on, approved_by, rejected_on, rejected_by, locked (boolean)
+- [ ] **SCHEMA-04**: `artifacts` table extended with ingestion_status (pending/extracting/preview/approved/failed) and ingestion_log_json
+- [ ] **SCHEMA-05**: `scheduled_jobs` extended with last_run_outcome (success/failure/partial), run_history_json, timezone, skill_params_json
+- [ ] **SCHEMA-06**: DB gains `business_outcomes` table (id, project_id, title, track, description, delivery_status, mapping_note)
+- [ ] **SCHEMA-07**: DB gains `e2e_workflows` table (id, project_id, team_name, workflow_name) with child `workflow_steps` (id, workflow_id, label, track, status, position)
+- [ ] **SCHEMA-08**: DB gains `focus_areas` table (id, project_id, title, tracks, why_it_matters, current_status, next_step, bp_owner, customer_owner)
+- [ ] **SCHEMA-09**: DB gains `architecture_integrations` table (id, project_id, tool_name, track, phase, status, integration_method, notes)
+- [ ] **SCHEMA-10**: DB gains `before_state` table (id, project_id, aggregation_hub_name, alert_to_ticket_problem, pain_points_json)
+- [ ] **SCHEMA-11**: DB gains `team_onboarding_status` table (id, project_id, team_name, track, ingest_status, correlation_status, incident_intelligence_status, sn_automation_status, biggy_ai_status)
 
-- [x] **DASH-01**: Today's Briefing panel displays stored morning-briefing result; refreshable on demand
-- [x] **DASH-02**: Project Health cards for all active accounts showing auto-derived RAG status, one-line summary, and open high-priority action count
-- [x] **DASH-03**: Health score auto-derived from data signals: overdue actions, stalled milestones (no progress in 14+ days), and unresolved high-severity risks — no manual RAG entry required
-- [x] **DASH-04**: Cross-project Risk Heat Map (probability × impact matrix) across all active accounts visible on dashboard
-- [x] **DASH-05**: Cross-Account Watch List showing escalated or time-sensitive items spanning multiple customers
-- [x] **DASH-06**: Recent Activity Feed showing last 7 days of skill runs, file outputs, and history entries across all projects
-- [x] **DASH-07**: Quick Action Bar with one-click buttons: Run Tracker, Generate Briefing, Weekly Status Draft (per active account)
-- [x] **DASH-08**: In-app notification badge for overdue actions, approaching go-live dates (within 14 days), and new tracker results
-- [x] **DASH-09**: Drafts Inbox — unified queue of all AI-generated drafts (emails, Slack messages) pending review before send; no AI content reaches external parties without passing through this queue
+### INGESTION — Document Ingestion
+*Net new — no file upload or AI extraction capability exists today.*
 
-### Project Workspace
+- [ ] **ING-01**: User can upload one or more files (PDF, DOCX, PPTX, XLSX, MD, TXT) via drag-and-drop or file browse from the project Artifacts tab
+- [ ] **ING-02**: Platform validates file type and size (max 50 MB per file) before accepting upload; shows a clear error on rejection
+- [ ] **ING-03**: Uploaded files are stored on disk at the configured workspace path and an Artifact record is created in the DB with ingestion_status: pending
+- [ ] **ING-04**: Claude extracts structured project data from the document targeting all entity types: actions, risks, decisions, stakeholders, milestones, tasks, architecture notes, engagement history, business outcomes, team data
+- [ ] **ING-05**: Extraction results are shown as a structured preview grouped by destination tab, with a confidence indicator per item and the source text excerpt
+- [ ] **ING-06**: User can approve, edit, or reject each extracted item individually before it is written to the DB
+- [ ] **ING-07**: User can bulk-approve all extracted items in one action after reviewing the preview
+- [ ] **ING-08**: Platform detects conflicts with existing records and prompts: merge, replace, or skip — not a silent overwrite
+- [ ] **ING-09**: Confirmed items are written to the appropriate DB tables with source attribution (filename, upload timestamp) and the artifact_id as source reference
+- [ ] **ING-10**: Each ingestion event is logged: filename, upload time, items extracted, approved, rejected; artifact.ingestion_log_json updated
+- [ ] **ING-11**: Uploading a new version of a previously ingested document triggers the preview-and-confirm flow — no silent overwrite of existing data
+- [ ] **ING-12**: Incremental uploads only surface net-new items not already present in the DB — already-ingested data is not re-presented
 
-- [x] **WORK-01**: Overview tab — workstream progress bars (ADR and Biggy tracks), milestone timeline, auto-derived health status, go-live target *(superseded by OVER-01 in Phase 5.1 — original implementation complete, replaced by onboarding dashboard)*
-- [x] **WORK-02**: Actions tab — filterable by status/owner/due date, inline editing (complete, add notes, change owner), every save syncs to PA3_Action_Tracker.xlsx atomically (dual-write)
-- [x] **WORK-03**: Risks tab — risk register with append-only mitigation log, inline severity/status editing, full mitigation history visible per risk
-- [x] **WORK-04**: Milestones tab — milestone tracker with action links, status indicators, completion history
-- [x] **WORK-05**: Teams tab — team onboarding status table (ADR + Biggy tracks) with onboarding velocity view showing time-in-phase and stall detection (team in same phase 14+ days with no logged activity)
-- [x] **WORK-06**: Architecture tab — Before BigPanda state documentation and current integration status summary, editable inline
-- [x] **WORK-07**: Decisions tab — append-only key decisions and alignments, searchable, never deletable
-- [x] **WORK-08**: Engagement History tab — append-only history entries with date/source, add new entries from pasted notes or transcripts
-- [x] **WORK-09**: Stakeholders tab — BigPanda and customer contacts roster with add/edit for name, role, email, Slack ID, notes
+### DISC — External Discovery Scan
+*Net new — MCP connectors (Slack, Gmail, Glean, Gong) exist and are unchanged; scan logic and review queue are new.*
 
-### Onboarding Dashboard
+- [ ] **DISC-01**: User can manually trigger a discovery scan for any project via a "Scan for Updates" button in the project sidebar
+- [ ] **DISC-02**: Discovery scan can be configured as a recurring scheduled job per project via the Scheduler (SCHED-01)
+- [ ] **DISC-03**: Per-project scan configuration defines which sources to include: Slack, Gmail, Glean, Gong (any combination)
+- [ ] **DISC-04**: Platform shows an in-app notification when a scan completes and items are pending review
+- [ ] **DISC-05**: Slack scan: searches configured channels for messages mentioning the project or customer name since the last scan timestamp; retrieves full thread context for matching messages
+- [ ] **DISC-06**: Gmail scan: searches inbox for emails matching project or customer keywords since the last scan timestamp; retrieves full email threads
+- [ ] **DISC-07**: Glean scan: searches for documents and content matching the project name since the last scan timestamp
+- [ ] **DISC-08**: Gong scan: retrieves call transcripts for the customer since the last scan timestamp
+- [ ] **DISC-09**: Claude analyzes all scan results and identifies: action items, decisions, risks, blockers, status updates — outputs structured DiscoveryItem records
+- [ ] **DISC-10**: Review Queue page accessible from the project sidebar and from a global notification badge showing pending item count
+- [ ] **DISC-11**: Each queue item displays: source tool, date found, source excerpt, suggested destination tab/field, Claude's extracted value
+- [ ] **DISC-12**: User can Approve, Edit then Approve, or Dismiss each queue item individually
+- [ ] **DISC-13**: User can bulk-approve all items in the queue in one action
+- [ ] **DISC-14**: Approved items are written to the appropriate DB tables with source attribution (source tool, scan timestamp)
+- [ ] **DISC-15**: Dismissed items are retained in dismissal history (status = dismissed) — not permanently deleted
+- [ ] **DISC-16**: Queue items have no expiry — they remain pending until explicitly acted upon
+- [ ] **DISC-17**: When a discovered item conflicts with an existing record, a side-by-side diff view is shown before the merge/replace/skip prompt
 
-- [x] **OVER-01**: Overview tab replaced with a dynamic onboarding status dashboard — shows onboarding phases/steps with filter/search controls, integration tracker, risks & blockers, milestone timeline, executive summary, and animated progress ring (% of steps complete); all data drawn live from PostgreSQL
-- [x] **OVER-02**: Onboarding phases and steps editable in-app — step status (not-started / in-progress / complete / blocked), owner, and append-only update notes per step; phases themselves are static labels (not added/deleted frequently)
-- [x] **OVER-03**: Integration tracker — per-customer list of tools with 4-stage pipeline (Not Connected → Configured → Validated → Production) plus blocked state; tool name, category, status, and notes editable in-app
-- [x] **OVER-04**: `onboarding_phases` and `integrations` YAML sections imported by migration script when present in context doc; in-app status/owner/notes edits written back to the project YAML context doc on save
+### WIZ — Project Initiation Wizard
+*Net new — projects are currently created by manually seeding the DB; there is no guided onboarding flow.*
 
-### Time Tracking
+- [ ] **WIZ-01**: User can create a new project via a guided multi-step wizard accessible from the Dashboard; the wizard replaces direct DB seed as the primary new-project flow
+- [ ] **WIZ-02**: Wizard step 1 captures: project name, customer name, status, start date, expected end date, description; creates Project and initialises all tab data structures in DB
+- [ ] **WIZ-03**: Wizard presents the recommended collateral checklist (SOW, Kickoff Deck, Discovery Notes, Presales Notes, Customer Org Chart, Prior Tracker, Gong Transcripts, Architecture Diagram Notes, Budget Sheet) and triggers the ingestion pipeline for each uploaded file
+- [ ] **WIZ-04**: Wizard shows AI extraction preview grouped by destination tab across all uploaded documents; user approves before any data is written to DB
+- [ ] **WIZ-05**: Wizard step allows manual addition of items not captured in documents via inline forms per tab
+- [ ] **WIZ-06**: Wizard step configures time tracking for the project: weekly capacity, working days, submission due date, approver
+- [ ] **WIZ-07**: Wizard launch step shows a completeness summary; clicking "Launch Project" sets project status to Active
+- [ ] **WIZ-08**: Platform calculates a Project Completeness Score (0–100%) based on the proportion of tabs that have at least one populated record
+- [ ] **WIZ-09**: Completeness score is visible on the project Overview tab; a prompt appears when score falls below 60% identifying specific gaps
 
-- [x] **TIME-01**: Time tab (12th workspace tab) — time log for the project showing entries table (date, hours, description), total hours in header, filterable by date range
-- [x] **TIME-02**: Add, edit, and delete time entries — entry fields: date (defaults to today), hours (decimal, e.g. 1.5), free-text description
-- [x] **TIME-03**: Export time entries for a project as CSV with columns: date, hours, description, project name
+### TTADV — Time Tracking Advanced
+*Extends the existing basic time entry tab (Phase 5.2/14). The entry grid exists; approval, calendar integration, admin config, and notifications do not.*
 
-### Skill Launcher
+- [ ] **TTADV-01**: Admin can enable/disable time tracking globally from Settings > Time Tracking; disabled by default for new installs
+- [ ] **TTADV-02**: Admin can configure: weekly capacity (hours), working days, submission due date/time, and reminder frequency
+- [ ] **TTADV-03**: Admin can create and manage custom time entry categories (e.g., Development, QA, Discovery, Meetings)
+- [ ] **TTADV-04**: Admin can restrict time entry to assigned projects only and filter by project status (e.g., Active only)
+- [ ] **TTADV-05**: Admin can designate specific team members as exempt from submission requirements and reminders
+- [ ] **TTADV-06**: Admin can lock timesheets after approval, preventing further edits without explicit unlock
+- [ ] **TTADV-07**: User can submit their timesheet for the current week via a "Submit Week for Approval" action
+- [ ] **TTADV-08**: Approver can approve or reject individual time entries and can approve/reject in bulk
+- [ ] **TTADV-09**: Approver can submit a timesheet on behalf of a team member
+- [ ] **TTADV-10**: Approved time entries are locked for editing unless the approver or admin explicitly overrides
+- [ ] **TTADV-11**: User can authenticate with Google Calendar via OAuth and import events from the current week as draft time entries
+- [ ] **TTADV-12**: System auto-matches each imported calendar event to a project by comparing event attendees against project participant lists; pre-populates for user review
+- [ ] **TTADV-13**: User can override the auto-matched project or assign unmatched events to any project or mark as non-project activity
+- [ ] **TTADV-14**: Imported time entries are created on the event date, not the import date
+- [ ] **TTADV-15**: Approver can bulk-approve, bulk-reject, bulk-move (between projects), and bulk-delete time entries
+- [ ] **TTADV-16**: Time entry table is exportable to CSV and Excel; export includes audit fields (submitted/approved/rejected on/by)
+- [ ] **TTADV-17**: Table supports grouping by: project, team member, status, role, phase, or task — with billable/non-billable subtotals per group
+- [ ] **TTADV-18**: Submission reminder notifications are sent before the due date and again when overdue (exempt users excluded)
+- [ ] **TTADV-19**: Approval and rejection notifications are sent to the submitting user with a summary
 
-- [x] **SKILL-01**: SkillOrchestrator service cleanly separated from HTTP Route Handlers — same code path for manual (SSE) and BullMQ-worker (scheduled) invocations
-- [x] **SKILL-02**: Token budget guard in context assembly — estimates token count before Claude call, truncates or summarizes low-priority context sections if over budget
-- [x] **SKILL-03**: Weekly Customer Status — select account → generate customer-facing email from DB context; copy to clipboard or save as file; optionally creates Gmail draft
-- [x] **SKILL-04**: Meeting Summary — paste notes/transcript + select account → generate .docx + optional .mermaid diagram; registers entry in engagement history
-- [x] **SKILL-05**: ELT External Status — select account + month → generate 5-slide .pptx (confidence-framed, partnership tone, no internal severity language)
-- [x] **SKILL-06**: ELT Internal Status — select account + date → generate internal .pptx (direct tone, surfaces blockers)
-- [x] **SKILL-07**: Team Engagement Map — select account → generate self-contained HTML (business outcomes, ADR/Biggy flows, team status table)
-- [x] **SKILL-08**: Workflow Diagram — select account → generate before/after HTML with two tabs
-- ~~**SKILL-09**: Biggy Weekly Briefing~~ *(moved to v2 — see v2 Requirements)*
-- [x] **SKILL-10**: Customer Project Tracker — run for one account or all active; sweeps Gmail/Slack/Gong for last 7 days; updates actions table and PA3_Action_Tracker.xlsx; shows structured report
-- [x] **SKILL-11**: Morning Briefing — fetch today's calendar via Glean, synthesize per-meeting context, store result in DB, display in Dashboard Briefing panel
-- [x] **SKILL-12**: Context Updater — paste notes/transcript + select account → apply all 14 update steps → write to DB → export updated context doc to file; registers in engagement history
-- [x] **SKILL-13**: Handoff Doc Generator — select account → generate structured handoff/coverage doc covering open actions, risks, key decisions, key contacts, and current workstream status
-- [x] **SKILL-14**: SKILL.md files read from disk at runtime (skill_path configurable in settings); prompts never modified or simplified in code
+### SCHED — Scheduler Enhanced
+*Extends the existing basic scheduler (Phases 4/15). The job runner and cron engine exist; the configurable UI, run history, and admin view do not.*
 
-### Output Library
+- [ ] **SCHED-01**: User can create a new scheduled job via a "Create Job" wizard from the Scheduler page
+- [ ] **SCHED-02**: Supported job frequencies: once, daily, weekly (pick day), bi-weekly, monthly (pick day of month), custom cron expression
+- [ ] **SCHED-03**: Each job has a configurable run time (hour + minute) with timezone support; defaults to browser timezone on creation
+- [ ] **SCHED-04**: Each job supports skill-specific configuration parameters (e.g., which project to scope, which Slack channels to scan, which customer)
+- [ ] **SCHED-05**: Jobs can be enabled or disabled without deleting them; disabled jobs do not run but retain their config and history
+- [ ] **SCHED-06**: Any job can be manually triggered on demand regardless of its next scheduled run time
+- [ ] **SCHED-07**: Scheduler UI shows per job: Last Run timestamp, Last Run Outcome (success/failure/partial), and Next Run time
+- [ ] **SCHED-08**: Failed job runs generate an in-app notification to the job creator with an error summary
+- [ ] **SCHED-09**: Each job maintains a run history log: run time, outcome, duration, and links to output artifacts or error messages
+- [ ] **SCHED-10**: Scheduler page is accessible from the main sidebar navigation
+- [ ] **SCHED-11**: Create Job wizard guides through: skill selection, scope (global/per-project/per-user), frequency, time, and skill-specific parameters
+- [ ] **SCHED-12**: All 12 skills are schedulable via the wizard: Morning Briefing, Customer Project Tracker, Weekly Customer Status, ELT External, ELT Internal, Biggy Weekly Briefing, Context Updater, Meeting Summary, Workflow Diagram, Team Engagement Map, Discovery Scan, Timesheet Reminder
 
-- [x] **OUT-01**: All generated files registered in outputs table with account, skill/type, filename, filepath, created_at
-- [x] **OUT-02**: Output Library view filterable by account, skill type, and date range
-- [x] **OUT-03**: HTML output files render inline in the app; .docx and .pptx open via system default app
-- [x] **OUT-04**: Regenerate action re-runs the generating skill with same or updated context; old file archived, new one registered
+### AUDIT — Source Attribution & Audit Trail
+*Extends all workspace tabs; requires SCHEMA-01 and SCHEMA-02 to be in place first.*
 
-### Project Plan & Task Builder
+- [ ] **AUDIT-01**: All workspace tab records display a source badge: "Manual", "Ingested — [filename]", or "Discovered — [source tool]"
+- [ ] **AUDIT-02**: All data modifications (create, update, delete) on workspace records are written to audit_log with actor, timestamp, entity, and before/after JSON values
+- [ ] **AUDIT-03**: Deletion of any workspace record requires a confirmation dialog and is always logged to audit_log
 
-- [x] **PLAN-01**: Task creation with title, description, owner, due date, priority (high/medium/low), type (technical/organizational/customer-facing), linked milestone
-- [x] **PLAN-02**: Phase Board — Kanban-style with columns per delivery phase; workstream cards draggable between phases
-- [x] **PLAN-03**: Task Board — scoped to phase/workstream; columns: To Do / In Progress / Blocked / Done
-- [x] **PLAN-04**: Gantt Timeline — milestones and workstreams across configurable date range; color-coded by status; milestone dependency lines
-- [x] **PLAN-05**: Team swimlane view — tasks organized by team with current status and upcoming due dates
-- [x] **PLAN-06**: Task dependencies — mark task as blocked by another; dependency chains visualized in Gantt and Task Board
-- [x] **PLAN-07**: Bulk operations — select multiple tasks, reassign owner, change due date, move to different phase
-- [x] **PLAN-08**: Task templates — one-click instantiation for Biggy Activation, ADR Onboarding, Team Kickoff workstreams
-- [x] **PLAN-09**: Progress rollup — task completion → workstream percent_complete → project health score automatically
-- [x] **PLAN-10**: Excel plan import from .xlsx (KAISER_Biggy_Project_Plan format) mapping columns to task schema
-- [x] **PLAN-11**: Plan export to .xlsx in the same format as the Kaiser plan
-- [x] **PLAN-12**: AI-assisted plan generation — given current project context, generates suggested task list for next 2 weeks scoped to current phase and open blockers
-- [x] **PLAN-13**: Weekly sprint summary — plain-English summary of last week's completions, this week's due tasks, and at-risk items
+### TEAMS — Teams Tab: Team Engagement Map View
+*Replaces the existing basic Teams tab with a rich, DB-powered 5-section engagement view. The team-engagement-map skill is updated to export from DB.*
 
-### Cross-Project Knowledge Base
+- [ ] **TEAMS-01**: Teams tab renders a 5-section Team Engagement Map view: (1) Business Value & Expected Outcomes, (2) Architecture overview (ADR + Biggy panels), (3) End-to-End Workflows, (4) Teams & Engagement Status cards, (5) Top Focus Areas
+- [ ] **TEAMS-02**: Business Value & Outcomes section renders outcome cards with: icon + title, track pills (ADR/Biggy/Both), delivery status badge (Live/In Progress/Blocked/Planned), and a mapping note — all sourced from DB, not inferred or generic
+- [ ] **TEAMS-03**: Architecture section within the Teams tab shows ADR panel (left, blue) and Biggy panel (right, purple) side by side, each listing integration nodes with live/in-progress/planned status using the defined design tokens
+- [ ] **TEAMS-04**: End-to-End Workflows section renders per-team step sequences with track ownership (ADR blue / Biggy purple) and status per step; arrows connect steps
+- [ ] **TEAMS-05**: Teams & Engagement Status section renders one card per team with: ADR track status items, Biggy track status items (if applicable), E2E workflow note (if applicable), top 2–3 open items as plain text (no ticket IDs), and footer status tags
+- [ ] **TEAMS-06**: Top Focus Areas section renders 3–5 cards with: title, track pills, why it matters (1–2 sentences), current status + next step, and named owners (customer-side and BigPanda-side)
+- [ ] **TEAMS-07**: Any section that cannot be fully populated from DB renders a visible yellow warning banner inside that section — content is never silently omitted or replaced with generic copy
+- [ ] **TEAMS-08**: Users can add and edit business outcomes, E2E workflow steps, focus areas, and team card data inline within the Teams tab (same optimistic-UI pattern as all other tabs)
+- [ ] **TEAMS-09**: For AMEX, the Teams tab enforces the canonical 8-team structure and order: ITSM & Platform Ops, Loyalty, Observability & Monitoring, OETM/Infrastructure, MIM Team, Global Remittance, Merchant Domain, Change Management
+- [ ] **TEAMS-10**: team-engagement-map skill is updated to read from DB (business_outcomes, e2e_workflows, focus_areas, team card data) and generate a self-contained HTML export of the same 5-section view
+- [ ] **TEAMS-11**: Design tokens applied consistently: ADR `#1e40af`/`#eff6ff`/`#bfdbfe`, Biggy `#6d28d9`/`#f5f3ff`/`#ddd6fe`, E2E `#065f46`/`#ecfdf5`/`#6ee7b7`, with Live/In Progress/Blocked/Planned status colors
 
-- [x] **KB-01**: Shared knowledge base spanning all accounts — capture patterns, solutions, and customer-handling notes that apply across projects
-- [x] **KB-02**: Knowledge base entries are searchable and linkable to specific risks or engagement history entries
-- [x] **KB-03**: Knowledge base entries carry source_trace (which project, which event, date captured)
+### ARCH — Architecture Tab: Workflow Diagram View
+*Replaces the existing basic Architecture tab with a rich, DB-powered 2-tab before/after diagram. The workflow-diagram skill is updated to export from DB.*
 
-### Search
+- [ ] **ARCH-01**: Architecture tab renders a two-tab Workflow Diagram: "Before BigPanda" (grey dot) and "Current & Future State" (green dot); tab switching works without page reload
+- [ ] **ARCH-02**: Before BigPanda tab renders a horizontal 5-phase flow: Event Sources → Aggregation Hub → Ticket Creation → Incident Response → Resolution — all tool names sourced from customer DB data, no placeholders
+- [ ] **ARCH-03**: Before BigPanda tab renders 5–6 customer-specific pain point cards below the phase flow (sourced from before_state.pain_points — no generic placeholders)
+- [ ] **ARCH-04**: Current & Future State tab renders the ADR Track (5 phase columns with status pills on each node) separated from Biggy AI Track by a full-width bold amber divider labeled "↓ BIGGY AI TRACK ↓"
+- [ ] **ARCH-05**: ADR Track renders phase columns: Event Ingest → Alert Intelligence (Normalization sub-group + Correlation sub-group) → Incident Intelligence → Console (🐼 BigPanda Console) → Workflow Automation — each node shows tool name, method, and status pill
+- [ ] **ARCH-06**: Biggy AI Track renders phase columns: Knowledge Sources (Ingested) → Real-Time Query Sources → Biggy Capabilities → Console (🤖 Biggy AI Console) → Outputs & Actions — each node shows integration name and status pill
+- [ ] **ARCH-07**: Team Onboarding Status table rendered below both tracks — columns: Team / Ingest & Normalization / Alert Correlation / Incident Intelligence / SN Automation / Biggy AI; split into ADR Track section (blue header) and Biggy AI Track section (amber header) with a dot legend
+- [ ] **ARCH-08**: All integration/capability nodes carry status pills: LIVE (green `#dcfce7`/`#14532d`) / In Progress (amber `#fef3c7`/`#92400e`) / Pilot (same as In Progress) / Planned (gray `#f1f5f9`/`#475569`)
+- [ ] **ARCH-09**: Users can add and edit integration nodes, before-state data, pain points, and team onboarding status inline within the Architecture tab
+- [ ] **ARCH-10**: workflow-diagram skill is updated to read from DB (architecture_integrations, before_state, team_onboarding_status) and generate a self-contained HTML export of the same 2-tab diagram
+- [ ] **ARCH-11**: Customer-specific rules applied: Kaiser ADR panel shows "live in production" framing (not onboarding flow); Amex Before tab shows "Sahara" as the orange aggregation hub; Merck renders mostly Planned status
+- [ ] **ARCH-12**: Architecture tab view renders self-contained when exported — no external CSS/JS dependencies; correct at 1280px and 1600px widths
 
-- [x] **SRCH-01**: Full-text search using PostgreSQL tsvector/tsquery across actions, risks, decisions, engagement history, stakeholders, artifacts, tasks, and knowledge base
-- [x] **SRCH-02**: Search filterable by account, date range, and data type
-- [x] **SRCH-03**: Search results show matching record in full context (which project, which section, which date)
+---
 
-### Scheduled Intelligence
+## Deferred to v2.1
 
-- [x] **SCHED-01**: BullMQ worker process as dedicated process alongside Next.js app — not in-process cron; persists across restarts; no duplicate firing on multi-instance deploy
-- [x] **SCHED-02**: Daily 8am: Morning Briefing background job — result stored in DB, surfaced in dashboard
-- [x] **SCHED-03**: Daily 8am: Cross-account health check — flag status changes, approaching due dates, overdue actions
-- [x] **SCHED-04**: Daily 9am: Overnight Slack + Gmail sweep for customer messages
-- [x] **SCHED-05**: Monday 7am: Full Customer Project Tracker run for all active accounts
-- [x] **SCHED-06**: Thursday 4pm: Weekly Status Draft generation for all active accounts; creates Gmail drafts; notifies dashboard
-- [x] **SCHED-07**: Friday 9am: Biggy Weekly Briefing generation; stores in Output Library
-- [x] **SCHED-08**: All schedule times configurable via Settings; jobs have queryable status (pending/running/completed/failed) visible in UI
-
-### Settings
-
-- [x] **SET-01**: Workspace path configuration (default: ~/Documents/BigPanda Projects/) — where output files are saved
-- [x] **SET-02**: Skill file location configuration (default: ~/.claude/get-shit-done/) — where SKILL.md files are read from
-- [x] **SET-03**: Schedule time configuration for each background job
-- [x] **SET-04**: Anthropic API key stored securely (not in .env committed to git; system keychain or local secrets file)
-
-## v2 Requirements
-
-### Deferred from v1
-
-- **SKILL-09**: Biggy Weekly Briefing — select modules → generate .docx + email draft + Slack draft (three outputs in one run); deferred from Phase 7 — no SKILL.md, no handler, not in WIRED_SKILLS
-
-### Team Expansion
-
-- **TEAM-01**: JWT-based auth for multi-user access (when expanding beyond Josh to full PS team)
-- **TEAM-02**: Per-user notification preferences
-- **TEAM-03**: Collaborative editing with conflict resolution on shared project records
-
-### Enhanced Intelligence
-
-- **AI-01**: QBR deck generator (quarterly retrospective, value-realization focused)
-- **AI-02**: Automated prompt injection detection layer for external content processed by skills
-- **AI-03**: Skill performance benchmarking and quality scoring
-
-### Integrations
-
-- **INT-01**: Webhook triggers — new Slack message in customer channel triggers lightweight context update
-- **INT-02**: Calendar write-back — create follow-up meeting from within the app
+- User Access & Roles: multi-user auth (email+password, Google OAuth login), RBAC (Admin/Project Owner/User roles), user invitation flow, per-user project scoping
+- Approver hierarchy (TT-205): single approver sufficient for v2.0 single-user context
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Customer-facing read-only portal | External access adds auth/hosting complexity; email updates sufficient for v1 |
-| QBR deck generator | External ELT deck covers the need; defer to v2 |
-| JWT/SSO auth | Single-user initially; add when expanding to team |
-| Real-time collaborative editing | Single-user; adds WebSocket complexity with no immediate benefit |
-| Mobile app | Web-first; localhost deployment model makes mobile impractical |
-| Hardcoded customer list | App is fully data-driven; Kaiser/AMEX/Merck are initial seed data only |
-| Separate MCP server processes | Anthropic SDK tools array IS the MCP protocol — no extra processes needed |
+| Microsoft Outlook Calendar integration | Permanently excluded — BRD explicit exclusion |
+| Custom role builder | Post-launch roadmap item — BRD explicit exclusion |
+| Customer-facing read-only portal | Auth complexity; email updates sufficient |
+| QBR deck generator | External ELT deck covers the need |
 
 ## Traceability
 
+*Populated by roadmapper agent.*
+
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | Phase 16 | Complete |
-| DATA-02 | Phase 16 | Complete |
-| DATA-03 | Phase 16 | Complete |
-| DATA-04 | Phase 16 | Complete |
-| DATA-05 | Phase 15/16 | Complete |
-| DATA-06 | Phase 16 | Complete |
-| DATA-07 | Phase 16 | Complete |
-| DATA-08 | Phase 16 | Complete |
-| SET-01 | Phase 16 | Complete |
-| SET-02 | Phase 10 | Complete |
-| SET-03 | Phase 16 | Complete |
-| SET-04 | Phase 16 | Complete |
-| DASH-01 | Phase 2 | Complete |
-| DASH-02 | Phase 2 | Complete |
-| DASH-03 | Phase 2 | Complete |
-| DASH-06 | Phase 2 | Complete |
-| DASH-07 | Phase 2 | Complete |
-| DASH-08 | Phase 2 | Complete |
-| WORK-01 | Phase 2 | Complete |
-| WORK-03 | Phase 2 | Complete |
-| WORK-04 | Phase 2 | Complete |
-| WORK-05 | Phase 2 | Complete |
-| WORK-06 | Phase 2 | Complete |
-| WORK-07 | Phase 2 | Complete |
-| WORK-08 | Phase 2 | Complete |
-| WORK-09 | Phase 2 | Complete |
-| WORK-02 | Phase 3 | Complete |
-| PLAN-01 | Phase 3 | Complete |
-| PLAN-02 | Phase 3 | Complete |
-| PLAN-03 | Phase 3 | Complete |
-| PLAN-04 | Phase 3 | Complete |
-| PLAN-05 | Phase 3 | Complete |
-| PLAN-06 | Phase 3 | Complete |
-| PLAN-07 | Phase 3 | Complete |
-| PLAN-08 | Phase 3 | Complete |
-| PLAN-09 | Phase 11 | Complete |
-| PLAN-10 | Phase 3 | Complete |
-| PLAN-11 | Phase 3 | Complete |
-| SCHED-01 | Phase 15/16 | Complete |
-| SCHED-02 | Phase 16 | Complete |
-| SCHED-03 | Phase 15/16 | Complete |
-| SCHED-04 | Phase 16 | Complete |
-| SCHED-05 | Phase 16 | Complete |
-| SCHED-06 | Phase 16 | Complete |
-| SCHED-07 | Phase 16 | Complete |
-| SCHED-08 | Phase 16 | Complete |
-| SKILL-01 | Phase 9 | Complete |
-| SKILL-02 | Phase 16 | Complete |
-| SKILL-03 | Phase 9 | Complete |
-| SKILL-04 | Phase 9 | Complete |
-| SKILL-11 | Phase 9 | Complete |
-| SKILL-12 | Phase 9 | Complete |
-| SKILL-13 | Phase 5 | Complete |
-| SKILL-14 | Phase 15/16 | Complete |
-| DASH-09 | Phase 5 | Complete |
-| OUT-01 | Phase 16 | Complete |
-| OUT-02 | Phase 16 | Complete |
-| OUT-03 | Phase 16 | Complete |
-| OUT-04 | Phase 16 | Complete |
-| OVER-01 | Phase 5.1 | Complete |
-| OVER-02 | Phase 5.1 | Complete |
-| OVER-03 | Phase 5.1 | Complete |
-| OVER-04 | Phase 5.1 | Complete |
-| TIME-01 | Phase 16 | Complete |
-| TIME-02 | Phase 16 | Complete |
-| TIME-03 | Phase 16 | Complete |
-| SKILL-10 | Phase 16 | Complete |
-| DASH-04 | Phase 16 | Complete |
-| DASH-05 | Phase 16 | Complete |
-| SKILL-05 | Phase 7 | Complete |
-| SKILL-06 | Phase 7 | Complete |
-| SKILL-07 | Phase 7 | Complete |
-| SKILL-08 | Phase 7 | Complete |
-| SKILL-09 | v2 | Deferred |
-| PLAN-12 | Phase 7 | Complete |
-| PLAN-13 | Phase 7 | Complete |
-| KB-01 | Phase 8 | Complete |
-| KB-02 | Phase 8 | Complete |
-| KB-03 | Phase 8 | Complete |
-| SRCH-01 | Phase 10 | Complete |
-| SRCH-02 | Phase 8 | Complete |
-| SRCH-03 | Phase 8 | Complete |
+| SCHEMA-01 through SCHEMA-11 | TBD | Pending |
+| ING-01 through ING-12 | TBD | Pending |
+| DISC-01 through DISC-17 | TBD | Pending |
+| WIZ-01 through WIZ-09 | TBD | Pending |
+| TTADV-01 through TTADV-19 | TBD | Pending |
+| SCHED-01 through SCHED-12 | TBD | Pending |
+| AUDIT-01 through AUDIT-03 | TBD | Pending |
+| TEAMS-01 through TEAMS-11 | TBD | Pending |
+| ARCH-01 through ARCH-12 | TBD | Pending |
 
 **Coverage:**
-- v1 requirements enumerated: 81 (DATA:8, DASH:9, WORK:9, OVER:4, TIME:3, SKILL:13, OUT:4, PLAN:13, KB:3, SRCH:3, SCHED:8, SET:4) — SKILL-09 moved to v2
-- Mapped to phases: 81
-- Unmapped: 0
-- Verified (3-source): 50/81 — 31 pending gap closure via Phases 15–16
-
-> Note: Added OVER-01–04 (Onboarding Dashboard) and TIME-01–03 (Time Tracking) on 2026-03-23. WORK-01 marked superseded by OVER-01 — original implementation remains complete, replaced in Phase 5.1.
+- v2.0 requirements: 96 total
+- Mapped to phases: 0 (roadmap pending)
+- Unmapped: 96 ⚠️
 
 ---
-*Requirements defined: 2026-03-18*
-*Last updated: 2026-03-25 — 31 orphaned requirements reset to Pending and assigned to gap closure phases 15–16 per v1.0-MILESTONE-AUDIT.md; Phase 5.2/6 ROADMAP checkboxes corrected*
+*Requirements defined: 2026-03-25*
+*Last updated: 2026-03-25 after initial v2.0 definition*
