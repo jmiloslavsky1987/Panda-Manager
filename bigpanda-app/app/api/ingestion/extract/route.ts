@@ -406,18 +406,32 @@ export async function POST(request: NextRequest): Promise<Response> {
           sendEvent({ type: 'progress', message: 'Parsing extraction results…' });
 
           // 7. Parse complete JSON response (pitfall 3: never parse mid-stream)
-          // Defensively strip markdown fences Claude occasionally adds despite instructions.
+          // Robust extraction: strip fences, then fall back to finding first [...] in response.
           let rawItems: ExtractionItem[] = [];
           try {
+            // Attempt 1: strip markdown fences and parse directly
             const cleaned = fullText.trim()
-              .replace(/^```(?:json)?\s*/i, '')  // strip leading ```json or ```
-              .replace(/\s*```\s*$/, '')          // strip trailing ```
+              .replace(/^```(?:json)?\s*/i, '')
+              .replace(/\s*```\s*$/, '')
               .trim();
-            const parsed = JSON.parse(cleaned);
+            let parsed: unknown;
+            try {
+              parsed = JSON.parse(cleaned);
+            } catch {
+              // Attempt 2: extract first [...] array from anywhere in the response
+              const match = fullText.match(/\[[\s\S]*\]/);
+              if (match) {
+                parsed = JSON.parse(match[0]);
+              } else {
+                throw new Error('no JSON array found');
+              }
+            }
             if (Array.isArray(parsed)) {
               rawItems = parsed as ExtractionItem[];
             }
           } catch (e) {
+            // Log the first 500 chars of Claude's response to help diagnose
+            console.error('[extract] JSON parse failed. Claude output (first 500 chars):', fullText.slice(0, 500));
             sendEvent({ type: 'error', message: 'Claude returned non-JSON output' });
             await db
               .update(artifacts)
