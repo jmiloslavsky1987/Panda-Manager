@@ -1,5 +1,6 @@
 import mammoth from 'mammoth';
 import ExcelJS from 'exceljs';
+import JSZip from 'jszip';
 
 export type ExtractResult =
   | { kind: 'pdf'; base64: string }
@@ -7,6 +8,35 @@ export type ExtractResult =
 
 export const ALLOWED_EXTENSIONS = ['.pdf', '.docx', '.pptx', '.xlsx', '.md', '.txt'];
 const MAX_FILE_BYTES = 50 * 1024 * 1024; // 50 MB
+
+async function extractPptxText(buffer: Buffer): Promise<string> {
+  const zip = await JSZip.loadAsync(buffer);
+
+  // Collect all slide files: ppt/slides/slide*.xml
+  const slideEntries: Array<{ num: number; file: JSZip.JSZipObject }> = [];
+  zip.forEach((relativePath, file) => {
+    const match = relativePath.match(/^ppt\/slides\/slide(\d+)\.xml$/);
+    if (match) {
+      slideEntries.push({ num: parseInt(match[1], 10), file });
+    }
+  });
+
+  // Sort by slide number (natural order)
+  slideEntries.sort((a, b) => a.num - b.num);
+
+  const slideTexts: string[] = [];
+  for (const entry of slideEntries) {
+    const xml = await entry.file.async('text');
+    // Extract all <a:t> text node contents
+    const matches = [...xml.matchAll(/<a:t>([^<]*)<\/a:t>/g)];
+    const text = matches.map(m => m[1]).join(' ').trim();
+    if (text.length > 0) {
+      slideTexts.push(`Slide ${entry.num}:\n${text}`);
+    }
+  }
+
+  return slideTexts.join('\n\n');
+}
 
 export function validateFile(filename: string, sizeBytes: number): string | null {
   const ext = filename.toLowerCase().slice(filename.lastIndexOf('.'));
@@ -46,10 +76,8 @@ export async function extractDocumentText(
     return { kind: 'text', content: lines.join('\n') };
   }
   if (ext === '.pptx') {
-    return {
-      kind: 'text',
-      content: `[PPTX: ${filename} — text extraction limited; Claude will extract from bullet text if present]`,
-    };
+    const content = await extractPptxText(buffer);
+    return { kind: 'text', content };
   }
   // .md, .txt, and any other text-based format
   return { kind: 'text', content: buffer.toString('utf-8') };
