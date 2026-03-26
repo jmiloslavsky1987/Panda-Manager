@@ -33,7 +33,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 ### v2.0 — AI Ingestion & Enhanced Operations
 
-- [ ] **Phase 17: Schema Extensions** - 8 new DB tables (discovery_items, audit_log, business_outcomes, e2e_workflows, focus_areas, architecture_integrations, before_state, team_onboarding_status); extend time_entries, artifacts, scheduled_jobs
+- [x] **Phase 17: Schema Extensions** - 8 new DB tables (discovery_items, audit_log, business_outcomes, e2e_workflows, focus_areas, architecture_integrations, before_state, team_onboarding_status); extend time_entries, artifacts, scheduled_jobs (completed 2026-03-26)
 - [ ] **Phase 18: Document Ingestion** - File upload (PDF/DOCX/PPTX/XLSX/MD/TXT), Claude extraction, structured preview, approve/edit/reject per item, conflict detection, source attribution, incremental dedup
 - [ ] **Phase 19: External Discovery Scan** - Manual + scheduled MCP scan (Slack/Gmail/Glean/Gong), Claude analysis, Review Queue UI, approve/dismiss flow, conflict diff view, dismissal history
 - [ ] **Phase 20: Project Initiation Wizard** - Guided new-project wizard (7 steps): project creation, collateral upload + ingestion pipeline, extraction preview, manual fill, time tracking config, completeness score, launch
@@ -510,7 +510,7 @@ Phases 18 and 19 can run in parallel after Phase 17. Phases 23 and 24 are indepe
 | 14. Time + Project Analytics | 5/5 | Complete    | 2026-03-25 |
 | 15. Scheduler + UI Fixes | 3/3 | Complete    | 2026-03-26 |
 | 16. Verification Retrofit | 5/5 | Complete    | 2026-03-26 |
-| 17. Schema Extensions | 2/3 | In Progress|  |
+| 17. Schema Extensions | 3/3 | Complete   | 2026-03-26 |
 | 18. Document Ingestion | 0/TBD | Not started | - |
 | 19. External Discovery Scan | 0/TBD | Not started | - |
 | 20. Project Initiation Wizard | 0/TBD | Not started | - |

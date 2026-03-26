@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
 current_plan: 17-02 COMPLETE
-status: in_progress
-last_updated: "2026-03-26T04:58:00.000Z"
+status: unknown
+last_updated: "2026-03-26T04:56:44.344Z"
 progress:
   total_phases: 26
-  completed_phases: 18
+  completed_phases: 19
   total_plans: 96
-  completed_plans: 95
+  completed_plans: 96
 ---
 
 # Project State
@@ -281,6 +281,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - [Phase 17]: Migration numbered 0011 (not 0006 per CONTEXT.md) — 0006-0010 were added by prior phases
 - [Phase 17]: scheduled_jobs is a CREATE TABLE (new table), not ALTER TABLE — CONTEXT.md noted ALTER but PLAN.md correctly specifies CREATE
 - [Phase 17]: workflow_steps RLS uses subquery EXISTS pattern (not direct project_id) since it has no project_id FK, only workflow_id
+- [Phase 17-schema-extensions]: v2.0 enums placed before tables in enums section (not appended at end) — artifacts table references ingestionStatusEnum which requires prior const declaration to avoid TDZ error
 
 ## Performance Metrics
 
@@ -375,6 +376,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 | Phase 16 P03 | 15 | 1 tasks | 1 files |
 | Phase 16 P05 | 15 | 1 tasks | 1 files |
 | Phase 17 P02 | 7 | 1 tasks | 1 files |
+| Phase 17-schema-extensions P03 | 6 | 1 tasks | 1 files |
 
 ## Key Context for Next Session
 
