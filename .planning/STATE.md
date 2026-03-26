@@ -1,16 +1,15 @@
 ---
 gsd_state_version: 1.0
 milestone: v2.0
-milestone_name: AI Ingestion & Enhanced Operations
-current_plan: 17-01
+milestone_name: — AI Ingestion & Enhanced Operations
+current_plan: 17-02 COMPLETE
 status: in_progress
-stopped_at: "Completed 17-01-PLAN.md"
-last_updated: "2026-03-26T04:54:00.000Z"
+last_updated: "2026-03-26T04:58:00.000Z"
 progress:
-  total_phases: 8
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 1
+  total_phases: 26
+  completed_phases: 18
+  total_plans: 96
+  completed_plans: 95
 ---
 
 # Project State
@@ -25,9 +24,9 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 ## Current Status
 
 **Phase:** Phase 17 — Schema Extensions (in progress)
-**Current Plan:** 17-01 COMPLETE
-**Last action:** 2026-03-26 — 17-01 executed; Wave 0 RED test scaffold created (15 failing tests)
-**Next action:** /gsd:execute-phase 17 (plan 17-02)
+**Current Plan:** 17-02 COMPLETE
+**Last action:** 2026-03-26 — 17-02 executed; 0011_v2_schema.sql migration created (9 tables, 5 enums, 2 ALTER TABLE, 8 RLS policies)
+**Next action:** /gsd:execute-phase 17 (plan 17-03)
 
 ## Phase Progress
 
@@ -51,7 +50,7 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 | 14. Time + Project Analytics | COMPLETE (5/5 plans) |
 | 15. Scheduler + UI Fixes | COMPLETE (3/3 plans) |
 | 16. Verification Retrofit | COMPLETE (5/5 plans) |
-| 17. Schema Extensions | In progress (1/? plans) |
+| 17. Schema Extensions | In progress (2/? plans) |
 | 18. Document Ingestion | Not started |
 | 19. External Discovery Scan | Not started |
 | 20. Project Initiation Wizard | Not started |
@@ -279,6 +278,9 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - [Phase 16-05]: Phase 06 confirmed BUILT despite STATE.md showing Not started — ROADMAP.md and codebase were correct; code is ground truth for verification
 - [Phase 16-05]: DASH-04 marked SATISFIED indirect: severity×status heat map satisfies 2D visualization intent; probability×impact axes were never in the DB schema
 - [Phase 16-05]: 06-VERIFICATION.md status human_needed (not gaps_found): all 3 Phase 06 requirements have production code; runtime verification needs live Redis/DB/MCP
+- [Phase 17]: Migration numbered 0011 (not 0006 per CONTEXT.md) — 0006-0010 were added by prior phases
+- [Phase 17]: scheduled_jobs is a CREATE TABLE (new table), not ALTER TABLE — CONTEXT.md noted ALTER but PLAN.md correctly specifies CREATE
+- [Phase 17]: workflow_steps RLS uses subquery EXISTS pattern (not direct project_id) since it has no project_id FK, only workflow_id
 
 ## Performance Metrics
 
@@ -372,6 +374,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 | Phase 16 P02 | 2 | 1 tasks | 1 files |
 | Phase 16 P03 | 15 | 1 tasks | 1 files |
 | Phase 16 P05 | 15 | 1 tasks | 1 files |
+| Phase 17 P02 | 7 | 1 tasks | 1 files |
 
 ## Key Context for Next Session
 
