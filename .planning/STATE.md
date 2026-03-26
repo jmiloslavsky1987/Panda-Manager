@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_plan: 15-01 complete (1/N plans)
+current_plan: 15-03 complete (3/3 plans)
 status: unknown
-stopped_at: Completed 15-02-PLAN.md — all 3 tasks done, 5 files fixed, all Wave 0 tests GREEN
-last_updated: "2026-03-26T00:32:19.304Z"
+stopped_at: Completed 15-03-PLAN.md — Phase 15 verified and closed; all 34 tests GREEN
+last_updated: "2026-03-26T00:38:39.688Z"
 progress:
   total_phases: 18
-  completed_phases: 16
+  completed_phases: 17
   total_plans: 88
-  completed_plans: 87
+  completed_plans: 88
 ---
 
 # Project State
@@ -24,11 +24,11 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 
 ## Current Status
 
-**Phase:** 15 — Scheduler + UI Fixes — In Progress
-**Current Plan:** 15-01 complete (1/N plans)
-**Last action:** Completed 15-01-PLAN.md — 2/2 TDD RED tests created (scheduler-map + search-type-options)
-**Next action:** Execute 15-02 (implementation: fix JOB_SCHEDULE_MAP + export TYPE_OPTIONS)
-**Stopped at:** Completed 15-02-PLAN.md — all 3 tasks done, 5 files fixed, all Wave 0 tests GREEN
+**Phase:** 15 — Scheduler + UI Fixes — COMPLETE
+**Current Plan:** 15-03 complete (3/3 plans)
+**Last action:** Completed 15-03-PLAN.md — Phase 15 human verification approved; all 34 tests GREEN, search UI confirmed, scheduler verified via unit tests
+**Next action:** Determine next phase (see ROADMAP.md)
+**Stopped at:** Completed 15-03-PLAN.md — Phase 15 verified and closed; all 34 tests GREEN
 
 ## Phase Progress
 
@@ -45,14 +45,15 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 | 7. File Generation + Remaining Skills | Not started |
 | 8. Cross-Project Features + Polish | Not started |
 | 14. Time + Project Analytics [INSERTED] | COMPLETE (5/5 plans) |
-| 15. Scheduler + UI Fixes [INSERTED] | In progress (1/? plans) |
+| 15. Scheduler + UI Fixes [INSERTED] | COMPLETE (3/3 plans) |
 
 ## Active Work
 
-Phase 15 in progress. 15-01 complete: created failing Vitest RED scaffolds for scheduler key rename (JOB_SCHEDULE_MAP) and TYPE_OPTIONS expansion (4 missing FTS tables). Next: 15-02 implements the actual fixes to turn these RED tests GREEN.
+Phase 15 COMPLETE (3/3 plans). All v1.0 integration gap fixes shipped and verified: phantom BullMQ scheduler entries removed, 3 job handlers migrated to settings-driven resolveSkillsDir, search type filter expanded with 4 missing FTS options. All 34 tests GREEN.
 
 ## Decisions
 
+- **[2026-03-26] 15-03:** Scheduler runtime verification accepted via unit tests when Bull Board not accessible — structural correctness sufficient for Phase 15 closure
 - **[2026-03-26] 15-01:** Unexported symbol imports yield undefined in Vitest — TypeError at test body counts as RED (valid test failure)
 - **[2026-03-26] 15-01:** Wave 0 TDD RED pattern: write tests against unexported/wrong-value symbols; Plan 02 adds exports + fixes
 - **[2026-03-19] 01-01:** Used Node.js built-in test runner (node:test) — no Jest/Vitest needed
@@ -245,6 +246,7 @@ Phase 15 in progress. 15-01 complete: created failing Vitest RED scaffolds for s
 - [Phase 15]: Export JOB_SCHEDULE_MAP and TYPE_OPTIONS for Vitest test import (named exports)
 - [Phase 15]: resolveSkillsDir called in handler function body (not module level) for runtime settings pickup without worker restart
 - [Phase 15]: context-updater: advisory lock remains first async op; readSettings called after lock succeeds
+- [Phase 15]: Scheduler runtime verification accepted via unit tests when Bull Board not accessible — structural correctness sufficient for Phase 15 closure
 
 ## Performance Metrics
 
@@ -332,6 +334,7 @@ Phase 15 in progress. 15-01 complete: created failing Vitest RED scaffolds for s
 | Phase 14-time-+-project-analytics P03 | 302 | 2 tasks | 2 files |
 | Phase 14-time-+-project-analytics P04 | 1 | 1 tasks | 1 files |
 | Phase 15 P02 | 2m | 3 tasks | 5 files |
+| Phase 15 P03 | 5 | 2 tasks | 0 files |
 
 ## Key Context for Next Session
 
