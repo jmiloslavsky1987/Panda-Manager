@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
+milestone: v2.0
+milestone_name: AI Ingestion & Enhanced Operations
 current_plan: Not started
-status: unknown
-stopped_at: "Completed 16-05-PLAN.md — Phase 06 MCP Integrations verification: SKILL-10, DASH-04, DASH-05 confirmed present; status human_needed"
-last_updated: "2026-03-26T02:20:14.425Z"
+status: defining_requirements
+stopped_at: ""
+last_updated: "2026-03-25T00:00:00.000Z"
 progress:
-  total_phases: 18
-  completed_phases: 18
-  total_plans: 93
-  completed_plans: 93
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
@@ -24,11 +24,10 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 
 ## Current Status
 
-**Phase:** 15 — Scheduler + UI Fixes — COMPLETE
-**Current Plan:** Not started
-**Last action:** Completed 15-03-PLAN.md — Phase 15 human verification approved; all 34 tests GREEN, search UI confirmed, scheduler verified via unit tests
-**Next action:** Determine next phase (see ROADMAP.md)
-**Stopped at:** Completed 16-05-PLAN.md — Phase 06 MCP Integrations verification: SKILL-10, DASH-04, DASH-05 confirmed present; status human_needed
+**Phase:** Not started (defining requirements)
+**Current Plan:** —
+**Last action:** 2026-03-25 — Milestone v2.0 started
+**Next action:** Define requirements → create roadmap → /gsd:plan-phase [N]
 
 ## Phase Progress
 

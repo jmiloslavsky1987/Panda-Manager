@@ -1,5 +1,21 @@
 # BigPanda AI Project Management App
 
+## Current Milestone: v2.0 AI Ingestion & Enhanced Operations
+
+**Goal:** Transform the platform from a single-user automation tool into an intelligent data-ingestion hub — AI-powered document extraction, automated external discovery scans, a guided project initiation wizard, and enterprise-grade time tracking and scheduler configuration.
+
+**Target features:**
+- Document ingestion: upload any project document → Claude extracts structured data → preview & approve → write to DB
+- External discovery scan: scheduled/manual MCP scan (Slack, Gmail, Glean, Gong) → in-app review queue
+- Project Initiation Wizard: guided new-project flow with AI extraction from collateral uploads and completeness scoring
+- Time Tracking advanced: approval workflow, Google Calendar import, bulk actions, admin config, notifications
+- Scheduler enhanced: full configurable job UI, run history, admin view, all 12 skills schedulable
+- Source attribution: source badges (Manual/Ingested/Discovered) on all workspace tab records
+- Audit log: system-wide trail of all data modifications with before/after values
+- DB schema extensions: DiscoveryItem, AuditLog, enhanced TimeEntry/Artifact/ScheduledJob tables
+
+---
+
 ## What This Is
 
 An AI-native project management platform purpose-built for BigPanda's Professional Services delivery team. It replaces the current workflow of manually running individual Cowork skills by delivering a unified, persistent application where every customer project lives, every action is tracked, every communication is synthesized automatically, and every deliverable can be generated in one click from a live database. Supports n active customer accounts with full lifecycle management (add, close, archive).
@@ -12,7 +28,19 @@ Every PS delivery intelligence the team has built — 15 AI skills, all project 
 
 ### Validated
 
-(None yet — ship to validate)
+<!-- v1.0 — shipped and confirmed operational 2026-03-25 -->
+- ✓ PostgreSQL database with full domain schema — Phase 1
+- ✓ Next.js 14 app shell with Dashboard + 9 workspace tabs (read + write) — Phases 2, 3, 12
+- ✓ Project Plan & Task Builder (Phase Board, Task Board, Gantt, swimlane) — Phase 3
+- ✓ BullMQ job infrastructure with Redis — Phase 4
+- ✓ Skill Engine: 15 skills wired with SSE streaming, Drafts Inbox, Output Library — Phases 5, 7
+- ✓ Onboarding Dashboard tab with onboarding_phases/steps/integrations — Phase 5.1
+- ✓ Time Tracking tab (basic entry, CSV export) — Phase 5.2
+- ✓ MCP integrations: Slack, Gmail, Glean, Drive — Phase 6
+- ✓ File generation service (.docx, .pptx, .xlsx, .html) — Phase 7
+- ✓ Cross-project features: FTS, risk heat map, watch list, Knowledge Base — Phase 8
+- ✓ Time & project analytics: rollups, velocity, risk trends, capacity view — Phase 14
+- ✓ Scheduler with cron registration and skill resolver — Phases 4, 15
 
 ### Active
 
@@ -103,9 +131,12 @@ Every PS delivery intelligence the team has built — 15 AI skills, all project 
 
 ### Out of Scope
 
-- Customer-facing read-only portal — external access adds auth complexity; email updates sufficient for v1
+- Customer-facing read-only portal — email updates sufficient; external access deferred
 - QBR deck generator — external ELT deck covers the need
-- JWT/SSO auth — single-user initially; add when expanding to full PS team
+- User Access & Roles (multi-user auth, RBAC, invitations) — deferred to v2.1; single-user in v2.0
+- Microsoft Outlook Calendar integration — permanently excluded (BRD explicit exclusion)
+- Custom role builder — post-launch (BRD explicit exclusion)
+- Approver hierarchy (TT-205) — deferred; single approver sufficient for v2.0
 - Hardcoded customer list — app is fully data-driven; Kaiser/AMEX/Merck are initial seed data only
 
 ## Context
@@ -134,4 +165,4 @@ This is a full rewrite of a previous Claude Code project assistant build (8 phas
 | Closed projects → archive (read-only) | Lessons learned and engagement history must remain searchable after project close | — Pending |
 
 ---
-*Last updated: 2026-03-18 after initialization*
+*Last updated: 2026-03-25 after v2.0 milestone start*
