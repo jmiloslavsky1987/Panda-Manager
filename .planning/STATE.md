@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: Completed 16-01-PLAN.md — Phase 01 retroactive verification written to 01-VERIFICATION.md
-last_updated: "2026-03-26T02:14:57.062Z"
+stopped_at: "Completed 16-02-PLAN.md — Phase 04 VERIFICATION.md created (gaps_found: SCHED-05/07/08 gaps recorded)"
+last_updated: "2026-03-26T02:15:38.418Z"
 progress:
   total_phases: 18
-  completed_phases: 17
+  completed_phases: 18
   total_plans: 93
-  completed_plans: 90
+  completed_plans: 93
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 15-03-PLAN.md — Phase 15 human verification approved; all 34 tests GREEN, search UI confirmed, scheduler verified via unit tests
 **Next action:** Determine next phase (see ROADMAP.md)
-**Stopped at:** Completed 16-01-PLAN.md — Phase 01 retroactive verification written to 01-VERIFICATION.md
+**Stopped at:** Completed 16-02-PLAN.md — Phase 04 VERIFICATION.md created (gaps_found: SCHED-05/07/08 gaps recorded)
 
 ## Phase Progress
 
@@ -251,6 +251,10 @@ Phase 15 COMPLETE (3/3 plans). All v1.0 integration gap fixes shipped and verifi
 - [Phase 16-04]: 2 Phase 05.2 human verifications remain open: CSV browser download trigger, live date range filter with seeded DB — these are verification steps, not implementation gaps
 - [Phase 16-01]: 10/11 Phase 01 requirements verified by code structure inspection — PostgreSQL unavailability does not invalidate code-level evidence
 - [Phase 16-01]: SET-04 API key secrecy requires human git audit — cannot confirm from source files alone; code protections in place (defensive delete, gitignore, API route never returns key value)
+- [Phase 16-02]: status gaps_found for Phase 04: 5/8 satisfied; SCHED-05 cron mismatch, SCHED-07 semantic mismatch, SCHED-08 schedule editing not wired to UI
+- [Phase 16-03]: SKILL-02 verified by implementation depth: real countTokens() call + withTruncatedHistory(5) in skill-orchestrator.ts
+- [Phase 16-03]: SKILL-14 SATISFIED (indirect): resolveSkillsDir() covers 3/5 handlers; meeting-summary.ts and handoff-doc-generator.ts retain hardcoded __dirname paths (low severity)
+- [Phase 16-03]: OUT-01..04 SATISFIED post-05-06 bug fix: skill-run.ts confirmed to write outputs and drafts for all on-demand runs
 
 ## Performance Metrics
 
@@ -341,6 +345,8 @@ Phase 15 COMPLETE (3/3 plans). All v1.0 integration gap fixes shipped and verifi
 | Phase 15 P03 | 5 | 2 tasks | 0 files |
 | Phase 16-verification-retrofit P04 | 4 | 1 tasks | 1 files |
 | Phase 16 P01 | 2 | 1 tasks | 1 files |
+| Phase 16 P02 | 2 | 1 tasks | 1 files |
+| Phase 16 P03 | 15 | 1 tasks | 1 files |
 
 ## Key Context for Next Session
 
