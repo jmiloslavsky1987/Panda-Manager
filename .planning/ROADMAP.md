@@ -519,7 +519,7 @@ Phases 18 and 19 can run in parallel after Phase 17. Phases 23 and 24 are indepe
 | 15. Scheduler + UI Fixes | 3/3 | Complete    | 2026-03-26 |
 | 16. Verification Retrofit | 5/5 | Complete    | 2026-03-26 |
 | 17. Schema Extensions | 3/3 | Complete    | 2026-03-26 |
-| 18. Document Ingestion | 2/6 | In Progress|  |
+| 18. Document Ingestion | 3/6 | In Progress|  |
 | 19. External Discovery Scan | 0/TBD | Not started | - |
 | 20. Project Initiation Wizard | 0/TBD | Not started | - |
 | 21. Teams Tab + Architecture Tab | 0/TBD | Not started | - |
