@@ -410,7 +410,15 @@ Plans:
   3. Approving all items in the preview (individually or in bulk) writes them to the correct tables with source attribution showing the filename and upload timestamp; rejected items are not written
   4. Re-uploading a document that was previously ingested triggers the preview flow again and only surfaces items not already present in the DB — no re-presentation of already-ingested data
   5. When an extracted item conflicts with an existing record, a merge/replace/skip prompt appears before any write — no silent overwrites
-**Plans**: TBD
+**Plans**: 6 plans
+
+Plans:
+- [ ] 18-01-PLAN.md — Wave 0: Test scaffolds (all 12 ING stubs) + migration 0012 (source_artifact_id + ingested_at on entity tables)
+- [ ] 18-02-PLAN.md — Wave 1: Upload API (/api/ingestion/upload) + document-extractor lib
+- [ ] 18-03-PLAN.md — Wave 1: Extract API (/api/ingestion/extract) — Claude extraction with SSE streaming + dedup filter
+- [ ] 18-04-PLAN.md — Wave 2: Approve API (/api/ingestion/approve) — conflict detection + source attribution writes + ingestion log
+- [ ] 18-05-PLAN.md — Wave 3: Ingestion UI components (IngestionModal, Stepper, ExtractionPreview, ItemRow, EditForm)
+- [ ] 18-06-PLAN.md — Wave 4: ArtifactsDropZone wired onto Artifacts tab + human verification checkpoint
 
 ### Phase 19: External Discovery Scan
 **Goal**: Users can trigger a scan across any combination of Slack, Gmail, Glean, and Gong for a project; Claude analyzes the results and surfaces structured findings in a Review Queue where each item can be approved or dismissed; approved items land in the DB with source attribution.
