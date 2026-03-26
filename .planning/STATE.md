@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
-current_plan: 17-02 COMPLETE
+current_plan: Not started
 status: unknown
-last_updated: "2026-03-26T04:56:44.344Z"
+last_updated: "2026-03-26T04:59:39.189Z"
 progress:
   total_phases: 26
   completed_phases: 19
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 ## Current Status
 
 **Phase:** Phase 17 — Schema Extensions (in progress)
-**Current Plan:** 17-02 COMPLETE
+**Current Plan:** Not started
 **Last action:** 2026-03-26 — 17-02 executed; 0011_v2_schema.sql migration created (9 tables, 5 enums, 2 ALTER TABLE, 8 RLS policies)
 **Next action:** /gsd:execute-phase 17 (plan 17-03)
 
