@@ -119,12 +119,33 @@ export async function POST(request: NextRequest): Promise<Response> {
           // 2. Get MCP server configs for discovery-scan skill
           const allMcpServers = await MCPClientPool.getInstance().getServersForSkill('discovery-scan');
 
-          // 3. Filter to only requested sources
-          const mcpServers = allMcpServers.filter(s => sources.includes(s.name as 'slack' | 'gmail' | 'glean' | 'gong'));
+          // 3. Filter to only requested sources (case-insensitive name match)
+          const mcpServers = allMcpServers.filter(s =>
+            sources.includes(s.name.toLowerCase() as 'slack' | 'gmail' | 'glean' | 'gong')
+          );
 
-          // 4. Stream per-source progress events
-          for (const source of sources) {
-            sendEvent({ type: 'progress', message: `Scanning ${source}…` });
+          // 3a. Warn clearly for sources with no configured MCP connection
+          const configuredSources = new Set(mcpServers.map(s => s.name.toLowerCase()));
+          const unconfiguredSources = sources.filter(s => !configuredSources.has(s));
+          if (unconfiguredSources.length > 0) {
+            sendEvent({
+              type: 'warning',
+              message: `No MCP connection configured for: ${unconfiguredSources.join(', ')}. Configure them in Settings → MCP Servers.`,
+              unconfiguredSources,
+            });
+          }
+          if (mcpServers.length === 0) {
+            sendEvent({
+              type: 'error',
+              message: `None of the selected sources (${sources.join(', ')}) have MCP connections configured. Go to Settings → MCP Servers to add your credentials.`,
+            });
+            controller.close();
+            return;
+          }
+
+          // 4. Stream per-source progress events (only configured ones)
+          for (const server of mcpServers) {
+            sendEvent({ type: 'progress', message: `Scanning ${server.name}…` });
           }
 
           // 5. Run discovery scan
