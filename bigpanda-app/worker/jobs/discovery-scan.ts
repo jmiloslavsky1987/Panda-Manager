@@ -10,8 +10,9 @@ import * as path from 'node:path';
 import * as os from 'node:os';
 import { and, eq, ilike } from 'drizzle-orm';
 import db from '../../db';
-import { projects, discoveryItems } from '../../db/schema';
+import { projects, discoveryItems, actions, risks, stakeholders, userSourceTokens } from '../../db/schema';
 import { MCPClientPool } from '../../lib/mcp-config';
+import { readSettings } from '../../lib/settings-core';
 import { runDiscoveryScan, type DiscoveryItem } from '../../lib/discovery-scanner';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -94,10 +95,34 @@ export default async function discoveryScanJob(job: Job): Promise<{ status: stri
     const scanId = `scan-${project.id}-${scanStart.getTime()}`;
 
     try {
-      // Get MCP server configs for discovery-scan skill
-      const allMcpServers = await MCPClientPool.getInstance().getServersForSkill('discovery-scan');
+      // Get settings, user tokens, MCP servers, and project context in parallel
+      const [settings, dbUserTokens, allMcpServers, existingActions, existingRisks, existingStakeholders] = await Promise.all([
+        readSettings(),
+        db.select().from(userSourceTokens).where(eq(userSourceTokens.user_id, 'default')),
+        MCPClientPool.getInstance().getServersForSkill('discovery-scan'),
+        db.select({ id: actions.id, title: actions.description, status: actions.status })
+          .from(actions).where(eq(actions.project_id, project.id)).limit(50),
+        db.select({ id: risks.id, title: risks.description, status: risks.status })
+          .from(risks).where(eq(risks.project_id, project.id)).limit(50),
+        db.select({ id: stakeholders.id, name: stakeholders.name, role: stakeholders.role })
+          .from(stakeholders).where(eq(stakeholders.project_id, project.id)).limit(50),
+      ]);
 
-      // Filter to only configured sources for this project
+      const source_credentials = settings.source_credentials ?? {};
+
+      const existingProjectSummary = [
+        existingActions.length > 0
+          ? `Actions:\n${existingActions.map(a => `- [${a.status}] ${a.title}`).join('\n')}`
+          : null,
+        existingRisks.length > 0
+          ? `Risks:\n${existingRisks.map(r => `- [${r.status}] ${r.title}`).join('\n')}`
+          : null,
+        existingStakeholders.length > 0
+          ? `Stakeholders:\n${existingStakeholders.map(s => `- ${s.name} (${s.role ?? 'unknown role'})`).join('\n')}`
+          : null,
+      ].filter(Boolean).join('\n\n');
+
+      // Filter MCP servers to only configured sources for this project
       const mcpServers = allMcpServers.filter(s =>
         sources.includes(s.name as string)
       );
@@ -109,6 +134,9 @@ export default async function discoveryScanJob(job: Job): Promise<{ status: stri
         sources,
         since: sevenDaysAgo(),
         mcpServers,
+        source_credentials,
+        userTokens: dbUserTokens,
+        existingProjectSummary,
       });
 
       // Dedup + insert (same logic as scan route)
@@ -132,6 +160,7 @@ export default async function discoveryScanJob(job: Job): Promise<{ status: stri
           source_url: item.source_url ?? null,
           source_excerpt: item.source_excerpt,
           scan_id: scanId,
+          likely_duplicate: item.likely_duplicate ?? false,
         });
 
         newItemCount++;

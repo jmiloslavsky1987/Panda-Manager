@@ -13,6 +13,7 @@ export interface DiscoveryQueueItem {
   scan_timestamp: string  // ISO date string
   created_at: string
   status: 'pending' | 'dismissed'
+  likely_duplicate?: boolean // true when Claude flagged item as matching existing project data
   conflict_existing?: string // populated client-side when conflict detected
 }
 

@@ -104,6 +104,9 @@ const baseParams = {
   projectId: 42,
   projectName: 'ACME BigPanda Onboarding',
   since: '2026-03-19T00:00:00Z',
+  source_credentials: {},
+  userTokens: [],
+  existingProjectSummary: '',
 };
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
