@@ -38,7 +38,7 @@ export interface AppSettings {
 export const SETTINGS_PATH = path.join(os.homedir(), '.bigpanda-app', 'settings.json');
 
 export const DEFAULTS: AppSettings = {
-  workspace_path: '/Documents/PM Application',
+  workspace_path: path.join(os.homedir(), 'Documents', 'PM Application'),
   skill_path: path.join(os.homedir(), '.claude', 'get-shit-done'),
   schedule: {
     morning_briefing: '0 8 * * *',
@@ -55,9 +55,17 @@ export async function readSettings(settingsPath: string = SETTINGS_PATH): Promis
   try {
     const raw = await fsPromises.readFile(settingsPath, 'utf-8');
     const parsed = JSON.parse(raw) as Partial<AppSettings>;
+    // Normalize workspace_path: if stored without homedir prefix (e.g. /Documents/...)
+    // resolve it relative to os.homedir() so paths like '/Documents/PM Application'
+    // expand correctly on every OS user account.
+    let workspacePath = parsed.workspace_path ?? DEFAULTS.workspace_path;
+    if (workspacePath && !workspacePath.startsWith(os.homedir()) && workspacePath.startsWith('/')) {
+      workspacePath = path.join(os.homedir(), workspacePath);
+    }
     return {
       ...DEFAULTS,
       ...parsed,
+      workspace_path: workspacePath,
       schedule: {
         ...DEFAULTS.schedule,
         ...(parsed.schedule ?? {}),
