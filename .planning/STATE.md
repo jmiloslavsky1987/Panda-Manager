@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: unknown
-stopped_at: Completed 16-03-PLAN.md
-last_updated: "2026-03-26T02:15:46.416Z"
+stopped_at: "Completed 16-05-PLAN.md — Phase 06 MCP Integrations verification: SKILL-10, DASH-04, DASH-05 confirmed present; status human_needed"
+last_updated: "2026-03-26T02:15:57.037Z"
 progress:
   total_phases: 18
   completed_phases: 18
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** Not started
 **Last action:** Completed 15-03-PLAN.md — Phase 15 human verification approved; all 34 tests GREEN, search UI confirmed, scheduler verified via unit tests
 **Next action:** Determine next phase (see ROADMAP.md)
-**Stopped at:** Completed 16-03-PLAN.md
+**Stopped at:** Completed 16-05-PLAN.md — Phase 06 MCP Integrations verification: SKILL-10, DASH-04, DASH-05 confirmed present; status human_needed
 
 ## Phase Progress
 
@@ -255,6 +255,9 @@ Phase 15 COMPLETE (3/3 plans). All v1.0 integration gap fixes shipped and verifi
 - [Phase 16-03]: SKILL-02 verified by implementation depth: real countTokens() call + withTruncatedHistory(5) in skill-orchestrator.ts
 - [Phase 16-03]: SKILL-14 SATISFIED (indirect): resolveSkillsDir() covers 3/5 handlers; meeting-summary.ts and handoff-doc-generator.ts retain hardcoded __dirname paths (low severity)
 - [Phase 16-03]: OUT-01..04 SATISFIED post-05-06 bug fix: skill-run.ts confirmed to write outputs and drafts for all on-demand runs
+- [Phase 16-05]: Phase 06 confirmed BUILT despite STATE.md showing Not started — ROADMAP.md and codebase were correct; code is ground truth for verification
+- [Phase 16-05]: DASH-04 marked SATISFIED indirect: severity×status heat map satisfies 2D visualization intent; probability×impact axes were never in the DB schema
+- [Phase 16-05]: 06-VERIFICATION.md status human_needed (not gaps_found): all 3 Phase 06 requirements have production code; runtime verification needs live Redis/DB/MCP
 
 ## Performance Metrics
 

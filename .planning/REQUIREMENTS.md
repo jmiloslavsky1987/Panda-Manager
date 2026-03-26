@@ -21,8 +21,8 @@
 - [x] **DASH-01**: Today's Briefing panel displays stored morning-briefing result; refreshable on demand
 - [x] **DASH-02**: Project Health cards for all active accounts showing auto-derived RAG status, one-line summary, and open high-priority action count
 - [x] **DASH-03**: Health score auto-derived from data signals: overdue actions, stalled milestones (no progress in 14+ days), and unresolved high-severity risks — no manual RAG entry required
-- [ ] **DASH-04**: Cross-project Risk Heat Map (probability × impact matrix) across all active accounts visible on dashboard
-- [ ] **DASH-05**: Cross-Account Watch List showing escalated or time-sensitive items spanning multiple customers
+- [x] **DASH-04**: Cross-project Risk Heat Map (probability × impact matrix) across all active accounts visible on dashboard
+- [x] **DASH-05**: Cross-Account Watch List showing escalated or time-sensitive items spanning multiple customers
 - [x] **DASH-06**: Recent Activity Feed showing last 7 days of skill runs, file outputs, and history entries across all projects
 - [x] **DASH-07**: Quick Action Bar with one-click buttons: Run Tracker, Generate Briefing, Weekly Status Draft (per active account)
 - [x] **DASH-08**: In-app notification badge for overdue actions, approaching go-live dates (within 14 days), and new tracker results
@@ -64,7 +64,7 @@
 - [x] **SKILL-07**: Team Engagement Map — select account → generate self-contained HTML (business outcomes, ADR/Biggy flows, team status table)
 - [x] **SKILL-08**: Workflow Diagram — select account → generate before/after HTML with two tabs
 - ~~**SKILL-09**: Biggy Weekly Briefing~~ *(moved to v2 — see v2 Requirements)*
-- [ ] **SKILL-10**: Customer Project Tracker — run for one account or all active; sweeps Gmail/Slack/Gong for last 7 days; updates actions table and PA3_Action_Tracker.xlsx; shows structured report
+- [x] **SKILL-10**: Customer Project Tracker — run for one account or all active; sweeps Gmail/Slack/Gong for last 7 days; updates actions table and PA3_Action_Tracker.xlsx; shows structured report
 - [x] **SKILL-11**: Morning Briefing — fetch today's calendar via Glean, synthesize per-meeting context, store result in DB, display in Dashboard Briefing panel
 - [x] **SKILL-12**: Context Updater — paste notes/transcript + select account → apply all 14 update steps → write to DB → export updated context doc to file; registers in engagement history
 - [x] **SKILL-13**: Handoff Doc Generator — select account → generate structured handoff/coverage doc covering open actions, risks, key decisions, key contacts, and current workstream status
@@ -228,9 +228,9 @@
 | TIME-01 | Phase 16 | Complete |
 | TIME-02 | Phase 16 | Complete |
 | TIME-03 | Phase 16 | Complete |
-| SKILL-10 | Phase 16 | Pending |
-| DASH-04 | Phase 16 | Pending |
-| DASH-05 | Phase 16 | Pending |
+| SKILL-10 | Phase 16 | Complete |
+| DASH-04 | Phase 16 | Complete |
+| DASH-05 | Phase 16 | Complete |
 | SKILL-05 | Phase 7 | Complete |
 | SKILL-06 | Phase 7 | Complete |
 | SKILL-07 | Phase 7 | Complete |
