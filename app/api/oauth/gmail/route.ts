@@ -8,10 +8,9 @@ export async function GET(request: NextRequest): Promise<Response> {
   const redirectUri = process.env.GOOGLE_REDIRECT_URI;
 
   if (!clientId || !clientSecret || !redirectUri) {
-    return new Response(
-      JSON.stringify({ error: 'Gmail OAuth not configured. Set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI in .env.local' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    const settingsUrl = new URL('/settings', request.url);
+    settingsUrl.searchParams.set('gmail_error', 'Gmail OAuth not configured. Set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and GOOGLE_REDIRECT_URI in .env.local.');
+    return Response.redirect(settingsUrl.toString());
   }
 
   const oauth2Client = new google.auth.OAuth2(clientId, clientSecret, redirectUri);
