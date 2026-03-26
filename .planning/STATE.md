@@ -4,12 +4,12 @@ milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
 current_plan: Not started
 status: unknown
-last_updated: "2026-03-26T06:26:47.003Z"
+last_updated: "2026-03-26T06:31:57.474Z"
 progress:
   total_phases: 26
   completed_phases: 19
   total_plans: 102
-  completed_plans: 97
+  completed_plans: 98
 ---
 
 # Project State
@@ -285,6 +285,8 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - [Phase 18-01]: Wave 0 stub pattern: expect(false, 'stub').toBe(true) in every test body — tests fail RED without importing not-yet-existing production modules
 - [Phase 18-01]: AnyPgColumn forward reference for actions/risks/milestones source_artifact_id FK — tables defined before artifacts in schema.ts
 - [Phase 18-01]: Append-only tables (key_decisions, engagement_history) receive source attribution columns — ADD COLUMN does not trigger append-only enforcement
+- [Phase 18-02]: external_id for uploads: generated as UPLOAD-{timestamp}-{filename} — artifacts.external_id is NOT NULL so uploads need a synthetic value
+- [Phase 18-02]: ExcelJS Buffer cast via buffer.buffer.slice() as ArrayBuffer — Node 24 Buffer<ArrayBufferLike> incompatible with ExcelJS legacy Buffer type
 
 ## Performance Metrics
 
@@ -381,6 +383,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 | Phase 17 P02 | 7 | 1 tasks | 1 files |
 | Phase 17-schema-extensions P03 | 6 | 1 tasks | 1 files |
 | Phase 18-document-ingestion P01 | 3 | 2 tasks | 8 files |
+| Phase 18-document-ingestion P02 | 3 | 2 tasks | 4 files |
 
 ## Key Context for Next Session
 
