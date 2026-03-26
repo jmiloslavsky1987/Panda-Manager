@@ -62,7 +62,7 @@ function buildRequest(body: unknown): NextRequest {
 
 describe('Dedup and conflict detection (ING-08, ING-11, ING-12)', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   it('ING-08: detects conflict when item matches existing record', async () => {
@@ -98,8 +98,8 @@ describe('Dedup and conflict detection (ING-08, ING-11, ING-12)', () => {
     const mockConflictWhere = vi.fn().mockResolvedValue([{ id: 99, description: 'Set up alerts in BigPanda' }]);
     const mockConflictFrom = vi.fn().mockReturnValue({ where: mockConflictWhere });
     vi.mocked(db.select)
-      .mockReturnValueOnce({ from: mockArtifactFrom } as ReturnType<typeof db.select>) // artifact fetch
-      .mockReturnValue({ from: mockConflictFrom } as ReturnType<typeof db.select>);     // conflict check
+      .mockReturnValueOnce({ from: mockArtifactFrom } as any) // artifact fetch
+      .mockReturnValue({ from: mockConflictFrom } as any);     // conflict check
 
     const req = buildRequest({
       artifactId: 10,
@@ -132,11 +132,11 @@ describe('Dedup and conflict detection (ING-08, ING-11, ING-12)', () => {
     const mockConflictWhere = vi.fn().mockResolvedValue([{ id: 99, description: 'Set up alerts in BigPanda' }]);
     const mockConflictFrom = vi.fn().mockReturnValue({ where: mockConflictWhere });
     vi.mocked(db.select)
-      .mockReturnValueOnce({ from: mockArtifactFrom } as ReturnType<typeof db.select>)
-      .mockReturnValue({ from: mockConflictFrom } as ReturnType<typeof db.select>);
+      .mockReturnValueOnce({ from: mockArtifactFrom } as any)
+      .mockReturnValue({ from: mockConflictFrom } as any);
 
     const mockSet = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) });
-    vi.mocked(db.update).mockReturnValue({ set: mockSet } as ReturnType<typeof db.update>);
+    vi.mocked(db.update).mockReturnValue({ set: mockSet } as any);
 
     const req = buildRequest({
       artifactId: 10,
@@ -170,20 +170,20 @@ describe('Dedup and conflict detection (ING-08, ING-11, ING-12)', () => {
     const mockConflictWhere = vi.fn().mockResolvedValue([{ id: 99, description: 'Old action text' }]);
     const mockConflictFrom = vi.fn().mockReturnValue({ where: mockConflictWhere });
     vi.mocked(db.select)
-      .mockReturnValueOnce({ from: mockArtifactFrom } as ReturnType<typeof db.select>)
-      .mockReturnValue({ from: mockConflictFrom } as ReturnType<typeof db.select>);
+      .mockReturnValueOnce({ from: mockArtifactFrom } as any)
+      .mockReturnValue({ from: mockConflictFrom } as any);
 
     // delete mock
     const mockDeleteWhere = vi.fn().mockResolvedValue([]);
-    vi.mocked(db.delete).mockReturnValue({ where: mockDeleteWhere } as ReturnType<typeof db.delete>);
+    vi.mocked(db.delete).mockReturnValue({ where: mockDeleteWhere } as any);
 
     // insert mock
     const mockValues = vi.fn().mockResolvedValue([{ id: 100 }]);
-    vi.mocked(db.insert).mockReturnValue({ values: mockValues } as ReturnType<typeof db.insert>);
+    vi.mocked(db.insert).mockReturnValue({ values: mockValues } as any);
 
     // update mock for artifact log
     const mockSet = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) });
-    vi.mocked(db.update).mockReturnValue({ set: mockSet } as ReturnType<typeof db.update>);
+    vi.mocked(db.update).mockReturnValue({ set: mockSet } as any);
 
     const req = buildRequest({
       artifactId: 10,
