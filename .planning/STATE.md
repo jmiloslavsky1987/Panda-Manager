@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_plan: Not started
-status: unknown
-stopped_at: Phase 15 context gathered
-last_updated: "2026-03-25T23:37:30.182Z"
+current_plan: 15-01 complete
+status: in_progress
+stopped_at: Completed 15-01-PLAN.md — 2/2 TDD RED tests created and committed
+last_updated: "2026-03-26T00:32:00Z"
 progress:
   total_phases: 18
   completed_phases: 16
-  total_plans: 85
-  completed_plans: 85
+  total_plans: 86
+  completed_plans: 86
 ---
 
 # Project State
@@ -24,11 +24,11 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 
 ## Current Status
 
-**Phase:** 14 — Time + Project Analytics — COMPLETE
-**Current Plan:** Not started
-**Last action:** Completed 14-05-PLAN.md — 6/6 E2E tests GREEN, human verification approved
-**Next action:** Advance to next phase per ROADMAP.md
-**Stopped at:** Phase 15 context gathered
+**Phase:** 15 — Scheduler + UI Fixes — In Progress
+**Current Plan:** 15-01 complete (1/N plans)
+**Last action:** Completed 15-01-PLAN.md — 2/2 TDD RED tests created (scheduler-map + search-type-options)
+**Next action:** Execute 15-02 (implementation: fix JOB_SCHEDULE_MAP + export TYPE_OPTIONS)
+**Stopped at:** Completed 15-01-PLAN.md — 2/2 TDD RED tests created and committed
 
 ## Phase Progress
 
@@ -45,13 +45,16 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 | 7. File Generation + Remaining Skills | Not started |
 | 8. Cross-Project Features + Polish | Not started |
 | 14. Time + Project Analytics [INSERTED] | COMPLETE (5/5 plans) |
+| 15. Scheduler + UI Fixes [INSERTED] | In progress (1/? plans) |
 
 ## Active Work
 
-Phase 14 COMPLETE. All 5 plans executed: 14-01 (E2E stubs RED), 14-02 (analytics DB schema + computeProjectAnalytics()), 14-03 (TimeTab weekly summary + capacity planning header), 14-04 (HealthCard velocity chart + risk trend), 14-05 (6/6 E2E tests GREEN + human verification approved). Next: advance to next phase per ROADMAP.md.
+Phase 15 in progress. 15-01 complete: created failing Vitest RED scaffolds for scheduler key rename (JOB_SCHEDULE_MAP) and TYPE_OPTIONS expansion (4 missing FTS tables). Next: 15-02 implements the actual fixes to turn these RED tests GREEN.
 
 ## Decisions
 
+- **[2026-03-26] 15-01:** Unexported symbol imports yield undefined in Vitest — TypeError at test body counts as RED (valid test failure)
+- **[2026-03-26] 15-01:** Wave 0 TDD RED pattern: write tests against unexported/wrong-value symbols; Plan 02 adds exports + fixes
 - **[2026-03-19] 01-01:** Used Node.js built-in test runner (node:test) — no Jest/Vitest needed
 - **[2026-03-19] 01-01:** DATABASE_URL defaults to postgres://localhost:5432/bigpanda_test in tests (prevents crash when env var unset)
 - **[2026-03-19] 01-01:** postgres and tsx installed at project root (not inside server/ or client/)
