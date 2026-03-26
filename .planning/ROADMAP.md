@@ -476,7 +476,15 @@ Plans:
   3. The wizard's manual-entry step allows adding actions, risks, stakeholders, and other items via inline forms for items not captured in uploaded documents
   4. Clicking "Launch Project" on the completeness summary step sets project status to Active and navigates to the project Overview tab
   5. The Project Completeness Score (0–100%) is visible on the Overview tab; projects below 60% show a banner identifying which tabs have no populated records
-**Plans**: TBD
+**Plans**: 6 plans
+
+Plans:
+- [ ] 20-01-PLAN.md — Wave 1: Test scaffolds + DB schema migration (draft status, project fields) + dashboard query fix
+- [ ] 20-02-PLAN.md — Wave 2: POST /api/projects (create) + PATCH /api/projects/[projectId] (status update)
+- [ ] 20-03-PLAN.md — Wave 3: ProjectWizard container + BasicInfoStep + CollateralUploadStep
+- [ ] 20-04-PLAN.md — Wave 4: AiPreviewStep + ManualEntryStep + LaunchStep + Dashboard wire
+- [ ] 20-05-PLAN.md — Wave 3 (parallel): Completeness score API + Overview tab display
+- [ ] 20-06-PLAN.md — Wave 5: Human verification checkpoint
 
 ### Phase 21: Teams Tab + Architecture Tab
 **Goal**: The Teams tab renders a rich, DB-powered 5-section Team Engagement Map view and the Architecture tab renders a rich, DB-powered 2-tab Workflow Diagram — both fully editable inline, with their respective skills updated to export from DB rather than static data.
@@ -555,7 +563,7 @@ Phases 18 and 19 can run in parallel after Phase 17. Phases 23 and 24 are indepe
 | 17. Schema Extensions | 3/3 | Complete    | 2026-03-26 |
 | 18. Document Ingestion | 5/6 | In Progress|  |
 | 19. External Discovery Scan | 5/6 | In Progress|  |
-| 20. Project Initiation Wizard | 0/TBD | Not started | - |
+| 20. Project Initiation Wizard | 0/6 | Not started | - |
 | 21. Teams Tab + Architecture Tab | 0/TBD | Not started | - |
 | 22. Source Badges + Audit Log | 0/TBD | Not started | - |
 | 23. Time Tracking Advanced | 0/TBD | Not started | - |
