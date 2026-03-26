@@ -29,6 +29,7 @@
     "drizzle-orm": "^0.45.1",
     "exceljs": "^4.4.0",
     "frappe-gantt": "^1.2.2",
+    "googleapis": "^171.4.0",
     "ioredis": "^5.10.1",
     "js-yaml": "^4.1.1",
     "jsonrepair": "^3.13.3",
