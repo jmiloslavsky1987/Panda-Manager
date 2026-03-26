@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: AI Ingestion & Enhanced Operations
-current_plan: Not started
-status: roadmap_ready
-stopped_at: ""
-last_updated: "2026-03-25T00:00:00.000Z"
+current_plan: 17-01
+status: in_progress
+stopped_at: "Completed 17-01-PLAN.md"
+last_updated: "2026-03-26T04:54:00.000Z"
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 0
-  completed_plans: 0
+  completed_plans: 1
 ---
 
 # Project State
@@ -24,10 +24,10 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 
 ## Current Status
 
-**Phase:** Phase 17 — Schema Extensions (not yet started)
-**Current Plan:** —
-**Last action:** 2026-03-25 — v2.0 roadmap created; 96/96 requirements mapped across Phases 17–24
-**Next action:** /gsd:plan-phase 17
+**Phase:** Phase 17 — Schema Extensions (in progress)
+**Current Plan:** 17-01 COMPLETE
+**Last action:** 2026-03-26 — 17-01 executed; Wave 0 RED test scaffold created (15 failing tests)
+**Next action:** /gsd:execute-phase 17 (plan 17-02)
 
 ## Phase Progress
 
@@ -51,7 +51,7 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 | 14. Time + Project Analytics | COMPLETE (5/5 plans) |
 | 15. Scheduler + UI Fixes | COMPLETE (3/3 plans) |
 | 16. Verification Retrofit | COMPLETE (5/5 plans) |
-| 17. Schema Extensions | Not started |
+| 17. Schema Extensions | In progress (1/? plans) |
 | 18. Document Ingestion | Not started |
 | 19. External Discovery Scan | Not started |
 | 20. Project Initiation Wizard | Not started |
@@ -73,6 +73,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - **[2026-03-25] v2.0 roadmap:** AUDIT (Phase 22) placed after Phases 18/19 — source badges are only meaningful once ingestion and discovery are operational; thin phase, no blocker on 21
 - **[2026-03-25] v2.0 roadmap:** SCHED requirements renamed to v2 SCHED (Phase 24) — these are distinct from v1 SCHED requirements (Phases 4/15) and represent the enhanced configurable scheduler UI
 - **[2026-03-25] v2.0 roadmap:** Research flag added for Phase 18 (Anthropic SDK document input API) and Phase 23 (Google Calendar OAuth in Next.js 14 App Router)
+- **[2026-03-26] 17-01:** Wave 0 RED pattern: import 15 unexported names from schema.ts — Vitest resolves them as undefined; toBeDefined() fails RED — valid TDD starting point for Phase 17 schema additions
 - **[2026-03-26] 15-03:** Scheduler runtime verification accepted via unit tests when Bull Board not accessible — structural correctness sufficient for Phase 15 closure
 - **[2026-03-26] 15-01:** Unexported symbol imports yield undefined in Vitest — TypeError at test body counts as RED (valid test failure)
 - **[2026-03-26] 15-01:** Wave 0 TDD RED pattern: write tests against unexported/wrong-value symbols; Plan 02 adds exports + fixes

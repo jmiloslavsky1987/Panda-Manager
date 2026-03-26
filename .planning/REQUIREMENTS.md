@@ -11,17 +11,17 @@
 ### SCHEMA — Data Model Extensions
 *Foundation for all other v2.0 features. Must land in the first phase.*
 
-- [ ] **SCHEMA-01**: DB gains `discovery_items` table (id, project_id, source, content, suggested_field, suggested_value, status: pending/approved/dismissed, scan_timestamp, source_url)
-- [ ] **SCHEMA-02**: DB gains `audit_log` table (id, entity_type, entity_id, action, actor_id, before_json, after_json, timestamp)
-- [ ] **SCHEMA-03**: `time_entries` extended with submitted_on, submitted_by, approved_on, approved_by, rejected_on, rejected_by, locked (boolean)
-- [ ] **SCHEMA-04**: `artifacts` table extended with ingestion_status (pending/extracting/preview/approved/failed) and ingestion_log_json
-- [ ] **SCHEMA-05**: `scheduled_jobs` extended with last_run_outcome (success/failure/partial), run_history_json, timezone, skill_params_json
-- [ ] **SCHEMA-06**: DB gains `business_outcomes` table (id, project_id, title, track, description, delivery_status, mapping_note)
-- [ ] **SCHEMA-07**: DB gains `e2e_workflows` table (id, project_id, team_name, workflow_name) with child `workflow_steps` (id, workflow_id, label, track, status, position)
-- [ ] **SCHEMA-08**: DB gains `focus_areas` table (id, project_id, title, tracks, why_it_matters, current_status, next_step, bp_owner, customer_owner)
-- [ ] **SCHEMA-09**: DB gains `architecture_integrations` table (id, project_id, tool_name, track, phase, status, integration_method, notes)
-- [ ] **SCHEMA-10**: DB gains `before_state` table (id, project_id, aggregation_hub_name, alert_to_ticket_problem, pain_points_json)
-- [ ] **SCHEMA-11**: DB gains `team_onboarding_status` table (id, project_id, team_name, track, ingest_status, correlation_status, incident_intelligence_status, sn_automation_status, biggy_ai_status)
+- [x] **SCHEMA-01**: DB gains `discovery_items` table (id, project_id, source, content, suggested_field, suggested_value, status: pending/approved/dismissed, scan_timestamp, source_url)
+- [x] **SCHEMA-02**: DB gains `audit_log` table (id, entity_type, entity_id, action, actor_id, before_json, after_json, timestamp)
+- [x] **SCHEMA-03**: `time_entries` extended with submitted_on, submitted_by, approved_on, approved_by, rejected_on, rejected_by, locked (boolean)
+- [x] **SCHEMA-04**: `artifacts` table extended with ingestion_status (pending/extracting/preview/approved/failed) and ingestion_log_json
+- [x] **SCHEMA-05**: `scheduled_jobs` extended with last_run_outcome (success/failure/partial), run_history_json, timezone, skill_params_json
+- [x] **SCHEMA-06**: DB gains `business_outcomes` table (id, project_id, title, track, description, delivery_status, mapping_note)
+- [x] **SCHEMA-07**: DB gains `e2e_workflows` table (id, project_id, team_name, workflow_name) with child `workflow_steps` (id, workflow_id, label, track, status, position)
+- [x] **SCHEMA-08**: DB gains `focus_areas` table (id, project_id, title, tracks, why_it_matters, current_status, next_step, bp_owner, customer_owner)
+- [x] **SCHEMA-09**: DB gains `architecture_integrations` table (id, project_id, tool_name, track, phase, status, integration_method, notes)
+- [x] **SCHEMA-10**: DB gains `before_state` table (id, project_id, aggregation_hub_name, alert_to_ticket_problem, pain_points_json)
+- [x] **SCHEMA-11**: DB gains `team_onboarding_status` table (id, project_id, team_name, track, ingest_status, correlation_status, incident_intelligence_status, sn_automation_status, biggy_ai_status)
 
 ### INGESTION — Document Ingestion
 *Net new — no file upload or AI extraction capability exists today.*
@@ -170,17 +170,17 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SCHEMA-01 | Phase 17 | Pending |
-| SCHEMA-02 | Phase 17 | Pending |
-| SCHEMA-03 | Phase 17 | Pending |
-| SCHEMA-04 | Phase 17 | Pending |
-| SCHEMA-05 | Phase 17 | Pending |
-| SCHEMA-06 | Phase 17 | Pending |
-| SCHEMA-07 | Phase 17 | Pending |
-| SCHEMA-08 | Phase 17 | Pending |
-| SCHEMA-09 | Phase 17 | Pending |
-| SCHEMA-10 | Phase 17 | Pending |
-| SCHEMA-11 | Phase 17 | Pending |
+| SCHEMA-01 | Phase 17 | Complete |
+| SCHEMA-02 | Phase 17 | Complete |
+| SCHEMA-03 | Phase 17 | Complete |
+| SCHEMA-04 | Phase 17 | Complete |
+| SCHEMA-05 | Phase 17 | Complete |
+| SCHEMA-06 | Phase 17 | Complete |
+| SCHEMA-07 | Phase 17 | Complete |
+| SCHEMA-08 | Phase 17 | Complete |
+| SCHEMA-09 | Phase 17 | Complete |
+| SCHEMA-10 | Phase 17 | Complete |
+| SCHEMA-11 | Phase 17 | Complete |
 | ING-01 | Phase 18 | Pending |
 | ING-02 | Phase 18 | Pending |
 | ING-03 | Phase 18 | Pending |
