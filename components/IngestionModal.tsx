@@ -153,6 +153,7 @@ export function IngestionModal({ open, onOpenChange, projectId, artifactId, init
                   if (parsed.type === 'progress') {
                     setExtractionMessage(parsed.message ?? `Extracting ${file.name}…`)
                   } else if (parsed.type === 'item') {
+                    // Individual item streaming (future use)
                     const item: ReviewItem = {
                       ...(parsed.item as ExtractionItem),
                       approved: true,
@@ -160,6 +161,17 @@ export function IngestionModal({ open, onOpenChange, projectId, artifactId, init
                       conflict: parsed.item.conflict,
                     }
                     accumulated.push(item)
+                  } else if (parsed.type === 'complete') {
+                    // Bulk completion — extract route sends all items in one event
+                    for (const raw of (parsed.items ?? [])) {
+                      accumulated.push({
+                        ...(raw as ExtractionItem),
+                        approved: true,
+                        edited: false,
+                        conflict: (raw as ExtractionItem & { conflict?: ReviewItem['conflict'] }).conflict,
+                      })
+                    }
+                    resolve(accumulated); return
                   } else if (parsed.type === 'done') {
                     resolve(accumulated); return
                   } else if (parsed.type === 'error') {
