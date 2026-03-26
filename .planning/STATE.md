@@ -4,12 +4,12 @@ milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
 current_plan: 19-05 COMPLETE
 status: unknown
-last_updated: "2026-03-26T20:04:40.256Z"
+last_updated: "2026-03-26T20:06:56.785Z"
 progress:
   total_phases: 27
   completed_phases: 20
   total_plans: 116
-  completed_plans: 112
+  completed_plans: 113
 ---
 
 # Project State
@@ -324,6 +324,9 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - [Phase 19.1-04]: prompt=consent required in generateAuthUrl to guarantee refresh_token is always returned — without it subsequent connects after revocation would permanently break GmailAdapter
 - [Phase 19.1-source-integrations]: Source Connections added as a third tab in Settings (not a new page) — consistent UX, no nav changes needed
 - [Phase 19.1-source-integrations]: Gmail connect uses anchor href to /api/oauth/gmail — browser redirect required; JS fetch cannot follow OAuth redirects
+- [Phase 19.1-08]: likely_duplicate stored in DB (not computed client-side): persists Claude's cross-reference signal through queue refresh cycles
+- [Phase 19.1-08]: Collapsed <details> section for duplicates (not auto-dismissed): flagged items remain reviewable, user can override Claude's judgment
+- [Phase 19.1-08]: existingProjectSummary required (not optional) in DiscoveryScanParams: callers must pass empty string to opt out, preventing silent omission
 
 ## Performance Metrics
 
@@ -432,6 +435,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 | Phase 19.1-source-integrations P03 | 8 | 2 tasks | 2 files |
 | Phase 19.1-source-integrations P04 | 4 | 2 tasks | 7 files |
 | Phase 19.1-source-integrations P06 | 4 | 1 tasks | 3 files |
+| Phase 19.1-source-integrations P08 | 6 | 3 tasks | 8 files |
 
 ## Key Context for Next Session
 
