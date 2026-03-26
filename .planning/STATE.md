@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
-current_plan: Not started
-status: unknown
-last_updated: "2026-03-26T20:36:23.108Z"
+current_plan: "20-02"
+status: in_progress
+last_updated: "2026-03-26T23:55:03.267Z"
 progress:
   total_phases: 27
   completed_phases: 21
-  total_plans: 116
-  completed_plans: 115
+  total_plans: 122
+  completed_plans: 116
 ---
 
 # Project State
@@ -23,10 +23,10 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 
 ## Current Status
 
-**Phase:** Phase 19.1 — Source Integrations (8/8 plans done — COMPLETE)
-**Current Plan:** Not started
-**Last action:** 2026-03-26 — 19.1-07 executed; vitest configured with server-only mock, 118 tests GREEN across 26 files, Source Connections panel human-verified (all 4 source cards visible, no console errors); Phase 19.1 COMPLETE
-**Next action:** Resume Phase 17 (17-03 remaining) or continue v2.0 roadmap — Phase 20 Project Initiation Wizard
+**Phase:** Phase 20 — Project Initiation Wizard (1/6 plans done)
+**Current Plan:** 20-02
+**Last action:** 2026-03-26 — 20-01 executed; 8 Wave 0 test stubs created (RED), 0016_wizard_schema.sql applied (draft enum + description/start_date/end_date), queries.ts updated to include draft in all status filters; 127 tests GREEN, 0 regressions
+**Next action:** Execute 20-02 (wizard UI scaffold + POST /api/projects route implementation)
 
 ## Phase Progress
 
@@ -54,7 +54,7 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 | 18. Document Ingestion | COMPLETE (6/6 plans) |
 | 19. External Discovery Scan | COMPLETE (see 19.1) |
 | 19.1. Source Integrations | COMPLETE (8/8 plans) |
-| 20. Project Initiation Wizard | Not started |
+| 20. Project Initiation Wizard | In progress (1/6 plans) |
 | 21. Teams Tab + Architecture Tab | Not started |
 | 22. Source Badges + Audit Log | Not started |
 | 23. Time Tracking Advanced | Not started |
@@ -333,6 +333,8 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - [Phase 19.1-08]: likely_duplicate stored in DB (not computed client-side): persists Claude's cross-reference signal through queue refresh cycles
 - [Phase 19.1-08]: Collapsed <details> section for duplicates (not auto-dismissed): flagged items remain reviewable, user can override Claude's judgment
 - [Phase 19.1-08]: existingProjectSummary required (not optional) in DiscoveryScanParams: callers must pass empty string to opt out, preventing silent omission
+- [Phase 20]: Migration named 0016_wizard_schema.sql (not 0002) due to existing migrations 0002-0015 from prior phases
+- [Phase 20]: FTS search arms updated for draft alongside dashboard — draft projects should appear in search once they have entity data
 
 ## Performance Metrics
 
@@ -442,6 +444,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 | Phase 19.1-source-integrations P04 | 4 | 2 tasks | 7 files |
 | Phase 19.1-source-integrations P06 | 4 | 1 tasks | 3 files |
 | Phase 19.1-source-integrations P08 | 6 | 3 tasks | 8 files |
+| Phase 20 P01 | 4m | 3 tasks | 12 files |
 
 ## Key Context for Next Session
 

@@ -63,15 +63,15 @@
 ### WIZ — Project Initiation Wizard
 *Net new — projects are currently created by manually seeding the DB; there is no guided onboarding flow.*
 
-- [ ] **WIZ-01**: User can create a new project via a guided multi-step wizard accessible from the Dashboard; the wizard replaces direct DB seed as the primary new-project flow
-- [ ] **WIZ-02**: Wizard step 1 captures: project name, customer name, status, start date, expected end date, description; creates Project and initialises all tab data structures in DB
-- [ ] **WIZ-03**: Wizard presents the recommended collateral checklist (SOW, Kickoff Deck, Discovery Notes, Presales Notes, Customer Org Chart, Prior Tracker, Gong Transcripts, Architecture Diagram Notes, Budget Sheet) and triggers the ingestion pipeline for each uploaded file
-- [ ] **WIZ-04**: Wizard shows AI extraction preview grouped by destination tab across all uploaded documents; user approves before any data is written to DB
-- [ ] **WIZ-05**: Wizard step allows manual addition of items not captured in documents via inline forms per tab
+- [x] **WIZ-01**: User can create a new project via a guided multi-step wizard accessible from the Dashboard; the wizard replaces direct DB seed as the primary new-project flow
+- [x] **WIZ-02**: Wizard step 1 captures: project name, customer name, status, start date, expected end date, description; creates Project and initialises all tab data structures in DB
+- [x] **WIZ-03**: Wizard presents the recommended collateral checklist (SOW, Kickoff Deck, Discovery Notes, Presales Notes, Customer Org Chart, Prior Tracker, Gong Transcripts, Architecture Diagram Notes, Budget Sheet) and triggers the ingestion pipeline for each uploaded file
+- [x] **WIZ-04**: Wizard shows AI extraction preview grouped by destination tab across all uploaded documents; user approves before any data is written to DB
+- [x] **WIZ-05**: Wizard step allows manual addition of items not captured in documents via inline forms per tab
 - [ ] **WIZ-06**: Wizard step configures time tracking for the project: weekly capacity, working days, submission due date, approver
-- [ ] **WIZ-07**: Wizard launch step shows a completeness summary; clicking "Launch Project" sets project status to Active
-- [ ] **WIZ-08**: Platform calculates a Project Completeness Score (0–100%) based on the proportion of tabs that have at least one populated record
-- [ ] **WIZ-09**: Completeness score is visible on the project Overview tab; a prompt appears when score falls below 60% identifying specific gaps
+- [x] **WIZ-07**: Wizard launch step shows a completeness summary; clicking "Launch Project" sets project status to Active
+- [x] **WIZ-08**: Platform calculates a Project Completeness Score (0–100%) based on the proportion of tabs that have at least one populated record
+- [x] **WIZ-09**: Completeness score is visible on the project Overview tab; a prompt appears when score falls below 60% identifying specific gaps
 
 ### TTADV — Time Tracking Advanced
 *Extends the existing basic time entry tab (Phase 5.2/14). The entry grid exists; approval, calendar integration, admin config, and notifications do not.*
@@ -210,15 +210,15 @@
 | DISC-15 | Phase 19 | Complete |
 | DISC-16 | Phase 19 | Complete |
 | DISC-17 | Phase 19 | Complete |
-| WIZ-01 | Phase 20 | Pending |
-| WIZ-02 | Phase 20 | Pending |
-| WIZ-03 | Phase 20 | Pending |
-| WIZ-04 | Phase 20 | Pending |
-| WIZ-05 | Phase 20 | Pending |
+| WIZ-01 | Phase 20 | Complete |
+| WIZ-02 | Phase 20 | Complete |
+| WIZ-03 | Phase 20 | Complete |
+| WIZ-04 | Phase 20 | Complete |
+| WIZ-05 | Phase 20 | Complete |
 | WIZ-06 | Phase 20 | Pending |
-| WIZ-07 | Phase 20 | Pending |
-| WIZ-08 | Phase 20 | Pending |
-| WIZ-09 | Phase 20 | Pending |
+| WIZ-07 | Phase 20 | Complete |
+| WIZ-08 | Phase 20 | Complete |
+| WIZ-09 | Phase 20 | Complete |
 | TEAMS-01 | Phase 21 | Pending |
 | TEAMS-02 | Phase 21 | Pending |
 | TEAMS-03 | Phase 21 | Pending |
