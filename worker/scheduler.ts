@@ -50,4 +50,16 @@ export async function registerAllSchedulers(settings: AppSettings): Promise<void
     }
   );
   console.log('[scheduler] registered customer-project-tracker → 0 9 * * *');
+
+  // discovery-scan: daily at 8am — scans all active projects for external updates
+  await jobQueue.upsertJobScheduler(
+    'discovery-scan',
+    { pattern: '0 8 * * *' },
+    {
+      name: 'discovery-scan',
+      data: { triggeredBy: 'scheduled' },
+      opts: { removeOnComplete: 10, removeOnFail: 50 },
+    }
+  );
+  console.log('[scheduler] registered discovery-scan → 0 8 * * *');
 }
