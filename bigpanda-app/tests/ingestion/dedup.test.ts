@@ -5,22 +5,26 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 vi.mock('@/db', () => ({
   db: {
     select: vi.fn(),
+    insert: vi.fn(),
     update: vi.fn(),
+    delete: vi.fn(),
   },
 }));
 
 // Mock db/schema — provide minimal shape so imports don't fail
 vi.mock('@/db/schema', () => ({
-  actions: { id: 'id', project_id: 'project_id', description: 'description' },
-  risks: { id: 'id', project_id: 'project_id', description: 'description' },
-  milestones: { id: 'id', project_id: 'project_id', name: 'name' },
-  keyDecisions: { id: 'id', project_id: 'project_id', decision: 'decision' },
-  engagementHistory: { id: 'id', project_id: 'project_id', content: 'content' },
-  stakeholders: { id: 'id', project_id: 'project_id', email: 'email', name: 'name' },
-  tasks: { id: 'id', project_id: 'project_id', title: 'title' },
-  businessOutcomes: { id: 'id', project_id: 'project_id', title: 'title' },
-  focusAreas: { id: 'id', project_id: 'project_id', title: 'title' },
-  architectureIntegrations: { id: 'id', project_id: 'project_id', tool_name: 'tool_name', track: 'track' },
+  actions: { id: 'id', project_id: 'project_id', description: 'description', source: 'source', source_artifact_id: 'source_artifact_id', ingested_at: 'ingested_at' },
+  risks: { id: 'id', project_id: 'project_id', description: 'description', source: 'source', source_artifact_id: 'source_artifact_id', ingested_at: 'ingested_at' },
+  milestones: { id: 'id', project_id: 'project_id', name: 'name', source: 'source', source_artifact_id: 'source_artifact_id', ingested_at: 'ingested_at' },
+  keyDecisions: { id: 'id', project_id: 'project_id', decision: 'decision', source: 'source', source_artifact_id: 'source_artifact_id', ingested_at: 'ingested_at' },
+  engagementHistory: { id: 'id', project_id: 'project_id', content: 'content', source: 'source', source_artifact_id: 'source_artifact_id', ingested_at: 'ingested_at' },
+  stakeholders: { id: 'id', project_id: 'project_id', email: 'email', name: 'name', source: 'source', source_artifact_id: 'source_artifact_id', ingested_at: 'ingested_at' },
+  tasks: { id: 'id', project_id: 'project_id', title: 'title', source: 'source', source_artifact_id: 'source_artifact_id', ingested_at: 'ingested_at' },
+  businessOutcomes: { id: 'id', project_id: 'project_id', title: 'title', source: 'source', source_artifact_id: 'source_artifact_id', ingested_at: 'ingested_at' },
+  focusAreas: { id: 'id', project_id: 'project_id', title: 'title', source: 'source', source_artifact_id: 'source_artifact_id', ingested_at: 'ingested_at' },
+  architectureIntegrations: { id: 'id', project_id: 'project_id', tool_name: 'tool_name', track: 'track', source: 'source', source_artifact_id: 'source_artifact_id', ingested_at: 'ingested_at' },
+  teamOnboardingStatus: { id: 'id', project_id: 'project_id', team_name: 'team_name' },
+  artifacts: { id: 'id', project_id: 'project_id', ingestion_status: 'ingestion_status', ingestion_log_json: 'ingestion_log_json' },
   ingestionStatusEnum: vi.fn(),
 }));
 
@@ -43,7 +47,18 @@ vi.mock('@/lib/document-extractor', () => ({
 
 import { isAlreadyIngested } from '@/app/api/ingestion/extract/route';
 import type { ExtractionItem } from '@/app/api/ingestion/extract/route';
+import { POST } from '@/app/api/ingestion/approve/route';
 import { db } from '@/db';
+import { NextRequest } from 'next/server';
+
+// Helper to build a NextRequest with JSON body
+function buildRequest(body: unknown): NextRequest {
+  return new NextRequest('http://localhost/api/ingestion/approve', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
 
 describe('Dedup and conflict detection (ING-08, ING-11, ING-12)', () => {
   beforeEach(() => {
@@ -70,6 +85,127 @@ describe('Dedup and conflict detection (ING-08, ING-11, ING-12)', () => {
     };
     const result = await isAlreadyIngested(item, 1);
     expect(result).toBe(false);
+  });
+
+  it('ING-08: approve route returns 409 when conflict found and no conflictResolution provided', async () => {
+    // Artifact fetch returns a valid artifact
+    const mockArtifactWhere = vi.fn().mockResolvedValue([{
+      id: 10,
+      ingestion_log_json: { filename: 'test.docx', uploaded_at: '2026-01-01T00:00:00Z' },
+    }]);
+    const mockArtifactFrom = vi.fn().mockReturnValue({ where: mockArtifactWhere });
+    // Conflict check: returns existing record (conflict!)
+    const mockConflictWhere = vi.fn().mockResolvedValue([{ id: 99, description: 'Set up alerts in BigPanda' }]);
+    const mockConflictFrom = vi.fn().mockReturnValue({ where: mockConflictWhere });
+    vi.mocked(db.select)
+      .mockReturnValueOnce({ from: mockArtifactFrom } as ReturnType<typeof db.select>) // artifact fetch
+      .mockReturnValue({ from: mockConflictFrom } as ReturnType<typeof db.select>);     // conflict check
+
+    const req = buildRequest({
+      artifactId: 10,
+      projectId: 1,
+      totalExtracted: 1,
+      items: [{
+        entityType: 'action',
+        fields: { description: 'Set up alerts in BigPanda', owner: 'John' },
+        approved: true,
+        // no conflictResolution provided
+      }],
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(409);
+    const body = await res.json() as { conflicts: Array<{ itemIndex: number; existingId: number }> };
+    expect(body.conflicts).toBeDefined();
+    expect(body.conflicts.length).toBeGreaterThan(0);
+    expect(body.conflicts[0].itemIndex).toBe(0);
+    expect(body.conflicts[0].existingId).toBe(99);
+  });
+
+  it('ING-08: approve route skips item when conflictResolution is skip', async () => {
+    const mockArtifactWhere = vi.fn().mockResolvedValue([{
+      id: 10,
+      ingestion_log_json: { filename: 'test.docx', uploaded_at: '2026-01-01T00:00:00Z' },
+    }]);
+    const mockArtifactFrom = vi.fn().mockReturnValue({ where: mockArtifactWhere });
+    // Conflict check: existing record found
+    const mockConflictWhere = vi.fn().mockResolvedValue([{ id: 99, description: 'Set up alerts in BigPanda' }]);
+    const mockConflictFrom = vi.fn().mockReturnValue({ where: mockConflictWhere });
+    vi.mocked(db.select)
+      .mockReturnValueOnce({ from: mockArtifactFrom } as ReturnType<typeof db.select>)
+      .mockReturnValue({ from: mockConflictFrom } as ReturnType<typeof db.select>);
+
+    const mockSet = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) });
+    vi.mocked(db.update).mockReturnValue({ set: mockSet } as ReturnType<typeof db.update>);
+
+    const req = buildRequest({
+      artifactId: 10,
+      projectId: 1,
+      totalExtracted: 1,
+      items: [{
+        entityType: 'action',
+        fields: { description: 'Set up alerts in BigPanda', owner: 'John' },
+        approved: true,
+        conflictResolution: 'skip',
+        existingId: 99,
+      }],
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    const body = await res.json() as { written: number; skipped: number; rejected: number };
+    expect(body.skipped).toBe(1);
+    expect(body.written).toBe(0);
+    // insert should NOT have been called
+    expect(vi.mocked(db.insert)).not.toHaveBeenCalled();
+  });
+
+  it('ING-08: approve route deletes and inserts when conflictResolution is replace', async () => {
+    const mockArtifactWhere = vi.fn().mockResolvedValue([{
+      id: 10,
+      ingestion_log_json: { filename: 'test.docx', uploaded_at: '2026-01-01T00:00:00Z' },
+    }]);
+    const mockArtifactFrom = vi.fn().mockReturnValue({ where: mockArtifactWhere });
+    // Conflict check: returns existing record
+    const mockConflictWhere = vi.fn().mockResolvedValue([{ id: 99, description: 'Old action text' }]);
+    const mockConflictFrom = vi.fn().mockReturnValue({ where: mockConflictWhere });
+    vi.mocked(db.select)
+      .mockReturnValueOnce({ from: mockArtifactFrom } as ReturnType<typeof db.select>)
+      .mockReturnValue({ from: mockConflictFrom } as ReturnType<typeof db.select>);
+
+    // delete mock
+    const mockDeleteWhere = vi.fn().mockResolvedValue([]);
+    vi.mocked(db.delete).mockReturnValue({ where: mockDeleteWhere } as ReturnType<typeof db.delete>);
+
+    // insert mock
+    const mockValues = vi.fn().mockResolvedValue([{ id: 100 }]);
+    vi.mocked(db.insert).mockReturnValue({ values: mockValues } as ReturnType<typeof db.insert>);
+
+    // update mock for artifact log
+    const mockSet = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) });
+    vi.mocked(db.update).mockReturnValue({ set: mockSet } as ReturnType<typeof db.update>);
+
+    const req = buildRequest({
+      artifactId: 10,
+      projectId: 1,
+      totalExtracted: 1,
+      items: [{
+        entityType: 'action',
+        fields: { description: 'Updated action text', owner: 'John' },
+        approved: true,
+        conflictResolution: 'replace',
+        existingId: 99,
+      }],
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    const body = await res.json() as { written: number; skipped: number; rejected: number };
+    expect(body.written).toBe(1);
+    // delete was called
+    expect(vi.mocked(db.delete)).toHaveBeenCalled();
+    // insert was called
+    expect(vi.mocked(db.insert)).toHaveBeenCalled();
   });
 
   it('ING-11: re-upload of same file triggers preview flow', () => {
