@@ -77,6 +77,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - **[2026-03-26] 18-06:** PPTX extraction via jszip: parse ppt/slides/slide*.xml from PPTX archive; original stub returned placeholder text
 - **[2026-03-26] 18-06:** 80k-char chunking for large text documents: split on newline boundary, Claude extraction per chunk, dedup+merge results
 - **[2026-03-26] 18-06:** jsonrepair as fallback after native JSON.parse — Claude occasionally returns malformed JSON; jsonrepair recovers partial output
+- **[2026-03-26] 18-06:** approve route requires artifactId from upload response, not prop-level — track lastExtractedArtifactId in modal state as fallback for drop-zone flow
 - **[2026-03-26] 17-01:** Wave 0 RED pattern: import 15 unexported names from schema.ts — Vitest resolves them as undefined; toBeDefined() fails RED — valid TDD starting point for Phase 17 schema additions
 - **[2026-03-26] 15-03:** Scheduler runtime verification accepted via unit tests when Bull Board not accessible — structural correctness sufficient for Phase 15 closure
 - **[2026-03-26] 15-01:** Unexported symbol imports yield undefined in Vitest — TypeError at test body counts as RED (valid test failure)

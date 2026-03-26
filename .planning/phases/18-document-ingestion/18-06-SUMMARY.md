@@ -167,9 +167,16 @@ Checkpoint fix commits:
 - **Files modified:** `bigpanda-app/app/api/ingestion/extract/route.ts`
 - **Committed in:** 6178d0f, 25b1461
 
+**8. [Rule 1 - Bug] Approve submission failed with "Invalid request" — missing artifactId**
+- **Found during:** Post-checkpoint (after human approval)
+- **Issue:** Drop-zone flow passed no prop-level `artifactId` to IngestionModal; approve route received undefined and rejected the request
+- **Fix:** Track `lastExtractedArtifactId` in modal state (set from upload response); use as fallback when no prop-level artifactId is available
+- **Files modified:** `bigpanda-app/components/IngestionModal.tsx`
+- **Committed in:** 4e236be
+
 ---
 
-**Total deviations:** 7 auto-fixed (5 Rule 1 bugs, 2 Rule 2 missing critical)
+**Total deviations:** 8 auto-fixed (6 Rule 1 bugs, 2 Rule 2 missing critical)
 **Impact on plan:** All fixes necessary for a functional end-to-end pipeline. No scope creep — all fixes directly on the ingestion path. Checkpoint iteration is expected for a pipeline this complex.
 
 ## Issues Encountered
