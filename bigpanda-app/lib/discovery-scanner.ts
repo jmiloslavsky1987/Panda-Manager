@@ -17,6 +17,7 @@ export interface DiscoveryItem {
   suggested_field: string;
   source_excerpt: string;
   source_url?: string;
+  likely_duplicate?: boolean;   // true when Claude determines item duplicates existing project data
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -33,10 +34,11 @@ const SOURCE_TOOL_MAP: Record<string, string> = {
 
 const DISCOVERY_SYSTEM = `You are analyzing communication data for a BigPanda implementation project. \
 Extract structured items that represent: action items, decisions, risks, blockers, or status updates. \
-For each item, return JSON with: source (the communication channel this came from), content (the extracted insight), \
+For each item, return JSON with: source (the communication channel), content (the extracted insight), \
 suggested_field (one of: action|risk|decision|milestone|stakeholder), \
 source_excerpt (verbatim 100-200 char snippet from source), \
-source_url (if available). \
+source_url (if available), \
+likely_duplicate (boolean: true if this item appears to already be captured in the existing project data provided, false otherwise). \
 Return ONLY a JSON array — no prose, no markdown fences.`;
 
 // ─── Params ───────────────────────────────────────────────────────────────────
@@ -47,6 +49,7 @@ export interface DiscoveryScanParams {
   sources: string[];
   since: string;
   mcpServers: MCPServerConfig[];
+  existingProjectSummary: string;   // compact summary of current project items for dedup context
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -79,7 +82,7 @@ function parseDiscoveryItems(text: string): DiscoveryItem[] {
  * @returns DiscoveryItem[] extracted and shaped by Claude
  */
 export async function runDiscoveryScan(params: DiscoveryScanParams): Promise<DiscoveryItem[]> {
-  const { projectName, sources, since, mcpServers } = params;
+  const { projectName, sources, since, mcpServers, existingProjectSummary } = params;
 
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -161,8 +164,13 @@ export async function runDiscoveryScan(params: DiscoveryScanParams): Promise<Dis
     .map(([src, text]) => `=== ${src.toUpperCase()} RESULTS ===\n${text}`)
     .join('\n\n');
 
-  const userMessage = `Analyze the following communication data for the project "${projectName}" ` +
-    `and extract all actionable items, decisions, risks, and status updates.\n\n${combinedPrompt}`;
+  const projectContextSection = existingProjectSummary
+    ? `\n\n=== EXISTING PROJECT DATA (for deduplication) ===\n${existingProjectSummary}\n\nFor each item you extract, set "likely_duplicate": true if it appears to already be captured in the existing project data above, false otherwise. A likely duplicate means the core insight or action item is already tracked — even if worded differently.`
+    : '';
+
+  const userMessage =
+    `Analyze the following communication data for the project "${projectName}" ` +
+    `and extract all actionable items, decisions, risks, and status updates.${projectContextSection}\n\n${combinedPrompt}`;
 
   let analysisText = '';
 
