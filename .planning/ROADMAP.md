@@ -445,7 +445,7 @@ Plans:
 **Goal:** Team members can connect the discovery scanner to real data sources — Slack, Gong, and Glean via shared org-level credentials stored in app Settings, and Gmail via per-user OAuth with guided setup instructions. MCP remains available as an alternate backend when configured in settings.json.
 **Requirements**: SRC-01, SRC-02, SRC-03, SRC-04, SRC-05, SRC-06, SRC-07, SRC-08, SRC-09
 **Depends on:** Phase 19
-**Plans:** 4/8 plans executed
+**Plans:** 5/8 plans executed
 
 **Success Criteria** (what must be TRUE):
 - Slack bot token, Gong API key, and Glean API token are configurable in Settings UI (shared org-level)
