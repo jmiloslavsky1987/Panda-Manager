@@ -440,6 +440,30 @@ Plans:
 - [ ] 19-05-PLAN.md — Wave 3: ScanForUpdatesButton wired to layout + scan-config API + discovery-scan worker job
 - [ ] 19-06-PLAN.md — Wave 4: Full test suite pass + human verification checkpoint
 
+### Phase 19.1: Source Integrations (INSERTED)
+
+**Goal:** Team members can connect the discovery scanner to real data sources — Slack, Gong, and Glean via shared org-level credentials stored in app Settings, and Gmail via per-user OAuth with guided setup instructions. MCP remains available as an alternate backend when configured in settings.json.
+**Requirements**: SRC-01, SRC-02, SRC-03, SRC-04, SRC-05, SRC-06, SRC-07, SRC-08
+**Depends on:** Phase 19
+**Plans:** 7 plans
+
+**Success Criteria** (what must be TRUE):
+- Slack bot token, Gong API key, and Glean API token are configurable in Settings UI (shared org-level)
+- Gmail connect uses per-user OAuth with clear setup instructions in the UI
+- Discovery scanner uses direct REST API calls when credentials are configured (no MCP required)
+- MCP remains fully functional as alternate backend when settings.json is configured
+- Settings UI shows connection status (connected/not connected) for each source
+- Users without credentials see actionable setup instructions, not silent failures
+
+Plans:
+- [ ] 19.1-01-PLAN.md — Wave 0: SourceAdapter interface + RED test stubs + DB migration + AppSettings extension
+- [ ] 19.1-02-PLAN.md — Wave 1: SlackAdapter + GongAdapter (GREEN tests)
+- [ ] 19.1-03-PLAN.md — Wave 1: GleanAdapter + MCPAdapter (GREEN tests)
+- [ ] 19.1-04-PLAN.md — Wave 1: Gmail OAuth routes + GmailAdapter
+- [ ] 19.1-05-PLAN.md — Wave 2: resolveAdapter factory + scanner refactor + source-credentials API
+- [ ] 19.1-06-PLAN.md — Wave 2: Settings UI Source Connections panel
+- [ ] 19.1-07-PLAN.md — Wave 3: Full test suite + human verification checkpoint
+
 ### Phase 20: Project Initiation Wizard
 **Goal**: New projects are created through a guided multi-step wizard that ingests collateral documents, extracts data via the ingestion pipeline, and computes a completeness score — replacing direct DB seeding as the primary new-project flow.
 **Depends on**: Phase 18 (wizard uses the ingestion pipeline)
