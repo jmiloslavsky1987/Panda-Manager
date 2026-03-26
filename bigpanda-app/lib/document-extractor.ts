@@ -34,7 +34,8 @@ export async function extractDocumentText(
   }
   if (ext === '.xlsx') {
     const wb = new ExcelJS.Workbook();
-    await wb.xlsx.load(buffer as unknown as Buffer);
+    // ExcelJS expects a legacy Buffer type; cast via ArrayBuffer to satisfy TS
+    await wb.xlsx.load(buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength) as ArrayBuffer);
     const lines: string[] = [];
     wb.worksheets.forEach(ws => {
       ws.eachRow(row => {
