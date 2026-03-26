@@ -114,13 +114,17 @@ export function ReviewQueue({ projectId }: ReviewQueueProps) {
     )
   }
 
+  // Split pending items into new discoveries vs likely duplicates
+  const newItems = items.filter(item => !item.likely_duplicate)
+  const likelyDuplicates = items.filter(item => item.likely_duplicate)
+
   return (
     <div>
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-medium text-zinc-800">
           Review Queue{' '}
-          <span className="text-zinc-400 font-normal">({items.length} pending)</span>
+          <span className="text-zinc-400 font-normal">({newItems.length} pending)</span>
         </h2>
         <div className="flex items-center gap-3">
           <button
@@ -129,7 +133,7 @@ export function ReviewQueue({ projectId }: ReviewQueueProps) {
           >
             {showDismissHistory ? 'Hide dismissal history' : 'View dismissal history'}
           </button>
-          {items.length > 0 && (
+          {newItems.length > 0 && (
             <button
               onClick={handleBulkApprove}
               disabled={bulkApproving}
@@ -141,14 +145,14 @@ export function ReviewQueue({ projectId }: ReviewQueueProps) {
         </div>
       </div>
 
-      {/* Pending items */}
-      {items.length === 0 ? (
+      {/* Primary pending items (non-duplicate) */}
+      {newItems.length === 0 ? (
         <div className="rounded-lg border border-zinc-200 bg-zinc-50 py-12 text-center text-sm text-zinc-400">
           No pending items — run a scan to discover new updates
         </div>
       ) : (
         <div className="rounded-lg border border-zinc-200 bg-white divide-y divide-zinc-100 px-4">
-          {items.map((item) => (
+          {newItems.map((item) => (
             <QueueItemRow
               key={item.id}
               item={item}
@@ -157,6 +161,32 @@ export function ReviewQueue({ projectId }: ReviewQueueProps) {
             />
           ))}
         </div>
+      )}
+
+      {/* Likely duplicates — collapsed section with amber badge */}
+      {likelyDuplicates.length > 0 && (
+        <details className="mt-6">
+          <summary className="cursor-pointer text-sm font-medium text-zinc-500 hover:text-zinc-700 select-none">
+            {likelyDuplicates.length} item{likelyDuplicates.length !== 1 ? 's' : ''} may already exist in this project
+            <span className="ml-2 text-xs text-zinc-400">(click to review)</span>
+          </summary>
+          <div className="mt-3 space-y-2 opacity-60">
+            <div className="rounded-lg border border-zinc-200 bg-white divide-y divide-zinc-100 px-4">
+              {likelyDuplicates.map((item) => (
+                <div key={item.id} className="relative">
+                  <QueueItemRow
+                    item={item}
+                    onApprove={handleApprove}
+                    onDismiss={handleDismiss}
+                  />
+                  <span className="absolute top-4 right-0 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200">
+                    May already exist
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </details>
       )}
 
       {/* Dismiss history */}

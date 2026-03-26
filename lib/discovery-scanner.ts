@@ -1,13 +1,21 @@
 // bigpanda-app/lib/discovery-scanner.ts
-// Discovery scan service — fetches content from configured MCP sources (Slack, Gmail, Glean, Gong)
+// Discovery scan service — fetches content from configured sources via adapter pattern,
 // then uses Claude to extract structured DiscoveryItem records.
 //
 // Called by: app/api/discovery/scan/route.ts
-// Pattern: MCP beta API (same as skill-orchestrator.ts) + jsonrepair fallback (same as 18-06)
+// Pattern: Adapter factory (resolveAdapter) selects correct adapter per source.
+//          Claude analysis uses streaming (same as skill-orchestrator.ts + 18-06).
+//          jsonrepair fallback for malformed JSON (same as 18-06).
 
 import Anthropic from '@anthropic-ai/sdk';
 import { jsonrepair } from 'jsonrepair';
 import type { MCPServerConfig } from './settings-core';
+import {
+  resolveAdapter,
+  type SourceCredentials,
+  type UserSourceToken,
+  type SourceName,
+} from './source-adapters/index';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -23,14 +31,6 @@ export interface DiscoveryItem {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const MODEL = 'claude-sonnet-4-6';
-
-// Maps source name to the primary MCP tool name to invoke
-const SOURCE_TOOL_MAP: Record<string, string> = {
-  slack: 'search_messages',
-  gmail: 'search_emails',
-  glean: 'search_documents',
-  gong: 'get_transcripts',
-};
 
 const DISCOVERY_SYSTEM = `You are analyzing communication data for a BigPanda implementation project. \
 Extract structured items that represent: action items, decisions, risks, blockers, or status updates. \
@@ -48,8 +48,10 @@ export interface DiscoveryScanParams {
   projectName: string;
   sources: string[];
   since: string;
-  mcpServers: MCPServerConfig[];
-  existingProjectSummary: string;   // compact summary of current project items for dedup context
+  mcpServers: MCPServerConfig[];        // preserved for MCP fallback via MCPAdapter
+  source_credentials: SourceCredentials; // org-level REST credentials from settings.json
+  userTokens: UserSourceToken[];         // per-user OAuth tokens from DB (Gmail)
+  existingProjectSummary: string;        // compact summary of current project items for dedup context
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -71,18 +73,27 @@ function parseDiscoveryItems(text: string): DiscoveryItem[] {
 // ─── Main export ──────────────────────────────────────────────────────────────
 
 /**
- * runDiscoveryScan — fetches content from each configured MCP source, then calls
- * Claude to extract structured DiscoveryItem[] from the combined results.
+ * runDiscoveryScan — fetches content from each configured source via adapter pattern,
+ * then calls Claude to extract structured DiscoveryItem[] from the combined results.
  *
- * @param params.projectId   - DB project ID (for context)
- * @param params.projectName - Human-readable customer/project name (used as search query)
- * @param params.sources     - Source names to query: ['slack', 'gmail', 'glean', 'gong']
- * @param params.since       - ISO timestamp for date-filtering source results
- * @param params.mcpServers  - Active MCPServerConfig entries (pre-filtered by caller)
+ * Phase 1: For each source, resolveAdapter selects the best adapter:
+ *   - REST adapter when org credentials configured (Slack/Gong/Glean) or user token (Gmail)
+ *   - MCPAdapter as fallback when MCP server is configured and enabled
+ *   - null → warn and skip (no credentials configured)
+ *
+ * Phase 2: Claude streaming analysis extracts structured items from combined source data.
+ *
+ * @param params.projectId          - DB project ID (for context)
+ * @param params.projectName        - Human-readable customer/project name (search query)
+ * @param params.sources            - Source names to query: ['slack', 'gmail', 'glean', 'gong']
+ * @param params.since              - ISO timestamp for date-filtering source results
+ * @param params.mcpServers         - Active MCPServerConfig entries (MCP fallback path)
+ * @param params.source_credentials - Org-level REST credentials from settings.json
+ * @param params.userTokens         - Per-user OAuth tokens from DB (Gmail OAuth)
  * @returns DiscoveryItem[] extracted and shaped by Claude
  */
 export async function runDiscoveryScan(params: DiscoveryScanParams): Promise<DiscoveryItem[]> {
-  const { projectName, sources, since, mcpServers, existingProjectSummary } = params;
+  const { projectName, sources, since, mcpServers, source_credentials, userTokens, existingProjectSummary } = params;
 
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -91,64 +102,42 @@ export async function runDiscoveryScan(params: DiscoveryScanParams): Promise<Dis
     mcpServers.map(s => [s.name, s])
   );
 
-  // ─── Phase 1: Fetch from each source via MCP ─────────────────────────────────
+  // ─── Phase 1: Fetch from each source via adapter ──────────────────────────────
   const sourceResults: Record<string, string> = {};
 
   for (const source of sources) {
     const server = serverByName.get(source);
-    if (!server || !server.enabled) {
-      console.warn(`[discovery-scanner] No enabled MCP server found for source '${source}' — skipping`);
+    const userToken = userTokens.find(t => t.source === source) ?? null;
+    const adapter = resolveAdapter(
+      source as SourceName,
+      source_credentials,
+      userToken,
+      server?.enabled ? server : undefined,
+    );
+
+    if (!adapter) {
+      console.warn(
+        `[discovery-scanner] No credentials for source '${source}' — skipping. ` +
+        `Configure in Settings > Source Connections.`
+      );
       continue;
     }
-
-    const toolName = SOURCE_TOOL_MAP[source];
-    if (!toolName) {
-      console.warn(`[discovery-scanner] Unknown source '${source}' — no tool mapping — skipping`);
-      continue;
-    }
-
-    const searchPrompt = `Search for recent communications about "${projectName}" since ${since}. ` +
-      `Use the ${toolName} tool to retrieve relevant ${source} content.`;
 
     try {
-      // Use Anthropic beta MCP API (same pattern as skill-orchestrator.ts)
-      const resp = await anthropic.beta.messages.create(
-        {
-          model: MODEL,
-          max_tokens: 4096,
-          mcp_servers: [
-            {
-              type: 'url' as const,
-              url: server.url,
-              name: server.name,
-              authorization_token: server.apiKey,
-            },
-          ],
-          tools: [
-            {
-              type: 'mcp_toolset' as const,
-              mcp_server_name: server.name,
-            },
-          ],
-          messages: [{ role: 'user', content: searchPrompt }],
-        },
-        { headers: { 'anthropic-beta': 'mcp-client-2025-11-20' } }
-      );
-
-      // Extract text content from response
-      const textParts = resp.content
-        .filter((block: { type: string }) => block.type === 'text')
-        .map((block: { type: string; text?: string }) => (block as { type: string; text: string }).text)
-        .join('\n');
-
-      if (textParts) {
-        sourceResults[source] = textParts;
-        console.log(`[discovery-scanner] ${source}: fetched ${textParts.length} chars`);
+      const content = await adapter.fetchContent(projectName, since);
+      if (content) {
+        sourceResults[source] = content;
+        console.log(
+          `[discovery-scanner] ${source}: fetched ${content.length} chars via ${adapter.constructor.name}`
+        );
       } else {
-        console.log(`[discovery-scanner] ${source}: no text content returned`);
+        console.log(`[discovery-scanner] ${source}: no content returned`);
       }
     } catch (err) {
-      console.error(`[discovery-scanner] ${source} fetch failed:`, err instanceof Error ? err.message : err);
+      console.error(
+        `[discovery-scanner] ${source} fetch failed:`,
+        err instanceof Error ? err.message : err
+      );
       // Continue with other sources — partial results are valid
     }
   }

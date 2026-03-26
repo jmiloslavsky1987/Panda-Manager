@@ -14,8 +14,9 @@ import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { and, eq, ilike } from 'drizzle-orm';
 import { db } from '@/db';
-import { projects, discoveryItems } from '@/db/schema';
+import { projects, discoveryItems, userSourceTokens, actions, risks, stakeholders } from '@/db/schema';
 import { MCPClientPool } from '@/lib/mcp-config';
+import { readSettings } from '@/lib/settings-core';
 import { runDiscoveryScan, type DiscoveryItem } from '@/lib/discovery-scanner';
 
 export const dynamic = 'force-dynamic';
@@ -116,39 +117,50 @@ export async function POST(request: NextRequest): Promise<Response> {
 
           const projectName = project.customer || project.name;
 
-          // 2. Get MCP server configs for discovery-scan skill
-          const allMcpServers = await MCPClientPool.getInstance().getServersForSkill('discovery-scan');
+          // 1b. Build compact project context for dedup analysis
+          // Fetch existing actions, risks, stakeholders (limit 50 each to stay within token budget)
+          const [existingActions, existingRisks, existingStakeholders] = await Promise.all([
+            db.select({ id: actions.id, title: actions.description, status: actions.status })
+              .from(actions).where(eq(actions.project_id, projectId)).limit(50),
+            db.select({ id: risks.id, title: risks.description, status: risks.status })
+              .from(risks).where(eq(risks.project_id, projectId)).limit(50),
+            db.select({ id: stakeholders.id, name: stakeholders.name, role: stakeholders.role })
+              .from(stakeholders).where(eq(stakeholders.project_id, projectId)).limit(50),
+          ]);
 
-          // 3. Filter to only requested sources (case-insensitive name match)
+          const existingProjectSummary = [
+            existingActions.length > 0
+              ? `Actions:\n${existingActions.map(a => `- [${a.status}] ${a.title}`).join('\n')}`
+              : null,
+            existingRisks.length > 0
+              ? `Risks:\n${existingRisks.map(r => `- [${r.status}] ${r.title}`).join('\n')}`
+              : null,
+            existingStakeholders.length > 0
+              ? `Stakeholders:\n${existingStakeholders.map(s => `- ${s.name} (${s.role ?? 'unknown role'})`).join('\n')}`
+              : null,
+          ].filter(Boolean).join('\n\n');
+
+          // 2. Read org-level source credentials and user OAuth tokens in parallel
+          const [settings, dbUserTokens, allMcpServers] = await Promise.all([
+            readSettings(),
+            db.select().from(userSourceTokens).where(eq(userSourceTokens.user_id, 'default')),
+            MCPClientPool.getInstance().getServersForSkill('discovery-scan'),
+          ]);
+
+          const source_credentials = settings.source_credentials ?? {};
+
+          // 3. Filter MCP servers to only requested sources (case-insensitive name match)
+          // MCP servers act as fallback when no REST credentials are configured for a source
           const mcpServers = allMcpServers.filter(s =>
             sources.includes(s.name.toLowerCase() as 'slack' | 'gmail' | 'glean' | 'gong')
           );
 
-          // 3a. Warn clearly for sources with no configured MCP connection
-          const configuredSources = new Set(mcpServers.map(s => s.name.toLowerCase()));
-          const unconfiguredSources = sources.filter(s => !configuredSources.has(s));
-          if (unconfiguredSources.length > 0) {
-            sendEvent({
-              type: 'warning',
-              message: `No MCP connection configured for: ${unconfiguredSources.join(', ')}. Configure them in Settings → MCP Servers.`,
-              unconfiguredSources,
-            });
-          }
-          if (mcpServers.length === 0) {
-            sendEvent({
-              type: 'error',
-              message: `None of the selected sources (${sources.join(', ')}) have MCP connections configured. Go to Settings → MCP Servers to add your credentials.`,
-            });
-            controller.close();
-            return;
+          // 4. Stream per-source progress events
+          for (const source of sources) {
+            sendEvent({ type: 'progress', message: `Scanning ${source}…` });
           }
 
-          // 4. Stream per-source progress events (only configured ones)
-          for (const server of mcpServers) {
-            sendEvent({ type: 'progress', message: `Scanning ${server.name}…` });
-          }
-
-          // 5. Run discovery scan
+          // 5. Run discovery scan — adapter selection happens inside scanner
           sendEvent({ type: 'progress', message: 'Analyzing results with Claude…' });
 
           const discoveryResults = await runDiscoveryScan({
@@ -157,6 +169,9 @@ export async function POST(request: NextRequest): Promise<Response> {
             sources,
             since: sinceTimestamp,
             mcpServers,
+            source_credentials,
+            userTokens: dbUserTokens,
+            existingProjectSummary,
           });
 
           sendEvent({ type: 'progress', message: `Processing ${discoveryResults.length} discovered items…` });
@@ -184,6 +199,7 @@ export async function POST(request: NextRequest): Promise<Response> {
               source_url: item.source_url ?? null,
               source_excerpt: item.source_excerpt,
               scan_id: scanId,
+              likely_duplicate: item.likely_duplicate ?? false,
             });
 
             newItemCount++;
