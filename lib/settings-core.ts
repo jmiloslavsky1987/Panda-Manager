@@ -21,6 +21,15 @@ export interface MCPServerConfig {
   allowedTools?: string[]; // optional allowlist; empty = all tools enabled
 }
 
+// ─── Source Credentials (Phase 19.1) ─────────────────────────────────────────
+// Org-level REST credentials for source adapters. Stored in settings.json.
+// Gmail OAuth tokens are per-user and stored in user_source_tokens DB table instead.
+export interface SourceCredentials {
+  slack?: { token: string; channels?: string[] };
+  gong?: { accessKey: string; accessKeySecret: string; baseUrl: string };
+  glean?: { token: string; instanceUrl: string; actAsEmail?: string };
+}
+
 export interface AppSettings {
   workspace_path: string;
   skill_path: string;
@@ -33,6 +42,7 @@ export interface AppSettings {
     biggy_briefing: string;
   };
   mcp_servers: MCPServerConfig[];
+  source_credentials?: SourceCredentials;
 }
 
 export const SETTINGS_PATH = path.join(os.homedir(), '.bigpanda-app', 'settings.json');
@@ -49,6 +59,7 @@ export const DEFAULTS: AppSettings = {
     biggy_briefing: '0 9 * * 5',
   },
   mcp_servers: [],
+  source_credentials: undefined,
 };
 
 export async function readSettings(settingsPath: string = SETTINGS_PATH): Promise<AppSettings> {
@@ -71,6 +82,7 @@ export async function readSettings(settingsPath: string = SETTINGS_PATH): Promis
         ...(parsed.schedule ?? {}),
       },
       mcp_servers: parsed.mcp_servers ?? DEFAULTS.mcp_servers,
+      source_credentials: parsed.source_credentials ?? DEFAULTS.source_credentials,
     };
   } catch (err: unknown) {
     const nodeErr = err as NodeJS.ErrnoException;
