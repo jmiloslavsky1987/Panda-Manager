@@ -249,13 +249,14 @@ async function computeHealth(projectId: number): Promise<{
 // ─── Query Functions ──────────────────────────────────────────────────────────
 
 /**
- * Returns all active projects with computed RAG health score.
+ * Returns all active and draft projects with computed RAG health score.
+ * Draft projects with no data return neutral health (green, all counts 0).
  */
 export async function getActiveProjects(): Promise<ProjectWithHealth[]> {
   const activeProjects = await db
     .select()
     .from(projects)
-    .where(eq(projects.status, 'active'));
+    .where(inArray(projects.status, ['active', 'draft']));
 
   const projectsWithHealth = await Promise.all(
     activeProjects.map(async (p) => {
@@ -509,7 +510,7 @@ export interface SearchResult {
  *   - from/to: ISO date strings — inclusive bounds on the table's primary date field
  *
  * Returns up to 100 results ordered by date DESC.
- * Archived projects excluded (projects.status = 'active') except knowledge_base entries
+ * Archived/closed projects excluded (status IN active, draft) except knowledge_base entries
  * with null project_id which are always included (KB-03 spec).
  */
 export async function searchAllRecords(params: {
@@ -559,7 +560,7 @@ export async function searchAllRecords(params: {
         SUBSTRING(COALESCE(a.notes, ''), 1, 200) AS snippet
       FROM actions a
       JOIN projects p ON p.id = a.project_id
-      WHERE p.status = 'active'
+      WHERE p.status IN ('active', 'draft')
         AND a.search_vec @@ plainto_tsquery('english', '${safeQ}')
         ${accountFilter('p.customer')}
         ${dateBounds('a.due')}
@@ -581,7 +582,7 @@ export async function searchAllRecords(params: {
         SUBSTRING(COALESCE(r.mitigation, ''), 1, 200) AS snippet
       FROM risks r
       JOIN projects p ON p.id = r.project_id
-      WHERE p.status = 'active'
+      WHERE p.status IN ('active', 'draft')
         AND r.search_vec @@ plainto_tsquery('english', '${safeQ}')
         ${accountFilter('p.customer')}
         ${dateBounds('r.last_updated')}
@@ -603,7 +604,7 @@ export async function searchAllRecords(params: {
         SUBSTRING(COALESCE(kd.context, ''), 1, 200) AS snippet
       FROM key_decisions kd
       JOIN projects p ON p.id = kd.project_id
-      WHERE p.status = 'active'
+      WHERE p.status IN ('active', 'draft')
         AND kd.search_vec @@ plainto_tsquery('english', '${safeQ}')
         ${accountFilter('p.customer')}
         ${dateBounds('kd.date')}
@@ -625,7 +626,7 @@ export async function searchAllRecords(params: {
         SUBSTRING(eh.content, 1, 200) AS snippet
       FROM engagement_history eh
       JOIN projects p ON p.id = eh.project_id
-      WHERE p.status = 'active'
+      WHERE p.status IN ('active', 'draft')
         AND eh.search_vec @@ plainto_tsquery('english', '${safeQ}')
         ${accountFilter('p.customer')}
         ${dateBounds('eh.date')}
@@ -647,7 +648,7 @@ export async function searchAllRecords(params: {
         SUBSTRING(COALESCE(s.role, '') || ' ' || COALESCE(s.notes, ''), 1, 200) AS snippet
       FROM stakeholders s
       JOIN projects p ON p.id = s.project_id
-      WHERE p.status = 'active'
+      WHERE p.status IN ('active', 'draft')
         AND s.search_vec @@ plainto_tsquery('english', '${safeQ}')
         ${accountFilter('p.customer')}
     `);
@@ -668,7 +669,7 @@ export async function searchAllRecords(params: {
         SUBSTRING(COALESCE(t.description, ''), 1, 200) AS snippet
       FROM tasks t
       JOIN projects p ON p.id = t.project_id
-      WHERE p.status = 'active'
+      WHERE p.status IN ('active', 'draft')
         AND t.search_vec @@ plainto_tsquery('english', '${safeQ}')
         ${accountFilter('p.customer')}
         ${dateBounds('t.due')}
@@ -690,7 +691,7 @@ export async function searchAllRecords(params: {
         SUBSTRING(COALESCE(a.description, ''), 1, 200) AS snippet
       FROM artifacts a
       JOIN projects p ON p.id = a.project_id
-      WHERE p.status = 'active'
+      WHERE p.status IN ('active', 'draft')
         AND a.search_vec @@ plainto_tsquery('english', '${safeQ}')
         ${accountFilter('p.customer')}
     `);
@@ -740,7 +741,7 @@ export async function searchAllRecords(params: {
         SUBSTRING(COALESCE(os.owner, ''), 1, 200) AS snippet
       FROM onboarding_steps os
       JOIN projects p ON p.id = os.project_id
-      WHERE p.status = 'active'
+      WHERE p.status IN ('active', 'draft')
         AND os.search_vec @@ plainto_tsquery('english', '${safeQ}')
         ${accountFilter('p.customer')}
         ${dateBounds("to_char(os.updated_at, 'YYYY-MM-DD')")}
@@ -762,7 +763,7 @@ export async function searchAllRecords(params: {
         ''::text AS snippet
       FROM onboarding_phases op
       JOIN projects p ON p.id = op.project_id
-      WHERE p.status = 'active'
+      WHERE p.status IN ('active', 'draft')
         AND op.search_vec @@ plainto_tsquery('english', '${safeQ}')
         ${accountFilter('p.customer')}
         ${dateBounds("to_char(op.created_at, 'YYYY-MM-DD')")}
@@ -784,7 +785,7 @@ export async function searchAllRecords(params: {
         SUBSTRING(COALESCE(i.notes, ''), 1, 200) AS snippet
       FROM integrations i
       JOIN projects p ON p.id = i.project_id
-      WHERE p.status = 'active'
+      WHERE p.status IN ('active', 'draft')
         AND i.search_vec @@ plainto_tsquery('english', '${safeQ}')
         ${accountFilter('p.customer')}
         ${dateBounds("to_char(i.updated_at, 'YYYY-MM-DD')")}
@@ -806,7 +807,7 @@ export async function searchAllRecords(params: {
         ''::text AS snippet
       FROM time_entries te
       JOIN projects p ON p.id = te.project_id
-      WHERE p.status = 'active'
+      WHERE p.status IN ('active', 'draft')
         AND te.search_vec @@ plainto_tsquery('english', '${safeQ}')
         ${accountFilter('p.customer')}
         ${dateBounds('te.date')}
