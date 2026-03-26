@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
-current_plan: 19.1-05 COMPLETE
+current_plan: 19.1-07 COMPLETE
 status: in_progress
-last_updated: "2026-03-26T20:08:00Z"
+last_updated: "2026-03-26T20:30:00Z"
 progress:
   total_phases: 27
   completed_phases: 20
   total_plans: 116
-  completed_plans: 114
+  completed_plans: 116
 ---
 
 # Project State
@@ -23,10 +23,10 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 
 ## Current Status
 
-**Phase:** Phase 19.1 — Source Integrations (5/8 plans done)
-**Current Plan:** 19.1-05 COMPLETE
-**Last action:** 2026-03-26 — 19.1-05 executed; resolveAdapter factory implemented, discovery-scanner refactored to use adapter pattern (no direct anthropic.beta MCP calls), scan route wired with source_credentials + userTokens, source-credentials API route in place; SRC-06/07/08 satisfied
-**Next action:** /gsd:execute-phase 19.1 (plan 19.1-06) — Source Connections UI
+**Phase:** Phase 19.1 — Source Integrations (8/8 plans done — COMPLETE)
+**Current Plan:** 19.1-07 COMPLETE
+**Last action:** 2026-03-26 — 19.1-07 executed; vitest configured with server-only mock, 118 tests GREEN across 26 files, Source Connections panel human-verified (all 4 source cards visible, no console errors); Phase 19.1 COMPLETE
+**Next action:** Resume Phase 17 (17-03 remaining) or continue v2.0 roadmap — Phase 20 Project Initiation Wizard
 
 ## Phase Progress
 
@@ -52,7 +52,8 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 | 16. Verification Retrofit | COMPLETE (5/5 plans) |
 | 17. Schema Extensions | In progress (2/3 plans) |
 | 18. Document Ingestion | COMPLETE (6/6 plans) |
-| 19. External Discovery Scan | Not started |
+| 19. External Discovery Scan | COMPLETE (see 19.1) |
+| 19.1. Source Integrations | COMPLETE (8/8 plans) |
 | 20. Project Initiation Wizard | Not started |
 | 21. Teams Tab + Architecture Tab | Not started |
 | 22. Source Badges + Audit Log | Not started |
@@ -78,6 +79,8 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - **[2026-03-26] 18-06:** 80k-char chunking for large text documents: split on newline boundary, Claude extraction per chunk, dedup+merge results
 - **[2026-03-26] 18-06:** jsonrepair as fallback after native JSON.parse — Claude occasionally returns malformed JSON; jsonrepair recovers partial output
 - **[2026-03-26] 18-06:** approve route requires artifactId from upload response, not prop-level — track lastExtractedArtifactId in modal state as fallback for drop-zone flow
+- **[2026-03-26] 19.1-07:** server-only mock required in vitest.config.ts — Next.js server-only package throws at import time in vitest context; mapping to empty stub unblocks all 26 adapter test files
+- **[2026-03-26] 19.1-07:** Phase 19.1 COMPLETE — all 8 requirements SRC-01 through SRC-09 satisfied; adapter pattern, UI, OAuth, test suite all verified
 - **[2026-03-26] 19.1-05:** resolveAdapter: REST credentials take priority over MCP fallback — REST checked first; MCP only if no REST creds configured
 - **[2026-03-26] 19.1-05:** Adapter constructors use creds object pattern (not positional args) — Wave 1 implementations all take `creds: { ... }` object, plan spec showed positional args; factory updated to match
 - **[2026-03-26] 19.1-05:** DiscoveryScanParams extended with source_credentials + userTokens — both required for adapter routing; existingProjectSummary also added for Claude dedup context
