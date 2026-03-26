@@ -4,12 +4,12 @@ milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
 current_plan: Not started
 status: unknown
-last_updated: "2026-03-26T06:45:00.497Z"
+last_updated: "2026-03-26T06:51:05.138Z"
 progress:
   total_phases: 26
   completed_phases: 19
   total_plans: 102
-  completed_plans: 100
+  completed_plans: 101
 ---
 
 # Project State
@@ -293,6 +293,9 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - [Phase 18-document-ingestion]: vi.resetAllMocks() required in beforeEach (not clearAllMocks) to prevent mockReturnValue state leaking across tests
 - [Phase 18-document-ingestion]: team entityType maps to focusAreas table (not teamOnboardingStatus) — teamOnboardingStatus lacks source_artifact_id/ingested_at
 - [Phase 18-document-ingestion]: Append-only tables (key_decisions, engagement_history) auto-skip on conflict in approve route — DB triggers prevent UPDATE/DELETE
+- [Phase 18-document-ingestion]: vitest node env + React UI: tested component behavior through exported pure helpers (TAB_LABELS, ENTITY_FIELDS) and state simulation functions instead of rendering — all ING-05/06/07/08 behaviors fully verified without jsdom
+- [Phase 18-document-ingestion]: ReviewItem type exported from IngestionModal.tsx: single source of truth for all client-side review state, imported by ExtractionPreview, ExtractionItemRow, ExtractionItemEditForm
+- [Phase 18-document-ingestion]: Demand-driven SSE extraction: IngestionModal only fires extraction when user navigates to a file, not preemptively for all files on upload — prevents wasted Claude API calls
 
 ## Performance Metrics
 
@@ -392,6 +395,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 | Phase 18-document-ingestion P02 | 3 | 2 tasks | 4 files |
 | Phase 18-document-ingestion P03 | 4min | 1 tasks | 3 files |
 | Phase 18-document-ingestion P04 | 5min | 1 tasks | 3 files |
+| Phase 18-document-ingestion P05 | 4 | 2 tasks | 6 files |
 
 ## Key Context for Next Session
 
