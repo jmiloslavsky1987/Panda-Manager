@@ -6,13 +6,13 @@ import type { AppSettings } from '../lib/settings-core';
 export const jobQueue = new Queue('scheduled-jobs', { connection: redisConnection });
 
 // Maps job names to their settings schedule keys
-const JOB_SCHEDULE_MAP: Record<string, keyof AppSettings['schedule']> = {
-  'action-sync':     'morning_briefing',
-  'health-refresh':  'health_check',
-  'weekly-briefing': 'weekly_status',
-  'context-updater': 'slack_sweep',
-  'gantt-snapshot':  'tracker_weekly',
-  'risk-monitor':    'biggy_briefing',
+export const JOB_SCHEDULE_MAP: Record<string, keyof AppSettings['schedule']> = {
+  'morning-briefing':        'morning_briefing',
+  'health-refresh':          'health_check',
+  'weekly-customer-status':  'weekly_status',
+  'context-updater':         'slack_sweep',
+  'gantt-snapshot':          'tracker_weekly',
+  'risk-monitor':            'biggy_briefing',
 };
 
 /**
@@ -21,6 +21,10 @@ const JOB_SCHEDULE_MAP: Record<string, keyof AppSettings['schedule']> = {
  * upsertJobScheduler with the same scheduler ID updates in place — no duplicates.
  */
 export async function registerAllSchedulers(settings: AppSettings): Promise<void> {
+  // Clean up phantom scheduler IDs from Redis (idempotent — safe on every restart)
+  await jobQueue.removeJobScheduler('action-sync');
+  await jobQueue.removeJobScheduler('weekly-briefing');
+
   for (const [jobName, scheduleKey] of Object.entries(JOB_SCHEDULE_MAP)) {
     const cronPattern = settings.schedule[scheduleKey];
     await jobQueue.upsertJobScheduler(
