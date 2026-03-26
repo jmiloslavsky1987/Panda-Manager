@@ -456,6 +456,8 @@ export const discoveryItems = pgTable('discovery_items', {
   status:          discoveryItemStatusEnum('status').default('pending').notNull(),
   scan_timestamp:  timestamp('scan_timestamp'),
   source_url:      text('source_url'),
+  source_excerpt:  text('source_excerpt'),                          // raw text snippet from source that triggered this item
+  scan_id:         text('scan_id'),                                  // e.g. "scan-{projectId}-{timestamp}"; groups items from one scan run
   created_at:      timestamp('created_at').defaultNow().notNull(),
 });
 
