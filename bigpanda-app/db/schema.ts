@@ -30,6 +30,7 @@ export const projectStatusEnum = pgEnum('project_status', [
   'active',
   'archived',
   'closed',
+  'draft',
 ]);
 
 export const actionStatusEnum = pgEnum('action_status', [
@@ -91,6 +92,9 @@ export const projects = pgTable('projects', {
   sprint_summary: text('sprint_summary'),
   sprint_summary_at: timestamp('sprint_summary_at', { withTimezone: true }),
   weekly_hour_target: numeric('weekly_hour_target', { precision: 5, scale: 2 }),
+  description: text('description'),
+  start_date: text('start_date'),
+  end_date: text('end_date'),
 });
 
 // ─── Table 2: workstreams ─────────────────────────────────────────────────────
