@@ -52,6 +52,28 @@ export const outputStatusEnum = pgEnum('output_status', [
   'failed',
 ]);
 
+// ─── v2.0 Enums ──────────────────────────────────────────────────────────────
+
+export const discoveryItemStatusEnum = pgEnum('discovery_item_status', [
+  'pending', 'approved', 'dismissed',
+]);
+
+export const ingestionStatusEnum = pgEnum('ingestion_status', [
+  'pending', 'extracting', 'preview', 'approved', 'failed',
+]);
+
+export const jobRunOutcomeEnum = pgEnum('job_run_outcome', [
+  'success', 'failure', 'partial',
+]);
+
+export const deliveryStatusEnum = pgEnum('delivery_status', [
+  'live', 'in_progress', 'blocked', 'planned',
+]);
+
+export const integrationTrackStatusEnum = pgEnum('integration_track_status', [
+  'live', 'in_progress', 'pilot', 'planned',
+]);
+
 // ─── Table 1: projects ────────────────────────────────────────────────────────
 
 export const projects = pgTable('projects', {
@@ -158,6 +180,8 @@ export const artifacts = pgTable('artifacts', {
   owner: text('owner'),
   source: text('source').notNull(),
   created_at: timestamp('created_at').defaultNow().notNull(),
+  ingestion_status:   ingestionStatusEnum('ingestion_status'),
+  ingestion_log_json: jsonb('ingestion_log_json'),
 });
 
 // ─── Table 7: engagement_history — APPEND ONLY ───────────────────────────────
@@ -394,7 +418,137 @@ export const timeEntries = pgTable('time_entries', {
   description: text('description').notNull(),
   created_at:  timestamp('created_at').defaultNow().notNull(),
   updated_at:  timestamp('updated_at').defaultNow().notNull(),
+  submitted_on:  timestamp('submitted_on'),
+  submitted_by:  text('submitted_by'),
+  approved_on:   timestamp('approved_on'),
+  approved_by:   text('approved_by'),
+  rejected_on:   timestamp('rejected_on'),
+  rejected_by:   text('rejected_by'),
+  locked:        boolean('locked').default(false).notNull(),
 })
 
 export type TimeEntry = typeof timeEntries.$inferSelect
 export type TimeEntryInsert = typeof timeEntries.$inferInsert
+
+// ─── v2.0 Tables ─────────────────────────────────────────────────────────────
+
+export const discoveryItems = pgTable('discovery_items', {
+  id:              serial('id').primaryKey(),
+  project_id:      integer('project_id').notNull().references(() => projects.id),
+  source:          text('source').notNull().default('manual'),
+  content:         text('content').notNull(),
+  suggested_field: text('suggested_field'),
+  suggested_value: text('suggested_value'),
+  status:          discoveryItemStatusEnum('status').default('pending').notNull(),
+  scan_timestamp:  timestamp('scan_timestamp'),
+  source_url:      text('source_url'),
+  created_at:      timestamp('created_at').defaultNow().notNull(),
+});
+
+export const auditLog = pgTable('audit_log', {
+  id:          serial('id').primaryKey(),
+  entity_type: text('entity_type').notNull(),
+  entity_id:   integer('entity_id'),
+  action:      text('action').notNull(),
+  actor_id:    text('actor_id'),
+  before_json: jsonb('before_json'),
+  after_json:  jsonb('after_json'),
+  created_at:  timestamp('created_at').defaultNow().notNull(),
+});
+
+export const businessOutcomes = pgTable('business_outcomes', {
+  id:              serial('id').primaryKey(),
+  project_id:      integer('project_id').notNull().references(() => projects.id),
+  title:           text('title').notNull(),
+  track:           text('track').notNull(),
+  description:     text('description'),
+  delivery_status: deliveryStatusEnum('delivery_status').default('planned').notNull(),
+  mapping_note:    text('mapping_note'),
+  source:          text('source').notNull().default('manual'),
+  created_at:      timestamp('created_at').defaultNow().notNull(),
+});
+
+export const e2eWorkflows = pgTable('e2e_workflows', {
+  id:            serial('id').primaryKey(),
+  project_id:    integer('project_id').notNull().references(() => projects.id),
+  team_name:     text('team_name').notNull(),
+  workflow_name: text('workflow_name').notNull(),
+  source:        text('source').notNull().default('manual'),
+  created_at:    timestamp('created_at').defaultNow().notNull(),
+});
+
+export const workflowSteps = pgTable('workflow_steps', {
+  id:          serial('id').primaryKey(),
+  workflow_id: integer('workflow_id').notNull().references(() => e2eWorkflows.id, { onDelete: 'cascade' }),
+  label:       text('label').notNull(),
+  track:       text('track'),
+  status:      text('status'),
+  position:    integer('position').default(0).notNull(),
+  created_at:  timestamp('created_at').defaultNow().notNull(),
+});
+
+export const focusAreas = pgTable('focus_areas', {
+  id:              serial('id').primaryKey(),
+  project_id:      integer('project_id').notNull().references(() => projects.id),
+  title:           text('title').notNull(),
+  tracks:          text('tracks'),
+  why_it_matters:  text('why_it_matters'),
+  current_status:  text('current_status'),
+  next_step:       text('next_step'),
+  bp_owner:        text('bp_owner'),
+  customer_owner:  text('customer_owner'),
+  source:          text('source').notNull().default('manual'),
+  created_at:      timestamp('created_at').defaultNow().notNull(),
+});
+
+export const architectureIntegrations = pgTable('architecture_integrations', {
+  id:                 serial('id').primaryKey(),
+  project_id:         integer('project_id').notNull().references(() => projects.id),
+  tool_name:          text('tool_name').notNull(),
+  track:              text('track').notNull(),
+  phase:              text('phase'),
+  status:             integrationTrackStatusEnum('status').default('planned').notNull(),
+  integration_method: text('integration_method'),
+  notes:              text('notes'),
+  source:             text('source').notNull().default('manual'),
+  created_at:         timestamp('created_at').defaultNow().notNull(),
+});
+
+export const beforeState = pgTable('before_state', {
+  id:                      serial('id').primaryKey(),
+  project_id:              integer('project_id').notNull().references(() => projects.id),
+  aggregation_hub_name:    text('aggregation_hub_name'),
+  alert_to_ticket_problem: text('alert_to_ticket_problem'),
+  pain_points_json:        jsonb('pain_points_json').default([]).notNull(),
+  source:                  text('source').notNull().default('manual'),
+  created_at:              timestamp('created_at').defaultNow().notNull(),
+});
+
+export const teamOnboardingStatus = pgTable('team_onboarding_status', {
+  id:                              serial('id').primaryKey(),
+  project_id:                      integer('project_id').notNull().references(() => projects.id),
+  team_name:                       text('team_name').notNull(),
+  track:                           text('track'),
+  ingest_status:                   integrationTrackStatusEnum('ingest_status'),
+  correlation_status:              integrationTrackStatusEnum('correlation_status'),
+  incident_intelligence_status:    integrationTrackStatusEnum('incident_intelligence_status'),
+  sn_automation_status:            integrationTrackStatusEnum('sn_automation_status'),
+  biggy_ai_status:                 integrationTrackStatusEnum('biggy_ai_status'),
+  source:                          text('source').notNull().default('manual'),
+  created_at:                      timestamp('created_at').defaultNow().notNull(),
+});
+
+export const scheduledJobs = pgTable('scheduled_jobs', {
+  id:                serial('id').primaryKey(),
+  name:              text('name').notNull(),
+  skill_name:        text('skill_name').notNull(),
+  cron_expression:   text('cron_expression').notNull(),
+  enabled:           boolean('enabled').default(true).notNull(),
+  timezone:          text('timezone'),
+  skill_params_json: jsonb('skill_params_json').default({}).notNull(),
+  last_run_at:       timestamp('last_run_at'),
+  last_run_outcome:  jobRunOutcomeEnum('last_run_outcome'),
+  run_history_json:  jsonb('run_history_json').default([]).notNull(),
+  created_at:        timestamp('created_at').defaultNow().notNull(),
+  updated_at:        timestamp('updated_at').defaultNow().notNull(),
+});
