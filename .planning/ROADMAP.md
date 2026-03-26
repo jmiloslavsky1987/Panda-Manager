@@ -29,7 +29,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 13: Skill UX + Draft Polish** - Contextual skill launch buttons, draft editing, search date filter, plan template library (completed 2026-03-25)
 - [x] **Phase 14: Time + Project Analytics** - Time entry rollup, action velocity, risk trends, capacity planning view (completed 2026-03-25)
 - [x] **Phase 15: Scheduler + UI Fixes** - Fix morning-briefing/weekly-customer-status scheduler registration, apply resolveSkillsDir() to 3 handlers, fix search filter for 4 new FTS tables (YAML export deferred to future phase) (completed 2026-03-26)
-- [ ] **Phase 16: Verification Retrofit** - Retroactive VERIFICATION.md for phases 01, 04, 05, 05.2, 06; closes 31 orphaned requirements
+- [x] **Phase 16: Verification Retrofit** - Retroactive VERIFICATION.md for phases 01, 04, 05, 05.2, 06; closes 31 orphaned requirements (completed 2026-03-26)
 
 ## Phase Details
 
@@ -258,7 +258,7 @@ Phases 5.1 and 5.2 can run in parallel. Phases 6 and 7 can overlap after Phase 5
 | 13. Skill UX + Draft Polish | 4/4 | Complete    | 2026-03-25 |
 | 14. Time + Project Analytics | 5/5 | Complete    | 2026-03-25 |
 | 15. Scheduler + UI Fixes | 3/3 | Complete    | 2026-03-26 |
-| 16. Verification Retrofit | 4/5 | In Progress|  |
+| 16. Verification Retrofit | 5/5 | Complete   | 2026-03-26 |
 
 ---
 

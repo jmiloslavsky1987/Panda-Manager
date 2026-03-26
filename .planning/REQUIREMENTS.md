@@ -56,7 +56,7 @@
 ### Skill Launcher
 
 - [x] **SKILL-01**: SkillOrchestrator service cleanly separated from HTTP Route Handlers — same code path for manual (SSE) and BullMQ-worker (scheduled) invocations
-- [ ] **SKILL-02**: Token budget guard in context assembly — estimates token count before Claude call, truncates or summarizes low-priority context sections if over budget
+- [x] **SKILL-02**: Token budget guard in context assembly — estimates token count before Claude call, truncates or summarizes low-priority context sections if over budget
 - [x] **SKILL-03**: Weekly Customer Status — select account → generate customer-facing email from DB context; copy to clipboard or save as file; optionally creates Gmail draft
 - [x] **SKILL-04**: Meeting Summary — paste notes/transcript + select account → generate .docx + optional .mermaid diagram; registers entry in engagement history
 - [x] **SKILL-05**: ELT External Status — select account + month → generate 5-slide .pptx (confidence-framed, partnership tone, no internal severity language)
@@ -72,10 +72,10 @@
 
 ### Output Library
 
-- [ ] **OUT-01**: All generated files registered in outputs table with account, skill/type, filename, filepath, created_at
-- [ ] **OUT-02**: Output Library view filterable by account, skill type, and date range
-- [ ] **OUT-03**: HTML output files render inline in the app; .docx and .pptx open via system default app
-- [ ] **OUT-04**: Regenerate action re-runs the generating skill with same or updated context; old file archived, new one registered
+- [x] **OUT-01**: All generated files registered in outputs table with account, skill/type, filename, filepath, created_at
+- [x] **OUT-02**: Output Library view filterable by account, skill type, and date range
+- [x] **OUT-03**: HTML output files render inline in the app; .docx and .pptx open via system default app
+- [x] **OUT-04**: Regenerate action re-runs the generating skill with same or updated context; old file archived, new one registered
 
 ### Project Plan & Task Builder
 
@@ -209,7 +209,7 @@
 | SCHED-07 | Phase 16 | Complete |
 | SCHED-08 | Phase 16 | Complete |
 | SKILL-01 | Phase 9 | Complete |
-| SKILL-02 | Phase 16 | Pending |
+| SKILL-02 | Phase 16 | Complete |
 | SKILL-03 | Phase 9 | Complete |
 | SKILL-04 | Phase 9 | Complete |
 | SKILL-11 | Phase 9 | Complete |
@@ -217,10 +217,10 @@
 | SKILL-13 | Phase 5 | Complete |
 | SKILL-14 | Phase 15/16 | Complete |
 | DASH-09 | Phase 5 | Complete |
-| OUT-01 | Phase 16 | Pending |
-| OUT-02 | Phase 16 | Pending |
-| OUT-03 | Phase 16 | Pending |
-| OUT-04 | Phase 16 | Pending |
+| OUT-01 | Phase 16 | Complete |
+| OUT-02 | Phase 16 | Complete |
+| OUT-03 | Phase 16 | Complete |
+| OUT-04 | Phase 16 | Complete |
 | OVER-01 | Phase 5.1 | Complete |
 | OVER-02 | Phase 5.1 | Complete |
 | OVER-03 | Phase 5.1 | Complete |
