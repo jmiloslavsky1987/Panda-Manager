@@ -1,7 +1,6 @@
 // bigpanda-app/worker/jobs/context-updater.ts
 // Scheduled BullMQ handler — delegates to SkillOrchestrator + registers output
 import type { Job } from 'bullmq';
-import path from 'path';
 import { randomUUID } from 'crypto';
 import { sql, eq } from 'drizzle-orm';
 import db from '../../db';
@@ -10,12 +9,13 @@ import { LOCK_IDS } from '../lock-ids';
 import { SkillOrchestrator } from '../../lib/skill-orchestrator';
 import { MCPClientPool } from '../../lib/mcp-config';
 import { getActiveProjects } from '../../lib/queries';
+import { readSettings } from '../../lib/settings-core';
+import { resolveSkillsDir } from './skill-run';
 
 const orchestrator = new SkillOrchestrator();
-const SKILLS_DIR = path.join(__dirname, '../../skills');
 
 export default async function contextUpdaterJob(job: Job): Promise<{ status: string }> {
-  // Acquire advisory lock to prevent concurrent runs
+  // Acquire advisory lock to prevent concurrent runs — FIRST async operation
   const [lockRow] = await db.execute(
     sql`SELECT pg_try_advisory_xact_lock(${LOCK_IDS.CONTEXT_UPDATER}) AS acquired`
   );
@@ -25,6 +25,9 @@ export default async function contextUpdaterJob(job: Job): Promise<{ status: str
     console.log(`[context-updater] skipped: advisory lock ${LOCK_IDS.CONTEXT_UPDATER} held`);
     return { status: 'skipped' };
   }
+
+  const settings = await readSettings();
+  const SKILLS_DIR = resolveSkillsDir(settings.skill_path ?? '');
 
   const projectId = job.data?.projectId as number | undefined;
   const input = job.data?.input as Record<string, string> | undefined;
