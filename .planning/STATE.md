@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
-current_plan: Not started
+current_plan: 19-05 COMPLETE
 status: unknown
-last_updated: "2026-03-26T18:42:38.640Z"
+last_updated: "2026-03-26T19:56:39.877Z"
 progress:
-  total_phases: 26
+  total_phases: 27
   completed_phases: 20
-  total_plans: 108
-  completed_plans: 107
+  total_plans: 116
+  completed_plans: 108
 ---
 
 # Project State
@@ -314,6 +314,8 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - [Phase 19-05]: Source selector uses inline dropdown (no Popover/Label shadcn) — those components not installed; avoids new dependencies
 - [Phase 19-05]: Scan config stored in ~/.bigpanda-app/discovery-scan-config.json keyed by projectId — no DB table needed
 - [Phase 19-05]: discovery-scan cron: fixed schedule in scheduler.ts (upsertJobScheduler 0 8 * * *), same pattern as customer-project-tracker
+- [Phase 19.1-02]: Adapter constructors use object-style creds param to match Plan 01 test stubs; tests define the API contract
+- [Phase 19.1-02]: GongAdapter cursor pagination limited to 3 pages max to prevent runaway on large Gong accounts
 
 ## Performance Metrics
 
