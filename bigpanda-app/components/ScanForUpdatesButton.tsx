@@ -136,6 +136,8 @@ export function ScanForUpdatesButton({ projectId }: ScanForUpdatesButtonProps) {
 
             if (payload.type === 'progress' && payload.message) {
               setScanProgress(payload.message)
+            } else if (payload.type === 'warning' && payload.message) {
+              toast.warning(payload.message)
             } else if (payload.type === 'complete') {
               setScanning(false)
               setScanProgress('')
