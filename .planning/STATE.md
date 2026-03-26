@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
 current_plan: Not started
-status: in-progress
-last_updated: "2026-03-26T08:00:00.000Z"
+status: unknown
+last_updated: "2026-03-26T18:30:41.424Z"
 progress:
   total_phases: 26
   completed_phases: 20
-  total_plans: 102
-  completed_plans: 107
+  total_plans: 108
+  completed_plans: 103
 ---
 
 # Project State
@@ -302,6 +302,8 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - [Phase 18-document-ingestion]: vitest node env + React UI: tested component behavior through exported pure helpers (TAB_LABELS, ENTITY_FIELDS) and state simulation functions instead of rendering — all ING-05/06/07/08 behaviors fully verified without jsdom
 - [Phase 18-document-ingestion]: ReviewItem type exported from IngestionModal.tsx: single source of truth for all client-side review state, imported by ExtractionPreview, ExtractionItemRow, ExtractionItemEditForm
 - [Phase 18-document-ingestion]: Demand-driven SSE extraction: IngestionModal only fires extraction when user navigates to a file, not preemptively for all files on upload — prevents wasted Claude API calls
+- [Phase 19-01]: Wave 0 stub imports: vitest globals=false requires explicit import { expect } from 'vitest' — no production module imports
+- [Phase 19-01]: source_excerpt stores raw text from source triggering discovery; scan_id groups items from one scan run; both nullable in migration 0013
 
 ## Performance Metrics
 
@@ -402,6 +404,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 | Phase 18-document-ingestion P03 | 4min | 1 tasks | 3 files |
 | Phase 18-document-ingestion P04 | 5min | 1 tasks | 3 files |
 | Phase 18-document-ingestion P05 | 4 | 2 tasks | 6 files |
+| Phase 19-external-discovery-scan P01 | 8 | 2 tasks | 7 files |
 
 ## Key Context for Next Session
 
