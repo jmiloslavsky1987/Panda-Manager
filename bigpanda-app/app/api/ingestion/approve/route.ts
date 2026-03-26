@@ -24,7 +24,7 @@ export const dynamic = 'force-dynamic';
 const ApprovalItemSchema = z.object({
   entityType: z.enum([
     'action', 'risk', 'decision', 'milestone', 'stakeholder',
-    'task', 'architecture', 'history', 'businessOutcome', 'team',
+    'task', 'architecture', 'history', 'businessOutcome', 'team', 'note',
   ]),
   fields: z.record(z.string(), z.string()),
   approved: z.boolean(),
@@ -43,7 +43,7 @@ type ApprovalItem = z.infer<typeof ApprovalItemSchema>;
 
 // ─── Append-only entity types (never merge/replace — auto-skip on conflict) ──
 
-const APPEND_ONLY_TYPES = new Set<EntityType>(['decision', 'history']);
+const APPEND_ONLY_TYPES = new Set<EntityType>(['decision', 'history', 'note']);
 
 // ─── Conflict detection: same dedup key as extract route ─────────────────────
 
@@ -290,6 +290,18 @@ async function insertItem(
         phase: f.phase ?? null,
         integration_method: f.integration_method ?? null,
         notes: f.notes ?? null,
+        ...attribution,
+      });
+      break;
+
+    case 'note':
+      // Free-form notes that don't fit a structured entity type — saved to engagement_history
+      // so no content from a document is ever lost.
+      await db.insert(engagementHistory).values({
+        project_id: projectId,
+        content: [f.content, f.context].filter(Boolean).join(' | ') || '(note)',
+        date: null,
+        source: 'ingestion',
         ...attribution,
       });
       break;

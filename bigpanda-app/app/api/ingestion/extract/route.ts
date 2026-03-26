@@ -35,7 +35,8 @@ export type EntityType =
   | 'architecture'
   | 'history'
   | 'businessOutcome'
-  | 'team';
+  | 'team'
+  | 'note';
 
 export interface ExtractionItem {
   entityType: EntityType;
@@ -47,10 +48,10 @@ export interface ExtractionItem {
 // ─── Extraction System Prompt ─────────────────────────────────────────────────
 
 const EXTRACTION_SYSTEM = `You are a project data extractor. Given a document, extract all structured project data.
-Output ONLY a JSON array of extraction items — no prose before or after.
+Output ONLY a JSON array of extraction items — no prose before or after, no markdown code fences.
 Each item follows this exact shape:
 {
-  "entityType": "action" | "risk" | "decision" | "milestone" | "stakeholder" | "task" | "architecture" | "history" | "businessOutcome" | "team",
+  "entityType": "action" | "risk" | "decision" | "milestone" | "stakeholder" | "task" | "architecture" | "history" | "businessOutcome" | "team" | "note",
   "fields": { /* entity-specific key-value pairs as strings */ },
   "confidence": 0.85,
   "sourceExcerpt": "verbatim text this was extracted from (max 200 chars)"
@@ -66,8 +67,10 @@ Entity type guidance:
 - history: { date, content, author }
 - businessOutcome: { title, track, description, delivery_status }
 - team: { team_name, track, ingest_status }
+- note: { content, context } — use for any valuable content that does not fit the above types: observations, meeting highlights, open questions, context, or anything that would be useful to preserve but has no specific schema.
+IMPORTANT: Do NOT discard content just because it doesn't fit a structured type. Capture it as a "note".
 If this document is a slide deck (PPTX), extract all project data visible in bullet points and speaker notes.
-Output only the JSON array. No markdown fences.`;
+Output only the raw JSON array. Never wrap it in markdown code fences.`;
 
 // ─── Dedup Logic (ING-12) ─────────────────────────────────────────────────────
 
@@ -151,8 +154,9 @@ export async function isAlreadyIngested(
       return rows.length > 0;
     }
 
-    case 'history': {
-      const key = normalize(f.content);
+    case 'history':
+    case 'note': {
+      const key = normalize(f.content ?? f.context);
       if (!key) return false;
       const rows = await db
         .select({ id: engagementHistory.id })
@@ -402,9 +406,14 @@ export async function POST(request: NextRequest): Promise<Response> {
           sendEvent({ type: 'progress', message: 'Parsing extraction results…' });
 
           // 7. Parse complete JSON response (pitfall 3: never parse mid-stream)
+          // Defensively strip markdown fences Claude occasionally adds despite instructions.
           let rawItems: ExtractionItem[] = [];
           try {
-            const parsed = JSON.parse(fullText.trim());
+            const cleaned = fullText.trim()
+              .replace(/^```(?:json)?\s*/i, '')  // strip leading ```json or ```
+              .replace(/\s*```\s*$/, '')          // strip trailing ```
+              .trim();
+            const parsed = JSON.parse(cleaned);
             if (Array.isArray(parsed)) {
               rawItems = parsed as ExtractionItem[];
             }
