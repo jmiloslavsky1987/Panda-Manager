@@ -42,10 +42,10 @@
 ### DISC — External Discovery Scan
 *Net new — MCP connectors (Slack, Gmail, Glean, Gong) exist and are unchanged; scan logic and review queue are new.*
 
-- [ ] **DISC-01**: User can manually trigger a discovery scan for any project via a "Scan for Updates" button in the project sidebar
-- [ ] **DISC-02**: Discovery scan can be configured as a recurring scheduled job per project via the Scheduler (SCHED-01)
+- [x] **DISC-01**: User can manually trigger a discovery scan for any project via a "Scan for Updates" button in the project sidebar
+- [x] **DISC-02**: Discovery scan can be configured as a recurring scheduled job per project via the Scheduler (SCHED-01)
 - [x] **DISC-03**: Per-project scan configuration defines which sources to include: Slack, Gmail, Glean, Gong (any combination)
-- [ ] **DISC-04**: Platform shows an in-app notification when a scan completes and items are pending review
+- [x] **DISC-04**: Platform shows an in-app notification when a scan completes and items are pending review
 - [x] **DISC-05**: Slack scan: searches configured channels for messages mentioning the project or customer name since the last scan timestamp; retrieves full thread context for matching messages
 - [x] **DISC-06**: Gmail scan: searches inbox for emails matching project or customer keywords since the last scan timestamp; retrieves full email threads
 - [x] **DISC-07**: Glean scan: searches for documents and content matching the project name since the last scan timestamp
@@ -193,10 +193,10 @@
 | ING-10 | Phase 18 | Complete |
 | ING-11 | Phase 18 | Complete |
 | ING-12 | Phase 18 | Complete |
-| DISC-01 | Phase 19 | Pending |
-| DISC-02 | Phase 19 | Pending |
+| DISC-01 | Phase 19 | Complete |
+| DISC-02 | Phase 19 | Complete |
 | DISC-03 | Phase 19 | Complete |
-| DISC-04 | Phase 19 | Pending |
+| DISC-04 | Phase 19 | Complete |
 | DISC-05 | Phase 19 | Complete |
 | DISC-06 | Phase 19 | Complete |
 | DISC-07 | Phase 19 | Complete |
