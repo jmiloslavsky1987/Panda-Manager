@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -36,20 +36,24 @@ interface IngestionModalProps {
   onOpenChange: (open: boolean) => void
   projectId: number
   artifactId?: number
+  /** Pre-populate the upload queue with files (e.g. from drag-and-drop on the Artifacts tab) */
+  initialFiles?: File[]
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function IngestionModal({ open, onOpenChange, projectId, artifactId }: IngestionModalProps) {
+export function IngestionModal({ open, onOpenChange, projectId, artifactId, initialFiles }: IngestionModalProps) {
   const [stage, setStage] = useState<Stage>('uploading')
   const [fileStatuses, setFileStatuses] = useState<FileStatus[]>([])
   const [currentFileIndex, setCurrentFileIndex] = useState(0)
   const [reviewItems, setReviewItems] = useState<ReviewItem[]>([])
   const [extractionMessage, setExtractionMessage] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
+  // Ref prevents double-firing in React StrictMode
+  const autoStartedRef = useRef(false)
 
   // ── Upload all files upfront ──────────────────────────────────────────────
-  async function handleFileDrop(acceptedFiles: File[]) {
+  const handleFileDrop = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return
 
     setStage('uploading')
@@ -75,19 +79,29 @@ export function IngestionModal({ open, onOpenChange, projectId, artifactId }: In
       return
     }
 
-    setFileStatuses(acceptedFiles.map((f, i) => ({
+    const newStatuses: FileStatus[] = acceptedFiles.map((f, i) => ({
       name: f.name,
       status: 'pending',
       fileId: uploadedIds[i],
-    })))
+    }))
+    setFileStatuses(newStatuses)
     setStage('extracting')
     // Trigger extraction for first file
-    await extractFile(0, acceptedFiles.map((f, i) => ({
-      name: f.name,
-      status: 'pending' as const,
-      fileId: uploadedIds[i],
-    })))
-  }
+    await extractFile(0, newStatuses)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId, artifactId])
+
+  // Auto-start upload when modal opens with initialFiles from ArtifactsDropZone
+  useEffect(() => {
+    if (open && initialFiles && initialFiles.length > 0 && !autoStartedRef.current) {
+      autoStartedRef.current = true
+      handleFileDrop(initialFiles)
+    }
+    // Reset when modal closes so next open can re-trigger
+    if (!open) {
+      autoStartedRef.current = false
+    }
+  }, [open, initialFiles, handleFileDrop])
 
   // ── Extract a single file via SSE ─────────────────────────────────────────
   const extractFile = useCallback(async (idx: number, statuses: FileStatus[]) => {
