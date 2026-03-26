@@ -4,6 +4,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { eq, and, ilike } from 'drizzle-orm';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { jsonrepair } from 'jsonrepair';
 import { db } from '@/db';
 import { readSettings } from '@/lib/settings';
 import {
@@ -409,29 +410,19 @@ export async function POST(request: NextRequest): Promise<Response> {
           // Robust extraction: strip fences, then fall back to finding first [...] in response.
           let rawItems: ExtractionItem[] = [];
           try {
-            // Attempt 1: strip markdown fences and parse directly
-            const cleaned = fullText.trim()
+            // Strip markdown fences, then use jsonrepair to fix common LLM JSON issues
+            // (unescaped quotes, trailing commas, truncated arrays, special chars from DOCX)
+            const stripped = fullText.trim()
               .replace(/^```(?:json)?\s*/i, '')
               .replace(/\s*```\s*$/, '')
               .trim();
-            let parsed: unknown;
-            try {
-              parsed = JSON.parse(cleaned);
-            } catch {
-              // Attempt 2: extract first [...] array from anywhere in the response
-              const match = fullText.match(/\[[\s\S]*\]/);
-              if (match) {
-                parsed = JSON.parse(match[0]);
-              } else {
-                throw new Error('no JSON array found');
-              }
-            }
+            const repaired = jsonrepair(stripped);
+            const parsed = JSON.parse(repaired);
             if (Array.isArray(parsed)) {
               rawItems = parsed as ExtractionItem[];
             }
           } catch (e) {
-            // Log the first 500 chars of Claude's response to help diagnose
-            console.error('[extract] JSON parse failed. Claude output (first 500 chars):', fullText.slice(0, 500));
+            console.error('[extract] JSON parse failed after repair attempt. Claude output (first 500 chars):', fullText.slice(0, 500));
             sendEvent({ type: 'error', message: 'Claude returned non-JSON output' });
             await db
               .update(artifacts)
