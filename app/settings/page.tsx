@@ -36,6 +36,23 @@ interface MCPServerConfig {
   allowedTools?: string[];
 }
 
+// ─── Source Connections ───────────────────────────────────────────────────────
+
+interface SlackStatus { connected: true; tokenHint: string; channels: string[] }
+interface GongStatus  { connected: true; accessKeyHint: string }
+interface GleanStatus { connected: true; tokenHint: string; instanceUrl: string; actAsEmail?: string }
+
+interface SourceCredentialStatus {
+  slack?: SlackStatus;
+  gong?:  GongStatus;
+  glean?: GleanStatus;
+}
+
+interface GmailStatus {
+  connected: boolean;
+  email: string | null;
+}
+
 const STATUS_COLORS: Record<string, string> = {
   completed: 'text-green-600',
   failed:    'text-red-600',
@@ -46,6 +63,23 @@ const STATUS_COLORS: Record<string, string> = {
 
 const TAB_CLASS =
   'px-4 py-2 text-sm font-medium text-zinc-500 hover:text-zinc-900 data-[state=active]:text-zinc-900 data-[state=active]:border-b-2 data-[state=active]:border-zinc-900 -mb-px';
+
+const INPUT_CLASS =
+  'w-full px-3 py-2 text-sm border border-zinc-300 rounded focus:outline-none focus:ring-2 focus:ring-zinc-900';
+
+const LABEL_CLASS = 'block text-sm font-medium text-zinc-700 mb-1';
+
+function ConnectedBadge({ connected }: { connected: boolean }) {
+  return connected ? (
+    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+      Connected
+    </span>
+  ) : (
+    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-zinc-100 text-zinc-500">
+      Not connected
+    </span>
+  );
+}
 
 function getTokenInstructions(name: string): string | null {
   const lower = name.toLowerCase();
@@ -77,6 +111,34 @@ export default function SettingsPage() {
   const [testing, setTesting] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // Source Connections state
+  const [sourceStatus, setSourceStatus] = useState<SourceCredentialStatus>({});
+  const [gmailStatus, setGmailStatus] = useState<GmailStatus>({ connected: false, email: null });
+  const [gmailDisconnecting, setGmailDisconnecting] = useState(false);
+
+  // Slack form
+  const [slackToken, setSlackToken] = useState('');
+  const [slackChannels, setSlackChannels] = useState('');
+  const [slackSaving, setSlackSaving] = useState(false);
+  const [slackSaved, setSlackSaved] = useState(false);
+
+  // Gong form
+  const [gongAccessKey, setGongAccessKey] = useState('');
+  const [gongAccessKeySecret, setGongAccessKeySecret] = useState('');
+  const [gongBaseUrl, setGongBaseUrl] = useState('');
+  const [gongSaving, setGongSaving] = useState(false);
+  const [gongSaved, setGongSaved] = useState(false);
+
+  // Glean form
+  const [gleanToken, setGleanToken] = useState('');
+  const [gleanInstanceUrl, setGleanInstanceUrl] = useState('');
+  const [gleanActAsEmail, setGleanActAsEmail] = useState('');
+  const [gleanSaving, setGleanSaving] = useState(false);
+  const [gleanSaved, setGleanSaved] = useState(false);
+
+  // Gmail success banner (after OAuth redirect)
+  const [gmailSuccessBanner, setGmailSuccessBanner] = useState(false);
+
   const fetchJobs = useCallback(async () => {
     const res = await fetch('/api/job-runs');
     if (res.ok) setJobs(await res.json());
@@ -90,10 +152,32 @@ export default function SettingsPage() {
     }
   }, []);
 
+  const fetchSourceStatus = useCallback(async () => {
+    const [credRes, gmailRes] = await Promise.all([
+      fetch('/api/settings/source-credentials'),
+      fetch('/api/oauth/gmail/status'),
+    ]);
+    if (credRes.ok)  setSourceStatus(await credRes.json());
+    if (gmailRes.ok) setGmailStatus(await gmailRes.json());
+  }, []);
+
   useEffect(() => {
     fetchJobs();
     fetchSettings();
-  }, [fetchJobs, fetchSettings]);
+    fetchSourceStatus();
+
+    // Check for ?success=gmail in URL after OAuth redirect
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('success') === 'gmail') {
+        setGmailSuccessBanner(true);
+        // Clean up URL without page reload
+        window.history.replaceState({}, '', '/settings');
+      }
+    }
+  }, [fetchJobs, fetchSettings, fetchSourceStatus]);
+
+  // ─── MCP handlers ────────────────────────────────────────────────────────────
 
   const triggerJob = async (jobName: string) => {
     setTriggering(jobName);
@@ -103,7 +187,6 @@ export default function SettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jobName }),
       });
-      // Brief delay then re-fetch to show the new running row
       setTimeout(fetchJobs, 1500);
     } finally {
       setTimeout(() => setTriggering(null), 1500);
@@ -148,7 +231,7 @@ export default function SettingsPage() {
       const data = await res.json();
       setTestResult(data);
     } catch {
-      setTestResult({ ok: false, error: 'Network error — could not reach the test endpoint.' });
+      setTestResult({ ok: false, error: 'Network error \u2014 could not reach the test endpoint.' });
     } finally {
       setTesting(false);
     }
@@ -178,11 +261,99 @@ export default function SettingsPage() {
     setTestResult(null);
   };
 
+  // ─── Source Connections handlers ──────────────────────────────────────────────
+
+  const handleSaveSlack = async () => {
+    setSlackSaving(true);
+    setSlackSaved(false);
+    try {
+      const channels = slackChannels
+        .split(',')
+        .map((c) => c.trim())
+        .filter(Boolean);
+      await fetch('/api/settings/source-credentials', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slack: { token: slackToken, channels } }),
+      });
+      await fetchSourceStatus();
+      setSlackToken('');
+      setSlackChannels('');
+      setSlackSaved(true);
+      setTimeout(() => setSlackSaved(false), 3000);
+    } finally {
+      setSlackSaving(false);
+    }
+  };
+
+  const handleSaveGong = async () => {
+    setGongSaving(true);
+    setGongSaved(false);
+    try {
+      await fetch('/api/settings/source-credentials', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          gong: { accessKey: gongAccessKey, accessKeySecret: gongAccessKeySecret, baseUrl: gongBaseUrl },
+        }),
+      });
+      await fetchSourceStatus();
+      setGongAccessKey('');
+      setGongAccessKeySecret('');
+      setGongBaseUrl('');
+      setGongSaved(true);
+      setTimeout(() => setGongSaved(false), 3000);
+    } finally {
+      setGongSaving(false);
+    }
+  };
+
+  const handleSaveGlean = async () => {
+    setGleanSaving(true);
+    setGleanSaved(false);
+    try {
+      await fetch('/api/settings/source-credentials', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          glean: { token: gleanToken, instanceUrl: gleanInstanceUrl, actAsEmail: gleanActAsEmail || undefined },
+        }),
+      });
+      await fetchSourceStatus();
+      setGleanToken('');
+      setGleanInstanceUrl('');
+      setGleanActAsEmail('');
+      setGleanSaved(true);
+      setTimeout(() => setGleanSaved(false), 3000);
+    } finally {
+      setGleanSaving(false);
+    }
+  };
+
+  const handleDisconnectGmail = async () => {
+    setGmailDisconnecting(true);
+    try {
+      await fetch('/api/oauth/gmail/status', { method: 'DELETE' });
+      await fetchSourceStatus();
+    } finally {
+      setGmailDisconnecting(false);
+    }
+  };
+
   const tokenInstructions = getTokenInstructions(newServer.name);
 
   return (
     <div className="p-8 max-w-5xl">
       <h1 className="text-2xl font-semibold text-zinc-900 mb-6">Settings</h1>
+
+      {gmailSuccessBanner && (
+        <div className="mb-6 px-4 py-3 rounded bg-green-50 border border-green-200 text-green-800 text-sm flex items-center justify-between">
+          <span>Gmail connected successfully.</span>
+          <button onClick={() => setGmailSuccessBanner(false)} className="text-green-600 hover:text-green-800 ml-4">
+            &times;
+          </button>
+        </div>
+      )}
 
       <Tabs.Root defaultValue="jobs" data-testid="jobs-tab">
         <Tabs.List className="flex border-b border-zinc-200 mb-6">
@@ -196,8 +367,16 @@ export default function SettingsPage() {
           >
             MCP Servers
           </Tabs.Trigger>
+          <Tabs.Trigger
+            value="source-connections"
+            className={TAB_CLASS}
+            data-testid="source-connections-tab"
+          >
+            Source Connections
+          </Tabs.Trigger>
         </Tabs.List>
 
+        {/* ── Jobs tab ── */}
         <Tabs.Content value="jobs">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -247,13 +426,12 @@ export default function SettingsPage() {
           </div>
         </Tabs.Content>
 
+        {/* ── MCP Servers tab ── */}
         <Tabs.Content
           value="mcp-servers"
           data-testid="mcp-servers-section"
         >
-          {/* Wrap in a div that always renders so the E2E test can find it */}
           <div data-testid="mcp-servers-form">
-            {/* Server table */}
             {mcpServers.length > 0 && (
               <div className="overflow-x-auto mb-6">
                 <table className="w-full text-sm">
@@ -304,22 +482,19 @@ export default function SettingsPage() {
               <p className="text-zinc-400 text-sm mb-4">No MCP servers configured.</p>
             )}
 
-            {/* Add Server form */}
             {addingServer ? (
               <div className="border border-zinc-200 rounded-lg p-6 bg-zinc-50 max-w-lg">
                 <h2 className="text-base font-semibold text-zinc-900 mb-4">Add MCP Server</h2>
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-zinc-700 mb-1">
-                      Name
-                    </label>
+                    <label className={LABEL_CLASS}>Name</label>
                     <input
                       type="text"
                       value={newServer.name}
                       onChange={(e) => setNewServer((p) => ({ ...p, name: e.target.value }))}
                       placeholder="e.g. glean, slack, gmail"
-                      className="w-full px-3 py-2 text-sm border border-zinc-300 rounded focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                      className={INPUT_CLASS}
                     />
                     {tokenInstructions && (
                       <p className="mt-1 text-xs text-zinc-500">{tokenInstructions}</p>
@@ -327,28 +502,24 @@ export default function SettingsPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-zinc-700 mb-1">
-                      URL
-                    </label>
+                    <label className={LABEL_CLASS}>URL</label>
                     <input
                       type="text"
                       value={newServer.url}
                       onChange={(e) => setNewServer((p) => ({ ...p, url: e.target.value }))}
                       placeholder="https://your-mcp-server.example.com/mcp"
-                      className="w-full px-3 py-2 text-sm border border-zinc-300 rounded focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                      className={INPUT_CLASS}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-zinc-700 mb-1">
-                      API Key
-                    </label>
+                    <label className={LABEL_CLASS}>API Key</label>
                     <input
                       type="password"
                       value={newServer.apiKey}
                       onChange={(e) => setNewServer((p) => ({ ...p, apiKey: e.target.value }))}
                       placeholder="Bearer token or API key"
-                      className="w-full px-3 py-2 text-sm border border-zinc-300 rounded focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                      className={INPUT_CLASS}
                     />
                   </div>
 
@@ -366,7 +537,6 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                {/* Test Connection result */}
                 {testResult && (
                   <div
                     className={`mt-4 px-3 py-2 rounded text-sm ${
@@ -412,6 +582,253 @@ export default function SettingsPage() {
                 Add MCP Server
               </button>
             )}
+          </div>
+        </Tabs.Content>
+
+        {/* ── Source Connections tab ── */}
+        <Tabs.Content value="source-connections" data-testid="source-connections-section">
+          <p className="text-sm text-zinc-500 mb-6">
+            Configure direct REST API access for the discovery scanner. REST credentials take
+            priority over MCP when configured.
+          </p>
+
+          <div className="space-y-6">
+
+            {/* ── Slack ── */}
+            <div className="border border-zinc-200 rounded-lg p-6 max-w-lg">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-base font-semibold text-zinc-900">Slack</h2>
+                <ConnectedBadge connected={!!sourceStatus.slack} />
+              </div>
+
+              {!sourceStatus.slack && (
+                <p className="text-xs text-zinc-500 mb-4 p-3 bg-zinc-50 rounded border border-zinc-100">
+                  Create a Slack app at api.slack.com. Install it to your workspace. Add the{' '}
+                  <code className="font-mono">channels:history</code> scope. Copy the Bot User OAuth Token.
+                </p>
+              )}
+
+              {sourceStatus.slack && (
+                <p className="text-xs text-zinc-500 mb-4">
+                  Token: <code className="font-mono">{sourceStatus.slack.tokenHint}</code>
+                  {sourceStatus.slack.channels.length > 0 && (
+                    <> &nbsp;&bull;&nbsp; Channels: {sourceStatus.slack.channels.join(', ')}</>
+                  )}
+                </p>
+              )}
+
+              <div className="space-y-3">
+                <div>
+                  <label className={LABEL_CLASS}>Bot Token</label>
+                  <input
+                    type="password"
+                    value={slackToken}
+                    onChange={(e) => setSlackToken(e.target.value)}
+                    placeholder="xoxb-..."
+                    className={INPUT_CLASS}
+                  />
+                </div>
+                <div>
+                  <label className={LABEL_CLASS}>Channel IDs</label>
+                  <input
+                    type="text"
+                    value={slackChannels}
+                    onChange={(e) => setSlackChannels(e.target.value)}
+                    placeholder="C01234567, C0987654"
+                    className={INPUT_CLASS}
+                  />
+                  <p className="mt-1 text-xs text-zinc-500">
+                    Comma-separated channel IDs. Bot must be invited to each channel.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 flex items-center gap-3">
+                <button
+                  onClick={handleSaveSlack}
+                  disabled={slackSaving || !slackToken}
+                  className="px-4 py-2 text-sm bg-zinc-900 text-white rounded hover:bg-zinc-700 disabled:opacity-50"
+                >
+                  {slackSaving ? 'Saving\u2026' : 'Save'}
+                </button>
+                {slackSaved && <span className="text-xs text-green-600">Saved.</span>}
+              </div>
+            </div>
+
+            {/* ── Gong ── */}
+            <div className="border border-zinc-200 rounded-lg p-6 max-w-lg">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-base font-semibold text-zinc-900">Gong</h2>
+                <ConnectedBadge connected={!!sourceStatus.gong} />
+              </div>
+
+              {!sourceStatus.gong && (
+                <p className="text-xs text-zinc-500 mb-4 p-3 bg-zinc-50 rounded border border-zinc-100">
+                  Get API credentials from Gong Admin &rarr; Settings &rarr; Ecosystem &rarr; API.
+                  The Base URL is region-specific.
+                </p>
+              )}
+
+              {sourceStatus.gong && (
+                <p className="text-xs text-zinc-500 mb-4">
+                  Access Key: <code className="font-mono">{sourceStatus.gong.accessKeyHint}</code>
+                </p>
+              )}
+
+              <div className="space-y-3">
+                <div>
+                  <label className={LABEL_CLASS}>Access Key</label>
+                  <input
+                    type="password"
+                    value={gongAccessKey}
+                    onChange={(e) => setGongAccessKey(e.target.value)}
+                    className={INPUT_CLASS}
+                  />
+                </div>
+                <div>
+                  <label className={LABEL_CLASS}>Access Key Secret</label>
+                  <input
+                    type="password"
+                    value={gongAccessKeySecret}
+                    onChange={(e) => setGongAccessKeySecret(e.target.value)}
+                    className={INPUT_CLASS}
+                  />
+                </div>
+                <div>
+                  <label className={LABEL_CLASS}>Base URL</label>
+                  <input
+                    type="text"
+                    value={gongBaseUrl}
+                    onChange={(e) => setGongBaseUrl(e.target.value)}
+                    placeholder="https://us-XXXX.api.gong.io"
+                    className={INPUT_CLASS}
+                  />
+                  <p className="mt-1 text-xs text-zinc-500">
+                    Find in Gong Admin &rarr; Settings &rarr; Ecosystem &rarr; API
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 flex items-center gap-3">
+                <button
+                  onClick={handleSaveGong}
+                  disabled={gongSaving || !gongAccessKey || !gongAccessKeySecret || !gongBaseUrl}
+                  className="px-4 py-2 text-sm bg-zinc-900 text-white rounded hover:bg-zinc-700 disabled:opacity-50"
+                >
+                  {gongSaving ? 'Saving\u2026' : 'Save'}
+                </button>
+                {gongSaved && <span className="text-xs text-green-600">Saved.</span>}
+              </div>
+            </div>
+
+            {/* ── Glean ── */}
+            <div className="border border-zinc-200 rounded-lg p-6 max-w-lg">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-base font-semibold text-zinc-900">Glean</h2>
+                <ConnectedBadge connected={!!sourceStatus.glean} />
+              </div>
+
+              {!sourceStatus.glean && (
+                <p className="text-xs text-zinc-500 mb-4 p-3 bg-zinc-50 rounded border border-zinc-100">
+                  Get a global token from Glean Admin &rarr; Developer &rarr; API Tokens. The ActAs
+                  Email field is required for global tokens.
+                </p>
+              )}
+
+              {sourceStatus.glean && (
+                <p className="text-xs text-zinc-500 mb-4">
+                  Token: <code className="font-mono">{sourceStatus.glean.tokenHint}</code>
+                  {' '}&bull;{' '}
+                  Instance: <code className="font-mono">{sourceStatus.glean.instanceUrl}</code>
+                </p>
+              )}
+
+              <div className="space-y-3">
+                <div>
+                  <label className={LABEL_CLASS}>API Token</label>
+                  <input
+                    type="password"
+                    value={gleanToken}
+                    onChange={(e) => setGleanToken(e.target.value)}
+                    className={INPUT_CLASS}
+                  />
+                </div>
+                <div>
+                  <label className={LABEL_CLASS}>Instance URL</label>
+                  <input
+                    type="text"
+                    value={gleanInstanceUrl}
+                    onChange={(e) => setGleanInstanceUrl(e.target.value)}
+                    placeholder="https://company.glean.com"
+                    className={INPUT_CLASS}
+                  />
+                </div>
+                <div>
+                  <label className={LABEL_CLASS}>ActAs Email</label>
+                  <input
+                    type="email"
+                    value={gleanActAsEmail}
+                    onChange={(e) => setGleanActAsEmail(e.target.value)}
+                    placeholder="admin@company.com"
+                    className={INPUT_CLASS}
+                  />
+                  <p className="mt-1 text-xs text-zinc-500">
+                    Required for global tokens &mdash; use an admin email.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 flex items-center gap-3">
+                <button
+                  onClick={handleSaveGlean}
+                  disabled={gleanSaving || !gleanToken || !gleanInstanceUrl}
+                  className="px-4 py-2 text-sm bg-zinc-900 text-white rounded hover:bg-zinc-700 disabled:opacity-50"
+                >
+                  {gleanSaving ? 'Saving\u2026' : 'Save'}
+                </button>
+                {gleanSaved && <span className="text-xs text-green-600">Saved.</span>}
+              </div>
+            </div>
+
+            {/* ── Gmail ── */}
+            <div className="border border-zinc-200 rounded-lg p-6 max-w-lg">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-base font-semibold text-zinc-900">Gmail</h2>
+                <ConnectedBadge connected={gmailStatus.connected} />
+              </div>
+
+              {!gmailStatus.connected ? (
+                <>
+                  <p className="text-xs text-zinc-500 mb-4 p-3 bg-zinc-50 rounded border border-zinc-100">
+                    Connect your Google account to allow the scanner to search your Gmail. Only{' '}
+                    <code className="font-mono">gmail.readonly</code> scope is requested &mdash; the
+                    app cannot send emails.
+                  </p>
+                  <a
+                    href="/api/oauth/gmail"
+                    className="inline-block px-4 py-2 text-sm bg-zinc-900 text-white rounded hover:bg-zinc-700"
+                  >
+                    Connect Gmail
+                  </a>
+                </>
+              ) : (
+                <div className="flex items-center gap-4">
+                  {gmailStatus.email && (
+                    <p className="text-sm text-zinc-700">
+                      Connected as <span className="font-medium">{gmailStatus.email}</span>
+                    </p>
+                  )}
+                  <button
+                    onClick={handleDisconnectGmail}
+                    disabled={gmailDisconnecting}
+                    className="px-3 py-1 text-xs border border-red-300 text-red-600 rounded hover:bg-red-50 disabled:opacity-50"
+                  >
+                    {gmailDisconnecting ? 'Disconnecting\u2026' : 'Disconnect'}
+                  </button>
+                </div>
+              )}
+            </div>
+
           </div>
         </Tabs.Content>
       </Tabs.Root>
