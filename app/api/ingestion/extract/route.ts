@@ -3,7 +3,9 @@ import { z } from 'zod';
 import Anthropic from '@anthropic-ai/sdk';
 import { eq, and, ilike } from 'drizzle-orm';
 import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 import { db } from '@/db';
+import { readSettings } from '@/lib/settings';
 import {
   artifacts,
   actions,
@@ -331,10 +333,11 @@ export async function POST(request: NextRequest): Promise<Response> {
 
           sendEvent({ type: 'progress', message: 'Reading document from disk…' });
 
-          // 3. Read file from disk at the stored path
-          // artifact.source holds the file path set during upload
-          // artifact.name holds the original filename for extension detection
-          const filePath = artifact.source;
+          // 3. Read file from disk — reconstruct path from workspace settings.
+          // artifact.source is a type label ('upload'), not a path.
+          // Upload route stores files at: {workspace_path}/ingestion/{projectId}/{filename}
+          const settings = await readSettings();
+          const filePath = path.join(settings.workspace_path, 'ingestion', String(projectId), artifact.name);
           let fileBuffer: Buffer;
           try {
             fileBuffer = Buffer.from(await readFile(filePath));
