@@ -430,7 +430,15 @@ Plans:
   3. Approving a queue item writes it to the correct DB table (e.g., an extracted action goes to the actions table) with source attribution showing the source tool and scan timestamp
   4. Dismissing a queue item sets its status to dismissed and it moves to dismissal history — it does not reappear in the active queue on the next scan
   5. When a discovered item conflicts with an existing record, a side-by-side diff view is shown before the merge/replace/skip prompt — no silent overwrites
-**Plans**: TBD
+**Plans**: 6 plans
+
+Plans:
+- [ ] 19-01-PLAN.md — Wave 1: RED test stubs (5 files) + migration 0013 (source_excerpt + scan_id on discovery_items)
+- [ ] 19-02-PLAN.md — Wave 2: lib/discovery-scanner.ts + POST /api/discovery/scan SSE route
+- [ ] 19-03-PLAN.md — Wave 2: Queue/Approve/Dismiss/History API routes
+- [ ] 19-04-PLAN.md — Wave 3: Review Queue page + QueueItemRow + DiffView components + WorkspaceTabs tab
+- [ ] 19-05-PLAN.md — Wave 3: ScanForUpdatesButton wired to layout + scan-config API + discovery-scan worker job
+- [ ] 19-06-PLAN.md — Wave 4: Full test suite pass + human verification checkpoint
 
 ### Phase 20: Project Initiation Wizard
 **Goal**: New projects are created through a guided multi-step wizard that ingests collateral documents, extracts data via the ingestion pipeline, and computes a completeness score — replacing direct DB seeding as the primary new-project flow.
