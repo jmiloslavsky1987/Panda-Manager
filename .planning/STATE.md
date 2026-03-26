@@ -4,12 +4,12 @@ milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
 current_plan: Not started
 status: unknown
-last_updated: "2026-03-26T06:38:08.988Z"
+last_updated: "2026-03-26T06:45:00.497Z"
 progress:
   total_phases: 26
   completed_phases: 19
   total_plans: 102
-  completed_plans: 99
+  completed_plans: 100
 ---
 
 # Project State
@@ -289,6 +289,10 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - [Phase 18-02]: ExcelJS Buffer cast via buffer.buffer.slice() as ArrayBuffer — Node 24 Buffer<ArrayBufferLike> incompatible with ExcelJS legacy Buffer type
 - [Phase 18-03]: Run vitest from bigpanda-app/ directory — @/ alias resolves to bigpanda-app/ per vitest.config.ts __dirname; running from project root yields ERR_MODULE_NOT_FOUND
 - [Phase 18-03]: isAlreadyIngested exported from route.ts (not separate lib) — entityType→table mapping is co-located with extraction handler; team entityType maps to focus_areas table
+- [Phase 18-document-ingestion]: Zod v4 z.record requires two-arg form z.record(z.string(), z.string()) — single-arg crashes at runtime
+- [Phase 18-document-ingestion]: vi.resetAllMocks() required in beforeEach (not clearAllMocks) to prevent mockReturnValue state leaking across tests
+- [Phase 18-document-ingestion]: team entityType maps to focusAreas table (not teamOnboardingStatus) — teamOnboardingStatus lacks source_artifact_id/ingested_at
+- [Phase 18-document-ingestion]: Append-only tables (key_decisions, engagement_history) auto-skip on conflict in approve route — DB triggers prevent UPDATE/DELETE
 
 ## Performance Metrics
 
@@ -387,6 +391,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 | Phase 18-document-ingestion P01 | 3 | 2 tasks | 8 files |
 | Phase 18-document-ingestion P02 | 3 | 2 tasks | 4 files |
 | Phase 18-document-ingestion P03 | 4min | 1 tasks | 3 files |
+| Phase 18-document-ingestion P04 | 5min | 1 tasks | 3 files |
 
 ## Key Context for Next Session
 
