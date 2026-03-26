@@ -4,12 +4,12 @@ milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
 current_plan: Not started
 status: unknown
-last_updated: "2026-03-26T18:40:50.323Z"
+last_updated: "2026-03-26T18:42:38.640Z"
 progress:
   total_phases: 26
   completed_phases: 20
   total_plans: 108
-  completed_plans: 106
+  completed_plans: 107
 ---
 
 # Project State
@@ -23,10 +23,10 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 
 ## Current Status
 
-**Phase:** Phase 18 — Document Ingestion (COMPLETE); Phase 17 — Schema Extensions (2/3 plans done)
-**Current Plan:** Not started
-**Last action:** 2026-03-26 — 18-06 executed; ArtifactsDropZone wired, ingestion pipeline end-to-end verified by human; all 12 ING requirements satisfied
-**Next action:** /gsd:execute-phase 17 (plan 17-03) to complete Phase 17, then /gsd:execute-phase 19
+**Phase:** Phase 19 — External Discovery Scan (5/6 plans done)
+**Current Plan:** 19-05 COMPLETE
+**Last action:** 2026-03-26 — 19-05 executed; ScanForUpdatesButton wired, scan-config API, discovery-scan BullMQ job + daily cron, dedup.test.ts GREEN; DISC-01/02/03/04 satisfied
+**Next action:** /gsd:execute-phase 19 (plan 19-06) to complete Phase 19
 
 ## Phase Progress
 
@@ -311,6 +311,9 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - [Phase 19-external-discovery-scan]: Dismiss uses inArray batch UPDATE; approve iterates per item to fetch suggested_field and route to correct entity table
 - [Phase 19-04]: WorkspaceTabs useEffect fetches queue count client-side on mount — badge is non-critical, errors silently ignored
 - [Phase 19-04]: DiffView triggered by 409 from approve route — current approve route doesn't return 409 but DiffView is wired for when it does
+- [Phase 19-05]: Source selector uses inline dropdown (no Popover/Label shadcn) — those components not installed; avoids new dependencies
+- [Phase 19-05]: Scan config stored in ~/.bigpanda-app/discovery-scan-config.json keyed by projectId — no DB table needed
+- [Phase 19-05]: discovery-scan cron: fixed schedule in scheduler.ts (upsertJobScheduler 0 8 * * *), same pattern as customer-project-tracker
 
 ## Performance Metrics
 
@@ -414,6 +417,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 | Phase 19-external-discovery-scan P01 | 8 | 2 tasks | 7 files |
 | Phase 19-external-discovery-scan P03 | 5 | 2 tasks | 7 files |
 | Phase 19-external-discovery-scan P04 | 10 | 2 tasks | 5 files |
+| Phase 19-external-discovery-scan P05 | 4 | 2 tasks | 7 files |
 
 ## Key Context for Next Session
 
