@@ -2,6 +2,7 @@ import { getProjectWithHealth } from '../../../lib/queries'
 import { ProjectHeader } from '../../../components/ProjectHeader'
 import { WorkspaceTabs } from '../../../components/WorkspaceTabs'
 import { AddNotesModal } from '../../../components/AddNotesModal'
+import { ScanForUpdatesButton } from '../../../components/ScanForUpdatesButton'
 
 export default async function WorkspaceLayout({
   children,
@@ -32,6 +33,9 @@ export default async function WorkspaceLayout({
         )}
       </div>
       <WorkspaceTabs projectId={id} />
+      <div className="px-6 py-2 border-b border-zinc-100 bg-zinc-50 flex items-center justify-end">
+        <ScanForUpdatesButton projectId={projectId} />
+      </div>
       <div className="flex-1 p-6 overflow-y-auto">
         {children}
       </div>
