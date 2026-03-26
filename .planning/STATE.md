@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
-current_plan: "20-02"
+current_plan: 20-03
 status: in_progress
-last_updated: "2026-03-26T23:55:03.267Z"
+last_updated: "2026-03-26T23:58:23.858Z"
 progress:
   total_phases: 27
   completed_phases: 21
   total_plans: 122
-  completed_plans: 116
+  completed_plans: 117
 ---
 
 # Project State
@@ -23,10 +23,10 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 
 ## Current Status
 
-**Phase:** Phase 20 — Project Initiation Wizard (1/6 plans done)
-**Current Plan:** 20-02
-**Last action:** 2026-03-26 — 20-01 executed; 8 Wave 0 test stubs created (RED), 0016_wizard_schema.sql applied (draft enum + description/start_date/end_date), queries.ts updated to include draft in all status filters; 127 tests GREEN, 0 regressions
-**Next action:** Execute 20-02 (wizard UI scaffold + POST /api/projects route implementation)
+**Phase:** Phase 20 — Project Initiation Wizard (2/6 plans done)
+**Current Plan:** 20-03
+**Last action:** 2026-03-26 — 20-02 executed; POST /api/projects (draft creation) and PATCH /api/projects/[projectId] (status update) implemented; create-project and launch test stubs turned GREEN; 131 tests GREEN, 0 regressions
+**Next action:** Execute 20-03 (wizard UI scaffold)
 
 ## Phase Progress
 
@@ -54,7 +54,7 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 | 18. Document Ingestion | COMPLETE (6/6 plans) |
 | 19. External Discovery Scan | COMPLETE (see 19.1) |
 | 19.1. Source Integrations | COMPLETE (8/8 plans) |
-| 20. Project Initiation Wizard | In progress (1/6 plans) |
+| 20. Project Initiation Wizard | In progress (2/6 plans) |
 | 21. Teams Tab + Architecture Tab | Not started |
 | 22. Source Badges + Audit Log | Not started |
 | 23. Time Tracking Advanced | Not started |
@@ -335,6 +335,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - [Phase 19.1-08]: existingProjectSummary required (not optional) in DiscoveryScanParams: callers must pass empty string to opt out, preventing silent omission
 - [Phase 20]: Migration named 0016_wizard_schema.sql (not 0002) due to existing migrations 0002-0015 from prior phases
 - [Phase 20]: FTS search arms updated for draft alongside dashboard — draft projects should appear in search once they have entity data
+- [Phase 20]: POST /api/projects hardcodes status=draft; PATCH existence check via returning() empty array avoids extra SELECT and aligns with test mock structure
 
 ## Performance Metrics
 
@@ -445,6 +446,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 | Phase 19.1-source-integrations P06 | 4 | 1 tasks | 3 files |
 | Phase 19.1-source-integrations P08 | 6 | 3 tasks | 8 files |
 | Phase 20 P01 | 4m | 3 tasks | 12 files |
+| Phase 20 P02 | 5min | 2 tasks | 2 files |
 
 ## Key Context for Next Session
 
