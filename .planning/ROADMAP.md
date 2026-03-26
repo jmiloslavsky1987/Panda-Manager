@@ -257,7 +257,7 @@ Phases 5.1 and 5.2 can run in parallel. Phases 6 and 7 can overlap after Phase 5
 | 12. Complete Workspace Write Surface | 4/4 | Complete    | 2026-03-25 |
 | 13. Skill UX + Draft Polish | 4/4 | Complete    | 2026-03-25 |
 | 14. Time + Project Analytics | 5/5 | Complete    | 2026-03-25 |
-| 15. Scheduler + UI Fixes | 1/3 | In Progress|  |
+| 15. Scheduler + UI Fixes | 2/3 | In Progress|  |
 | 16. Verification Retrofit | 0/5 | Pending     |  |
 
 ---

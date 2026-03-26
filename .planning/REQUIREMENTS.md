@@ -68,7 +68,7 @@
 - [x] **SKILL-11**: Morning Briefing — fetch today's calendar via Glean, synthesize per-meeting context, store result in DB, display in Dashboard Briefing panel
 - [x] **SKILL-12**: Context Updater — paste notes/transcript + select account → apply all 14 update steps → write to DB → export updated context doc to file; registers in engagement history
 - [x] **SKILL-13**: Handoff Doc Generator — select account → generate structured handoff/coverage doc covering open actions, risks, key decisions, key contacts, and current workstream status
-- [ ] **SKILL-14**: SKILL.md files read from disk at runtime (skill_path configurable in settings); prompts never modified or simplified in code
+- [x] **SKILL-14**: SKILL.md files read from disk at runtime (skill_path configurable in settings); prompts never modified or simplified in code
 
 ### Output Library
 
@@ -107,9 +107,9 @@
 
 ### Scheduled Intelligence
 
-- [ ] **SCHED-01**: BullMQ worker process as dedicated process alongside Next.js app — not in-process cron; persists across restarts; no duplicate firing on multi-instance deploy
+- [x] **SCHED-01**: BullMQ worker process as dedicated process alongside Next.js app — not in-process cron; persists across restarts; no duplicate firing on multi-instance deploy
 - [ ] **SCHED-02**: Daily 8am: Morning Briefing background job — result stored in DB, surfaced in dashboard
-- [ ] **SCHED-03**: Daily 8am: Cross-account health check — flag status changes, approaching due dates, overdue actions
+- [x] **SCHED-03**: Daily 8am: Cross-account health check — flag status changes, approaching due dates, overdue actions
 - [ ] **SCHED-04**: Daily 9am: Overnight Slack + Gmail sweep for customer messages
 - [ ] **SCHED-05**: Monday 7am: Full Customer Project Tracker run for all active accounts
 - [ ] **SCHED-06**: Thursday 4pm: Weekly Status Draft generation for all active accounts; creates Gmail drafts; notifies dashboard
@@ -200,9 +200,9 @@
 | PLAN-09 | Phase 11 | Complete |
 | PLAN-10 | Phase 3 | Complete |
 | PLAN-11 | Phase 3 | Complete |
-| SCHED-01 | Phase 15/16 | Pending |
+| SCHED-01 | Phase 15/16 | Complete |
 | SCHED-02 | Phase 16 | Pending |
-| SCHED-03 | Phase 15/16 | Pending |
+| SCHED-03 | Phase 15/16 | Complete |
 | SCHED-04 | Phase 16 | Pending |
 | SCHED-05 | Phase 16 | Pending |
 | SCHED-06 | Phase 16 | Pending |
@@ -215,7 +215,7 @@
 | SKILL-11 | Phase 9 | Complete |
 | SKILL-12 | Phase 9 | Complete |
 | SKILL-13 | Phase 5 | Complete |
-| SKILL-14 | Phase 15/16 | Pending |
+| SKILL-14 | Phase 15/16 | Complete |
 | DASH-09 | Phase 5 | Complete |
 | OUT-01 | Phase 16 | Pending |
 | OUT-02 | Phase 16 | Pending |

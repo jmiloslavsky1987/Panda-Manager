@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_plan: 15-01 complete
-status: in_progress
-stopped_at: Completed 15-01-PLAN.md — 2/2 TDD RED tests created and committed
-last_updated: "2026-03-26T00:32:00Z"
+current_plan: 15-01 complete (1/N plans)
+status: unknown
+stopped_at: Completed 15-02-PLAN.md — all 3 tasks done, 5 files fixed, all Wave 0 tests GREEN
+last_updated: "2026-03-26T00:32:19.304Z"
 progress:
   total_phases: 18
   completed_phases: 16
-  total_plans: 86
-  completed_plans: 86
+  total_plans: 88
+  completed_plans: 87
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 **Current Plan:** 15-01 complete (1/N plans)
 **Last action:** Completed 15-01-PLAN.md — 2/2 TDD RED tests created (scheduler-map + search-type-options)
 **Next action:** Execute 15-02 (implementation: fix JOB_SCHEDULE_MAP + export TYPE_OPTIONS)
-**Stopped at:** Completed 15-01-PLAN.md — 2/2 TDD RED tests created and committed
+**Stopped at:** Completed 15-02-PLAN.md — all 3 tasks done, 5 files fixed, all Wave 0 tests GREEN
 
 ## Phase Progress
 
@@ -242,6 +242,9 @@ Phase 15 in progress. 15-01 complete: created failing Vitest RED scaffolds for s
 - [Phase 14-04]: maxCount computed once outside map for efficiency in velocity bar chart
 - [Phase 14-05]: sql.raw() required for PostgreSQL SET LOCAL GUC parameters — parameterized syntax is invalid for session-level settings
 - [Phase 14-05]: actions table uses created_at not updated_at — velocity week grouping queries must reference created_at
+- [Phase 15]: Export JOB_SCHEDULE_MAP and TYPE_OPTIONS for Vitest test import (named exports)
+- [Phase 15]: resolveSkillsDir called in handler function body (not module level) for runtime settings pickup without worker restart
+- [Phase 15]: context-updater: advisory lock remains first async op; readSettings called after lock succeeds
 
 ## Performance Metrics
 
@@ -328,6 +331,7 @@ Phase 15 in progress. 15-01 complete: created failing Vitest RED scaffolds for s
 | Phase 14-time-+-project-analytics P02 | 4 | 2 tasks | 4 files |
 | Phase 14-time-+-project-analytics P03 | 302 | 2 tasks | 2 files |
 | Phase 14-time-+-project-analytics P04 | 1 | 1 tasks | 1 files |
+| Phase 15 P02 | 2m | 3 tasks | 5 files |
 
 ## Key Context for Next Session
 
