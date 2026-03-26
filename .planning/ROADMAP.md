@@ -393,7 +393,12 @@ Plans:
   2. `time_entries` rows have the submitted_on, approved_on, rejected_on, and locked columns; `artifacts` rows have ingestion_status and ingestion_log_json; `scheduled_jobs` rows have last_run_outcome, run_history_json, timezone, and skill_params_json
   3. The five new project-scoped tables (business_outcomes, e2e_workflows with workflow_steps, focus_areas, architecture_integrations, before_state, team_onboarding_status) all exist and accept seed rows scoped to a project_id without foreign-key violations
   4. A migration rollback followed by re-apply leaves the DB in identical state — no data corruption or duplicate column errors
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 17-01-PLAN.md — Wave 0: Vitest test scaffold (RED — verifies all 15 new schema.ts exports)
+- [ ] 17-02-PLAN.md — Wave 1: SQL migration 0011_v2_schema.sql (5 enums, 9 tables, 2 ALTER TABLE, RLS)
+- [ ] 17-03-PLAN.md — Wave 1: Drizzle schema.ts update (5 enums + 10 tables, turns tests GREEN)
 
 ### Phase 18: Document Ingestion
 **Goal**: Users can upload any supported document into a project, Claude extracts structured data across all entity types, and after reviewing a grouped preview the user's approved items land in the correct DB tables with full source attribution — no data is written without explicit human confirmation.
