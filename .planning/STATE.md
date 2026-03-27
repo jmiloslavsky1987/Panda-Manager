@@ -4,12 +4,12 @@ milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
 current_plan: Not started
 status: unknown
-last_updated: "2026-03-27T04:38:36.340Z"
+last_updated: "2026-03-27T04:44:03.491Z"
 progress:
   total_phases: 27
   completed_phases: 22
   total_plans: 129
-  completed_plans: 126
+  completed_plans: 127
 ---
 
 # Project State
@@ -352,6 +352,8 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - [Phase 21-03]: openActions are project-level (no team field) — top-3 shown as shared Open Items block on every team card (TEAMS-05)
 - [Phase 21-03]: architectureIntegrations passed as read-only prop to ArchOverviewSection — Architecture tab manages writes, Teams tab reads
 - [Phase 21-03]: AMEX canonical 8-team ordering: customer.toLowerCase().includes('amex') guard for future-proof casing
+- [Phase 21-05]: Per-skill context builders (buildTeamsSkillContext, buildArchSkillContext) rather than extending shared buildSkillContext — avoids token cost loading 6 new tables for unrelated skills
+- [Phase 21-05]: skillSpecificContext dispatched by name in orchestrator with null guard — zero impact on existing skill behavior
 
 ## Performance Metrics
 
@@ -470,6 +472,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 | Phase 21-teams-tab-+-architecture-tab P02 | 4 | 2 tasks | 6 files |
 | Phase 21-teams-tab-+-architecture-tab P04 | 4 | 2 tasks | 9 files |
 | Phase 21-teams-tab-+-architecture-tab P03 | 6 | 2 tasks | 9 files |
+| Phase 21-teams-tab-+-architecture-tab P05 | 3 | 2 tasks | 5 files |
 
 ## Key Context for Next Session
 
