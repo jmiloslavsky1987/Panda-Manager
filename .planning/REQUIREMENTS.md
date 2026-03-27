@@ -115,9 +115,9 @@
 ### AUDIT — Source Attribution & Audit Trail
 *Extends all workspace tabs; requires SCHEMA-01 and SCHEMA-02 to be in place first.*
 
-- [ ] **AUDIT-01**: All workspace tab records display a source badge: "Manual", "Ingested — [filename]", or "Discovered — [source tool]"
-- [ ] **AUDIT-02**: All data modifications (create, update, delete) on workspace records are written to audit_log with actor, timestamp, entity, and before/after JSON values
-- [ ] **AUDIT-03**: Deletion of any workspace record requires a confirmation dialog and is always logged to audit_log
+- [x] **AUDIT-01**: All workspace tab records display a source badge: "Manual", "Ingested — [filename]", or "Discovered — [source tool]"
+- [x] **AUDIT-02**: All data modifications (create, update, delete) on workspace records are written to audit_log with actor, timestamp, entity, and before/after JSON values
+- [x] **AUDIT-03**: Deletion of any workspace record requires a confirmation dialog and is always logged to audit_log
 
 ### TEAMS — Teams Tab: Team Engagement Map View
 *Replaces the existing basic Teams tab with a rich, DB-powered 5-section engagement view. The team-engagement-map skill is updated to export from DB.*
@@ -242,9 +242,9 @@
 | ARCH-10 | Phase 21 | Complete |
 | ARCH-11 | Phase 21 | Complete |
 | ARCH-12 | Phase 21 | Complete |
-| AUDIT-01 | Phase 22 | Pending |
-| AUDIT-02 | Phase 22 | Pending |
-| AUDIT-03 | Phase 22 | Pending |
+| AUDIT-01 | Phase 22 | Complete |
+| AUDIT-02 | Phase 22 | Complete |
+| AUDIT-03 | Phase 22 | Complete |
 | TTADV-01 | Phase 23 | Pending |
 | TTADV-02 | Phase 23 | Pending |
 | TTADV-03 | Phase 23 | Pending |

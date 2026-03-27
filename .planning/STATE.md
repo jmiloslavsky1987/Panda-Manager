@@ -4,12 +4,12 @@ milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
 current_plan: Not started
 status: unknown
-last_updated: "2026-03-27T05:02:37.305Z"
+last_updated: "2026-03-27T17:25:06.906Z"
 progress:
   total_phases: 27
   completed_phases: 23
-  total_plans: 129
-  completed_plans: 128
+  total_plans: 134
+  completed_plans: 129
 ---
 
 # Project State
@@ -355,6 +355,8 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - [Phase 21-05]: Per-skill context builders (buildTeamsSkillContext, buildArchSkillContext) rather than extending shared buildSkillContext — avoids token cost loading 6 new tables for unrelated skills
 - [Phase 21-05]: skillSpecificContext dispatched by name in orchestrator with null guard — zero impact on existing skill behavior
 - [Phase 21]: Phase 21 approved via automated preview screenshot and snapshot verification — all 5 Teams sections and 2-tab Architecture view passed visual inspection with correct design tokens
+- [Phase 22-source-badges-+-audit-log]: SourceBadge Wave 0 stub throws instead of returning undefined — Vite import-analysis resolves at transform time, requiring a real stub file
+- [Phase 22-source-badges-+-audit-log]: Lazy import helper for audit-helper tests — node env resolves at runtime so try/catch inside async helper gives per-test failures
 
 ## Performance Metrics
 
@@ -474,6 +476,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 | Phase 21-teams-tab-+-architecture-tab P04 | 4 | 2 tasks | 9 files |
 | Phase 21-teams-tab-+-architecture-tab P03 | 6 | 2 tasks | 9 files |
 | Phase 21-teams-tab-+-architecture-tab P05 | 3 | 2 tasks | 5 files |
+| Phase 22-source-badges-+-audit-log P01 | 4 | 2 tasks | 5 files |
 
 ## Key Context for Next Session
 
