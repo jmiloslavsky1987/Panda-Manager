@@ -496,7 +496,15 @@ Plans:
   3. Users can add and edit business outcomes, E2E workflow steps, focus areas, team card data, integration nodes, before-state data, and team onboarding rows directly within the Teams and Architecture tabs; saves persist immediately with optimistic UI
   4. Running the team-engagement-map skill generates a self-contained HTML export of the 5-section view using live DB data; running the workflow-diagram skill generates a self-contained HTML export of the 2-tab diagram using live DB data
   5. Design tokens are applied consistently — ADR blue (#1e40af), Biggy purple (#6d28d9), E2E green (#065f46), and all status pill colors (Live/In Progress/Pilot/Planned) match the specified hex values in both the tab view and skill exports
-**Plans**: TBD
+**Plans**: 6 plans
+
+Plans:
+- [ ] 21-01-PLAN.md — Wave 1: API routes + queries for Teams tab data (business-outcomes, e2e-workflows+steps, focus-areas)
+- [ ] 21-02-PLAN.md — Wave 1: API routes + queries for Architecture tab data (architecture-integrations, before-state, team-onboarding-status)
+- [ ] 21-03-PLAN.md — Wave 2: Teams tab rebuild — 5-section Team Engagement Map with design tokens + inline editing
+- [ ] 21-04-PLAN.md — Wave 2: Architecture tab rebuild — 2-tab Workflow Diagram with inline editing
+- [ ] 21-05-PLAN.md — Wave 3: Skill system prompts + skill-context.ts update for team-engagement-map + workflow-diagram
+- [ ] 21-06-PLAN.md — Wave 4: Human verification checkpoint
 
 ### Phase 22: Source Badges + Audit Log
 **Goal**: Every workspace record displays where it came from (Manual, Ingested, or Discovered), every data mutation is written to the audit log, and deletions require explicit confirmation — the full data provenance trail is complete.
