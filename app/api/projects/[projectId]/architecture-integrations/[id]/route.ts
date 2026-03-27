@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/db'
-import { architectureIntegrations } from '@/db/schema'
+import { architectureIntegrations, auditLog } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { sql } from 'drizzle-orm'
 import { z } from 'zod'
@@ -50,11 +50,18 @@ export async function PATCH(
   if (integration_method !== undefined) updateData.integration_method = integration_method
   if (notes !== undefined) updateData.notes = notes
 
+  // Read before-state for audit
+  const [before] = await db.select().from(architectureIntegrations)
+    .where(and(eq(architectureIntegrations.id, numericId), eq(architectureIntegrations.project_id, numericProjectId)))
+  if (!before) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
+
   try {
     const result = await db.transaction(async (tx) => {
       await tx.execute(sql.raw(`SET LOCAL app.current_project_id = ${numericProjectId}`))
 
-      return tx
+      const updated = await tx
         .update(architectureIntegrations)
         .set(updateData)
         .where(
@@ -64,6 +71,15 @@ export async function PATCH(
           )
         )
         .returning()
+      await tx.insert(auditLog).values({
+        entity_type: 'architecture_integration',
+        entity_id: numericId,
+        action: 'update',
+        actor_id: 'default',
+        before_json: before as Record<string, unknown>,
+        after_json: { ...before, ...updateData } as Record<string, unknown>,
+      })
+      return updated
     })
 
     if (result.length === 0) {
@@ -92,9 +108,24 @@ export async function DELETE(
     return NextResponse.json({ error: 'Invalid id' }, { status: 400 })
   }
 
+  // Read before-state for audit
+  const [beforeDelete] = await db.select().from(architectureIntegrations)
+    .where(and(eq(architectureIntegrations.id, numericId), eq(architectureIntegrations.project_id, numericProjectId)))
+
   try {
     await db.transaction(async (tx) => {
       await tx.execute(sql.raw(`SET LOCAL app.current_project_id = ${numericProjectId}`))
+
+      if (beforeDelete) {
+        await tx.insert(auditLog).values({
+          entity_type: 'architecture_integration',
+          entity_id: numericId,
+          action: 'delete',
+          actor_id: 'default',
+          before_json: beforeDelete as Record<string, unknown>,
+          after_json: null,
+        })
+      }
 
       await tx
         .delete(architectureIntegrations)
