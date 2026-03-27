@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
-current_plan: 20-04
+current_plan: 20-05
 status: in_progress
-last_updated: "2026-03-27T00:04:39.121Z"
+last_updated: "2026-03-27T00:07:21Z"
 progress:
   total_phases: 27
   completed_phases: 21
   total_plans: 122
-  completed_plans: 118
+  completed_plans: 119
 ---
 
 # Project State
@@ -23,10 +23,10 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 
 ## Current Status
 
-**Phase:** Phase 20 — Project Initiation Wizard (3/6 plans done)
-**Current Plan:** 20-04
-**Last action:** 2026-03-27 — 20-03 executed; ProjectWizard Dialog shell + 5-step progress header, BasicInfoStep (6-field form + POST /api/projects), CollateralUploadStep (9-item checklist + drag-and-drop); matchCollateralCategory 4 tests GREEN; 135 tests GREEN, 0 regressions
-**Next action:** Execute 20-04 (AiPreviewStep + ManualEntryStep)
+**Phase:** Phase 20 — Project Initiation Wizard (5/6 plans done)
+**Current Plan:** 20-05
+**Last action:** 2026-03-27 — 20-05 executed; GET /api/projects/[projectId]/completeness endpoint + computeCompletenessScore + getBannerData; Overview page completeness bar + yellow warning banner; 6 new tests GREEN, 141 total GREEN
+**Next action:** Execute 20-06 (final wizard plan)
 
 ## Phase Progress
 
@@ -54,7 +54,7 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 | 18. Document Ingestion | COMPLETE (6/6 plans) |
 | 19. External Discovery Scan | COMPLETE (see 19.1) |
 | 19.1. Source Integrations | COMPLETE (8/8 plans) |
-| 20. Project Initiation Wizard | In progress (2/6 plans) |
+| 20. Project Initiation Wizard | In progress (5/6 plans) |
 | 21. Teams Tab + Architecture Tab | Not started |
 | 22. Source Badges + Audit Log | Not started |
 | 23. Time Tracking Advanced | Not started |
@@ -81,6 +81,9 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - **[2026-03-26] 18-06:** approve route requires artifactId from upload response, not prop-level — track lastExtractedArtifactId in modal state as fallback for drop-zone flow
 - **[2026-03-26] 19.1-07:** server-only mock required in vitest.config.ts — Next.js server-only package throws at import time in vitest context; mapping to empty stub unblocks all 26 adapter test files
 - **[2026-03-26] 19.1-07:** Phase 19.1 COMPLETE — all 8 requirements SRC-01 through SRC-09 satisfied; adapter pattern, UI, OAuth, test suite all verified
+- **[2026-03-27] 20-05:** computeCompletenessScore takes TableCounts object — pre-written tests required this signature; function counts populated fields internally
+- **[2026-03-27] 20-05:** getBannerData returns { show, emptyTabs } — test contract required structured response, not plain array
+- **[2026-03-27] 20-05:** Overview page imports route helpers directly — avoids HTTP self-call, consistent with RSC direct-DB pattern used throughout app
 - **[2026-03-26] 19.1-05:** resolveAdapter: REST credentials take priority over MCP fallback — REST checked first; MCP only if no REST creds configured
 - **[2026-03-26] 19.1-05:** Adapter constructors use creds object pattern (not positional args) — Wave 1 implementations all take `creds: { ... }` object, plan spec showed positional args; factory updated to match
 - **[2026-03-26] 19.1-05:** DiscoveryScanParams extended with source_credentials + userTokens — both required for adapter routing; existingProjectSummary also added for Claude dedup context
