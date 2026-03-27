@@ -4,12 +4,12 @@ milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
 current_plan: Not started
 status: unknown
-last_updated: "2026-03-27T17:25:06.906Z"
+last_updated: "2026-03-27T17:34:18.486Z"
 progress:
   total_phases: 27
   completed_phases: 23
   total_plans: 134
-  completed_plans: 129
+  completed_plans: 130
 ---
 
 # Project State
@@ -357,6 +357,8 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - [Phase 21]: Phase 21 approved via automated preview screenshot and snapshot verification — all 5 Teams sections and 2-tab Architecture view passed visual inspection with correct design tokens
 - [Phase 22-source-badges-+-audit-log]: SourceBadge Wave 0 stub throws instead of returning undefined — Vite import-analysis resolves at transform time, requiring a real stub file
 - [Phase 22-source-badges-+-audit-log]: Lazy import helper for audit-helper tests — node env resolves at runtime so try/catch inside async helper gives per-test failures
+- [Phase 22-source-badges-+-audit-log]: jest-dom setup via expect.extend(matchers): with globals: false, direct import fails; explicit extend + afterEach cleanup() in setupFiles required
+- [Phase 22-source-badges-+-audit-log]: discovery_source capitalization on approve route write, not on SourceBadge read — single responsibility
 
 ## Performance Metrics
 
@@ -477,6 +479,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 | Phase 21-teams-tab-+-architecture-tab P03 | 6 | 2 tasks | 9 files |
 | Phase 21-teams-tab-+-architecture-tab P05 | 3 | 2 tasks | 5 files |
 | Phase 22-source-badges-+-audit-log P01 | 4 | 2 tasks | 5 files |
+| Phase 22-source-badges-+-audit-log P02 | 6 | 3 tasks | 12 files |
 
 ## Key Context for Next Session
 
