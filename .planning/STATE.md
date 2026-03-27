@@ -4,12 +4,12 @@ milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
 current_plan: Not started
 status: unknown
-last_updated: "2026-03-27T17:40:41.797Z"
+last_updated: "2026-03-27T17:49:14.967Z"
 progress:
   total_phases: 27
   completed_phases: 23
   total_plans: 134
-  completed_plans: 131
+  completed_plans: 132
 ---
 
 # Project State
@@ -361,6 +361,8 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - [Phase 22-source-badges-+-audit-log]: discovery_source capitalization on approve route write, not on SourceBadge read — single responsibility
 - [Phase 22-03]: Used tx.insert(auditLog) directly inside transactions rather than writeAuditLog() helper — helper uses db not tx, breaking atomicity
 - [Phase 22-03]: Risks route always fetches before-state unconditionally (was conditional on mitigation_append) — simpler code, clean audit capture
+- [Phase 22-source-badges-+-audit-log]: 22-04: artifactName resolved from pre-fetched data.artifacts Map (no N+1) — avoids LEFT JOIN since getWorkspaceData already fetches all artifacts
+- [Phase 22-source-badges-+-audit-log]: 22-04: Teams/arch badges added at client sub-component level (BusinessOutcomesSection, FocusAreasSection, E2eWorkflowsSection, IntegrationNode) — not RSC page level due to client state
 
 ## Performance Metrics
 
@@ -483,6 +485,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 | Phase 22-source-badges-+-audit-log P01 | 4 | 2 tasks | 5 files |
 | Phase 22-source-badges-+-audit-log P02 | 6 | 3 tasks | 12 files |
 | Phase 22-source-badges-+-audit-log P03 | 4 | 2 tasks | 13 files |
+| Phase 22-source-badges-+-audit-log P04 | 18 | 2 tasks | 13 files |
 
 ## Key Context for Next Session
 
