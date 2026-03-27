@@ -514,7 +514,14 @@ Plans:
   1. Every record on the Actions, Risks, Decisions, Milestones, Stakeholders, Engagement History, and Artifacts tabs shows a source badge — "Manual" for user-entered records, "Ingested — [filename]" for document-ingested records, "Discovered — [source tool]" for discovery-approved records
   2. Creating, editing, or deleting any workspace record produces a corresponding row in audit_log with the correct entity_type, entity_id, action, actor_id, before_json, after_json, and timestamp — verifiable by querying audit_log directly
   3. Attempting to delete any workspace record opens a confirmation dialog; confirming the deletion writes the delete event to audit_log before the record is removed
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 22-01-PLAN.md — Wave 1: TDD — RED tests for writeAuditLog() and SourceBadge (Wave 0 contracts)
+- [ ] 22-02-PLAN.md — Wave 2: migration 0017 + lib/audit.ts + SourceBadge + DeleteConfirmDialog components
+- [ ] 22-03-PLAN.md — Wave 3: audit-instrument all 13 API routes (PATCH/POST/DELETE)
+- [ ] 22-04-PLAN.md — Wave 3: wire SourceBadge into all 9 tab pages + wrap delete buttons with DeleteConfirmDialog
+- [ ] 22-05-PLAN.md — Wave 4: human verification checkpoint
 
 ### Phase 23: Time Tracking Advanced
 **Goal**: The Time tab gains an approval workflow, Google Calendar import, and admin configuration — transforming basic time logging into a team-grade time management system with submission reminders, locked entries, and bulk operations.
