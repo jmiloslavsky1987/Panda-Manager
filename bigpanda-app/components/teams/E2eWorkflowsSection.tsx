@@ -66,6 +66,7 @@ export function E2eWorkflowsSection({ projectId, workflows, onUpdate }: Props) {
       track: (values.track as WorkflowStep['track']) ?? 'ADR',
       status: (values.status as WorkflowStep['status']) ?? 'planned',
       position: parseInt(values.position ?? '0', 10),
+      discovery_source: null,
       created_at: new Date(),
     }
     const updated = workflows.map((wf) =>
@@ -96,6 +97,7 @@ export function E2eWorkflowsSection({ projectId, workflows, onUpdate }: Props) {
       workflow_name: values.workflow_name ?? '',
       source: 'manual',
       source_artifact_id: null,
+      discovery_source: null,
       ingested_at: null,
       created_at: new Date(),
       steps: [],

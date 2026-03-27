@@ -48,6 +48,7 @@ export function FocusAreasSection({ projectId, focusAreas, onUpdate }: Props) {
       customer_owner: values.customer_owner ?? null,
       source: 'manual',
       source_artifact_id: null,
+      discovery_source: null,
       ingested_at: null,
       created_at: new Date(),
     }

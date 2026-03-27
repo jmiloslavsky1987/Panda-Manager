@@ -67,6 +67,7 @@ export function BusinessOutcomesSection({ projectId, outcomes, onUpdate }: Props
       mapping_note: values.mapping_note ?? null,
       source: 'manual',
       source_artifact_id: null,
+      discovery_source: null,
       ingested_at: null,
       created_at: new Date(),
     }
