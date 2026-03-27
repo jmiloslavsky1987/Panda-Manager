@@ -4,12 +4,12 @@ milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
 current_plan: Not started
 status: unknown
-last_updated: "2026-03-27T17:34:18.486Z"
+last_updated: "2026-03-27T17:40:41.797Z"
 progress:
   total_phases: 27
   completed_phases: 23
   total_plans: 134
-  completed_plans: 130
+  completed_plans: 131
 ---
 
 # Project State
@@ -359,6 +359,8 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - [Phase 22-source-badges-+-audit-log]: Lazy import helper for audit-helper tests — node env resolves at runtime so try/catch inside async helper gives per-test failures
 - [Phase 22-source-badges-+-audit-log]: jest-dom setup via expect.extend(matchers): with globals: false, direct import fails; explicit extend + afterEach cleanup() in setupFiles required
 - [Phase 22-source-badges-+-audit-log]: discovery_source capitalization on approve route write, not on SourceBadge read — single responsibility
+- [Phase 22-03]: Used tx.insert(auditLog) directly inside transactions rather than writeAuditLog() helper — helper uses db not tx, breaking atomicity
+- [Phase 22-03]: Risks route always fetches before-state unconditionally (was conditional on mitigation_append) — simpler code, clean audit capture
 
 ## Performance Metrics
 
@@ -480,6 +482,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 | Phase 21-teams-tab-+-architecture-tab P05 | 3 | 2 tasks | 5 files |
 | Phase 22-source-badges-+-audit-log P01 | 4 | 2 tasks | 5 files |
 | Phase 22-source-badges-+-audit-log P02 | 6 | 3 tasks | 12 files |
+| Phase 22-source-badges-+-audit-log P03 | 4 | 2 tasks | 13 files |
 
 ## Key Context for Next Session
 
