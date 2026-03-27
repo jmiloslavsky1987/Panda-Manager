@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/db'
-import { businessOutcomes } from '@/db/schema'
+import { businessOutcomes, auditLog } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { sql } from 'drizzle-orm'
 
@@ -39,13 +39,29 @@ export async function PATCH(
     return NextResponse.json({ error: 'No fields to update' }, { status: 400 })
   }
 
+  // Read before-state for audit
+  const [before] = await db.select().from(businessOutcomes)
+    .where(and(eq(businessOutcomes.id, numericId), eq(businessOutcomes.project_id, numericProjectId)))
+  if (!before) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
+
   try {
     const result = await db.transaction(async (tx) => {
       await tx.execute(sql.raw(`SET LOCAL app.current_project_id = ${numericProjectId}`))
-      return tx.update(businessOutcomes)
+      const updated = await tx.update(businessOutcomes)
         .set(updates)
         .where(and(eq(businessOutcomes.id, numericId), eq(businessOutcomes.project_id, numericProjectId)))
         .returning()
+      await tx.insert(auditLog).values({
+        entity_type: 'business_outcome',
+        entity_id: numericId,
+        action: 'update',
+        actor_id: 'default',
+        before_json: before as Record<string, unknown>,
+        after_json: { ...before, ...updates } as Record<string, unknown>,
+      })
+      return updated
     })
     if (result.length === 0) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
@@ -68,9 +84,23 @@ export async function DELETE(
     return NextResponse.json({ error: 'Invalid projectId or id' }, { status: 400 })
   }
 
+  // Read before-state for audit
+  const [beforeDelete] = await db.select().from(businessOutcomes)
+    .where(and(eq(businessOutcomes.id, numericId), eq(businessOutcomes.project_id, numericProjectId)))
+
   try {
     await db.transaction(async (tx) => {
       await tx.execute(sql.raw(`SET LOCAL app.current_project_id = ${numericProjectId}`))
+      if (beforeDelete) {
+        await tx.insert(auditLog).values({
+          entity_type: 'business_outcome',
+          entity_id: numericId,
+          action: 'delete',
+          actor_id: 'default',
+          before_json: beforeDelete as Record<string, unknown>,
+          after_json: null,
+        })
+      }
       await tx.delete(businessOutcomes)
         .where(and(eq(businessOutcomes.id, numericId), eq(businessOutcomes.project_id, numericProjectId)))
     })
