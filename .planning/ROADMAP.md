@@ -37,7 +37,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 18: Document Ingestion** - File upload (PDF/DOCX/PPTX/XLSX/MD/TXT), Claude extraction, structured preview, approve/edit/reject per item, conflict detection, source attribution, incremental dedup (completed 2026-03-26)
 - [ ] **Phase 19: External Discovery Scan** - Manual + scheduled MCP scan (Slack/Gmail/Glean/Gong), Claude analysis, Review Queue UI, approve/dismiss flow, conflict diff view, dismissal history
 - [x] **Phase 20: Project Initiation Wizard** - Guided new-project wizard (7 steps): project creation, collateral upload + ingestion pipeline, extraction preview, manual fill, time tracking config, completeness score, launch (completed 2026-03-27)
-- [ ] **Phase 21: Teams Tab + Architecture Tab** - Full DB-powered 5-section Team Engagement Map view; full DB-powered 2-tab Workflow Diagram; inline edit for all sections; skill exports updated to read from DB
+- [x] **Phase 21: Teams Tab + Architecture Tab** - Full DB-powered 5-section Team Engagement Map view; full DB-powered 2-tab Workflow Diagram; inline edit for all sections; skill exports updated to read from DB (completed 2026-03-27)
 - [ ] **Phase 22: Source Badges + Audit Log** - Source attribution badges on all workspace tab records (Manual/Ingested/Discovered); audit_log writes on all data mutations; deletion confirmation dialog
 - [ ] **Phase 23: Time Tracking Advanced** - Approval workflow, Google Calendar OAuth import, admin config (capacity/categories/exemptions), bulk operations, submission reminders, export with audit fields
 - [ ] **Phase 24: Scheduler Enhanced** - Create Job wizard (all 12 skills), configurable frequency/timezone/skill-params, enable/disable, run history log, failure notifications, Scheduler sidebar link
@@ -572,7 +572,7 @@ Phases 18 and 19 can run in parallel after Phase 17. Phases 23 and 24 are indepe
 | 18. Document Ingestion | 5/6 | In Progress|  |
 | 19. External Discovery Scan | 5/6 | In Progress|  |
 | 20. Project Initiation Wizard | 6/6 | Complete    | 2026-03-27 |
-| 21. Teams Tab + Architecture Tab | 6/7 | In Progress|  |
+| 21. Teams Tab + Architecture Tab | 7/7 | Complete   | 2026-03-27 |
 | 22. Source Badges + Audit Log | 0/TBD | Not started | - |
 | 23. Time Tracking Advanced | 0/TBD | Not started | - |
 | 24. Scheduler Enhanced | 0/TBD | Not started | - |

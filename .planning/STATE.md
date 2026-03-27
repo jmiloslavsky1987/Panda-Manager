@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
-current_plan: Not started
-status: unknown
-last_updated: "2026-03-27T04:44:03.491Z"
+current_plan: 21-06
+status: awaiting-verification
+last_updated: "2026-03-27T04:45:08Z"
 progress:
   total_phases: 27
   completed_phases: 22
@@ -23,10 +23,10 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 
 ## Current Status
 
-**Phase:** Phase 20 — Project Initiation Wizard (6/6 plans — awaiting human verification)
-**Current Plan:** Not started
-**Last action:** 2026-03-27 — 20-06 checkpoint reached; human verification of full wizard flow + completeness display required
-**Next action:** Human approves 20-06 checkpoint → Phase 20 COMPLETE → Phase 21 starts
+**Phase:** Phase 21 — Teams Tab + Architecture Tab (6/6 plans — awaiting human verification)
+**Current Plan:** 21-06 (checkpoint reached)
+**Last action:** 2026-03-27 — 21-06 checkpoint reached; human verification of Teams tab, Architecture tab, and skill exports required
+**Next action:** Human approves 21-06 checkpoint → Phase 21 COMPLETE → Phase 22 starts
 
 ## Phase Progress
 
@@ -55,7 +55,7 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 | 19. External Discovery Scan | COMPLETE (see 19.1) |
 | 19.1. Source Integrations | COMPLETE (8/8 plans) |
 | 20. Project Initiation Wizard | Awaiting verification (6/6 plans — checkpoint) |
-| 21. Teams Tab + Architecture Tab | Not started |
+| 21. Teams Tab + Architecture Tab | Awaiting verification (6/6 plans — checkpoint) |
 | 22. Source Badges + Audit Log | Not started |
 | 23. Time Tracking Advanced | Not started |
 | 24. Scheduler Enhanced | Not started |
