@@ -5,6 +5,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: false,
+    setupFiles: ['./tests/setup-jest-dom.ts'],
     alias: {
       // 'server-only' is a Next.js build guard that has no runtime content.
       // In vitest (node env) it must be stubbed so tests can import server modules.
