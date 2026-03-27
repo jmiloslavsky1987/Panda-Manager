@@ -37,10 +37,18 @@ type DiscoveryItem = {
   created_at: Date;
 };
 
+// Capitalize first letter of discovery source tool name (e.g., 'slack' → 'Slack')
+function capitalizeSource(src: string): string {
+  if (!src) return src;
+  return src.charAt(0).toUpperCase() + src.slice(1);
+}
+
 async function insertDiscoveredItem(item: DiscoveryItem): Promise<void> {
   const field = item.suggested_field ?? 'history';
   const projectId = item.project_id;
   const source = 'discovery' as const;
+  // Propagate the tool name (e.g., 'Slack', 'Gmail', 'Gong') for SourceBadge display
+  const discovery_source = item.source ? capitalizeSource(item.source) : null;
   const createdAt = new Date();
 
   switch (field) {
@@ -51,6 +59,7 @@ async function insertDiscoveredItem(item: DiscoveryItem): Promise<void> {
         description: item.content,
         status: 'open',
         source,
+        discovery_source,
         created_at: createdAt,
       });
       break;
@@ -61,6 +70,7 @@ async function insertDiscoveredItem(item: DiscoveryItem): Promise<void> {
         external_id: `DISC-RSK-${item.id}-${Date.now()}`,
         description: item.content,
         source,
+        discovery_source,
         created_at: createdAt,
       });
       break;
@@ -71,6 +81,7 @@ async function insertDiscoveredItem(item: DiscoveryItem): Promise<void> {
         decision: item.content,
         date: item.scan_timestamp ? item.scan_timestamp.toISOString().split('T')[0] : null,
         source,
+        discovery_source,
         created_at: createdAt,
       });
       break;
@@ -81,6 +92,7 @@ async function insertDiscoveredItem(item: DiscoveryItem): Promise<void> {
         external_id: `DISC-MIL-${item.id}-${Date.now()}`,
         name: item.content,
         source,
+        discovery_source,
         created_at: createdAt,
       });
       break;
@@ -90,6 +102,7 @@ async function insertDiscoveredItem(item: DiscoveryItem): Promise<void> {
         project_id: projectId,
         name: item.content,
         source,
+        discovery_source,
         created_at: createdAt,
       });
       break;
@@ -102,6 +115,7 @@ async function insertDiscoveredItem(item: DiscoveryItem): Promise<void> {
         content: item.content,
         date: item.scan_timestamp ? item.scan_timestamp.toISOString().split('T')[0] : null,
         source,
+        discovery_source,
         created_at: createdAt,
       });
       break;

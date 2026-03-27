@@ -132,6 +132,7 @@ export const actions = pgTable('actions', {
   type: text('type').default('action').notNull(), // 'action' | 'question' (Q-NNN IDs)
   source: text('source').notNull(),
   source_artifact_id: integer('source_artifact_id').references((): AnyPgColumn => artifacts.id, { onDelete: 'set null' }),
+  discovery_source: text('discovery_source'),
   ingested_at: timestamp('ingested_at'),
   created_at: timestamp('created_at').defaultNow().notNull(),
 });
@@ -152,6 +153,7 @@ export const risks = pgTable('risks', {
   last_updated: text('last_updated'),
   source: text('source').notNull(),
   source_artifact_id: integer('source_artifact_id').references((): AnyPgColumn => artifacts.id, { onDelete: 'set null' }),
+  discovery_source: text('discovery_source'),
   ingested_at: timestamp('ingested_at'),
   created_at: timestamp('created_at').defaultNow().notNull(),
 });
@@ -172,6 +174,7 @@ export const milestones = pgTable('milestones', {
   owner: text('owner'),
   source: text('source').notNull(),
   source_artifact_id: integer('source_artifact_id').references((): AnyPgColumn => artifacts.id, { onDelete: 'set null' }),
+  discovery_source: text('discovery_source'),
   ingested_at: timestamp('ingested_at'),
   created_at: timestamp('created_at').defaultNow().notNull(),
 });
@@ -189,6 +192,7 @@ export const artifacts = pgTable('artifacts', {
   status: text('status'),
   owner: text('owner'),
   source: text('source').notNull(),
+  discovery_source: text('discovery_source'),
   created_at: timestamp('created_at').defaultNow().notNull(),
   ingestion_status:   ingestionStatusEnum('ingestion_status'),
   ingestion_log_json: jsonb('ingestion_log_json'),
@@ -206,6 +210,7 @@ export const engagementHistory = pgTable('engagement_history', {
   content: text('content').notNull(),
   source: text('source').notNull(),
   source_artifact_id: integer('source_artifact_id').references(() => artifacts.id, { onDelete: 'set null' }),
+  discovery_source: text('discovery_source'),
   ingested_at: timestamp('ingested_at'),
   created_at: timestamp('created_at').defaultNow().notNull(),
 });
@@ -223,6 +228,7 @@ export const keyDecisions = pgTable('key_decisions', {
   context: text('context'),
   source: text('source').notNull(),
   source_artifact_id: integer('source_artifact_id').references(() => artifacts.id, { onDelete: 'set null' }),
+  discovery_source: text('discovery_source'),
   ingested_at: timestamp('ingested_at'),
   created_at: timestamp('created_at').defaultNow().notNull(),
 });
@@ -242,6 +248,7 @@ export const stakeholders = pgTable('stakeholders', {
   notes: text('notes'),
   source: text('source').notNull(),
   source_artifact_id: integer('source_artifact_id').references(() => artifacts.id, { onDelete: 'set null' }),
+  discovery_source: text('discovery_source'),
   ingested_at: timestamp('ingested_at'),
   created_at: timestamp('created_at').defaultNow().notNull(),
 });
@@ -487,6 +494,7 @@ export const businessOutcomes = pgTable('business_outcomes', {
   mapping_note:    text('mapping_note'),
   source:          text('source').notNull().default('manual'),
   source_artifact_id: integer('source_artifact_id').references(() => artifacts.id, { onDelete: 'set null' }),
+  discovery_source: text('discovery_source'),
   ingested_at:     timestamp('ingested_at'),
   created_at:      timestamp('created_at').defaultNow().notNull(),
 });
@@ -498,6 +506,7 @@ export const e2eWorkflows = pgTable('e2e_workflows', {
   workflow_name: text('workflow_name').notNull(),
   source:        text('source').notNull().default('manual'),
   source_artifact_id: integer('source_artifact_id').references(() => artifacts.id, { onDelete: 'set null' }),
+  discovery_source: text('discovery_source'),
   ingested_at:   timestamp('ingested_at'),
   created_at:    timestamp('created_at').defaultNow().notNull(),
 });
@@ -508,8 +517,9 @@ export const workflowSteps = pgTable('workflow_steps', {
   label:       text('label').notNull(),
   track:       text('track'),
   status:      text('status'),
-  position:    integer('position').default(0).notNull(),
-  created_at:  timestamp('created_at').defaultNow().notNull(),
+  position:        integer('position').default(0).notNull(),
+  discovery_source: text('discovery_source'),
+  created_at:      timestamp('created_at').defaultNow().notNull(),
 });
 
 export const focusAreas = pgTable('focus_areas', {
@@ -524,6 +534,7 @@ export const focusAreas = pgTable('focus_areas', {
   customer_owner:  text('customer_owner'),
   source:          text('source').notNull().default('manual'),
   source_artifact_id: integer('source_artifact_id').references(() => artifacts.id, { onDelete: 'set null' }),
+  discovery_source: text('discovery_source'),
   ingested_at:     timestamp('ingested_at'),
   created_at:      timestamp('created_at').defaultNow().notNull(),
 });
@@ -539,6 +550,7 @@ export const architectureIntegrations = pgTable('architecture_integrations', {
   notes:              text('notes'),
   source:             text('source').notNull().default('manual'),
   source_artifact_id: integer('source_artifact_id').references(() => artifacts.id, { onDelete: 'set null' }),
+  discovery_source:   text('discovery_source'),
   ingested_at:        timestamp('ingested_at'),
   created_at:         timestamp('created_at').defaultNow().notNull(),
 });
