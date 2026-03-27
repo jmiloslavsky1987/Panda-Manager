@@ -4,6 +4,7 @@ import { useState } from 'react'
 import type { E2eWorkflowWithSteps, WorkflowStep } from '@/lib/queries'
 import { WarnBanner } from './WarnBanner'
 import { InlineEditModal } from './InlineEditModal'
+import { SourceBadge } from '@/components/SourceBadge'
 
 // Design tokens
 const ADR = { text: '#1e40af', bg: '#eff6ff', border: '#bfdbfe' }
@@ -139,7 +140,14 @@ export function E2eWorkflowsSection({ projectId, workflows, onUpdate }: Props) {
             <div key={wf.id} className="border border-zinc-200 rounded-lg p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-semibold text-zinc-800 text-sm">{wf.team_name}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-zinc-800 text-sm">{wf.team_name}</p>
+                    <SourceBadge
+                      source={wf.source ?? 'manual'}
+                      artifactName={null}
+                      discoverySource={wf.discovery_source}
+                    />
+                  </div>
                   {wf.workflow_name && (
                     <p className="text-xs text-zinc-500">{wf.workflow_name}</p>
                   )}

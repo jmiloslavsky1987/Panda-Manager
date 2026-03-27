@@ -3,6 +3,7 @@
 import type { BusinessOutcome } from '@/lib/queries'
 import { WarnBanner } from './WarnBanner'
 import { InlineEditModal } from './InlineEditModal'
+import { SourceBadge } from '@/components/SourceBadge'
 import { useState } from 'react'
 
 // Design tokens
@@ -159,6 +160,15 @@ export function BusinessOutcomesSection({ projectId, outcomes, onUpdate }: Props
                 {outcome.mapping_note && (
                   <p className="text-xs text-zinc-500 italic">{outcome.mapping_note}</p>
                 )}
+
+                {/* source badge */}
+                <div className="ml-2">
+                  <SourceBadge
+                    source={outcome.source ?? 'manual'}
+                    artifactName={null}
+                    discoverySource={outcome.discovery_source}
+                  />
+                </div>
               </div>
             )
           })}
