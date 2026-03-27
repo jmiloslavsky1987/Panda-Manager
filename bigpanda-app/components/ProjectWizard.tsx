@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Check } from 'lucide-react'
 import {
   Dialog,
@@ -12,6 +13,9 @@ import type { ReviewItem } from './IngestionModal'
 import { cn } from '@/lib/utils'
 import { BasicInfoStep } from './wizard/BasicInfoStep'
 import { CollateralUploadStep } from './wizard/CollateralUploadStep'
+import { AiPreviewStep } from './wizard/AiPreviewStep'
+import { ManualEntryStep } from './wizard/ManualEntryStep'
+import { LaunchStep } from './wizard/LaunchStep'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -100,7 +104,10 @@ export function ProjectWizard({ open, onOpenChange }: ProjectWizardProps) {
     }))
   }
 
+  const router = useRouter()
+
   function handleClose() {
+    router.refresh()
     onOpenChange(false)
     setState(INITIAL_STATE)
   }
@@ -122,8 +129,9 @@ export function ProjectWizard({ open, onOpenChange }: ProjectWizardProps) {
     handleStepComplete(state.step)
   }
 
-  const showSkip = state.step !== 'basic-info' && state.step !== 'launch'
-  const showFooter = state.step !== 'basic-info' // BasicInfoStep has its own submit button
+  const showSkip = state.step === 'upload'
+  // Steps 3-5 manage their own navigation buttons; only show generic footer for step 2 (upload)
+  const showFooter = state.step === 'upload'
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -204,11 +212,34 @@ export function ProjectWizard({ open, onOpenChange }: ProjectWizardProps) {
               onContinue={() => handleStepComplete('upload')}
             />
           )}
-          {/* Steps 3-5 rendered in Plan 04 */}
-          {(state.step === 'ai-preview' || state.step === 'manual-entry' || state.step === 'launch') && (
-            <div className="flex flex-col items-center justify-center h-full text-gray-400 text-sm">
-              <p>Step coming in Plan 04…</p>
-            </div>
+          {state.step === 'ai-preview' && (
+            <AiPreviewStep
+              projectId={state.projectId!}
+              fileStatuses={state.fileStatuses}
+              reviewItems={state.reviewItems}
+              onReviewItemsChange={(items) => setState(prev => ({ ...prev, reviewItems: items }))}
+              onApprove={(approvedItems) => {
+                setState(prev => ({ ...prev, reviewItems: approvedItems, step: 'manual-entry' }))
+              }}
+              onSkip={() => setState(prev => ({ ...prev, step: 'manual-entry' }))}
+            />
+          )}
+          {state.step === 'manual-entry' && (
+            <ManualEntryStep
+              projectId={state.projectId!}
+              approvedItems={state.reviewItems.filter(i => i.approved)}
+              manualItems={state.manualItems}
+              onManualItemsChange={(items) => setState(prev => ({ ...prev, manualItems: items }))}
+              onContinue={() => setState(prev => ({ ...prev, step: 'launch' }))}
+              onSkip={() => setState(prev => ({ ...prev, step: 'launch' }))}
+            />
+          )}
+          {state.step === 'launch' && (
+            <LaunchStep
+              projectId={state.projectId!}
+              approvedItems={state.reviewItems.filter(i => i.approved)}
+              manualItems={state.manualItems}
+            />
           )}
         </div>
 

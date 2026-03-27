@@ -6,6 +6,7 @@ import { NotificationBadge } from '../components/NotificationBadge';
 import { DraftsInbox } from '../components/DraftsInbox';
 import { RiskHeatMap } from '../components/RiskHeatMap';
 import { WatchList } from '../components/WatchList';
+import { NewProjectButton } from '../components/NewProjectButton';
 
 export default async function DashboardPage() {
   const [data, latestBriefing] = await Promise.all([
@@ -18,7 +19,10 @@ export default async function DashboardPage() {
       {/* Header row */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-zinc-900">Dashboard</h1>
-        <NotificationBadge count={data.notifications.overdueCount} />
+        <div className="flex items-center gap-3">
+          <NewProjectButton />
+          <NotificationBadge count={data.notifications.overdueCount} />
+        </div>
       </div>
 
       {/* Morning Briefing panel — SKILL-11 */}
