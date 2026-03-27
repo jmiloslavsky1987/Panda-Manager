@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '../../../../db'
-import { milestones } from '../../../../db/schema'
+import { milestones, auditLog } from '../../../../db/schema'
 import { eq } from 'drizzle-orm'
 
 const patchSchema = z.object({
@@ -36,15 +36,23 @@ export async function PATCH(
 
   const patch = parsed.data
 
-  const result = await db
-    .update(milestones)
-    .set(patch)
-    .where(eq(milestones.id, numericId))
-    .returning({ id: milestones.id })
-
-  if (result.length === 0) {
+  // Read before-state for audit
+  const [before] = await db.select().from(milestones).where(eq(milestones.id, numericId))
+  if (!before) {
     return NextResponse.json({ error: 'Milestone not found' }, { status: 404 })
   }
+
+  await db.transaction(async (tx) => {
+    await tx.update(milestones).set(patch).where(eq(milestones.id, numericId))
+    await tx.insert(auditLog).values({
+      entity_type: 'milestone',
+      entity_id: numericId,
+      action: 'update',
+      actor_id: 'default',
+      before_json: before as Record<string, unknown>,
+      after_json: { ...before, ...patch } as Record<string, unknown>,
+    })
+  })
 
   return NextResponse.json({ ok: true })
 }
