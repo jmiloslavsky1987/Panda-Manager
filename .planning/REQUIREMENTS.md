@@ -122,33 +122,33 @@
 ### TEAMS — Teams Tab: Team Engagement Map View
 *Replaces the existing basic Teams tab with a rich, DB-powered 5-section engagement view. The team-engagement-map skill is updated to export from DB.*
 
-- [ ] **TEAMS-01**: Teams tab renders a 5-section Team Engagement Map view: (1) Business Value & Expected Outcomes, (2) Architecture overview (ADR + Biggy panels), (3) End-to-End Workflows, (4) Teams & Engagement Status cards, (5) Top Focus Areas
-- [ ] **TEAMS-02**: Business Value & Outcomes section renders outcome cards with: icon + title, track pills (ADR/Biggy/Both), delivery status badge (Live/In Progress/Blocked/Planned), and a mapping note — all sourced from DB, not inferred or generic
+- [x] **TEAMS-01**: Teams tab renders a 5-section Team Engagement Map view: (1) Business Value & Expected Outcomes, (2) Architecture overview (ADR + Biggy panels), (3) End-to-End Workflows, (4) Teams & Engagement Status cards, (5) Top Focus Areas
+- [x] **TEAMS-02**: Business Value & Outcomes section renders outcome cards with: icon + title, track pills (ADR/Biggy/Both), delivery status badge (Live/In Progress/Blocked/Planned), and a mapping note — all sourced from DB, not inferred or generic
 - [ ] **TEAMS-03**: Architecture section within the Teams tab shows ADR panel (left, blue) and Biggy panel (right, purple) side by side, each listing integration nodes with live/in-progress/planned status using the defined design tokens
-- [ ] **TEAMS-04**: End-to-End Workflows section renders per-team step sequences with track ownership (ADR blue / Biggy purple) and status per step; arrows connect steps
+- [x] **TEAMS-04**: End-to-End Workflows section renders per-team step sequences with track ownership (ADR blue / Biggy purple) and status per step; arrows connect steps
 - [ ] **TEAMS-05**: Teams & Engagement Status section renders one card per team with: ADR track status items, Biggy track status items (if applicable), E2E workflow note (if applicable), top 2–3 open items as plain text (no ticket IDs), and footer status tags
 - [ ] **TEAMS-06**: Top Focus Areas section renders 3–5 cards with: title, track pills, why it matters (1–2 sentences), current status + next step, and named owners (customer-side and BigPanda-side)
-- [ ] **TEAMS-07**: Any section that cannot be fully populated from DB renders a visible yellow warning banner inside that section — content is never silently omitted or replaced with generic copy
+- [x] **TEAMS-07**: Any section that cannot be fully populated from DB renders a visible yellow warning banner inside that section — content is never silently omitted or replaced with generic copy
 - [ ] **TEAMS-08**: Users can add and edit business outcomes, E2E workflow steps, focus areas, and team card data inline within the Teams tab (same optimistic-UI pattern as all other tabs)
-- [ ] **TEAMS-09**: For AMEX, the Teams tab enforces the canonical 8-team structure and order: ITSM & Platform Ops, Loyalty, Observability & Monitoring, OETM/Infrastructure, MIM Team, Global Remittance, Merchant Domain, Change Management
-- [ ] **TEAMS-10**: team-engagement-map skill is updated to read from DB (business_outcomes, e2e_workflows, focus_areas, team card data) and generate a self-contained HTML export of the same 5-section view
-- [ ] **TEAMS-11**: Design tokens applied consistently: ADR `#1e40af`/`#eff6ff`/`#bfdbfe`, Biggy `#6d28d9`/`#f5f3ff`/`#ddd6fe`, E2E `#065f46`/`#ecfdf5`/`#6ee7b7`, with Live/In Progress/Blocked/Planned status colors
+- [x] **TEAMS-09**: For AMEX, the Teams tab enforces the canonical 8-team structure and order: ITSM & Platform Ops, Loyalty, Observability & Monitoring, OETM/Infrastructure, MIM Team, Global Remittance, Merchant Domain, Change Management
+- [x] **TEAMS-10**: team-engagement-map skill is updated to read from DB (business_outcomes, e2e_workflows, focus_areas, team card data) and generate a self-contained HTML export of the same 5-section view
+- [x] **TEAMS-11**: Design tokens applied consistently: ADR `#1e40af`/`#eff6ff`/`#bfdbfe`, Biggy `#6d28d9`/`#f5f3ff`/`#ddd6fe`, E2E `#065f46`/`#ecfdf5`/`#6ee7b7`, with Live/In Progress/Blocked/Planned status colors
 
 ### ARCH — Architecture Tab: Workflow Diagram View
 *Replaces the existing basic Architecture tab with a rich, DB-powered 2-tab before/after diagram. The workflow-diagram skill is updated to export from DB.*
 
-- [ ] **ARCH-01**: Architecture tab renders a two-tab Workflow Diagram: "Before BigPanda" (grey dot) and "Current & Future State" (green dot); tab switching works without page reload
+- [x] **ARCH-01**: Architecture tab renders a two-tab Workflow Diagram: "Before BigPanda" (grey dot) and "Current & Future State" (green dot); tab switching works without page reload
 - [ ] **ARCH-02**: Before BigPanda tab renders a horizontal 5-phase flow: Event Sources → Aggregation Hub → Ticket Creation → Incident Response → Resolution — all tool names sourced from customer DB data, no placeholders
-- [ ] **ARCH-03**: Before BigPanda tab renders 5–6 customer-specific pain point cards below the phase flow (sourced from before_state.pain_points — no generic placeholders)
+- [x] **ARCH-03**: Before BigPanda tab renders 5–6 customer-specific pain point cards below the phase flow (sourced from before_state.pain_points — no generic placeholders)
 - [ ] **ARCH-04**: Current & Future State tab renders the ADR Track (5 phase columns with status pills on each node) separated from Biggy AI Track by a full-width bold amber divider labeled "↓ BIGGY AI TRACK ↓"
 - [ ] **ARCH-05**: ADR Track renders phase columns: Event Ingest → Alert Intelligence (Normalization sub-group + Correlation sub-group) → Incident Intelligence → Console (🐼 BigPanda Console) → Workflow Automation — each node shows tool name, method, and status pill
 - [ ] **ARCH-06**: Biggy AI Track renders phase columns: Knowledge Sources (Ingested) → Real-Time Query Sources → Biggy Capabilities → Console (🤖 Biggy AI Console) → Outputs & Actions — each node shows integration name and status pill
 - [ ] **ARCH-07**: Team Onboarding Status table rendered below both tracks — columns: Team / Ingest & Normalization / Alert Correlation / Incident Intelligence / SN Automation / Biggy AI; split into ADR Track section (blue header) and Biggy AI Track section (amber header) with a dot legend
-- [ ] **ARCH-08**: All integration/capability nodes carry status pills: LIVE (green `#dcfce7`/`#14532d`) / In Progress (amber `#fef3c7`/`#92400e`) / Pilot (same as In Progress) / Planned (gray `#f1f5f9`/`#475569`)
+- [x] **ARCH-08**: All integration/capability nodes carry status pills: LIVE (green `#dcfce7`/`#14532d`) / In Progress (amber `#fef3c7`/`#92400e`) / Pilot (same as In Progress) / Planned (gray `#f1f5f9`/`#475569`)
 - [ ] **ARCH-09**: Users can add and edit integration nodes, before-state data, pain points, and team onboarding status inline within the Architecture tab
-- [ ] **ARCH-10**: workflow-diagram skill is updated to read from DB (architecture_integrations, before_state, team_onboarding_status) and generate a self-contained HTML export of the same 2-tab diagram
-- [ ] **ARCH-11**: Customer-specific rules applied: Kaiser ADR panel shows "live in production" framing (not onboarding flow); Amex Before tab shows "Sahara" as the orange aggregation hub; Merck renders mostly Planned status
-- [ ] **ARCH-12**: Architecture tab view renders self-contained when exported — no external CSS/JS dependencies; correct at 1280px and 1600px widths
+- [x] **ARCH-10**: workflow-diagram skill is updated to read from DB (architecture_integrations, before_state, team_onboarding_status) and generate a self-contained HTML export of the same 2-tab diagram
+- [x] **ARCH-11**: Customer-specific rules applied: Kaiser ADR panel shows "live in production" framing (not onboarding flow); Amex Before tab shows "Sahara" as the orange aggregation hub; Merck renders mostly Planned status
+- [x] **ARCH-12**: Architecture tab view renders self-contained when exported — no external CSS/JS dependencies; correct at 1280px and 1600px widths
 
 ---
 
@@ -219,29 +219,29 @@
 | WIZ-07 | Phase 20 | Complete |
 | WIZ-08 | Phase 20 | Complete |
 | WIZ-09 | Phase 20 | Complete |
-| TEAMS-01 | Phase 21 | Pending |
-| TEAMS-02 | Phase 21 | Pending |
+| TEAMS-01 | Phase 21 | Complete |
+| TEAMS-02 | Phase 21 | Complete |
 | TEAMS-03 | Phase 21 | Pending |
-| TEAMS-04 | Phase 21 | Pending |
+| TEAMS-04 | Phase 21 | Complete |
 | TEAMS-05 | Phase 21 | Pending |
 | TEAMS-06 | Phase 21 | Pending |
-| TEAMS-07 | Phase 21 | Pending |
+| TEAMS-07 | Phase 21 | Complete |
 | TEAMS-08 | Phase 21 | Pending |
-| TEAMS-09 | Phase 21 | Pending |
-| TEAMS-10 | Phase 21 | Pending |
-| TEAMS-11 | Phase 21 | Pending |
-| ARCH-01 | Phase 21 | Pending |
+| TEAMS-09 | Phase 21 | Complete |
+| TEAMS-10 | Phase 21 | Complete |
+| TEAMS-11 | Phase 21 | Complete |
+| ARCH-01 | Phase 21 | Complete |
 | ARCH-02 | Phase 21 | Pending |
-| ARCH-03 | Phase 21 | Pending |
+| ARCH-03 | Phase 21 | Complete |
 | ARCH-04 | Phase 21 | Pending |
 | ARCH-05 | Phase 21 | Pending |
 | ARCH-06 | Phase 21 | Pending |
 | ARCH-07 | Phase 21 | Pending |
-| ARCH-08 | Phase 21 | Pending |
+| ARCH-08 | Phase 21 | Complete |
 | ARCH-09 | Phase 21 | Pending |
-| ARCH-10 | Phase 21 | Pending |
-| ARCH-11 | Phase 21 | Pending |
-| ARCH-12 | Phase 21 | Pending |
+| ARCH-10 | Phase 21 | Complete |
+| ARCH-11 | Phase 21 | Complete |
+| ARCH-12 | Phase 21 | Complete |
 | AUDIT-01 | Phase 22 | Pending |
 | AUDIT-02 | Phase 22 | Pending |
 | AUDIT-03 | Phase 22 | Pending |

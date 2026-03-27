@@ -4,12 +4,12 @@ milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
 current_plan: Not started
 status: unknown
-last_updated: "2026-03-27T00:28:54.730Z"
+last_updated: "2026-03-27T04:23:06.425Z"
 progress:
   total_phases: 27
   completed_phases: 22
-  total_plans: 122
-  completed_plans: 121
+  total_plans: 129
+  completed_plans: 122
 ---
 
 # Project State
@@ -343,6 +343,8 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - [Phase 20]: CollateralUploadStep owns Skip/Continue buttons (plan contract); ProjectWizard renders footer only for steps 3-5 while under construction
 - [Phase 20]: Steps 3-5 own navigation buttons — generic wizard footer suppressed for steps that have their own Submit/Continue/Launch controls
 - [Phase 20]: NewProjectButton extracted as separate component for clean RSC/client boundary in Dashboard page.tsx
+- [Phase 21-00]: Wave 0 stubs use it.todo() so suite is green immediately — tests turn red as Wave 1+ implementations are written
+- [Phase 21-00]: Import lines in stubs commented out with plan reference so TypeScript errors only surface after implementation modules exist
 
 ## Performance Metrics
 
@@ -456,6 +458,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 | Phase 20 P02 | 5min | 2 tasks | 2 files |
 | Phase 20 P03 | 18 | 3 tasks | 3 files |
 | Phase 20 P04 | 13 | 3 tasks | 6 files |
+| Phase 21-teams-tab-+-architecture-tab P00 | 2min | 2 tasks | 14 files |
 
 ## Key Context for Next Session
 

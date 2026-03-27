@@ -3,7 +3,7 @@ phase: 21
 slug: teams-tab-+-architecture-tab
 status: draft
 nyquist_compliant: false
-wave_0_complete: false
+wave_0_complete: true
 created: 2026-03-26
 ---
 
@@ -55,19 +55,19 @@ created: 2026-03-26
 
 ## Wave 0 Requirements
 
-- [ ] `bigpanda-app/tests/teams-arch/business-outcomes.test.ts` — stubs for TEAMS-02 API shape
-- [ ] `bigpanda-app/tests/teams-arch/e2e-workflows.test.ts` — stubs for TEAMS-04 nested query
-- [ ] `bigpanda-app/tests/teams-arch/teams-sections.test.ts` — stubs for TEAMS-01 section rendering
-- [ ] `bigpanda-app/tests/teams-arch/warning-banner.test.ts` — stubs for TEAMS-07 empty section banner
-- [ ] `bigpanda-app/tests/teams-arch/team-order.test.ts` — stubs for TEAMS-09 AMEX canonical ordering
-- [ ] `bigpanda-app/tests/teams-arch/skill-context-teams.test.ts` — stubs for TEAMS-10 context extension
-- [ ] `bigpanda-app/tests/teams-arch/design-tokens.test.ts` — stubs for TEAMS-11 design token consistency
-- [ ] `bigpanda-app/tests/teams-arch/arch-tabs.test.ts` — stubs for ARCH-01 two-tab structure
-- [ ] `bigpanda-app/tests/teams-arch/pain-points.test.ts` — stubs for ARCH-03 JSONB pain points
-- [ ] `bigpanda-app/tests/teams-arch/status-pills.test.ts` — stubs for ARCH-08 status pill color map
-- [ ] `bigpanda-app/tests/teams-arch/skill-context-arch.test.ts` — stubs for ARCH-10 arch context extension
-- [ ] `bigpanda-app/tests/teams-arch/customer-rules.test.ts` — stubs for ARCH-11 customer-specific rules
-- [ ] `bigpanda-app/tests/teams-arch/skill-html-export.test.ts` — stubs for ARCH-12 self-contained HTML export
+- [x] `bigpanda-app/tests/teams-arch/business-outcomes.test.ts` — stubs for TEAMS-02 API shape
+- [x] `bigpanda-app/tests/teams-arch/e2e-workflows.test.ts` — stubs for TEAMS-04 nested query
+- [x] `bigpanda-app/tests/teams-arch/teams-sections.test.ts` — stubs for TEAMS-01 section rendering
+- [x] `bigpanda-app/tests/teams-arch/warning-banner.test.ts` — stubs for TEAMS-07 empty section banner
+- [x] `bigpanda-app/tests/teams-arch/team-order.test.ts` — stubs for TEAMS-09 AMEX canonical ordering
+- [x] `bigpanda-app/tests/teams-arch/skill-context-teams.test.ts` — stubs for TEAMS-10 context extension
+- [x] `bigpanda-app/tests/teams-arch/design-tokens.test.ts` — stubs for TEAMS-11 design token consistency
+- [x] `bigpanda-app/tests/teams-arch/arch-tabs.test.ts` — stubs for ARCH-01 two-tab structure
+- [x] `bigpanda-app/tests/teams-arch/pain-points.test.ts` — stubs for ARCH-03 JSONB pain points
+- [x] `bigpanda-app/tests/teams-arch/status-pills.test.ts` — stubs for ARCH-08 status pill color map
+- [x] `bigpanda-app/tests/teams-arch/skill-context-arch.test.ts` — stubs for ARCH-10 arch context extension
+- [x] `bigpanda-app/tests/teams-arch/customer-rules.test.ts` — stubs for ARCH-11 customer-specific rules
+- [x] `bigpanda-app/tests/teams-arch/skill-html-export.test.ts` — stubs for ARCH-12 self-contained HTML export
 
 ---
 
