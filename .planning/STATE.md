@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
-current_plan: 20-03
+current_plan: 20-04
 status: in_progress
-last_updated: "2026-03-26T23:58:23.858Z"
+last_updated: "2026-03-27T00:04:39.121Z"
 progress:
   total_phases: 27
   completed_phases: 21
   total_plans: 122
-  completed_plans: 117
+  completed_plans: 118
 ---
 
 # Project State
@@ -23,10 +23,10 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 
 ## Current Status
 
-**Phase:** Phase 20 — Project Initiation Wizard (2/6 plans done)
-**Current Plan:** 20-03
-**Last action:** 2026-03-26 — 20-02 executed; POST /api/projects (draft creation) and PATCH /api/projects/[projectId] (status update) implemented; create-project and launch test stubs turned GREEN; 131 tests GREEN, 0 regressions
-**Next action:** Execute 20-03 (wizard UI scaffold)
+**Phase:** Phase 20 — Project Initiation Wizard (3/6 plans done)
+**Current Plan:** 20-04
+**Last action:** 2026-03-27 — 20-03 executed; ProjectWizard Dialog shell + 5-step progress header, BasicInfoStep (6-field form + POST /api/projects), CollateralUploadStep (9-item checklist + drag-and-drop); matchCollateralCategory 4 tests GREEN; 135 tests GREEN, 0 regressions
+**Next action:** Execute 20-04 (AiPreviewStep + ManualEntryStep)
 
 ## Phase Progress
 
@@ -336,6 +336,8 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - [Phase 20]: Migration named 0016_wizard_schema.sql (not 0002) due to existing migrations 0002-0015 from prior phases
 - [Phase 20]: FTS search arms updated for draft alongside dashboard — draft projects should appear in search once they have entity data
 - [Phase 20]: POST /api/projects hardcodes status=draft; PATCH existence check via returning() empty array avoids extra SELECT and aligns with test mock structure
+- [Phase 20]: checklistState promoted to WizardState so LaunchStep can read checked items without prop drilling
+- [Phase 20]: CollateralUploadStep owns Skip/Continue buttons (plan contract); ProjectWizard renders footer only for steps 3-5 while under construction
 
 ## Performance Metrics
 
@@ -447,6 +449,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 | Phase 19.1-source-integrations P08 | 6 | 3 tasks | 8 files |
 | Phase 20 P01 | 4m | 3 tasks | 12 files |
 | Phase 20 P02 | 5min | 2 tasks | 2 files |
+| Phase 20 P03 | 18 | 3 tasks | 3 files |
 
 ## Key Context for Next Session
 

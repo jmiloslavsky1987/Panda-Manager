@@ -563,7 +563,7 @@ Phases 18 and 19 can run in parallel after Phase 17. Phases 23 and 24 are indepe
 | 17. Schema Extensions | 3/3 | Complete    | 2026-03-26 |
 | 18. Document Ingestion | 5/6 | In Progress|  |
 | 19. External Discovery Scan | 5/6 | In Progress|  |
-| 20. Project Initiation Wizard | 2/6 | In Progress|  |
+| 20. Project Initiation Wizard | 3/6 | In Progress|  |
 | 21. Teams Tab + Architecture Tab | 0/TBD | Not started | - |
 | 22. Source Badges + Audit Log | 0/TBD | Not started | - |
 | 23. Time Tracking Advanced | 0/TBD | Not started | - |
