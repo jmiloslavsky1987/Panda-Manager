@@ -15,8 +15,15 @@ import {
   tasks,
   planTemplates,
   knowledgeBase,
+  businessOutcomes,
+  e2eWorkflows,
+  workflowSteps,
+  focusAreas,
+  architectureIntegrations,
+  beforeState,
+  teamOnboardingStatus,
 } from '../db/schema';
-import { eq, and, inArray, lt, ne, gt, or, desc } from 'drizzle-orm';
+import { eq, and, inArray, lt, ne, gt, or, desc, asc } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
 import { skillRuns } from '../db/schema';
 
@@ -838,4 +845,119 @@ export async function searchAllRecords(params: {
     title: String(row.title ?? ''),
     snippet: String(row.snippet ?? ''),
   }));
+}
+
+// ─── Teams Tab Types ──────────────────────────────────────────────────────────
+
+export type BusinessOutcome = typeof businessOutcomes.$inferSelect;
+export type E2eWorkflow = typeof e2eWorkflows.$inferSelect;
+export type WorkflowStep = typeof workflowSteps.$inferSelect;
+export type FocusArea = typeof focusAreas.$inferSelect;
+export type ArchitectureIntegration = typeof architectureIntegrations.$inferSelect;
+// ArchitectureIntegration: { id, project_id, tool_name, track, phase, status, integration_method, notes, created_at }
+// track: 'ADR' | 'Biggy'; status: 'live' | 'in_progress' | 'pilot' | 'planned'
+
+export interface E2eWorkflowWithSteps extends E2eWorkflow {
+  steps: WorkflowStep[];
+}
+
+// OpenAction: a subset of the actions row — only what TeamsEngagementSection needs for display.
+// actions table has NO team field; open actions are shown as project-level open items, not per-team.
+export interface OpenAction {
+  id: number;
+  description: string;  // the plain-text item label (no ticket IDs rendered in UI)
+  owner: string | null;
+  status: string;
+}
+
+export interface TeamsTabData {
+  businessOutcomes: BusinessOutcome[];
+  e2eWorkflows: E2eWorkflowWithSteps[];
+  focusAreas: FocusArea[];
+  architectureIntegrations: ArchitectureIntegration[];
+  openActions: OpenAction[];  // open + in_progress actions for the project, sorted by id asc
+}
+
+// ─── Teams Tab Query ──────────────────────────────────────────────────────────
+
+/**
+ * Returns all data needed for the Teams tab page (RSC call).
+ * Fetches business outcomes, e2e workflows with nested steps, focus areas,
+ * architecture integrations (for the Architecture Overview section),
+ * and open/in_progress actions (for the Teams & Engagement Status section).
+ */
+export async function getTeamsTabData(projectId: number): Promise<TeamsTabData> {
+  const [outcomes, workflows, steps, areas, archIntegrations, openActs] = await Promise.all([
+    db.select().from(businessOutcomes).where(eq(businessOutcomes.project_id, projectId)),
+    db.select().from(e2eWorkflows).where(eq(e2eWorkflows.project_id, projectId)),
+    db.select().from(workflowSteps)
+      .innerJoin(e2eWorkflows, eq(workflowSteps.workflow_id, e2eWorkflows.id))
+      .where(eq(e2eWorkflows.project_id, projectId))
+      .orderBy(asc(workflowSteps.position)),
+    db.select().from(focusAreas).where(eq(focusAreas.project_id, projectId)),
+    db.select().from(architectureIntegrations).where(eq(architectureIntegrations.project_id, projectId)),
+    // Open actions: status is 'open' or 'in_progress' (not 'completed' or 'cancelled').
+    // actions has no team field — all open actions are returned for client-side display.
+    db.select({
+      id: actions.id,
+      description: actions.description,
+      owner: actions.owner,
+      status: actions.status,
+    }).from(actions).where(
+      and(
+        eq(actions.project_id, projectId),
+        inArray(actions.status, ['open', 'in_progress'])
+      )
+    ).orderBy(asc(actions.id)),
+  ]);
+
+  const stepsMap = new Map<number, WorkflowStep[]>();
+  for (const row of steps) {
+    const wfId = row.workflow_steps.workflow_id;
+    if (!stepsMap.has(wfId)) stepsMap.set(wfId, []);
+    stepsMap.get(wfId)!.push(row.workflow_steps);
+  }
+
+  return {
+    businessOutcomes: outcomes,
+    e2eWorkflows: workflows.map(wf => ({ ...wf, steps: stepsMap.get(wf.id) ?? [] })),
+    focusAreas: areas,
+    architectureIntegrations: archIntegrations,
+    openActions: openActs,
+  };
+}
+
+// ─── Architecture Tab Types ───────────────────────────────────────────────────
+
+export type BeforeState = typeof beforeState.$inferSelect;
+export type TeamOnboardingStatus = typeof teamOnboardingStatus.$inferSelect;
+
+export interface ArchTabData {
+  architectureIntegrations: ArchitectureIntegration[];
+  beforeState: BeforeState | null;
+  teamOnboardingStatus: TeamOnboardingStatus[];
+}
+
+// ─── Architecture Tab Query ───────────────────────────────────────────────────
+
+/**
+ * Returns all data needed for the Architecture tab page (RSC call).
+ * Fetches architecture integrations, before-state (single row or null),
+ * and team onboarding status rows for the project.
+ */
+export async function getArchTabData(projectId: number): Promise<ArchTabData> {
+  const [integrations, beforeStateRows, onboardingRows] = await Promise.all([
+    db.select().from(architectureIntegrations)
+      .where(eq(architectureIntegrations.project_id, projectId))
+      .orderBy(asc(architectureIntegrations.phase), asc(architectureIntegrations.tool_name)),
+    db.select().from(beforeState).where(eq(beforeState.project_id, projectId)).limit(1),
+    db.select().from(teamOnboardingStatus)
+      .where(eq(teamOnboardingStatus.project_id, projectId))
+      .orderBy(asc(teamOnboardingStatus.team_name)),
+  ]);
+  return {
+    architectureIntegrations: integrations,
+    beforeState: beforeStateRows[0] ?? null,
+    teamOnboardingStatus: onboardingRows,
+  };
 }
