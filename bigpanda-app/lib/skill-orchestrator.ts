@@ -11,6 +11,8 @@ import db from '../db';
 import { skillRuns, skillRunChunks } from '../db/schema';
 import { eq, sql } from 'drizzle-orm';
 import { buildSkillContext } from './skill-context';
+import { buildTeamsSkillContext } from './skill-context-teams';
+import { buildArchSkillContext } from './skill-context-arch';
 import type { MCPServerConfig } from './settings-core';
 
 const TOKEN_BUDGET = 80_000;
@@ -54,6 +56,16 @@ export class SkillOrchestrator {
     }
 
     // 2. Assemble context from DB
+    // Per-skill context builders for team-engagement-map and workflow-diagram inject
+    // only the relevant DB tables into Claude's user message (TEAMS-10, ARCH-10).
+    // All other skills continue to use buildSkillContext unchanged.
+    let skillSpecificContext: string | null = null;
+    if (params.skillName === 'team-engagement-map') {
+      skillSpecificContext = await buildTeamsSkillContext(params.projectId);
+    } else if (params.skillName === 'workflow-diagram') {
+      skillSpecificContext = await buildArchSkillContext(params.projectId);
+    }
+
     const context = await buildSkillContext(
       params.projectId,
       params.skillName,
@@ -62,8 +74,12 @@ export class SkillOrchestrator {
 
     // 3. Token budget guard (SKILL-02)
     // Pass identical {model, system, messages} to countTokens and stream
+    const userMessageContent = skillSpecificContext !== null
+      ? skillSpecificContext
+      : context.userMessage;
+
     const messages: Anthropic.MessageParam[] = [
-      { role: 'user', content: context.userMessage },
+      { role: 'user', content: userMessageContent },
     ];
 
     const tokenCount = await this.client.messages.countTokens({
@@ -76,8 +92,12 @@ export class SkillOrchestrator {
 
     if (tokenCount.input_tokens > TOKEN_BUDGET) {
       console.log(`[skill-orchestrator] ${params.skillName} over budget — truncating context`);
-      const truncated = context.withTruncatedHistory(5);
-      messages[0] = { role: 'user', content: truncated.userMessage };
+      // Per-skill context builders (teams/arch) do not contain engagement history;
+      // truncation only applies to the shared buildSkillContext path.
+      if (skillSpecificContext === null) {
+        const truncated = context.withTruncatedHistory(5);
+        messages[0] = { role: 'user', content: truncated.userMessage };
+      }
     }
 
     // 4. Stream from Claude, write chunks to DB incrementally
