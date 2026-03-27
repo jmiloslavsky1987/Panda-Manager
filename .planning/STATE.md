@@ -4,12 +4,12 @@ milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
 current_plan: Not started
 status: unknown
-last_updated: "2026-03-27T04:36:23.155Z"
+last_updated: "2026-03-27T04:38:36.340Z"
 progress:
   total_phases: 27
   completed_phases: 22
   total_plans: 129
-  completed_plans: 125
+  completed_plans: 126
 ---
 
 # Project State
@@ -349,6 +349,9 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - [Phase 21-teams-tab-+-architecture-tab]: openActions uses inArray(status, ['open','in_progress']) — actions table has no team field, all open actions returned project-level for client-side display
 - [Phase 21-teams-tab-+-architecture-tab]: before-state PUT upsert: select-then-update-or-insert (not ON CONFLICT) — schema has no unique constraint on project_id for before_state table
 - [Phase 21-04]: Typed status state as string in IntegrationEditModal to avoid TS2345 with select onChange
+- [Phase 21-03]: openActions are project-level (no team field) — top-3 shown as shared Open Items block on every team card (TEAMS-05)
+- [Phase 21-03]: architectureIntegrations passed as read-only prop to ArchOverviewSection — Architecture tab manages writes, Teams tab reads
+- [Phase 21-03]: AMEX canonical 8-team ordering: customer.toLowerCase().includes('amex') guard for future-proof casing
 
 ## Performance Metrics
 
@@ -466,6 +469,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 | Phase 21-teams-tab-+-architecture-tab P01 | 4 | 2 tasks | 9 files |
 | Phase 21-teams-tab-+-architecture-tab P02 | 4 | 2 tasks | 6 files |
 | Phase 21-teams-tab-+-architecture-tab P04 | 4 | 2 tasks | 9 files |
+| Phase 21-teams-tab-+-architecture-tab P03 | 6 | 2 tasks | 9 files |
 
 ## Key Context for Next Session
 

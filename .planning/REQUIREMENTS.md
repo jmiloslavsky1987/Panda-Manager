@@ -138,14 +138,14 @@
 *Replaces the existing basic Architecture tab with a rich, DB-powered 2-tab before/after diagram. The workflow-diagram skill is updated to export from DB.*
 
 - [x] **ARCH-01**: Architecture tab renders a two-tab Workflow Diagram: "Before BigPanda" (grey dot) and "Current & Future State" (green dot); tab switching works without page reload
-- [ ] **ARCH-02**: Before BigPanda tab renders a horizontal 5-phase flow: Event Sources → Aggregation Hub → Ticket Creation → Incident Response → Resolution — all tool names sourced from customer DB data, no placeholders
+- [x] **ARCH-02**: Before BigPanda tab renders a horizontal 5-phase flow: Event Sources → Aggregation Hub → Ticket Creation → Incident Response → Resolution — all tool names sourced from customer DB data, no placeholders
 - [x] **ARCH-03**: Before BigPanda tab renders 5–6 customer-specific pain point cards below the phase flow (sourced from before_state.pain_points — no generic placeholders)
-- [ ] **ARCH-04**: Current & Future State tab renders the ADR Track (5 phase columns with status pills on each node) separated from Biggy AI Track by a full-width bold amber divider labeled "↓ BIGGY AI TRACK ↓"
-- [ ] **ARCH-05**: ADR Track renders phase columns: Event Ingest → Alert Intelligence (Normalization sub-group + Correlation sub-group) → Incident Intelligence → Console (🐼 BigPanda Console) → Workflow Automation — each node shows tool name, method, and status pill
-- [ ] **ARCH-06**: Biggy AI Track renders phase columns: Knowledge Sources (Ingested) → Real-Time Query Sources → Biggy Capabilities → Console (🤖 Biggy AI Console) → Outputs & Actions — each node shows integration name and status pill
-- [ ] **ARCH-07**: Team Onboarding Status table rendered below both tracks — columns: Team / Ingest & Normalization / Alert Correlation / Incident Intelligence / SN Automation / Biggy AI; split into ADR Track section (blue header) and Biggy AI Track section (amber header) with a dot legend
+- [x] **ARCH-04**: Current & Future State tab renders the ADR Track (5 phase columns with status pills on each node) separated from Biggy AI Track by a full-width bold amber divider labeled "↓ BIGGY AI TRACK ↓"
+- [x] **ARCH-05**: ADR Track renders phase columns: Event Ingest → Alert Intelligence (Normalization sub-group + Correlation sub-group) → Incident Intelligence → Console (🐼 BigPanda Console) → Workflow Automation — each node shows tool name, method, and status pill
+- [x] **ARCH-06**: Biggy AI Track renders phase columns: Knowledge Sources (Ingested) → Real-Time Query Sources → Biggy Capabilities → Console (🤖 Biggy AI Console) → Outputs & Actions — each node shows integration name and status pill
+- [x] **ARCH-07**: Team Onboarding Status table rendered below both tracks — columns: Team / Ingest & Normalization / Alert Correlation / Incident Intelligence / SN Automation / Biggy AI; split into ADR Track section (blue header) and Biggy AI Track section (amber header) with a dot legend
 - [x] **ARCH-08**: All integration/capability nodes carry status pills: LIVE (green `#dcfce7`/`#14532d`) / In Progress (amber `#fef3c7`/`#92400e`) / Pilot (same as In Progress) / Planned (gray `#f1f5f9`/`#475569`)
-- [ ] **ARCH-09**: Users can add and edit integration nodes, before-state data, pain points, and team onboarding status inline within the Architecture tab
+- [x] **ARCH-09**: Users can add and edit integration nodes, before-state data, pain points, and team onboarding status inline within the Architecture tab
 - [x] **ARCH-10**: workflow-diagram skill is updated to read from DB (architecture_integrations, before_state, team_onboarding_status) and generate a self-contained HTML export of the same 2-tab diagram
 - [x] **ARCH-11**: Customer-specific rules applied: Kaiser ADR panel shows "live in production" framing (not onboarding flow); Amex Before tab shows "Sahara" as the orange aggregation hub; Merck renders mostly Planned status
 - [x] **ARCH-12**: Architecture tab view renders self-contained when exported — no external CSS/JS dependencies; correct at 1280px and 1600px widths
@@ -231,14 +231,14 @@
 | TEAMS-10 | Phase 21 | Complete |
 | TEAMS-11 | Phase 21 | Complete |
 | ARCH-01 | Phase 21 | Complete |
-| ARCH-02 | Phase 21 | Pending |
+| ARCH-02 | Phase 21 | Complete |
 | ARCH-03 | Phase 21 | Complete |
-| ARCH-04 | Phase 21 | Pending |
-| ARCH-05 | Phase 21 | Pending |
-| ARCH-06 | Phase 21 | Pending |
-| ARCH-07 | Phase 21 | Pending |
+| ARCH-04 | Phase 21 | Complete |
+| ARCH-05 | Phase 21 | Complete |
+| ARCH-06 | Phase 21 | Complete |
+| ARCH-07 | Phase 21 | Complete |
 | ARCH-08 | Phase 21 | Complete |
-| ARCH-09 | Phase 21 | Pending |
+| ARCH-09 | Phase 21 | Complete |
 | ARCH-10 | Phase 21 | Complete |
 | ARCH-11 | Phase 21 | Complete |
 | ARCH-12 | Phase 21 | Complete |
