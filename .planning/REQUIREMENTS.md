@@ -124,12 +124,12 @@
 
 - [x] **TEAMS-01**: Teams tab renders a 5-section Team Engagement Map view: (1) Business Value & Expected Outcomes, (2) Architecture overview (ADR + Biggy panels), (3) End-to-End Workflows, (4) Teams & Engagement Status cards, (5) Top Focus Areas
 - [x] **TEAMS-02**: Business Value & Outcomes section renders outcome cards with: icon + title, track pills (ADR/Biggy/Both), delivery status badge (Live/In Progress/Blocked/Planned), and a mapping note — all sourced from DB, not inferred or generic
-- [ ] **TEAMS-03**: Architecture section within the Teams tab shows ADR panel (left, blue) and Biggy panel (right, purple) side by side, each listing integration nodes with live/in-progress/planned status using the defined design tokens
+- [x] **TEAMS-03**: Architecture section within the Teams tab shows ADR panel (left, blue) and Biggy panel (right, purple) side by side, each listing integration nodes with live/in-progress/planned status using the defined design tokens
 - [x] **TEAMS-04**: End-to-End Workflows section renders per-team step sequences with track ownership (ADR blue / Biggy purple) and status per step; arrows connect steps
-- [ ] **TEAMS-05**: Teams & Engagement Status section renders one card per team with: ADR track status items, Biggy track status items (if applicable), E2E workflow note (if applicable), top 2–3 open items as plain text (no ticket IDs), and footer status tags
-- [ ] **TEAMS-06**: Top Focus Areas section renders 3–5 cards with: title, track pills, why it matters (1–2 sentences), current status + next step, and named owners (customer-side and BigPanda-side)
+- [x] **TEAMS-05**: Teams & Engagement Status section renders one card per team with: ADR track status items, Biggy track status items (if applicable), E2E workflow note (if applicable), top 2–3 open items as plain text (no ticket IDs), and footer status tags
+- [x] **TEAMS-06**: Top Focus Areas section renders 3–5 cards with: title, track pills, why it matters (1–2 sentences), current status + next step, and named owners (customer-side and BigPanda-side)
 - [x] **TEAMS-07**: Any section that cannot be fully populated from DB renders a visible yellow warning banner inside that section — content is never silently omitted or replaced with generic copy
-- [ ] **TEAMS-08**: Users can add and edit business outcomes, E2E workflow steps, focus areas, and team card data inline within the Teams tab (same optimistic-UI pattern as all other tabs)
+- [x] **TEAMS-08**: Users can add and edit business outcomes, E2E workflow steps, focus areas, and team card data inline within the Teams tab (same optimistic-UI pattern as all other tabs)
 - [x] **TEAMS-09**: For AMEX, the Teams tab enforces the canonical 8-team structure and order: ITSM & Platform Ops, Loyalty, Observability & Monitoring, OETM/Infrastructure, MIM Team, Global Remittance, Merchant Domain, Change Management
 - [x] **TEAMS-10**: team-engagement-map skill is updated to read from DB (business_outcomes, e2e_workflows, focus_areas, team card data) and generate a self-contained HTML export of the same 5-section view
 - [x] **TEAMS-11**: Design tokens applied consistently: ADR `#1e40af`/`#eff6ff`/`#bfdbfe`, Biggy `#6d28d9`/`#f5f3ff`/`#ddd6fe`, E2E `#065f46`/`#ecfdf5`/`#6ee7b7`, with Live/In Progress/Blocked/Planned status colors
@@ -221,12 +221,12 @@
 | WIZ-09 | Phase 20 | Complete |
 | TEAMS-01 | Phase 21 | Complete |
 | TEAMS-02 | Phase 21 | Complete |
-| TEAMS-03 | Phase 21 | Pending |
+| TEAMS-03 | Phase 21 | Complete |
 | TEAMS-04 | Phase 21 | Complete |
-| TEAMS-05 | Phase 21 | Pending |
-| TEAMS-06 | Phase 21 | Pending |
+| TEAMS-05 | Phase 21 | Complete |
+| TEAMS-06 | Phase 21 | Complete |
 | TEAMS-07 | Phase 21 | Complete |
-| TEAMS-08 | Phase 21 | Pending |
+| TEAMS-08 | Phase 21 | Complete |
 | TEAMS-09 | Phase 21 | Complete |
 | TEAMS-10 | Phase 21 | Complete |
 | TEAMS-11 | Phase 21 | Complete |

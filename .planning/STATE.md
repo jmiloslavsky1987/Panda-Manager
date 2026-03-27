@@ -4,12 +4,12 @@ milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
 current_plan: Not started
 status: unknown
-last_updated: "2026-03-27T04:23:06.425Z"
+last_updated: "2026-03-27T04:28:46.330Z"
 progress:
   total_phases: 27
   completed_phases: 22
   total_plans: 129
-  completed_plans: 122
+  completed_plans: 123
 ---
 
 # Project State
@@ -345,6 +345,8 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - [Phase 20]: NewProjectButton extracted as separate component for clean RSC/client boundary in Dashboard page.tsx
 - [Phase 21-00]: Wave 0 stubs use it.todo() so suite is green immediately — tests turn red as Wave 1+ implementations are written
 - [Phase 21-00]: Import lines in stubs commented out with plan reference so TypeScript errors only surface after implementation modules exist
+- [Phase 21-teams-tab-+-architecture-tab]: getTeamsTabData uses db.select() (not explicit column selector) for architectureIntegrations to match $inferSelect — source/source_artifact_id/ingested_at fields added in Phase 19 not reflected in plan
+- [Phase 21-teams-tab-+-architecture-tab]: openActions uses inArray(status, ['open','in_progress']) — actions table has no team field, all open actions returned project-level for client-side display
 
 ## Performance Metrics
 
@@ -459,6 +461,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 | Phase 20 P03 | 18 | 3 tasks | 3 files |
 | Phase 20 P04 | 13 | 3 tasks | 6 files |
 | Phase 21-teams-tab-+-architecture-tab P00 | 2min | 2 tasks | 14 files |
+| Phase 21-teams-tab-+-architecture-tab P01 | 4 | 2 tasks | 9 files |
 
 ## Key Context for Next Session
 
