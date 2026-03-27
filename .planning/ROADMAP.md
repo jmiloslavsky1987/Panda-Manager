@@ -533,7 +533,17 @@ Plans:
   3. Admin can configure weekly capacity, working days, submission due date, custom categories, project restrictions, and exempt users from Settings > Time Tracking — all settings persist and take effect immediately
   4. Submission reminder notifications are sent before the due date and again when overdue (exempt users excluded); approval and rejection notifications reach the submitting user with a summary
   5. The time entry table supports grouping by project, team member, status, or phase with billable/non-billable subtotals; export to CSV and Excel includes audit fields (submitted/approved/rejected on/by)
-**Plans**: TBD
+**Plans**: 8 plans
+
+Plans:
+- [ ] 23-01-PLAN.md — Wave 0: TDD RED tests (approval state, locking, grouping)
+- [ ] 23-02-PLAN.md — Wave 1: Admin settings — DB config table, API, Settings UI (TTADV-01 to 06)
+- [ ] 23-03-PLAN.md — Wave 1: Approval workflow — submit/approve/reject routes + TimeTab UI (TTADV-07 to 10)
+- [ ] 23-04-PLAN.md — Wave 1: Google Calendar OAuth + event import + auto-match (TTADV-11 to 14)
+- [ ] 23-05-PLAN.md — Wave 2: Bulk operations — API + TimeTab multi-select toolbar (TTADV-15)
+- [ ] 23-06-PLAN.md — Wave 2: Export CSV/Excel with audit fields + table grouping (TTADV-16, 17)
+- [ ] 23-07-PLAN.md — Wave 2: Submission reminders + approval/rejection notifications (TTADV-18, 19)
+- [ ] 23-08-PLAN.md — Wave 3: Human verification checkpoint
 
 ### Phase 24: Scheduler Enhanced
 **Goal**: The Scheduler page is a full self-service job management UI — users can create, configure, enable/disable, and manually trigger any of the 12 skills as scheduled jobs, with run history logs and failure notifications built in.
