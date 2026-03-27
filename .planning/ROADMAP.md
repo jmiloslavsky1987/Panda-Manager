@@ -517,11 +517,11 @@ Plans:
 **Plans**: 5 plans
 
 Plans:
-- [ ] 22-01-PLAN.md — Wave 1: TDD — RED tests for writeAuditLog() and SourceBadge (Wave 0 contracts)
-- [ ] 22-02-PLAN.md — Wave 2: migration 0017 + lib/audit.ts + SourceBadge + DeleteConfirmDialog components
-- [ ] 22-03-PLAN.md — Wave 3: audit-instrument all 13 API routes (PATCH/POST/DELETE)
-- [ ] 22-04-PLAN.md — Wave 3: wire SourceBadge into all 9 tab pages + wrap delete buttons with DeleteConfirmDialog
-- [ ] 22-05-PLAN.md — Wave 4: human verification checkpoint
+- [x] 22-01-PLAN.md — Wave 1: TDD — RED tests for writeAuditLog() and SourceBadge (Wave 0 contracts)
+- [x] 22-02-PLAN.md — Wave 2: migration 0017 + lib/audit.ts + SourceBadge + DeleteConfirmDialog components
+- [x] 22-03-PLAN.md — Wave 3: audit-instrument all 13 API routes (PATCH/POST/DELETE)
+- [x] 22-04-PLAN.md — Wave 3: wire SourceBadge into all 9 tab pages + wrap delete buttons with DeleteConfirmDialog
+- [x] 22-05-PLAN.md — Wave 4: human verification checkpoint (approved 2026-03-27)
 
 ### Phase 23: Time Tracking Advanced
 **Goal**: The Time tab gains an approval workflow, Google Calendar import, and admin configuration — transforming basic time logging into a team-grade time management system with submission reminders, locked entries, and bulk operations.
