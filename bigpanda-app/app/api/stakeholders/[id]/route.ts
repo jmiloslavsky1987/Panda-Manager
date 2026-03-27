@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '../../../../db'
-import { stakeholders } from '../../../../db/schema'
+import { stakeholders, auditLog } from '../../../../db/schema'
 import { eq } from 'drizzle-orm'
 
 const patchSchema = z.object({
@@ -38,15 +38,23 @@ export async function PATCH(
 
   const patch = parsed.data
 
-  const result = await db
-    .update(stakeholders)
-    .set(patch)
-    .where(eq(stakeholders.id, numericId))
-    .returning({ id: stakeholders.id })
-
-  if (result.length === 0) {
+  // Read before-state for audit
+  const [before] = await db.select().from(stakeholders).where(eq(stakeholders.id, numericId))
+  if (!before) {
     return NextResponse.json({ error: 'Stakeholder not found' }, { status: 404 })
   }
+
+  await db.transaction(async (tx) => {
+    await tx.update(stakeholders).set(patch).where(eq(stakeholders.id, numericId))
+    await tx.insert(auditLog).values({
+      entity_type: 'stakeholder',
+      entity_id: numericId,
+      action: 'update',
+      actor_id: 'default',
+      before_json: before as Record<string, unknown>,
+      after_json: { ...before, ...patch } as Record<string, unknown>,
+    })
+  })
 
   return NextResponse.json({ ok: true })
 }

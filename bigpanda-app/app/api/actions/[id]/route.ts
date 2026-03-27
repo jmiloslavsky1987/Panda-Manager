@@ -3,7 +3,7 @@ import { z } from 'zod'
 import ExcelJS from 'exceljs'
 import * as path from 'path'
 import { db } from '@/db'
-import { actions } from '@/db/schema'
+import { actions, auditLog } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { readSettings } from '@/lib/settings'
 
@@ -171,14 +171,26 @@ export async function PATCH(
   }
 
   try {
+    // Step 0: Read before-state (outside transaction, before any lock)
+    const [before] = await db.select().from(actions).where(eq(actions.id, actionId))
+    if (!before) return Response.json({ error: 'Action not found' }, { status: 404 })
+
     // Step 1: xlsx write FIRST — if this throws, DB write is blocked
     await updateXlsxRow(actionId, patch)
 
-    // Step 2: DB write (only after xlsx succeeds)
-    await db
-      .update(actions)
-      .set({ ...patch, last_updated: new Date().toISOString().split('T')[0] })
-      .where(eq(actions.id, actionId))
+    // Step 2: DB update + audit log in one transaction (only after xlsx succeeds)
+    const patchWithDate = { ...patch, last_updated: new Date().toISOString().split('T')[0] }
+    await db.transaction(async (tx) => {
+      await tx.update(actions).set(patchWithDate).where(eq(actions.id, actionId))
+      await tx.insert(auditLog).values({
+        entity_type: 'action',
+        entity_id: actionId,
+        action: 'update',
+        actor_id: 'default',
+        before_json: before as Record<string, unknown>,
+        after_json: { ...before, ...patchWithDate } as Record<string, unknown>,
+      })
+    })
 
     return Response.json({ ok: true })
   } catch (err) {

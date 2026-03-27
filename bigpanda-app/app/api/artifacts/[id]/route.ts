@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/db'
-import { artifacts } from '@/db/schema'
+import { artifacts, auditLog } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 
 const patchSchema = z.object({
@@ -31,8 +31,21 @@ export async function PATCH(
   if (parsed.data.owner !== undefined) patch.owner = parsed.data.owner
   if (parsed.data.description !== undefined) patch.description = parsed.data.description
 
-  const result = await db.update(artifacts).set(patch).where(eq(artifacts.id, numericId)).returning({ id: artifacts.id })
-  if (result.length === 0) return NextResponse.json({ error: 'Artifact not found' }, { status: 404 })
+  // Read before-state for audit
+  const [before] = await db.select().from(artifacts).where(eq(artifacts.id, numericId))
+  if (!before) return NextResponse.json({ error: 'Artifact not found' }, { status: 404 })
+
+  await db.transaction(async (tx) => {
+    await tx.update(artifacts).set(patch).where(eq(artifacts.id, numericId))
+    await tx.insert(auditLog).values({
+      entity_type: 'artifact',
+      entity_id: numericId,
+      action: 'update',
+      actor_id: 'default',
+      before_json: before as Record<string, unknown>,
+      after_json: { ...before, ...patch } as Record<string, unknown>,
+    })
+  })
 
   return NextResponse.json({ ok: true })
 }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '../../../../db'
-import { risks } from '../../../../db/schema'
+import { risks, auditLog } from '../../../../db/schema'
 import { eq } from 'drizzle-orm'
 
 const patchSchema = z.object({
@@ -36,6 +36,12 @@ export async function PATCH(
   const { severity, status, mitigation_append } = parsed.data
   const today = new Date().toISOString().split('T')[0]
 
+  // Read before-state (always, to capture for audit)
+  const [before] = await db.select().from(risks).where(eq(risks.id, numericId))
+  if (!before) {
+    return NextResponse.json({ error: 'Risk not found' }, { status: 404 })
+  }
+
   // Build the update patch
   const patch: {
     severity?: typeof severity
@@ -48,32 +54,24 @@ export async function PATCH(
   if (status !== undefined) patch.status = status
 
   if (mitigation_append && mitigation_append.trim()) {
-    // Fetch existing mitigation to append
-    const existing = await db
-      .select({ mitigation: risks.mitigation })
-      .from(risks)
-      .where(eq(risks.id, numericId))
-
-    if (existing.length === 0) {
-      return NextResponse.json({ error: 'Risk not found' }, { status: 404 })
-    }
-
-    const existingMitigation = existing[0].mitigation ?? ''
+    const existingMitigation = before.mitigation ?? ''
     const separator = existingMitigation ? '\n\n' : ''
     patch.mitigation = existingMitigation + separator + `${today}: ${mitigation_append.trim()}`
   }
 
   patch.last_updated = today
 
-  const result = await db
-    .update(risks)
-    .set(patch)
-    .where(eq(risks.id, numericId))
-    .returning({ id: risks.id })
-
-  if (result.length === 0) {
-    return NextResponse.json({ error: 'Risk not found' }, { status: 404 })
-  }
+  await db.transaction(async (tx) => {
+    await tx.update(risks).set(patch).where(eq(risks.id, numericId))
+    await tx.insert(auditLog).values({
+      entity_type: 'risk',
+      entity_id: numericId,
+      action: 'update',
+      actor_id: 'default',
+      before_json: before as Record<string, unknown>,
+      after_json: { ...before, ...patch } as Record<string, unknown>,
+    })
+  })
 
   return NextResponse.json({ ok: true })
 }
