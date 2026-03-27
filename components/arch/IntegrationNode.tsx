@@ -1,5 +1,7 @@
 'use client'
 
+import { SourceBadge } from '@/components/SourceBadge'
+
 interface StatusPillProps {
   status: string | null
 }
@@ -58,9 +60,11 @@ interface IntegrationNodeProps {
   status: string | null
   track: 'ADR' | 'Biggy'
   onEdit?: () => void
+  source?: string | null
+  discoverySource?: string | null
 }
 
-export function IntegrationNode({ toolName, integrationMethod, status, track, onEdit }: IntegrationNodeProps) {
+export function IntegrationNode({ toolName, integrationMethod, status, track, onEdit, source, discoverySource }: IntegrationNodeProps) {
   const trackBg = track === 'ADR' ? '#eff6ff' : '#f5f3ff'
   const trackBorder = track === 'ADR' ? '#bfdbfe' : '#ddd6fe'
 
@@ -84,6 +88,15 @@ export function IntegrationNode({ toolName, integrationMethod, status, track, on
             <p style={{ fontSize: '0.72rem', color: '#64748b', margin: '2px 0 0 0' }}>{integrationMethod}</p>
           )}
           <StatusPill status={status} />
+          {source && (
+            <div className="mt-1">
+              <SourceBadge
+                source={source}
+                artifactName={null}
+                discoverySource={discoverySource ?? null}
+              />
+            </div>
+          )}
         </div>
         {onEdit && (
           <button

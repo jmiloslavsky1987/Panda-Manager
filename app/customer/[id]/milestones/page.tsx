@@ -9,6 +9,7 @@ import {
   TableRow,
 } from '../../../../components/ui/table'
 import { MilestoneEditModal } from '../../../../components/MilestoneEditModal'
+import { SourceBadge } from '../../../../components/SourceBadge'
 
 const statusBadgeColors: Record<string, string> = {
   completed: 'bg-green-100 text-green-800',
@@ -33,6 +34,7 @@ export default async function MilestonesPage({
 }) {
   const { id } = await params
   const data = await getWorkspaceData(parseInt(id, 10))
+  const artifactMap = new Map(data.artifacts.map((a) => [a.id, a.name]))
 
   // Sort: incomplete first by target date asc, completed last
   const incomplete = [...data.milestones].filter(
@@ -89,7 +91,18 @@ export default async function MilestonesPage({
                         <TableCell className="font-mono text-xs text-zinc-500">
                           {m.external_id}
                         </TableCell>
-                        <TableCell className="text-sm font-medium">{m.name}</TableCell>
+                        <TableCell className="text-sm font-medium">
+                          <div className="space-y-1">
+                            <span>{m.name}</span>
+                            <div>
+                              <SourceBadge
+                                source={m.source}
+                                artifactName={m.source_artifact_id ? (artifactMap.get(m.source_artifact_id) ?? null) : null}
+                                discoverySource={m.discovery_source}
+                              />
+                            </div>
+                          </div>
+                        </TableCell>
                         <TableCell>
                           <div className="flex flex-wrap items-center gap-1">
                             <Badge className={`text-xs ${badgeClass}`}>{m.status ?? 'Unknown'}</Badge>

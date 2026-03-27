@@ -102,6 +102,8 @@ export function CurrentFutureStateTab({
                     status={node.status}
                     track="ADR"
                     onEdit={() => setEditModal({ integration: node, defaultTrack: 'ADR' })}
+                    source={node.source}
+                    discoverySource={node.discovery_source}
                   />
                 ))}
                 {displayNodes.length === 0 && (
@@ -125,6 +127,8 @@ export function CurrentFutureStateTab({
               status={node.status}
               track={track}
               onEdit={() => setEditModal({ integration: node, defaultTrack: track })}
+              source={node.source}
+              discoverySource={node.discovery_source}
             />
           ))}
           {nodes.length === 0 && (

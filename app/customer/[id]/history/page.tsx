@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { getWorkspaceData } from '../../../../lib/queries'
+import { SourceBadge } from '../../../../components/SourceBadge'
 
 const SOURCE_STYLES: Record<string, string> = {
   yaml_import: 'bg-zinc-100 text-zinc-600',
@@ -10,6 +11,7 @@ const SOURCE_STYLES: Record<string, string> = {
 export default async function HistoryPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const data = await getWorkspaceData(parseInt(id, 10))
+  const artifactMap = new Map(data.artifacts.map((a) => [a.id, a.name]))
 
   const history = [...data.engagementHistory].sort(
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -56,11 +58,18 @@ export default async function HistoryPage({ params }: { params: Promise<{ id: st
                   <span className="text-xs text-zinc-500">
                     {entry.date ?? new Date(entry.created_at).toLocaleDateString()}
                   </span>
-                  <span
-                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${sourceStyle}`}
-                  >
-                    {entry.source}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${sourceStyle}`}
+                    >
+                      {entry.source}
+                    </span>
+                    <SourceBadge
+                      source={entry.source === 'ingestion' ? 'ingestion' : entry.source === 'discovery' ? 'discovery' : 'manual'}
+                      artifactName={entry.source_artifact_id ? (artifactMap.get(entry.source_artifact_id) ?? null) : null}
+                      discoverySource={entry.discovery_source}
+                    />
+                  </div>
                 </div>
                 <p className="text-sm text-zinc-900 whitespace-pre-wrap">{entry.content}</p>
               </div>

@@ -2,6 +2,7 @@ import { getWorkspaceData } from '@/lib/queries'
 import { ArtifactEditModal } from '@/components/ArtifactEditModal'
 import { Button } from '@/components/ui/button'
 import { ArtifactsDropZone } from '@/components/ArtifactsDropZone'
+import { SourceBadge } from '@/components/SourceBadge'
 
 export default async function ArtifactsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -28,11 +29,12 @@ export default async function ArtifactsPage({ params }: { params: Promise<{ id: 
         </div>
 
         {/* Column headers */}
-        <div className="grid grid-cols-[80px_1fr_120px_160px] gap-2 border-b pb-2 text-sm font-medium text-zinc-500">
+        <div className="grid grid-cols-[80px_1fr_120px_160px_auto] gap-2 border-b pb-2 text-sm font-medium text-zinc-500">
           <span>ID</span>
           <span>Name</span>
           <span>Status</span>
           <span>Owner</span>
+          <span>Source</span>
         </div>
 
         {/* Rows */}
@@ -47,13 +49,18 @@ export default async function ArtifactsPage({ params }: { params: Promise<{ id: 
                 projectId={projectId}
                 trigger={
                   <div
-                    className="grid grid-cols-[80px_1fr_120px_160px] gap-2 border-b py-2 hover:bg-zinc-50 cursor-pointer text-sm"
+                    className="grid grid-cols-[80px_1fr_120px_160px_auto] gap-2 border-b py-2 hover:bg-zinc-50 cursor-pointer text-sm"
                     data-testid={`artifact-row-${artifact.id}`}
                   >
                     <span className="font-mono text-zinc-500">{artifact.external_id}</span>
                     <span className="text-zinc-800">{artifact.name}</span>
                     <span className="text-zinc-600">{artifact.status ?? '—'}</span>
                     <span className="text-zinc-600">{artifact.owner ?? '—'}</span>
+                    <SourceBadge
+                      source={artifact.source}
+                      artifactName={artifact.source === 'ingestion' ? artifact.name : null}
+                      discoverySource={artifact.discovery_source}
+                    />
                   </div>
                 }
               />

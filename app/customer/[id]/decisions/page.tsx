@@ -1,10 +1,12 @@
 import { getWorkspaceData } from '../../../../lib/queries'
 import { AddDecisionModal } from '@/components/AddDecisionModal'
+import { SourceBadge } from '@/components/SourceBadge'
 
 export default async function DecisionsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const projectId = parseInt(id, 10)
   const data = await getWorkspaceData(projectId)
+  const artifactMap = new Map(data.artifacts.map((a) => [a.id, a.name]))
 
   const decisions = [...data.keyDecisions].sort(
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -30,11 +32,11 @@ export default async function DecisionsPage({ params }: { params: Promise<{ id: 
                 <span className="text-xs text-zinc-500">
                   {decision.date ?? new Date(decision.created_at).toLocaleDateString()}
                 </span>
-                {decision.source && (
-                  <span className="inline-flex items-center rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600">
-                    {decision.source}
-                  </span>
-                )}
+                <SourceBadge
+                  source={decision.source}
+                  artifactName={decision.source_artifact_id ? (artifactMap.get(decision.source_artifact_id) ?? null) : null}
+                  discoverySource={decision.discovery_source}
+                />
               </div>
 
               <p className="text-sm text-zinc-900">{decision.decision}</p>

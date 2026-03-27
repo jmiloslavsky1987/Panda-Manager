@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { getWorkspaceData } from '../../../../lib/queries'
 import { StakeholderEditModal } from '../../../../components/StakeholderEditModal'
+import { SourceBadge } from '../../../../components/SourceBadge'
 
 function truncate(str: string | null | undefined, max: number): string {
   if (!str) return ''
@@ -12,6 +13,7 @@ export default async function StakeholdersPage({ params }: { params: Promise<{ i
   const projectId = parseInt(id, 10)
   const data = await getWorkspaceData(projectId)
   const stakeholders = data.stakeholders
+  const artifactMap = new Map(data.artifacts.map((a) => [a.id, a.name]))
 
   // Group by company: BigPanda first, then others
   const bigpandaContacts = stakeholders.filter(
@@ -51,7 +53,16 @@ export default async function StakeholdersPage({ params }: { params: Promise<{ i
         projectId={projectId}
         trigger={
           <tr className="align-top border-b border-zinc-100 hover:bg-zinc-50 cursor-pointer">
-            <td className="py-3 pr-4 font-medium text-zinc-900 whitespace-nowrap">{s.name}</td>
+            <td className="py-3 pr-4 font-medium text-zinc-900 whitespace-nowrap">
+              <div className="flex items-center gap-2">
+                <span>{s.name}</span>
+                <SourceBadge
+                  source={s.source}
+                  artifactName={s.source_artifact_id ? (artifactMap.get(s.source_artifact_id) ?? null) : null}
+                  discoverySource={s.discovery_source}
+                />
+              </div>
+            </td>
             <td className="py-3 pr-4 text-zinc-700">{s.role ?? '—'}</td>
             <td className="py-3 pr-4 text-zinc-700">{s.company ?? '—'}</td>
             <td className="py-3 pr-4 text-zinc-700">

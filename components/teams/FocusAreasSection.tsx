@@ -4,6 +4,7 @@ import { useState } from 'react'
 import type { FocusArea } from '@/lib/queries'
 import { WarnBanner } from './WarnBanner'
 import { InlineEditModal } from './InlineEditModal'
+import { SourceBadge } from '@/components/SourceBadge'
 
 // Design tokens
 const ADR = { text: '#1e40af', bg: '#eff6ff', border: '#bfdbfe' }
@@ -167,6 +168,15 @@ export function FocusAreasSection({ projectId, focusAreas, onUpdate }: Props) {
                 <div className="text-xs text-zinc-400 space-y-0.5 pt-1 border-t border-zinc-100">
                   {area.bp_owner && <p>BP: {area.bp_owner}</p>}
                   {area.customer_owner && <p>Customer: {area.customer_owner}</p>}
+                </div>
+
+                {/* source badge */}
+                <div className="ml-2">
+                  <SourceBadge
+                    source={area.source ?? 'manual'}
+                    artifactName={null}
+                    discoverySource={area.discovery_source}
+                  />
                 </div>
               </div>
             )

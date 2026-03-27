@@ -9,6 +9,7 @@ import {
   TableRow,
 } from '../../../../components/ui/table'
 import { RiskEditModal } from '../../../../components/RiskEditModal'
+import { SourceBadge } from '../../../../components/SourceBadge'
 
 const SEVERITY_ORDER: Record<string, number> = {
   critical: 0,
@@ -36,6 +37,8 @@ export default async function RisksPage({
 }) {
   const { id } = await params
   const data = await getWorkspaceData(parseInt(id, 10))
+
+  const artifactMap = new Map(data.artifacts.map((a) => [a.id, a.name]))
 
   const sortedRisks = [...data.risks].sort((a, b) => {
     const aOrder = SEVERITY_ORDER[a.severity ?? 'low'] ?? 4
@@ -85,9 +88,18 @@ export default async function RisksPage({
                           {risk.external_id}
                         </TableCell>
                         <TableCell className="text-sm">
-                          {risk.description.length > 100
-                            ? risk.description.slice(0, 100) + '…'
-                            : risk.description}
+                          <div className="space-y-1">
+                            <span>{risk.description.length > 100
+                              ? risk.description.slice(0, 100) + '…'
+                              : risk.description}</span>
+                            <div>
+                              <SourceBadge
+                                source={risk.source}
+                                artifactName={risk.source_artifact_id ? (artifactMap.get(risk.source_artifact_id) ?? null) : null}
+                                discoverySource={risk.discovery_source}
+                              />
+                            </div>
+                          </div>
                         </TableCell>
                         <TableCell>
                           <Badge className={`text-xs ${badgeClass}`}>{sevKey}</Badge>

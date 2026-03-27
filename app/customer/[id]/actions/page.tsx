@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { getWorkspaceData } from '../../../../lib/queries'
 import { Badge } from '../../../../components/ui/badge'
 import { ActionEditModal } from '../../../../components/ActionEditModal'
+import { SourceBadge } from '../../../../components/SourceBadge'
 
 const PAGE_SIZE = 50
 
@@ -43,6 +44,9 @@ export default async function ActionsPage({
   }
 
   const allActions = data?.actions ?? []
+  const allArtifacts = data?.artifacts ?? []
+  const artifactMap = new Map(allArtifacts.map((a) => [a.id, a.name]))
+
   const filtered = statusFilter
     ? allActions.filter((a) => a.status === statusFilter)
     : allActions
@@ -127,9 +131,14 @@ export default async function ActionsPage({
                       </div>
                     </div>
                     <p className="text-sm mt-1 text-zinc-800">{action.description}</p>
-                    <div className="flex gap-4 mt-1 text-xs text-zinc-500">
+                    <div className="flex flex-wrap items-center gap-4 mt-1 text-xs text-zinc-500">
                       <span>Owner: {action.owner ?? '—'}</span>
                       <span>Due: {action.due ?? '—'}</span>
+                      <SourceBadge
+                        source={action.source}
+                        artifactName={action.source_artifact_id ? (artifactMap.get(action.source_artifact_id) ?? null) : null}
+                        discoverySource={action.discovery_source}
+                      />
                     </div>
                   </div>
                 }
