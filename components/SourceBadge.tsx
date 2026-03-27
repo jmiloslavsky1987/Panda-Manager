@@ -1,15 +1,31 @@
-// STUB — Wave 0 placeholder so test imports resolve at build time.
-// The real implementation is created in Plan 22-02.
-// This file intentionally throws so RED tests fail at test-assertion time
-// rather than at Vite's import-analysis step.
-//
-// DO NOT add implementation here. Remove the throw and implement the component
-// in Plan 22-02.
+'use client';
 
-export function SourceBadge(_props: {
+import { Badge } from '@/components/ui/badge';
+
+interface SourceBadgeProps {
   source: string;
   artifactName?: string | null;
   discoverySource?: string | null;
-}): never {
-  throw new Error('SourceBadge not yet implemented — see Plan 22-02');
+}
+
+export function SourceBadge({ source, artifactName, discoverySource }: SourceBadgeProps) {
+  if (source === 'ingestion' && artifactName) {
+    return (
+      <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-xs font-normal">
+        Ingested — {artifactName}
+      </Badge>
+    );
+  }
+  if (source === 'discovery') {
+    return (
+      <Badge className="bg-purple-100 text-purple-800 border-purple-200 text-xs font-normal">
+        {discoverySource ? `Discovered — ${discoverySource}` : 'Discovered'}
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="outline" className="text-xs font-normal text-gray-500">
+      Manual
+    </Badge>
+  );
 }
