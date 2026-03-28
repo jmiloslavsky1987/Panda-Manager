@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { eq, and, gte, lte } from 'drizzle-orm'
 import { sql } from 'drizzle-orm'
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 import db from '@/db'
 import { timeEntries, projects } from '@/db/schema'
 import type { TimeEntry } from '@/db/schema'
@@ -47,112 +47,117 @@ function toExportRow(entry: TimeEntry, projectName: string): ExportRow {
 // ─── CSV helpers ───────────────────────────────────────────────────────────────
 
 function escapeCSVField(value: string): string {
-  // Wrap in quotes if value contains comma, double-quote, or newline
   if (value.includes(',') || value.includes('"') || value.includes('\n')) {
     return `"${value.replace(/"/g, '""')}"`
   }
   return value
 }
 
+const EXPORT_COLUMNS: (keyof ExportRow)[] = [
+  'Date', 'Hours', 'Description', 'Status', 'Project',
+  'Team_Member', 'Submitted_On', 'Submitted_By',
+  'Approved_On', 'Approved_By',
+  'Rejected_On', 'Rejected_By', 'Locked',
+]
+
 function buildCSV(rows: ExportRow[]): string {
-  const headers: (keyof ExportRow)[] = [
-    'Date', 'Hours', 'Description', 'Status', 'Project',
-    'Team_Member', 'Submitted_On', 'Submitted_By',
-    'Approved_On', 'Approved_By',
-    'Rejected_On', 'Rejected_By', 'Locked',
-  ]
-  const headerLine = headers.join(',')
+  const headerLine = EXPORT_COLUMNS.join(',')
   const dataLines = rows.map((row) =>
-    headers.map((h) => escapeCSVField(row[h])).join(',')
+    EXPORT_COLUMNS.map((h) => escapeCSVField(row[h])).join(',')
   )
   return [headerLine, ...dataLines].join('\n')
 }
 
 // ─── Excel helpers ─────────────────────────────────────────────────────────────
 
-function addSubtotalRow(rows: ExportRow[], entries: TimeEntry[]): ExportRow[] {
-  const { total_hours, billable_hours, non_billable_hours } = computeSubtotals(entries)
-  return [
-    ...rows,
-    {
+function addWorksheetFromEntries(
+  wb: ExcelJS.Workbook,
+  sheetName: string,
+  entries: TimeEntry[],
+  projectName: string,
+  includeSubtotal: boolean
+) {
+  const ws = wb.addWorksheet(sheetName.slice(0, 31))
+  ws.columns = EXPORT_COLUMNS.map((col) => ({ header: col, key: col, width: 20 }))
+
+  const rows = entries.map((e) => toExportRow(e, projectName))
+  rows.forEach((row) => ws.addRow(row))
+
+  if (includeSubtotal && entries.length > 0) {
+    const { total_hours, billable_hours, non_billable_hours } = computeSubtotals(entries)
+    const subtotalRow = ws.addRow({
       Date: 'SUBTOTAL',
       Hours: total_hours.toFixed(2),
       Description: `Billable: ${billable_hours.toFixed(2)} | Non-Billable: ${non_billable_hours.toFixed(2)}`,
-      Status: '',
-      Project: '',
-      Team_Member: '',
-      Submitted_On: '',
-      Submitted_By: '',
-      Approved_On: '',
-      Approved_By: '',
-      Rejected_On: '',
-      Rejected_By: '',
-      Locked: '',
-    },
-  ]
+      Status: '', Project: '', Team_Member: '',
+      Submitted_On: '', Submitted_By: '',
+      Approved_On: '', Approved_By: '',
+      Rejected_On: '', Rejected_By: '', Locked: '',
+    })
+    subtotalRow.font = { bold: true }
+    subtotalRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFF5F5F5' },
+    }
+  }
+
+  // Bold header row
+  ws.getRow(1).font = { bold: true }
+  return ws
 }
 
-function buildGroupedWorkbook(
+function addSummarySheet(wb: ExcelJS.Workbook, entries: TimeEntry[]) {
+  const ws = wb.addWorksheet('Summary')
+  ws.columns = [
+    { header: 'Status', key: 'Status', width: 15 },
+    { header: 'Count', key: 'Count', width: 10 },
+    { header: 'Total_Hours', key: 'Total_Hours', width: 15 },
+    { header: 'Billable_Hours', key: 'Billable_Hours', width: 15 },
+    { header: 'Non_Billable_Hours', key: 'Non_Billable_Hours', width: 18 },
+  ]
+  ws.getRow(1).font = { bold: true }
+
+  const statusGroups = groupEntries(entries, 'status')
+  Object.entries(statusGroups).forEach(([status, groupEntryList]) => {
+    const { total_hours, billable_hours, non_billable_hours } = computeSubtotals(groupEntryList)
+    ws.addRow({
+      Status: status,
+      Count: groupEntryList.length,
+      Total_Hours: total_hours.toFixed(2),
+      Billable_Hours: billable_hours.toFixed(2),
+      Non_Billable_Hours: non_billable_hours.toFixed(2),
+    })
+  })
+}
+
+async function buildGroupedWorkbook(
   entries: TimeEntry[],
   projectName: string,
   groupBy: GroupBy
-): XLSX.WorkBook {
-  const wb = XLSX.utils.book_new()
+): Promise<Uint8Array> {
+  const wb = new ExcelJS.Workbook()
   const grouped = groupEntries(entries, groupBy)
 
-  // Sort group keys for consistent sheet ordering
   const keys = Object.keys(grouped).sort()
-
   for (const key of keys) {
-    const groupEntryList = grouped[key]
-    const rows = groupEntryList.map((e) => toExportRow(e, projectName))
-    const rowsWithSubtotal = addSubtotalRow(rows, groupEntryList)
-    const ws = XLSX.utils.json_to_sheet(rowsWithSubtotal)
-    // Sheet name: truncate to 31 chars (Excel limit)
-    const sheetName = key.slice(0, 31)
-    XLSX.utils.book_append_sheet(wb, ws, sheetName)
+    addWorksheetFromEntries(wb, key, grouped[key], projectName, true)
   }
 
-  // Summary sheet: totals per status
-  const statusGroups = groupEntries(entries, 'status')
-  const summaryRows = Object.entries(statusGroups).map(([status, groupEntryList]) => {
-    const { total_hours, billable_hours, non_billable_hours } = computeSubtotals(groupEntryList)
-    return {
-      Status: status,
-      Count: groupEntryList.length,
-      Total_Hours: total_hours.toFixed(2),
-      Billable_Hours: billable_hours.toFixed(2),
-      Non_Billable_Hours: non_billable_hours.toFixed(2),
-    }
-  })
-  const summaryWs = XLSX.utils.json_to_sheet(summaryRows)
-  XLSX.utils.book_append_sheet(wb, summaryWs, 'Summary')
-
-  return wb
+  addSummarySheet(wb, entries)
+  const buf = await wb.xlsx.writeBuffer()
+  return new Uint8Array(buf as ArrayBuffer)
 }
 
-function buildSingleSheetWorkbook(entries: TimeEntry[], projectName: string): XLSX.WorkBook {
-  const wb = XLSX.utils.book_new()
-  const rows = entries.map((e) => toExportRow(e, projectName))
-  const ws = XLSX.utils.json_to_sheet(rows)
-  XLSX.utils.book_append_sheet(wb, ws, 'Time Entries')
-
-  // Summary sheet: totals per status
-  const statusGroups = groupEntries(entries, 'status')
-  const summaryRows = Object.entries(statusGroups).map(([status, groupEntryList]) => {
-    const { total_hours, billable_hours, non_billable_hours } = computeSubtotals(groupEntryList)
-    return {
-      Status: status,
-      Count: groupEntryList.length,
-      Total_Hours: total_hours.toFixed(2),
-      Billable_Hours: billable_hours.toFixed(2),
-      Non_Billable_Hours: non_billable_hours.toFixed(2),
-    }
-  })
-  const summaryWs = XLSX.utils.json_to_sheet(summaryRows)
-  XLSX.utils.book_append_sheet(wb, summaryWs, 'Summary')
-
-  return wb
+async function buildSingleSheetWorkbook(
+  entries: TimeEntry[],
+  projectName: string
+): Promise<Uint8Array> {
+  const wb = new ExcelJS.Workbook()
+  addWorksheetFromEntries(wb, 'Time Entries', entries, projectName, false)
+  addSummarySheet(wb, entries)
+  const buf = await wb.xlsx.writeBuffer()
+  return new Uint8Array(buf as ArrayBuffer)
 }
 
 // ─── Route handler ─────────────────────────────────────────────────────────────
@@ -214,14 +219,12 @@ export async function GET(
     }
 
     // xlsx format
-    const wb =
+    const xlsxBytes: Uint8Array =
       groupBy != null
-        ? buildGroupedWorkbook(fetchedEntries, projectName, groupBy)
-        : buildSingleSheetWorkbook(fetchedEntries, projectName)
+        ? await buildGroupedWorkbook(fetchedEntries, projectName, groupBy)
+        : await buildSingleSheetWorkbook(fetchedEntries, projectName)
 
-    const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }) as Buffer
-
-    return new NextResponse(buffer, {
+    return new Response(xlsxBytes.buffer as ArrayBuffer, {
       status: 200,
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
