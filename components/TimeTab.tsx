@@ -319,6 +319,183 @@ export function TimeTab({ projectId }: TimeTabProps) {
   // Per-entry action saving state: entryId → action string
   const [savingEntry, setSavingEntry] = useState<Record<number, string>>({})
 
+  // ─── Bulk selection state ───────────────────────────────────────────────────
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const showBulkBar = selectedIds.size > 0
+
+  // Bulk action processing state
+  const [bulkProcessing, setBulkProcessing] = useState(false)
+  const [bulkToast, setBulkToast] = useState<string | null>(null)
+  const [bulkError, setBulkError] = useState<string | null>(null)
+
+  // Inline reject reason state for bulk reject
+  const [showBulkRejectInput, setShowBulkRejectInput] = useState(false)
+  const [bulkRejectReason, setBulkRejectReason] = useState('')
+
+  // Project picker state for bulk move
+  const [showBulkMoveDropdown, setShowBulkMoveDropdown] = useState(false)
+  const [moveProjects, setMoveProjects] = useState<{ id: number; name: string }[]>([])
+
+  // Helper: show a success toast that auto-dismisses after 4s
+  function showToast(msg: string) {
+    setBulkToast(msg)
+    setTimeout(() => setBulkToast(null), 4000)
+  }
+
+  // Toggle single entry checkbox
+  function toggleEntrySelect(id: number) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
+
+  // Toggle all visible entries
+  function toggleSelectAll() {
+    if (selectedIds.size === entries.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(entries.map((e) => e.id)))
+    }
+  }
+
+  // Fetch projects list for the move dropdown
+  async function fetchMoveProjects() {
+    try {
+      const res = await fetch('/api/projects')
+      if (!res.ok) { setMoveProjects([]); return }
+      const data = await res.json()
+      const list = Array.isArray(data) ? data : (data.projects ?? [])
+      setMoveProjects(
+        list
+          .filter((p: { id: number }) => p.id !== projectId)
+          .map((p: { id: number; customer?: string; name?: string }) => ({
+            id: p.id,
+            name: p.customer ?? p.name ?? `Project ${p.id}`,
+          }))
+      )
+    } catch {
+      setMoveProjects([])
+    }
+  }
+
+  // POST to the bulk endpoint
+  async function postBulk(payload: Record<string, unknown>): Promise<{ ok: boolean; data: unknown }> {
+    const res = await fetch(`/api/projects/${projectId}/time-entries/bulk`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    const data = await res.json()
+    return { ok: res.ok, data }
+  }
+
+  async function handleBulkApprove() {
+    setBulkProcessing(true)
+    setBulkError(null)
+    try {
+      const { ok, data } = await postBulk({
+        action: 'approve',
+        entry_ids: Array.from(selectedIds),
+        approved_by: role,
+      })
+      if (ok) {
+        const d = data as { processed: number; skipped: number }
+        showToast(`Approved ${d.processed} entr${d.processed === 1 ? 'y' : 'ies'}${d.skipped > 0 ? ` (${d.skipped} skipped)` : ''}`)
+        setSelectedIds(new Set())
+        refresh()
+      } else {
+        setBulkError((data as { error?: string }).error ?? 'Bulk approve failed')
+      }
+    } catch {
+      setBulkError('Network error — please try again')
+    } finally {
+      setBulkProcessing(false)
+    }
+  }
+
+  async function handleBulkReject() {
+    if (!bulkRejectReason.trim()) return
+    setBulkProcessing(true)
+    setBulkError(null)
+    try {
+      const { ok, data } = await postBulk({
+        action: 'reject',
+        entry_ids: Array.from(selectedIds),
+        rejected_by: role,
+        reason: bulkRejectReason.trim(),
+      })
+      if (ok) {
+        const d = data as { processed: number; skipped: number }
+        showToast(`Rejected ${d.processed} entr${d.processed === 1 ? 'y' : 'ies'}${d.skipped > 0 ? ` (${d.skipped} skipped)` : ''}`)
+        setSelectedIds(new Set())
+        setShowBulkRejectInput(false)
+        setBulkRejectReason('')
+        refresh()
+      } else {
+        setBulkError((data as { error?: string }).error ?? 'Bulk reject failed')
+      }
+    } catch {
+      setBulkError('Network error — please try again')
+    } finally {
+      setBulkProcessing(false)
+    }
+  }
+
+  async function handleBulkMove(targetProjectId: number) {
+    setBulkProcessing(true)
+    setBulkError(null)
+    setShowBulkMoveDropdown(false)
+    try {
+      const { ok, data } = await postBulk({
+        action: 'move',
+        entry_ids: Array.from(selectedIds),
+        target_project_id: targetProjectId,
+      })
+      if (ok) {
+        const d = data as { processed: number; skipped: number }
+        showToast(`Moved ${d.processed} entr${d.processed === 1 ? 'y' : 'ies'}${d.skipped > 0 ? ` (${d.skipped} skipped — only draft/rejected entries can be moved)` : ''}`)
+        setSelectedIds(new Set())
+        refresh()
+      } else {
+        setBulkError((data as { error?: string }).error ?? 'Bulk move failed')
+      }
+    } catch {
+      setBulkError('Network error — please try again')
+    } finally {
+      setBulkProcessing(false)
+    }
+  }
+
+  async function handleBulkDelete() {
+    if (!window.confirm(`Delete ${selectedIds.size} selected entr${selectedIds.size === 1 ? 'y' : 'ies'}? Locked entries will be skipped.`)) return
+    setBulkProcessing(true)
+    setBulkError(null)
+    try {
+      const { ok, data } = await postBulk({
+        action: 'delete',
+        entry_ids: Array.from(selectedIds),
+      })
+      if (ok) {
+        const d = data as { deleted: number; skipped: number }
+        showToast(`Deleted ${d.deleted} entr${d.deleted === 1 ? 'y' : 'ies'}${d.skipped > 0 ? ` (${d.skipped} locked — skipped)` : ''}`)
+        setSelectedIds(new Set())
+        refresh()
+      } else {
+        setBulkError((data as { error?: string }).error ?? 'Bulk delete failed')
+      }
+    } catch {
+      setBulkError('Network error — please try again')
+    } finally {
+      setBulkProcessing(false)
+    }
+  }
+
   // Analytics state
   const [weeklyRollup, setWeeklyRollup] = useState<{ weekLabel: string; hours: number; variance: number | null }[]>([])
   const [weeklyTarget, setWeeklyTarget] = useState<number | null>(null)
@@ -545,6 +722,141 @@ export function TimeTab({ projectId }: TimeTabProps) {
         />
       )}
 
+      {/* Bulk toast success message */}
+      {bulkToast && (
+        <div className="rounded-lg border border-green-300 bg-green-50 px-4 py-3 flex items-center justify-between gap-3">
+          <span className="text-sm text-green-800 font-medium">{bulkToast}</span>
+          <button
+            onClick={() => setBulkToast(null)}
+            className="text-xs text-green-600 hover:text-green-900"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* Bulk action toolbar — only when isApprover AND entries are selected */}
+      {isApprover && showBulkBar && (
+        <div className="rounded-lg border border-zinc-300 bg-zinc-50 px-4 py-3 flex flex-wrap items-center gap-3" data-testid="bulk-toolbar">
+          <span className="text-sm font-medium text-zinc-700 mr-1">
+            {selectedIds.size} selected
+          </span>
+
+          {/* Approve Selected */}
+          <button
+            onClick={handleBulkApprove}
+            disabled={bulkProcessing}
+            className="px-3 py-1.5 text-sm bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
+            data-testid="bulk-approve-btn"
+          >
+            {bulkProcessing ? 'Processing...' : 'Approve Selected'}
+          </button>
+
+          {/* Reject Selected — inline reason input */}
+          {showBulkRejectInput ? (
+            <div className="flex items-center gap-2">
+              <input
+                autoFocus
+                type="text"
+                value={bulkRejectReason}
+                onChange={(e) => setBulkRejectReason(e.target.value)}
+                placeholder="Rejection reason..."
+                className="border border-zinc-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-red-400 w-52"
+                data-testid="bulk-reject-reason-input"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleBulkReject()
+                  if (e.key === 'Escape') { setShowBulkRejectInput(false); setBulkRejectReason('') }
+                }}
+              />
+              <button
+                onClick={handleBulkReject}
+                disabled={bulkProcessing || !bulkRejectReason.trim()}
+                className="px-3 py-1.5 text-sm bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+              >
+                {bulkProcessing ? 'Processing...' : 'Confirm Reject'}
+              </button>
+              <button
+                onClick={() => { setShowBulkRejectInput(false); setBulkRejectReason('') }}
+                className="px-2 py-1 text-sm text-zinc-500 hover:text-zinc-800"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowBulkRejectInput(true)}
+              disabled={bulkProcessing}
+              className="px-3 py-1.5 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 disabled:opacity-50"
+              data-testid="bulk-reject-btn"
+            >
+              Reject Selected
+            </button>
+          )}
+
+          {/* Move to Project — dropdown picker */}
+          <div className="relative">
+            {showBulkMoveDropdown ? (
+              <div className="absolute top-full left-0 mt-1 z-20 bg-white border border-zinc-200 rounded-lg shadow-md min-w-[200px] py-1">
+                {moveProjects.length === 0 ? (
+                  <div className="px-3 py-2 text-sm text-zinc-400">No other projects found</div>
+                ) : (
+                  moveProjects.map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => handleBulkMove(p.id)}
+                      disabled={bulkProcessing}
+                      className="w-full text-left px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+                    >
+                      {p.name}
+                    </button>
+                  ))
+                )}
+                <button
+                  onClick={() => setShowBulkMoveDropdown(false)}
+                  className="w-full text-left px-3 py-2 text-xs text-zinc-400 hover:bg-zinc-50 border-t border-zinc-100"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : null}
+            <button
+              onClick={() => {
+                fetchMoveProjects()
+                setShowBulkMoveDropdown((v) => !v)
+              }}
+              disabled={bulkProcessing}
+              className="px-3 py-1.5 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200 disabled:opacity-50"
+              data-testid="bulk-move-btn"
+            >
+              Move to Project
+            </button>
+          </div>
+
+          {/* Delete Selected */}
+          <button
+            onClick={handleBulkDelete}
+            disabled={bulkProcessing}
+            className="px-3 py-1.5 text-sm bg-zinc-200 text-zinc-700 rounded hover:bg-zinc-300 disabled:opacity-50"
+            data-testid="bulk-delete-btn"
+          >
+            {bulkProcessing ? 'Processing...' : 'Delete Selected'}
+          </button>
+
+          {/* Cancel selection */}
+          <button
+            onClick={() => setSelectedIds(new Set())}
+            className="ml-auto text-xs text-zinc-400 hover:text-zinc-700"
+          >
+            Clear selection
+          </button>
+
+          {/* Bulk error display */}
+          {bulkError && (
+            <span className="text-xs text-red-600 ml-2">{bulkError}</span>
+          )}
+        </div>
+      )}
+
       {/* Header row */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-4">
@@ -725,6 +1037,19 @@ export function TimeTab({ projectId }: TimeTabProps) {
           <table className="w-full text-sm border-collapse">
             <thead>
               <tr className="border-b border-zinc-200">
+                {/* Checkbox column — approver/admin only */}
+                {isApprover && (
+                  <th className="py-2 px-2 w-8">
+                    <input
+                      type="checkbox"
+                      checked={entries.length > 0 && selectedIds.size === entries.length}
+                      onChange={toggleSelectAll}
+                      aria-label="Select all entries"
+                      className="rounded border-zinc-300"
+                      data-testid="select-all-checkbox"
+                    />
+                  </th>
+                )}
                 <th className="text-left py-2 px-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">
                   Date
                 </th>
@@ -754,8 +1079,21 @@ export function TimeTab({ projectId }: TimeTabProps) {
                   <tr
                     key={entry.id}
                     data-testid="time-entry-row"
-                    className="border-b border-zinc-100 hover:bg-zinc-50 transition-colors"
+                    className={`border-b border-zinc-100 hover:bg-zinc-50 transition-colors${selectedIds.has(entry.id) ? ' bg-blue-50' : ''}`}
                   >
+                    {/* Checkbox cell — approver/admin only */}
+                    {isApprover && (
+                      <td className="py-2 px-2 w-8">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(entry.id)}
+                          onChange={() => toggleEntrySelect(entry.id)}
+                          aria-label={`Select entry ${entry.id}`}
+                          className="rounded border-zinc-300"
+                          data-testid="entry-checkbox"
+                        />
+                      </td>
+                    )}
                     <td className="py-2 px-3 text-zinc-700 whitespace-nowrap">{entry.date}</td>
                     <td className="py-2 px-3 text-zinc-700 whitespace-nowrap">{entry.hours}</td>
                     <td className="py-2 px-3 text-zinc-900">{entry.description}</td>
