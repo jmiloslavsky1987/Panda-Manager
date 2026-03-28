@@ -296,7 +296,7 @@ function SubmitWeekDialog({ projectId, role, entries, onClose, onSuccess }: Subm
 
 export function TimeTab({ projectId }: TimeTabProps) {
   const searchParams = useSearchParams()
-  const role = searchParams.get('role') ?? 'user'
+  const [role, setRole] = useState<string>(searchParams.get('role') ?? 'user')
 
   const [entries, setEntries] = useState<TimeEntry[]>([])
   const [projectName, setProjectName] = useState('')
@@ -948,6 +948,24 @@ export function TimeTab({ projectId }: TimeTabProps) {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          {/* Role switcher */}
+          <div className="flex items-center gap-1.5">
+            <label htmlFor="role-select" className="text-xs text-zinc-500 whitespace-nowrap">
+              View as
+            </label>
+            <select
+              id="role-select"
+              data-testid="role-select"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              className="border border-zinc-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400 bg-white"
+            >
+              <option value="user">User</option>
+              <option value="approver">Approver</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+
           {/* Group by select */}
           <div className="flex items-center gap-1.5">
             <label

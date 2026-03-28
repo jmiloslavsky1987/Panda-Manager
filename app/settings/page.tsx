@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import * as Tabs from '@radix-ui/react-tabs';
+import TimeTrackingSettings from '@/components/TimeTrackingSettings';
 
 const JOB_DISPLAY: Record<string, { label: string; schedule: string }> = {
   'action-sync':     { label: 'Action Sync',     schedule: '0 8 * * *'   },
@@ -376,6 +377,13 @@ export default function SettingsPage() {
             data-testid="source-connections-tab"
           >
             Source Connections
+          </Tabs.Trigger>
+          <Tabs.Trigger
+            value="time-tracking"
+            className={TAB_CLASS}
+            data-testid="time-tracking-tab"
+          >
+            Time Tracking
           </Tabs.Trigger>
         </Tabs.List>
 
@@ -838,6 +846,11 @@ export default function SettingsPage() {
             </div>
 
           </div>
+        </Tabs.Content>
+
+        {/* ── Time Tracking tab ── */}
+        <Tabs.Content value="time-tracking">
+          <TimeTrackingSettings />
         </Tabs.Content>
       </Tabs.Root>
     </div>
