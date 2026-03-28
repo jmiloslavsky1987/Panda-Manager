@@ -6,6 +6,7 @@ import db from '@/db'
 import { timeEntries } from '@/db/schema'
 import { getEntryStatus } from '@/lib/time-tracking'
 import { writeAuditLog } from '@/lib/audit'
+import { buildApprovalNotification } from '@/lib/time-tracking-notifications'
 
 const ApproveSchema = z.object({
   approved_by: z.string().optional(),
@@ -113,6 +114,11 @@ export async function POST(
       actorId: approvedBy,
       beforeJson: result.before as Record<string, unknown>,
       afterJson: result.entry as Record<string, unknown>,
+    })
+
+    // TTADV-19: notify user that their entry was approved
+    await buildApprovalNotification(result.entry, approvedBy).catch((err) => {
+      console.error('[approve] notification write failed (non-fatal):', err)
     })
 
     return NextResponse.json(result.entry)
