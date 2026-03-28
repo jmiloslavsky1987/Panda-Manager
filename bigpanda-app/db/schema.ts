@@ -477,6 +477,22 @@ export const timeTrackingConfig = pgTable('time_tracking_config', {
 export type TimeTrackingConfig = typeof timeTrackingConfig.$inferSelect
 export type TimeTrackingConfigInsert = typeof timeTrackingConfig.$inferInsert
 
+// ─── Phase 23: In-App Notifications ──────────────────────────────────────────
+
+export const appNotifications = pgTable('app_notifications', {
+  id:         serial('id').primaryKey(),
+  user_id:    text('user_id').notNull().default('default'),
+  type:       text('type').notNull(),   // 'timesheet_reminder' | 'timesheet_overdue' | 'timesheet_approved' | 'timesheet_rejected'
+  title:      text('title').notNull(),
+  body:       text('body').notNull(),
+  read:       boolean('read').notNull().default(false),
+  data:       jsonb('data'),             // { project_id?, entry_ids?, reason? }
+  created_at: timestamp('created_at').defaultNow().notNull(),
+})
+
+export type AppNotification = typeof appNotifications.$inferSelect
+export type AppNotificationInsert = typeof appNotifications.$inferInsert
+
 // ─── v2.0 Tables ─────────────────────────────────────────────────────────────
 
 export const discoveryItems = pgTable('discovery_items', {
