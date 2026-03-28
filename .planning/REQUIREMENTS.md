@@ -91,7 +91,7 @@
 - [x] **TTADV-13**: User can override the auto-matched project or assign unmatched events to any project or mark as non-project activity
 - [x] **TTADV-14**: Imported time entries are created on the event date, not the import date
 - [x] **TTADV-15**: Approver can bulk-approve, bulk-reject, bulk-move (between projects), and bulk-delete time entries
-- [ ] **TTADV-16**: Time entry table is exportable to CSV and Excel; export includes audit fields (submitted/approved/rejected on/by)
+- [x] **TTADV-16**: Time entry table is exportable to CSV and Excel; export includes audit fields (submitted/approved/rejected on/by)
 - [x] **TTADV-17**: Table supports grouping by: project, team member, status, role, phase, or task — with billable/non-billable subtotals per group
 - [x] **TTADV-18**: Submission reminder notifications are sent before the due date and again when overdue (exempt users excluded)
 - [x] **TTADV-19**: Approval and rejection notifications are sent to the submitting user with a summary
@@ -260,7 +260,7 @@
 | TTADV-13 | Phase 23 | Complete |
 | TTADV-14 | Phase 23 | Complete |
 | TTADV-15 | Phase 23 | Complete |
-| TTADV-16 | Phase 23 | Pending |
+| TTADV-16 | Phase 23 | Complete |
 | TTADV-17 | Phase 23 | Complete |
 | TTADV-18 | Phase 23 | Complete |
 | TTADV-19 | Phase 23 | Complete |
