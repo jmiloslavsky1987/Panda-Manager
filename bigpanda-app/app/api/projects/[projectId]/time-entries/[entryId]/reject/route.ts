@@ -6,6 +6,7 @@ import db from '@/db'
 import { timeEntries } from '@/db/schema'
 import { getEntryStatus } from '@/lib/time-tracking'
 import { writeAuditLog } from '@/lib/audit'
+import { buildRejectionNotification } from '@/lib/time-tracking-notifications'
 
 const RejectSchema = z.object({
   rejected_by: z.string().optional(),
@@ -105,6 +106,11 @@ export async function POST(
       actorId: rejectedBy,
       beforeJson: result.before as Record<string, unknown>,
       afterJson: result.entry as Record<string, unknown>,
+    })
+
+    // TTADV-19: notify user that their entry was rejected with reason
+    await buildRejectionNotification(result.entry, rejectedBy, reason).catch((err) => {
+      console.error('[reject] notification write failed (non-fatal):', err)
     })
 
     return NextResponse.json(result.entry)

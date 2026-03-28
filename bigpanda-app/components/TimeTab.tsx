@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { TimeEntryModal } from './TimeEntryModal'
 import { DeleteConfirmDialog } from './DeleteConfirmDialog'
+import { CalendarImportModal } from './CalendarImportModal'
 import type { TimeEntry } from '@/db/schema'
 import { getEntryStatus, canEdit, canSubmit, canOverrideLock } from '@/lib/time-tracking'
 import type { EntryStatus } from '@/lib/time-tracking'
@@ -326,9 +327,49 @@ export function TimeTab({ projectId }: TimeTabProps) {
   const [targetInput, setTargetInput] = useState('')
   const [summaryExpanded, setSummaryExpanded] = useState(true)
 
+  // ─── Notification state ────────────────────────────────────────────────────
+  const [notifications, setNotifications] = useState<{
+    id: number
+    type: string
+    title: string
+    body: string
+    read: boolean
+    created_at: string
+  }[]>([])
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [showNotifications, setShowNotifications] = useState(false)
+
   const isApprover = role === 'approver' || role === 'admin'
 
   const refresh = useCallback(() => setRefreshCount((c) => c + 1), [])
+
+  // ─── Notification fetch + auto-refresh ───────────────────────────────────
+  const fetchNotifications = useCallback(() => {
+    fetch('/api/notifications/time-tracking')
+      .then((r) => (r.ok ? r.json() : { notifications: [], unread_count: 0 }))
+      .then((data) => {
+        setNotifications(data.notifications ?? [])
+        setUnreadCount(data.unread_count ?? 0)
+      })
+      .catch(() => {/* non-fatal — notifications are supplementary */})
+  }, [])
+
+  useEffect(() => {
+    fetchNotifications()
+    // Auto-refresh every 60 seconds while component is mounted
+    const interval = setInterval(fetchNotifications, 60_000)
+    return () => clearInterval(interval)
+  }, [fetchNotifications])
+
+  async function handleDismissNotification(id: number) {
+    await fetch('/api/notifications/time-tracking', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    }).catch(() => {/* non-fatal */})
+    setNotifications((prev) => prev.filter((n) => n.id !== id))
+    setUnreadCount((c) => Math.max(0, c - 1))
+  }
 
   useEffect(() => {
     setLoading(true)
@@ -458,6 +499,41 @@ export function TimeTab({ projectId }: TimeTabProps) {
 
   return (
     <div data-testid="time-tab" className="space-y-4">
+      {/* Notification Banner — shown when unread timesheet notifications exist */}
+      {unreadCount > 0 && (
+        <div className="rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-3 flex items-center justify-between gap-3">
+          <span className="text-sm text-yellow-800 font-medium">
+            You have {unreadCount} timesheet notification{unreadCount !== 1 ? 's' : ''}
+          </span>
+          <button
+            onClick={() => setShowNotifications((v) => !v)}
+            className="text-sm text-yellow-700 underline hover:text-yellow-900"
+          >
+            {showNotifications ? 'Hide' : 'View'}
+          </button>
+        </div>
+      )}
+
+      {/* Notification list — expanded when user clicks View */}
+      {showNotifications && notifications.filter((n) => !n.read).length > 0 && (
+        <div className="rounded-lg border border-yellow-200 bg-white divide-y divide-yellow-100">
+          {notifications.filter((n) => !n.read).map((n) => (
+            <div key={n.id} className="flex items-start justify-between gap-3 px-4 py-3">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-zinc-900">{n.title}</p>
+                <p className="text-sm text-zinc-600 mt-0.5">{n.body}</p>
+              </div>
+              <button
+                onClick={() => handleDismissNotification(n.id)}
+                className="shrink-0 text-xs text-zinc-400 hover:text-zinc-700 border border-zinc-200 rounded px-2 py-0.5"
+              >
+                Dismiss
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Submit Week Dialog */}
       {showSubmitDialog && (
         <SubmitWeekDialog
@@ -557,6 +633,8 @@ export function TimeTab({ projectId }: TimeTabProps) {
           >
             Submit Week
           </button>
+          {/* Import from Calendar — CalendarImportModal manages its own open/close state */}
+          <CalendarImportModal projectId={projectId} onSuccess={refresh} />
           <button
             data-testid="export-csv"
             onClick={() => exportCSV(entries, projectName)}
