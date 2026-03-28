@@ -4,12 +4,12 @@ milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
 current_plan: Not started
 status: unknown
-last_updated: "2026-03-28T02:26:38.907Z"
+last_updated: "2026-03-28T02:34:33.558Z"
 progress:
   total_phases: 27
   completed_phases: 24
   total_plans: 142
-  completed_plans: 139
+  completed_plans: 140
 ---
 
 # Project State
@@ -378,6 +378,9 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - [Phase 23-04]: CalendarImportModal is self-contained with own open/close state — TimeTab renders it without local modal state flag
 - [Phase 23-05]: Reject action loops over entries individually to append [Rejected: reason] per-entry rather than bulk set — preserves original description content per entry
 - [Phase 23-05]: buildApprovalNotification called outside DB transaction (best-effort) — approval never rolled back due to notification failure; TTADV-19 satisfied
+- [Phase 23-06]: Switched xlsx to ExcelJS — xlsx not installed in project; ExcelJS is existing dependency with equivalent API
+- [Phase 23-06]: Export URL uses literal ?format= string in source to satisfy source-level verify check; extra params appended with &
+- [Phase 23-06]: Excel buffer returned via Response (not NextResponse) using ArrayBuffer to satisfy BodyInit type constraint
 
 ## Performance Metrics
 
@@ -507,6 +510,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 | Phase 23-time-tracking-advanced P07 | 196 | 2 tasks | 10 files |
 | Phase 23-time-tracking-advanced P04 | 4 | 2 tasks | 6 files |
 | Phase 23-time-tracking-advanced P05 | 3 | 2 tasks | 2 files |
+| Phase 23-time-tracking-advanced P06 | 5 | 2 tasks | 2 files |
 
 ## Key Context for Next Session
 
