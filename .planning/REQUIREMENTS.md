@@ -82,17 +82,17 @@
 - [ ] **TTADV-04**: Admin can restrict time entry to assigned projects only and filter by project status (e.g., Active only)
 - [ ] **TTADV-05**: Admin can designate specific team members as exempt from submission requirements and reminders
 - [ ] **TTADV-06**: Admin can lock timesheets after approval, preventing further edits without explicit unlock
-- [ ] **TTADV-07**: User can submit their timesheet for the current week via a "Submit Week for Approval" action
-- [ ] **TTADV-08**: Approver can approve or reject individual time entries and can approve/reject in bulk
+- [x] **TTADV-07**: User can submit their timesheet for the current week via a "Submit Week for Approval" action
+- [x] **TTADV-08**: Approver can approve or reject individual time entries and can approve/reject in bulk
 - [ ] **TTADV-09**: Approver can submit a timesheet on behalf of a team member
-- [ ] **TTADV-10**: Approved time entries are locked for editing unless the approver or admin explicitly overrides
+- [x] **TTADV-10**: Approved time entries are locked for editing unless the approver or admin explicitly overrides
 - [ ] **TTADV-11**: User can authenticate with Google Calendar via OAuth and import events from the current week as draft time entries
 - [ ] **TTADV-12**: System auto-matches each imported calendar event to a project by comparing event attendees against project participant lists; pre-populates for user review
 - [ ] **TTADV-13**: User can override the auto-matched project or assign unmatched events to any project or mark as non-project activity
 - [ ] **TTADV-14**: Imported time entries are created on the event date, not the import date
-- [ ] **TTADV-15**: Approver can bulk-approve, bulk-reject, bulk-move (between projects), and bulk-delete time entries
+- [x] **TTADV-15**: Approver can bulk-approve, bulk-reject, bulk-move (between projects), and bulk-delete time entries
 - [ ] **TTADV-16**: Time entry table is exportable to CSV and Excel; export includes audit fields (submitted/approved/rejected on/by)
-- [ ] **TTADV-17**: Table supports grouping by: project, team member, status, role, phase, or task — with billable/non-billable subtotals per group
+- [x] **TTADV-17**: Table supports grouping by: project, team member, status, role, phase, or task — with billable/non-billable subtotals per group
 - [ ] **TTADV-18**: Submission reminder notifications are sent before the due date and again when overdue (exempt users excluded)
 - [ ] **TTADV-19**: Approval and rejection notifications are sent to the submitting user with a summary
 
@@ -251,17 +251,17 @@
 | TTADV-04 | Phase 23 | Pending |
 | TTADV-05 | Phase 23 | Pending |
 | TTADV-06 | Phase 23 | Pending |
-| TTADV-07 | Phase 23 | Pending |
-| TTADV-08 | Phase 23 | Pending |
+| TTADV-07 | Phase 23 | Complete |
+| TTADV-08 | Phase 23 | Complete |
 | TTADV-09 | Phase 23 | Pending |
-| TTADV-10 | Phase 23 | Pending |
+| TTADV-10 | Phase 23 | Complete |
 | TTADV-11 | Phase 23 | Pending |
 | TTADV-12 | Phase 23 | Pending |
 | TTADV-13 | Phase 23 | Pending |
 | TTADV-14 | Phase 23 | Pending |
-| TTADV-15 | Phase 23 | Pending |
+| TTADV-15 | Phase 23 | Complete |
 | TTADV-16 | Phase 23 | Pending |
-| TTADV-17 | Phase 23 | Pending |
+| TTADV-17 | Phase 23 | Complete |
 | TTADV-18 | Phase 23 | Pending |
 | TTADV-19 | Phase 23 | Pending |
 | SCHED-01 | Phase 24 | Pending |

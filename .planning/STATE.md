@@ -4,12 +4,12 @@ milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
 current_plan: Not started
 status: unknown
-last_updated: "2026-03-27T21:20:07.635Z"
+last_updated: "2026-03-28T02:08:09.206Z"
 progress:
   total_phases: 27
   completed_phases: 24
-  total_plans: 134
-  completed_plans: 133
+  total_plans: 142
+  completed_plans: 134
 ---
 
 # Project State
@@ -365,6 +365,8 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - [Phase 22-source-badges-+-audit-log]: 22-04: artifactName resolved from pre-fetched data.artifacts Map (no N+1) — avoids LEFT JOIN since getWorkspaceData already fetches all artifacts
 - [Phase 22-source-badges-+-audit-log]: 22-04: Teams/arch badges added at client sub-component level (BusinessOutcomesSection, FocusAreasSection, E2eWorkflowsSection, IntegrationNode) — not RSC page level due to client state
 - [Phase 22]: Phase 22 COMPLETE — all three AUDIT requirements (AUDIT-01, AUDIT-02, AUDIT-03) verified in-browser and via direct DB query; source badges, delete confirmation dialogs, and audit log all confirmed working
+- [Phase 23-01]: Grouping scope limited to 4 schema-supported dimensions (project, team_member/submitted_by, status, date) — role/phase/task grouping requires schema extension not in Phase 23 scope
+- [Phase 23-01]: Locking is explicit (locked=true flag only), NOT automatic on approval — test TTADV-15-2 documents and enforces this distinction
 
 ## Performance Metrics
 
@@ -488,6 +490,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 | Phase 22-source-badges-+-audit-log P02 | 6 | 3 tasks | 12 files |
 | Phase 22-source-badges-+-audit-log P03 | 4 | 2 tasks | 13 files |
 | Phase 22-source-badges-+-audit-log P04 | 18 | 2 tasks | 13 files |
+| Phase 23-time-tracking-advanced P01 | 12 | 3 tasks | 3 files |
 
 ## Key Context for Next Session
 
