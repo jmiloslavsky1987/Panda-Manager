@@ -76,12 +76,12 @@
 ### TTADV — Time Tracking Advanced
 *Extends the existing basic time entry tab (Phase 5.2/14). The entry grid exists; approval, calendar integration, admin config, and notifications do not.*
 
-- [ ] **TTADV-01**: Admin can enable/disable time tracking globally from Settings > Time Tracking; disabled by default for new installs
-- [ ] **TTADV-02**: Admin can configure: weekly capacity (hours), working days, submission due date/time, and reminder frequency
-- [ ] **TTADV-03**: Admin can create and manage custom time entry categories (e.g., Development, QA, Discovery, Meetings)
-- [ ] **TTADV-04**: Admin can restrict time entry to assigned projects only and filter by project status (e.g., Active only)
-- [ ] **TTADV-05**: Admin can designate specific team members as exempt from submission requirements and reminders
-- [ ] **TTADV-06**: Admin can lock timesheets after approval, preventing further edits without explicit unlock
+- [x] **TTADV-01**: Admin can enable/disable time tracking globally from Settings > Time Tracking; disabled by default for new installs
+- [x] **TTADV-02**: Admin can configure: weekly capacity (hours), working days, submission due date/time, and reminder frequency
+- [x] **TTADV-03**: Admin can create and manage custom time entry categories (e.g., Development, QA, Discovery, Meetings)
+- [x] **TTADV-04**: Admin can restrict time entry to assigned projects only and filter by project status (e.g., Active only)
+- [x] **TTADV-05**: Admin can designate specific team members as exempt from submission requirements and reminders
+- [x] **TTADV-06**: Admin can lock timesheets after approval, preventing further edits without explicit unlock
 - [x] **TTADV-07**: User can submit their timesheet for the current week via a "Submit Week for Approval" action
 - [x] **TTADV-08**: Approver can approve or reject individual time entries and can approve/reject in bulk
 - [ ] **TTADV-09**: Approver can submit a timesheet on behalf of a team member
@@ -245,12 +245,12 @@
 | AUDIT-01 | Phase 22 | Complete |
 | AUDIT-02 | Phase 22 | Complete |
 | AUDIT-03 | Phase 22 | Complete |
-| TTADV-01 | Phase 23 | Pending |
-| TTADV-02 | Phase 23 | Pending |
-| TTADV-03 | Phase 23 | Pending |
-| TTADV-04 | Phase 23 | Pending |
-| TTADV-05 | Phase 23 | Pending |
-| TTADV-06 | Phase 23 | Pending |
+| TTADV-01 | Phase 23 | Complete |
+| TTADV-02 | Phase 23 | Complete |
+| TTADV-03 | Phase 23 | Complete |
+| TTADV-04 | Phase 23 | Complete |
+| TTADV-05 | Phase 23 | Complete |
+| TTADV-06 | Phase 23 | Complete |
 | TTADV-07 | Phase 23 | Complete |
 | TTADV-08 | Phase 23 | Complete |
 | TTADV-09 | Phase 23 | Pending |

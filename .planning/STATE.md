@@ -4,12 +4,12 @@ milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
 current_plan: Not started
 status: unknown
-last_updated: "2026-03-28T02:08:09.206Z"
+last_updated: "2026-03-28T02:12:29.108Z"
 progress:
   total_phases: 27
   completed_phases: 24
   total_plans: 142
-  completed_plans: 134
+  completed_plans: 135
 ---
 
 # Project State
@@ -367,6 +367,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - [Phase 22]: Phase 22 COMPLETE — all three AUDIT requirements (AUDIT-01, AUDIT-02, AUDIT-03) verified in-browser and via direct DB query; source badges, delete confirmation dialogs, and audit log all confirmed working
 - [Phase 23-01]: Grouping scope limited to 4 schema-supported dimensions (project, team_member/submitted_by, status, date) — role/phase/task grouping requires schema extension not in Phase 23 scope
 - [Phase 23-01]: Locking is explicit (locked=true flag only), NOT automatic on approval — test TTADV-15-2 documents and enforces this distinction
+- [Phase 23]: 23-02: Migration numbered 0018 (0015 already taken by discovery_dedup_flag); inline ToggleSwitch implemented (shadcn Switch not installed); settings at /settings/time-tracking standalone route
 
 ## Performance Metrics
 
@@ -491,6 +492,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 | Phase 22-source-badges-+-audit-log P03 | 4 | 2 tasks | 13 files |
 | Phase 22-source-badges-+-audit-log P04 | 18 | 2 tasks | 13 files |
 | Phase 23-time-tracking-advanced P01 | 12 | 3 tasks | 3 files |
+| Phase 23 P02 | 2 | 2 tasks | 5 files |
 
 ## Key Context for Next Session
 
