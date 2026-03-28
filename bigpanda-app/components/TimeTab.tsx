@@ -6,8 +6,8 @@ import { TimeEntryModal } from './TimeEntryModal'
 import { DeleteConfirmDialog } from './DeleteConfirmDialog'
 import { CalendarImportModal } from './CalendarImportModal'
 import type { TimeEntry } from '@/db/schema'
-import { getEntryStatus, canEdit, canSubmit, canOverrideLock } from '@/lib/time-tracking'
-import type { EntryStatus } from '@/lib/time-tracking'
+import { getEntryStatus, canEdit, canSubmit, canOverrideLock, groupEntries, computeSubtotals } from '@/lib/time-tracking'
+import type { EntryStatus, GroupBy } from '@/lib/time-tracking'
 
 interface TimeTabProps {
   projectId: number
@@ -61,21 +61,12 @@ function getMondayOfWeek(date: Date): string {
   return d.toISOString().slice(0, 10)
 }
 
-// ─── CSV export ────────────────────────────────────────────────────────────────
+// ─── API-based export download ─────────────────────────────────────────────────
 
-function exportCSV(entries: TimeEntry[], projectName: string) {
-  const header = 'date,hours,description,project name'
-  const rows = entries.map((e) =>
-    [e.date, e.hours, `"${e.description.replace(/"/g, '""')}"`, `"${projectName}"`].join(',')
-  )
-  const csv = [header, ...rows].join('\n')
-  const blob = new Blob([csv], { type: 'text/csv' })
-  const url = URL.createObjectURL(blob)
+function triggerExportDownload(url: string) {
   const a = document.createElement('a')
   a.href = url
-  a.download = `time-log-${projectName}-${new Date().toISOString().slice(0, 10)}.csv`
   a.click()
-  URL.revokeObjectURL(url)
 }
 
 // ─── Inline add form ───────────────────────────────────────────────────────────
@@ -315,6 +306,12 @@ export function TimeTab({ projectId }: TimeTabProps) {
   const [showAddForm, setShowAddForm] = useState(false)
   const [showSubmitDialog, setShowSubmitDialog] = useState(false)
   const [refreshCount, setRefreshCount] = useState(0)
+
+  // Group by state for table grouping
+  const [groupBy, setGroupBy] = useState<GroupBy | 'none'>('none')
+
+  // Export dropdown open state
+  const [showExportMenu, setShowExportMenu] = useState(false)
 
   // Per-entry action saving state: entryId → action string
   const [savingEntry, setSavingEntry] = useState<Record<number, string>>({})
@@ -650,6 +647,20 @@ export function TimeTab({ projectId }: TimeTabProps) {
     }
   }
 
+  // Build export URL with current date filters
+  // Base URL includes format= directly: /api/projects/{id}/time-entries/export?format=csv|xlsx
+  function buildExportUrl(format: 'csv' | 'xlsx', groupByOverride?: GroupBy | 'none') {
+    const extraParams = new URLSearchParams()
+    if (fromDate) extraParams.set('from', fromDate)
+    if (toDate) extraParams.set('to', toDate)
+    const gb = groupByOverride ?? groupBy
+    if (format === 'xlsx' && gb !== 'none') {
+      extraParams.set('group_by', gb)
+    }
+    const extra = extraParams.toString() ? `&${extraParams.toString()}` : ''
+    return `/api/projects/${projectId}/time-entries/export?format=${format}${extra}`
+  }
+
   // Override lock (admin/approver only)
   async function handleOverrideLock(entryId: number) {
     setSavingEntry((prev) => ({ ...prev, [entryId]: 'unlock' }))
@@ -936,7 +947,30 @@ export function TimeTab({ projectId }: TimeTabProps) {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Group by select */}
+          <div className="flex items-center gap-1.5">
+            <label
+              htmlFor="group-by-select"
+              className="text-xs text-zinc-500 whitespace-nowrap"
+            >
+              Group by
+            </label>
+            <select
+              id="group-by-select"
+              data-testid="group-by-select"
+              value={groupBy}
+              onChange={(e) => setGroupBy(e.target.value as GroupBy | 'none')}
+              className="border border-zinc-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400 bg-white"
+            >
+              <option value="none">None</option>
+              <option value="project">Project</option>
+              <option value="team_member">Team Member</option>
+              <option value="status">Status</option>
+              <option value="date">Date</option>
+            </select>
+          </div>
+
           {/* Submit Week button */}
           <button
             data-testid="submit-week-btn"
@@ -947,14 +981,70 @@ export function TimeTab({ projectId }: TimeTabProps) {
           </button>
           {/* Import from Calendar — CalendarImportModal manages its own open/close state */}
           <CalendarImportModal projectId={projectId} onSuccess={refresh} />
-          <button
-            data-testid="export-csv"
-            onClick={() => exportCSV(entries, projectName)}
-            disabled={entries.length === 0}
-            className="px-3 py-1.5 text-sm border border-zinc-300 rounded hover:bg-zinc-50 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            Export CSV
-          </button>
+
+          {/* Export dropdown */}
+          <div className="relative">
+            <button
+              data-testid="export-dropdown-btn"
+              onClick={() => setShowExportMenu((v) => !v)}
+              disabled={entries.length === 0}
+              className="px-3 py-1.5 text-sm border border-zinc-300 rounded hover:bg-zinc-50 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+            >
+              Export
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+            {showExportMenu && (
+              <div className="absolute right-0 top-full mt-1 z-20 bg-white border border-zinc-200 rounded-lg shadow-md min-w-[180px] py-1">
+                <button
+                  data-testid="export-csv"
+                  onClick={() => {
+                    triggerExportDownload(buildExportUrl('csv'))
+                    setShowExportMenu(false)
+                  }}
+                  className="w-full text-left px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+                >
+                  Export CSV
+                </button>
+                <button
+                  data-testid="export-xlsx"
+                  onClick={() => {
+                    triggerExportDownload(buildExportUrl('xlsx', 'none'))
+                    setShowExportMenu(false)
+                  }}
+                  className="w-full text-left px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+                >
+                  Export Excel
+                </button>
+                <button
+                  data-testid="export-xlsx-grouped"
+                  onClick={() => {
+                    const gb: GroupBy = groupBy !== 'none' ? groupBy : 'status'
+                    triggerExportDownload(buildExportUrl('xlsx', gb))
+                    setShowExportMenu(false)
+                  }}
+                  className="w-full text-left px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+                >
+                  Export Excel (grouped)
+                  {groupBy !== 'none' && (
+                    <span className="ml-1 text-xs text-zinc-400">by {groupBy}</span>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
+
           <button
             data-testid="log-time-btn"
             onClick={() => setShowAddForm((v) => !v)}
@@ -1031,6 +1121,129 @@ export function TimeTab({ projectId }: TimeTabProps) {
           className="py-12 text-center text-zinc-400 text-sm border border-dashed border-zinc-200 rounded-lg"
         >
           No time logged yet &mdash; click &lsquo;Log Time&rsquo; to add your first entry
+        </div>
+      ) : groupBy !== 'none' ? (
+        /* Grouped view */
+        <div data-testid="grouped-entries" className="space-y-4">
+          {Object.entries(groupEntries(entries, groupBy))
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([groupKey, groupEntryList]) => {
+              const subtotals = computeSubtotals(groupEntryList)
+              return (
+                <div key={groupKey} data-testid="entry-group">
+                  {/* Group header row */}
+                  <div className="flex items-center justify-between px-3 py-2 bg-zinc-100 rounded-t border border-zinc-200 font-semibold text-sm text-zinc-800">
+                    <span data-testid="group-key">{groupKey}</span>
+                    <span className="text-xs text-zinc-600 font-normal">
+                      {subtotals.total_hours.toFixed(2)} h total &middot;{' '}
+                      {subtotals.billable_hours.toFixed(2)} h billable
+                    </span>
+                  </div>
+                  <div className="overflow-x-auto border border-t-0 border-zinc-200 rounded-b">
+                    <table className="w-full text-sm border-collapse">
+                      <thead>
+                        <tr className="border-b border-zinc-200 bg-zinc-50">
+                          {isApprover && <th className="py-1.5 px-2 w-8" />}
+                          <th className="text-left py-1.5 px-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Date</th>
+                          <th className="text-left py-1.5 px-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Hours</th>
+                          <th className="text-left py-1.5 px-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Description</th>
+                          <th className="text-left py-1.5 px-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Status</th>
+                          <th className="text-right py-1.5 px-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {groupEntryList.map((entry) => {
+                          const status = getEntryStatus(entry)
+                          const editable = canEdit(entry)
+                          const locked = entry.locked
+                          const isSaving = savingEntry[entry.id]
+                          return (
+                            <tr
+                              key={entry.id}
+                              data-testid="time-entry-row"
+                              className={`border-b border-zinc-100 hover:bg-zinc-50 transition-colors${selectedIds.has(entry.id) ? ' bg-blue-50' : ''}`}
+                            >
+                              {isApprover && (
+                                <td className="py-2 px-2 w-8">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedIds.has(entry.id)}
+                                    onChange={() => toggleEntrySelect(entry.id)}
+                                    aria-label={`Select entry ${entry.id}`}
+                                    className="rounded border-zinc-300"
+                                    data-testid="entry-checkbox"
+                                  />
+                                </td>
+                              )}
+                              <td className="py-2 px-3 text-zinc-700 whitespace-nowrap">{entry.date}</td>
+                              <td className="py-2 px-3 text-zinc-700 whitespace-nowrap">{entry.hours}</td>
+                              <td className="py-2 px-3 text-zinc-900">{entry.description}</td>
+                              <td className="py-2 px-3 whitespace-nowrap">
+                                <StatusBadge status={status} />
+                              </td>
+                              <td className="py-2 px-3 text-right whitespace-nowrap">
+                                <div className="inline-flex items-center gap-1.5">
+                                  {isSaving && <span className="text-xs text-zinc-400">Saving...</span>}
+                                  {isApprover && status === 'submitted' && !isSaving && (
+                                    <button onClick={() => handleApprove(entry.id)} className="px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200" data-testid="approve-btn">Approve</button>
+                                  )}
+                                  {isApprover && status === 'submitted' && !isSaving && (
+                                    <button onClick={() => handleReject(entry.id)} className="px-2 py-0.5 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200" data-testid="reject-btn">Reject</button>
+                                  )}
+                                  {locked && canOverrideLock(role) && !isSaving && (
+                                    <button onClick={() => handleOverrideLock(entry.id)} className="px-2 py-0.5 text-xs bg-amber-100 text-amber-700 rounded hover:bg-amber-200" data-testid="override-lock-btn">Unlock</button>
+                                  )}
+                                  {editable && !isSaving && (
+                                    <TimeEntryModal
+                                      projectId={projectId}
+                                      entry={entry}
+                                      trigger={
+                                        <button className="p-1 rounded hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900" title="Edit entry" aria-label="Edit entry">
+                                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                          </svg>
+                                        </button>
+                                      }
+                                      onSuccess={refresh}
+                                    />
+                                  )}
+                                  {locked && !canOverrideLock(role) && (
+                                    <span className="p-1 text-amber-500" title="Entry is locked" aria-label="Entry is locked" data-testid="lock-icon">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                      </svg>
+                                    </span>
+                                  )}
+                                  {editable && !isSaving && (
+                                    <DeleteConfirmDialog
+                                      entityLabel="this time entry"
+                                      onConfirm={() => handleDelete(entry.id)}
+                                      trigger={
+                                        <button className="p-1 rounded hover:bg-red-50 text-zinc-500 hover:text-red-600" title="Delete entry" aria-label="Delete entry">
+                                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <polyline points="3 6 5 6 21 6" />
+                                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                            <path d="M10 11v6" />
+                                            <path d="M14 11v6" />
+                                            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                                          </svg>
+                                        </button>
+                                      }
+                                    />
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )
+            })}
         </div>
       ) : (
         <div className="overflow-x-auto">
