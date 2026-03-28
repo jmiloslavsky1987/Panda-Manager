@@ -84,7 +84,7 @@
 - [x] **TTADV-06**: Admin can lock timesheets after approval, preventing further edits without explicit unlock
 - [x] **TTADV-07**: User can submit their timesheet for the current week via a "Submit Week for Approval" action
 - [x] **TTADV-08**: Approver can approve or reject individual time entries and can approve/reject in bulk
-- [ ] **TTADV-09**: Approver can submit a timesheet on behalf of a team member
+- [x] **TTADV-09**: Approver can submit a timesheet on behalf of a team member
 - [x] **TTADV-10**: Approved time entries are locked for editing unless the approver or admin explicitly overrides
 - [ ] **TTADV-11**: User can authenticate with Google Calendar via OAuth and import events from the current week as draft time entries
 - [ ] **TTADV-12**: System auto-matches each imported calendar event to a project by comparing event attendees against project participant lists; pre-populates for user review
@@ -93,8 +93,8 @@
 - [x] **TTADV-15**: Approver can bulk-approve, bulk-reject, bulk-move (between projects), and bulk-delete time entries
 - [ ] **TTADV-16**: Time entry table is exportable to CSV and Excel; export includes audit fields (submitted/approved/rejected on/by)
 - [x] **TTADV-17**: Table supports grouping by: project, team member, status, role, phase, or task — with billable/non-billable subtotals per group
-- [ ] **TTADV-18**: Submission reminder notifications are sent before the due date and again when overdue (exempt users excluded)
-- [ ] **TTADV-19**: Approval and rejection notifications are sent to the submitting user with a summary
+- [x] **TTADV-18**: Submission reminder notifications are sent before the due date and again when overdue (exempt users excluded)
+- [x] **TTADV-19**: Approval and rejection notifications are sent to the submitting user with a summary
 
 ### SCHED — Scheduler Enhanced
 *Extends the existing basic scheduler (Phases 4/15). The job runner and cron engine exist; the configurable UI, run history, and admin view do not.*
@@ -253,7 +253,7 @@
 | TTADV-06 | Phase 23 | Complete |
 | TTADV-07 | Phase 23 | Complete |
 | TTADV-08 | Phase 23 | Complete |
-| TTADV-09 | Phase 23 | Pending |
+| TTADV-09 | Phase 23 | Complete |
 | TTADV-10 | Phase 23 | Complete |
 | TTADV-11 | Phase 23 | Pending |
 | TTADV-12 | Phase 23 | Pending |
@@ -262,8 +262,8 @@
 | TTADV-15 | Phase 23 | Complete |
 | TTADV-16 | Phase 23 | Pending |
 | TTADV-17 | Phase 23 | Complete |
-| TTADV-18 | Phase 23 | Pending |
-| TTADV-19 | Phase 23 | Pending |
+| TTADV-18 | Phase 23 | Complete |
+| TTADV-19 | Phase 23 | Complete |
 | SCHED-01 | Phase 24 | Pending |
 | SCHED-02 | Phase 24 | Pending |
 | SCHED-03 | Phase 24 | Pending |
