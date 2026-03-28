@@ -4,12 +4,12 @@ milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
 current_plan: Not started
 status: unknown
-last_updated: "2026-03-28T02:20:35.286Z"
+last_updated: "2026-03-28T02:21:07.922Z"
 progress:
   total_phases: 27
   completed_phases: 24
   total_plans: 142
-  completed_plans: 137
+  completed_plans: 138
 ---
 
 # Project State
@@ -373,6 +373,9 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - [Phase 23-03]: Submit Week dialog uses datalist for recent submitters (not a select) — allows free-text username entry for TTADV-09 submit-on-behalf compliance
 - [Phase 23-07]: Notification calls in approve/reject routes are non-fatal (.catch()) — primary route response never blocked by notification failures
 - [Phase 23-07]: Worker handler created at both plan-specified path (app/api/jobs/handlers/) and actual BullMQ path (worker/jobs/) — timesheet-reminder registered in worker/index.ts JOB_HANDLERS
+- [Phase 23-04]: GOOGLE_CALENDAR_REDIRECT_URI dedicated env var — no fallback to Gmail's GOOGLE_REDIRECT_URI to prevent OAuth mis-routing
+- [Phase 23-04]: Calendar token refresh uses setCredentials() + tokens event (googleapis Pattern 2) not deprecated refreshAccessToken()
+- [Phase 23-04]: CalendarImportModal is self-contained with own open/close state — TimeTab renders it without local modal state flag
 
 ## Performance Metrics
 
@@ -500,6 +503,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 | Phase 23 P02 | 2 | 2 tasks | 5 files |
 | Phase 23-time-tracking-advanced P03 | 4 | 2 tasks | 5 files |
 | Phase 23-time-tracking-advanced P07 | 196 | 2 tasks | 10 files |
+| Phase 23-time-tracking-advanced P04 | 4 | 2 tasks | 6 files |
 
 ## Key Context for Next Session
 

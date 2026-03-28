@@ -86,10 +86,10 @@
 - [x] **TTADV-08**: Approver can approve or reject individual time entries and can approve/reject in bulk
 - [x] **TTADV-09**: Approver can submit a timesheet on behalf of a team member
 - [x] **TTADV-10**: Approved time entries are locked for editing unless the approver or admin explicitly overrides
-- [ ] **TTADV-11**: User can authenticate with Google Calendar via OAuth and import events from the current week as draft time entries
-- [ ] **TTADV-12**: System auto-matches each imported calendar event to a project by comparing event attendees against project participant lists; pre-populates for user review
-- [ ] **TTADV-13**: User can override the auto-matched project or assign unmatched events to any project or mark as non-project activity
-- [ ] **TTADV-14**: Imported time entries are created on the event date, not the import date
+- [x] **TTADV-11**: User can authenticate with Google Calendar via OAuth and import events from the current week as draft time entries
+- [x] **TTADV-12**: System auto-matches each imported calendar event to a project by comparing event attendees against project participant lists; pre-populates for user review
+- [x] **TTADV-13**: User can override the auto-matched project or assign unmatched events to any project or mark as non-project activity
+- [x] **TTADV-14**: Imported time entries are created on the event date, not the import date
 - [x] **TTADV-15**: Approver can bulk-approve, bulk-reject, bulk-move (between projects), and bulk-delete time entries
 - [ ] **TTADV-16**: Time entry table is exportable to CSV and Excel; export includes audit fields (submitted/approved/rejected on/by)
 - [x] **TTADV-17**: Table supports grouping by: project, team member, status, role, phase, or task — with billable/non-billable subtotals per group
@@ -255,10 +255,10 @@
 | TTADV-08 | Phase 23 | Complete |
 | TTADV-09 | Phase 23 | Complete |
 | TTADV-10 | Phase 23 | Complete |
-| TTADV-11 | Phase 23 | Pending |
-| TTADV-12 | Phase 23 | Pending |
-| TTADV-13 | Phase 23 | Pending |
-| TTADV-14 | Phase 23 | Pending |
+| TTADV-11 | Phase 23 | Complete |
+| TTADV-12 | Phase 23 | Complete |
+| TTADV-13 | Phase 23 | Complete |
+| TTADV-14 | Phase 23 | Complete |
 | TTADV-15 | Phase 23 | Complete |
 | TTADV-16 | Phase 23 | Pending |
 | TTADV-17 | Phase 23 | Complete |
