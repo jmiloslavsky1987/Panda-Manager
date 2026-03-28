@@ -1,13 +1,66 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { TimeEntryModal } from './TimeEntryModal'
 import { DeleteConfirmDialog } from './DeleteConfirmDialog'
 import type { TimeEntry } from '@/db/schema'
+import { getEntryStatus, canEdit, canSubmit, canOverrideLock } from '@/lib/time-tracking'
+import type { EntryStatus } from '@/lib/time-tracking'
 
 interface TimeTabProps {
   projectId: number
 }
+
+// ─── Status Badge ──────────────────────────────────────────────────────────────
+
+const STATUS_COLORS: Record<EntryStatus, string> = {
+  draft: 'bg-zinc-100 text-zinc-500',
+  submitted: 'bg-blue-100 text-blue-700',
+  approved: 'bg-green-100 text-green-700',
+  rejected: 'bg-red-100 text-red-700',
+  locked: 'bg-amber-100 text-amber-700',
+}
+
+function StatusBadge({ status }: { status: EntryStatus }) {
+  return (
+    <span
+      className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide ${STATUS_COLORS[status]}`}
+      data-testid="status-badge"
+    >
+      {status === 'locked' && (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="9"
+          height="9"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="mr-0.5"
+        >
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
+      )}
+      {status}
+    </span>
+  )
+}
+
+// ─── ISO week helpers ──────────────────────────────────────────────────────────
+
+function getMondayOfWeek(date: Date): string {
+  const d = new Date(date)
+  const day = d.getDay()
+  const diff = day === 0 ? -6 : 1 - day // Monday = start of ISO week
+  d.setDate(d.getDate() + diff)
+  return d.toISOString().slice(0, 10)
+}
+
+// ─── CSV export ────────────────────────────────────────────────────────────────
 
 function exportCSV(entries: TimeEntry[], projectName: string) {
   const header = 'date,hours,description,project name'
@@ -24,7 +77,8 @@ function exportCSV(entries: TimeEntry[], projectName: string) {
   URL.revokeObjectURL(url)
 }
 
-// Inline add form (not modal)
+// ─── Inline add form ───────────────────────────────────────────────────────────
+
 interface AddFormProps {
   projectId: number
   onSuccess: () => void
@@ -128,14 +182,141 @@ function AddTimeForm({ projectId, onSuccess, onCancel }: AddFormProps) {
   )
 }
 
+// ─── Submit Week Dialog ────────────────────────────────────────────────────────
+
+interface SubmitWeekDialogProps {
+  projectId: number
+  role: string
+  entries: TimeEntry[]
+  onClose: () => void
+  onSuccess: () => void
+}
+
+function SubmitWeekDialog({ projectId, role, entries, onClose, onSuccess }: SubmitWeekDialogProps) {
+  const [weekStart, setWeekStart] = useState(getMondayOfWeek(new Date()))
+  const [submittedBy, setSubmittedBy] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // Collect unique submitted_by values from existing entries for the approver dropdown
+  const recentSubmitters = Array.from(
+    new Set(entries.map((e) => e.submitted_by).filter((v): v is string => Boolean(v)))
+  )
+
+  const isApprover = role === 'approver' || role === 'admin'
+
+  async function handleConfirm() {
+    setSaving(true)
+    setError(null)
+    try {
+      const body: { week_start: string; submitted_by?: string } = { week_start: weekStart }
+      if (isApprover && submittedBy) {
+        body.submitted_by = submittedBy
+      }
+      const res = await fetch(`/api/projects/${projectId}/time-entries/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error ?? 'Failed to submit')
+        setSaving(false)
+        return
+      }
+      onSuccess()
+      onClose()
+    } catch {
+      setError('Network error — please try again')
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Submit Week for Approval"
+      data-testid="submit-week-dialog"
+    >
+      <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md space-y-4">
+        <h2 className="text-base font-semibold text-zinc-900">Submit Week for Approval</h2>
+
+        {/* Week picker */}
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-zinc-700">Week starting (Monday)</label>
+          <input
+            type="date"
+            value={weekStart}
+            onChange={(e) => setWeekStart(e.target.value)}
+            className="border border-zinc-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400"
+          />
+        </div>
+
+        {/* Submit for: selector — approver/admin only (TTADV-09) */}
+        {isApprover && (
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-zinc-700">Submit for:</label>
+            <input
+              list="recent-submitters"
+              value={submittedBy}
+              onChange={(e) => setSubmittedBy(e.target.value)}
+              placeholder="Enter username or select..."
+              className="border border-zinc-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400"
+              data-testid="submit-for-input"
+            />
+            {recentSubmitters.length > 0 && (
+              <datalist id="recent-submitters">
+                {recentSubmitters.map((s) => (
+                  <option key={s} value={s} />
+                ))}
+              </datalist>
+            )}
+            <p className="text-xs text-zinc-400">Leave blank to submit on your own behalf.</p>
+          </div>
+        )}
+
+        {error && <p className="text-red-600 text-sm">{error}</p>}
+
+        <div className="flex justify-end gap-2 pt-2">
+          <button
+            onClick={onClose}
+            disabled={saving}
+            className="px-4 py-2 text-sm border border-zinc-300 rounded hover:bg-zinc-100 disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleConfirm}
+            disabled={saving}
+            className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+          >
+            {saving ? 'Saving...' : 'Confirm Submit'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Main TimeTab ──────────────────────────────────────────────────────────────
+
 export function TimeTab({ projectId }: TimeTabProps) {
+  const searchParams = useSearchParams()
+  const role = searchParams.get('role') ?? 'user'
+
   const [entries, setEntries] = useState<TimeEntry[]>([])
   const [projectName, setProjectName] = useState('')
   const [loading, setLoading] = useState(true)
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
   const [showAddForm, setShowAddForm] = useState(false)
+  const [showSubmitDialog, setShowSubmitDialog] = useState(false)
   const [refreshCount, setRefreshCount] = useState(0)
+
+  // Per-entry action saving state: entryId → action string
+  const [savingEntry, setSavingEntry] = useState<Record<number, string>>({})
 
   // Analytics state
   const [weeklyRollup, setWeeklyRollup] = useState<{ weekLabel: string; hours: number; variance: number | null }[]>([])
@@ -144,6 +325,10 @@ export function TimeTab({ projectId }: TimeTabProps) {
   const [editingTarget, setEditingTarget] = useState(false)
   const [targetInput, setTargetInput] = useState('')
   const [summaryExpanded, setSummaryExpanded] = useState(true)
+
+  const isApprover = role === 'approver' || role === 'admin'
+
+  const refresh = useCallback(() => setRefreshCount((c) => c + 1), [])
 
   useEffect(() => {
     setLoading(true)
@@ -188,16 +373,102 @@ export function TimeTab({ projectId }: TimeTabProps) {
     await fetch(`/api/projects/${projectId}/time-entries/${entryId}`, {
       method: 'DELETE',
     })
-    setRefreshCount((c) => c + 1)
+    refresh()
   }
 
   function handleAddSuccess() {
     setShowAddForm(false)
-    setRefreshCount((c) => c + 1)
+    refresh()
+  }
+
+  // Approve a single entry (approver/admin only)
+  async function handleApprove(entryId: number) {
+    setSavingEntry((prev) => ({ ...prev, [entryId]: 'approve' }))
+    try {
+      const res = await fetch(
+        `/api/projects/${projectId}/time-entries/${entryId}/approve`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ approved_by: role }),
+        }
+      )
+      if (res.ok) {
+        refresh()
+      }
+    } finally {
+      setSavingEntry((prev) => {
+        const next = { ...prev }
+        delete next[entryId]
+        return next
+      })
+    }
+  }
+
+  // Reject a single entry (approver/admin only)
+  async function handleReject(entryId: number) {
+    const reason = window.prompt('Rejection reason (required):')
+    if (!reason || !reason.trim()) return
+
+    setSavingEntry((prev) => ({ ...prev, [entryId]: 'reject' }))
+    try {
+      const res = await fetch(
+        `/api/projects/${projectId}/time-entries/${entryId}/reject`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rejected_by: role, reason: reason.trim() }),
+        }
+      )
+      if (res.ok) {
+        refresh()
+      }
+    } finally {
+      setSavingEntry((prev) => {
+        const next = { ...prev }
+        delete next[entryId]
+        return next
+      })
+    }
+  }
+
+  // Override lock (admin/approver only)
+  async function handleOverrideLock(entryId: number) {
+    setSavingEntry((prev) => ({ ...prev, [entryId]: 'unlock' }))
+    try {
+      const res = await fetch(
+        `/api/projects/${projectId}/time-entries/${entryId}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ locked: false }),
+        }
+      )
+      if (res.ok) {
+        refresh()
+      }
+    } finally {
+      setSavingEntry((prev) => {
+        const next = { ...prev }
+        delete next[entryId]
+        return next
+      })
+    }
   }
 
   return (
     <div data-testid="time-tab" className="space-y-4">
+      {/* Submit Week Dialog */}
+      {showSubmitDialog && (
+        <SubmitWeekDialog
+          projectId={projectId}
+          role={role}
+          entries={entries}
+          onClose={() => setShowSubmitDialog(false)}
+          onSuccess={refresh}
+        />
+      )}
+
       {/* Header row */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-4">
@@ -278,6 +549,14 @@ export function TimeTab({ projectId }: TimeTabProps) {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Submit Week button */}
+          <button
+            data-testid="submit-week-btn"
+            onClick={() => setShowSubmitDialog(true)}
+            className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Submit Week
+          </button>
           <button
             data-testid="export-csv"
             onClick={() => exportCSV(entries, projectName)}
@@ -349,7 +628,7 @@ export function TimeTab({ projectId }: TimeTabProps) {
         )}
       </div>
 
-      {/* Table */}
+      {/* Entry Table */}
       {loading ? (
         <div className="space-y-2 animate-pulse">
           {[1, 2, 3].map((i) => (
@@ -377,37 +656,123 @@ export function TimeTab({ projectId }: TimeTabProps) {
                 <th className="text-left py-2 px-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">
                   Description
                 </th>
+                <th className="text-left py-2 px-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">
+                  Status
+                </th>
                 <th className="text-right py-2 px-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody>
-              {entries.map((entry) => (
-                <tr
-                  key={entry.id}
-                  data-testid="time-entry-row"
-                  className="border-b border-zinc-100 hover:bg-zinc-50 transition-colors"
-                >
-                  <td className="py-2 px-3 text-zinc-700 whitespace-nowrap">{entry.date}</td>
-                  <td className="py-2 px-3 text-zinc-700 whitespace-nowrap">{entry.hours}</td>
-                  <td className="py-2 px-3 text-zinc-900">{entry.description}</td>
-                  <td className="py-2 px-3 text-right whitespace-nowrap">
-                    <div className="inline-flex items-center gap-2">
-                      {/* Edit — opens TimeEntryModal */}
-                      <TimeEntryModal
-                        projectId={projectId}
-                        entry={entry}
-                        trigger={
+              {entries.map((entry) => {
+                const status = getEntryStatus(entry)
+                const editable = canEdit(entry)
+                const submittable = canSubmit(entry)
+                const locked = entry.locked
+                const isSaving = savingEntry[entry.id]
+
+                return (
+                  <tr
+                    key={entry.id}
+                    data-testid="time-entry-row"
+                    className="border-b border-zinc-100 hover:bg-zinc-50 transition-colors"
+                  >
+                    <td className="py-2 px-3 text-zinc-700 whitespace-nowrap">{entry.date}</td>
+                    <td className="py-2 px-3 text-zinc-700 whitespace-nowrap">{entry.hours}</td>
+                    <td className="py-2 px-3 text-zinc-900">{entry.description}</td>
+                    <td className="py-2 px-3 whitespace-nowrap">
+                      <StatusBadge status={status} />
+                    </td>
+                    <td className="py-2 px-3 text-right whitespace-nowrap">
+                      <div className="inline-flex items-center gap-1.5">
+                        {/* Saving indicator */}
+                        {isSaving && (
+                          <span className="text-xs text-zinc-400">Saving...</span>
+                        )}
+
+                        {/* Approve button — shown to approver/admin when entry is submitted */}
+                        {isApprover && status === 'submitted' && !isSaving && (
                           <button
-                            className="p-1 rounded hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900"
-                            title="Edit entry"
-                            aria-label="Edit entry"
+                            onClick={() => handleApprove(entry.id)}
+                            className="px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200"
+                            title="Approve entry"
+                            aria-label="Approve entry"
+                            data-testid="approve-btn"
+                          >
+                            Approve
+                          </button>
+                        )}
+
+                        {/* Reject button — shown to approver/admin when entry is submitted */}
+                        {isApprover && status === 'submitted' && !isSaving && (
+                          <button
+                            onClick={() => handleReject(entry.id)}
+                            className="px-2 py-0.5 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200"
+                            title="Reject entry"
+                            aria-label="Reject entry"
+                            data-testid="reject-btn"
+                          >
+                            Reject
+                          </button>
+                        )}
+
+                        {/* Override Lock button — admin/approver when entry is locked */}
+                        {locked && canOverrideLock(role) && !isSaving && (
+                          <button
+                            onClick={() => handleOverrideLock(entry.id)}
+                            className="px-2 py-0.5 text-xs bg-amber-100 text-amber-700 rounded hover:bg-amber-200"
+                            title="Override lock"
+                            aria-label="Override lock"
+                            data-testid="override-lock-btn"
+                          >
+                            Unlock
+                          </button>
+                        )}
+
+                        {/* Edit — only when canEdit */}
+                        {editable && !isSaving && (
+                          <TimeEntryModal
+                            projectId={projectId}
+                            entry={entry}
+                            trigger={
+                              <button
+                                className="p-1 rounded hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900"
+                                title="Edit entry"
+                                aria-label="Edit entry"
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="14"
+                                  height="14"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                </svg>
+                              </button>
+                            }
+                            onSuccess={refresh}
+                          />
+                        )}
+
+                        {/* Lock icon when entry is locked (non-override users) */}
+                        {locked && !canOverrideLock(role) && (
+                          <span
+                            className="p-1 text-amber-500"
+                            title="Entry is locked"
+                            aria-label="Entry is locked"
+                            data-testid="lock-icon"
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
-                              width="14"
-                              height="14"
+                              width="13"
+                              height="13"
                               viewBox="0 0 24 24"
                               fill="none"
                               stroke="currentColor"
@@ -415,47 +780,54 @@ export function TimeTab({ projectId }: TimeTabProps) {
                               strokeLinecap="round"
                               strokeLinejoin="round"
                             >
-                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                             </svg>
-                          </button>
-                        }
-                        onSuccess={() => setRefreshCount((c) => c + 1)}
-                      />
-                      {/* Delete — wrapped in confirmation dialog */}
-                      <DeleteConfirmDialog
-                        entityLabel="this time entry"
-                        onConfirm={() => handleDelete(entry.id)}
-                        trigger={
-                          <button
-                            className="p-1 rounded hover:bg-red-50 text-zinc-500 hover:text-red-600"
-                            title="Delete entry"
-                            aria-label="Delete entry"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="14"
-                              height="14"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <polyline points="3 6 5 6 21 6" />
-                              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                              <path d="M10 11v6" />
-                              <path d="M14 11v6" />
-                              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                            </svg>
-                          </button>
-                        }
-                      />
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                          </span>
+                        )}
+
+                        {/* Delete — only when canEdit and not locked */}
+                        {editable && !isSaving && (
+                          <DeleteConfirmDialog
+                            entityLabel="this time entry"
+                            onConfirm={() => handleDelete(entry.id)}
+                            trigger={
+                              <button
+                                className="p-1 rounded hover:bg-red-50 text-zinc-500 hover:text-red-600"
+                                title="Delete entry"
+                                aria-label="Delete entry"
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="14"
+                                  height="14"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <polyline points="3 6 5 6 21 6" />
+                                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                  <path d="M10 11v6" />
+                                  <path d="M14 11v6" />
+                                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                                </svg>
+                              </button>
+                            }
+                          />
+                        )}
+
+                        {/* Submittable indicator — shown for user role when canSubmit */}
+                        {!isApprover && submittable && !editable && (
+                          <span className="text-xs text-zinc-400 italic">ready</span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
