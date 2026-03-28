@@ -172,7 +172,7 @@ async function getCalendarClient(db: DB): Promise<calendar_v3.Calendar> {
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
-    process.env.GOOGLE_CALENDAR_REDIRECT_URI ?? process.env.GOOGLE_REDIRECT_URI,
+    process.env.GOOGLE_CALENDAR_REDIRECT_URI, // NO fallback to GOOGLE_REDIRECT_URI — that is the Gmail callback URI
   );
 
   // setCredentials — automatic refresh is built in; no manual refresh call needed
