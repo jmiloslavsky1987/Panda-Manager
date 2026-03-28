@@ -455,6 +455,28 @@ export const timeEntries = pgTable('time_entries', {
 export type TimeEntry = typeof timeEntries.$inferSelect
 export type TimeEntryInsert = typeof timeEntries.$inferInsert
 
+// ─── Phase 23: Time Tracking Advanced Config ───────────────────────────────
+
+export const timeTrackingConfig = pgTable('time_tracking_config', {
+  id:                    serial('id').primaryKey(),
+  enabled:               boolean('enabled').default(false).notNull(),
+  weekly_capacity_hours: numeric('weekly_capacity_hours', { precision: 5, scale: 2 }).notNull().default('40'),
+  working_days:          text('working_days').array().notNull().default(['Mon','Tue','Wed','Thu','Fri']),
+  submission_due_day:    text('submission_due_day').notNull().default('Friday'),
+  submission_due_time:   text('submission_due_time').notNull().default('17:00'),
+  reminder_days_before:  integer('reminder_days_before').notNull().default(1),
+  categories:            text('categories').array().notNull().default(['Development','Meetings','QA','Discovery','Admin']),
+  restrict_to_assigned:  boolean('restrict_to_assigned').default(false).notNull(),
+  active_projects_only:  boolean('active_projects_only').default(true).notNull(),
+  lock_after_approval:   boolean('lock_after_approval').default(true).notNull(),
+  exempt_users:          text('exempt_users').array().notNull().default([]),
+  created_at:            timestamp('created_at').defaultNow().notNull(),
+  updated_at:            timestamp('updated_at').defaultNow().notNull(),
+})
+
+export type TimeTrackingConfig = typeof timeTrackingConfig.$inferSelect
+export type TimeTrackingConfigInsert = typeof timeTrackingConfig.$inferInsert
+
 // ─── v2.0 Tables ─────────────────────────────────────────────────────────────
 
 export const discoveryItems = pgTable('discovery_items', {
