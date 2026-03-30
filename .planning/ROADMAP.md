@@ -41,6 +41,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 22: Source Badges + Audit Log** - Source attribution badges on all workspace tab records (Manual/Ingested/Discovered); audit_log writes on all data mutations; deletion confirmation dialog (completed 2026-03-27)
 - [x] **Phase 23: Time Tracking Advanced** - Approval workflow, Google Calendar OAuth import, admin config (capacity/categories/exemptions), bulk operations, submission reminders, export with audit fields (completed 2026-03-28)
 - [ ] **Phase 24: Scheduler Enhanced** - Create Job wizard (all 12 skills), configurable frequency/timezone/skill-params, enable/disable, run history log, failure notifications, Scheduler sidebar link
+- [ ] **Phase 25: Wizard Fix + Audit Completion** [GAP CLOSURE] - Fix AiPreviewStep.tsx filter bug (WIZ-03 wiring break restoring E2E Flow 3); add writeAuditLog to ingestion/approve and discovery/approve routes (AUDIT-02)
+**Gap Closure:** Closes WIZ-03 (wizard extraction never fires), AUDIT-02 (ingestion+discovery bulk-approve paths unlogged), and E2E Flow 3 break from v2.0 audit
 
 ## Phase Details
 
@@ -556,13 +558,25 @@ Plans:
   4. Each job's run history shows per-run timestamp, outcome, duration, and links to output artifacts or error messages; failed runs generate an in-app notification with an error summary
 **Plans**: TBD
 
+### Phase 25: Wizard Fix + Audit Completion
+**Goal**: Two targeted code fixes close the last wiring gaps from the v2.0 audit — the wizard AI extraction flow is fully functional and all bulk-ingest mutation paths write to the audit log.
+**Depends on**: Phase 20 (wizard), Phase 22 (audit log infrastructure)
+**Requirements**: WIZ-03, AUDIT-02
+**Gap Closure**: Closes gaps identified in v2.0-MILESTONE-AUDIT.md
+**Success Criteria** (what must be TRUE):
+  1. Uploading a document in the wizard's collateral step (step 2) and proceeding to the AI Preview step (step 3) triggers the SSE extraction call — extracted items appear in the preview grouped by destination tab
+  2. Approving items via the ingestion approve route (`/api/ingestion/approve`) writes a record to audit_log with entity_type, action, actor_id, and before/after JSON
+  3. Approving discovery items via the discovery approve route (`/api/discovery/approve`) writes a record to audit_log with the same fields
+  4. E2E Flow 3 (wizard upload → ingestion → extraction → items in project tabs) completes end-to-end without a filter bug blocking step 3
+**Plans**: TBD
+
 ---
 
 ## Progress
 
 **Execution Order:**
 v1.0 phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 5.1 → 5.2 → 6 → 7 → 8 → 9 → 10 → 11 → 12 → 13 → 14 → 15 → 16
-v2.0 phases execute: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (parallel)
+v2.0 phases execute: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (parallel) → 25 (gap closure)
 Phases 18 and 19 can run in parallel after Phase 17. Phases 23 and 24 are independent of each other.
 
 | Phase | Plans Complete | Status | Completed |
@@ -593,6 +607,7 @@ Phases 18 and 19 can run in parallel after Phase 17. Phases 23 and 24 are indepe
 | 22. Source Badges + Audit Log | 5/5 | Complete    | 2026-03-27 |
 | 23. Time Tracking Advanced | 8/8 | Complete   | 2026-03-28 |
 | 24. Scheduler Enhanced | 0/TBD | Not started | - |
+| 25. Wizard Fix + Audit Completion [GAP] | 0/TBD | Not started | - |
 
 ---
 
@@ -745,7 +760,7 @@ Phases 18 and 19 can run in parallel after Phase 17. Phases 23 and 24 are indepe
 | DISC-17 | Phase 19 |
 | WIZ-01 | Phase 20 |
 | WIZ-02 | Phase 20 |
-| WIZ-03 | Phase 20 |
+| WIZ-03 | Phase 25 (gap closure) |
 | WIZ-04 | Phase 20 |
 | WIZ-05 | Phase 20 |
 | WIZ-06 | Phase 20 |
@@ -776,7 +791,7 @@ Phases 18 and 19 can run in parallel after Phase 17. Phases 23 and 24 are indepe
 | ARCH-11 | Phase 21 |
 | ARCH-12 | Phase 21 |
 | AUDIT-01 | Phase 22 |
-| AUDIT-02 | Phase 22 |
+| AUDIT-02 | Phase 25 (gap closure) |
 | AUDIT-03 | Phase 22 |
 | TTADV-01 | Phase 23 |
 | TTADV-02 | Phase 23 |
@@ -810,7 +825,7 @@ Phases 18 and 19 can run in parallel after Phase 17. Phases 23 and 24 are indepe
 | SCHED-11 | Phase 24 |
 | SCHED-12 | Phase 24 |
 
-**v2.0 coverage: 96/96 requirements mapped across Phases 17–24**
+**v2.0 coverage: 96/96 requirements mapped across Phases 17–25 (Phase 25 is gap closure)**
 
 ---
 
@@ -837,3 +852,4 @@ Phases 18 and 19 can run in parallel after Phase 17. Phases 23 and 24 are indepe
 *Phase 5.2 planned: 2026-03-23 — 5 plans across 4 waves (Wave 0–3)*
 *Phases 9–14 added: 2026-03-24 — gap closure phases from v1.0 audit + high-value feature additions; SKILL-09 moved to v2*
 *v2.0 Phases 17–24 added: 2026-03-25 — AI Ingestion & Enhanced Operations milestone; 96/96 requirements mapped*
+*Phase 25 added: 2026-03-30 — gap closure from v2.0-MILESTONE-AUDIT.md; closes WIZ-03 wiring break + AUDIT-02 partial*

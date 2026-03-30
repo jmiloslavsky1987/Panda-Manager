@@ -65,7 +65,7 @@
 
 - [x] **WIZ-01**: User can create a new project via a guided multi-step wizard accessible from the Dashboard; the wizard replaces direct DB seed as the primary new-project flow
 - [x] **WIZ-02**: Wizard step 1 captures: project name, customer name, status, start date, expected end date, description; creates Project and initialises all tab data structures in DB
-- [x] **WIZ-03**: Wizard presents the recommended collateral checklist (SOW, Kickoff Deck, Discovery Notes, Presales Notes, Customer Org Chart, Prior Tracker, Gong Transcripts, Architecture Diagram Notes, Budget Sheet) and triggers the ingestion pipeline for each uploaded file
+- [ ] **WIZ-03**: Wizard presents the recommended collateral checklist (SOW, Kickoff Deck, Discovery Notes, Presales Notes, Customer Org Chart, Prior Tracker, Gong Transcripts, Architecture Diagram Notes, Budget Sheet) and triggers the ingestion pipeline for each uploaded file
 - [x] **WIZ-04**: Wizard shows AI extraction preview grouped by destination tab across all uploaded documents; user approves before any data is written to DB
 - [x] **WIZ-05**: Wizard step allows manual addition of items not captured in documents via inline forms per tab
 - [ ] **WIZ-06**: Wizard step configures time tracking for the project: weekly capacity, working days, submission due date, approver
@@ -116,7 +116,7 @@
 *Extends all workspace tabs; requires SCHEMA-01 and SCHEMA-02 to be in place first.*
 
 - [x] **AUDIT-01**: All workspace tab records display a source badge: "Manual", "Ingested — [filename]", or "Discovered — [source tool]"
-- [x] **AUDIT-02**: All data modifications (create, update, delete) on workspace records are written to audit_log with actor, timestamp, entity, and before/after JSON values
+- [ ] **AUDIT-02**: All data modifications (create, update, delete) on workspace records are written to audit_log with actor, timestamp, entity, and before/after JSON values
 - [x] **AUDIT-03**: Deletion of any workspace record requires a confirmation dialog and is always logged to audit_log
 
 ### TEAMS — Teams Tab: Team Engagement Map View
@@ -212,7 +212,7 @@
 | DISC-17 | Phase 19 | Complete |
 | WIZ-01 | Phase 20 | Complete |
 | WIZ-02 | Phase 20 | Complete |
-| WIZ-03 | Phase 20 | Complete |
+| WIZ-03 | Phase 25 | Pending |
 | WIZ-04 | Phase 20 | Complete |
 | WIZ-05 | Phase 20 | Complete |
 | WIZ-06 | Phase 20 | Pending |
@@ -243,7 +243,7 @@
 | ARCH-11 | Phase 21 | Complete |
 | ARCH-12 | Phase 21 | Complete |
 | AUDIT-01 | Phase 22 | Complete |
-| AUDIT-02 | Phase 22 | Complete |
+| AUDIT-02 | Phase 25 | Pending |
 | AUDIT-03 | Phase 22 | Complete |
 | TTADV-01 | Phase 23 | Complete |
 | TTADV-02 | Phase 23 | Complete |
@@ -281,6 +281,7 @@
 - v2.0 requirements: 96 total
 - Mapped to phases: 96
 - Unmapped: 0
+- Pending (gap closure): WIZ-03 (Phase 25), WIZ-06 (Phase 20 deferred), AUDIT-02 (Phase 25), SCHED-01..12 (Phase 24)
 
 ---
 *Requirements defined: 2026-03-25*
