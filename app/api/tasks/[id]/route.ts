@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { db } from '../../../../db'
-import { tasks } from '../../../../db/schema'
+import { tasks, auditLog } from '../../../../db/schema'
 import { eq } from 'drizzle-orm'
 import { updateWorkstreamProgress } from '../../../../lib/queries'
 
@@ -52,26 +52,34 @@ export async function PATCH(
   const patch: TaskPatch = parsed.data
 
   try {
-    // Get current task for workstream rollup
-    const [existing] = await db
-      .select({ workstream_id: tasks.workstream_id })
+    // Full SELECT for both 404 check and audit before_json
+    const [beforeFull] = await db
+      .select()
       .from(tasks)
       .where(eq(tasks.id, taskId))
       .limit(1)
 
-    if (!existing) {
+    if (!beforeFull) {
       return Response.json({ error: 'Task not found' }, { status: 404 })
     }
 
-    await db
-      .update(tasks)
-      .set(patch)
-      .where(eq(tasks.id, taskId))
+    await db.transaction(async (tx) => {
+      await tx.update(tasks).set(patch).where(eq(tasks.id, taskId))
+      const [afterFull] = await tx.select().from(tasks).where(eq(tasks.id, taskId)).limit(1)
+      await tx.insert(auditLog).values({
+        entity_type: 'task',
+        entity_id: taskId,
+        action: 'update',
+        actor_id: 'default',
+        before_json: beforeFull as Record<string, unknown>,
+        after_json: afterFull as Record<string, unknown>,
+      })
+    })
 
     // PLAN-09 progress rollup: update workstream if workstream changed or status changed
     const affectedWorkstreamId = patch.workstream_id !== undefined
       ? patch.workstream_id
-      : (patch.status !== undefined ? existing.workstream_id : null)
+      : (patch.status !== undefined ? beforeFull.workstream_id : null)
 
     if (affectedWorkstreamId) {
       await updateWorkstreamProgress(affectedWorkstreamId)
@@ -97,20 +105,28 @@ export async function DELETE(
   }
 
   try {
-    // Fetch workstream_id before deletion for post-delete rollup
-    const [existing] = await db
-      .select({ workstream_id: tasks.workstream_id })
+    // Full SELECT for both workstream rollup and audit before_json
+    const [beforeFull] = await db
+      .select()
       .from(tasks)
       .where(eq(tasks.id, taskId))
       .limit(1)
 
-    await db
-      .delete(tasks)
-      .where(eq(tasks.id, taskId))
+    await db.transaction(async (tx) => {
+      await tx.delete(tasks).where(eq(tasks.id, taskId))
+      await tx.insert(auditLog).values({
+        entity_type: 'task',
+        entity_id: taskId,
+        action: 'delete',
+        actor_id: 'default',
+        before_json: beforeFull as Record<string, unknown> ?? null,
+        after_json: null,
+      })
+    })
 
     // PLAN-09 progress rollup: recalculate workstream percent_complete after task deletion
-    if (existing?.workstream_id) {
-      await updateWorkstreamProgress(existing.workstream_id)
+    if (beforeFull?.workstream_id) {
+      await updateWorkstreamProgress(beforeFull.workstream_id)
     }
 
     return Response.json({ ok: true })

@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { db } from '../../../db'
-import { tasks } from '../../../db/schema'
+import { tasks, auditLog } from '../../../db/schema'
 import { eq } from 'drizzle-orm'
 import { updateWorkstreamProgress } from '../../../lib/queries'
 
@@ -74,32 +74,43 @@ export async function POST(request: NextRequest) {
   } = parsed.data
 
   try {
-    const result = await db
-      .insert(tasks)
-      .values({
-        project_id,
-        title,
-        description: description ?? null,
-        owner: owner ?? null,
-        due: due ?? null,
-        priority: priority ?? null,
-        type: type ?? null,
-        phase: phase ?? null,
-        workstream_id: workstream_id ?? null,
-        blocked_by: blocked_by ?? null,
-        milestone_id: milestone_id ?? null,
-        start_date: start_date ?? null,
-        status,
-        source: source ?? 'manual',
+    const inserted = await db.transaction(async (tx) => {
+      const [row] = await tx
+        .insert(tasks)
+        .values({
+          project_id,
+          title,
+          description: description ?? null,
+          owner: owner ?? null,
+          due: due ?? null,
+          priority: priority ?? null,
+          type: type ?? null,
+          phase: phase ?? null,
+          workstream_id: workstream_id ?? null,
+          blocked_by: blocked_by ?? null,
+          milestone_id: milestone_id ?? null,
+          start_date: start_date ?? null,
+          status,
+          source: source ?? 'manual',
+        })
+        .returning()
+      await tx.insert(auditLog).values({
+        entity_type: 'task',
+        entity_id: row.id,
+        action: 'create',
+        actor_id: 'default',
+        before_json: null,
+        after_json: row as Record<string, unknown>,
       })
-      .returning()
+      return row
+    })
 
     // PLAN-09 progress rollup: update workstream percent_complete after insert
     if (workstream_id) {
       await updateWorkstreamProgress(workstream_id)
     }
 
-    return Response.json(result[0], { status: 201 })
+    return Response.json(inserted, { status: 201 })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Insert failed'
     return Response.json({ error: message }, { status: 500 })
