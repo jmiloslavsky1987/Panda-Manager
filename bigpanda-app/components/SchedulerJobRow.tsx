@@ -43,6 +43,7 @@ interface SchedulerJobRowProps {
   onToggleExpand: () => void;
   onJobUpdate: (j: ScheduledJob) => void;
   onJobDelete: (id: number) => void;
+  onEdit?: (job: ScheduledJob) => void;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -92,6 +93,7 @@ export function SchedulerJobRow({
   onToggleExpand,
   onJobUpdate,
   onJobDelete,
+  onEdit,
 }: SchedulerJobRowProps) {
   const [toggling, setToggling] = useState(false);
   const [triggering, setTriggering] = useState(false);
@@ -267,11 +269,16 @@ export function SchedulerJobRow({
             <div className="space-y-3">
               {/* Controls */}
               <div className="flex items-center gap-2">
-                {/* Edit — stub for Plan 04 */}
+                {/* Edit */}
                 <button
-                  disabled
-                  className="text-xs px-3 py-1.5 rounded border border-zinc-300 text-zinc-400 cursor-not-allowed"
-                  title="Edit (coming in Plan 04)"
+                  onClick={() => onEdit?.(job)}
+                  disabled={!onEdit}
+                  className={`text-xs px-3 py-1.5 rounded border transition-colors ${
+                    onEdit
+                      ? 'border-zinc-300 text-zinc-700 hover:bg-zinc-100'
+                      : 'border-zinc-300 text-zinc-400 cursor-not-allowed'
+                  }`}
+                  data-testid={`edit-${job.id}`}
                 >
                   Edit
                 </button>

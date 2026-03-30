@@ -30,8 +30,8 @@ const DAYS_OF_WEEK = [
 // Get all IANA timezones supported by the runtime
 const TIMEZONES: string[] = (() => {
   try {
-    // @ts-expect-error — Intl.supportedValuesOf is stage-3 but widely supported
-    return Intl.supportedValuesOf('timeZone') as string[]
+    // Intl.supportedValuesOf is widely supported in modern engines
+    return (Intl as unknown as { supportedValuesOf: (key: string) => string[] }).supportedValuesOf('timeZone')
   } catch {
     // Fallback for environments that don't support Intl.supportedValuesOf
     return ['UTC', 'America/New_York', 'America/Los_Angeles', 'Europe/London', 'Asia/Tokyo']
