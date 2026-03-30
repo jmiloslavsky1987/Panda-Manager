@@ -1,17 +1,17 @@
 # Project Research Summary
 
-**Project:** BigPanda AI Project Management App (Full Rewrite)
-**Domain:** AI-native PS Delivery Management — single power user, n customer accounts, heavy AI output generation
-**Researched:** 2026-03-18
-**Confidence:** MEDIUM (stack HIGH where grounded in working codebase; architecture/pitfalls HIGH for established patterns; MCP specifics LOW)
+**Project:** BigPanda AI Project Management App — v3.0 Collaboration & Intelligence
+**Domain:** AI-native PS Delivery Management — multi-user auth, per-project chat, interactive visuals, Context Hub, templates
+**Researched:** 2026-03-30
+**Confidence:** HIGH
 
 ## Executive Summary
 
-This is a full rewrite of a working 8-phase local web app — switching from Google Drive + React/Express/Vite to PostgreSQL + Next.js 14 App Router, while keeping the existing AI skill ecosystem intact. The recommended approach is a unified Next.js 14 monorepo with Drizzle ORM for type-safe DB access, BullMQ + Redis for scheduled background jobs, and the Anthropic SDK's native tool-use API for MCP integrations. The existing working codebase provides HIGH-confidence ground-truth versions for most key libraries (React 19, Tailwind 4, @anthropic-ai/sdk 0.78.0, pptxgenjs 4, Zod 4, TanStack Query 5, CodeMirror 6) — these are proven, running versions, not estimates.
+The v3.0 milestone adds six capability areas on top of a mature single-user Next.js 16 + PostgreSQL + BullMQ platform. The core technical challenge is not building new features in isolation but integrating them into a working codebase in the correct order: authentication must come first because every subsequent feature depends on a verified user identity — audit log attribution, session-scoped chat, and admin-only route gating all require auth to exist before they are written. The recommended approach is a dependency-sequenced five-phase build: auth and tab templates in parallel first, then interactive visuals, per-project chat, and finally the Context Hub (most complex, highest Claude API risk, most failure modes).
 
-The AI-native differentiator depends critically on a SkillOrchestrator that reads SKILL.md files from disk at runtime (not bundled), assembles DB-derived context, and invokes Claude with token-budget guards. This orchestrator must be cleanly separated from Route Handlers so the same code path runs for both manual (SSE-streamed) and scheduled (BullMQ worker) invocations. Getting this separation wrong in Phase 5 taints the entire scheduled job infrastructure. The YAML context doc export must also carry forward the exact js-yaml settings from the prior build to preserve Cowork skill compatibility — this is a non-negotiable constraint.
+The stack additions are lean and well-justified. `better-auth@1.5.6` is preferred over Auth.js v5 because SAML 2.0 is a native plugin rather than a multi-week custom integration, and better-auth is now maintained by the same team that acquired Auth.js. For chat, the Vercel AI SDK (`ai` + `@ai-sdk/anthropic`) provides the `useChat` hook that handles SSE stream assembly in the browser — the existing `@anthropic-ai/sdk` raw SDK stays in place for all 15 skill routes and the two SDKs coexist without conflict. The originally-considered RAG/pgvector approach should be deferred entirely: at single-project scope a structured DB query producing a 2000–4000 token context payload is faster, more deterministic, and requires no new infrastructure. `@xyflow/react@12.10.2` (React Flow v12) handles interactive node-edge diagrams.
 
-The primary risks are: (1) Next.js serverless architecture killing cron jobs if not isolated in a dedicated worker process, (2) PostgreSQL connection pool exhaustion during concurrent scheduled job bursts, (3) Claude context window blowout on Customer Project Tracker batch runs across 10+ accounts, and (4) MCP client process stability (LOW confidence on current SDK state). The first three have well-documented mitigations. MCP needs a research spike before Phase 6.
+The dominant risk category is authentication security. CVE-2025-29927 (CVSS 9.1, March 2025) demonstrated that Next.js middleware can be bypassed by setting a single HTTP header — any app that relies solely on `middleware.ts` for auth is fully exposed. Defense-in-depth requires `requireSession()` at the top of every Route Handler and Server Action in addition to the middleware redirect. A second structural risk exists in schema design: whether future Okta integration requires a two-day config change or a two-week rewrite depends entirely on one decision made in the auth phase — adding an `okta_subject` nullable column to the `users` table and abstracting role resolution behind a `resolveRole(session)` function. Context Hub carries the highest per-feature implementation risk, with two specific failure modes requiring upfront design: transactional multi-tab writes (partial failures produce silent data inconsistency) and prompt injection via uploaded document text.
 
 ---
 
@@ -19,220 +19,131 @@ The primary risks are: (1) Next.js serverless architecture killing cron jobs if 
 
 ### Recommended Stack
 
-The stack is anchored by the existing working codebase. Ground-truth versions from running package.json files give HIGH confidence on all carry-forward libraries. New additions (Drizzle ORM, BullMQ, docx, ExcelJS, @slack/web-api) need `npm view <pkg> version` verification before pinning.
+The existing stack (Next.js 16.2.0, React 19, PostgreSQL + Drizzle ORM 0.45.1, BullMQ + Redis, `@anthropic-ai/sdk@0.80.0`, Radix UI, Tailwind CSS, Vitest) is unchanged for v3.0. Research addressed only the six new capability areas. The milestone brief references "Next.js 14" — the running application is Next.js 16.2.0, which replaces classic middleware with a `proxy.ts` pattern and has critical compatibility implications for auth library selection.
 
-**Core technologies:**
-- **Next.js 14 (App Router):** Unified frontend + API — replaces the Vite/Express split; server components, API routes, and streaming RSC in one repo
-- **React 19.2.0:** Confirmed working in existing client; do not downgrade to 18
-- **Tailwind CSS 4.2.1:** Confirmed in existing client; V4 uses CSS `@theme` directives — NO `tailwind.config.js`; `@tailwindcss/vite` plugin only
-- **TypeScript 5.x:** Standard for Next.js App Router; use strict mode throughout
-- **PostgreSQL 16.x + Drizzle ORM:** Primary data store; Drizzle preferred over Prisma (no binary engine, native Edge Runtime compat, plain TypeScript schema)
-- **`postgres` (porsager) driver:** Cleaner connection lifecycle than `pg`; avoids pool config footguns
-- **@anthropic-ai/sdk 0.78.0:** Confirmed running version — NOT ^0.20.0 (stale); streaming and tool-use API surface changed substantially from 0.20.x
-- **BullMQ + Redis:** Job queue for 6 scheduled skills; provides retry, persistence, job history — node-cron is unacceptable (no retry, no persistence, silent failure)
-- **pptxgenjs 4.0.1:** Confirmed v4 in existing build; requires `export const runtime = 'nodejs'` — cannot run in Edge Runtime
-- **Zod 4.3.6:** Confirmed v4; breaking changes from v3 (`z.record()`, `z.string().min(1)` replacing `.nonempty()`)
-- **TanStack Query 5.90.21:** Confirmed in existing client; `QueryClientProvider` must be in a client component
-- **CodeMirror 6:** Confirmed in existing client; use for YAML editor — do not switch to Monaco
-- **js-yaml 4.1.1:** Confirmed; must use `{ sortKeys: false, lineWidth: -1, schema: yaml.JSON_SCHEMA }` — non-negotiable for Cowork compatibility
-- **googleapis 171.4.0:** Confirmed working for Drive + Gmail; CJS import works in Next.js via standard `import { google } from 'googleapis'`
-- **docx 8.x + ExcelJS 4.x:** New additions for .docx/.xlsx generation; versions need `npm view` before pinning
-- **SSE via Next.js `ReadableStream`:** No library needed for real-time skill output streaming; WebSockets are incompatible with App Router serverless architecture
+**Core technology additions:**
+- `better-auth@1.5.6`: Session management, credentials login, RBAC, Okta-ready OIDC/SAML — native SAML 2.0 plugin, TypeScript-first, Next.js 16 proxy.ts supported; use `--legacy-peer-deps` if peer dep version mismatch on install
+- `bcryptjs@^2.x` + `@types/bcryptjs`: Password hashing — pure JS, no native bindings, safe in all Next.js runtimes including Edge
+- `ai@6.0.141` + `@ai-sdk/anthropic@3.0.64` + `@ai-sdk/react@3.0.143`: Vercel AI SDK — for chat only; provides `useChat` + `streamText` + `toDataStreamResponse()`; coexists with raw `@anthropic-ai/sdk` without conflict
+- `@xyflow/react@12.10.2`: Interactive node-edge diagrams (Engagement Map, Workflow Diagram); requires `dynamic(() => import(...), { ssr: false })` in all parent components
+- `pgvector@0.2.1` + `voyageai@0.2.1`: Available but NOT RECOMMENDED for v3.0 — structured DB query context injection is correct at project data scale; defer vector search to a future phase if cross-project knowledge base search becomes a requirement
 
-**Critical version verification required before Phase 1:**
-```bash
-npm view drizzle-orm version
-npm view postgres version
-npm view drizzle-kit version
-npm view bullmq version
-npm view ioredis version
-npm view docx version
-npm view exceljs version
-npm view @slack/web-api version
-```
+No new packages required for Context Hub or completeness analysis — both use existing `@anthropic-ai/sdk`, Drizzle ORM, and BullMQ infrastructure.
 
-See `.planning/research/STACK.md` for complete version table, conflict matrix, and installation commands.
-
----
+See [STACK.md](.planning/research/STACK.md) for full version compatibility table, installation commands, and alternatives considered.
 
 ### Expected Features
 
-The feature set is defined by the PROJECT.md specification (domain-authoritative). External web research was unavailable; feature categorizations are validated against known PS delivery tooling patterns (Gainsight, Vitally, Linear AI).
+**Must have (table stakes) — missing means the feature feels unshipped:**
+- Credential-based login form with persistent httpOnly cookie session
+- Role-enforced UI with server-side admin enforcement (not UI-only gating)
+- Context Hub file upload with extracted content review before DB commit (approve/reject per suggestion)
+- Per-tab completeness indicator (complete/partial/empty badge minimum)
+- Project Chat that answers questions from live project DB data — hallucinating project details is worse than no chat
+- Sub-tabs for Teams and Architecture tabs (these have the clearest multi-content-area need)
+- Templates: new project pre-populates with canonical section structure across all 11 tabs
 
-**Must have (table stakes) — missing = product fails:**
-- Project health at a glance (auto-derived RAG from overdue actions + stalled milestones + unresolved high risks — never manual)
-- Per-project action tracker with inline editing + PA3_Action_Tracker.xlsx sync (contractual Cowork handshake)
-- Risk register with append-only mitigation log
-- Milestone tracker with completion history
-- Engagement history and key decisions (both append-only — contractual audit trail)
-- Stakeholder roster (BigPanda vs customer contacts)
-- Full-text search across all records spanning all projects
-- Output Library (indexed by account + skill type + date)
-- Settings (API keys, paths, schedule times — self-configurable without code changes)
-- Multi-account architecture (n projects with add/close/archive lifecycle)
+**Should have (differentiators — what makes this categorically better than Notion + manual ChatGPT):**
+- Okta-ready OIDC architecture wired but not live — environment-variable gated so IT can plug in with no app changes
+- Admin role for scheduler and user management with a separate `/admin` route group
+- Context Hub AI routing: extracted content routed to the correct tab automatically with low-confidence fallback to manual routing
+- Per-tab quality gap flags listing missing sections (upgrade from completeness badge)
+- Interactive Engagement Map with drill-down to live DB data on node click
+- Project chat multi-turn within session (follow-up questions work correctly)
+- URL-addressable sub-tab state (`?tab=teams&subtab=adr`) for deep-linking
 
-**Should have (AI-native differentiators) — what makes this valuable over a generic PM tool:**
-- Scheduled background intelligence: 6 cron jobs (Morning Briefing 8am, Health Check 8am, Slack/Gmail sweep 9am, Tracker Monday 7am, Weekly Status Thursday 4pm, Biggy Briefing Friday 9am)
-- Skill Launcher with 15 pre-built AI skills (SKILL.md read from disk at runtime, never bundled)
-- Tone separation: customer-facing vs internal outputs are enforced at skill level — never mix
-- Drafts Inbox: review queue for all outbound AI content before any send
-- Auto health scoring (data-derived, not manual — with manual override requiring justification)
-- Context Updater: 14-step structured update from meeting notes → DB → context doc (atomic)
-- Cross-project risk heat map (probability x impact, all accounts)
-- Cross-account watch list (escalated items needing daily attention)
-- Customer Project Tracker (Gmail/Slack/Gong sweep → DB update)
-- Knowledge Base (cross-project lessons learned, searchable after archive)
-- Source tracing on all records (required for Cowork skill confidence framing)
-- YAML ↔ DB round-trip (DB → YAML for Cowork compatibility, exact js-yaml settings required)
-- Team Engagement Map, Onboarding velocity view, AI-assisted plan generation
+**Defer to v3.1 and v4+:**
+- Interactive Workflow Diagram (lower urgency than Engagement Map; add when Engagement Map pattern is validated)
+- Full per-tab gap scoring 1–5 with structured JSON output (upgrade after simple badge is shipping)
+- Multiple template types (Enterprise, SMB, Renewal) — validate single canonical template first
+- Live Okta integration (requires BigPanda IT coordination with a live Okta tenant)
+- Persistent project chat history (session-scoped is sufficient to validate chat value)
+- pgvector / RAG embeddings (anti-feature at current data scale — direct DB query is faster and more deterministic)
 
-**Defer to later milestones (not v1):**
-- Knowledge Base (build after data accumulates — milestone 2)
-- AI-assisted plan generation (highest complexity, lowest urgency — milestone 3)
-- Gantt timeline view (read-only is fine for v1; drag-and-drop is scope theater)
-- Onboarding velocity / stall detection (valuable but secondary to core data surfaces)
-
-**Anti-features (deliberately not building):**
-- Customer-facing portal, multi-user collaboration, JWT/SSO auth, in-app email/Slack send, QBR generator, real-time collaborative editing, native mobile app, versioned document diffing
-
-See `.planning/research/FEATURES.md` for full feature dependency graph and MVP prioritization order.
-
----
+See [FEATURES.md](.planning/research/FEATURES.md) for full feature dependency graph, anti-feature rationale, and prioritization matrix.
 
 ### Architecture Approach
 
-The architecture is a single-schema multi-tenant Next.js 14 App Router application with a strictly separated service layer. PostgreSQL is the single source of truth. BullMQ workers run as a separate persistent Node.js process alongside the Next.js server — this separation is mandatory, not optional. The SkillOrchestrator is the most critical component: it must be callable from both Route Handlers (manual SSE invocations) and BullMQ workers (scheduled runs) — if skill logic leaks into Route Handlers, the scheduled job path breaks.
+v3.0 is additive on the existing system. No existing tables require structural changes — the only new DB table is `users` (email, password_hash, role, active, okta_subject nullable). The `audit_log.actor_id` column already exists but was always null in single-user mode; it will now be populated from session. The pattern is: `middleware.ts` as a UX redirect gate (edge-safe, no bcrypt, no DB calls) plus `requireSession()` called at the top of every Route Handler as the actual security enforcement layer. Interactive visuals become React client components reading from existing DB tables — the HTML-generating skills are not modified and their outputs remain available in the Output Library.
 
-**Major components:**
-1. **RSC Pages** — Server-side render of data-heavy read views (dashboard, workspace tabs); zero client JS for initial paint
-2. **Route Handlers (`/app/api/`)** — HTTP boundary only; input validation, dispatch to service layer; never contain business logic
-3. **DataService** — All DB access via Drizzle; enforces append-only rules, ID generation, source tracing; only component that touches PostgreSQL
-4. **SkillOrchestrator** — Loads SKILL.md from disk at invocation time, assembles DB context, invokes Anthropic SDK, streams result, persists draft; callable from both Route Handlers and workers
-5. **MCPClientPool** — Shared MCP client instance initialized at server startup; manages Slack/Gmail/Glean/Drive tool sessions; one pool, not one client per request
-6. **JobService** — Enqueues BullMQ jobs; exposes job status; manages cron schedule registration; does not contain skill logic
-7. **BullMQ Workers** — Separate Node.js process; calls SkillOrchestrator for scheduled runs; writes results to DB via DataService
-8. **FileGenerationService** — Produces .docx/.pptx/.xlsx/.html; registers artifact in DB outputs table; isolated to Node.js runtime routes
+**Major new components:**
+1. `middleware.ts` — edge-safe cookie session gate; reads iron-session cookie, redirects unauthenticated users to /login; no bcrypt, no DB
+2. `lib/auth.ts` + `lib/session.ts` + `lib/session-edge.ts` — split auth config isolating Node.js bcrypt operations from edge-safe session decryption
+3. `app/api/chat/[id]/route.ts` + `lib/chat-context-builder.ts` — per-project chat endpoint using Vercel AI SDK `streamText`; DB snapshot approach (no vector search)
+4. `app/api/context-hub/[id]/ingest/route.ts` + `apply/route.ts` — Claude routing call returning JSON preview, then transactional DB writes via existing `discoveryItems` infrastructure
+5. `components/EngagementMapVisual.tsx` + `WorkflowDiagramVisual.tsx` — React client components; WorkflowDiagram uses React Flow with `dynamic()` + `ssr:false`
+6. `lib/tab-template-registry.ts` — TypeScript registry of fixed section structure per tab type; version-controlled, type-safe, zero runtime overhead (no DB table needed)
 
-**Key patterns:**
-- `export const runtime = 'nodejs'` on every Route Handler that touches skills, jobs, file generation, or SKILL.md reads — Edge Runtime is incompatible with all of these
-- Singleton DB connection pool with `global.__pgPool` to survive hot reload
-- `import 'server-only'` at the top of every file with DB queries or API keys — build-time guard against client bundle leakage
-- SSE via Next.js `ReadableStream` for manual skill invocations; 3-second polling for job status
-- PostgreSQL FTS (`tsvector`/`tsquery` with GIN index) for cross-project search — no separate search engine needed
-
-**Build order is strictly sequential for Phases 1-5:** Schema → App Shell → Write Surface → Job Infrastructure → Skill Engine. Phase 6 (MCP) and Phase 7 (file generation) can overlap after Phase 5 is stable.
-
-See `.planning/research/ARCHITECTURE.md` for full component boundary table, data flow diagrams, and anti-pattern list.
-
----
+See [ARCHITECTURE.md](.planning/research/ARCHITECTURE.md) for full component responsibility table, data flow diagrams, anti-patterns, and dependency-sequenced build order.
 
 ### Critical Pitfalls
 
-**Top pitfalls ordered by blast radius:**
+1. **Middleware-only auth (CVE-2025-29927)** — Never treat `middleware.ts` as the sole auth enforcement point. Add `requireSession()` to every Route Handler and Server Action regardless of middleware. The app runs Next.js 16.2.0 (patched), but defense-in-depth is still mandatory. Block `x-middleware-subrequest` at the reverse proxy as a belt-and-suspenders measure.
 
-1. **Cron jobs in Next.js Route Handlers** — Jobs silently stop running in any multi-process or serverless context; scheduler log appears on every HTTP request if misplaced. Prevention: dedicated worker process (`worker/index.ts`) launched alongside Next.js; BullMQ RepeatableJob, never `node-cron` inside API routes.
+2. **Okta-hostile user store** — Add `okta_subject` (nullable TEXT) to the `users` table in the initial migration. Implement `resolveRole(session)` as an abstraction accepting both credential and OIDC session shapes. Without these two decisions, adding Okta later requires a data migration and full session layer rewrite.
 
-2. **PostgreSQL connection pool exhaustion** — `new Pool()` at module scope creates a new pool on every Route Handler cold start; exhausts `max_connections` during concurrent scheduled job bursts. Prevention: singleton pool pattern (`global.__pgPool`); set `max: 10`; PgBouncer in transaction mode if needed.
+3. **Context Hub partial write failures** — All tab writes from a single document ingestion must be wrapped in a single PostgreSQL transaction. Implement idempotency via a UUID `ingestion_id` to prevent duplicate writes on re-upload. The Claude routing call (returns JSON preview) must be decoupled from the DB write phase (transactional apply step).
 
-3. **Claude context window blowout** — Customer Project Tracker sweeping 30 days of Gmail + Slack + Gong for 10+ accounts can hit 80k-120k tokens per account; $50-200+ API bill from a single Monday batch. Prevention: `buildSkillContext()` utility that queries only skill-declared DB rows (not full project dump); token budget guard wrapping every API call; sequential (not parallel) batch execution.
+4. **Prompt injection via uploaded documents** — Wrap all extracted document content in `<document_content>...</document_content>` delimiters in the routing prompt. Validate all Claude routing output against a strict JSON schema before any DB write is triggered. Log routing outputs to `context_hub_events` before writes for post-hoc audit.
 
-4. **Missing `project_id` filter causing cross-account data contamination** — Silent bug that gets worse as account count grows. Prevention: PostgreSQL Row Level Security on every project-scoped table; `ProjectRepository` class that always injects `project_id`; two-project seed in all integration tests.
+5. **React Flow hydration failure** — Any component using `@xyflow/react` or accessing browser APIs must be wrapped in `dynamic(() => import(...), { ssr: false })`. Never access `window`, `document`, or `ref.current` outside `useEffect`. Test with `next build && next start` — development mode does not surface all hydration errors.
 
-5. **SkillOrchestrator not separated from Route Handlers** — If skill logic is embedded in Route Handlers, BullMQ workers cannot call it, creating duplicate code paths that drift. Prevention: enforce the boundary before writing any skill logic in Phase 5; Route Handler calls `SkillOrchestrator.run()`; Worker calls `SkillOrchestrator.run()`.
-
-6. **YAML export round-trip drift** — Wrong js-yaml settings break Cowork skill compatibility silently. Prevention: carry forward `{ sortKeys: false, lineWidth: -1, schema: yaml.JSON_SCHEMA }` exactly; add round-trip test before any YAML export ships.
-
-7. **Append-only tables broken by accidental UPDATE** — Application-layer conventions drift. Prevention: `BEFORE UPDATE OR DELETE` trigger on `engagement_history` and `key_decisions` at migration time; no `PATCH` Route Handler for these tables.
-
-8. **SSE disconnect → duplicate skill run → double API cost** — User navigates away mid-stream; on reconnect triggers a new run. Prevention: write to `outputs` table during stream (not after); idempotency key on skill runs; poll job status on reconnect.
-
-9. **Prompt injection via DB content in skill prompts** — User-supplied meeting notes or swept Slack messages can override skill behavior; Context Updater writes to DB. Prevention: `<user_content>` delimiters in every prompt; schema-validated output before any DB write; diff review in Drafts Inbox.
-
-10. **MCP auth token leakage** — OAuth tokens embedded in stored skill outputs or logs. Prevention: tokens never passed to Claude; sanitize outputs before DB write; `server-only` import guard on all credential-handling modules.
-
-See `.planning/research/PITFALLS.md` for full pitfall list with detection and phase-specific warning table.
+See [PITFALLS.md](.planning/research/PITFALLS.md) for the full pitfall list including moderate risks, the security checklist, and the "looks done but isn't" verification checklist.
 
 ---
 
 ## Implications for Roadmap
 
-Based on the combined research, the architecture's component dependency graph and the FEATURES.md priority order converge on the same 8-phase structure suggested in ARCHITECTURE.md. The ordering is driven by hard dependencies: everything is blocked on the schema; skills are blocked on job infrastructure; MCP is blocked on skills.
+The research's dependency graph is clear and unambiguous: auth is the prerequisite for chat, Context Hub, admin routing, and audit log attribution. Tab templates are independent and can be built in parallel with auth. Interactive visuals depend only on existing DB tables and React Flow. Chat depends on auth. Context Hub depends on auth and benefits significantly from templates being defined first (the completeness analysis needs the template section schema as its definition of "complete"). This produces five phases, with Phase 1 containing a parallelizable sub-track.
 
-### Phase 1: Data Foundation
-**Rationale:** Every feature in FEATURES.md is blocked on PostgreSQL schema + migrations. Connection pooling, RLS policies, append-only triggers, and YAML export utilities must be built here — retrofitting them later is significantly more expensive.
-**Delivers:** PostgreSQL schema with all domain tables (actions, risks, milestones, history, decisions, stakeholders, artifacts, outputs, job_runs, drafts); DataService with full CRUD; YAML import script (existing context docs → DB); YAML export with correct js-yaml settings; health score computation logic; singleton connection pool; RLS policies; append-only triggers.
-**Addresses:** Multi-account architecture, action tracker, risk register, milestone tracker, engagement history, key decisions, stakeholder roster, YAML round-trip.
-**Avoids:** Pitfalls 2 (connection pool), 4 (missing project_id filter), 6 (YAML drift), 7 (append-only violation). These cannot be retroactively fixed without schema rewrites.
-**Research flag:** Standard patterns — skip research phase. PostgreSQL multi-tenant schema, Drizzle ORM migration workflow, and js-yaml configuration are well-documented.
+### Phase 1: Multi-User Auth Foundation
+**Rationale:** Session context is required by audit log attribution, chat endpoint security, admin gating, and the `project_members` data access pattern. All 40+ existing Route Handlers need a `requireSession()` guard added — doing this as a cohesive phase is far safer than retrofitting it after other v3 features are written. The schema decisions here (okta_subject column, resolveRole abstraction) are one-time choices with permanent consequences.
+**Delivers:** Working multi-user login, session management, admin role enforcement, Okta-ready architecture, audit log actor attribution, all existing routes session-protected, `/admin` user management panel.
+**Addresses:** Credential login (table stakes), session persistence, role-enforced UI, admin dashboard, Okta-ready OIDC adapter.
+**Avoids:** CVE-2025-29927 middleware bypass, cross-user data leakage from missing project_id user membership check, Okta-hostile integer-ID user store, edge runtime crash from importing bcrypt in middleware.
 
-### Phase 2: Next.js App Shell + Read Surface
-**Rationale:** With data in the DB, the app shell and read-only views can be built without mutation logic. SSR via React Server Components gives fast initial paint. Dashboard health cards and workspace tabs are the daily driver — establishing them early validates the data model.
-**Delivers:** Next.js project scaffold; `server-only` import guards; Route Handlers for read endpoints; RSC Dashboard with auto-derived RAG health cards; RSC workspace tabs (actions, risks, milestones, history, decisions, stakeholders); TanStack Query setup with `QueryClientProvider` in client component.
-**Uses:** Next.js 14 App Router, React 19, Tailwind 4 (CSS `@theme` directives), TanStack Query 5.
-**Avoids:** Pitfall 15 (server component credential leakage); Pitfall 13 (stale health scores during batch — add `last_updated` timestamps now).
-**Research flag:** Skip research phase. Next.js App Router RSC + Tailwind 4 + TanStack Query 5 setup is well-documented and proven in existing client.
+### Phase 1B: Tab Templates (Parallelize with Phase 1)
+**Rationale:** Pure TypeScript registry — no new DB tables, no auth dependency, no API changes. Can be built and merged while Phase 1 is in review. Completing templates before Context Hub is important because the completeness analysis needs template section definitions to know what "complete" means per tab.
+**Delivers:** `lib/tab-template-registry.ts` with fixed section structure for all 11 tab types; workspace tabs render sections per template; new project creation seeds template defaults.
+**Addresses:** Template structure consistency, canonical empty-project structure, section definitions that unblock completeness analysis in Phase 5.
+**Avoids:** Template retrofitting data loss — expand/contract pattern applies from the start rather than as a migration against live data.
 
-### Phase 3: Write Surface + Action Tracker
-**Rationale:** Read-only views prove the data model; write surface proves data integrity. Inline editing, optimistic UI, and the PA3_Action_Tracker.xlsx dual-write are the contractual deliverables that validate the DB is correct.
-**Delivers:** Mutation Route Handlers for all domain entities; optimistic UI patterns in client components; inline editing in workspace tabs; PA3_Action_Tracker.xlsx dual-write with round-trip test.
-**Avoids:** Pitfall 5 (data isolation — verify `project_id` filter on every mutation); PA3 row format must be validated against exact column headers before phase closes.
-**Research flag:** Skip research phase. Optimistic UI with TanStack Query and ExcelJS xlsx generation are well-documented patterns.
+### Phase 2: Interactive Visuals
+**Rationale:** DB tables already exist from v2. Components are purely additive — no new tables, no auth dependency (read-only). Can begin immediately after Phase 1 merges. The Engagement Map is the highest user-visible differentiator in the visual category and validates the React client component architecture early.
+**Delivers:** `EngagementMapVisual.tsx` (inline SVG, clickable nodes with drill-down modal), `WorkflowDiagramVisual.tsx` (React Flow + dagre layout), both wired into the architecture and overview/teams tabs.
+**Uses:** `@xyflow/react@12.10.2`, `@dagrejs/dagre`, `dynamic()` + `ssr:false` pattern for all browser-API-dependent components.
+**Avoids:** React Flow hydration failure (dynamic import required), bundle size impact on initial page load (dynamic import defers 90kb gzipped to on-demand load).
 
-### Phase 4: Job Infrastructure
-**Rationale:** Skills (Phase 5) depend on BullMQ for async execution. The job infrastructure must exist and be verified stable before any skill logic is written — including the worker process lifecycle, job status table, and advisory locking pattern.
-**Delivers:** Redis setup (local via Homebrew); BullMQ worker process (`worker/index.ts`); `JobService` (enqueue, status); job status Route Handler + polling UI component; `scheduled_jobs` table with advisory lock pattern; cron schedule registration for all 6 scheduled jobs (initially no-op handlers).
-**Avoids:** Pitfall 1 (cron jobs in Next.js — worker process is the solution); Pitfall 6 (job overlap — advisory locks established here, not retrofitted).
-**Research flag:** Needs research spike on BullMQ v5 RepeatableJob cron syntax before implementation — major version may have changed the repeat job API.
+### Phase 3: Per-Project Chat
+**Rationale:** Chat endpoint requires session protection (Phase 1 completed). Straightforward to implement once auth is in place. Structured DB-query context injection is the correct architecture — no pgvector needed. Streaming must be built in from day one, not added as an optimization.
+**Delivers:** `/customer/[id]/chat` workspace tab, `/api/chat/[id]` streaming endpoint, `lib/chat-context-builder.ts` DB snapshot utility, multi-turn session-scoped conversation with typing indicator.
+**Implements:** Per-project DB-query RAG chat (Pattern 2 from ARCHITECTURE.md) — Vercel AI SDK `streamText` + `useChat`, no vector embeddings.
+**Avoids:** Cross-project data leakage in chat responses (DAL wrapper + project-scoped queries only), non-streamed 15-second wait (critical UX failure), raw Anthropic SDK in chat endpoint (breaks `useChat` Vercel data stream protocol).
 
-### Phase 5: Skill Engine
-**Rationale:** The AI-native value proposition lives here. `SkillOrchestrator` is the most critical component boundary — it must be callable identically from Route Handlers and workers before any skill is wired. Token budget guard and context chunking must be built before first skill runs.
-**Delivers:** `SkillOrchestrator` with `run(skillId, projectId)` method; `buildSkillContext()` utility with token budget guard; SKILL.md startup validation + pre-run file guard; Anthropic SDK streaming integration; SSE Route Handler (`export const runtime = 'nodejs'`); streaming UI panel (Skill Launcher); Drafts Inbox; `outputs` table status model with idempotency key; initial 4 skills wired: Weekly Customer Status, Context Updater, Morning Briefing, Customer Project Tracker (without MCP).
-**Avoids:** Pitfall 3 (context window blowout — token budget guard is Phase 5 prerequisite); Pitfall 8 (SSE disconnect — DB write during stream); Pitfall 9 (prompt injection — content delimiters on all prompts); Pitfall 10 (missing SKILL.md → startup validation).
-**Research flag:** Needs research phase. Anthropic SDK 0.78.x streaming with tool_use multi-turn requires API verification. Verify `buildSkillContext()` context assembly pattern against current SDK docs.
-
-### Phase 6: MCP Integrations
-**Rationale:** Customer Project Tracker is the highest-value scheduled job but depends on Slack/Gmail/Gong sweeps via MCP. MCP is isolated to Phase 6 because the client pool pattern has LOW confidence — it needs a research spike before implementation.
-**Delivers:** `MCPClientPool` (shared, initialized once at server startup); MCP connections for Slack, Gmail, Glean, Drive; tool-use flow in SkillOrchestrator; Customer Project Tracker skill fully wired with MCP; auth token sanitization before DB write.
-**Avoids:** Pitfall 4 (MCPClientPool shared — not one client per request); Pitfall 9 (MCP auth token leakage).
-**Research flag:** REQUIRES research phase. MCP SDK was actively evolving at training cutoff (August 2025). Verify `@modelcontextprotocol/sdk` current API, stdio vs HTTP transport preference, and connection lifecycle management in 2026 before writing any Phase 6 code.
-
-### Phase 7: File Generation
-**Rationale:** Can overlap with Phase 6. pptxgenjs, docx, and ExcelJS generators are isolated to `FileGenerationService` — no dependency on MCP. ELT decks and meeting summaries complete the skill portfolio.
-**Delivers:** `FileGenerationService` with per-type generators (.docx, .pptx, .xlsx, .html); Output Library UI (indexed by account + skill type + date); archive-on-replace pattern; remaining 11 skills wired (ELT External/Internal Status, Team Engagement Map, Workflow Diagram, Handoff Doc Generator, Meeting Summary, Biggy Weekly Briefing, Onboarding Assessment, AI-Assist Plan, Knowledge Capture).
-**Avoids:** Pitfall 8 (file corruption — test every template in Microsoft Office before wiring into skill launcher; use `export const runtime = 'nodejs'` on all file generation routes).
-**Research flag:** Needs a validation spike: generate test PPTX and DOCX, open in Microsoft Office (not LibreOffice), verify no corruption. This is a known failure mode — do it before writing generation logic, not after.
-
-### Phase 8: Cross-Project Features + Polish
-**Rationale:** Cross-project views (risk heat map, watch list, full-text search) require all project data to be populated. Knowledge Base benefits from accumulated patterns. These features have no hard Phase 7 predecessors but need substantial data to be useful.
-**Delivers:** PostgreSQL FTS across all tables (GIN index); cross-project risk heat map; cross-account watch list; Knowledge Base (searchable, linkable to risks/decisions); Dashboard cross-account panels; Drafts Inbox send/discard flow; settings validation for SKILL.md paths; onboarding velocity / stall detection.
-**Research flag:** Skip research phase. PostgreSQL FTS and cross-project query patterns are well-documented. UI polish is standard React work.
-
----
+### Phase 4: Context Hub
+**Rationale:** Most complex feature with the most failure modes. Requires auth (Phase 1). Benefits from tab templates being defined (Phase 1B) since completeness analysis checks against template sections. The `discovery_items` approval workflow infrastructure is already in place from v2. Building this last ensures all prior infrastructure is stable and the team has proven the Claude API integration patterns in Phase 3.
+**Delivers:** `/customer/[id]/context-hub` workspace tab, document upload + AI routing + approve/reject flow, per-tab completeness badge, Context Hub and Chat added to WorkspaceTabs navigation.
+**Implements:** Claude as content router (Pattern 3 from ARCHITECTURE.md) — two-step ingest/apply API, single-transaction multi-tab writes, idempotent uploads via ingestion_id, reuse of existing `discoveryItems` infrastructure.
+**Avoids:** Context Hub partial write failures (single PostgreSQL transaction), prompt injection via document content (delimiter wrapping + JSON schema validation), duplicate writes on re-upload (idempotency key).
 
 ### Phase Ordering Rationale
 
-- **Data-first (Phase 1):** RLS policies, connection pooling, append-only triggers, and YAML export are dramatically harder to retrofit than to build first. Every other phase touches the DB.
-- **Read before write (Phase 2 before 3):** Read surface validates the data model before mutations can corrupt it. Optimistic UI bugs are harder to diagnose without a known-good read baseline.
-- **Infrastructure before skills (Phase 4 before 5):** SkillOrchestrator being callable from workers is the single most critical architectural boundary. It cannot be established after skill logic is written.
-- **Skills before MCP (Phase 5 before 6):** Skills without MCP (DB-only context) are fully functional for most use cases. MCP adds the Slack/Gmail sweep dimension. Isolating MCP to Phase 6 reduces Phase 5 scope and lets the LOW-confidence MCP patterns be researched before use.
-- **File generation can overlap (Phase 7 with Phase 6):** FileGenerationService has no MCP dependency. ELT deck generation can proceed in parallel with MCP integration work.
-- **Cross-project last (Phase 8):** These features compound value from accumulated data. Full-text search with empty tables is not useful.
-
----
+- Auth comes first because `requireSession()` guards must be in place before any authenticated feature is added; retrofitting 40+ route handlers after the fact is high-risk and tedious
+- Templates are parallel to auth because they have zero auth dependency and no external library requirements; completing them before Context Hub is a meaningful ordering advantage
+- Interactive visuals before chat because they are lower complexity, purely read-only, and validate the React client component architecture early
+- Chat before Context Hub because chat proves the Claude API integration pattern for the new use case and is substantially lower risk
+- Context Hub last because it has the highest number of distinct failure modes and benefits from all prior infrastructure being proven stable
 
 ### Research Flags
 
-**Requires research phase before implementation:**
-- **Phase 4:** BullMQ v5 RepeatableJob cron syntax — major version API may have changed
-- **Phase 5:** Anthropic SDK 0.78.x streaming + tool_use multi-turn pattern — verify current API surface; `buildSkillContext()` token estimation approach
-- **Phase 6:** MCP SDK current API, connection lifecycle, stdio vs HTTP transport — LOW confidence, actively evolving ecosystem
-- **Phase 7:** pptxgenjs v4 + docx v8 Microsoft Office compatibility — validation spike before generation logic is written
+Phases likely needing deeper research during planning:
+- **Phase 1 (Auth):** Verify the specific better-auth + iron-session coexistence pattern — ARCHITECTURE.md specifies iron-session for sessions while STACK.md recommends better-auth's built-in session layer; this tension must be resolved before implementation begins (recommendation: use better-auth's built-in session management, not iron-session independently)
+- **Phase 4 (Context Hub):** Claude routing prompt engineering for tab classification has no standard pattern — the routing prompt design (mapping extracted entities to 11 different tab schemas, handling low-confidence cases) requires iteration and testing on real BigPanda document types before the production implementation is written
 
-**Standard patterns (skip research phase):**
-- **Phase 1:** PostgreSQL schema design, Drizzle migration workflow, js-yaml configuration — well-documented; existing app provides proven patterns
-- **Phase 2:** Next.js App Router RSC, Tailwind 4, TanStack Query 5 — existing client codebase is ground truth
-- **Phase 3:** Optimistic UI with TanStack Query, ExcelJS xlsx writes — established patterns
-- **Phase 8:** PostgreSQL FTS, cross-project queries, React UI polish — standard
+Phases with standard patterns (can skip research-phase):
+- **Phase 1B (Templates):** TypeScript registry pattern is trivial; no external libraries; no research needed
+- **Phase 2 (Interactive Visuals):** React Flow official examples cover the exact patterns needed; `ssr:false` dynamic import is well-documented
+- **Phase 3 (Chat):** Vercel AI SDK RAG guide covers the exact `streamText` + `useChat` + DB context pattern end-to-end
 
 ---
 
@@ -240,43 +151,44 @@ Based on the combined research, the architecture's component dependency graph an
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack (carry-forward libraries) | HIGH | Read directly from working server/package.json and client/package.json — proven running versions |
-| Stack (new libraries: Drizzle, BullMQ, docx, ExcelJS) | MEDIUM | Architecture rationale is HIGH; version numbers need `npm view` before pinning |
-| Features | HIGH | Grounded in PROJECT.md specification (domain-authoritative, written by the PS delivery manager); external PS tool research MEDIUM but used only for validation |
-| Architecture | HIGH for core patterns; LOW for MCP | Next.js App Router, PostgreSQL multi-tenant, BullMQ worker separation are well-established; MCP client pool pattern was evolving at training cutoff |
-| Pitfalls | HIGH | All critical pitfalls are well-documented across multiple authoritative sources; MCP-specific pitfalls are MEDIUM |
+| Stack | HIGH | All npm versions verified live on 2026-03-30; Next.js 16 / React 19 compatibility confirmed for all additions; pgvector deferral is a justified judgment call |
+| Features | MEDIUM-HIGH | Grounded in PROJECT.md (canonical spec) and 2026 web research; feature prioritization is well-reasoned but not validated against actual user behavior in production |
+| Architecture | HIGH | Official Next.js auth guide, official Vercel AI SDK docs, official React Flow docs; patterns are established; the better-auth vs iron-session tension is the one open question |
+| Pitfalls | HIGH | CVE-2025-29927 is a documented real-world vulnerability; all critical pitfalls verified from official sources or established PostgreSQL/Next.js SSR behavior |
 
-**Overall confidence:** MEDIUM-HIGH. The foundation (schema, app shell, write surface, job infrastructure) can be built with HIGH confidence. Skill engine needs API verification (Phase 5). MCP integration is the highest-uncertainty area and needs a dedicated research spike (Phase 6).
+**Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **MCP SDK current state (Phase 6 blocker):** As of training cutoff (August 2025), `@modelcontextprotocol/sdk` was actively evolving. Verify current connection management API, stdio vs HTTP transport preference, and whether the client pool pattern from ARCHITECTURE.md Q3 is still the recommended approach. Run this research before Phase 6 planning.
-- **BullMQ v5 RepeatableJob API (Phase 4):** Major version — verify `repeat: { cron: '0 8 * * *', tz: 'America/New_York' }` syntax is still correct in v5 before implementing scheduled jobs.
-- **pptxgenjs v4 + docx v8 Microsoft Office compatibility (Phase 7):** Generate test files early in Phase 7 and open in actual Microsoft Office. Known failure mode — do not defer this validation.
-- **Cowork skill context format (Phase 5):** SKILL.md files are read from disk and expect a specific YAML-like context format. Before wiring any skill, verify the `assembleContext()` output format matches what the existing Cowork skills expect — diff against the YAML files the previous app generated.
-- **Action ID gap behavior for Cowork (Phase 1):** PostgreSQL sequences create gaps on rollback. Confirm whether Cowork skills that read context docs tolerate ID gaps (A-001, A-002, A-004) or require sequential renumbering on export.
+- **better-auth vs iron-session session layer:** ARCHITECTURE.md specifies iron-session for session management; STACK.md recommends better-auth which has its own built-in session layer. Resolve in Phase 1 planning: use better-auth's built-in session management as the single session system (recommended) and do not run both in parallel. Update implementation notes accordingly.
+- **Context Hub completeness scoring trigger:** Research leaves open whether completeness analysis is triggered on-demand (simpler for v3.0) or on a BullMQ schedule (richer but more complex). Decide before Phase 4 implementation — the BullMQ infrastructure exists and either option is viable; on-demand is recommended for v3.0.
+- **Teams and Architecture sub-tab content definitions:** Sub-tabs for Teams (ADR track vs Biggy track) and Architecture (Before-state vs Integration status) are called out in research but the exact section labels and content definitions need validation with the PS lead before Phase 1B locks the template registry.
+- **pgvector postgres.js integration:** Not a v3.0 concern, but if vector search is ever added, the `pgvector` npm package primarily documents `node-postgres` (pg) integration patterns; the app uses `postgres.js`. Raw SQL via Drizzle's `sql` tag is the confirmed fallback: `sql\`embedding <=> ${queryVector}::vector\``.
 
 ---
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/Users/jmiloslavsky/Documents/Project Assistant Code/server/package.json` — proven server dependency versions (running code)
-- `/Users/jmiloslavsky/Documents/Project Assistant Code/client/package.json` — proven client dependency versions (running code)
-- `.planning/PROJECT.md` — requirements specification (domain-authoritative)
-- Next.js 14 App Router official documentation — RSC, Route Handlers, `runtime = 'nodejs'`, `server-only` package
-- PostgreSQL documentation — RLS, FTS (`tsvector`/`tsquery`), advisory locks, connection limits
+- [PROJECT.md](../../PROJECT.md) — canonical feature specification and v3.0 scope
+- [Next.js Official Auth Guide](https://nextjs.org/docs/app/guides/authentication) — iron-session pattern, session management
+- [Vercel AI SDK — Next.js App Router](https://ai-sdk.dev/docs/getting-started/nextjs-app-router) — `streamText` + `useChat` integration
+- [Vercel AI SDK RAG Guide](https://sdk.vercel.ai/docs/guides/rag-chatbot) — DB-backed context approach
+- [React Flow Dagre Example](https://reactflow.dev/examples/layout/dagre) — `@xyflow/react` + dagre layout patterns
+- [better-auth official docs — Next.js integration](https://better-auth.com/docs/integrations/next) — Next.js 16 proxy.ts pattern
+- [CVE-2025-29927 advisory](https://github.com/vercel/next.js/security/advisories/GHSA-f82v-jwr5-mffw) — middleware auth bypass; defense-in-depth requirement
+- [Auth.js Protecting Routes](https://authjs.dev/getting-started/session-management/protecting) — DAL pattern documentation
+- [Anthropic embeddings docs](https://docs.claude.com/en/docs/build-with-claude/embeddings) — Voyage AI official recommendation (context for deferral decision)
+- Live npm version checks (2026-03-30): `better-auth@1.5.6`, `@xyflow/react@12.10.2`, `ai@6.0.141`, `@ai-sdk/anthropic@3.0.64`, `@ai-sdk/react@3.0.143`, `voyageai@0.2.1`, `pgvector@0.2.1`
 
 ### Secondary (MEDIUM confidence)
-- Training knowledge through August 2025 — BullMQ v5, Drizzle ORM, pptxgenjs v4, docx v8, ExcelJS v4
-- `.planning-archive-20260318/research/STACK.md` — previous research cycle (carry-forward context)
-- Anthropic SDK streaming and tool-use patterns — well-established but SDK version-sensitive
-- PS delivery tooling landscape (Gainsight, Vitally, Linear, Notion AI) — used for feature categorization validation only
-
-### Tertiary (LOW confidence)
-- MCP SDK client pool patterns — `@modelcontextprotocol/sdk` was actively evolving at training cutoff; verify before Phase 6
+- [PkgPulse auth comparison 2026](https://www.pkgpulse.com/blog/best-nextjs-auth-solutions-2026) — auth ecosystem survey
+- [RAG with PostgreSQL — pgDash](https://pgdash.io/blog/rag-with-postgresql.html) — structured DB query approach sufficient at small scale
+- [Mermaid.js interactive flowcharts](https://haridornala.medium.com/building-interactive-flowcharts-with-mermaid-js-and-javascript-57ec27cdc63d) — click handler patterns for Workflow Diagram alternative
+- [AI document quality gap detection — Docsie 2026](https://www.docsie.io/blog/articles/ai-document-comparison-tool-2026/) — per-section scoring patterns for Context Hub
+- [Why 95% of RAG Apps Leak Data Across Users — Medium](https://medium.com/@pswaraj0614/why-95-of-rag-apps-leak-data-across-users-and-how-i-fixed-it-0e9ded006a8c) — cross-project data scoping failure modes
+- [Next.js Security Best Practices 2026 — Authgear](https://www.authgear.com/post/nextjs-security-best-practices) — defense-in-depth patterns
 
 ---
-
-*Research completed: 2026-03-18*
+*Research completed: 2026-03-30*
 *Ready for roadmap: yes*

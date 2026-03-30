@@ -1,416 +1,613 @@
-# Architecture Patterns
+# Architecture Research
 
-**Project:** BigPanda AI Project Management App (Next.js 14 + PostgreSQL rewrite)
-**Researched:** 2026-03-18
-**Confidence:** MEDIUM — training knowledge, no external tool access during session; all claims based on well-established patterns for Next.js 14, BullMQ, Anthropic SDK, and PostgreSQL
-
----
-
-## Recommended Architecture
-
-### System Overview
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│  Browser (React / Next.js App Router)                               │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐  │
-│  │  Dashboard   │  │  Workspace   │  │  Skill Launcher / Drafts │  │
-│  │  (SSR/RSC)   │  │  (RSC+hooks) │  │  (streaming + polling)   │  │
-│  └──────┬───────┘  └──────┬───────┘  └────────────┬─────────────┘  │
-└─────────┼────────────────┼───────────────────────┼─────────────────┘
-          │  HTTP / SSE / WS│                       │ SSE stream
-┌─────────┼────────────────┼───────────────────────┼─────────────────┐
-│  Next.js 14 App Router API Layer (Route Handlers)                   │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐  │
-│  │  /api/data   │  │ /api/skills  │  │  /api/jobs (status poll) │  │
-│  │  (CRUD)      │  │ (invoke,     │  │  /api/stream (SSE)       │  │
-│  │              │  │  stream out) │  │                          │  │
-│  └──────┬───────┘  └──────┬───────┘  └────────────┬─────────────┘  │
-│         │                 │                        │                │
-│  ┌──────▼─────────────────▼────────────────────────▼─────────────┐ │
-│  │                   Service Layer                                │ │
-│  │  ┌─────────────┐  ┌────────────────┐  ┌────────────────────┐  │ │
-│  │  │ DataService  │  │ SkillOrchestra │  │  JobService         │  │ │
-│  │  │ (DB queries) │  │ (context+run)  │  │  (BullMQ enqueue)  │  │ │
-│  │  └──────┬──────┘  └───────┬────────┘  └────────┬───────────┘  │ │
-│  └─────────┼─────────────────┼─────────────────────┼─────────────┘ │
-└────────────┼─────────────────┼─────────────────────┼───────────────┘
-             │                 │                      │
-  ┌──────────▼──┐   ┌──────────▼────────┐   ┌────────▼───────────────┐
-  │ PostgreSQL  │   │  Anthropic SDK    │   │  BullMQ + Redis        │
-  │ (via Drizzle│   │  (claude-3-5 API) │   │  (job queue + cron)    │
-  │  or Prisma) │   │                  │   │                        │
-  └─────────────┘   │  ┌─────────────┐ │   └────────────────────────┘
-                    │  │  MCP Client │ │
-                    │  │  (Slack,    │ │
-                    │  │  Gmail,     │ │
-                    │  │  Glean,     │ │
-                    │  │  Drive)     │ │
-                    │  └─────────────┘ │
-                    └──────────────────┘
-```
+**Domain:** Multi-user AI project management platform — v3.0 integration architecture
+**Researched:** 2026-03-30
+**Confidence:** HIGH
 
 ---
 
-## Component Boundaries
+## Existing Architecture Baseline
 
-| Component | Responsibility | Communicates With |
-|-----------|---------------|-------------------|
-| **RSC Pages** | Server-side render of data-heavy read views (dashboard, workspace tabs). Zero client JS for initial paint. | DataService (direct DB access in RSC), Job status via client hooks |
-| **Client Components** | Interactive state: forms, optimistic updates, streaming output panels, Kanban drag | Route Handlers via fetch/SSE |
-| **Route Handlers** (`/app/api/`)  | HTTP boundary. Auth guard, input validation, dispatch to service layer. Never contain business logic. | Service layer only |
-| **DataService** | All DB access. Encapsulates Drizzle/Prisma queries. Enforces append-only rules, ID generation, source tracing. | PostgreSQL |
-| **SkillOrchestrator** | Loads SKILL.md from disk, assembles context from DB, invokes Anthropic SDK, streams result, persists draft output. | DataService, Anthropic SDK, MCP Client |
-| **MCP Client** | Single shared client instance. Manages MCP tool sessions for Slack/Gmail/Glean/Drive. Tool results passed to skill context. | Anthropic SDK (tool_use blocks), external MCP servers |
-| **JobService** | Enqueues BullMQ jobs, exposes job status, handles cron schedule registration. Does not contain skill logic. | BullMQ/Redis, SkillOrchestrator (called from workers) |
-| **BullMQ Workers** | Separate Node.js worker processes. Call SkillOrchestrator for scheduled runs. Write results to DB. | SkillOrchestrator, DataService, BullMQ/Redis |
-| **FileGenerationService** | Produces .docx/.pptx/.xlsx/.html from structured data or AI output. Registers artifact in DB outputs table. | DataService (read context, write output record), local filesystem |
-| **PostgreSQL** | Single source of truth. All project data, skill outputs, job status, drafts. | DataService only (no direct external access) |
-| **Redis** | BullMQ job queue storage and job status cache. | JobService, BullMQ Workers |
+Before documenting new components, the existing system as-built is:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     Browser (React 19)                          │
+│  ┌──────────┐  ┌────────────┐  ┌──────────────┐  ┌──────────┐  │
+│  │ Sidebar  │  │ Dashboard  │  │  Workspace   │  │ Search   │  │
+│  │ (Server) │  │ (Server)   │  │  /[id]/*     │  │  (Client)│  │
+│  └──────────┘  └────────────┘  └──────────────┘  └──────────┘  │
+├─────────────────────────────────────────────────────────────────┤
+│              Next.js 16.2 App Router (Node.js)                  │
+│  ┌──────────────────┐  ┌────────────────────────────────────┐   │
+│  │  Route Handlers  │  │         Server Components          │   │
+│  │  app/api/**      │  │  (direct DB calls via Drizzle)     │   │
+│  └──────────────────┘  └────────────────────────────────────┘   │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │               lib/ service layer                         │   │
+│  │  skill-orchestrator | queries | audit | data-service     │   │
+│  └──────────────────────────────────────────────────────────┘   │
+├─────────────────────────────────────────────────────────────────┤
+│                     PostgreSQL (Drizzle ORM)                     │
+│  projects · actions · risks · milestones · workstreams          │
+│  artifacts · engagement_history · key_decisions · stakeholders  │
+│  tasks · outputs · knowledge_base · drafts · skill_runs         │
+│  discovery_items · audit_log · scheduled_jobs · job_runs        │
+│  onboarding_phases/steps · integrations · time_entries          │
+│  business_outcomes · e2e_workflows · workflow_steps             │
+│  before_state · architecture_integrations · focus_areas         │
+├─────────────────────────────────────────────────────────────────┤
+│          BullMQ Worker Process (tsx watch worker/index.ts)      │
+│  ┌─────────────────────────┐  ┌──────────────────────────────┐  │
+│  │   DB-Driven Scheduler   │  │     Skill Run Jobs           │  │
+│  │  (scheduled_jobs table) │  │  (SkillOrchestrator.run())   │  │
+│  └─────────────────────────┘  └──────────────────────────────┘  │
+│                      Redis (ioredis + BullMQ)                    │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Key existing patterns:**
+- All pages and most tabs are Server Components that call Drizzle directly — no API layer for reads
+- Route Handlers (`app/api/**`) handle mutations and SSE streaming
+- Skills run via `SkillOrchestrator` which reads SKILL.md files from disk at runtime
+- No auth layer — all requests treated as a single implicit user
+- `lib/queries.ts` is the canonical query library; `lib/skill-orchestrator.ts` owns all Claude calls
 
 ---
 
-## Data Flow
+## v3.0 New Components Architecture
 
-### 1. Manual Skill Invocation (user clicks "Run Tracker")
-
-```
-User click
-  → POST /api/skills/invoke { skillId, projectId }
-    → SkillOrchestrator.run(skillId, projectId)
-      → DataService.assembleContext(projectId)   // pulls all relevant tables
-      → fs.readFile(SKILL_PATH/skillId.SKILL.md) // read prompt from disk
-      → MCP.gatherToolInputs()                    // Slack/Gmail sweep if skill requires
-      → anthropic.messages.stream({ system: skill_prompt, messages: [context] })
-        → yields text chunks via SSE to browser
-      → on complete: DataService.saveDraft(output)
-        → outputs table row (type=draft, status=pending_review)
-  → Browser renders streaming output in Skill Launcher panel
-  → "Review & Send" button appears when stream ends
-```
-
-### 2. Scheduled Job (daily 8am Morning Briefing)
+### System Overview — After v3.0
 
 ```
-BullMQ cron trigger (8:00 America/New_York)
-  → Worker picks up job
-    → SkillOrchestrator.run('morning-briefing', ALL_ACTIVE_PROJECTS)
-      → Same flow as manual but no SSE — result written directly to DB
-      → DataService.saveDraft(output, { source: 'scheduled', jobId })
-  → Dashboard health check on next page load: reads latest morning_briefing row
-  → In-app notification badge incremented via DB flag
-```
-
-### 3. Cross-Project Health Scoring (auto-derived)
-
-```
-DB trigger OR application-level after-write hook:
-  → On any action/risk/milestone write:
-    → DataService.computeProjectHealth(projectId)
-      → Query: overdue actions, open high-risks, stalled milestones
-      → Write: projects.rag_status, projects.health_score, projects.health_computed_at
-  → Dashboard RSC reads health score directly from DB (no AI call needed)
-```
-
-### 4. File Generation Pipeline
-
-```
-Skill output (structured JSON/markdown) OR user-triggered export
-  → FileGenerationService.generate({ type, projectId, skillOutput })
-    → For .docx: officegen or docx library → Buffer
-    → For .pptx: pptxgenjs (CJS) → Buffer
-    → For .xlsx: exceljs → Buffer
-    → For .html: template string or handlebars → string
-  → Write file to outputs directory (filesystem, configurable path)
-  → DataService.registerOutput({ projectId, type, filename, path, skillId, generatedAt })
-  → Response: { fileUrl: '/api/outputs/[id]', outputId }
-  → Browser: direct download link or inline HTML render
-```
-
-### 5. MCP Tool Calling (during skill run)
-
-```
-SkillOrchestrator assembles initial messages
-  → anthropic.messages.stream with tools array (MCP tool definitions)
-  → On tool_use block in stream:
-    → Pause stream processing
-    → MCP Client dispatches tool call to correct MCP server
-      → slack.search_messages({ query, ... })
-      → gmail.list_threads({ ... })
-      → drive.get_file({ fileId })
-    → Collect tool_results
-    → Continue stream with tool_results appended to messages
-  → Multi-turn until no more tool_use blocks
+┌─────────────────────────────────────────────────────────────────┐
+│                     Browser (React 19)                          │
+│  ┌──────────┐  ┌──────────────┐  ┌──────────────┐  ┌────────┐  │
+│  │ /login   │  │ Dashboard    │  │ Workspace    │  │ Admin  │  │
+│  │ (Client) │  │ (Server)     │  │ /[id]/* + NEW│  │ Panel  │  │
+│  └──────────┘  └──────────────┘  └──────────────┘  └────────┘  │
+│                     NEW workspace tabs:                         │
+│         context-hub · chat · (visuals inline in existing)       │
+├─────────────────────────────────────────────────────────────────┤
+│         middleware.ts — Session Gate (NEW)                      │
+│  Reads session cookie → redirect to /login if absent            │
+│  Injects user context; no bcrypt, no DB calls (edge-safe)       │
+├─────────────────────────────────────────────────────────────────┤
+│              Next.js 16.2 App Router (Node.js)                  │
+│  ┌────────────────────────┐  ┌──────────────────────────────┐   │
+│  │  NEW: /api/auth/*      │  │  MODIFIED: all existing      │   │
+│  │  login · logout        │  │  Route Handlers — session    │   │
+│  │  session-check         │  │  check wrapper added         │   │
+│  └────────────────────────┘  └──────────────────────────────┘   │
+│  ┌────────────────────────┐  ┌──────────────────────────────┐   │
+│  │  NEW: /api/chat/[id]   │  │  NEW: /api/context-hub/[id]  │   │
+│  │  (Vercel AI SDK        │  │  ingest · analyze · apply    │   │
+│  │   streamText POST)     │  │  (Claude + DB queries)       │   │
+│  └────────────────────────┘  └──────────────────────────────┘   │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │               lib/ service layer                         │   │
+│  │  NEW: auth.ts · session.ts · session-edge.ts             │   │
+│  │  NEW: chat-context-builder.ts                            │   │
+│  │  NEW: tab-template-registry.ts                           │   │
+│  │  MODIFIED: audit.ts (actor_id from session)              │   │
+│  │  MODIFIED: skill-orchestrator.ts (user attribution)      │   │
+│  └──────────────────────────────────────────────────────────┘   │
+├─────────────────────────────────────────────────────────────────┤
+│                     PostgreSQL (Drizzle ORM)                     │
+│         ALL EXISTING TABLES (unchanged except audit_log)        │
+│  ┌───────────────┐  ┌────────────────────────────────────────┐  │
+│  │  NEW: users   │  │  MODIFIED: audit_log.actor_id          │  │
+│  │  id · email   │  │  (now populated — was always null)     │  │
+│  │  password_hash│  └────────────────────────────────────────┘  │
+│  │  role · active│                                              │
+│  │  okta_subject │  (nullable — for future Okta OIDC)          │
+│  └───────────────┘                                              │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Architectural Decisions
+## Component Responsibilities
 
-### Q1: Claude AI Skill Invocation Layer
+### New Components
 
-**Pattern: SkillOrchestrator with per-skill SKILL.md dispatch, not per-skill agents**
+| Component | Responsibility | Location |
+|-----------|---------------|----------|
+| `middleware.ts` | Cookie-based session gate; redirect unauthenticated to /login; edge-safe (no bcrypt, no DB) | `bigpanda-app/middleware.ts` |
+| `app/login/page.tsx` | Credential form (email + password); calls Server Action; sets iron-session cookie | `app/login/` |
+| `lib/auth.ts` | Password hashing (bcrypt), user lookup from DB, bcrypt comparison — Node.js only; never imported in middleware | `lib/auth.ts` |
+| `lib/session.ts` | iron-session config, `getSession()`, `requireSession()`, `destroySession()` — for Route Handlers and Server Actions | `lib/session.ts` |
+| `lib/session-edge.ts` | Edge-safe session decrypt only (no bcrypt, no DB) — used exclusively by middleware | `lib/session-edge.ts` |
+| `app/api/auth/login/route.ts` | POST handler: validates credentials, creates session, sets cookie | `app/api/auth/login/` |
+| `app/api/auth/logout/route.ts` | POST handler: destroys session, clears cookie | `app/api/auth/logout/` |
+| `app/admin/page.tsx` | Admin panel: user list, create/deactivate users, role assignment (admin role required) | `app/admin/` |
+| `app/customer/[id]/chat/page.tsx` | Project chat UI — `"use client"` component using `useChat` hook | `app/customer/[id]/chat/` |
+| `app/api/chat/[id]/route.ts` | POST handler: receives messages, builds DB context snapshot, streams response via Vercel AI SDK `streamText` | `app/api/chat/[id]/` |
+| `lib/chat-context-builder.ts` | Assembles DB snapshot (actions, risks, milestones, workstreams, stakeholders, key_decisions) for Claude chat system prompt | `lib/chat-context-builder.ts` |
+| `app/customer/[id]/context-hub/page.tsx` | Context Hub tab: file upload, routing preview grouped by tab, approve/dismiss per suggestion, completeness analysis | `app/customer/[id]/context-hub/` |
+| `app/api/context-hub/[id]/ingest/route.ts` | POST: receives document text, calls Claude to extract + route, creates discoveryItems rows (status: pending) | `app/api/context-hub/[id]/ingest/` |
+| `app/api/context-hub/[id]/apply/route.ts` | POST: applies approved discovery items to their respective domain tables; writes audit log | `app/api/context-hub/[id]/apply/` |
+| `lib/tab-template-registry.ts` | TypeScript registry defining fixed section structure per tab type; consumed by tab rendering components | `lib/tab-template-registry.ts` |
+| `components/EngagementMapVisual.tsx` | React client component rendering engagement map as interactive inline SVG; onClick drill-down to detail modal | `components/EngagementMapVisual.tsx` |
+| `components/WorkflowDiagramVisual.tsx` | React client component for before/after workflow diagram using React Flow + Dagre layout; dynamic import with ssr:false | `components/WorkflowDiagramVisual.tsx` |
 
-Do not create separate agent classes per skill (15 skills = 15 files, drift risk). Instead:
+### Modified Components
 
-- One `SkillOrchestrator` class with a `run(skillId, projectId, options)` method.
-- SKILL.md loaded from disk at invocation time via `fs.readFile` — never bundled or cached in memory long-term. This preserves Cowork compatibility.
-- `assembleContext()` is the critical per-skill variation point. Each skill declares what context it needs (actions, risks, milestones, stakeholders, history, etc.) via a skill-config map (not embedded in SKILL.md). Context is fetched from DB, serialized to the same YAML-like format that Cowork skills expect.
-- Structured output: use `tool_use` with a `write_output` tool definition for skills that must produce structured JSON (Context Updater, Tracker). Plain streaming for document-generation skills (Status Email, Meeting Summary). Never use JSON mode for long documents — streaming is faster and handles token limits better.
-- Source tracing constraint: inject `source_trace` instructions into every system prompt to ensure AI output attributions are DB-derived.
-
-**Confidence: MEDIUM** — Pattern derived from Anthropic SDK streaming docs and established tool-use patterns. Verify `@anthropic-ai/sdk` version before Phase 5 (existing memory note confirmed).
-
-### Q2: Background Job Scheduling
-
-**Use BullMQ + Redis, not node-cron**
-
-Rationale:
-- node-cron runs in the Next.js server process. Next.js App Router can terminate and restart worker threads during deploys or hot reload, losing in-flight jobs. Critically, in production with multiple instances, cron jobs would fire on every instance simultaneously.
-- BullMQ with Redis provides: job deduplication, retry-on-failure, job status persistence (queryable from UI), graceful shutdown, and cron schedule management via `RepeatableJob`.
-- Workers run as separate Node.js processes (`/workers/index.ts`) started alongside the Next.js server.
-
-**Job status surfacing:** Each job writes a `job_runs` table row (jobId, skillId, projectId, status: queued|running|complete|failed, startedAt, completedAt, outputId). Route Handler `GET /api/jobs/[jobId]` polls this table. UI uses 3-second interval polling (not WebSocket) for job status — adequate for 10-30s jobs, simpler infrastructure.
-
-**Confidence: MEDIUM** — BullMQ is the established standard for Node.js job queues. Redis dependency is the only added infrastructure cost. For a local single-user app, `ioredis` connecting to a local Redis instance (or `redis` Docker container) is sufficient. Verify BullMQ v5 API (major version may have changed repeat job syntax).
-
-### Q3: MCP Tool Calling from Next.js Backend
-
-**Pattern: Shared MCP client pool initialized at server startup**
-
-- The Anthropic SDK's tool-use API is the integration point: define MCP tools as tool definitions in the `tools` array of the messages request. The SDK handles multi-turn automatically if you use `stream` with tool handling.
-- MCP servers (Slack, Gmail, Glean, Drive) run as separate processes communicating over stdio or HTTP. Use `@modelcontextprotocol/sdk` to connect.
-- Create one `MCPClientPool` module initialized at app startup (`/lib/mcp/pool.ts`). Exposes `callTool(server, toolName, params)`.
-- Skills that require MCP declare their tool dependencies in the skill-config map. SkillOrchestrator passes only the relevant tool definitions to Anthropic — do not pass all 40+ tools on every call.
-- Tool results must be stored in the job_runs record for auditability and replay.
-
-**Critical integration point:** MCP server process lifecycle management is non-trivial. The MCP server processes must be started before worker jobs attempt tool calls. Add health checks with automatic restart on failure. This is a known source of flakiness in early MCP integrations.
-
-**Confidence: LOW for MCP specifics** — MCP protocol specification and client SDK were evolving rapidly as of training cutoff (August 2025). Verify `@modelcontextprotocol/sdk` current API, connection management, and whether stdio vs HTTP transport is preferred for local servers in 2026.
-
-### Q4: Long-Running AI Skills (10-30s) — Streaming vs Polling vs WebSockets
-
-**Decision: Server-Sent Events (SSE) for manual invocations; polling for scheduled jobs**
-
-- **SSE via Next.js Route Handler** for user-triggered skill runs. Route Handler returns a `ReadableStream` with `Content-Type: text/event-stream`. Anthropic SDK's `.stream()` method yields text delta events that pipe directly. Browser uses `EventSource` or `fetch` with `ReadableStream`. This is the correct pattern for Next.js App Router.
-- **Do not use WebSockets** for skill streaming. WebSocket infrastructure (socket.io or ws) adds complexity and a server upgrade step. SSE is request/response, works through proxies, and is sufficient for unidirectional streaming.
-- **Polling for scheduled jobs.** Once a user triggers a manual run that queues a BullMQ job (vs. inline invocation), or for dashboard checking on overnight job results, 3-second polling against `GET /api/jobs/[jobId]` is the right model. Simpler than maintaining open connections.
-- **Streaming timeout handling:** Next.js App Router route handlers have a default 30-second edge function timeout. For local/self-hosted deployment, this is not a constraint (no edge runtime). Use Node.js runtime for all skill route handlers: `export const runtime = 'nodejs'`.
-
-**Confidence: HIGH** — SSE with Next.js App Router is well-documented. The `runtime = 'nodejs'` requirement for long-running routes is critical and a common source of timeout bugs.
-
-### Q5: Database Structure for N-Account Multi-Project with Cross-Project Search
-
-**Pattern: Single-schema multi-tenant with project_id foreign key on every domain table**
-
-```sql
--- Core tenant table
-projects (id, customer_name, customer_id_prefix, status: active|closed|archived,
-          rag_status, health_score, health_computed_at, go_live_date, ...)
-
--- Domain tables — all carry project_id
-actions      (id, project_id, action_id_text, ...)  -- A-CUST-NNN
-risks        (id, project_id, risk_id_text, ...)    -- R-CUST-NNN
-milestones   (id, project_id, milestone_id_text, ...)
-artifacts    (id, project_id, ...)
-history      (id, project_id, ...)   -- append-only
-decisions    (id, project_id, ...)   -- append-only
-stakeholders (id, project_id, ...)
-tasks        (id, project_id, workstream_id, ...)
-workstreams  (id, project_id, ...)
-outputs      (id, project_id, skill_id, file_type, filename, path, generated_at, ...)
-job_runs     (id, project_id, skill_id, status, started_at, completed_at, output_id)
-drafts       (id, project_id, skill_id, content, status: pending|sent|archived, ...)
-knowledge_base (id, linked_project_ids[], ...)  -- cross-project
-
--- Full-text search
-CREATE INDEX idx_actions_fts ON actions USING GIN(to_tsvector('english', description || ' ' || notes));
-CREATE INDEX idx_risks_fts ON risks USING GIN(to_tsvector('english', description || ' ' || mitigation_notes));
--- Repeat for decisions, history, stakeholders, tasks, knowledge_base
-```
-
-**Cross-project search:** Use PostgreSQL full-text search (no separate search engine needed for single-user workload). A `search_all` function queries each domain table with `project_id IN (SELECT id FROM projects WHERE status != 'archived' OR include_archived = true)` and UNIONs results. Each result row carries `project_id`, `source_table`, `matched_text`, `created_at`.
-
-**ID conventions:** `action_id_text` stores `A-KAISER-001` (the Cowork-compatible string). Primary key `id` is a serial integer for join efficiency. Never reuse `action_id_text` values — enforce with UNIQUE constraint.
-
-**Append-only enforcement:** `history` and `decisions` tables have no UPDATE-accessible route handler. DataService exposes only `appendHistory()` / `appendDecision()` — no `updateHistory()` exists.
-
-**Confidence: HIGH** — Standard PostgreSQL multi-tenant patterns. FTS approach well-established.
-
-### Q6: File Generation Pipeline (.docx/.pptx/.xlsx/.html)
-
-**Pattern: FileGenerationService with per-type generators, filesystem storage, DB registration**
-
-```
-/lib/files/
-  generators/
-    docx.ts      → uses `docx` library (maintained, ESM-compatible)
-    pptx.ts      → uses `pptxgenjs` (CJS — must use require() or createRequire workaround)
-    xlsx.ts      → uses `exceljs` (ESM-compatible)
-    html.ts      → template literals or Handlebars
-  FileGenerationService.ts   → dispatches to generator, writes to filesystem, registers in DB
-```
-
-**pptxgenjs CJS constraint:** This is carried over from the prior app (existing memory note confirmed). In a Next.js project, use `createRequire` from `module` to import pptxgenjs in a server-only context, or isolate it in a Route Handler that explicitly sets `runtime = 'nodejs'`. Do not attempt to use it in RSC or edge runtime.
-
-**Output storage:** Write files to a configurable base path (default `~/Documents/BigPanda Projects/outputs/`). Store relative path in DB. Serve via `GET /api/outputs/[id]` which reads the file and streams it with appropriate Content-Disposition.
-
-**Archive-on-replace:** When regenerating an output, the old row gets `status = 'archived'` and `archived_at = now()`. New row created. Query active outputs with `WHERE status = 'active'`.
-
-**Confidence: MEDIUM** — Library choices are based on prior project decisions (docx, pptxgenjs, exceljs). Verify current major versions before Phase implementation.
+| Component | Modification | Impact |
+|-----------|-------------|--------|
+| `app/layout.tsx` | No change — middleware handles auth redirect | None |
+| `lib/audit.ts` | Read `actor_id` from session (`getSession()`) on every write | All audit log entries gain actor attribution |
+| `lib/skill-orchestrator.ts` | Accept optional `actorId` param; pass to audit writes | Scheduled runs use `'system'`; user-triggered runs use session userId |
+| `app/customer/[id]/layout.tsx` | No change to layout structure | WorkspaceTabs gets new entries |
+| `components/WorkspaceTabs.tsx` | Add Context Hub and Chat tab entries | 2 new tabs appear in nav |
+| `app/customer/[id]/architecture/page.tsx` | Embed `WorkflowDiagramVisual` component; keep skill output link for download | Visual behavior changes; static HTML remains available |
+| `app/customer/[id]/overview/page.tsx` or teams tab | Embed `EngagementMapVisual` component inline | Visual behavior changes |
+| All `app/api/**/route.ts` files (40+ handlers) | Add `requireSession()` guard at top of each handler | Auth enforcement across all mutations |
+| `db/schema.ts` | Add `users` table | New Drizzle migration required |
 
 ---
 
-## Component Boundaries (Formal)
+## Architectural Patterns
 
-| Component | Inputs | Outputs | Must NOT |
-|-----------|--------|---------|---------|
-| RSC Pages | DB data via DataService, job status | Rendered HTML | Call Anthropic SDK directly, import client-only libs |
-| Route Handlers | HTTP requests | HTTP responses, SSE streams | Contain business logic, direct DB queries |
-| SkillOrchestrator | skillId, projectId, options | Draft output record, streaming chunks | Read from HTTP request, write HTTP response |
-| DataService | Query params, mutation payloads | Domain objects, DB records | Know about HTTP, Anthropic, or file system |
-| MCP Client Pool | toolName, params | Tool results | Block the calling thread (use async/await throughout) |
-| JobService | Job payload, schedule config | jobId, job status | Execute skill logic directly |
-| BullMQ Workers | Job payload from Redis | DB writes via DataService | Access HTTP request context |
-| FileGenerationService | Structured data, skill output | File buffer, registered output row | Stream over HTTP directly |
+### Pattern 1: iron-session Cookie Auth (Credentials-Only, Okta-Ready)
+
+**What:** Stateless encrypted cookie session using `iron-session`. The `users` table stores `email`, `password_hash` (bcrypt, 10 rounds), and `role` (`'user' | 'admin'`). Middleware reads the cookie and redirects to `/login` on miss. No external auth server needed today.
+
+**Okta-readiness strategy:** The `users` table includes an `okta_subject` column (nullable TEXT). When Okta is enabled later, the login route skips password check and instead initiates an OIDC Authorization Code flow via NextAuth.js Okta provider. The iron-session cookie is still issued after Okta callback — the session shape does not change, so all downstream code (`requireSession()`, `getSession()`, audit log) remains identical.
+
+**Trade-offs:** iron-session sessions are stateless — not revocable without a session DB or `user_active` flag check. Acceptable for an internal tool. Logout destroys the client cookie. If forced-logout is needed, check `users.active` inside `requireSession()`.
+
+**Edge Runtime constraint:** `bcrypt` uses Node.js native modules not available in the Edge Runtime. Middleware runs in Edge Runtime. This means `lib/auth.ts` (which imports bcrypt) must never be imported in `middleware.ts`. Two separate files solve this: `lib/auth.ts` for Node.js contexts, `lib/session-edge.ts` for the edge-safe decrypt only.
+
+```typescript
+// lib/session.ts — Node.js only (Route Handlers, Server Actions)
+import { getIronSession } from 'iron-session';
+import { cookies } from 'next/headers';
+
+export interface SessionData {
+  userId: number;
+  email: string;
+  role: 'user' | 'admin';
+}
+
+export async function getSession() {
+  return getIronSession<SessionData>(await cookies(), {
+    password: process.env.SESSION_SECRET!,
+    cookieName: 'bp-session',
+    cookieOptions: { httpOnly: true, secure: process.env.NODE_ENV === 'production' },
+  });
+}
+
+export async function requireSession() {
+  const session = await getSession();
+  if (!session.userId) {
+    throw new Response('Unauthorized', { status: 401 });
+  }
+  return session;
+}
+```
+
+```typescript
+// middleware.ts — edge-safe only (no bcrypt, no DB)
+import { NextRequest, NextResponse } from 'next/server';
+import { unsealData } from 'iron-session'; // edge-compatible seal/unseal
+
+const PUBLIC_PATHS = ['/login', '/_next', '/favicon.ico'];
+
+export async function middleware(req: NextRequest) {
+  const isPublic = PUBLIC_PATHS.some(p => req.nextUrl.pathname.startsWith(p));
+  if (isPublic) return NextResponse.next();
+
+  const cookie = req.cookies.get('bp-session')?.value;
+  if (!cookie) return NextResponse.redirect(new URL('/login', req.url));
+
+  try {
+    await unsealData(cookie, { password: process.env.SESSION_SECRET! });
+  } catch {
+    return NextResponse.redirect(new URL('/login', req.url));
+  }
+
+  return NextResponse.next();
+}
+```
+
+**CVE-2025-29927 note:** The app runs on Next.js 16.2.0 (patched well past the affected versions 14.x < 14.2.25). Middleware bypass via `x-middleware-subrequest` is not a concern at this version. Defense-in-depth (`requireSession()` in all Route Handlers) is still the correct pattern.
+
+### Pattern 2: Per-Project DB-Query RAG Chat (No Vector Search)
+
+**What:** A project chat endpoint that builds a structured DB snapshot (all actions, risks, milestones, workstreams, stakeholders, key_decisions for the project), injects it into Claude's system prompt, then streams a response back using Vercel AI SDK `streamText`. The `useChat` hook on the client handles streaming display.
+
+**Why no vector search:** All project data for a single project fits comfortably within Claude's context window (typical project: 20-60k tokens). Adding pgvector would require an embeddings pipeline, index maintenance, and chunking strategy for marginal benefit at this scale. Direct DB query is deterministic, cheaper, and simpler.
+
+**Implementation note:** The existing `@anthropic-ai/sdk@^0.80.0` is used by `SkillOrchestrator`. The chat endpoint uses `@ai-sdk/anthropic` + `ai` (Vercel AI SDK) alongside it. These coexist without conflict — `SkillOrchestrator` stays on the raw SDK (its DB chunk-write streaming pattern predates and does not need the Vercel AI SDK protocol). The chat endpoint uses the Vercel AI SDK because `useChat` expects the Vercel data stream format.
+
+```typescript
+// app/api/chat/[id]/route.ts
+import { streamText } from 'ai';
+import { anthropic } from '@ai-sdk/anthropic';
+import { buildChatContext } from '@/lib/chat-context-builder';
+import { requireSession } from '@/lib/session';
+
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  await requireSession();
+  const { messages } = await req.json();
+  const { id } = await params;
+  const projectId = parseInt(id, 10);
+  const systemPrompt = await buildChatContext(projectId);
+
+  const result = streamText({
+    model: anthropic('claude-sonnet-4-6'),
+    system: systemPrompt,
+    messages,
+  });
+
+  return result.toDataStreamResponse();
+}
+```
+
+### Pattern 3: Context Hub — Claude as Content Router
+
+**What:** User uploads a document (paste text or file). Claude receives the text plus a manifest of available tabs and their field schemas, then returns structured JSON identifying which fields in which tabs should be updated, plus a per-tab completeness analysis. Always previewed before DB write — uses the existing `discoveryItems` approval workflow (status: `pending` → `approved` → `dismissed`).
+
+**Why reuse discoveryItems:** The `discovery_items` table and its approval pattern (`pending` → `approved` → `dismissed`) already models this exact workflow. The Context Hub is a new UI surface on top of existing data infrastructure — no new tables needed.
+
+**Two-step Claude call:**
+1. `ingest`: Extract content → route to tabs → return preview JSON → create `discoveryItems` rows (status: pending)
+2. `apply`: User approves items → write to domain tables → mark discoveryItems approved → write audit log
+
+### Pattern 4: Interactive Visuals as React Components
+
+**What:** The existing skills generate static HTML files. In v3.0, engagement maps and workflow diagrams become React client components that read from the same DB tables the skills already populate. The HTML file generation is preserved for download/export.
+
+**Engagement Map:** Inline SVG JSX. Data from `business_outcomes`, `e2e_workflows`, `workflow_steps`, `focus_areas`, and team tables. Clickable SVG `<g>` elements with onClick handlers opening a detail drawer/modal. No external library needed — pure React + SVG.
+
+**Workflow Diagram:** `@xyflow/react` (React Flow v12+) with `@dagrejs/dagre` for automatic node layout. Nodes from `workflow_steps` table. Must use `dynamic(() => import(...), { ssr: false })` — React Flow requires browser APIs.
+
+**Trade-offs:** React Flow adds ~90kb gzipped to the client bundle. The dynamic import with `ssr: false` ensures this does not affect initial page load. The `dagrejs/dagre` package is unmaintained upstream but widely used and stable for this use case.
+
+### Pattern 5: Tab Templates via TypeScript Registry
+
+**What:** A TypeScript file defines the fixed section structure per tab type. Tab rendering components read their template and enforce section order and required/optional status.
+
+**Why TypeScript file over DB table:** Tab templates are product-design decisions that change on deploys, not at runtime. A DB table would require a migration every time a section is added. A TypeScript registry is version-controlled, type-safe, and zero overhead.
+
+```typescript
+// lib/tab-template-registry.ts
+export type TabType = 'actions' | 'risks' | 'milestones' | 'architecture' | 'overview';
+
+export interface TabSection {
+  key: string;
+  label: string;
+  required: boolean;
+  displayOrder: number;
+  description?: string;
+}
+
+export const TAB_TEMPLATES: Record<TabType, TabSection[]> = {
+  actions: [
+    { key: 'open-actions', label: 'Open Actions', required: true, displayOrder: 1 },
+    { key: 'completed-actions', label: 'Completed Actions', required: false, displayOrder: 2 },
+  ],
+  // ... remainder defined per tab during implementation
+};
+```
+
+---
+
+## Data Flow Changes
+
+### New: Authentication Flow
+
+```
+User submits /login form (email + password)
+  ↓
+Route Handler: db.select(users).where(email) → bcrypt.compare(password, hash)
+  ↓
+If valid: getSession() → session.userId = user.id → session.save()
+          iron-session sets HttpOnly encrypted cookie 'bp-session'
+  ↓
+Redirect to /
+  ↓
+All subsequent requests:
+  middleware reads 'bp-session' cookie → unsealData() → valid → NextResponse.next()
+                                                       → invalid/missing → redirect /login
+  Route Handlers: requireSession() → getSession() → check userId → return session or throw 401
+```
+
+### New: Chat Flow
+
+```
+User types message in Chat tab (/customer/[id]/chat)
+  ↓
+useChat hook (client) POSTs { messages } to /api/chat/[id]
+  ↓
+Route Handler: requireSession() | buildChatContext(projectId)
+  ↓
+buildChatContext: Drizzle queries → actions + risks + milestones + workstreams
+                 + stakeholders + key_decisions → serialized to text
+  ↓
+streamText({ model: claude-sonnet-4-6, system: contextSnapshot, messages })
+  ↓
+toDataStreamResponse() → SSE stream back to client
+  ↓
+useChat updates UI token-by-token as chunks arrive
+```
+
+### New: Context Hub Flow
+
+```
+User uploads document text in Context Hub tab
+  ↓
+POST /api/context-hub/[id]/ingest { text: string }
+  ↓
+Claude call: system = tab manifest + field schemas; user = document text
+  → returns JSON: { updates: [{ tab, field, value, confidence }], completeness: { ... } }
+  ↓
+Create discoveryItems rows for each suggested update (status: 'pending')
+  ↓
+Response: { discoveryItemIds, completeness }
+  ↓
+UI: renders grouped preview by tab; approve/dismiss per item
+  ↓
+User approves → POST /api/context-hub/[id]/apply { itemIds: number[] }
+  ↓
+For each approved discoveryItem: write value to correct domain table
+Mark discoveryItem status = 'approved'; write audit_log entries
+```
+
+### Modified: Audit Log Flow
+
+```
+Before v3.0: audit_log.actor_id always null (single-user, no auth)
+After v3.0:
+  - User-triggered actions: audit.ts calls getSession() → actor_id = session.userId.toString()
+  - Scheduled BullMQ jobs: SkillOrchestrator receives actorId='system' → audit_log.actor_id = 'system'
+  - Result: full audit trail with named actors
+```
+
+---
+
+## Recommended Project Structure Changes
+
+Only new/changed directories relative to the current structure:
+
+```
+bigpanda-app/
+├── middleware.ts                     # NEW — edge-safe session gate
+├── app/
+│   ├── login/
+│   │   └── page.tsx                 # NEW — login form (Client Component)
+│   ├── admin/
+│   │   └── page.tsx                 # NEW — user management (admin role-gated)
+│   ├── api/
+│   │   ├── auth/
+│   │   │   ├── login/route.ts       # NEW — credential validation + cookie set
+│   │   │   └── logout/route.ts      # NEW — cookie destroy
+│   │   ├── chat/
+│   │   │   └── [id]/route.ts        # NEW — Vercel AI SDK streamText
+│   │   └── context-hub/
+│   │       └── [id]/
+│   │           ├── ingest/route.ts  # NEW — Claude routing call
+│   │           └── apply/route.ts   # NEW — write approved items to DB
+│   └── customer/[id]/
+│       ├── chat/
+│       │   └── page.tsx             # NEW — useChat UI (Client Component)
+│       └── context-hub/
+│           └── page.tsx             # NEW — upload + preview UI
+├── lib/
+│   ├── auth.ts                      # NEW — bcrypt ops (Node.js only, never in middleware)
+│   ├── session.ts                   # NEW — iron-session config, getSession, requireSession
+│   ├── session-edge.ts              # NEW — edge-safe unseal (middleware only)
+│   ├── chat-context-builder.ts      # NEW — DB snapshot → Claude system prompt
+│   ├── tab-template-registry.ts     # NEW — fixed section definitions per tab type
+│   └── audit.ts                     # MODIFIED — actor_id from session
+└── components/
+    ├── EngagementMapVisual.tsx       # NEW — inline SVG, Client Component
+    └── WorkflowDiagramVisual.tsx     # NEW — React Flow, dynamic import ssr:false
+```
+
+**DB migration required:** Add `users` table. No changes to any existing table except `audit_log.actor_id` is now populated (schema column already exists).
+
+---
+
+## Integration Points
+
+### Auth Impact on Existing Route Handlers
+
+All existing Route Handlers need a single guard added at the top — no business logic changes:
+
+```typescript
+// Add to top of every existing /api/**/route.ts
+import { requireSession } from '@/lib/session';
+
+export async function POST(req: Request) {
+  const session = await requireSession(); // throws 401 Response if no valid session
+  // ... existing handler logic unchanged
+}
+```
+
+Server Components (pages/layouts) do not need explicit session checks — middleware handles redirect. For defense-in-depth, the admin panel checks role in addition.
+
+### Coexistence: Raw Anthropic SDK vs Vercel AI SDK
+
+| Usage | SDK | Why |
+|-------|-----|-----|
+| 15 skills via `SkillOrchestrator` | `@anthropic-ai/sdk` (raw) | DB chunk-write streaming pattern; not compatible with `useChat` protocol |
+| Project chat (`/api/chat/[id]`) | `@ai-sdk/anthropic` + `ai` | `useChat` requires Vercel AI SDK data stream format |
+| Context Hub Claude calls | `@anthropic-ai/sdk` (raw) | Not streamed to browser; structured JSON response; raw SDK is simpler here |
+
+Both SDKs read from `process.env.ANTHROPIC_API_KEY`. They coexist in `package.json` without conflict.
+
+### Interactive Visuals — No Data Migration
+
+The `business_outcomes`, `e2e_workflows`, `workflow_steps`, `focus_areas`, `architectureIntegrations`, and `beforeState` tables were shipped in v2.0. The new React components read from these tables directly. No data migration required. The existing HTML-generating skills are not modified — their outputs remain available in the Output Library.
+
+### Context Hub — Reuse Existing Infrastructure
+
+The `document_ingestion` status enum (`pending → extracting → preview → approved → failed`) and `discoveryItems` table (`pending → approved → dismissed`) are already in the schema. The Context Hub tab is purely new UI + API routes over existing infrastructure. No new DB tables are needed for v3.0.
+
+### External Services
+
+| Service | Integration Pattern | Status | Notes |
+|---------|---------------------|--------|-------|
+| Anthropic Claude (skills) | Raw `@anthropic-ai/sdk` via `SkillOrchestrator` | Unchanged | 15 skills unaffected |
+| Anthropic Claude (chat) | `@ai-sdk/anthropic` + Vercel AI SDK | New | Separate from skill runs |
+| Anthropic Claude (context hub) | Raw `@anthropic-ai/sdk` | New | JSON extraction calls |
+| Okta OIDC (future) | NextAuth.js Okta provider, bridged to iron-session | Future | Session shape unchanged |
+| Redis / BullMQ | Unchanged | Unchanged | Worker unaffected by auth |
+
+---
+
+## Build Order (Dependency-Sequenced)
+
+### Phase A: Multi-User Auth — Build First
+
+**Rationale:** Session context (`actor_id`) is needed by audit log, chat endpoint, and context hub. If auth is built first, every subsequent feature is written auth-aware from day one. Retrofitting auth across 40+ Route Handlers after the fact is high-risk and tedious.
+
+**Deliverables:**
+1. `users` table migration (email, password_hash, role, active, okta_subject nullable)
+2. `lib/auth.ts` (bcrypt), `lib/session.ts`, `lib/session-edge.ts`
+3. `middleware.ts` (session gate)
+4. `/login` page + `/api/auth/login` + `/api/auth/logout`
+5. `requireSession()` added to all existing Route Handlers
+6. `lib/audit.ts` modified to populate `actor_id` from session
+7. `/admin` page (user CRUD)
+
+**Risk:** Low. No existing feature behavior changes — only adds a gate.
+
+### Phase B: Tab Templates — Parallelize with A
+
+**Rationale:** Pure TypeScript registry, no new tables, no API changes, no auth dependency. Can be written and merged while Phase A is in review.
+
+**Deliverables:**
+1. `lib/tab-template-registry.ts` with all tab section definitions
+2. Each existing workspace tab updated to render sections per template
+
+**Risk:** Very low.
+
+### Phase C: Interactive Visuals — After A, B
+
+**Rationale:** DB tables already exist. Components are additive. Requires React Flow install. No auth dependency (read-only components). Can begin immediately after A is merged.
+
+**Deliverables:**
+1. `npm install @xyflow/react @dagrejs/dagre`
+2. `EngagementMapVisual.tsx` (inline SVG)
+3. `WorkflowDiagramVisual.tsx` (React Flow, dynamic import)
+4. Wire into architecture and overview/teams tabs
+
+**Risk:** Medium. React Flow bundle size; potential hydration issues with `ssr: false` dynamic import.
+
+### Phase D: Per-Project Chat — After A
+
+**Rationale:** Chat endpoint must be session-protected (requires Phase A). Straightforward once auth is in place.
+
+**Deliverables:**
+1. `npm install ai @ai-sdk/anthropic`
+2. `lib/chat-context-builder.ts`
+3. `/api/chat/[id]/route.ts`
+4. `/customer/[id]/chat/page.tsx`
+5. Add Chat to WorkspaceTabs
+
+**Risk:** Low-medium. Main complexity is tuning the DB context snapshot size to avoid token budget overflow.
+
+### Phase E: Context Hub — Last (Depends on A; Benefits from B)
+
+**Rationale:** Most complex feature. Depends on auth. Benefits from tab templates being defined (completeness analysis checks against template sections). Existing `discoveryItems` infrastructure is already in place.
+
+**Deliverables:**
+1. `/api/context-hub/[id]/ingest/route.ts`
+2. `/api/context-hub/[id]/apply/route.ts`
+3. `/customer/[id]/context-hub/page.tsx`
+4. Add Context Hub to WorkspaceTabs
+
+**Risk:** High. Claude routing accuracy requires prompt engineering; approval UX is complex.
 
 ---
 
 ## Anti-Patterns to Avoid
 
-### Anti-Pattern 1: Skill Logic in Route Handlers
-**What:** Building skill invocation directly inside `/app/api/skills/route.ts`
-**Why bad:** Cannot be called from BullMQ workers (no HTTP request context). Duplicate code paths for manual vs scheduled runs. Impossible to test in isolation.
-**Instead:** Route Handler calls `SkillOrchestrator.run()`. Worker calls `SkillOrchestrator.run()`. Same code path.
+### Anti-Pattern 1: Auth Only in Middleware
 
-### Anti-Pattern 2: node-cron Inside Next.js Server
-**What:** Registering cron jobs in a file that gets imported during app startup
-**Why bad:** Fires on every Next.js instance in multi-process scenarios. Lost on server restart. No job history, no retry, no UI visibility.
-**Instead:** BullMQ RepeatableJob with Redis persistence.
+**What people do:** Put all auth checks in `middleware.ts`, skip `requireSession()` in Route Handlers.
 
-### Anti-Pattern 3: Streaming AI Output Without Persisting It
-**What:** Streaming skill output to browser but not saving intermediate/final result to DB
-**Why bad:** User cannot recover output after browser refresh. Scheduled jobs cannot store results.
-**Instead:** SkillOrchestrator accumulates full output, writes to `drafts` table on stream completion. Browser has the stream; DB has the record.
+**Why it's wrong:** Defense-in-depth principle. Even though this app runs on a patched Next.js version, relying on a single enforcement point is fragile. Future Next.js upgrades should not silently remove your security.
 
-### Anti-Pattern 4: One MCP Client Per Request
-**What:** Creating a new MCP client connection for every skill invocation
-**Why bad:** MCP server process startup cost on every request. Connection thrashing. Race conditions if two skills run simultaneously.
-**Instead:** Shared `MCPClientPool` initialized once at server startup, reused across all invocations.
+**Do this instead:** Middleware for UX redirect. `requireSession()` in every Route Handler for actual enforcement.
 
-### Anti-Pattern 5: Storing Full SKILL.md Content in DB
-**What:** Caching skill prompts in the database or in-memory at startup
-**Why bad:** Violates the SKILL.md-on-disk runtime-read constraint. Cowork edits to skill prompts won't take effect. Drift between DB version and filesystem version.
-**Instead:** Always `fs.readFile` at invocation time. Acceptable latency for a single-user app.
+### Anti-Pattern 2: Importing bcrypt in Middleware
 
-### Anti-Pattern 6: Edge Runtime for Skill Route Handlers
-**What:** Deploying skill invocation route handlers to edge runtime (default in some Next.js configs)
-**Why bad:** Edge runtime has no `fs` access (can't read SKILL.md), no Redis access, 30s timeout, no Node.js native modules.
-**Instead:** `export const runtime = 'nodejs'` in every route handler that touches skills, jobs, or file generation.
+**What people do:** Share `lib/auth.ts` between middleware and Route Handlers.
 
----
+**Why it's wrong:** `bcrypt` uses Node.js native modules not available in Edge Runtime. Middleware throws at startup if it imports `bcrypt` directly or transitively.
 
-## Build Order (Component Dependency Graph)
+**Do this instead:** `lib/auth.ts` (bcrypt) for Node.js Route Handlers only. `lib/session-edge.ts` (iron-session `unsealData` — edge-compatible) for middleware only.
 
-```
-Phase 1 — Data Foundation (no UI dependencies)
-  PostgreSQL schema + migrations
-  DataService (all domain CRUD)
-  YAML import script (existing → DB)
-  Action Tracker import (XLSX → DB)
-  Health score computation logic
-    ↓
-Phase 2 — Next.js App Shell + Read Surface
-  Next.js project scaffold (App Router, Tailwind, auth-optional)
-  Route Handlers for read-only data endpoints
-  RSC Dashboard (reads from DataService)
-  RSC Workspace tabs (actions, risks, milestones, etc.)
-  Context doc export (DB → YAML Markdown)
-    ↓
-Phase 3 — Write Surface + Action Tracker
-  Mutation Route Handlers (CRUD for actions, risks, milestones)
-  Optimistic UI patterns in Client Components
-  Inline editing in Workspace tabs
-  PA3_Action_Tracker.xlsx dual-write
-    ↓
-Phase 4 — Job Infrastructure
-  Redis setup
-  BullMQ worker process
-  JobService
-  Job status Route Handler + polling UI component
-  Cron schedule registration (6 scheduled jobs)
-    ↓
-Phase 5 — Skill Engine (depends on Phase 4 for async, Phase 2 for context)
-  SkillOrchestrator
-  Context assembly per skill
-  Anthropic SDK integration + streaming
-  SSE Route Handler
-  Streaming UI panel (Skill Launcher)
-    ↓
-Phase 6 — MCP Integrations (depends on Phase 5)
-  MCPClientPool
-  Slack MCP server connection
-  Gmail MCP server connection
-  Glean MCP server connection
-  Drive MCP server connection
-  Tool-use flow in SkillOrchestrator
-  Customer Project Tracker skill (primary MCP consumer)
-    ↓
-Phase 7 — File Generation (can overlap with Phase 5)
-  FileGenerationService
-  docx, pptx, xlsx, html generators
-  Output Library UI
-  Artifact registration in DB
-    ↓
-Phase 8 — Cross-Project Features + Polish
-  Full-text search across all tables
-  Cross-project Risk Heat Map
-  Knowledge Base
-  Dashboard cross-account panels
-  Drafts Inbox + send/discard flow
+### Anti-Pattern 3: Using Raw Anthropic SDK for the Chat Endpoint
+
+**What people do:** Reuse `SkillOrchestrator`'s streaming pattern in the chat endpoint.
+
+**Why it's wrong:** The `useChat` hook from `@ai-sdk/react` expects the Vercel AI SDK data stream format. Raw Anthropic SSE chunks are a different format — `useChat` will receive garbled output.
+
+**Do this instead:** `/api/chat/[id]` uses `@ai-sdk/anthropic` + `streamText` → `toDataStreamResponse()`. `SkillOrchestrator` continues using the raw SDK for skills — they are separate paths.
+
+### Anti-Pattern 4: Cross-Project Chat Context
+
+**What people do:** Build the chat to answer questions spanning all projects.
+
+**Why it's wrong:** Combined context of all active projects exceeds Claude's practical context window for a single call. The FTS search feature already handles cross-project lookup.
+
+**Do this instead:** Chat is scoped per-project. Label the UI "Ask about [Project Name]". Explicitly block cross-project queries in the system prompt if needed.
+
+### Anti-Pattern 5: React Flow Without dynamic() + ssr:false
+
+**What people do:** Import `WorkflowDiagramVisual` as a static import in a Server Component or page.
+
+**Why it's wrong:** React Flow uses browser-only APIs (`window`, `ResizeObserver`). A static import in a Server Component causes a hydration error or build failure.
+
+**Do this instead:**
+```typescript
+// In the page or parent component:
+const WorkflowDiagramVisual = dynamic(
+  () => import('@/components/WorkflowDiagramVisual'),
+  { ssr: false }
+);
 ```
 
-**Critical path:** Phases 1 → 2 → 3 → 4 → 5 are strictly sequential. Phase 6 (MCP) and Phase 7 (file gen) can overlap after Phase 5 is stable. Phase 8 has no hard predecessors but benefits from all data being populated.
+### Anti-Pattern 6: Adding a sessions Table for iron-session
 
-**Biggest blocking risk:** Phase 4 → 5 interface. If SkillOrchestrator is not cleanly separated from Route Handlers in Phase 5, it cannot be called from BullMQ workers. This architectural boundary must be enforced before any skill logic is written.
+**What people do:** Create a `sessions` DB table to pair with iron-session, "for completeness."
 
----
+**Why it's wrong:** iron-session is designed as a stateless cookie-only solution. Adding a DB lookup on every request adds 30-100ms latency with no benefit at this scale.
 
-## Critical Integration Points
-
-| Integration | Risk Level | Notes |
-|-------------|------------|-------|
-| SKILL.md disk read at runtime | MEDIUM | Path must be configurable. Works in local deploy; would break in serverless. Confirm local Node.js deployment only. |
-| pptxgenjs CJS in Next.js | HIGH | Requires `createRequire` wrapper or dedicated API route with `runtime = 'nodejs'`. Test in Phase 7 setup before writing generation logic. |
-| BullMQ worker process lifecycle | MEDIUM | Workers must start with the app. Use a process manager (pm2) or a startup script. Hot reload must not restart workers. |
-| MCP client process stability | HIGH (LOW confidence) | MCP server processes crashing silently is a known pain point. Requires health check loop and automatic restart logic. |
-| Anthropic SDK streaming + tool_use | MEDIUM | Multi-turn tool_use with streaming requires careful message array management. Verify SDK version handles this correctly. |
-| PA3_Action_Tracker.xlsx dual-write | MEDIUM | Row format is contractual. Test export round-trip before Phase 3 is considered done. |
-| PostgreSQL FTS for cross-project search | LOW | Standard feature; no risk. May need query tuning for large history tables. |
+**Do this instead:** Cookie-only. If forced session revocation is required, add a `users.active` boolean and check it inside `requireSession()`.
 
 ---
 
-## Scalability Considerations
+## Scaling Considerations
 
-This is a single-user local application. Scalability considerations are secondary to correctness.
+v3.0 targets a small internal team (~5-20 users). Scaling is not a constraint.
 
-| Concern | Single-User (current) | Future Team Scale |
-|---------|----------------------|-------------------|
-| DB connections | Direct pg connection pool, 5 connections sufficient | Add PgBouncer |
-| Job concurrency | 1-2 concurrent workers | Increase worker count, add job priority queues |
-| File storage | Local filesystem | S3/GCS with signed URLs |
-| Search | PostgreSQL FTS | Add pgvector for semantic search, or migrate to dedicated search |
-| Auth | None (single-user local) | NextAuth.js with team roles |
+| Scale | Approach |
+|-------|----------|
+| 1-20 users (v3.0 target) | iron-session cookie, monolith, current DB schema — all fine |
+| 20-100 users | Add `users.active` check in `requireSession()` for revocability; pgBouncer for connection pooling |
+| 100+ users | Redis session store for revocability without DB hits; read replica for analytics queries; evaluate tRPC |
 
 ---
 
 ## Sources
 
-- Anthropic SDK streaming and tool_use patterns: training knowledge (MEDIUM confidence, verify `@anthropic-ai/sdk` current version)
-- BullMQ v5 RepeatableJob API: training knowledge (MEDIUM confidence, verify cron syntax in v5)
-- Next.js 14 App Router runtime configuration (`export const runtime = 'nodejs'`): training knowledge (HIGH confidence, well-established)
-- PostgreSQL full-text search: training knowledge (HIGH confidence, stable feature)
-- MCP SDK client pool pattern: training knowledge (LOW confidence, protocol was actively evolving at training cutoff)
-- pptxgenjs CJS interop: confirmed by prior project build (existing app memory)
-- PA3_Action_Tracker.xlsx row format: confirmed in PROJECT.md
-- SKILL.md runtime-read constraint: confirmed in PROJECT.md
+- [Next.js Official Auth Guide](https://nextjs.org/docs/app/guides/authentication) — iron-session pattern, session management (HIGH confidence — official docs)
+- [Next.js Middleware Docs 14](https://nextjs.org/docs/14/app/building-your-application/routing/middleware) — middleware route protection (HIGH confidence — official docs)
+- [Vercel AI SDK — Next.js App Router](https://ai-sdk.dev/docs/getting-started/nextjs-app-router) — `streamText` + `useChat` pattern (HIGH confidence — official SDK docs)
+- [Vercel AI SDK RAG Guide](https://sdk.vercel.ai/docs/guides/rag-chatbot) — DB-backed context approach (HIGH confidence — official guide)
+- [React Flow Dagre Example](https://reactflow.dev/examples/layout/dagre) — `@xyflow/react` + `@dagrejs/dagre` integration (HIGH confidence — official examples)
+- [NextAuth.js Okta Provider](https://next-auth.js.org/providers/okta) — future OIDC Okta bridge (HIGH confidence — official docs)
+- [CVE-2025-29927 disclosure](https://workos.com/blog/nextjs-app-router-authentication-guide-2026) — middleware bypass; patched in 14.2.25+ (HIGH confidence — security advisory referenced in multiple sources)
+- [Lama Dev iron-session walkthrough](https://blog.lama.dev/next-js-14-auth-with-iron-session/) — implementation pattern (MEDIUM confidence — community article, verified against official docs)
+- [LogRocket — SVG in Next.js 2025](https://blog.logrocket.com/import-svgs-next-js-apps/) — inline SVG vs dynamic import pattern (MEDIUM confidence — community article)
+
+---
+
+*Architecture research for: BigPanda AI Project Management App — v3.0 Collaboration & Intelligence*
+*Researched: 2026-03-30*

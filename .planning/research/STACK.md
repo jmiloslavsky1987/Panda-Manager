@@ -1,617 +1,272 @@
-# Technology Stack
+# Stack Research — v3.0 New Capabilities
 
-**Project:** BigPanda AI Project Management App (Full Rewrite)
-**Researched:** 2026-03-18
-**Research Mode:** Ecosystem — Stack Dimension
-**Knowledge Basis:** Existing working codebase (`server/package.json`, `client/package.json`) + training data through Aug 2025
+**Domain:** Multi-user auth, RAG chat over PostgreSQL, interactive visuals — added to existing Next.js 16 + PostgreSQL app
+**Researched:** 2026-03-30
+**Confidence:** HIGH (npm versions verified live; library capabilities verified via web search + official docs)
 
-> IMPORTANT VERIFICATION NOTE: External web/npm lookups were blocked by project settings.
-> All versions marked HIGH confidence are directly read from the WORKING codebase's installed
-> package.json files — these are the proven, running versions, not estimates.
-> Versions marked MEDIUM confidence apply to new libraries not yet installed (PostgreSQL layer,
-> BullMQ, MCP, docx, xlsx) — verify with `npm view <pkg> version` before pinning.
+> This document covers ONLY the stack additions for v3.0. The existing validated stack
+> (Next.js 16.2.0, React 19, PostgreSQL + Drizzle ORM, BullMQ + Redis, Anthropic SDK 0.80.0,
+> Radix UI, Tailwind CSS, Vitest) is already installed and is NOT re-researched here.
 
 ---
 
-## Context: What Changed from the Previous Build
+## Critical Context: The App Runs Next.js 16, Not 14
 
-The existing codebase (React/Vite/Express/Google Drive, 8 phases complete) used versions that
-were accurate as of early 2026. The rewrite switches:
+The `bigpanda-app/package.json` confirms `next: 16.2.0` and `react: 19.2.4`. All library
+recommendations below have been verified against Next.js 16 / React 19 compatibility.
+The milestone brief references "Next.js 14" — this is outdated and should be treated as 16.
 
-- **From** Google Drive as data store  **→ To** PostgreSQL as the source of truth
-- **From** React/Vite SPA + Express API **→ To** Next.js 14+ (App Router) unified
-- **From** Drive-sync YAML files **→ To** DB with YAML export for Cowork compatibility
-- **Adds** Background job scheduling, MCP tool calling, full-text search, real-time UI
-
-The existing `server/` and `client/` package.json files contain the ground-truth versions for
-all shared libraries. Those versions are used directly below.
+**Key Next.js 16 difference:** Middleware has been replaced by `proxy.ts`. Any auth
+library that uses middleware for route protection must use the `proxy.ts` pattern.
 
 ---
 
-## Recommended Stack
+## Recommended Additions
 
-### Core Frontend
+### 1. Authentication
 
-| Technology | Proven Version | Purpose | Why |
-|------------|---------------|---------|-----|
-| Next.js | ^14.x (App Router) | Frontend framework + API routes | Decided. App Router co-locates server components, API routes, and streaming RSC in one repo. Eliminates the Vite proxy/Express split of the previous build. |
-| React | ^19.2.0 | UI framework | CONFIRMED working in existing codebase. React 19 is the current stable and the default scaffold. Not 18. |
-| Tailwind CSS | ^4.2.1 | Utility CSS | CONFIRMED working. V4 uses `@tailwindcss/vite` plugin (no separate PostCSS config). The old tailwind.config.js approach is replaced by CSS `@theme` directives. |
-| TypeScript | ^5.x | Type safety | Standard for Next.js projects. App Router and server components are typed by default. Use strict mode. |
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| `better-auth` | 1.5.6 | Session management, credentials login, role-based access, SAML/OIDC provider architecture | Native SAML 2.0 + OIDC support out of the box; TypeScript-first plugin system; fully compatible with Next.js 16 + React 19 App Router; `proxy.ts` pattern supported; Auth.js team was acquired by better-auth team in Sept 2025, making this the forward path |
+| `bcryptjs` | latest ^2.x | Password hashing for credentials provider | Pure JS, no native bindings, works in all Next.js runtimes |
+| `@types/bcryptjs` | latest | TypeScript types | Dev dependency |
 
-**Confidence:** HIGH (React 19, Tailwind 4 — directly from working codebase).
+**Why better-auth over Auth.js v5 (next-auth@beta):**
+Auth.js v5 requires "significant custom work" for SAML — the first-class feature this project
+needs for Okta-ready architecture. better-auth ships SAML 2.0 as a plugin, has native
+Next.js 16 / proxy.ts docs, and is actively maintained by the same team that now owns Auth.js.
 
-**Tailwind v4 gotcha (HIGH confidence — proven in existing build):**
-V4 does NOT use `tailwind.config.js` by default. Configuration moves to CSS:
-```css
-/* app/globals.css */
-@import "tailwindcss";
-@theme {
-  --color-brand: #FF6B35;
-}
-```
-The `@tailwindcss/vite` plugin handles everything. No PostCSS config needed. Running
-`npx tailwindcss init` generates a v3-style config that is WRONG for v4.
+**Why not Clerk:**
+Clerk is a managed SaaS. This app is local/self-hosted (no external dependency acceptable for
+a single-team internal tool). Clerk pricing and vendor lock-in are wrong fit.
 
----
+**Okta-ready architecture pattern:**
+Use better-auth's OIDC plugin for Okta connection. No live Okta credentials needed now —
+the plugin is wired but the provider config is environment-variable gated. When Okta is
+ready, set `OKTA_CLIENT_ID` / `OKTA_CLIENT_SECRET` / `OKTA_ISSUER` and the login flow switches.
+Credentials login remains as fallback for users not in Okta.
 
-### Core Backend
-
-| Technology | Proven/Recommended Version | Purpose | Why |
-|------------|---------------------------|---------|-----|
-| Next.js API Routes | (same as frontend) | REST API + background triggers | App Router `route.ts` files replace the Express layer. No separate server process needed for API. |
-| Node.js | ^22.x LTS | Runtime | Next.js 14 requires Node 18.17+. Use 22.x (enters LTS Oct 2025) for all new work. |
-| Express | ^5.2.1 (existing) | NOT recommended for new build | Express 5 is confirmed working in the existing server. For the Next.js rewrite, API routes replace Express. If a standalone worker process is needed for BullMQ, use Express 5. |
-
-**Confidence:** HIGH.
-
-**Architecture decision — Express vs Next.js API Routes:**
-Keep BullMQ workers in a separate `worker/` process (Express 5 or standalone Node script)
-because Next.js serverless functions do not support long-running processes. Everything else
-(CRUD, AI invocation) goes in Next.js API routes.
+**Security: Defense-in-depth required (CVE-2025-29927 lesson)**
+Never rely solely on proxy.ts for auth protection. Every Server Action and Route Handler that
+touches user data must call `auth()` to verify the session. This is the Data Access Layer
+pattern — verified at the point of data, not only at the routing layer.
 
 ---
 
-### Database Layer
+### 2. RAG Chat over PostgreSQL
 
-| Technology | Recommended Version | Purpose | Why |
-|------------|--------------------|---------|----|
-| PostgreSQL | ^16.x | Primary data store | Decided. Full-text search (`tsvector`/`tsquery`) is built-in and eliminates the need for a separate search index for a single-user local app. JSONB columns handle semi-structured skill outputs. |
-| Drizzle ORM | ^0.30.x | Type-safe DB access | Preferred over Prisma for Next.js App Router. Drizzle schema is plain TypeScript, runs in Edge Runtime, and generates SQL that is readable. Prisma generates an opaque query engine binary that complicates local dev on macOS ARM. |
-| drizzle-kit | ^0.20.x | DB migrations | Drizzle's migration CLI. Generates SQL migration files you can inspect and run. |
-| postgres (npm) | ^3.4.x | pg driver | The `postgres` package (by porsager) is the recommended driver for Drizzle + PostgreSQL. Faster than `pg`, supports tagged template literals, and avoids the `pg` pool configuration footguns. |
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| `pgvector` | 0.2.1 | Node.js client for PostgreSQL pgvector extension; adds vector type support | Official npm package from the pgvector project; works with existing `postgres` (node-postgres) client already in the app; supports Drizzle ORM vector columns |
+| `voyageai` | 0.2.1 | Embeddings API — converts project text to vectors | Anthropic's official recommended embedding partner; voyage-3.5 model outperforms OpenAI text-embedding-3-large on retrieval benchmarks; same API key infrastructure as Claude |
+| `ai` (Vercel AI SDK) | 6.0.141 | `useChat` hook, `streamText`, unified LLM interface | Handles streaming chat UI with no manual SSE management; `useChat` hook provides optimistic UI, error handling, and message state out of the box; integrates with Anthropic via `@ai-sdk/anthropic` |
+| `@ai-sdk/anthropic` | 3.0.64 | Vercel AI SDK provider for Anthropic Claude | Wraps `@anthropic-ai/sdk` in the unified AI SDK interface; required for `streamText` with Claude; allows tool use within chat |
+| `@ai-sdk/react` | 3.0.143 | React hooks (`useChat`, `useCompletion`) | Client-side chat state management; works with Next.js 16 App Router client components |
 
-**Confidence:** MEDIUM (Drizzle/postgres version numbers — need `npm view` before pinning; architecture rationale is HIGH).
+**Why Voyage AI for embeddings instead of OpenAI:**
+Anthropic does not offer its own embedding model. Their official recommendation is Voyage AI.
+For a Claude-native stack, using Voyage AI keeps vendor footprint tight (one AI vendor relationship).
+`voyage-3.5` is current best-practice for RAG with Claude. The `voyageai` npm package is the
+official Voyage AI Node.js SDK.
 
-**Drizzle ORM over Prisma — rationale:**
+**Why Vercel AI SDK on top of existing `@anthropic-ai/sdk`:**
+The existing codebase uses `@anthropic-ai/sdk` directly for skill streaming. The Vercel AI SDK
+wraps this for the chat use case specifically — it provides the `useChat` React hook which
+handles streaming response assembly in the browser. For the existing skill engine (SSE streaming),
+keep the direct SDK. For the new per-project chat UI, use Vercel AI SDK.
 
-| Criterion | Drizzle | Prisma |
-|-----------|---------|--------|
-| Schema definition | TypeScript file, no DSL | Prisma schema DSL (separate language) |
-| Next.js App Router compat | Native (no binary dependency) | Requires workarounds for Edge Runtime |
-| Generated queries | Inspectable SQL | Opaque query engine |
-| Migration workflow | SQL files (drizzle-kit generate + push) | Prisma migrate (heavier tooling) |
-| macOS ARM | Works out of box | Binary engine download sometimes fails |
-| Bundle size | Small | Large (binary engine) |
-
-**Full-text search strategy (PostgreSQL built-in):**
-```sql
--- Add tsvector column to searchable tables
-ALTER TABLE actions ADD COLUMN search_vector tsvector
-  GENERATED ALWAYS AS (
-    to_tsvector('english', coalesce(description, '') || ' ' || coalesce(notes, ''))
-  ) STORED;
-
-CREATE INDEX actions_search_idx ON actions USING gin(search_vector);
-
--- Query
-SELECT * FROM actions
-WHERE search_vector @@ plainto_tsquery('english', $1)
-ORDER BY ts_rank(search_vector, plainto_tsquery('english', $1)) DESC;
+**RAG data flow:**
 ```
-This covers the full-text search requirement across actions, risks, decisions, and history
-without adding Elasticsearch or MeiliSearch to the stack.
+Project data (DB rows) → chunked text → Voyage AI embed → pgvector column (per project)
+User chat message → Voyage AI embed → cosine similarity search → top-k chunks
+top-k chunks + question → Claude via streamText → streamed answer
+```
+
+**pgvector with Drizzle ORM:**
+Drizzle 0.31.2+ supports pgvector natively. The `pgvector` npm package adds the vector type
+to the `postgres` client already installed. Schema addition:
+```ts
+import { vector } from 'drizzle-orm/pg-core';
+// In a new embeddings table:
+embedding: vector({ dimensions: 1024 })  // voyage-3.5 uses 1024 dimensions
+```
+HNSW index with cosine ops for sub-millisecond similarity search at project scale.
+The pgvector PostgreSQL extension must be enabled in the DB before migrations run:
+`CREATE EXTENSION IF NOT EXISTS vector;`
 
 ---
 
-### Anthropic SDK (AI Invocation)
+### 3. Interactive Visuals (Engagement Maps + Workflow Diagrams)
 
-| Technology | Proven Version | Purpose | Why |
-|------------|---------------|---------|-----|
-| @anthropic-ai/sdk | ^0.78.0 | Claude API client | CONFIRMED — this is the version running in production in the existing build. NOT ^0.20.0 (stale), NOT ^0.30.x (stale estimate). 0.78.0 is the ground-truth current version. |
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| `@xyflow/react` | 12.10.2 | Node-based interactive diagrams: engagement maps, workflow diagrams, drill-down detail | React Flow v12 (rebranded to @xyflow/react) is the standard for interactive node-edge diagrams in React; supports custom SVG nodes, zoom/pan, click handlers for drill-down; the xyflow team now uses Next.js App Router for their own docs site |
 
-**Confidence:** HIGH (directly from running server/package.json).
+**Why @xyflow/react over D3.js:**
+D3 requires imperative DOM manipulation that conflicts with React's declarative model. React Flow
+renders nodes as React components — meaning every engagement map node can be a full React component
+with Radix UI popover drill-down on click. D3 is appropriate if you need physics simulation (D3-Force)
+for large graphs, but at project scale (10-50 nodes), React Flow is far easier to maintain.
 
-**SDK version delta warning:** The brief originally specified `^0.20.0`. The existing build
-already upgraded to `^0.78.0`. The API surface has changed substantially — streaming pattern,
-tool use API (now `tools` array with `tool_choice`), and the `beta` header for extended thinking.
-Do not copy code examples written for 0.20.x.
+**Why not raw SVG + React:**
+The existing HTML files contain static SVG. Making them interactive requires: pan/zoom viewport,
+click handlers with state, dynamic data binding, and drill-down overlays. React Flow provides
+all of this. Rolling custom SVG pan/zoom is 3-4 weeks of work that React Flow gives in one day.
 
-**Streaming for long-running skills (HIGH confidence — proven pattern):**
-```typescript
-// app/api/skills/[skill]/route.ts
-import Anthropic from '@anthropic-ai/sdk';
+**Migration path for existing HTML files:**
+The existing static HTML engagement maps and workflow diagrams are generated by Claude skills.
+v3.0 approach: keep skills generating the data structure (JSON), render via React Flow instead
+of HTML file. The skill output changes from HTML string to structured JSON that the React
+component consumes. This is a skill output format change, not a skill logic change.
 
-export async function POST(request: Request) {
-  const { customerId, skillName } = await request.json();
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
-  const encoder = new TextEncoder();
-  const stream = new ReadableStream({
-    async start(controller) {
-      const messageStream = client.messages.stream({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 8192,
-        messages: [{ role: 'user', content: buildPrompt(customerId, skillName) }],
-      });
-
-      for await (const chunk of messageStream) {
-        if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ delta: chunk.delta.text })}\n\n`));
-        }
-      }
-      controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-      controller.close();
-    },
-  });
-
-  return new Response(stream, {
-    headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-    },
-  });
-}
-```
-
-**MCP tool calling pattern:**
-The Anthropic SDK 0.78.x supports tool use natively. MCP (Model Context Protocol) tool calls
-map to the SDK's `tools` array. Each Slack/Gmail/Glean/Drive integration is a tool definition:
-```typescript
-const tools: Anthropic.Tool[] = [
-  {
-    name: 'search_slack',
-    description: 'Search Slack messages for a customer channel',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        customer_name: { type: 'string' },
-        days_back: { type: 'number' },
-      },
-      required: ['customer_name'],
-    },
-  },
-  // ... gmail_search, glean_search, drive_read
-];
-
-// Tool execution loop
-const response = await client.messages.create({
-  model: 'claude-sonnet-4-6',
-  max_tokens: 4096,
-  tools,
-  messages,
-});
-
-if (response.stop_reason === 'tool_use') {
-  for (const block of response.content) {
-    if (block.type === 'tool_use') {
-      const result = await executeLocalTool(block.name, block.input);
-      // append tool_result to messages and continue loop
-    }
-  }
-}
-```
+**Note on package name:** `reactflow` (old) is now `@xyflow/react` (v12+). Do not install the
+old `reactflow` package — it is deprecated in favor of `@xyflow/react`.
 
 ---
 
-### Background Job Scheduling
+### 4. Context Hub — AI Completeness Analysis
 
-| Technology | Recommended Version | Purpose | Why |
-|------------|--------------------|---------|----|
-| BullMQ | ^5.x | Job queue + scheduling | Preferred over node-cron for this use case. See decision matrix below. |
-| ioredis | ^5.x | Redis client (BullMQ dep) | BullMQ requires Redis. ioredis is the BullMQ-recommended client. |
-| Redis | ^7.x (local) | Queue backend | Required by BullMQ. Run locally via Homebrew (`brew install redis`) or Docker. |
+No new packages required. This feature uses:
+- Existing `@anthropic-ai/sdk` for per-tab completeness analysis calls
+- Existing Drizzle ORM + PostgreSQL for storing analysis results
+- Existing SSE streaming infrastructure for analysis progress
 
-**Confidence:** MEDIUM (versions need `npm view` confirmation; architecture rationale is HIGH).
-
-**BullMQ vs node-cron — decision matrix:**
-
-| Criterion | BullMQ | node-cron |
-|-----------|--------|-----------|
-| Job persistence | YES — jobs survive server restart | NO — lost on restart |
-| Job history / logging | YES — completed/failed queue in Redis | NO |
-| Retry on failure | YES — configurable backoff | NO |
-| Concurrent jobs | YES — worker pools | Single-threaded |
-| Real-time job status | YES — events, progress | NO |
-| Dependencies | Redis required | None |
-| Complexity | Medium (queue + worker process) | Very low |
-| Good for 5-7 scheduled jobs | Overkill but correct | Fine |
-
-**Recommendation: BullMQ.** The scheduled jobs (Morning Briefing, Slack sweep, Weekly Status)
-call Claude and touch external APIs. They can fail (Claude timeout, Slack rate limit). BullMQ
-gives retries, visibility into failures, and the ability to see "last Morning Briefing ran at 8:02am,
-completed, 3 AI calls made." node-cron gives you a silent cron that fails invisibly.
-
-**The Redis requirement is the tradeoff.** For a local single-user app on macOS, Redis is
-`brew install redis` + `brew services start redis`. Not a burden.
-
-**Worker architecture:**
-```
-next-app/               ← Next.js (API routes, UI)
-worker/
-  index.ts              ← BullMQ worker process (separate `npm run worker`)
-  jobs/
-    morningBriefing.ts
-    slackSweep.ts
-    weeklyStatus.ts
-    healthCheck.ts
-  queues.ts             ← queue definitions shared with Next.js
-```
-
-Next.js enqueues jobs via `await jobQueue.add(...)`. The worker process pulls and executes.
-Both share the same Redis connection.
+The completeness analysis is a structured Claude prompt that receives tab data from the DB
+and returns a JSON gap report. This is a feature design task, not a new library task.
 
 ---
 
-### MCP / External Integrations
+## Supporting Libraries
 
-| Integration | Approach | SDK/Library | Why |
-|-------------|----------|-------------|-----|
-| Slack | Direct REST API | `@slack/web-api ^7.x` | MCP Slack server is available but adds an extra process. Direct API call from a BullMQ job is simpler for read-only sweep (search messages, read channels). |
-| Gmail | Google APIs | `googleapis ^171.4.0` | Already proven in existing build. `gmail.users.messages.list` with label filters. Same service account pattern as Drive. |
-| Google Drive | Google APIs | `googleapis ^171.4.0` | CONFIRMED working in existing build. Context doc export/import uses this. |
-| Glean | Glean REST API | Native fetch | Glean has a REST search API. No official Node SDK. Use `fetch` with `Authorization: Bearer` header. |
-| MCP protocol | Anthropic SDK tools array | `@anthropic-ai/sdk ^0.78.0` | SDK handles the tool-use protocol natively. No separate MCP server process needed for these integrations — implement tool executors as local async functions. |
-
-**Confidence:** MEDIUM (library versions); HIGH (architecture pattern).
-
-**googleapis version confirmed:** ^171.4.0 — directly from existing server/package.json.
-
-**Why no separate MCP server processes:** The project's integrations are read-only sweeps
-(search Slack, search Gmail, read Drive). Running separate MCP server processes for each adds
-operational complexity with no benefit for a single-user local app. The Anthropic SDK's `tools`
-array IS the MCP protocol — use it directly.
-
----
-
-### File Generation
-
-| Output | Library | Version | Why |
-|--------|---------|---------|-----|
-| .pptx | pptxgenjs | ^4.0.1 | CONFIRMED — upgraded to v4 in existing build. V4 has ESM support and improved chart rendering. |
-| .docx | docx | ^8.x | The `docx` npm package is the standard for programmatic Word doc generation in Node.js. Pure JS, no binary deps. NOT mammoth (that's for reading). NOT officegen (abandoned 2019). |
-| .xlsx | ExcelJS | ^4.x | ExcelJS is the recommended library for writing Excel files with formatting. The action tracker export (PA3_Action_Tracker.xlsx format) requires cell formatting (bold headers, date cells, colored status). SheetJS (xlsx) is an alternative but ExcelJS is more ergonomic for writes. |
-| .html | Native template literals | N/A | Team Engagement Map and Workflow Diagram skills output self-contained HTML. Generate via template literal strings in the skill executor — no library needed. |
-
-**Confidence:** HIGH for pptxgenjs (proven); MEDIUM for docx and ExcelJS versions (need npm view).
-
-**pptxgenjs v4 breaking changes from v3 (IMPORTANT):**
-The existing archived STACK.md documented pptxgenjs as `^3.12.x`. The existing working build
-has `^4.0.1`. V4 is a major version — check the pptxgenjs changelog before assuming v3 code
-works in v4. Key changes: ESM-first export, some method signatures updated.
-
-**docx library pattern:**
-```typescript
-import { Document, Paragraph, TextRun, HeadingLevel } from 'docx';
-import { Packer } from 'docx';
-
-const doc = new Document({
-  sections: [{
-    properties: {},
-    children: [
-      new Paragraph({
-        heading: HeadingLevel.HEADING_1,
-        children: [new TextRun('Meeting Summary')],
-      }),
-    ],
-  }],
-});
-
-const buffer = await Packer.toBuffer(doc);
-// Return as API response or write to disk
-```
-
----
-
-### Real-Time UI Updates
-
-| Technology | Recommended Version | Purpose | Why |
-|------------|--------------------|---------|----|
-| Server-Sent Events (SSE) | Native (Next.js `ReadableStream`) | Push job completion to UI | SSE is built into Next.js App Router via `ReadableStream` responses. No library needed. One-directional (server → client) is sufficient for "job completed" notifications. |
-| TanStack Query | ^5.90.21 | Client-side cache + polling fallback | CONFIRMED — already in existing client build. Use `refetchOnWindowFocus` and `staleTime` settings. For job status, poll the `GET /api/jobs/:id/status` endpoint every 3s as fallback when SSE connection drops. |
-
-**Confidence:** HIGH (TanStack Query version confirmed from existing codebase).
-
-**SSE vs WebSockets:**
-WebSockets require a persistent server connection, which conflicts with Next.js serverless
-architecture. SSE works with standard HTTP and is natively supported. For "job started →
-job completed" notifications, SSE is correct.
-
-**SSE pattern in Next.js App Router:**
-```typescript
-// app/api/jobs/stream/route.ts
-export async function GET() {
-  const encoder = new TextEncoder();
-  let intervalId: NodeJS.Timeout;
-
-  const stream = new ReadableStream({
-    start(controller) {
-      intervalId = setInterval(async () => {
-        const pendingJobs = await db.query.jobRuns.findMany({
-          where: eq(jobRuns.status, 'completed'),
-          orderBy: desc(jobRuns.completedAt),
-          limit: 5,
-        });
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify(pendingJobs)}\n\n`));
-      }, 3000);
-    },
-    cancel() {
-      clearInterval(intervalId);
-    },
-  });
-
-  return new Response(stream, {
-    headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      Connection: 'keep-alive',
-    },
-  });
-}
-```
-
----
-
-### Supporting Libraries
-
-| Library | Proven/Recommended Version | Purpose | When to Use |
-|---------|---------------------------|---------|-------------|
-| zod | ^4.3.6 | Schema validation | CONFIRMED. V4 is a major version bump — API is broadly compatible with v3 but some method names changed (`z.string().parse()` etc. stable). Validate all Claude JSON output, all API inputs. |
-| js-yaml | ^4.1.1 | YAML parse/serialize | CONFIRMED. For context doc export (DB → YAML frontmatter Markdown for Cowork skill compatibility). Use `JSON_SCHEMA` to prevent boolean coercion. |
-| clsx | ^2.1.1 | Conditional classNames | CONFIRMED. Standard for Tailwind utility class composition. |
-| date-fns | ^3.x | Date manipulation | Overdue action calculations, due date formatting. Lighter than dayjs, tree-shakeable. |
-| dotenv | ^17.3.1 | Env vars | CONFIRMED. For worker process (`.env` loading in standalone Node scripts). Next.js handles `.env.local` natively. |
-| nodemon | ^3.1.14 | Dev auto-restart | CONFIRMED (dev dep). For the BullMQ worker process in dev. |
-
----
-
-## Stack Conflicts and Gotchas
-
-### Conflict 1: pptxgenjs CJS vs ESM in Next.js
-
-pptxgenjs v4 ships ESM but has CJS interop. Next.js App Router runs in Edge Runtime by default
-for some routes. pptxgenjs CANNOT run in Edge Runtime (no Node.js Buffer API).
-
-**Prevention:** Mark any route that generates PPTX as Node.js runtime:
-```typescript
-// app/api/skills/elt-deck/route.ts
-export const runtime = 'nodejs'; // Required for pptxgenjs
-```
-
-### Conflict 2: BullMQ Worker vs Next.js Process
-
-BullMQ workers must run as a persistent process — they cannot run inside Next.js API routes
-(which are request-scoped). The worker must be a separate `node worker/index.ts` process.
-Both processes share Redis for the job queue.
-
-**Prevention:** In `package.json`:
-```json
-{
-  "scripts": {
-    "dev": "concurrently \"next dev\" \"tsx watch worker/index.ts\"",
-    "worker": "tsx worker/index.ts"
-  }
-}
-```
-
-### Conflict 3: googleapis CJS in ESM Next.js
-
-`googleapis` is CJS. In Next.js (ESM), import via:
-```typescript
-import { google } from 'googleapis';
-```
-This works because Next.js handles CJS interop. Do NOT use `require()` inside App Router
-server components — it breaks.
-
-### Conflict 4: Drizzle schema vs Prisma if considering a switch
-
-Do not introduce Prisma. The binary query engine (`prisma-client`) downloads a platform-specific
-binary at postinstall time. On macOS ARM this sometimes fails in CI or fresh environments.
-Drizzle has no binary dependency — schema is pure TypeScript.
-
-### Conflict 5: Zod v4 breaking change
-
-Zod v4 (`^4.3.6` — confirmed in existing build) has some changes from v3:
-- `z.record()` now takes two args for key/value types (not one)
-- Error message formatting changed
-- `z.string().nonempty()` replaced by `z.string().min(1)`
-Do not copy v3 Zod patterns verbatim. Check the Zod v4 migration guide.
-
-### Conflict 6: React Router v7 vs Next.js App Router routing
-
-The existing client uses `react-router-dom ^7.13.1`. The Next.js rewrite uses Next.js App Router
-for routing — NOT react-router-dom. These are mutually exclusive. Remove react-router-dom
-entirely from the Next.js project.
-
-### Conflict 7: Next.js 14 App Router + TanStack Query setup
-
-TanStack Query 5.x requires a `QueryClientProvider` wrapper. In App Router, this must live in
-a client component (`'use client'`). The typical pattern:
-```typescript
-// app/providers.tsx
-'use client';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-const queryClient = new QueryClient();
-export function Providers({ children }: { children: React.ReactNode }) {
-  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
-}
-```
-
----
-
-## Alternatives Considered
-
-| Category | Recommended | Alternative | Why Not |
-|----------|-------------|-------------|---------|
-| ORM | Drizzle | Prisma | Binary engine download fails on macOS ARM; Edge Runtime incompatible |
-| ORM | Drizzle | TypeORM | Decorator-heavy, worse TypeScript inference than Drizzle |
-| Full-text search | PostgreSQL tsvector | Elasticsearch | Massive over-engineering for a local single-user app with 5K-50K records |
-| Full-text search | PostgreSQL tsvector | MeiliSearch | Adds another service to run locally; Postgres built-in is sufficient |
-| Job queue | BullMQ | node-cron | node-cron has no retry, no persistence, no job history — unacceptable for AI skill jobs |
-| Job queue | BullMQ | Agenda | Agenda uses MongoDB; adds a second DB |
-| Job queue | BullMQ | pg-boss | pg-boss uses PostgreSQL — eliminates Redis dep, but BullMQ has better observability tooling (BullMQ Board) |
-| Real-time | SSE | WebSockets | WebSockets require persistent connection; conflicts with Next.js serverless architecture |
-| Real-time | SSE | Pusher/Ably | External service dependency for a local app — unnecessary |
-| DOCX | docx (npm) | officegen | Abandoned 2019, security vulnerabilities |
-| XLSX | ExcelJS | SheetJS (xlsx) | SheetJS write API is more complex for formatted output; ExcelJS is more ergonomic |
-| XLSX | ExcelJS | csv-writer | CSV doesn't preserve formatting required by PA3 tracker format |
-| CSS | Tailwind v4 | Tailwind v3 | v4 is already installed and proven in the existing client; upgrading back to v3 would be a downgrade |
-| Editor | CodeMirror 6 | Monaco | CodeMirror is lighter, already installed and proven in the existing client build |
-| State | TanStack Query | Redux/Zustand | TanStack Query handles server state; local UI state uses React useState — no global state manager needed |
-| DB driver | postgres (porsager) | pg (node-postgres) | `pg` has connection pool config footguns; `postgres` (porsager) is simpler and faster |
+| Library | Version | Purpose | When to Use |
+|---------|---------|---------|-------------|
+| `@types/bcryptjs` | ^2.4.x | TypeScript types for bcryptjs | Dev dependency; always with bcryptjs |
 
 ---
 
 ## Installation
 
 ```bash
-# Create Next.js app
-npx create-next-app@latest bigpanda-app --typescript --tailwind --app
+# Authentication
+npm install better-auth bcryptjs
+npm install -D @types/bcryptjs
 
-# DB layer
-npm install drizzle-orm postgres
-npm install -D drizzle-kit
+# RAG pipeline
+npm install pgvector voyageai ai @ai-sdk/anthropic @ai-sdk/react
 
-# Anthropic + AI
-npm install @anthropic-ai/sdk
-
-# Job scheduling
-npm install bullmq ioredis
-
-# External integrations
-npm install googleapis google-auth-library @slack/web-api
-
-# File generation
-npm install pptxgenjs docx exceljs
-
-# Utilities
-npm install js-yaml zod clsx date-fns
-npm install -D tsx concurrently nodemon @types/js-yaml
-
-# Verify versions before pinning (REQUIRED before first install)
-npm view @anthropic-ai/sdk version        # Expect ~0.78.x
-npm view bullmq version                   # Expect ~5.x
-npm view drizzle-orm version              # Expect ~0.30.x
-npm view postgres version                 # Expect ~3.x (porsager driver)
-npm view docx version                     # Expect ~8.x
-npm view exceljs version                  # Expect ~4.x
-npm view @slack/web-api version           # Expect ~7.x
+# Interactive visuals
+npm install @xyflow/react
 ```
 
----
-
-## Project Structure
-
-```
-bigpanda-app/
-├── app/                         # Next.js App Router
-│   ├── layout.tsx               # Root layout with Providers
-│   ├── page.tsx                 # Dashboard (/)
-│   ├── customers/
-│   │   └── [id]/
-│   │       ├── page.tsx         # Customer Overview
-│   │       ├── actions/page.tsx
-│   │       ├── risks/page.tsx
-│   │       ├── milestones/page.tsx
-│   │       └── ...
-│   └── api/
-│       ├── customers/route.ts
-│       ├── skills/[skill]/route.ts   # export const runtime = 'nodejs'
-│       └── jobs/stream/route.ts      # SSE endpoint
-│
-├── db/
-│   ├── schema.ts                # Drizzle schema definitions
-│   ├── index.ts                 # DB connection
-│   └── migrations/              # drizzle-kit generated SQL
-│
-├── worker/
-│   ├── index.ts                 # BullMQ worker entry point
-│   ├── queues.ts                # Queue definitions (shared with app)
-│   └── jobs/
-│       ├── morningBriefing.ts
-│       ├── slackSweep.ts
-│       ├── weeklyStatus.ts
-│       └── healthCheck.ts
-│
-├── services/
-│   ├── anthropic.ts             # Claude API calls + tool execution
-│   ├── drive.ts                 # Google Drive read/write
-│   ├── gmail.ts                 # Gmail search
-│   ├── slack.ts                 # Slack search
-│   ├── yamlExport.ts            # DB → YAML for Cowork compatibility
-│   ├── pptxService.ts           # pptxgenjs deck builder
-│   ├── docxService.ts           # docx document builder
-│   └── xlsxService.ts           # ExcelJS action tracker
-│
-├── components/                  # React components
-├── .env.local                   # ANTHROPIC_API_KEY, DB_URL, SLACK_TOKEN
-└── package.json
-```
-
----
-
-## Critical Pre-Start Verification Checklist
+**Note on better-auth peer deps with Next.js 16:**
+If `npm install better-auth` fails with ERESOLVE (peer dep declaring `next@^14||^15`),
+use `--legacy-peer-deps`. This is a declared-version issue, not a runtime incompatibility —
+the library works correctly with Next.js 16 as confirmed by the maintainers.
 
 ```bash
-# These versions are CONFIRMED from the existing working build:
-# @anthropic-ai/sdk:  ^0.78.0   (NOT ^0.20.0 — the brief is stale)
-# googleapis:         ^171.4.0
-# pptxgenjs:          ^4.0.1    (NOT ^3.x — v4 is the installed version)
-# js-yaml:            ^4.1.1
-# zod:                ^4.3.6    (NOT ^3.x — v4 is the installed version)
-# express:            ^5.2.1    (for worker process only)
-# react:              ^19.2.0   (NOT 18)
-# tailwindcss:        ^4.2.1    (v4, uses @tailwindcss/vite, NO tailwind.config.js)
-# vite:               ^7.3.1    (NOT 5.x)
-# react-router-dom:   ^7.13.1   (existing client only — NOT used in Next.js rewrite)
-# TanStack Query:     ^5.90.21
-# codemirror:         ^6.0.2 + @codemirror/lang-yaml ^6.1.2
-
-# These need live npm view before pinning:
-npm view drizzle-orm version      # New: PostgreSQL ORM
-npm view postgres version         # New: PG driver (porsager)
-npm view drizzle-kit version      # New: migration CLI
-npm view bullmq version           # New: job queue
-npm view ioredis version          # New: Redis client for BullMQ
-npm view docx version             # New: .docx generation
-npm view exceljs version          # New: .xlsx generation
-npm view @slack/web-api version   # New: Slack integration
+npm install better-auth --legacy-peer-deps
 ```
+
+**Enable pgvector in PostgreSQL before running migrations:**
+```sql
+CREATE EXTENSION IF NOT EXISTS vector;
+```
+
+---
+
+## Alternatives Considered
+
+| Recommended | Alternative | Why Not |
+|-------------|-------------|---------|
+| `better-auth` | `next-auth@beta` (Auth.js v5) | SAML requires "significant custom work" in Auth.js; better-auth has native SAML 2.0 plugin; Auth.js development now owned by better-auth team |
+| `better-auth` | Clerk | Managed SaaS — not appropriate for local self-hosted internal tool; vendor lock-in; cost |
+| Voyage AI (`voyageai`) | OpenAI `text-embedding-3` | App already uses Anthropic; Voyage AI is Anthropic's official embedding partner; keeps vendor count low |
+| Voyage AI (`voyageai`) | Self-hosted BGE/E5 models | RAG quality at this scale does not justify infra complexity of local embedding server |
+| `@xyflow/react` | D3.js | D3 requires imperative DOM manipulation incompatible with React model; React Flow renders nodes as React components, allowing Radix UI drill-down popups |
+| `@xyflow/react` | Custom SVG + React | Weeks of work to rebuild pan/zoom/click; React Flow provides this out of the box |
+| Vercel AI SDK (`ai`) | Direct Anthropic SDK for chat | `useChat` hook handles streaming assembly, optimistic UI, and error state — saves ~200 lines of boilerplate per chat component |
+
+---
+
+## What NOT to Use
+
+| Avoid | Why | Use Instead |
+|-------|-----|-------------|
+| `reactflow` (old package) | Deprecated; last release 2023; renamed to `@xyflow/react` | `@xyflow/react` ^12.10.2 |
+| `passport` + `passport-local` | Express-era auth; does not integrate with Next.js App Router Server Components, proxy.ts, or Server Actions | `better-auth` |
+| `jsonwebtoken` directly | Manual JWT handling with no session invalidation, no CSRF protection, and no App Router session helpers | `better-auth`'s built-in session management |
+| Middleware-only auth (proxy.ts sole gate) | CVE-2025-29927 class of vulnerability — proxy/middleware can be bypassed; all auth must also be verified at data access layer | Defense-in-depth: proxy.ts + `auth()` call in every Route Handler and Server Action |
+| `langchain` | Heavy dependency (50+ transitive packages) for what is a simple retrieval query; overkill for this RAG pattern | Direct pgvector cosine search via Drizzle + `voyageai` for embeddings |
+| `prisma` for vector columns | Prisma has limited pgvector support; Drizzle ORM already in the project has native vector column + HNSW index support | Drizzle ORM with `pgvector` npm package |
+
+---
+
+## Stack Patterns by Variant
+
+**If Okta is not yet live (current state):**
+- Use better-auth credentials provider only
+- Wire OIDC plugin with empty/disabled config
+- Users log in with email + password stored in a new `users` table in PostgreSQL
+- Admin role is a column on the users table
+
+**If Okta becomes live:**
+- Set `OKTA_CLIENT_ID`, `OKTA_CLIENT_SECRET`, `OKTA_ISSUER` environment variables
+- better-auth OIDC plugin activates automatically
+- Credentials login remains as fallback
+- No code changes required, only env var addition
+
+**If RAG context is narrow (one project at a time):**
+- Embed only the active project's DB rows at chat session start
+- Store embeddings in a `project_embeddings` table keyed by `project_id`
+- Invalidate embeddings on every write to that project (BullMQ job)
+
+**If RAG context needs cross-project (e.g., Knowledge Base search):**
+- Add a separate `knowledge_base_embeddings` table
+- Voyage AI's `inputType: "document"` for ingestion, `inputType: "query"` for retrieval
+- Cosine similarity search across projects with a `project_id` filter option
+
+---
+
+## Version Compatibility
+
+| Package A | Compatible With | Notes |
+|-----------|-----------------|-------|
+| `better-auth@1.5.6` | `next@16.2.0` | Works; may need `--legacy-peer-deps` on install due to stale peer dep declaration; fully functional at runtime |
+| `better-auth@1.5.6` | `react@19.2.4` | Fully compatible |
+| `@xyflow/react@12.10.2` | `react@19.2.4` | Tested; xyflow docs site runs on Next.js App Router |
+| `ai@6.0.141` | `next@16.2.0` | Vercel makes both; fully compatible |
+| `@ai-sdk/anthropic@3.0.64` | `@anthropic-ai/sdk@^0.80.0` | AI SDK wraps the Anthropic SDK; both can coexist; use direct SDK for skills, AI SDK for chat |
+| `pgvector@0.2.1` | `postgres@^3.4.8` (existing) | pgvector node package supports node-postgres (pg) and postgres.js (this app uses postgres.js — verify integration pattern) |
+| `drizzle-orm@^0.45.1` (existing) | pgvector columns | Drizzle 0.31.2+ required for vector support; app has 0.45.1 — confirmed compatible |
+
+**pgvector + postgres.js integration note:**
+The `pgvector` npm package's README shows integration with `node-postgres` (pg) as the primary
+example. For `postgres.js` (which this app uses), verify the type parser setup. The pattern is:
+```ts
+import { VectorType } from 'pgvector/pg';
+// or use raw SQL for similarity queries if type parsing is complex
+```
+If postgres.js integration proves difficult, raw SQL cosine search via Drizzle's `sql` tag
+is a clean fallback: `sql\`embedding <=> \${queryVector}::vector\``.
 
 ---
 
 ## Sources
 
-- `/Users/jmiloslavsky/Documents/Project Assistant Code/server/package.json` — proven server dependencies (HIGH confidence — running code)
-- `/Users/jmiloslavsky/Documents/Project Assistant Code/client/package.json` — proven client dependencies (HIGH confidence — running code)
-- `.planning-archive-20260318/research/STACK.md` — previous research (MEDIUM confidence — training data Aug 2025)
-- `.planning/PROJECT.md` — requirements specification
-- Training data through August 2025 for new libraries (BullMQ, Drizzle, docx, ExcelJS)
+- [better-auth official docs — Next.js integration](https://better-auth.com/docs/integrations/next) — Next.js 16 proxy.ts pattern
+- [better-auth Next.js 16 issue tracker](https://github.com/better-auth/better-auth/issues/6439) — peer dep workaround confirmed
+- [Auth.js migration guide v5](https://authjs.dev/getting-started/migrating-to-v5) — SAML limitation documented
+- [Anthropic embeddings docs](https://docs.claude.com/en/docs/build-with-claude/embeddings) — Voyage AI official recommendation
+- [Voyage AI npm package](https://www.npmjs.com/package/voyageai) — v0.2.1 confirmed
+- [Drizzle ORM pgvector guide](https://orm.drizzle.team/docs/guides/vector-similarity-search) — vector column + HNSW index patterns
+- [Vercel AI SDK — Next.js App Router getting started](https://ai-sdk.dev/docs/getting-started/nextjs-app-router) — useChat + streamText integration
+- [Vercel AI SDK RAG guide](https://sdk.vercel.ai/docs/guides/rag-chatbot) — pgvector RAG pattern
+- [@xyflow/react npm](https://www.npmjs.com/package/@xyflow/react) — v12.10.2 confirmed
+- [React Flow Next.js compatibility](https://reactflow.dev/learn/getting-started/installation-and-requirements) — App Router confirmed
+- [CVE-2025-29927 advisory](https://github.com/vercel/next.js/security/advisories/GHSA-f82v-jwr5-mffw) — middleware-only auth bypass; defense-in-depth requirement
+- [PkgPulse auth comparison 2026](https://www.pkgpulse.com/blog/best-nextjs-auth-solutions-2026) — MEDIUM confidence ecosystem survey
+- Live npm version checks (2026-03-30): `better-auth@1.5.6`, `next-auth@4.24.13`, `@xyflow/react@12.10.2`, `ai@6.0.141`, `@ai-sdk/anthropic@3.0.64`, `@ai-sdk/react@3.0.143`, `voyageai@0.2.1`, `pgvector@0.2.1`
 
-**Confidence Summary:**
-
-| Area | Confidence | Reason |
-|------|------------|--------|
-| @anthropic-ai/sdk version (0.78.0) | HIGH | Read directly from working server/package.json |
-| React 19, Tailwind 4, Vite 7 | HIGH | Read directly from working client/package.json |
-| pptxgenjs v4, zod v4, express v5 | HIGH | Read directly from working package.json files |
-| googleapis v171, js-yaml v4 | HIGH | Read directly from working server/package.json |
-| TanStack Query v5, CodeMirror v6 | HIGH | Read directly from working client/package.json |
-| Next.js App Router as architecture | HIGH | Decided in PROJECT.md; standard for 2025/2026 |
-| PostgreSQL + Drizzle ORM | MEDIUM | Architecture rationale HIGH; version numbers need npm view |
-| BullMQ vs node-cron decision | HIGH | Architectural reasoning; version number MEDIUM |
-| docx, ExcelJS versions | MEDIUM | Library choice HIGH; versions need npm view |
-| @slack/web-api version | MEDIUM | Library choice HIGH; version needs npm view |
-| Tailwind v4 config pattern | HIGH | Proven in existing client build |
-| SSE for real-time updates | HIGH | Native Next.js App Router capability |
-| Drizzle over Prisma | HIGH | Architectural reasoning backed by known Prisma ARM issues |
+---
+*Stack research for: BigPanda App v3.0 — Auth, RAG Chat, Interactive Visuals*
+*Researched: 2026-03-30*
