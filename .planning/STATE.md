@@ -4,12 +4,12 @@ milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
 current_plan: Not started
 status: unknown
-last_updated: "2026-03-30T18:42:44.589Z"
+last_updated: "2026-03-30T18:57:43.312Z"
 progress:
   total_phases: 28
   completed_phases: 26
   total_plans: 152
-  completed_plans: 147
+  completed_plans: 148
 ---
 
 # Project State
@@ -390,6 +390,8 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - [Phase 25-05]: knowledge-base PATCH uses tx.update().returning() result as after_json — no extra SELECT inside transaction needed
 - [Phase 25-05]: plan-templates keeps default import style (import db from ...) — not converted to named import; auditLog added separately
 - [Phase 24-01]: Wave 0 TDD scaffold: sidebar.test.ts tests SIDEBAR_NAV_ITEMS constant rather than full RSC render to avoid jsdom env complexity; appendRunHistoryEntry and insertSchedulerFailureNotification co-located in lib/scheduler-notifications
+- [Phase 24-scheduler-enhanced]: Zod v4 z.record() requires two-argument form: z.record(z.string(), z.unknown()) — single arg form silently broken for optional fields with actual values
+- [Phase 24-scheduler-enhanced]: Vitest 4 constructor mocks: vi.fn(function() { return {...} }) works; vi.fn().mockImplementation(() => ...) does NOT work with new keyword
 
 ## Performance Metrics
 
@@ -526,6 +528,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 | Phase 25-wizard-fix-audit-completion P04 | 7 | 2 tasks | 5 files |
 | Phase 25-wizard-fix-audit-completion P05 | 6 | 2 tasks | 7 files |
 | Phase 24-scheduler-enhanced P01 | 12 | 1 tasks | 8 files |
+| Phase 24-scheduler-enhanced P02 | 12 | 2 tasks | 11 files |
 
 ## Key Context for Next Session
 
