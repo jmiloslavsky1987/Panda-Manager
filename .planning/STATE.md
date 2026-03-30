@@ -4,12 +4,12 @@ milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
 current_plan: Not started
 status: unknown
-last_updated: "2026-03-30T18:57:43.312Z"
+last_updated: "2026-03-30T19:02:47.860Z"
 progress:
   total_phases: 28
   completed_phases: 26
   total_plans: 152
-  completed_plans: 148
+  completed_plans: 149
 ---
 
 # Project State
@@ -392,6 +392,8 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - [Phase 24-01]: Wave 0 TDD scaffold: sidebar.test.ts tests SIDEBAR_NAV_ITEMS constant rather than full RSC render to avoid jsdom env complexity; appendRunHistoryEntry and insertSchedulerFailureNotification co-located in lib/scheduler-notifications
 - [Phase 24-scheduler-enhanced]: Zod v4 z.record() requires two-argument form: z.record(z.string(), z.unknown()) — single arg form silently broken for optional fields with actual values
 - [Phase 24-scheduler-enhanced]: Vitest 4 constructor mocks: vi.fn(function() { return {...} }) works; vi.fn().mockImplementation(() => ...) does NOT work with new keyword
+- [Phase 24-03]: Sidebar queries app_notifications for scheduler_failure count in parallel with getActiveProjects — no extra latency
+- [Phase 24-03]: SchedulerJobRow.id typed as number (matches DB serial); Edit button stub in expanded panel for Plan 04 wiring
 
 ## Performance Metrics
 
@@ -529,6 +531,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 | Phase 25-wizard-fix-audit-completion P05 | 6 | 2 tasks | 7 files |
 | Phase 24-scheduler-enhanced P01 | 12 | 1 tasks | 8 files |
 | Phase 24-scheduler-enhanced P02 | 12 | 2 tasks | 11 files |
+| Phase 24-scheduler-enhanced P03 | 3 | 2 tasks | 4 files |
 
 ## Key Context for Next Session
 
