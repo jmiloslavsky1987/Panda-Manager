@@ -281,8 +281,9 @@
 - v2.0 requirements: 96 total
 - Mapped to phases: 96
 - Unmapped: 0
-- Pending (gap closure): WIZ-03 (Phase 25), WIZ-06 (Phase 20 deferred), AUDIT-02 (Phase 25), SCHED-01..12 (Phase 24)
+- Pending (gap closure): WIZ-03 (Phase 25), WIZ-06 (Phase 20 deferred), AUDIT-02 (Phase 25)
+- SCHED-01..12: COMPLETE — Phase 24 Scheduler Enhanced verified 2026-03-30
 
 ---
 *Requirements defined: 2026-03-25*
-*Last updated: 2026-03-25 — traceability populated by roadmapper agent; all 96 requirements mapped to Phases 17–24*
+*Last updated: 2026-03-30 — SCHED-01..12 verified and complete; Phase 24 Scheduler Enhanced delivered*

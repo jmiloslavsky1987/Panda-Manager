@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
-current_plan: Not started
-status: unknown
-last_updated: "2026-03-30T19:09:10.267Z"
+current_plan: "Phase 24 COMPLETE"
+status: complete
+last_updated: "2026-03-30T20:30:00.000Z"
 progress:
   total_phases: 28
-  completed_phases: 26
+  completed_phases: 27
   total_plans: 152
-  completed_plans: 150
+  completed_plans: 152
 ---
 
 # Project State
@@ -23,10 +23,10 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 
 ## Current Status
 
-**Phase:** Phase 24 — Scheduler Enhanced
-**Current Plan:** 24-05 (at checkpoint: human-verify)
-**Last action:** 2026-03-30 — 24-05 Task 1 complete; 48/48 scheduler tests passing; ioredis/bullmq TS type conflict resolved; awaiting browser verification at checkpoint
-**Next action:** Human verifies Phase 24 Scheduler at http://localhost:3000 — type "approved" or describe issues
+**Phase:** Phase 24 — Scheduler Enhanced — COMPLETE
+**Current Plan:** All 152/152 plans complete — v2.0 milestone COMPLETE
+**Last action:** 2026-03-30 — Phase 24 COMPLETE; all 12 SCHED requirements verified in-browser; 48/48 scheduler tests GREEN; Settings Jobs tab removed; v2.0 milestone fully delivered
+**Next action:** All v2.0 phases (17-24) complete — project ready for post-v2.0 work or new milestone planning
 
 ## Phase Progress
 
@@ -58,7 +58,7 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 | 21. Teams Tab + Architecture Tab | COMPLETE (6/6 plans) |
 | 22. Source Badges + Audit Log | COMPLETE (5/5 plans) |
 | 23. Time Tracking Advanced | COMPLETE (8/8 plans) |
-| 24. Scheduler Enhanced | Awaiting verification (5/5 plans — checkpoint) |
+| 24. Scheduler Enhanced | COMPLETE (5/5 plans) |
 
 ## Active Work
 
@@ -396,6 +396,8 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - [Phase 24-03]: Sidebar queries app_notifications for scheduler_failure count in parallel with getActiveProjects — no extra latency
 - [Phase 24-03]: SchedulerJobRow.id typed as number (matches DB serial); Edit button stub in expanded panel for Plan 04 wiring
 - [Phase 24]: 24-04: timesheet-reminder removed from SKILLS_WITH_PARAMS and hasParams set to false — no configurable params, Step 3 skipped for it
+- [Phase 24-05]: Settings Jobs tab removed — all scheduling now exclusively DB-driven via /scheduler UI; eliminates dual scheduling code paths
+- [Phase 24-05]: All 12 SCHED requirements (SCHED-01 through SCHED-12) verified in-browser and approved; Phase 24 Scheduler Enhanced COMPLETE
 
 ## Performance Metrics
 
@@ -535,6 +537,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 | Phase 24-scheduler-enhanced P02 | 12 | 2 tasks | 11 files |
 | Phase 24-scheduler-enhanced P03 | 3 | 2 tasks | 4 files |
 | Phase 24 P04 | 4 | 2 tasks | 7 files |
+| Phase 24-scheduler-enhanced P05 | 20 | 2 tasks | 7 files |
 
 ## Key Context for Next Session
 
