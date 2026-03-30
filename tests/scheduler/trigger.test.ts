@@ -2,11 +2,16 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('server-only', () => ({}));
 
-// Mock BullMQ Queue to avoid real Redis I/O
+// Mock BullMQ Queue to avoid real Redis I/O.
+// Uses a regular function (not arrow) as the constructor implementation — Vitest 4
+// requires function/class implementations when the mock is used with `new`.
 vi.mock('bullmq', () => ({
-  Queue: vi.fn().mockImplementation(() => ({
-    add: vi.fn().mockResolvedValue({ id: 'job-123' }),
-  })),
+  Queue: vi.fn(function (this: unknown) {
+    return {
+      add: vi.fn().mockResolvedValue({ id: 'job-123' }),
+      close: vi.fn().mockResolvedValue(undefined),
+    };
+  }),
 }));
 
 vi.mock('../../db', () => ({
