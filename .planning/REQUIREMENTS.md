@@ -99,18 +99,18 @@
 ### SCHED — Scheduler Enhanced
 *Extends the existing basic scheduler (Phases 4/15). The job runner and cron engine exist; the configurable UI, run history, and admin view do not.*
 
-- [ ] **SCHED-01**: User can create a new scheduled job via a "Create Job" wizard from the Scheduler page
-- [ ] **SCHED-02**: Supported job frequencies: once, daily, weekly (pick day), bi-weekly, monthly (pick day of month), custom cron expression
-- [ ] **SCHED-03**: Each job has a configurable run time (hour + minute) with timezone support; defaults to browser timezone on creation
-- [ ] **SCHED-04**: Each job supports skill-specific configuration parameters (e.g., which project to scope, which Slack channels to scan, which customer)
-- [ ] **SCHED-05**: Jobs can be enabled or disabled without deleting them; disabled jobs do not run but retain their config and history
-- [ ] **SCHED-06**: Any job can be manually triggered on demand regardless of its next scheduled run time
-- [ ] **SCHED-07**: Scheduler UI shows per job: Last Run timestamp, Last Run Outcome (success/failure/partial), and Next Run time
-- [ ] **SCHED-08**: Failed job runs generate an in-app notification to the job creator with an error summary
-- [ ] **SCHED-09**: Each job maintains a run history log: run time, outcome, duration, and links to output artifacts or error messages
-- [ ] **SCHED-10**: Scheduler page is accessible from the main sidebar navigation
-- [ ] **SCHED-11**: Create Job wizard guides through: skill selection, scope (global/per-project/per-user), frequency, time, and skill-specific parameters
-- [ ] **SCHED-12**: All 12 skills are schedulable via the wizard: Morning Briefing, Customer Project Tracker, Weekly Customer Status, ELT External, ELT Internal, Biggy Weekly Briefing, Context Updater, Meeting Summary, Workflow Diagram, Team Engagement Map, Discovery Scan, Timesheet Reminder
+- [x] **SCHED-01**: User can create a new scheduled job via a "Create Job" wizard from the Scheduler page
+- [x] **SCHED-02**: Supported job frequencies: once, daily, weekly (pick day), bi-weekly, monthly (pick day of month), custom cron expression
+- [x] **SCHED-03**: Each job has a configurable run time (hour + minute) with timezone support; defaults to browser timezone on creation
+- [x] **SCHED-04**: Each job supports skill-specific configuration parameters (e.g., which project to scope, which Slack channels to scan, which customer)
+- [x] **SCHED-05**: Jobs can be enabled or disabled without deleting them; disabled jobs do not run but retain their config and history
+- [x] **SCHED-06**: Any job can be manually triggered on demand regardless of its next scheduled run time
+- [x] **SCHED-07**: Scheduler UI shows per job: Last Run timestamp, Last Run Outcome (success/failure/partial), and Next Run time
+- [x] **SCHED-08**: Failed job runs generate an in-app notification to the job creator with an error summary
+- [x] **SCHED-09**: Each job maintains a run history log: run time, outcome, duration, and links to output artifacts or error messages
+- [x] **SCHED-10**: Scheduler page is accessible from the main sidebar navigation
+- [x] **SCHED-11**: Create Job wizard guides through: skill selection, scope (global/per-project/per-user), frequency, time, and skill-specific parameters
+- [x] **SCHED-12**: All 12 skills are schedulable via the wizard: Morning Briefing, Customer Project Tracker, Weekly Customer Status, ELT External, ELT Internal, Biggy Weekly Briefing, Context Updater, Meeting Summary, Workflow Diagram, Team Engagement Map, Discovery Scan, Timesheet Reminder
 
 ### AUDIT — Source Attribution & Audit Trail
 *Extends all workspace tabs; requires SCHEMA-01 and SCHEMA-02 to be in place first.*
@@ -264,18 +264,18 @@
 | TTADV-17 | Phase 23 | Complete |
 | TTADV-18 | Phase 23 | Complete |
 | TTADV-19 | Phase 23 | Complete |
-| SCHED-01 | Phase 24 | Pending |
-| SCHED-02 | Phase 24 | Pending |
-| SCHED-03 | Phase 24 | Pending |
-| SCHED-04 | Phase 24 | Pending |
-| SCHED-05 | Phase 24 | Pending |
-| SCHED-06 | Phase 24 | Pending |
-| SCHED-07 | Phase 24 | Pending |
-| SCHED-08 | Phase 24 | Pending |
-| SCHED-09 | Phase 24 | Pending |
-| SCHED-10 | Phase 24 | Pending |
-| SCHED-11 | Phase 24 | Pending |
-| SCHED-12 | Phase 24 | Pending |
+| SCHED-01 | Phase 24 | Complete |
+| SCHED-02 | Phase 24 | Complete |
+| SCHED-03 | Phase 24 | Complete |
+| SCHED-04 | Phase 24 | Complete |
+| SCHED-05 | Phase 24 | Complete |
+| SCHED-06 | Phase 24 | Complete |
+| SCHED-07 | Phase 24 | Complete |
+| SCHED-08 | Phase 24 | Complete |
+| SCHED-09 | Phase 24 | Complete |
+| SCHED-10 | Phase 24 | Complete |
+| SCHED-11 | Phase 24 | Complete |
+| SCHED-12 | Phase 24 | Complete |
 
 **Coverage:**
 - v2.0 requirements: 96 total

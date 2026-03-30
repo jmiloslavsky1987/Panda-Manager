@@ -4,12 +4,12 @@ milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
 current_plan: Not started
 status: unknown
-last_updated: "2026-03-30T17:41:56.992Z"
+last_updated: "2026-03-30T18:42:44.589Z"
 progress:
   total_phases: 28
   completed_phases: 26
-  total_plans: 147
-  completed_plans: 146
+  total_plans: 152
+  completed_plans: 147
 ---
 
 # Project State
@@ -389,6 +389,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - [Phase 25-wizard-fix-audit-completion]: Consolidated partial SELECT into full SELECT in PATCH/DELETE — serves both 404 check and audit before_json
 - [Phase 25-05]: knowledge-base PATCH uses tx.update().returning() result as after_json — no extra SELECT inside transaction needed
 - [Phase 25-05]: plan-templates keeps default import style (import db from ...) — not converted to named import; auditLog added separately
+- [Phase 24-01]: Wave 0 TDD scaffold: sidebar.test.ts tests SIDEBAR_NAV_ITEMS constant rather than full RSC render to avoid jsdom env complexity; appendRunHistoryEntry and insertSchedulerFailureNotification co-located in lib/scheduler-notifications
 
 ## Performance Metrics
 
@@ -524,6 +525,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 | Phase 25-wizard-fix-audit-completion P03 | 4 | 2 tasks | 3 files |
 | Phase 25-wizard-fix-audit-completion P04 | 7 | 2 tasks | 5 files |
 | Phase 25-wizard-fix-audit-completion P05 | 6 | 2 tasks | 7 files |
+| Phase 24-scheduler-enhanced P01 | 12 | 1 tasks | 8 files |
 
 ## Key Context for Next Session
 
