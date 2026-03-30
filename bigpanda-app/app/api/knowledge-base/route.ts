@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '../../../db';
-import { knowledgeBase, projects } from '../../../db/schema';
+import { knowledgeBase, auditLog, projects } from '../../../db/schema';
 import { eq, desc, and } from 'drizzle-orm';
 import { searchAllRecords } from '../../../lib/queries';
 
@@ -131,7 +131,18 @@ export async function POST(request: NextRequest) {
         linked_date !== undefined && linked_date !== null ? String(linked_date) : null,
     };
 
-    const [newRow] = await db.insert(knowledgeBase).values(insertData).returning();
+    const newRow = await db.transaction(async (tx) => {
+      const [row] = await tx.insert(knowledgeBase).values(insertData).returning();
+      await tx.insert(auditLog).values({
+        entity_type: 'knowledge_base',
+        entity_id: row.id,
+        action: 'create',
+        actor_id: 'default',
+        before_json: null,
+        after_json: row as Record<string, unknown>,
+      });
+      return row;
+    });
 
     return NextResponse.json({ entry: newRow }, { status: 201 });
   } catch (error) {

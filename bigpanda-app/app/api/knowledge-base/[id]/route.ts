@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '../../../../db';
-import { knowledgeBase } from '../../../../db/schema';
+import { knowledgeBase, auditLog } from '../../../../db/schema';
 import { eq } from 'drizzle-orm';
 
 // PATCH /api/knowledge-base/[id]
@@ -62,17 +62,30 @@ export async function PATCH(
       patch.linked_date != null ? String(patch.linked_date) : null;
   }
 
-  const result = await db
-    .update(knowledgeBase)
-    .set(updateData)
-    .where(eq(knowledgeBase.id, numericId))
-    .returning();
-
-  if (result.length === 0) {
+  const [before] = await db.select().from(knowledgeBase).where(eq(knowledgeBase.id, numericId));
+  if (!before) {
     return NextResponse.json({ error: 'Knowledge base entry not found' }, { status: 404 });
   }
 
-  return NextResponse.json({ entry: result[0] });
+  let afterRow: typeof before | undefined;
+  await db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(knowledgeBase)
+      .set(updateData)
+      .where(eq(knowledgeBase.id, numericId))
+      .returning();
+    await tx.insert(auditLog).values({
+      entity_type: 'knowledge_base',
+      entity_id: numericId,
+      action: 'update',
+      actor_id: 'default',
+      before_json: before as Record<string, unknown>,
+      after_json: updated as Record<string, unknown>,
+    });
+    afterRow = updated;
+  });
+
+  return NextResponse.json({ entry: afterRow });
 }
 
 // DELETE /api/knowledge-base/[id]
@@ -87,7 +100,22 @@ export async function DELETE(
     return NextResponse.json({ error: 'Invalid id' }, { status: 400 });
   }
 
-  await db.delete(knowledgeBase).where(eq(knowledgeBase.id, numericId));
+  const [before] = await db.select().from(knowledgeBase).where(eq(knowledgeBase.id, numericId));
+  if (!before) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
+  await db.transaction(async (tx) => {
+    await tx.delete(knowledgeBase).where(eq(knowledgeBase.id, numericId));
+    await tx.insert(auditLog).values({
+      entity_type: 'knowledge_base',
+      entity_id: numericId,
+      action: 'delete',
+      actor_id: 'default',
+      before_json: before as Record<string, unknown>,
+      after_json: null,
+    });
+  });
 
   return new NextResponse(null, { status: 204 });
 }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/db'
-import { workstreams } from '@/db/schema'
+import { workstreams, auditLog } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 
 const patchSchema = z.object({
@@ -35,13 +35,21 @@ export async function PATCH(
   // Do NOT call updateWorkstreamProgress() here — that recalculates from tasks.
   // This route writes directly to percent_complete. The two paths are independent.
 
-  const result = await db
-    .update(workstreams)
-    .set(patch)
-    .where(eq(workstreams.id, numericId))
-    .returning({ id: workstreams.id })
+  const [before] = await db.select().from(workstreams).where(eq(workstreams.id, numericId))
+  if (!before) return NextResponse.json({ error: 'Workstream not found' }, { status: 404 })
 
-  if (result.length === 0) return NextResponse.json({ error: 'Workstream not found' }, { status: 404 })
+  await db.transaction(async (tx) => {
+    await tx.update(workstreams).set(patch).where(eq(workstreams.id, numericId))
+    const [after] = await tx.select().from(workstreams).where(eq(workstreams.id, numericId))
+    await tx.insert(auditLog).values({
+      entity_type: 'workstream',
+      entity_id: numericId,
+      action: 'update',
+      actor_id: 'default',
+      before_json: before as Record<string, unknown>,
+      after_json: after as Record<string, unknown>,
+    })
+  })
 
   return NextResponse.json({ ok: true })
 }
