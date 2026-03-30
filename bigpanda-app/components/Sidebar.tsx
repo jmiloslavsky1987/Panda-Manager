@@ -1,10 +1,26 @@
 import Link from 'next/link';
-import { BookOpen, Library, Settings } from 'lucide-react';
+import { BookOpen, CalendarClock, Library, Settings } from 'lucide-react';
+import { eq, and } from 'drizzle-orm';
+import { db } from '../db';
+import { appNotifications } from '../db/schema';
 import { getActiveProjects } from '../lib/queries';
 import { SidebarProjectItem } from './SidebarProjectItem';
+import { NotificationBadge } from './NotificationBadge';
 
 export async function Sidebar() {
-  const projects = await getActiveProjects();
+  const [projects, schedulerFailureRows] = await Promise.all([
+    getActiveProjects(),
+    db
+      .select({ id: appNotifications.id })
+      .from(appNotifications)
+      .where(
+        and(
+          eq(appNotifications.type, 'scheduler_failure'),
+          eq(appNotifications.read, false),
+        ),
+      ),
+  ]);
+  const schedulerFailureCount = schedulerFailureRows.length;
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-60 bg-zinc-900 text-zinc-100 flex flex-col z-40">
@@ -54,6 +70,15 @@ export async function Sidebar() {
           >
             <Settings className="w-4 h-4" />
             Settings
+          </Link>
+          <Link
+            href="/scheduler"
+            className="flex items-center gap-2 text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 rounded px-2 py-1.5 text-sm transition-colors"
+            data-testid="sidebar-scheduler-link"
+          >
+            <CalendarClock className="w-4 h-4" />
+            Scheduler
+            <NotificationBadge count={schedulerFailureCount} />
           </Link>
         </div>
       </nav>
