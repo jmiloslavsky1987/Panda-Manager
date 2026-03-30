@@ -556,7 +556,14 @@ Plans:
   2. The Create Job wizard guides through skill selection, scope (global/per-project), frequency (once/daily/weekly/bi-weekly/monthly/custom cron), time with timezone, and skill-specific parameters; all 12 skills are available in the skill picker
   3. Disabling a job retains its config and run history but stops it from running; manually triggering a job fires it immediately regardless of its next scheduled time
   4. Each job's run history shows per-run timestamp, outcome, duration, and links to output artifacts or error messages; failed runs generate an in-app notification with an error summary
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 24-01-PLAN.md — Wave 0: Test scaffold (8 stub files for all SCHED requirements)
+- [ ] 24-02-PLAN.md — Wave 1: lib utilities + CRUD API routes + DB-driven scheduler + worker hooks
+- [ ] 24-03-PLAN.md — Wave 1: Sidebar link + /scheduler RSC page + SchedulerJobTable + SchedulerJobRow
+- [ ] 24-04-PLAN.md — Wave 2: CreateJobWizard (3-step) + step components + table wiring
+- [ ] 24-05-PLAN.md — Wave 3: Final test run + human verification checkpoint
 
 ### Phase 25: Wizard Fix + Audit Completion
 **Goal**: Two targeted code fixes close the last wiring gaps from the v2.0 audit — the wizard AI extraction flow is fully functional and all bulk-ingest mutation paths write to the audit log.
