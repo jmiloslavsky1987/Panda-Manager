@@ -1,13 +1,16 @@
 # BigPanda AI Project Management App
 
-## Current Milestone: v2.0 AI Ingestion & Enhanced Operations
+## Current Milestone: v3.0 Collaboration & Intelligence
 
-**Goal:** Transform the platform from a single-user automation tool into an intelligent data-ingestion hub — AI-powered document extraction, automated external discovery scans, a guided project initiation wizard, and enterprise-grade time tracking and scheduler configuration.
+**Goal:** Transform the platform into a multi-user, AI-intelligent workspace — a Context Hub that routes uploaded documents to the right tabs and flags quality gaps, multi-user auth with admin/user roles and Okta-ready architecture, a modernized decluttered UI with sub-tabs, interactive inline visuals, per-project AI chat, and templatized tab structures.
 
 **Target features:**
-- Document ingestion: upload any project document → Claude extracts structured data → preview & approve → write to DB
-- External discovery scan: scheduled/manual MCP scan (Slack, Gmail, Glean, Gong) → in-app review queue
-- Project Initiation Wizard: guided new-project flow with AI extraction from collateral uploads and completeness scoring
+- Context Hub: dedicated per-project tab for uploading docs, AI routes extracted content to tabs, AI completeness check flags quality gaps per tab
+- Multi-user auth: user + admin roles, credential-based login, Okta-ready (SAML/OIDC architecture without live Okta yet)
+- UI overhaul: sub-tabs to reduce clutter, modernized look & feel throughout
+- Interactive visuals: engagement map + workflow diagrams clickable with drill-down detail
+- Project chat: inline AI chat answered from live project DB data
+- Templates: fixed section structure + pre-populated defaults per tab (spec to be provided per tab)
 - Time Tracking advanced: approval workflow, Google Calendar import, bulk actions, admin config, notifications
 - Scheduler enhanced: full configurable job UI, run history, admin view, all 12 skills schedulable
 - Source attribution: source badges (Manual/Ingested/Discovered) on all workspace tab records
