@@ -4,12 +4,12 @@ milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
 current_plan: Not started
 status: unknown
-last_updated: "2026-03-30T17:29:06.145Z"
+last_updated: "2026-03-30T17:37:23.471Z"
 progress:
   total_phases: 28
-  completed_phases: 25
+  completed_phases: 26
   total_plans: 147
-  completed_plans: 145
+  completed_plans: 146
 ---
 
 # Project State
@@ -387,6 +387,8 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - [Phase 25-02]: WIZ-03 fix: outer filter checks only for artifactId presence; inner loop guard handles per-file status logic — roles are distinct and must stay separate
 - [Phase 25-03]: Inline tx.insert(auditLog) inside db.transaction() for ingestion/discovery approve routes — writeAuditLog helper does not accept tx parameter
 - [Phase 25-wizard-fix-audit-completion]: Consolidated partial SELECT into full SELECT in PATCH/DELETE — serves both 404 check and audit before_json
+- [Phase 25-05]: knowledge-base PATCH uses tx.update().returning() result as after_json — no extra SELECT inside transaction needed
+- [Phase 25-05]: plan-templates keeps default import style (import db from ...) — not converted to named import; auditLog added separately
 
 ## Performance Metrics
 
@@ -521,6 +523,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 | Phase 25-wizard-fix-audit-completion P02 | 5 | 1 tasks | 1 files |
 | Phase 25-wizard-fix-audit-completion P03 | 4 | 2 tasks | 3 files |
 | Phase 25-wizard-fix-audit-completion P04 | 7 | 2 tasks | 5 files |
+| Phase 25-wizard-fix-audit-completion P05 | 6 | 2 tasks | 7 files |
 
 ## Key Context for Next Session
 
