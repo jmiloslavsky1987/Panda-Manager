@@ -4,12 +4,12 @@ milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
 current_plan: Not started
 status: unknown
-last_updated: "2026-03-30T19:02:47.860Z"
+last_updated: "2026-03-30T19:09:10.267Z"
 progress:
   total_phases: 28
   completed_phases: 26
   total_plans: 152
-  completed_plans: 149
+  completed_plans: 150
 ---
 
 # Project State
@@ -394,6 +394,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - [Phase 24-scheduler-enhanced]: Vitest 4 constructor mocks: vi.fn(function() { return {...} }) works; vi.fn().mockImplementation(() => ...) does NOT work with new keyword
 - [Phase 24-03]: Sidebar queries app_notifications for scheduler_failure count in parallel with getActiveProjects — no extra latency
 - [Phase 24-03]: SchedulerJobRow.id typed as number (matches DB serial); Edit button stub in expanded panel for Plan 04 wiring
+- [Phase 24]: 24-04: timesheet-reminder removed from SKILLS_WITH_PARAMS and hasParams set to false — no configurable params, Step 3 skipped for it
 
 ## Performance Metrics
 
@@ -532,6 +533,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 | Phase 24-scheduler-enhanced P01 | 12 | 1 tasks | 8 files |
 | Phase 24-scheduler-enhanced P02 | 12 | 2 tasks | 11 files |
 | Phase 24-scheduler-enhanced P03 | 3 | 2 tasks | 4 files |
+| Phase 24 P04 | 4 | 2 tasks | 7 files |
 
 ## Key Context for Next Session
 
