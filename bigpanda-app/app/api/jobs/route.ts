@@ -126,7 +126,8 @@ export async function POST(request: Request): Promise<Response> {
       try {
         const { Queue } = await import('bullmq');
         const { createApiRedisConnection } = await import('../../../worker/connection');
-        const queue = new Queue('scheduled-jobs', { connection: createApiRedisConnection() });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const queue = new Queue('scheduled-jobs', { connection: createApiRedisConnection() as any });
         await queue.upsertJobScheduler(
           `db-job-${created.id}`,
           { pattern: cronExpr, ...(timezone ? { tz: timezone } : {}) },

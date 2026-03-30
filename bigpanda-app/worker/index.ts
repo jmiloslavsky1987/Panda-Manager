@@ -64,7 +64,8 @@ const worker = new Worker(
     return handler(job);
   },
   {
-    connection: createRedisConnection(), // fresh connection for Worker
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    connection: createRedisConnection() as any, // fresh connection for Worker
     concurrency: 1,                      // one job at a time per worker process
   }
 );

@@ -6,7 +6,8 @@ import { db } from '../db';
 import { scheduledJobs } from '../db/schema';
 import { eq } from 'drizzle-orm';
 
-export const jobQueue = new Queue('scheduled-jobs', { connection: redisConnection });
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const jobQueue = new Queue('scheduled-jobs', { connection: redisConnection as any });
 
 // Maps job names to their settings schedule keys
 export const JOB_SCHEDULE_MAP: Record<string, keyof AppSettings['schedule']> = {

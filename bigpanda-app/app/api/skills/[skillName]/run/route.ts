@@ -38,7 +38,8 @@ export async function POST(
     }).returning({ id: skillRuns.id });
 
     // Enqueue BullMQ job — uses existing 'scheduled-jobs' queue + new 'skill-run' handler
-    const queue = new Queue('scheduled-jobs', { connection: createApiRedisConnection() });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const queue = new Queue('scheduled-jobs', { connection: createApiRedisConnection() as any });
     await queue.add(
       'skill-run',
       { runId: runRow.id, skillName, projectId: body.projectId, input: body.input },

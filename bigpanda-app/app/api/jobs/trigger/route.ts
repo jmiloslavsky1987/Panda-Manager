@@ -39,7 +39,8 @@ export async function POST(request: Request) {
         );
       }
 
-      const queue = new Queue('scheduled-jobs', { connection: createApiRedisConnection() });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const queue = new Queue('scheduled-jobs', { connection: createApiRedisConnection() as any });
       await queue.add(
         skillName,
         { triggeredBy: 'manual', jobId: jobId ?? null, params: params ?? {} },
@@ -58,7 +59,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'jobName is required' }, { status: 400 });
     }
 
-    const queue = new Queue('scheduled-jobs', { connection: createApiRedisConnection() });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const queue = new Queue('scheduled-jobs', { connection: createApiRedisConnection() as any });
     await queue.add(
       jobName,
       { triggeredBy: 'manual' },

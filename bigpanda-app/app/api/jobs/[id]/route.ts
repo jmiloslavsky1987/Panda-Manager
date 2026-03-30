@@ -96,7 +96,8 @@ export async function PATCH(
     try {
       const { Queue } = await import('bullmq');
       const { createApiRedisConnection } = await import('../../../../worker/connection');
-      const queue = new Queue('scheduled-jobs', { connection: createApiRedisConnection() });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const queue = new Queue('scheduled-jobs', { connection: createApiRedisConnection() as any });
 
       if (enabled === false) {
         // Disable — remove the scheduler
@@ -144,7 +145,8 @@ export async function DELETE(
     try {
       const { Queue } = await import('bullmq');
       const { createApiRedisConnection } = await import('../../../../worker/connection');
-      const queue = new Queue('scheduled-jobs', { connection: createApiRedisConnection() });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const queue = new Queue('scheduled-jobs', { connection: createApiRedisConnection() as any });
       await queue.removeJobScheduler(`db-job-${jobId}`);
       await queue.close();
     } catch (queueErr) {
