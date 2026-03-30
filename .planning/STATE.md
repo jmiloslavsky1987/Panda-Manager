@@ -24,9 +24,9 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 ## Current Status
 
 **Phase:** Phase 24 — Scheduler Enhanced
-**Current Plan:** Not started
-**Last action:** 2026-03-27 — 23-08 human verification approved; Phase 23 COMPLETE — all 19 TTADV requirements verified in-browser; 41/41 TDD tests passing
-**Next action:** Begin Phase 24 (Scheduler Enhanced)
+**Current Plan:** 24-05 (at checkpoint: human-verify)
+**Last action:** 2026-03-30 — 24-05 Task 1 complete; 48/48 scheduler tests passing; ioredis/bullmq TS type conflict resolved; awaiting browser verification at checkpoint
+**Next action:** Human verifies Phase 24 Scheduler at http://localhost:3000 — type "approved" or describe issues
 
 ## Phase Progress
 
@@ -58,7 +58,7 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 | 21. Teams Tab + Architecture Tab | COMPLETE (6/6 plans) |
 | 22. Source Badges + Audit Log | COMPLETE (5/5 plans) |
 | 23. Time Tracking Advanced | COMPLETE (8/8 plans) |
-| 24. Scheduler Enhanced | Not started |
+| 24. Scheduler Enhanced | Awaiting verification (5/5 plans — checkpoint) |
 
 ## Active Work
 
@@ -68,6 +68,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 
 ## Decisions
 
+- **[2026-03-30] 24-05:** ioredis/bullmq TS2322 type conflict resolved with `as any` cast in 6 files — bullmq v5 bundles its own ioredis; runtime unaffected; 48/48 scheduler tests GREEN; awaiting human browser verification before SCHED-01-12 marked complete
 - **[2026-03-27] 23-08:** Phase 23 COMPLETE — all 19 TTADV requirements verified in-browser; 41/41 TDD tests passing; migration 0018 required manual psql -f (not auto-applied); Google Calendar OAuth UI verified but full auth flow needs Google Cloud Console setup; Phase 24 can proceed
 - **[2026-03-27] 22-05:** Phase 22 COMPLETE — all three AUDIT requirements verified in-browser and via direct DB query; no issues found; Phases 23 and 24 can proceed in parallel
 - **[2026-03-25] v2.0 roadmap:** Phases 18 and 19 (Document Ingestion and External Discovery) assigned to parallel wave after Phase 17 — both depend only on Schema, not on each other
