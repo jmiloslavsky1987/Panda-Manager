@@ -14,6 +14,7 @@ import {
   focusAreas,
   architectureIntegrations,
   artifacts,
+  auditLog,
 } from '@/db/schema';
 import type { EntityType, ExtractionItem } from '@/app/api/ingestion/extract/route';
 
@@ -187,122 +188,231 @@ async function insertItem(
 
   switch (item.entityType) {
     case 'action':
-      await db.insert(actions).values({
-        project_id: projectId,
-        external_id: syntheticExternalId('action', artifactId),
-        description: f.description ?? '',
-        owner: f.owner ?? null,
-        due: f.due_date ?? null,
-        status: 'open',
-        ...attribution,
+      await db.transaction(async (tx) => {
+        const [inserted] = await tx.insert(actions).values({
+          project_id: projectId,
+          external_id: syntheticExternalId('action', artifactId),
+          description: f.description ?? '',
+          owner: f.owner ?? null,
+          due: f.due_date ?? null,
+          status: 'open',
+          ...attribution,
+        }).returning();
+        await tx.insert(auditLog).values({
+          entity_type: item.entityType,
+          entity_id: inserted.id,
+          action: 'create',
+          actor_id: 'default',
+          before_json: null,
+          after_json: inserted as Record<string, unknown>,
+        });
       });
       break;
 
     case 'risk':
-      await db.insert(risks).values({
-        project_id: projectId,
-        external_id: syntheticExternalId('risk', artifactId),
-        description: f.description ?? '',
-        owner: f.owner ?? null,
-        mitigation: f.mitigation ?? null,
-        ...attribution,
+      await db.transaction(async (tx) => {
+        const [inserted] = await tx.insert(risks).values({
+          project_id: projectId,
+          external_id: syntheticExternalId('risk', artifactId),
+          description: f.description ?? '',
+          owner: f.owner ?? null,
+          mitigation: f.mitigation ?? null,
+          ...attribution,
+        }).returning();
+        await tx.insert(auditLog).values({
+          entity_type: item.entityType,
+          entity_id: inserted.id,
+          action: 'create',
+          actor_id: 'default',
+          before_json: null,
+          after_json: inserted as Record<string, unknown>,
+        });
       });
       break;
 
     case 'milestone':
-      await db.insert(milestones).values({
-        project_id: projectId,
-        external_id: syntheticExternalId('milestone', artifactId),
-        name: f.name ?? '',
-        target: f.target_date ?? null,
-        date: f.target_date ?? null,
-        status: f.status ?? null,
-        ...attribution,
+      await db.transaction(async (tx) => {
+        const [inserted] = await tx.insert(milestones).values({
+          project_id: projectId,
+          external_id: syntheticExternalId('milestone', artifactId),
+          name: f.name ?? '',
+          target: f.target_date ?? null,
+          date: f.target_date ?? null,
+          status: f.status ?? null,
+          ...attribution,
+        }).returning();
+        await tx.insert(auditLog).values({
+          entity_type: item.entityType,
+          entity_id: inserted.id,
+          action: 'create',
+          actor_id: 'default',
+          before_json: null,
+          after_json: inserted as Record<string, unknown>,
+        });
       });
       break;
 
     case 'decision':
-      await db.insert(keyDecisions).values({
-        project_id: projectId,
-        decision: f.decision ?? '',
-        date: f.date ?? null,
-        context: f.rationale ?? null,
-        ...attribution,
+      await db.transaction(async (tx) => {
+        const [inserted] = await tx.insert(keyDecisions).values({
+          project_id: projectId,
+          decision: f.decision ?? '',
+          date: f.date ?? null,
+          context: f.rationale ?? null,
+          ...attribution,
+        }).returning();
+        await tx.insert(auditLog).values({
+          entity_type: item.entityType,
+          entity_id: inserted.id,
+          action: 'create',
+          actor_id: 'default',
+          before_json: null,
+          after_json: inserted as Record<string, unknown>,
+        });
       });
       break;
 
     case 'history':
-      await db.insert(engagementHistory).values({
-        project_id: projectId,
-        content: f.content ?? '',
-        date: f.date ?? null,
-        ...attribution,
+      await db.transaction(async (tx) => {
+        const [inserted] = await tx.insert(engagementHistory).values({
+          project_id: projectId,
+          content: f.content ?? '',
+          date: f.date ?? null,
+          ...attribution,
+        }).returning();
+        await tx.insert(auditLog).values({
+          entity_type: item.entityType,
+          entity_id: inserted.id,
+          action: 'create',
+          actor_id: 'default',
+          before_json: null,
+          after_json: inserted as Record<string, unknown>,
+        });
       });
       break;
 
     case 'stakeholder':
-      await db.insert(stakeholders).values({
-        project_id: projectId,
-        name: f.name ?? '',
-        role: f.role ?? null,
-        email: f.email ?? null,
-        company: f.account ?? null,
-        ...attribution,
+      await db.transaction(async (tx) => {
+        const [inserted] = await tx.insert(stakeholders).values({
+          project_id: projectId,
+          name: f.name ?? '',
+          role: f.role ?? null,
+          email: f.email ?? null,
+          company: f.account ?? null,
+          ...attribution,
+        }).returning();
+        await tx.insert(auditLog).values({
+          entity_type: item.entityType,
+          entity_id: inserted.id,
+          action: 'create',
+          actor_id: 'default',
+          before_json: null,
+          after_json: inserted as Record<string, unknown>,
+        });
       });
       break;
 
     case 'task':
-      await db.insert(tasks).values({
-        project_id: projectId,
-        title: f.title ?? '',
-        owner: f.owner ?? null,
-        phase: f.phase ?? null,
-        status: f.status ?? 'todo',
-        ...attribution,
+      await db.transaction(async (tx) => {
+        const [inserted] = await tx.insert(tasks).values({
+          project_id: projectId,
+          title: f.title ?? '',
+          owner: f.owner ?? null,
+          phase: f.phase ?? null,
+          status: f.status ?? 'todo',
+          ...attribution,
+        }).returning();
+        await tx.insert(auditLog).values({
+          entity_type: item.entityType,
+          entity_id: inserted.id,
+          action: 'create',
+          actor_id: 'default',
+          before_json: null,
+          after_json: inserted as Record<string, unknown>,
+        });
       });
       break;
 
     case 'businessOutcome':
-      await db.insert(businessOutcomes).values({
-        project_id: projectId,
-        title: f.title ?? '',
-        track: f.track ?? '',
-        description: f.description ?? null,
-        ...attribution,
+      await db.transaction(async (tx) => {
+        const [inserted] = await tx.insert(businessOutcomes).values({
+          project_id: projectId,
+          title: f.title ?? '',
+          track: f.track ?? '',
+          description: f.description ?? null,
+          ...attribution,
+        }).returning();
+        await tx.insert(auditLog).values({
+          entity_type: item.entityType,
+          entity_id: inserted.id,
+          action: 'create',
+          actor_id: 'default',
+          before_json: null,
+          after_json: inserted as Record<string, unknown>,
+        });
       });
       break;
 
     case 'team':
       // team maps to focus_areas table (consistent with extract route)
-      await db.insert(focusAreas).values({
-        project_id: projectId,
-        title: f.team_name ?? '',
-        tracks: f.track ?? null,
-        ...attribution,
+      await db.transaction(async (tx) => {
+        const [inserted] = await tx.insert(focusAreas).values({
+          project_id: projectId,
+          title: f.team_name ?? '',
+          tracks: f.track ?? null,
+          ...attribution,
+        }).returning();
+        await tx.insert(auditLog).values({
+          entity_type: item.entityType,
+          entity_id: inserted.id,
+          action: 'create',
+          actor_id: 'default',
+          before_json: null,
+          after_json: inserted as Record<string, unknown>,
+        });
       });
       break;
 
     case 'architecture':
-      await db.insert(architectureIntegrations).values({
-        project_id: projectId,
-        tool_name: f.tool_name ?? '',
-        track: f.track ?? '',
-        phase: f.phase ?? null,
-        integration_method: f.integration_method ?? null,
-        notes: f.notes ?? null,
-        ...attribution,
+      await db.transaction(async (tx) => {
+        const [inserted] = await tx.insert(architectureIntegrations).values({
+          project_id: projectId,
+          tool_name: f.tool_name ?? '',
+          track: f.track ?? '',
+          phase: f.phase ?? null,
+          integration_method: f.integration_method ?? null,
+          notes: f.notes ?? null,
+          ...attribution,
+        }).returning();
+        await tx.insert(auditLog).values({
+          entity_type: item.entityType,
+          entity_id: inserted.id,
+          action: 'create',
+          actor_id: 'default',
+          before_json: null,
+          after_json: inserted as Record<string, unknown>,
+        });
       });
       break;
 
     case 'note':
       // Free-form notes that don't fit a structured entity type — saved to engagement_history
       // so no content from a document is ever lost.
-      await db.insert(engagementHistory).values({
-        project_id: projectId,
-        content: [f.content, f.context].filter(Boolean).join(' | ') || '(note)',
-        date: null,
-        source: 'ingestion',
-        ...attribution,
+      await db.transaction(async (tx) => {
+        const [inserted] = await tx.insert(engagementHistory).values({
+          project_id: projectId,
+          content: [f.content, f.context].filter(Boolean).join(' | ') || '(note)',
+          date: null,
+          ...attribution,
+        }).returning();
+        await tx.insert(auditLog).values({
+          entity_type: item.entityType,
+          entity_id: inserted.id,
+          action: 'create',
+          actor_id: 'default',
+          before_json: null,
+          after_json: inserted as Record<string, unknown>,
+        });
       });
       break;
   }
@@ -322,69 +432,141 @@ async function mergeItem(
   };
 
   switch (item.entityType) {
-    case 'action':
-      await db.update(actions).set({
-        owner: f.owner ?? undefined,
-        due: f.due_date ?? undefined,
-        ...attribution,
-      }).where(eq(actions.id, existingId));
+    case 'action': {
+      const [beforeRecord] = await db.select().from(actions).where(eq(actions.id, existingId));
+      const patch = { owner: f.owner ?? undefined, due: f.due_date ?? undefined, ...attribution };
+      await db.transaction(async (tx) => {
+        await tx.update(actions).set(patch).where(eq(actions.id, existingId));
+        await tx.insert(auditLog).values({
+          entity_type: item.entityType,
+          entity_id: existingId,
+          action: 'update',
+          actor_id: 'default',
+          before_json: beforeRecord as Record<string, unknown>,
+          after_json: { ...beforeRecord, ...patch } as Record<string, unknown>,
+        });
+      });
       break;
+    }
 
-    case 'risk':
-      await db.update(risks).set({
-        owner: f.owner ?? undefined,
-        mitigation: f.mitigation ?? undefined,
-        ...attribution,
-      }).where(eq(risks.id, existingId));
+    case 'risk': {
+      const [beforeRecord] = await db.select().from(risks).where(eq(risks.id, existingId));
+      const patch = { owner: f.owner ?? undefined, mitigation: f.mitigation ?? undefined, ...attribution };
+      await db.transaction(async (tx) => {
+        await tx.update(risks).set(patch).where(eq(risks.id, existingId));
+        await tx.insert(auditLog).values({
+          entity_type: item.entityType,
+          entity_id: existingId,
+          action: 'update',
+          actor_id: 'default',
+          before_json: beforeRecord as Record<string, unknown>,
+          after_json: { ...beforeRecord, ...patch } as Record<string, unknown>,
+        });
+      });
       break;
+    }
 
-    case 'milestone':
-      await db.update(milestones).set({
-        target: f.target_date ?? undefined,
-        status: f.status ?? undefined,
-        ...attribution,
-      }).where(eq(milestones.id, existingId));
+    case 'milestone': {
+      const [beforeRecord] = await db.select().from(milestones).where(eq(milestones.id, existingId));
+      const patch = { target: f.target_date ?? undefined, status: f.status ?? undefined, ...attribution };
+      await db.transaction(async (tx) => {
+        await tx.update(milestones).set(patch).where(eq(milestones.id, existingId));
+        await tx.insert(auditLog).values({
+          entity_type: item.entityType,
+          entity_id: existingId,
+          action: 'update',
+          actor_id: 'default',
+          before_json: beforeRecord as Record<string, unknown>,
+          after_json: { ...beforeRecord, ...patch } as Record<string, unknown>,
+        });
+      });
       break;
+    }
 
-    case 'stakeholder':
-      await db.update(stakeholders).set({
-        role: f.role ?? undefined,
-        email: f.email ?? undefined,
-        company: f.account ?? undefined,
-        ...attribution,
-      }).where(eq(stakeholders.id, existingId));
+    case 'stakeholder': {
+      const [beforeRecord] = await db.select().from(stakeholders).where(eq(stakeholders.id, existingId));
+      const patch = { role: f.role ?? undefined, email: f.email ?? undefined, company: f.account ?? undefined, ...attribution };
+      await db.transaction(async (tx) => {
+        await tx.update(stakeholders).set(patch).where(eq(stakeholders.id, existingId));
+        await tx.insert(auditLog).values({
+          entity_type: item.entityType,
+          entity_id: existingId,
+          action: 'update',
+          actor_id: 'default',
+          before_json: beforeRecord as Record<string, unknown>,
+          after_json: { ...beforeRecord, ...patch } as Record<string, unknown>,
+        });
+      });
       break;
+    }
 
-    case 'task':
-      await db.update(tasks).set({
-        owner: f.owner ?? undefined,
-        status: f.status ?? undefined,
-        ...attribution,
-      }).where(eq(tasks.id, existingId));
+    case 'task': {
+      const [beforeRecord] = await db.select().from(tasks).where(eq(tasks.id, existingId));
+      const patch = { owner: f.owner ?? undefined, status: f.status ?? undefined, ...attribution };
+      await db.transaction(async (tx) => {
+        await tx.update(tasks).set(patch).where(eq(tasks.id, existingId));
+        await tx.insert(auditLog).values({
+          entity_type: item.entityType,
+          entity_id: existingId,
+          action: 'update',
+          actor_id: 'default',
+          before_json: beforeRecord as Record<string, unknown>,
+          after_json: { ...beforeRecord, ...patch } as Record<string, unknown>,
+        });
+      });
       break;
+    }
 
-    case 'businessOutcome':
-      await db.update(businessOutcomes).set({
-        description: f.description ?? undefined,
-        ...attribution,
-      }).where(eq(businessOutcomes.id, existingId));
+    case 'businessOutcome': {
+      const [beforeRecord] = await db.select().from(businessOutcomes).where(eq(businessOutcomes.id, existingId));
+      const patch = { description: f.description ?? undefined, ...attribution };
+      await db.transaction(async (tx) => {
+        await tx.update(businessOutcomes).set(patch).where(eq(businessOutcomes.id, existingId));
+        await tx.insert(auditLog).values({
+          entity_type: item.entityType,
+          entity_id: existingId,
+          action: 'update',
+          actor_id: 'default',
+          before_json: beforeRecord as Record<string, unknown>,
+          after_json: { ...beforeRecord, ...patch } as Record<string, unknown>,
+        });
+      });
       break;
+    }
 
-    case 'team':
-      await db.update(focusAreas).set({
-        tracks: f.track ?? undefined,
-        ...attribution,
-      }).where(eq(focusAreas.id, existingId));
+    case 'team': {
+      const [beforeRecord] = await db.select().from(focusAreas).where(eq(focusAreas.id, existingId));
+      const patch = { tracks: f.track ?? undefined, ...attribution };
+      await db.transaction(async (tx) => {
+        await tx.update(focusAreas).set(patch).where(eq(focusAreas.id, existingId));
+        await tx.insert(auditLog).values({
+          entity_type: item.entityType,
+          entity_id: existingId,
+          action: 'update',
+          actor_id: 'default',
+          before_json: beforeRecord as Record<string, unknown>,
+          after_json: { ...beforeRecord, ...patch } as Record<string, unknown>,
+        });
+      });
       break;
+    }
 
-    case 'architecture':
-      await db.update(architectureIntegrations).set({
-        phase: f.phase ?? undefined,
-        integration_method: f.integration_method ?? undefined,
-        notes: f.notes ?? undefined,
-        ...attribution,
-      }).where(eq(architectureIntegrations.id, existingId));
+    case 'architecture': {
+      const [beforeRecord] = await db.select().from(architectureIntegrations).where(eq(architectureIntegrations.id, existingId));
+      const patch = { phase: f.phase ?? undefined, integration_method: f.integration_method ?? undefined, notes: f.notes ?? undefined, ...attribution };
+      await db.transaction(async (tx) => {
+        await tx.update(architectureIntegrations).set(patch).where(eq(architectureIntegrations.id, existingId));
+        await tx.insert(auditLog).values({
+          entity_type: item.entityType,
+          entity_id: existingId,
+          action: 'update',
+          actor_id: 'default',
+          before_json: beforeRecord as Record<string, unknown>,
+          after_json: { ...beforeRecord, ...patch } as Record<string, unknown>,
+        });
+      });
       break;
+    }
 
     // decision and history are append-only — merge is not applicable
     default:
@@ -396,30 +578,126 @@ async function mergeItem(
 
 async function deleteItem(entityType: EntityType, existingId: number): Promise<void> {
   switch (entityType) {
-    case 'action':
-      await db.delete(actions).where(eq(actions.id, existingId));
+    case 'action': {
+      const [before] = await db.select().from(actions).where(eq(actions.id, existingId));
+      await db.transaction(async (tx) => {
+        await tx.delete(actions).where(eq(actions.id, existingId));
+        await tx.insert(auditLog).values({
+          entity_type: entityType,
+          entity_id: existingId,
+          action: 'delete',
+          actor_id: 'default',
+          before_json: (before as Record<string, unknown>) ?? null,
+          after_json: null,
+        });
+      });
       break;
-    case 'risk':
-      await db.delete(risks).where(eq(risks.id, existingId));
+    }
+    case 'risk': {
+      const [before] = await db.select().from(risks).where(eq(risks.id, existingId));
+      await db.transaction(async (tx) => {
+        await tx.delete(risks).where(eq(risks.id, existingId));
+        await tx.insert(auditLog).values({
+          entity_type: entityType,
+          entity_id: existingId,
+          action: 'delete',
+          actor_id: 'default',
+          before_json: (before as Record<string, unknown>) ?? null,
+          after_json: null,
+        });
+      });
       break;
-    case 'milestone':
-      await db.delete(milestones).where(eq(milestones.id, existingId));
+    }
+    case 'milestone': {
+      const [before] = await db.select().from(milestones).where(eq(milestones.id, existingId));
+      await db.transaction(async (tx) => {
+        await tx.delete(milestones).where(eq(milestones.id, existingId));
+        await tx.insert(auditLog).values({
+          entity_type: entityType,
+          entity_id: existingId,
+          action: 'delete',
+          actor_id: 'default',
+          before_json: (before as Record<string, unknown>) ?? null,
+          after_json: null,
+        });
+      });
       break;
-    case 'stakeholder':
-      await db.delete(stakeholders).where(eq(stakeholders.id, existingId));
+    }
+    case 'stakeholder': {
+      const [before] = await db.select().from(stakeholders).where(eq(stakeholders.id, existingId));
+      await db.transaction(async (tx) => {
+        await tx.delete(stakeholders).where(eq(stakeholders.id, existingId));
+        await tx.insert(auditLog).values({
+          entity_type: entityType,
+          entity_id: existingId,
+          action: 'delete',
+          actor_id: 'default',
+          before_json: (before as Record<string, unknown>) ?? null,
+          after_json: null,
+        });
+      });
       break;
-    case 'task':
-      await db.delete(tasks).where(eq(tasks.id, existingId));
+    }
+    case 'task': {
+      const [before] = await db.select().from(tasks).where(eq(tasks.id, existingId));
+      await db.transaction(async (tx) => {
+        await tx.delete(tasks).where(eq(tasks.id, existingId));
+        await tx.insert(auditLog).values({
+          entity_type: entityType,
+          entity_id: existingId,
+          action: 'delete',
+          actor_id: 'default',
+          before_json: (before as Record<string, unknown>) ?? null,
+          after_json: null,
+        });
+      });
       break;
-    case 'businessOutcome':
-      await db.delete(businessOutcomes).where(eq(businessOutcomes.id, existingId));
+    }
+    case 'businessOutcome': {
+      const [before] = await db.select().from(businessOutcomes).where(eq(businessOutcomes.id, existingId));
+      await db.transaction(async (tx) => {
+        await tx.delete(businessOutcomes).where(eq(businessOutcomes.id, existingId));
+        await tx.insert(auditLog).values({
+          entity_type: entityType,
+          entity_id: existingId,
+          action: 'delete',
+          actor_id: 'default',
+          before_json: (before as Record<string, unknown>) ?? null,
+          after_json: null,
+        });
+      });
       break;
-    case 'team':
-      await db.delete(focusAreas).where(eq(focusAreas.id, existingId));
+    }
+    case 'team': {
+      const [before] = await db.select().from(focusAreas).where(eq(focusAreas.id, existingId));
+      await db.transaction(async (tx) => {
+        await tx.delete(focusAreas).where(eq(focusAreas.id, existingId));
+        await tx.insert(auditLog).values({
+          entity_type: entityType,
+          entity_id: existingId,
+          action: 'delete',
+          actor_id: 'default',
+          before_json: (before as Record<string, unknown>) ?? null,
+          after_json: null,
+        });
+      });
       break;
-    case 'architecture':
-      await db.delete(architectureIntegrations).where(eq(architectureIntegrations.id, existingId));
+    }
+    case 'architecture': {
+      const [before] = await db.select().from(architectureIntegrations).where(eq(architectureIntegrations.id, existingId));
+      await db.transaction(async (tx) => {
+        await tx.delete(architectureIntegrations).where(eq(architectureIntegrations.id, existingId));
+        await tx.insert(auditLog).values({
+          entity_type: entityType,
+          entity_id: existingId,
+          action: 'delete',
+          actor_id: 'default',
+          before_json: (before as Record<string, unknown>) ?? null,
+          after_json: null,
+        });
+      });
       break;
+    }
     // decision and history: append-only, never deleted via approve route
     default:
       break;

@@ -98,14 +98,20 @@ describe('ingestion/approve route — audit transaction (AUDIT-02)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Default: artifact SELECT returns a valid artifact so route doesn't 404
-    vi.mocked(db.select).mockReturnValue({
-      from: vi.fn().mockReturnValue({
-        where: vi.fn().mockResolvedValue([
-          { id: 1, ingestion_log_json: {} },
-        ]),
-      }),
-    } as any);
+    // Default: first SELECT returns artifact (for 404 guard), subsequent SELECTs
+    // return empty (no conflicts) so insertItem path is exercised in ING-1.
+    let selectCallCount = 0;
+    vi.mocked(db.select).mockImplementation(() => {
+      selectCallCount++;
+      const resolvedValue = selectCallCount === 1
+        ? [{ id: 1, ingestion_log_json: {} }]
+        : [];
+      return {
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue(resolvedValue),
+        }),
+      } as any;
+    });
 
     // Default: insert chain (used by route for entity insert + artifact update)
     vi.mocked(db.insert).mockReturnValue({
@@ -129,6 +135,16 @@ describe('ingestion/approve route — audit transaction (AUDIT-02)', () => {
     mockTx.insert.mockReturnValue(mockInsertChain);
     mockInsertChain.values.mockReturnThis();
     mockInsertChain.returning.mockResolvedValue([{ id: 999 }]);
+
+    // Mock tx update chain (needed for mergeItem and deleteItem paths)
+    mockTx.update.mockReturnValue(mockUpdateChain);
+    mockUpdateChain.set.mockReturnThis();
+    mockUpdateChain.where.mockResolvedValue([]);
+
+    // Mock tx delete chain (needed for deleteItem path)
+    mockTx.delete.mockReturnValue({
+      where: vi.fn().mockResolvedValue([]),
+    });
   });
 
   it('AUDIT-02-ING-1: insertItem() wraps entity write + auditLog insert in db.transaction (insert path)', async () => {
