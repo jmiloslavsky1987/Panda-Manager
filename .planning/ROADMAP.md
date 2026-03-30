@@ -568,7 +568,14 @@ Plans:
   2. Approving items via the ingestion approve route (`/api/ingestion/approve`) writes a record to audit_log with entity_type, action, actor_id, and before/after JSON
   3. Approving discovery items via the discovery approve route (`/api/discovery/approve`) writes a record to audit_log with the same fields
   4. E2E Flow 3 (wizard upload → ingestion → extraction → items in project tabs) completes end-to-end without a filter bug blocking step 3
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 25-01-PLAN.md — Wave 0: Test stubs (ai-preview-filter, ingestion-approve-audit, discovery-approve-audit)
+- [ ] 25-02-PLAN.md — Wave 1: WIZ-03 filter fix in AiPreviewStep.tsx
+- [ ] 25-03-PLAN.md — Wave 1: AUDIT-02 bulk routes (ingestion/approve + discovery/approve)
+- [ ] 25-04-PLAN.md — Wave 1: AUDIT-02 single-entity routes (tasks POST/PATCH/DELETE + stakeholders POST)
+- [ ] 25-05-PLAN.md — Wave 1: AUDIT-02 single-entity routes (workstreams + knowledge-base + plan-templates)
 
 ---
 
