@@ -56,7 +56,7 @@ export function AiPreviewStep({
     if (hasStartedRef.current) return
     hasStartedRef.current = true
 
-    const filesToExtract = fileStatuses.filter(f => f.artifactId && f.status !== 'done')
+    const filesToExtract = fileStatuses.filter(f => f.artifactId)
     if (filesToExtract.length === 0) return
 
     // Run extractions sequentially
