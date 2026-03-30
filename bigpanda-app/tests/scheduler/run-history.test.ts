@@ -2,10 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('server-only', () => ({}));
 
-const mockDbUpdate = vi.fn().mockReturnValue({
-  set: vi.fn().mockReturnValue({
-    where: vi.fn().mockResolvedValue([{ id: 1 }]),
-  }),
+// Use vi.hoisted so the mock variable is available in the vi.mock factory
+const { mockDbUpdate } = vi.hoisted(() => {
+  const mockDbUpdate = vi.fn().mockReturnValue({
+    set: vi.fn().mockReturnValue({
+      where: vi.fn().mockResolvedValue([{ id: 1 }]),
+    }),
+  });
+  return { mockDbUpdate };
 });
 
 vi.mock('../../db', () => ({
