@@ -19,7 +19,6 @@ import {
   appendRunHistoryEntry,
   insertSchedulerFailureNotification,
 } from '../lib/scheduler-notifications';
-import { readSettings } from '../lib/settings-core';
 
 // Job handler dispatch map — avoids dynamic require which can fail with tsx
 import actionSync            from './jobs/action-sync';
@@ -124,22 +123,19 @@ const gracefulShutdown = async (signal: string) => {
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT',  () => gracefulShutdown('SIGINT'));
 
-// Start: register schedulers, then poll every 60s for schedule changes
+// Start: clean up legacy schedulers, register DB-driven schedulers, poll every 60s
 async function start() {
   console.log('[worker] starting...');
-  const settings = await readSettings();
-  await registerAllSchedulers(settings);
+  await registerAllSchedulers();
   await registerDbSchedulers();
   console.log('[worker] all schedulers registered');
 
-  // Re-register every 60s — picks up schedule changes saved via Settings UI + DB
+  // Re-register every 60s — picks up DB job changes (enable/disable/edit)
   setInterval(async () => {
     try {
-      const fresh = await readSettings();
-      await registerAllSchedulers(fresh);
       await registerDbSchedulers();
     } catch (err) {
-      console.error('[worker] settings poll error', err);
+      console.error('[worker] scheduler poll error', err);
     }
   }, 60_000);
 
