@@ -614,7 +614,7 @@ Phases 18 and 19 can run in parallel after Phase 17. Phases 23 and 24 are indepe
 | 22. Source Badges + Audit Log | 5/5 | Complete    | 2026-03-27 |
 | 23. Time Tracking Advanced | 8/8 | Complete   | 2026-03-28 |
 | 24. Scheduler Enhanced | 0/TBD | Not started | - |
-| 25. Wizard Fix + Audit Completion [GAP] | 1/5 | In Progress|  |
+| 25. Wizard Fix + Audit Completion [GAP] | 2/5 | In Progress|  |
 
 ---
 

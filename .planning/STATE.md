@@ -4,12 +4,12 @@ milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
 current_plan: Not started
 status: unknown
-last_updated: "2026-03-30T17:15:50.177Z"
+last_updated: "2026-03-30T17:18:34.518Z"
 progress:
   total_phases: 28
   completed_phases: 25
   total_plans: 147
-  completed_plans: 142
+  completed_plans: 143
 ---
 
 # Project State
@@ -384,6 +384,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 - [Phase 23-06]: Excel buffer returned via Response (not NextResponse) using ArrayBuffer to satisfy BodyInit type constraint
 - [Phase 25-01]: Filter regression tests are GREEN by design — pure data tests document WIZ-03 bug vs fix, serve as regression guards for Plan 02 one-line change
 - [Phase 25-01]: Audit RED tests drive real POST handlers via mocked @/db to avoid exporting private helpers; conflict-path test overrides db.select mock inline
+- [Phase 25-02]: WIZ-03 fix: outer filter checks only for artifactId presence; inner loop guard handles per-file status logic — roles are distinct and must stay separate
 
 ## Performance Metrics
 
@@ -515,6 +516,7 @@ Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (paralle
 | Phase 23-time-tracking-advanced P05 | 3 | 2 tasks | 2 files |
 | Phase 23-time-tracking-advanced P06 | 5 | 2 tasks | 2 files |
 | Phase 25-wizard-fix-audit-completion P01 | 8 | 3 tasks | 3 files |
+| Phase 25-wizard-fix-audit-completion P02 | 5 | 1 tasks | 1 files |
 
 ## Key Context for Next Session
 
