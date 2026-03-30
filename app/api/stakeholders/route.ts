@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '../../../db'
-import { stakeholders } from '../../../db/schema'
+import { stakeholders, auditLog } from '../../../db/schema'
 
 const postSchema = z.object({
   project_id: z.number(),
@@ -29,19 +29,35 @@ export async function POST(request: NextRequest) {
 
   const { project_id, name, role, company, email, slack_id, notes, source } = parsed.data
 
-  const result = await db
-    .insert(stakeholders)
-    .values({
-      project_id,
-      name,
-      role: role ?? null,
-      company: company ?? null,
-      email: email ?? null,
-      slack_id: slack_id ?? null,
-      notes: notes ?? null,
-      source,
+  try {
+    let insertedRow: typeof stakeholders.$inferSelect | undefined
+    await db.transaction(async (tx) => {
+      const [row] = await tx
+        .insert(stakeholders)
+        .values({
+          project_id,
+          name,
+          role: role ?? null,
+          company: company ?? null,
+          email: email ?? null,
+          slack_id: slack_id ?? null,
+          notes: notes ?? null,
+          source,
+        })
+        .returning()
+      await tx.insert(auditLog).values({
+        entity_type: 'stakeholder',
+        entity_id: row.id,
+        action: 'create',
+        actor_id: 'default',
+        before_json: null,
+        after_json: row as Record<string, unknown>,
+      })
+      insertedRow = row
     })
-    .returning()
-
-  return NextResponse.json(result[0], { status: 201 })
+    return NextResponse.json(insertedRow!, { status: 201 })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Insert failed'
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }
