@@ -890,7 +890,14 @@ Phases 18 and 19 can run in parallel after Phase 17. Phases 23 and 24 are indepe
   3. An admin can open Settings > Users, create a new user account with a role, deactivate an existing account, and change a user's role — changes take effect on next login without a server restart
   4. The users table contains an `external_id` nullable column and role resolution runs through a `resolveRole(session)` abstraction — adding Okta OIDC later requires only environment variable configuration, not a schema migration
   5. The audit_log `actor_id` column is populated from the active session on every mutation — audit records written during authenticated sessions show the user's ID, not null
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 26-01-PLAN.md — Wave 0: Package install (better-auth, bcryptjs) + 10 RED test stubs in tests/auth/
+- [ ] 26-02-PLAN.md — Wave 1: db/schema.ts auth tables + migration 0020 + lib/auth.ts + lib/auth-server.ts + lib/auth-utils.ts + lib/auth-client.ts
+- [ ] 26-03-PLAN.md — Wave 2: app/api/auth/[...all]/route.ts + proxy.ts + requireSession() added to all 86 route handlers
+- [ ] 26-04-PLAN.md — Wave 3: app/login/page.tsx + app/setup/page.tsx + app/layout.tsx auth wrapper + AuthProvider + SessionExpiredModal + fetchWithAuth
+- [ ] 26-05-PLAN.md — Wave 4: app/api/settings/users/route.ts + UsersTab.tsx + settings/page.tsx Users tab + human verification checkpoint
 
 ### Phase 27: UI Overhaul + Templates
 **Goal**: The workspace navigation is decluttered by grouping tabs into logical sub-tabs, the visual design is modernized throughout with updated typography, spacing, and color, and every tab type has a TypeScript-enforced required section structure — new projects created after this phase are seeded with canonical placeholder content in all 11 tabs.
