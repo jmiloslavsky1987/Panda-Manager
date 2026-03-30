@@ -87,19 +87,19 @@ export const SKILL_LIST: SkillDef[] = [
     id: 'timesheet-reminder',
     label: 'Timesheet Reminder',
     description: 'Sends scheduled reminders to PS team members to submit timesheets.',
-    hasParams: true,
+    hasParams: false,
   },
 ];
 
 /**
  * IDs of skills that have configurable parameters (extra wizard step).
+ * Note: timesheet-reminder has no configurable params — Step 3 is skipped for it.
  */
 export const SKILLS_WITH_PARAMS: string[] = [
   'discovery-scan',
   'customer-project-tracker',
   'weekly-customer-status',
   'context-updater',
-  'timesheet-reminder',
 ];
 
 /**
