@@ -867,3 +867,127 @@ Phases 18 and 19 can run in parallel after Phase 17. Phases 23 and 24 are indepe
 *Phases 9–14 added: 2026-03-24 — gap closure phases from v1.0 audit + high-value feature additions; SKILL-09 moved to v2*
 *v2.0 Phases 17–24 added: 2026-03-25 — AI Ingestion & Enhanced Operations milestone; 96/96 requirements mapped*
 *Phase 25 added: 2026-03-30 — gap closure from v2.0-MILESTONE-AUDIT.md; closes WIZ-03 wiring break + AUDIT-02 partial*
+
+---
+
+### v3.0 — Collaboration & Intelligence
+
+- [ ] **Phase 26: Multi-User Auth** - Credential login, user management, role enforcement, Okta-ready schema, all routes session-protected
+- [ ] **Phase 27: UI Overhaul + Templates** - Sub-tab navigation, visual modernization, TypeScript template registry, new-project seeding
+- [ ] **Phase 28: Interactive Visuals** - React Flow engagement map, interactive workflow diagram with clickable nodes
+- [ ] **Phase 29: Project Chat** - Inline AI chat panel per project, DB context injection, hallucination constraints
+- [ ] **Phase 30: Context Hub** - Dedicated upload tab, Claude content routing, completeness analysis, per-tab gap summaries
+
+## Phase Details (v3.0)
+
+### Phase 26: Multi-User Auth
+**Goal**: The platform transitions from single-user to multi-user — any team member can log in with their credentials, admins can manage user accounts and roles from the Settings panel, all 40+ existing Route Handlers enforce session at the API layer (not just middleware), and the user schema is Okta-ready for future OIDC integration with no data migration required.
+**Depends on**: Phase 25 (v2.0 complete)
+**Requirements**: AUTH-01, AUTH-02, AUTH-03, AUTH-04, AUTH-05
+**Success Criteria** (what must be TRUE):
+  1. A team member can navigate to /login, enter their email and password, and be redirected to the Dashboard — the session persists across browser tab closes and reopens (httpOnly cookie, not localStorage)
+  2. An unauthenticated request to any API route or workspace page is redirected to /login — setting the x-middleware-subrequest header does not bypass this (defense-in-depth: requireSession() enforced at Route Handler level, not only middleware)
+  3. An admin can open Settings > Users, create a new user account with a role, deactivate an existing account, and change a user's role — changes take effect on next login without a server restart
+  4. The users table contains an `external_id` nullable column and role resolution runs through a `resolveRole(session)` abstraction — adding Okta OIDC later requires only environment variable configuration, not a schema migration
+  5. The audit_log `actor_id` column is populated from the active session on every mutation — audit records written during authenticated sessions show the user's ID, not null
+**Plans**: TBD
+
+### Phase 27: UI Overhaul + Templates
+**Goal**: The workspace navigation is decluttered by grouping tabs into logical sub-tabs, the visual design is modernized throughout with updated typography, spacing, and color, and every tab type has a TypeScript-enforced required section structure — new projects created after this phase are seeded with canonical placeholder content in all 11 tabs.
+**Depends on**: Phase 26
+**Requirements**: UI-01, UI-02, UI-03, UI-04
+**Success Criteria** (what must be TRUE):
+  1. The workspace tab bar groups related tabs under sub-tab headers (e.g., Teams and Architecture share a parent tab) — the top-level navigation shows fewer than the current 12 top-level items; URL state uses `?tab=teams&subtab=adr` pattern for deep-linking
+  2. Opening any workspace page shows updated color palette, typography, and component spacing — Radix UI / Tailwind tokens are applied consistently; no legacy inline styles remain; before/after screenshots show visible improvement
+  3. `lib/tab-template-registry.ts` exports a typed map of all 11 tab types to their required section structure — the TypeScript compiler enforces that any new tab renderer references only defined sections; no DB table required
+  4. Creating a new project through the wizard results in all 11 tabs pre-populated with template placeholder content — the project's Overview tab shows a completeness score below 100% (placeholder content counts as partial, not complete)
+**Plans**: TBD
+
+### Phase 28: Interactive Visuals
+**Goal**: The static HTML engagement map and workflow diagram are replaced with interactive React components — team and integration nodes are clickable and expand to show live project data, both components load without SSR hydration errors, and the existing HTML skill exports remain available alongside the new in-app components.
+**Depends on**: Phase 26 (auth must be in place; visuals read from existing tables so no new DB dependency)
+**Requirements**: VIS-01, VIS-02
+**Success Criteria** (what must be TRUE):
+  1. The Teams tab engagement map renders as an interactive node-edge graph — clicking any team or stakeholder node expands a detail panel showing that entity's live data from the DB (status, owner, notes); the panel closes without a page reload
+  2. The Architecture tab workflow diagram renders integration nodes as interactive — clicking any integration node shows its current status, type, and configuration details from the DB; layout is computed via dagre (no manual positioning)
+  3. Both components load without React hydration errors in `next build && next start` mode — `dynamic(() => import(...), { ssr: false })` is applied to all `@xyflow/react` parent components; browser console shows no hydration warnings
+**Plans**: TBD
+
+### Phase 29: Project Chat
+**Goal**: Every project workspace has an inline AI chat panel that answers questions using live DB data scoped to that project — responses stream to the browser, multi-turn follow-ups work within the session, and the system never generates project-specific facts (percentages, dates, names) that are not directly present in the DB query snapshot.
+**Depends on**: Phase 26 (session required to scope chat to authenticated user's projects)
+**Requirements**: CHAT-01, CHAT-02
+**Success Criteria** (what must be TRUE):
+  1. The project workspace has a Chat panel accessible from the tab bar — typing a question and submitting streams an answer to the browser in real time (words appear progressively, not after a full wait); a typing indicator is visible while the response is generating
+  2. Asking a follow-up question in the same session ("what about the risks?") correctly references the prior exchange — multi-turn context is maintained within the browser session without repeating the full project context on every message
+  3. A question about a specific project fact (e.g., "how many open actions does Kaiser have?") returns a response that cites the actual DB record count — if the DB has 7 open actions, the response says 7; the system prompt explicitly prohibits invented numbers and the response format can be verified against a live DB query
+**Plans**: TBD
+
+### Phase 30: Context Hub
+**Goal**: Each project has a dedicated Context tab where team members can upload documents, see Claude's content routing suggestions per workspace tab, approve or reject each suggestion before any data is written, and view a per-tab completeness status that flags specific quality gaps — all document writes are transactional and idempotent.
+**Depends on**: Phase 26 (session required), Phase 27 (template section definitions needed for completeness analysis)
+**Requirements**: CTX-01, CTX-02, CTX-03, CTX-04
+**Success Criteria** (what must be TRUE):
+  1. Each project workspace has a Context tab — uploading a PDF, DOCX, or PPTX to this tab triggers Claude extraction and returns a categorized preview of suggested content additions grouped by destination workspace tab; no data is written to the DB until the user explicitly approves
+  2. Approving suggestions from the Context tab writes all approved items to the correct workspace tabs in a single PostgreSQL transaction — if any write fails, no partial data is committed; re-uploading the same document does not create duplicate records (idempotency via ingestion_id)
+  3. The Context tab displays a completeness status badge (complete / partial / empty) for each of the 11 workspace tabs — the analysis is triggered on demand and reflects live DB data at the time of analysis
+  4. The completeness view lists specific gap descriptions per tab (e.g., "Teams tab: ADR onboarding status missing for 3 of 5 team members") — gaps reference template section definitions from Phase 27, not generic empty-record counts
+**Plans**: TBD
+
+
+## Progress (v3.0)
+
+**Execution Order:**
+v3.0 phases execute: 26 → 27 → 28/29 (parallel, both depend on 26 only) → 30
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 26. Multi-User Auth | 0/TBD | Not started | - |
+| 27. UI Overhaul + Templates | 0/TBD | Not started | - |
+| 28. Interactive Visuals | 0/TBD | Not started | - |
+| 29. Project Chat | 0/TBD | Not started | - |
+| 30. Context Hub | 0/TBD | Not started | - |
+
+---
+
+## Coverage (v3.0)
+
+**v3.0 requirement-to-phase mapping:**
+
+| Requirement | Phase |
+|-------------|-------|
+| AUTH-01 | Phase 26 |
+| AUTH-02 | Phase 26 |
+| AUTH-03 | Phase 26 |
+| AUTH-04 | Phase 26 |
+| AUTH-05 | Phase 26 |
+| UI-01 | Phase 27 |
+| UI-02 | Phase 27 |
+| UI-03 | Phase 27 |
+| UI-04 | Phase 27 |
+| VIS-01 | Phase 28 |
+| VIS-02 | Phase 28 |
+| CHAT-01 | Phase 29 |
+| CHAT-02 | Phase 29 |
+| CTX-01 | Phase 30 |
+| CTX-02 | Phase 30 |
+| CTX-03 | Phase 30 |
+| CTX-04 | Phase 30 |
+
+**v3.0 coverage: 17/17 requirements mapped across Phases 26–30**
+
+---
+
+## Research Flags (v3.0)
+
+| Phase | Research Required | Reason |
+|-------|-------------------|--------|
+| Phase 26 | YES — resolve before planning | better-auth vs iron-session tension: ARCHITECTURE.md specifies iron-session; STACK.md recommends better-auth's built-in session layer. Decision: use better-auth's session management as the single system (do not run both in parallel). Verify specific Next.js 16.2.0 + better-auth@1.5.6 proxy.ts pattern before writing any session code. |
+| Phase 27 | No — skip research | TypeScript registry pattern is trivial; no new libraries; sub-tab URL state is a standard Next.js searchParams pattern already used in the codebase |
+| Phase 28 | No — skip research | React Flow official examples cover the exact patterns; `ssr:false` dynamic import is well-documented; `@xyflow/react@12.10.2` version confirmed live 2026-03-30 |
+| Phase 29 | No — skip research | Vercel AI SDK RAG guide covers the exact `streamText` + `useChat` + DB context pattern; no pgvector needed at single-project scale |
+| Phase 30 | YES — spike before planning | Claude routing prompt for tab classification has no standard pattern; the routing prompt design (mapping extracted entities to 11 different tab schemas, handling low-confidence cases) requires iteration on real BigPanda document types before the production prompt is written. Also: decide whether completeness analysis is on-demand (recommended for v3.0) or BullMQ-scheduled before coding begins. |
+
+---
+
+*v3.0 Phases 26–30 added: 2026-03-30 — Collaboration & Intelligence milestone; 17/17 requirements mapped*

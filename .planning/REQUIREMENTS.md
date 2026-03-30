@@ -67,34 +67,32 @@ All v2.0 requirements are complete. See `.planning/v2.0-MILESTONE-AUDIT.md` for 
 
 ## Traceability
 
-*Populated during roadmap creation.*
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | Phase 25 | Pending |
-| AUTH-02 | Phase 25 | Pending |
-| AUTH-03 | Phase 25 | Pending |
-| AUTH-04 | Phase 25 | Pending |
-| AUTH-05 | Phase 25 | Pending |
-| CTX-01 | TBD | Pending |
-| CTX-02 | TBD | Pending |
-| CTX-03 | TBD | Pending |
-| CTX-04 | TBD | Pending |
-| UI-01 | TBD | Pending |
-| UI-02 | TBD | Pending |
-| UI-03 | TBD | Pending |
-| UI-04 | TBD | Pending |
-| CHAT-01 | TBD | Pending |
-| CHAT-02 | TBD | Pending |
-| VIS-01 | TBD | Pending |
-| VIS-02 | TBD | Pending |
+| AUTH-01 | Phase 26 | Pending |
+| AUTH-02 | Phase 26 | Pending |
+| AUTH-03 | Phase 26 | Pending |
+| AUTH-04 | Phase 26 | Pending |
+| AUTH-05 | Phase 26 | Pending |
+| UI-01 | Phase 27 | Pending |
+| UI-02 | Phase 27 | Pending |
+| UI-03 | Phase 27 | Pending |
+| UI-04 | Phase 27 | Pending |
+| VIS-01 | Phase 28 | Pending |
+| VIS-02 | Phase 28 | Pending |
+| CHAT-01 | Phase 29 | Pending |
+| CHAT-02 | Phase 29 | Pending |
+| CTX-01 | Phase 30 | Pending |
+| CTX-02 | Phase 30 | Pending |
+| CTX-03 | Phase 30 | Pending |
+| CTX-04 | Phase 30 | Pending |
 
 **Coverage:**
 - v3.0 requirements: 17 total
-- Mapped to phases: TBD (roadmapper to complete)
-- Unmapped: 17 ⚠️ (pending roadmap)
+- Mapped to phases: 17/17
+- Unmapped: 0
 
 ---
 *v2.0 requirements defined: 2026-03-25*
 *v3.0 requirements defined: 2026-03-30*
-*Last updated: 2026-03-30 after v3.0 milestone start*
+*Last updated: 2026-03-30 — v3.0 roadmap created; all 17 requirements mapped across Phases 26–30*

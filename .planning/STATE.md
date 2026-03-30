@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Collaboration & Intelligence
 current_plan: "—"
-status: defining_requirements
-last_updated: "2026-03-30T21:00:00.000Z"
+status: roadmap_created
+last_updated: "2026-03-30T22:00:00.000Z"
 progress:
-  total_phases: 0
+  total_phases: 5
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,551 +20,85 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 
 ## Current Status
 
-**Phase:** Not started (defining requirements)
+**Phase:** Phase 26 — Multi-User Auth — Not started
 **Plan:** —
-**Status:** Defining requirements
-**Last activity:** 2026-03-30 — Milestone v3.0 started
+**Status:** Roadmap created; ready for Phase 26 planning
+**Last activity:** 2026-03-30 — v3.0 roadmap created; 17/17 requirements mapped across Phases 26–30
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
-**Current focus:** Phase 18 complete. Phase 17 still needs 17-03. Next: complete Phase 17, then Phase 19.
+**Current focus:** v3.0 milestone starting. Phase 26 (Multi-User Auth) is the entry point — all other v3.0 phases depend on session infrastructure.
 
-## Current Status
+## Milestone History
 
-**Phase:** Phase 24 — Scheduler Enhanced — COMPLETE
-**Current Plan:** All 152/152 plans complete — v2.0 milestone COMPLETE
-**Last action:** 2026-03-30 — Phase 24 COMPLETE; all 12 SCHED requirements verified in-browser; 48/48 scheduler tests GREEN; Settings Jobs tab removed; v2.0 milestone fully delivered
-**Next action:** All v2.0 phases (17-24) complete — project ready for post-v2.0 work or new milestone planning
+- **v1.0** — Foundation + Read/Write Surface + Skills + MCP + Cross-Project (Phases 1–16, complete 2026-03-26)
+- **v2.0** — AI Ingestion & Enhanced Operations (Phases 17–25, complete 2026-03-30)
+- **v3.0** — Collaboration & Intelligence (Phases 26–30, roadmap created 2026-03-30)
 
-## Phase Progress
+## Phase Progress (v3.0)
 
 | Phase | Status |
 |-------|--------|
-| 1. Data Foundation | COMPLETE (6/6 plans) |
-| 2. App Shell + Read Surface | COMPLETE (7/7 plans) |
-| 3. Write Surface + Plan Builder | COMPLETE (9/9 plans) |
-| 4. Job Infrastructure | COMPLETE (5/5 plans) |
-| 5. Skill Engine | COMPLETE (6/6 plans) |
-| 5.1 Onboarding Dashboard [INSERTED] | COMPLETE (8/8 plans) |
-| 5.2 Time Tracking [INSERTED] | COMPLETE (5/5 plans) |
-| 6. MCP Integrations | COMPLETE (7/7 plans) |
-| 7. File Generation + Remaining Skills | COMPLETE (7/7 plans) |
-| 8. Cross-Project Features + Polish | COMPLETE (7/7 plans) |
-| 9. MCP Injection Fix | COMPLETE (2/2 plans) |
-| 10. FTS Expansion + Code Polish | COMPLETE (2/2 plans) |
-| 11. Health Score Wire | COMPLETE (1/1 plans) |
-| 12. Complete Workspace Write Surface | COMPLETE (4/4 plans) |
-| 13. Skill UX + Draft Polish | COMPLETE (4/4 plans) |
-| 14. Time + Project Analytics | COMPLETE (5/5 plans) |
-| 15. Scheduler + UI Fixes | COMPLETE (3/3 plans) |
-| 16. Verification Retrofit | COMPLETE (5/5 plans) |
-| 17. Schema Extensions | In progress (2/3 plans) |
-| 18. Document Ingestion | COMPLETE (6/6 plans) |
-| 19. External Discovery Scan | COMPLETE (see 19.1) |
-| 19.1. Source Integrations | COMPLETE (8/8 plans) |
-| 20. Project Initiation Wizard | Awaiting verification (6/6 plans — checkpoint) |
-| 21. Teams Tab + Architecture Tab | COMPLETE (6/6 plans) |
-| 22. Source Badges + Audit Log | COMPLETE (5/5 plans) |
-| 23. Time Tracking Advanced | COMPLETE (8/8 plans) |
-| 24. Scheduler Enhanced | COMPLETE (5/5 plans) |
+| 26. Multi-User Auth | Not started |
+| 27. UI Overhaul + Templates | Not started |
+| 28. Interactive Visuals | Not started |
+| 29. Project Chat | Not started |
+| 30. Context Hub | Not started |
 
 ## Active Work
 
-v1.0 COMPLETE (Phases 1–16). v2.0 roadmap created 2026-03-25. 96/96 v2.0 requirements mapped across 8 new phases (17–24). Phase 17 Schema Extensions is the entry point — all other v2.0 phases depend on it.
+v3.0 roadmap created 2026-03-30. 17/17 v3.0 requirements mapped across 5 new phases (26–30).
 
-Execution order: 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (parallel)
+Execution order: 26 → 27 → 28/29 (parallel after 26) → 30
+
+Phase 26 is the mandatory entry point — session infrastructure must exist before any authenticated feature is added. All 40+ existing Route Handlers need requireSession() guards added in this phase.
 
 ## Decisions
+
+- **[2026-03-30] v3.0 roadmap:** Phase numbering starts at 26 — Phase 25 was used for v2.0 gap closure (Wizard Fix + Audit Completion)
+- **[2026-03-30] v3.0 roadmap:** Phases 28 and 29 can run in parallel after Phase 26 — Interactive Visuals have no chat dependency; Chat has no visuals dependency; both depend only on Auth
+- **[2026-03-30] v3.0 roadmap:** Phase 30 (Context Hub) placed last — highest number of distinct failure modes; benefits from templates (Phase 27) being locked before completeness analysis is built; benefits from Claude API patterns proven in Phase 29 (Chat)
+- **[2026-03-30] v3.0 roadmap:** pgvector/RAG deferred — structured DB query context injection is correct at single-project scope; faster, more deterministic, no new infrastructure; reconsider only if cross-project knowledge base search becomes a requirement
+- **[2026-03-30] v3.0 roadmap:** Context Hub completeness trigger = on-demand for v3.0; BullMQ-scheduled option deferred to v3.1 (infrastructure exists but on-demand simpler to validate)
+- **[2026-03-30] v3.0 roadmap:** better-auth vs iron-session to be resolved in Phase 26 planning — recommendation: use better-auth's built-in session management as the single system; do not run both in parallel
+
+## Previous Milestone Decisions (v2.0)
 
 - **[2026-03-30] 24-05:** ioredis/bullmq TS2322 type conflict resolved with `as any` cast in 6 files — bullmq v5 bundles its own ioredis; runtime unaffected; 48/48 scheduler tests GREEN; awaiting human browser verification before SCHED-01-12 marked complete
 - **[2026-03-27] 23-08:** Phase 23 COMPLETE — all 19 TTADV requirements verified in-browser; 41/41 TDD tests passing; migration 0018 required manual psql -f (not auto-applied); Google Calendar OAuth UI verified but full auth flow needs Google Cloud Console setup; Phase 24 can proceed
 - **[2026-03-27] 22-05:** Phase 22 COMPLETE — all three AUDIT requirements verified in-browser and via direct DB query; no issues found; Phases 23 and 24 can proceed in parallel
 - **[2026-03-25] v2.0 roadmap:** Phases 18 and 19 (Document Ingestion and External Discovery) assigned to parallel wave after Phase 17 — both depend only on Schema, not on each other
-- **[2026-03-25] v2.0 roadmap:** TEAMS and ARCH grouped into single Phase 21 — share data model (business_outcomes, e2e_workflows, focus_areas, architecture_integrations, before_state, team_onboarding_status) and deliver complementary views together
-- **[2026-03-25] v2.0 roadmap:** AUDIT (Phase 22) placed after Phases 18/19 — source badges are only meaningful once ingestion and discovery are operational; thin phase, no blocker on 21
-- **[2026-03-25] v2.0 roadmap:** SCHED requirements renamed to v2 SCHED (Phase 24) — these are distinct from v1 SCHED requirements (Phases 4/15) and represent the enhanced configurable scheduler UI
-- **[2026-03-25] v2.0 roadmap:** Research flag added for Phase 18 (Anthropic SDK document input API) and Phase 23 (Google Calendar OAuth in Next.js 14 App Router)
+- **[2026-03-25] v2.0 roadmap:** TEAMS and ARCH grouped into single Phase 21 — share data model and deliver complementary views together
+- **[2026-03-25] v2.0 roadmap:** AUDIT (Phase 22) placed after Phases 18/19 — source badges are only meaningful once ingestion and discovery are operational
 - **[2026-03-26] 18-06:** SSE event type alignment: extract route emits type:'complete'; IngestionModal must listen for 'complete' not 'item' — primary end-to-end blocker
 - **[2026-03-26] 18-06:** max_tokens 8192→16384 in extract route — dense documents silently truncated at lower limit with no visible error
-- **[2026-03-26] 18-06:** PPTX extraction via jszip: parse ppt/slides/slide*.xml from PPTX archive; original stub returned placeholder text
-- **[2026-03-26] 18-06:** 80k-char chunking for large text documents: split on newline boundary, Claude extraction per chunk, dedup+merge results
-- **[2026-03-26] 18-06:** jsonrepair as fallback after native JSON.parse — Claude occasionally returns malformed JSON; jsonrepair recovers partial output
-- **[2026-03-26] 18-06:** approve route requires artifactId from upload response, not prop-level — track lastExtractedArtifactId in modal state as fallback for drop-zone flow
 - **[2026-03-26] 19.1-07:** server-only mock required in vitest.config.ts — Next.js server-only package throws at import time in vitest context; mapping to empty stub unblocks all 26 adapter test files
-- **[2026-03-26] 19.1-07:** Phase 19.1 COMPLETE — all 8 requirements SRC-01 through SRC-09 satisfied; adapter pattern, UI, OAuth, test suite all verified
-- **[2026-03-27] 20-05:** computeCompletenessScore takes TableCounts object — pre-written tests required this signature; function counts populated fields internally
-- **[2026-03-27] 20-05:** getBannerData returns { show, emptyTabs } — test contract required structured response, not plain array
-- **[2026-03-27] 20-05:** Overview page imports route helpers directly — avoids HTTP self-call, consistent with RSC direct-DB pattern used throughout app
-- **[2026-03-26] 19.1-05:** resolveAdapter: REST credentials take priority over MCP fallback — REST checked first; MCP only if no REST creds configured
-- **[2026-03-26] 19.1-05:** Adapter constructors use creds object pattern (not positional args) — Wave 1 implementations all take `creds: { ... }` object, plan spec showed positional args; factory updated to match
-- **[2026-03-26] 19.1-05:** DiscoveryScanParams extended with source_credentials + userTokens — both required for adapter routing; existingProjectSummary also added for Claude dedup context
 - **[2026-03-26] 17-01:** Wave 0 RED pattern: import 15 unexported names from schema.ts — Vitest resolves them as undefined; toBeDefined() fails RED — valid TDD starting point for Phase 17 schema additions
-- **[2026-03-26] 15-03:** Scheduler runtime verification accepted via unit tests when Bull Board not accessible — structural correctness sufficient for Phase 15 closure
-- **[2026-03-26] 15-01:** Unexported symbol imports yield undefined in Vitest — TypeError at test body counts as RED (valid test failure)
-- **[2026-03-26] 15-01:** Wave 0 TDD RED pattern: write tests against unexported/wrong-value symbols; Plan 02 adds exports + fixes
-- **[2026-03-19] 01-01:** Used Node.js built-in test runner (node:test) — no Jest/Vitest needed
-- **[2026-03-19] 01-01:** DATABASE_URL defaults to postgres://localhost:5432/bigpanda_test in tests (prevents crash when env var unset)
-- **[2026-03-19] 01-01:** postgres and tsx installed at project root (not inside server/ or client/)
-- [Phase 01-03]: Settings library at both project root (test access) and bigpanda-app/lib/ (server-only for Next.js)
-- [Phase 01-03]: readSettings/writeSettings accept optional settingsPath arg for test isolation without mocking fs
-- **[2026-03-19] 01-02:** db/ lives in bigpanda-app/db/ (plan-spec); pool.test.ts updated to import from '../bigpanda-app/db/'
-- **[2026-03-19] 01-02:** server-only import omitted from db/index.ts — next/compiled version throws unconditionally in Node.js test context
-- **[2026-03-19] 01-02:** FORCE ROW LEVEL SECURITY added to all 8 RLS tables — ensures tests pass regardless of DB user superuser status
-- **[2026-03-19] 01-02:** PostgreSQL not installed on this machine — migration requires user to install PostgreSQL and run drizzle-kit migrate
-- [Phase 01-04]: server-only omitted from lib/yaml-export.ts for test runner compat (same pattern as db/index.ts)
-- [Phase 01-04]: buildYamlDocument takes two args (project, sections) — Wave 0 stub updated during TDD RED
-- [Phase 01-04]: outputs.test.ts uses NODE_PATH=./bigpanda-app/node_modules workaround for js-yaml access
-- [Phase 01-05]: sanitizeYamlFrontmatter() added to handle AMEX source doc with unescaped double-quotes in YAML scalars
-- [Phase 01-05]: SOURCE_DIR hardcoded as ~/Documents/PM Application — NOT settings.workspace_path (output files only)
-- [Phase 01-05]: All migration DB tests remain RED until PostgreSQL installed (ECONNREFUSED expected)
-- [Phase 01-06]: Q-NNN IDs (Open Questions sheet) stored in actions table with type='question'
-- [Phase 01-06]: importXlsx() exported from migrate-local.ts for independent test runner access
-- [Phase 01-06]: Workstream Notes sheet: UPDATE only (no insert) — enriches YAML-sourced workstream rows
-- **[2026-03-19] 02-01:** npm install --no-package-lock used for @playwright/test — invalid esbuild semver in package-lock.json blocks standard install
-- **[2026-03-19] 02-01:** E2E stubs use expect(false, 'stub').toBe(true) not test.fixme() — keeps tests RED and visible in report
-- **[2026-03-19] 02-01:** Requirement IDs in test names (DASH-01 etc.) — implementation plans use --grep to target specific tests
-- [Phase 02-04]: getProjectWithHealth() added to queries.ts — thin wrapper combining getProjectById + computeHealth for workspace layout type correctness
-- [Phase 02-04]: data-testid='add-notes-btn-placeholder' used (not 'add-notes-btn') — plan 02-06 replaces FAB with AddNotesModal owning the final testid
-- [Phase 02-app-shell-read-surface]: 02-03: NotificationBadge in page header (not root layout) for Phase 2 — Phase 5 will hoist to layout when skill data available
-- [Phase 02-app-shell-read-surface]: 02-03: RAG badge uses inline className override on shadcn Badge — keeps variant config clean
-- [Phase 02-06]: append-only enforcement is dual-layer: DB triggers prevent UPDATE/DELETE, UI renders no edit/delete controls on decisions or history tabs
-- [Phase 02-06]: AddNotesModal owns the final data-testid='add-notes-btn'; plan 02-04 used 'add-notes-btn-placeholder' as previously recorded in STATE.md
-- [Phase 02-05]: searchParams typed as Promise in ActionsPage — required for Next.js 15 RSC compatibility
-- [Phase 02-05]: Date guards use regex before Date() parse — safely skips TBD/N/A TEXT date fields across all tab pages
-- [Phase 02-app-shell-read-surface]: 02-07: E2E suite activated (23/23 passing) before human checkpoint; human verified all 9 workspace tabs, RAG badges, Add Notes modal → DB
-- [Phase 03-01]: Wave 0 stub assertion placed as FIRST line in each test — visibly RED without server running
-- [Phase 03-02]: AnyPgColumn import required for self-referential FK (tasks.blocked_by references tasks.id)
-- [Phase 03-02]: Migration SQL written manually (not via drizzle-kit generate) — DB not available in dev environment
-- [Phase 03-02]: npm install --no-package-lock used for Phase 3 packages — invalid esbuild semver pattern (same as 02-01)
-- [Phase 03-03]: Card-based layout replaces table rows in actions page — avoids span-inside-tr DOM nesting issues when wrapping with ActionEditModal trigger
-- [Phase 03-03]: xlsx write is skipped gracefully when file not found (dev environment without tracker)
-- [Phase 03-03]: EBUSY/EPERM on xlsx writeFile returns human-readable Close in Excel message
-- [Phase 03-04]: Risk mitigation is append-only in both UI and API: new text is date-prefixed and appended to existing history
-- [Phase 03-04]: StakeholderEditModal dual-mode: no stakeholder prop = create (POST), with prop = edit (PATCH)
-- [Phase 03-05]: Used satisfies Array<...> (not as const) for TABS array to allow tab.subRoute access without TS union narrowing errors
-- [Phase 03-05]: subRoute: true flag on Plan tab entry enables pathname.includes active check for nested /plan/* routes
-- [Phase 03-06]: ExcelJS load() Buffer<ArrayBuffer> type mismatch with @types/node 20.x — used any cast at plan-import route; runtime correct
-- [Phase 03-06]: PhaseBoard derives columns from task.phase values dynamically; default phases Discovery/Design/Build/Test/Go-Live when no tasks
-- [Phase 03-06]: Bulk toolbar in-place micro-forms for owner/due/phase — no modal overlay
-- [Phase 03-08]: Status change via select dropdown (click-to-move) rather than full @dnd-kit drag — plan explicitly permits this fallback for nested scrollable container complexity
-- [Phase 03-08]: Unassigned lane filtered out when no tasks have workstream_id=null — avoids empty row clutter
-- [Phase 03-07]: frappe-gantt has no @types package — added manual types/frappe-gantt.d.ts declaration file
-- [Phase 03-07]: Only single blocked_by dependency per task in Phase 3 — multi-dependency requires text[] column (Phase 4+ concern)
-- **[2026-03-20] 03-09:** E2E count-conditional assertions: test passes on empty DB but exercises full flow when data is seeded (assert-if-present pattern)
-- **[2026-03-20] 03-09:** SET LOCAL required (not SET) for RLS policy variables inside connection pool — SET LOCAL scopes to transaction, preventing context bleed across pool connections
-- **[2026-03-20] 03-09:** Zod TaskCreateSchema uses .nullish() not .optional() — HTML form fields submit null (not undefined), .optional() rejects null values
-- **[2026-03-20] 03-09:** Task API validation errors return error.message string — raw Zod error object serializes as {} causing [object Object] in UI
-- [Phase 04-job-infrastructure]: Wave-0 RED stub pattern (expect(false, 'stub').toBe(true) first line) used for Phase 4 stubs — consistent with 02-01 and 03-01
-- [Phase 04-02]: settings-core.ts / settings.ts split: worker-safe core module + server-only wrapper preserves all existing Next.js imports
-- [Phase 04-02]: maxRetriesPerRequest: null required on every IORedis instance used with BullMQ Worker — omitting causes silent EXECABORT failures
-- [Phase 04-02]: createRedisConnection() factory pattern: Queue and Worker each get their own IORedis instance — sharing causes protocol state corruption
-- [Phase 04-02]: Advisory lock IDs use pg_try_advisory_xact_lock (xact variant): auto-releases at transaction end, safe with connection pools
-- [Phase 04-03]: Static job dispatch map (not dynamic import) — tsx watch mode has module cache issues with dynamic import()
-- [Phase 04-03]: concurrency:1 on BullMQ Worker — prevents advisory lock contention within same process
-- [Phase 04-03]: settings-core imported in worker/index.ts (not lib/settings.ts) — server-only marker crashes worker process context
-- [Phase 04-04]: Settings page is Client Component (not RSC) — data fetched via useEffect to keep DB imports server-side only
-- [Phase 04-04]: Cron schedules hardcoded in JOB_DISPLAY map (UI constants) — Redis scheduler state not surfaced to API in Phase 4, editable in Phase 5+
-- [Phase 04-04]: queue.add() with unique jobId (manual-{name}-{timestamp}) prevents duplicate manual triggers within same second
-- [Phase 04-05]: assert-if-present for SCHED-08 Trigger Now result: test passes if Redis unavailable (CI-safe) but verifies triggered_by if last_run exists
-- [Phase 04-05]: createApiRedisConnection() factory with maxRetriesPerRequest:1, connectTimeout:3s: trigger API fails fast when Redis unavailable instead of hanging 35s
-- [Phase 04-05]: DOM nesting fix in edit modals: React.cloneElement() instead of wrapping tr triggers in div containers
-- [Phase 05-01]: npm install --no-package-lock for @anthropic-ai/sdk — consistent with 02-01/03-02 pattern (invalid esbuild semver in package-lock.json)
-- [Phase 05-01]: skill_run_chunks.run_id is INTEGER FK referencing skill_runs.id for ON DELETE CASCADE support
-- [Phase 05-01]: SKILL.md files contain real stub prompts (not empty files) — downstream plans refine during skill wiring
-- [Phase 05-skill-engine]: SkillOrchestrator uses __dirname-anchored SKILLS_DIR in worker context for reliable SKILL.md path resolution regardless of cwd
-- [Phase 05-skill-engine]: full_output reconstructed from skill_run_chunks rows instead of stream.accumulated to avoid SDK version incompatibility
-- [Phase 05-04]: DraftsInbox is a Client Component imported into RSC Dashboard — client-side fetch required for optimistic dismiss without full page reload
-- [Phase 05-04]: outputs.archived column appended to existing 0004 migration (ALTER TABLE IF NOT EXISTS) — avoids new migration file for a single column addition
-- [Phase 05-04]: Regenerate flow in Output Library: POST skill/run -> PATCH archive old -> router.push to new run page — all client-side sequential
-- [Phase 05-04]: system-open endpoint uses GET semantics with no request body — idempotent, natural REST fit for opening a file
-- [Phase 05-03]: Stream route at runs/[runId]/stream/ is one extra directory level deep — import paths to db/ require 6 ../ not 5 (corrected during Task 1 verification)
-- [Phase 05-03]: SSE deduplication pattern: skill run page fetches run status before subscribing to EventSource — completed runs show full_output without opening SSE connection
-- [Phase 05-05]: Scheduled handlers create their own skill_runs row; on-demand handlers receive runId from skill-run.ts via job.data
-- [Phase 05-05]: Weekly Customer Status inserts into drafts table (draft_type='email') after orchestrator completion for Drafts Inbox review
-- [Phase 05-06]: skill-run.ts generic handler now writes to outputs (all skills) and drafts (weekly-customer-status) after orchestrator completes — on-demand runs now match scheduled handler behavior
-- [Phase 05-06]: assert-if-present pattern for Redis/Anthropic-dependent E2E tests — structural UI assertions always pass, live-call assertions skip gracefully when infra unavailable
-- [Phase 05.1-01]: Wave 0 stub assertion placed as FIRST line in each test — visibly RED without server running (consistent with 02-01 and 03-01 pattern)
-- [Phase 05.1-01]: Requirement IDs in test names (OVER-01 etc.) — implementation plans use --grep to target specific tests
-- [Phase 05.1-02]: jsonb added to existing drizzle-orm/pg-core import — no second import block
-- [Phase 05.1-02]: Enum values use hyphens (not-started, in-progress) matching reference HTML data-status attributes per CONTEXT.md
-- [Phase 05.1-03]: JSONB append uses sql template tag pattern to preserve existing array entries; plain .set() would overwrite
-- [Phase 05.1-03]: All routes use @/db alias imports — consistent with must_haves constraint and avoids deep relative path issues
-- [Phase 05.1-04]: useRef omitted — sticky header is pure CSS; no programmatic scroll management needed
-- [Phase 05.1-04]: Risks/milestones fetch falls back to empty array on 404 — no GET routes added (out of scope per plan)
-- [Phase 05.1-04]: StepOwnerField extracted as sub-component to keep inline edit state local without prop-drilling
-- [Phase 05.1-05]: import-onboarding.ts uses existence-check (not onConflictDoNothing) for idempotency — no UNIQUE constraint on (project_id, name) in onboarding schema
-- [Phase 05.1-05]: yaml-export route imports lib/yaml-export from ../../../../../../lib/yaml-export (6 levels up) — @/ alias resolves to bigpanda-app/ not project root
-- [Phase 05.1-06]: All 4 OVER tests activated with no skips — assert-if-present pattern ensures CI-safety while exercising full flow when DB is seeded
-- [Phase 05.1-07]: StepOwnerField span→input transition requires click() before fill() — Playwright fill() requires input element, not span
-- [Phase 05.1-07]: yaml-export endpoint is /api/projects/[projectId]/yaml-export (not /api/yaml-export)
-- [Phase 05.1-08]: No RLS on GET /api/projects/[projectId] — projects table has no row-level security policies; simple SELECT by id correct
-- [Phase 05.1-08]: status_summary used as executive summary — no separate engagement_summary DB column exists; desired_outcomes deferred
-- [Phase 05.2-01]: Wave 0 stub assertion as FIRST line in each test — visibly RED without server running (consistent with 02-01, 03-01, 04-01, 05.1-01)
-- [Phase 05.2-01]: Requirement IDs (TIME-01/02/03) in test names for --grep targeting in implementation plans
-- [Phase 05.2-02]: hours stored as TEXT not NUMERIC — consistent with project-wide schema convention; JS parseFloat() for arithmetic
-- [Phase 05.2-02]: date stored as TEXT not DATE — consistent with all other date fields in the schema
-- [Phase 05.2-02]: No RLS on time_entries — single-user app; plain WHERE project_id = N is sufficient (established Phase 5.1)
-- [Phase 05.2-02]: Migration 0006 written manually — drizzle-kit generate not available (consistent with Phase 03-02 decision)
-- [Phase 05.2-03]: and(...conditions) array pattern for dynamic WHERE filters — avoids conditional query variable reassignment
-- [Phase 05.2-03]: PATCH and DELETE WHERE includes both entry_id and project_id — defense-in-depth scoping on top of RLS
-- [Phase 05.2-03]: GET returns { entries: [] } not 404 when no time entries — empty state is valid
-- [Phase 05.2-04]: Inline add form above table (not modal) — TimeEntryModal used for EDIT only; avoids modal-within-table nesting issues
-- [Phase 05.2-04]: refreshCount state pattern triggers re-fetch after mutations without router.refresh() in client components
-- [Phase 05.2-04]: fromDate/toDate sent as query params — server-side filter; no redundant client-side filtering
-- [Phase 06-mcp-integrations]: Wave 0 stub pattern consistent with all prior phases: expect(false, 'stub').toBe(true) as first line — visibly RED without server running
-- [Phase 06-mcp-integrations]: Unit test stubs use node:test assert.fail() — plans 06-03 and 06-05 activate by removing assert.fail() and adding real test bodies
-- [Phase 06-mcp-integrations]: RiskHeatMap groups statuses dynamically from query results (not hardcoded) to handle inconsistent status casing in real data
-- [Phase 06-mcp-integrations]: WatchList includes IS NULL OR != 'resolved' for status filter since risks.status is nullable TEXT
-- [Phase 06-mcp-integrations]: getServersForSkill accepts optional settingsPath param for testability without mocking the module
-- [Phase 06-mcp-integrations]: mcp-config.ts imports from settings-core (not settings.ts) — worker processes cannot import server-only modules
-- [Phase 06-mcp-integrations]: mcp_servers replaced wholesale on POST — no partial merge to avoid stale entry drift
-- [Phase 06-mcp-integrations]: data-testid='mcp-servers-form' on always-rendered wrapper so E2E test passes after tab click without opening form
-- [Phase 06-05]: Use StreamLike structural type alias rather than @ts-ignore to resolve MessageStream/BetaMessageStream union type incompatibility in skill-orchestrator.ts
-- [Phase 06-mcp-integrations]: customer-project-tracker uses fixed 0 9 * * * cron outside settings JOB_SCHEDULE_MAP (no AppSettings.schedule key for this skill)
-- [Phase 07-01]: vitest ^4.1.1 installed in bigpanda-app with --no-package-lock; Wave 0 stub pattern (expect(false, 'stub').toBe(true) as first line) consistent with all prior phases
-- [Phase 07-02]: readSettings() is async — buildOutputPath must await it; plan snippet showed sync call which is incorrect
-- [Phase 07-02]: pptxgenjs installed with --no-package-lock (consistent with all Phase 2+ installs)
-- [Phase 07-02]: workspace_path /Documents/PM Application treated as relative-to-homedir (not absolute) — matches DEFAULTS in settings-core.ts
-- [Phase 07-03]: customer-project-tracker added to WIRED_SKILLS — was in ALL_SKILLS but missing from the enabled set; plan target state includes it
-- [Phase 07-03]: fetchOutputRow queries /api/outputs by project_id + skill_name (most recent); no idempotency_key filter needed for Phase 7 single-active-run pattern
-- [Phase 07-03]: biggy-weekly-briefing excluded from WIRED_SKILLS per locked decision; comment added to set for future maintainability
-- [Phase 07-04]: FILE_SKILLS exported from skill-run.ts for testability without leaking into app layer
-- [Phase 07-04]: generateFile() called post-orchestrator — pure Claude streaming layer stays clean
-- [Phase 07-04]: Generation errors caught and logged; output row still inserted with raw content (graceful degradation)
-- [Phase 07-05]: SkillOrchestrator mock uses real ES class syntax (not vi.fn().mockImplementation) — arrow function factories are not constructors when used with new
-- [Phase 07-05]: vitest.config.ts needs resolve.alias for @/ path — route handler tests import @/db and @/lib/ which require the alias
-- [Phase 07-05]: Proposed tasks NOT written to tasks table by generate-plan route — only skill_runs row; tasks written only on explicit Commit click
-- [Phase 07-06]: sprint-summary output stored in projects.sprint_summary — no outputs table insert (PLAN-13: not in Output Library)
-- [Phase 07-06]: Transient skill_run row created for orchestrator tracking — does not surface in Output Library since no outputs row is written
-- [Phase 07-06]: SprintSummaryPanel open=true initial state prevents hydration mismatch — Client Component initialized identically on server and client
-- [Phase 07-07]: Route slug conflict fixed — generate-plan and sprint-summary routes moved from [id] to [projectId]
-- [Phase 07-07]: skills/page.tsx wraps getSkillRuns in try/catch — consistent with board page pattern for DB-unavailable resilience
-- [Phase 07-07]: assert-if-present used for PLAN-12 — generate-plan-btn assertion passes structurally without API key
-- [Phase 07-07]: PhaseBoard useEffect(setTasks, [initialTasks]) syncs local DnD state when prop changes after router.refresh()
-- [Phase 07-07]: router.refresh() in AiPlanPanel after AI plan commit triggers RSC re-render without navigation side-effects
-- [Phase 08-01]: Wave 0 stub assertion placed as FIRST line in each test — visibly RED without server running (consistent with 02-01 through 07-01)
-- [Phase 08-01]: Requirement IDs (SRCH-01/02/03, KB-01/02/03) in test names for --grep targeting in activation plans
-- [Phase 08-02]: search_vec (tsvector) excluded from Drizzle schema — trigger-managed, queried via raw SQL; adding it causes PgVectorType inference issues
-- [Phase 08-02]: Per-table trigger functions (tsvector_update_{table}) chosen over shared function — each table has its own field list for independent maintainability
-- [Phase 08-03]: Raw SQL UNION ALL via sql.raw() for tsvector full-text search across 8 tables — Drizzle has no native tsquery support
-- [Phase 08-03]: knowledge_base arm uses LEFT JOIN — null project_id entries always searchable per KB-03 spec; account filter skips null-project entries
-- [Phase 08-04]: GET /api/knowledge-base delegates to searchAllRecords when q>=2 chars — reuses FTS infrastructure from 08-03 rather than duplicating tsquery logic
-- [Phase 08-04]: POST /api/knowledge-base auto-builds source_trace as 'Project: {customer} | Date: {today}' satisfying KB-03 when client omits it but project_id is supplied
-- [Phase 08-05]: search-results container only rendered when results.length > 0 — avoids empty data-testid container interfering with E2E selectors
-- [Phase 08-05]: Filter state kept local (not URL-synced) — only search query in URL; simplifies navigation without losing filter state
-- [Phase 08-06]: Inline input forms for link-to-risk/history on entry card — no modal overlay per plan scope guidance
-- [Phase 08-06]: Knowledge Base sidebar link placed above Outputs in the bottom nav group with BookOpen icon
-- [Phase 08-07]: assert-if-present used for all 6 Phase 8 E2E tests — structural testid assertions always pass; content assertions conditional on seeded data
-- [Phase 09-01]: db mock insert chain includes .returning() support — scheduled handlers use .returning() while outputs inserts use .onConflictDoNothing(); both methods needed in same mock
-- [Phase 09-01]: vi.resetModules() in beforeEach ensures each test gets a fresh handler import, preventing stale module cache from causing false positives
-- [Phase 09-02]: Two-line MCP injection pattern (import MCPClientPool + getServersForSkill before orchestrator.run) applied uniformly to all 4 handlers matching customer-project-tracker.ts reference
-- [Phase 09-02]: skill-run.ts uses dynamic getServersForSkill(skillName) variable — not hardcoded string — enabling runtime MCP resolution for any skill dispatched on-demand
-- [Phase 10-01]: [Phase 10] SET-02 skill_path fix intentionally scoped to skill-run.ts (generic on-demand handler) only — scheduled handlers retain __dirname anchor; future phases can extend if needed
-- [Phase 10-02]: [Phase 10-02] resolveSkillsDir() extracted from skillRunJob() and exported — avoids mocking full dependency chain; same observable behavior; cleaner per plan recommendation
-- [Phase 10-02]: [Phase 10-02] resolveSkillsDir accepts optional dirnameRef param defaulting to __dirname — enables deterministic unit testing
-- [Phase 10-02]: resolveSkillsDir() extracted from skillRunJob() and exported — avoids mocking full dependency chain; same observable behavior; cleaner per plan recommendation
-- [Phase 10-02]: resolveSkillsDir accepts optional dirnameRef param defaulting to __dirname — enables deterministic unit testing
-- [Phase 11-health-score-wire]: buildSelectMock uses per-call index cycling for predictable query sequencing in health tests
-- [Phase 11-health-score-wire]: stalledWorkstreams: number added to ProjectWithHealth interface after stalledMilestones — semantic ordering
-- [Phase 12]: Wave 0 stubs contain zero navigation or page interaction code — thin stubs only, grep tags match VALIDATION.md map
-- [Phase 12-02]: source='ui' injected in POST handler — artifacts.source is NOT NULL in schema, plan omitted it
-- [Phase 12-02]: Div-grid rows instead of tr in artifacts page — avoids React DOM nesting warning from Dialog wrapping table rows
-- [Phase 12-02]: Native HTML input/textarea in ArtifactEditModal — shadcn Input/Label/Textarea don't exist in project, using ActionEditModal pattern
-- [Phase 12-03]: AddDecisionModal extracted to components/ (not inline) — decisions/page.tsx must stay async RSC in Next.js 15
-- [Phase 12-03]: WorkstreamTableClient replaces shadcn Table in teams/page.tsx — native HTML table enables range inputs in cells without adding use client to the page
-- [Phase 12-03]: Architecture state NOT trimmed on save — whitespace-pre-wrap content must round-trip exactly
-- [Phase 12-03]: Workstreams PATCH route does NOT call updateWorkstreamProgress() — direct percent_complete write and task-derived rollup are independent paths
-- [Phase 12-04]: Phase gate pattern enforced: 12/12 E2E GREEN + human sign-off before Phase 12 marked COMPLETE
-- [Phase 13-01]: 11 Wave 0 stubs: 3 skill-launch tests + 8 draft/search/template tests; descriptions tuned to match VALIDATION.md grep patterns
-- [Phase 13-02]: Skill launch buttons use plain next/link Link (RSC-safe, no client JS)
-- [Phase 13-02]: to_char() applied at dateBounds() call sites for timestamp arms; SELECT ::text cast kept for display
-- [Phase 13-03]: DraftEditModal uses parent-controlled open state (no DialogTrigger) because trigger is the entire card div
-- [Phase 13-03]: PATCH edit action no longer requires content to be present; partial update sets only fields provided in body
-- [Phase 13-03]: TemplatePicker sub-component removed; logic inlined into PhaseBoard Dialog with task counts per template row
-- [Phase 13-04]: POST /api/drafts and GET/POST/DELETE /api/plan-templates added as E2E fixture endpoints — required for test isolation since tests need known DB state
-- [Phase 14]: Wave 0 stub pattern: expect(false).toBe(true) as first assertion — guarantees RED regardless of navigation errors
-- [Phase 14-02]: velocityWeeks fills 4 slots always: Monday-snap today, subtract 0/7/14/21 days, default 0 for missing weeks
-- [Phase 14-02]: riskTrend compares openRiskCount now vs risks created >7 days ago still open
-- [Phase 14-time-+-project-analytics]: tx.execute<T> requires T extends Record<string, unknown>; RowList iterable directly (for...of), no .rows property
-- [Phase 14-04]: maxCount computed once outside map for efficiency in velocity bar chart
-- [Phase 14-05]: sql.raw() required for PostgreSQL SET LOCAL GUC parameters — parameterized syntax is invalid for session-level settings
-- [Phase 14-05]: actions table uses created_at not updated_at — velocity week grouping queries must reference created_at
-- [Phase 15]: Export JOB_SCHEDULE_MAP and TYPE_OPTIONS for Vitest test import (named exports)
-- [Phase 15]: resolveSkillsDir called in handler function body (not module level) for runtime settings pickup without worker restart
-- [Phase 15]: context-updater: advisory lock remains first async op; readSettings called after lock succeeds
-- [Phase 15]: Scheduler runtime verification accepted via unit tests when Bull Board not accessible — structural correctness sufficient for Phase 15 closure
-- [Phase 16-04]: Phase 05.2 TIME-01/02/03 all SATISFIED in live codebase — STATE.md 'Not started' was a state tracking error; ROADMAP.md completion date 2026-03-23 is correct
-- [Phase 16-04]: 2 Phase 05.2 human verifications remain open: CSV browser download trigger, live date range filter with seeded DB — these are verification steps, not implementation gaps
-- [Phase 16-01]: 10/11 Phase 01 requirements verified by code structure inspection — PostgreSQL unavailability does not invalidate code-level evidence
-- [Phase 16-01]: SET-04 API key secrecy requires human git audit — cannot confirm from source files alone; code protections in place (defensive delete, gitignore, API route never returns key value)
-- [Phase 16-02]: status gaps_found for Phase 04: 5/8 satisfied; SCHED-05 cron mismatch, SCHED-07 semantic mismatch, SCHED-08 schedule editing not wired to UI
-- [Phase 16-03]: SKILL-02 verified by implementation depth: real countTokens() call + withTruncatedHistory(5) in skill-orchestrator.ts
-- [Phase 16-03]: SKILL-14 SATISFIED (indirect): resolveSkillsDir() covers 3/5 handlers; meeting-summary.ts and handoff-doc-generator.ts retain hardcoded __dirname paths (low severity)
-- [Phase 16-03]: OUT-01..04 SATISFIED post-05-06 bug fix: skill-run.ts confirmed to write outputs and drafts for all on-demand runs
-- [Phase 16-05]: Phase 06 confirmed BUILT despite STATE.md showing Not started — ROADMAP.md and codebase were correct; code is ground truth for verification
-- [Phase 16-05]: DASH-04 marked SATISFIED indirect: severity×status heat map satisfies 2D visualization intent; probability×impact axes were never in the DB schema
-- [Phase 16-05]: 06-VERIFICATION.md status human_needed (not gaps_found): all 3 Phase 06 requirements have production code; runtime verification needs live Redis/DB/MCP
-- [Phase 17]: Migration numbered 0011 (not 0006 per CONTEXT.md) — 0006-0010 were added by prior phases
-- [Phase 17]: scheduled_jobs is a CREATE TABLE (new table), not ALTER TABLE — CONTEXT.md noted ALTER but PLAN.md correctly specifies CREATE
-- [Phase 17]: workflow_steps RLS uses subquery EXISTS pattern (not direct project_id) since it has no project_id FK, only workflow_id
-- [Phase 17-schema-extensions]: v2.0 enums placed before tables in enums section (not appended at end) — artifacts table references ingestionStatusEnum which requires prior const declaration to avoid TDZ error
-- [Phase 18-01]: Wave 0 stub pattern: expect(false, 'stub').toBe(true) in every test body — tests fail RED without importing not-yet-existing production modules
-- [Phase 18-01]: AnyPgColumn forward reference for actions/risks/milestones source_artifact_id FK — tables defined before artifacts in schema.ts
-- [Phase 18-01]: Append-only tables (key_decisions, engagement_history) receive source attribution columns — ADD COLUMN does not trigger append-only enforcement
-- [Phase 18-02]: external_id for uploads: generated as UPLOAD-{timestamp}-{filename} — artifacts.external_id is NOT NULL so uploads need a synthetic value
-- [Phase 18-02]: ExcelJS Buffer cast via buffer.buffer.slice() as ArrayBuffer — Node 24 Buffer<ArrayBufferLike> incompatible with ExcelJS legacy Buffer type
-- [Phase 18-03]: Run vitest from bigpanda-app/ directory — @/ alias resolves to bigpanda-app/ per vitest.config.ts __dirname; running from project root yields ERR_MODULE_NOT_FOUND
-- [Phase 18-03]: isAlreadyIngested exported from route.ts (not separate lib) — entityType→table mapping is co-located with extraction handler; team entityType maps to focus_areas table
-- [Phase 18-document-ingestion]: Zod v4 z.record requires two-arg form z.record(z.string(), z.string()) — single-arg crashes at runtime
-- [Phase 18-document-ingestion]: vi.resetAllMocks() required in beforeEach (not clearAllMocks) to prevent mockReturnValue state leaking across tests
-- [Phase 18-document-ingestion]: team entityType maps to focusAreas table (not teamOnboardingStatus) — teamOnboardingStatus lacks source_artifact_id/ingested_at
-- [Phase 18-document-ingestion]: Append-only tables (key_decisions, engagement_history) auto-skip on conflict in approve route — DB triggers prevent UPDATE/DELETE
-- [Phase 18-document-ingestion]: vitest node env + React UI: tested component behavior through exported pure helpers (TAB_LABELS, ENTITY_FIELDS) and state simulation functions instead of rendering — all ING-05/06/07/08 behaviors fully verified without jsdom
-- [Phase 18-document-ingestion]: ReviewItem type exported from IngestionModal.tsx: single source of truth for all client-side review state, imported by ExtractionPreview, ExtractionItemRow, ExtractionItemEditForm
-- [Phase 18-document-ingestion]: Demand-driven SSE extraction: IngestionModal only fires extraction when user navigates to a file, not preemptively for all files on upload — prevents wasted Claude API calls
-- [Phase 19-01]: Wave 0 stub imports: vitest globals=false requires explicit import { expect } from 'vitest' — no production module imports
-- [Phase 19-01]: source_excerpt stores raw text from source triggering discovery; scan_id groups items from one scan run; both nullable in migration 0013
-- [Phase 19]: Anthropic beta MCP API for per-source fetch — beta.messages.create with mcp_servers + mcp-client-2025-11-20 header
-- [Phase 19]: jsonrepair fallback in discovery-scanner (same as 18-06) for malformed Claude JSON
-- [Phase 19]: Dedup on dismissed status only in scan route (DISC-15) — pending/approved not blocked
-- [Phase 19-external-discovery-scan]: Discovery approve has no conflict detection — discovery items are user-curated scan results, not documents needing dedup semantics
-- [Phase 19-external-discovery-scan]: Dismiss uses inArray batch UPDATE; approve iterates per item to fetch suggested_field and route to correct entity table
-- [Phase 19-04]: WorkspaceTabs useEffect fetches queue count client-side on mount — badge is non-critical, errors silently ignored
-- [Phase 19-04]: DiffView triggered by 409 from approve route — current approve route doesn't return 409 but DiffView is wired for when it does
-- [Phase 19-05]: Source selector uses inline dropdown (no Popover/Label shadcn) — those components not installed; avoids new dependencies
-- [Phase 19-05]: Scan config stored in ~/.bigpanda-app/discovery-scan-config.json keyed by projectId — no DB table needed
-- [Phase 19-05]: discovery-scan cron: fixed schedule in scheduler.ts (upsertJobScheduler 0 8 * * *), same pattern as customer-project-tracker
-- [Phase 19.1-02]: Adapter constructors use object-style creds param to match Plan 01 test stubs; tests define the API contract
-- [Phase 19.1-02]: GongAdapter cursor pagination limited to 3 pages max to prevent runaway on large Gong accounts
-- [Phase 19.1]: SourceCredentials defined in settings-core.ts (not source-adapters/index.ts) to prevent circular import — index.ts imports MCPServerConfig from settings-core
-- [Phase 19.1]: resolveAdapter stub returns null for all inputs — full factory logic deferred to Plan 19.1-05 after all adapter implementations exist
-- [Phase 19.1]: user_source_tokens UNIQUE(user_id, source) with DEFAULT user_id='default' — single-user-compatible, forward-compatible with future multi-user auth
-- [Phase 19.1-03]: GleanAdapter constructor uses creds object pattern to match Plan 01 test stubs; actAsEmail missing warns but proceeds
-- [Phase 19.1-03]: MCPAdapter created as parallel module — discovery-scanner.ts left intact until Plan 19.1-05 refactor to preserve SRC-07 backward compatibility
-- [Phase 19.1-04]: prompt=consent required in generateAuthUrl to guarantee refresh_token is always returned — without it subsequent connects after revocation would permanently break GmailAdapter
-- [Phase 19.1-source-integrations]: Source Connections added as a third tab in Settings (not a new page) — consistent UX, no nav changes needed
-- [Phase 19.1-source-integrations]: Gmail connect uses anchor href to /api/oauth/gmail — browser redirect required; JS fetch cannot follow OAuth redirects
-- [Phase 19.1-08]: likely_duplicate stored in DB (not computed client-side): persists Claude's cross-reference signal through queue refresh cycles
-- [Phase 19.1-08]: Collapsed <details> section for duplicates (not auto-dismissed): flagged items remain reviewable, user can override Claude's judgment
-- [Phase 19.1-08]: existingProjectSummary required (not optional) in DiscoveryScanParams: callers must pass empty string to opt out, preventing silent omission
-- [Phase 20]: Migration named 0016_wizard_schema.sql (not 0002) due to existing migrations 0002-0015 from prior phases
-- [Phase 20]: FTS search arms updated for draft alongside dashboard — draft projects should appear in search once they have entity data
-- [Phase 20]: POST /api/projects hardcodes status=draft; PATCH existence check via returning() empty array avoids extra SELECT and aligns with test mock structure
-- [Phase 20]: checklistState promoted to WizardState so LaunchStep can read checked items without prop drilling
-- [Phase 20]: CollateralUploadStep owns Skip/Continue buttons (plan contract); ProjectWizard renders footer only for steps 3-5 while under construction
-- [Phase 20]: Steps 3-5 own navigation buttons — generic wizard footer suppressed for steps that have their own Submit/Continue/Launch controls
-- [Phase 20]: NewProjectButton extracted as separate component for clean RSC/client boundary in Dashboard page.tsx
-- [Phase 21-00]: Wave 0 stubs use it.todo() so suite is green immediately — tests turn red as Wave 1+ implementations are written
-- [Phase 21-00]: Import lines in stubs commented out with plan reference so TypeScript errors only surface after implementation modules exist
-- [Phase 21-teams-tab-+-architecture-tab]: getTeamsTabData uses db.select() (not explicit column selector) for architectureIntegrations to match $inferSelect — source/source_artifact_id/ingested_at fields added in Phase 19 not reflected in plan
-- [Phase 21-teams-tab-+-architecture-tab]: openActions uses inArray(status, ['open','in_progress']) — actions table has no team field, all open actions returned project-level for client-side display
-- [Phase 21-teams-tab-+-architecture-tab]: before-state PUT upsert: select-then-update-or-insert (not ON CONFLICT) — schema has no unique constraint on project_id for before_state table
-- [Phase 21-04]: Typed status state as string in IntegrationEditModal to avoid TS2345 with select onChange
-- [Phase 21-03]: openActions are project-level (no team field) — top-3 shown as shared Open Items block on every team card (TEAMS-05)
-- [Phase 21-03]: architectureIntegrations passed as read-only prop to ArchOverviewSection — Architecture tab manages writes, Teams tab reads
-- [Phase 21-03]: AMEX canonical 8-team ordering: customer.toLowerCase().includes('amex') guard for future-proof casing
-- [Phase 21-05]: Per-skill context builders (buildTeamsSkillContext, buildArchSkillContext) rather than extending shared buildSkillContext — avoids token cost loading 6 new tables for unrelated skills
-- [Phase 21-05]: skillSpecificContext dispatched by name in orchestrator with null guard — zero impact on existing skill behavior
-- [Phase 21]: Phase 21 approved via automated preview screenshot and snapshot verification — all 5 Teams sections and 2-tab Architecture view passed visual inspection with correct design tokens
-- [Phase 22-source-badges-+-audit-log]: SourceBadge Wave 0 stub throws instead of returning undefined — Vite import-analysis resolves at transform time, requiring a real stub file
-- [Phase 22-source-badges-+-audit-log]: Lazy import helper for audit-helper tests — node env resolves at runtime so try/catch inside async helper gives per-test failures
-- [Phase 22-source-badges-+-audit-log]: jest-dom setup via expect.extend(matchers): with globals: false, direct import fails; explicit extend + afterEach cleanup() in setupFiles required
-- [Phase 22-source-badges-+-audit-log]: discovery_source capitalization on approve route write, not on SourceBadge read — single responsibility
-- [Phase 22-03]: Used tx.insert(auditLog) directly inside transactions rather than writeAuditLog() helper — helper uses db not tx, breaking atomicity
-- [Phase 22-03]: Risks route always fetches before-state unconditionally (was conditional on mitigation_append) — simpler code, clean audit capture
-- [Phase 22-source-badges-+-audit-log]: 22-04: artifactName resolved from pre-fetched data.artifacts Map (no N+1) — avoids LEFT JOIN since getWorkspaceData already fetches all artifacts
-- [Phase 22-source-badges-+-audit-log]: 22-04: Teams/arch badges added at client sub-component level (BusinessOutcomesSection, FocusAreasSection, E2eWorkflowsSection, IntegrationNode) — not RSC page level due to client state
-- [Phase 22]: Phase 22 COMPLETE — all three AUDIT requirements (AUDIT-01, AUDIT-02, AUDIT-03) verified in-browser and via direct DB query; source badges, delete confirmation dialogs, and audit log all confirmed working
-- [Phase 23-01]: Grouping scope limited to 4 schema-supported dimensions (project, team_member/submitted_by, status, date) — role/phase/task grouping requires schema extension not in Phase 23 scope
-- [Phase 23-01]: Locking is explicit (locked=true flag only), NOT automatic on approval — test TTADV-15-2 documents and enforces this distinction
-- [Phase 23]: 23-02: Migration numbered 0018 (0015 already taken by discovery_dedup_flag); inline ToggleSwitch implemented (shadcn Switch not installed); settings at /settings/time-tracking standalone route
-- [Phase 23-03]: lib/time-tracking.ts exports both value functions and TypeScript types (EntryStatus, GroupBy, Subtotals) — client can import types without server-only side effects
-- [Phase 23-03]: Approve route gracefully degrades when time_tracking_config table absent (23-02 not run): defaults lock_after_approval=false, auto-upgrades once 23-02 creates the table
-- [Phase 23-03]: Submit Week dialog uses datalist for recent submitters (not a select) — allows free-text username entry for TTADV-09 submit-on-behalf compliance
-- [Phase 23-07]: Notification calls in approve/reject routes are non-fatal (.catch()) — primary route response never blocked by notification failures
-- [Phase 23-07]: Worker handler created at both plan-specified path (app/api/jobs/handlers/) and actual BullMQ path (worker/jobs/) — timesheet-reminder registered in worker/index.ts JOB_HANDLERS
-- [Phase 23-04]: GOOGLE_CALENDAR_REDIRECT_URI dedicated env var — no fallback to Gmail's GOOGLE_REDIRECT_URI to prevent OAuth mis-routing
-- [Phase 23-04]: Calendar token refresh uses setCredentials() + tokens event (googleapis Pattern 2) not deprecated refreshAccessToken()
-- [Phase 23-04]: CalendarImportModal is self-contained with own open/close state — TimeTab renders it without local modal state flag
-- [Phase 23-05]: Reject action loops over entries individually to append [Rejected: reason] per-entry rather than bulk set — preserves original description content per entry
-- [Phase 23-05]: buildApprovalNotification called outside DB transaction (best-effort) — approval never rolled back due to notification failure; TTADV-19 satisfied
-- [Phase 23-06]: Switched xlsx to ExcelJS — xlsx not installed in project; ExcelJS is existing dependency with equivalent API
-- [Phase 23-06]: Export URL uses literal ?format= string in source to satisfy source-level verify check; extra params appended with &
-- [Phase 23-06]: Excel buffer returned via Response (not NextResponse) using ArrayBuffer to satisfy BodyInit type constraint
-- [Phase 25-01]: Filter regression tests are GREEN by design — pure data tests document WIZ-03 bug vs fix, serve as regression guards for Plan 02 one-line change
-- [Phase 25-01]: Audit RED tests drive real POST handlers via mocked @/db to avoid exporting private helpers; conflict-path test overrides db.select mock inline
-- [Phase 25-02]: WIZ-03 fix: outer filter checks only for artifactId presence; inner loop guard handles per-file status logic — roles are distinct and must stay separate
-- [Phase 25-03]: Inline tx.insert(auditLog) inside db.transaction() for ingestion/discovery approve routes — writeAuditLog helper does not accept tx parameter
-- [Phase 25-wizard-fix-audit-completion]: Consolidated partial SELECT into full SELECT in PATCH/DELETE — serves both 404 check and audit before_json
-- [Phase 25-05]: knowledge-base PATCH uses tx.update().returning() result as after_json — no extra SELECT inside transaction needed
-- [Phase 25-05]: plan-templates keeps default import style (import db from ...) — not converted to named import; auditLog added separately
-- [Phase 24-01]: Wave 0 TDD scaffold: sidebar.test.ts tests SIDEBAR_NAV_ITEMS constant rather than full RSC render to avoid jsdom env complexity; appendRunHistoryEntry and insertSchedulerFailureNotification co-located in lib/scheduler-notifications
-- [Phase 24-scheduler-enhanced]: Zod v4 z.record() requires two-argument form: z.record(z.string(), z.unknown()) — single arg form silently broken for optional fields with actual values
-- [Phase 24-scheduler-enhanced]: Vitest 4 constructor mocks: vi.fn(function() { return {...} }) works; vi.fn().mockImplementation(() => ...) does NOT work with new keyword
-- [Phase 24-03]: Sidebar queries app_notifications for scheduler_failure count in parallel with getActiveProjects — no extra latency
-- [Phase 24-03]: SchedulerJobRow.id typed as number (matches DB serial); Edit button stub in expanded panel for Plan 04 wiring
-- [Phase 24]: 24-04: timesheet-reminder removed from SKILLS_WITH_PARAMS and hasParams set to false — no configurable params, Step 3 skipped for it
-- [Phase 24-05]: Settings Jobs tab removed — all scheduling now exclusively DB-driven via /scheduler UI; eliminates dual scheduling code paths
-- [Phase 24-05]: All 12 SCHED requirements (SCHED-01 through SCHED-12) verified in-browser and approved; Phase 24 Scheduler Enhanced COMPLETE
 
-## Performance Metrics
+## Accumulated Technical Context
 
-| Phase | Plan | Duration | Tasks | Files |
-|-------|------|----------|-------|-------|
-| 01-data-foundation | 01 | 4min | 2/2 | 9 |
-| 01-data-foundation | 02 | 20min | 2/2 | 14 |
-| 01-data-foundation | 03 | 8min | 1/1 | 3 |
-| 01-data-foundation | 04 | 15min | 2/2 | 4 |
-| 01-data-foundation | 05 | 25min | 1/1 | 2 |
-| 01-data-foundation | 06 | 4min | 1/1 | 2 |
-| 02-app-shell-read-surface | 01 | 12min | 1/1 | 3 |
-| Phase 02-app-shell-read-surface P04 | 8min | 1 tasks | 5 files |
-| Phase 02-app-shell-read-surface P03 | 2min | 2 tasks | 5 files |
-| Phase 02-app-shell-read-surface P06 | 3min | 2 tasks | 7 files |
-| Phase 02-app-shell-read-surface P05 | 3min | 2 tasks | 6 files |
-| Phase 02-app-shell-read-surface P07 | 10min | 2 tasks | 1 files |
-| Phase 03-write-surface-+-plan-builder P01 | 2min | 1 tasks | 1 files |
-| Phase 03-write-surface-+-plan-builder P02 | 8min | 2 tasks | 4 files |
-| Phase 03-write-surface-+-plan-builder P03 | 2min | 3 tasks | 3 files |
-| Phase 03-write-surface-+-plan-builder P04 | 4min | 2 tasks | 10 files |
-| Phase 03-write-surface-+-plan-builder P05 | 2min | 2 tasks | 8 files |
-| Phase 03-write-surface-+-plan-builder P06 | 6min | 2 tasks | 10 files |
-| Phase 03-write-surface-+-plan-builder P08 | 2min | 2 tasks | 2 files |
-| Phase 03-write-surface-+-plan-builder P07 | 2min | 2 tasks | 4 files |
-| Phase 03-write-surface-+-plan-builder P09 | 35min | 2 tasks | 3 files |
-| Phase 04-job-infrastructure P01 | 5min | 1 tasks | 1 files |
-| Phase 04-job-infrastructure P02 | 2min | 2 tasks | 7 files |
-| Phase 04-job-infrastructure P03 | 6min | 2 tasks | 8 files |
-| Phase 04-job-infrastructure P04 | 8min | 2 tasks | 4 files |
-| Phase 04-job-infrastructure P05 | 20min | 2 tasks | 1 files |
-| Phase 05-skill-engine P01 | 3min | 2 tasks | 9 files |
-| Phase 05-skill-engine P02 | 3min | 2 tasks | 5 files |
-| Phase 05-skill-engine P04 | 3min | 2 tasks | 11 files |
-| Phase 05-skill-engine P03 | 4min | 2 tasks | 7 files |
-| Phase 05-skill-engine P05 | 2min | 1 tasks | 8 files |
-| Phase 05.1-onboarding-dashboard P01 | 3min | 1 tasks | 1 files |
-| Phase 05.1-onboarding-dashboard P02 | 1min | 2 tasks | 2 files |
-| Phase 05.1-onboarding-dashboard P03 | 5min | 2 tasks | 4 files |
-| Phase 05.1-onboarding-dashboard P04 | 8 | 2 tasks | 3 files |
-| Phase 05.1-onboarding-dashboard P05 | 2min | 2 tasks | 3 files |
-| Phase 05.1-onboarding-dashboard P06 | 5min | 2 tasks | 1 files |
-| Phase 05.1-onboarding-dashboard P07 | 2min | 1 tasks | 1 files |
-| Phase 05.1-onboarding-dashboard P08 | 8min | 2 tasks | 2 files |
-| Phase 05.2-time-tracking P01 | 3min | 1 tasks | 1 files |
-| Phase 05.2-time-tracking P02 | 2min | 2 tasks | 2 files |
-| Phase 05.2-time-tracking P04 | 5min | 2 tasks | 4 files |
-| Phase 06-mcp-integrations P01 | 5min | 2 tasks | 3 files |
-| Phase 06-mcp-integrations P02 | 227 | 2 tasks | 6 files |
-| Phase 06-mcp-integrations P03 | 12 | 2 tasks | 4 files |
-| Phase 06-mcp-integrations P04 | 18 | 2 tasks | 4 files |
-| Phase 06 P05 | 18 | 1 tasks | 2 files |
-| Phase 06-mcp-integrations P06 | 2 | 2 tasks | 5 files |
-| Phase 07-file-generation-remaining-skills P01 | 4min | 2 tasks | 7 files |
-| Phase 07-file-generation-remaining-skills P02 | 3min | 2 tasks | 7 files |
-| Phase 07-file-generation-remaining-skills P03 | 8min | 2 tasks | 6 files |
-| Phase 07-file-generation-remaining-skills P04 | 3min | 2 tasks | 3 files |
-| Phase 07-file-generation-remaining-skills P05 | 5min | 2 tasks | 7 files |
-| Phase 07-file-generation-remaining-skills P06 | 2min | 2 tasks | 7 files |
-| Phase 07-file-generation-remaining-skills P07 | 736s | 1 tasks | 4 files |
-| Phase 07-file-generation-remaining-skills P07 | 40min | 2 tasks | 6 files |
-| Phase 08-cross-project-features-+-polish P01 | 10min | 1 tasks | 1 files |
-| Phase 08-cross-project-features-+-polish P02 | 2min | 2 tasks | 2 files |
-| Phase 08-cross-project-features-+-polish P03 | 2min | 2 tasks | 2 files |
-| Phase 08-cross-project-features-+-polish P04 | 2min | 2 tasks | 2 files |
-| Phase 08-cross-project-features-+-polish P05 | 6min | 2 tasks | 3 files |
-| Phase 08-cross-project-features-+-polish P06 | 2min | 2 tasks | 4 files |
-| Phase 08-cross-project-features-+-polish P07 | 15min | 2 tasks | 1 files |
-| Phase 09-mcp-injection-fix P01 | 2min | 1 tasks | 1 files |
-| Phase 09-mcp-injection-fix P02 | 1min | 2 tasks | 4 files |
-| Phase 09-mcp-injection-fix P02 | 4min | 3 tasks | 4 files |
-| Phase 10-fts-expansion-+-code-polish P01 | 7min | 3 tasks | 6 files |
-| Phase 10-fts-expansion-+-code-polish P02 | 5min | 1 tasks | 3 files |
-| Phase 10-fts-expansion-+-code-polish P02 | checkpoint-resume | 2 tasks | 3 files |
-| Phase 11-health-score-wire P01 | 3min | 3 tasks | 5 files |
-| Phase 12 P01 | 5 | 1 tasks | 1 files |
-| Phase 12-complete-workspace-write-surface P02 | 15 | 2 tasks | 5 files |
-| Phase 12 P03 | 4 | 2 tasks | 8 files |
-| Phase 13-skill-ux-+-draft-polish P01 | 8 | 1 tasks | 1 files |
-| Phase 13-skill-ux-+-draft-polish P02 | 12 | 2 tasks | 3 files |
-| Phase 13-skill-ux-+-draft-polish P03 | 15 | 3 tasks | 4 files |
-| Phase 13-skill-ux-+-draft-polish P04 | 65 | 2 tasks | 4 files |
-| Phase 14 P01 | 1 | 1 tasks | 1 files |
-| Phase 14-time-+-project-analytics P02 | 4 | 2 tasks | 4 files |
-| Phase 14-time-+-project-analytics P03 | 302 | 2 tasks | 2 files |
-| Phase 14-time-+-project-analytics P04 | 1 | 1 tasks | 1 files |
-| Phase 15 P02 | 2m | 3 tasks | 5 files |
-| Phase 15 P03 | 5 | 2 tasks | 0 files |
-| Phase 16-verification-retrofit P04 | 4 | 1 tasks | 1 files |
-| Phase 16 P01 | 2 | 1 tasks | 1 files |
-| Phase 16 P02 | 2 | 1 tasks | 1 files |
-| Phase 16 P03 | 15 | 1 tasks | 1 files |
-| Phase 16 P05 | 15 | 1 tasks | 1 files |
-| Phase 17 P02 | 7 | 1 tasks | 1 files |
-| Phase 17-schema-extensions P03 | 6 | 1 tasks | 1 files |
-| Phase 18-document-ingestion P01 | 3 | 2 tasks | 8 files |
-| Phase 18-document-ingestion P02 | 3 | 2 tasks | 4 files |
-| Phase 18-document-ingestion P03 | 4min | 1 tasks | 3 files |
-| Phase 18-document-ingestion P04 | 5min | 1 tasks | 3 files |
-| Phase 18-document-ingestion P05 | 4 | 2 tasks | 6 files |
-| Phase 19-external-discovery-scan P01 | 8 | 2 tasks | 7 files |
-| Phase 19-external-discovery-scan P03 | 5 | 2 tasks | 7 files |
-| Phase 19-external-discovery-scan P04 | 10 | 2 tasks | 5 files |
-| Phase 19-external-discovery-scan P05 | 4 | 2 tasks | 7 files |
-| Phase 19.1 P01 | 3 | 3 tasks | 8 files |
-| Phase 19.1-source-integrations P03 | 8 | 2 tasks | 2 files |
-| Phase 19.1-source-integrations P04 | 4 | 2 tasks | 7 files |
-| Phase 19.1-source-integrations P06 | 4 | 1 tasks | 3 files |
-| Phase 19.1-source-integrations P08 | 6 | 3 tasks | 8 files |
-| Phase 20 P01 | 4m | 3 tasks | 12 files |
-| Phase 20 P02 | 5min | 2 tasks | 2 files |
-| Phase 20 P03 | 18 | 3 tasks | 3 files |
-| Phase 20 P04 | 13 | 3 tasks | 6 files |
-| Phase 21-teams-tab-+-architecture-tab P00 | 2min | 2 tasks | 14 files |
-| Phase 21-teams-tab-+-architecture-tab P01 | 4 | 2 tasks | 9 files |
-| Phase 21-teams-tab-+-architecture-tab P02 | 4 | 2 tasks | 6 files |
-| Phase 21-teams-tab-+-architecture-tab P04 | 4 | 2 tasks | 9 files |
-| Phase 21-teams-tab-+-architecture-tab P03 | 6 | 2 tasks | 9 files |
-| Phase 21-teams-tab-+-architecture-tab P05 | 3 | 2 tasks | 5 files |
-| Phase 22-source-badges-+-audit-log P01 | 4 | 2 tasks | 5 files |
-| Phase 22-source-badges-+-audit-log P02 | 6 | 3 tasks | 12 files |
-| Phase 22-source-badges-+-audit-log P03 | 4 | 2 tasks | 13 files |
-| Phase 22-source-badges-+-audit-log P04 | 18 | 2 tasks | 13 files |
-| Phase 23-time-tracking-advanced P01 | 12 | 3 tasks | 3 files |
-| Phase 23 P02 | 2 | 2 tasks | 5 files |
-| Phase 23-time-tracking-advanced P03 | 4 | 2 tasks | 5 files |
-| Phase 23-time-tracking-advanced P07 | 196 | 2 tasks | 10 files |
-| Phase 23-time-tracking-advanced P04 | 4 | 2 tasks | 6 files |
-| Phase 23-time-tracking-advanced P05 | 3 | 2 tasks | 2 files |
-| Phase 23-time-tracking-advanced P06 | 5 | 2 tasks | 2 files |
-| Phase 25-wizard-fix-audit-completion P01 | 8 | 3 tasks | 3 files |
-| Phase 25-wizard-fix-audit-completion P02 | 5 | 1 tasks | 1 files |
-| Phase 25-wizard-fix-audit-completion P03 | 4 | 2 tasks | 3 files |
-| Phase 25-wizard-fix-audit-completion P04 | 7 | 2 tasks | 5 files |
-| Phase 25-wizard-fix-audit-completion P05 | 6 | 2 tasks | 7 files |
-| Phase 24-scheduler-enhanced P01 | 12 | 1 tasks | 8 files |
-| Phase 24-scheduler-enhanced P02 | 12 | 2 tasks | 11 files |
-| Phase 24-scheduler-enhanced P03 | 3 | 2 tasks | 4 files |
-| Phase 24 P04 | 4 | 2 tasks | 7 files |
-| Phase 24-scheduler-enhanced P05 | 20 | 2 tasks | 7 files |
+### Auth Implementation Notes (for Phase 26 planning)
+- CVE-2025-29927 (CVSS 9.1): Next.js middleware auth bypass via x-middleware-subrequest header. Defense-in-depth mandatory: requireSession() at Route Handler level, not only middleware.
+- better-auth@1.5.6 is preferred over Auth.js v5 — native SAML 2.0 plugin, Next.js 16 proxy.ts supported; use --legacy-peer-deps if peer dep version mismatch on install
+- bcryptjs@^2.x + @types/bcryptjs: password hashing — pure JS, no native bindings, safe in all Next.js runtimes including Edge
+- Split auth config required: lib/auth.ts (Node.js, can use bcrypt) vs lib/session-edge.ts (edge-safe, no bcrypt) — middleware uses edge-safe version only
+- users table must include: email, password_hash, role, active (boolean), external_id (nullable TEXT for Okta), created_at
+- resolveRole(session) abstraction must accept both credential session shape and future OIDC session shape
 
-## Key Context for Next Session
+### Chat Implementation Notes (for Phase 29 planning)
+- ai@6.0.141 + @ai-sdk/anthropic@3.0.64 + @ai-sdk/react@3.0.143: Vercel AI SDK for chat only; coexists with raw @anthropic-ai/sdk without conflict
+- useChat hook handles SSE stream assembly in browser; streamText + toDataStreamResponse() in the Route Handler
+- lib/chat-context-builder.ts: DB snapshot approach — query all project records, serialize to 2000–4000 token context payload; no vector search needed
+- Cross-project data leakage prevention: DAL wrapper + project-scoped queries only; project_id filter mandatory on every DB call in chat context builder
 
-- **Working directory:** `/Users/jmiloslavsky/Documents/Project Assistant Code`
-- **v2.0 milestone:** Roadmap complete. 96/96 requirements mapped. Phase 17 is the entry point.
-- **Next command:** `/gsd:plan-phase 17`
-- **Execution order:** 17 → 18/19 (parallel) → 20 → 21 → 22 → 23/24 (parallel)
-- **Research flags before planning:** Phase 18 (Anthropic SDK document input API for PDF/DOCX/PPTX), Phase 23 (Google Calendar OAuth in Next.js 14 App Router)
-- **v1.0 ground truth versions:** React 19, Next.js 14, Tailwind 4, Anthropic SDK 0.78.x, BullMQ, Drizzle ORM — read from existing bigpanda-app/package.json
-- **DB migration pattern (established):** Write SQL manually to bigpanda-app/db/migrations/ — drizzle-kit generate not available; no PostgreSQL in dev environment
-- **Test runner pattern (established):** Wave 0 stubs use `expect(false, 'stub').toBe(true)` as first assertion; Requirement IDs in test names for --grep targeting
-- **npm install pattern (established):** Always use `--no-package-lock` — invalid esbuild semver in package-lock.json blocks standard install
-- **Wave 0 complete (Phase 1):** All 8 test stubs exist in tests/ — verify commands valid for Plans 01-02 through 01-06
-- **Phase 2 E2E: ALL GREEN:** tests/e2e/phase2.spec.ts has 23 passing tests — full read surface verified by human on 2026-03-19
-- **Playwright installed:** @playwright/test at project root, Chromium cached. Run: `npx playwright test tests/e2e/phase2.spec.ts --grep "DASH-01"`
-- **Critical pitfall:** BullMQ worker must be a dedicated process — never in-process cron
-- **Critical pitfall:** SkillOrchestrator must be separated from Route Handlers before Phase 5
-- **Cowork compatibility:** js-yaml settings `sortKeys: false, lineWidth: -1, JSON_SCHEMA` — non-negotiable
-- **DB setup required:** PostgreSQL not installed — user must install PostgreSQL, create bigpanda_test + bigpanda_app DBs, and run `cd bigpanda-app && DATABASE_URL=postgresql://localhost:5432/bigpanda_test npx drizzle-kit migrate`
+### Interactive Visuals Notes (for Phase 28 planning)
+- @xyflow/react@12.10.2: requires dynamic(() => import(...), { ssr: false }) in ALL parent components — never import directly
+- Test with `next build && next start` — development mode does not surface all hydration errors
+- Dagre layout (@dagrejs/dagre) for auto-positioning; no manual node coordinate specification needed
 
----
-*Initialized: 2026-03-18*
-*v2.0 roadmap added: 2026-03-25 — 8 phases (17–24), 96/96 requirements mapped*
+### Context Hub Notes (for Phase 30 planning)
+- Two-phase API: POST /api/context-hub/[id]/ingest (Claude routing call, returns JSON preview) → POST /api/context-hub/[id]/apply (transactional DB writes)
+- All tab writes from one document must be wrapped in a single PostgreSQL transaction; idempotency via UUID ingestion_id
+- Wrap all extracted document content in <document_content>...</document_content> delimiters in routing prompt — prompt injection defense
+- Validate all Claude routing output against strict JSON schema before any DB write is triggered
+- discovery_items approval workflow infrastructure from Phase 18/19 is reusable for approve/reject flow
+- Completeness analysis: on-demand trigger (not BullMQ-scheduled) for v3.0; checks live DB against template section definitions from Phase 27
