@@ -10,6 +10,7 @@ import {
   keyDecisions,
   engagementHistory,
   stakeholders,
+  auditLog,
 } from '@/db/schema';
 
 export const dynamic = 'force-dynamic';
@@ -53,70 +54,130 @@ async function insertDiscoveredItem(item: DiscoveryItem): Promise<void> {
 
   switch (field) {
     case 'action':
-      await db.insert(actions).values({
-        project_id: projectId,
-        external_id: `DISC-ACT-${item.id}-${Date.now()}`,
-        description: item.content,
-        status: 'open',
-        source,
-        discovery_source,
-        created_at: createdAt,
+      await db.transaction(async (tx) => {
+        const [inserted] = await tx.insert(actions).values({
+          project_id: projectId,
+          external_id: `DISC-ACT-${item.id}-${Date.now()}`,
+          description: item.content,
+          status: 'open',
+          source,
+          discovery_source,
+          created_at: createdAt,
+        }).returning();
+        await tx.insert(auditLog).values({
+          entity_type: field,
+          entity_id: inserted.id,
+          action: 'create',
+          actor_id: 'default',
+          before_json: null,
+          after_json: inserted as Record<string, unknown>,
+        });
       });
       break;
 
     case 'risk':
-      await db.insert(risks).values({
-        project_id: projectId,
-        external_id: `DISC-RSK-${item.id}-${Date.now()}`,
-        description: item.content,
-        source,
-        discovery_source,
-        created_at: createdAt,
+      await db.transaction(async (tx) => {
+        const [inserted] = await tx.insert(risks).values({
+          project_id: projectId,
+          external_id: `DISC-RSK-${item.id}-${Date.now()}`,
+          description: item.content,
+          source,
+          discovery_source,
+          created_at: createdAt,
+        }).returning();
+        await tx.insert(auditLog).values({
+          entity_type: field,
+          entity_id: inserted.id,
+          action: 'create',
+          actor_id: 'default',
+          before_json: null,
+          after_json: inserted as Record<string, unknown>,
+        });
       });
       break;
 
     case 'decision':
-      await db.insert(keyDecisions).values({
-        project_id: projectId,
-        decision: item.content,
-        date: item.scan_timestamp ? item.scan_timestamp.toISOString().split('T')[0] : null,
-        source,
-        discovery_source,
-        created_at: createdAt,
+      await db.transaction(async (tx) => {
+        const [inserted] = await tx.insert(keyDecisions).values({
+          project_id: projectId,
+          decision: item.content,
+          date: item.scan_timestamp ? item.scan_timestamp.toISOString().split('T')[0] : null,
+          source,
+          discovery_source,
+          created_at: createdAt,
+        }).returning();
+        await tx.insert(auditLog).values({
+          entity_type: field,
+          entity_id: inserted.id,
+          action: 'create',
+          actor_id: 'default',
+          before_json: null,
+          after_json: inserted as Record<string, unknown>,
+        });
       });
       break;
 
     case 'milestone':
-      await db.insert(milestones).values({
-        project_id: projectId,
-        external_id: `DISC-MIL-${item.id}-${Date.now()}`,
-        name: item.content,
-        source,
-        discovery_source,
-        created_at: createdAt,
+      await db.transaction(async (tx) => {
+        const [inserted] = await tx.insert(milestones).values({
+          project_id: projectId,
+          external_id: `DISC-MIL-${item.id}-${Date.now()}`,
+          name: item.content,
+          source,
+          discovery_source,
+          created_at: createdAt,
+        }).returning();
+        await tx.insert(auditLog).values({
+          entity_type: field,
+          entity_id: inserted.id,
+          action: 'create',
+          actor_id: 'default',
+          before_json: null,
+          after_json: inserted as Record<string, unknown>,
+        });
       });
       break;
 
     case 'stakeholder':
-      await db.insert(stakeholders).values({
-        project_id: projectId,
-        name: item.content,
-        source,
-        discovery_source,
-        created_at: createdAt,
+      await db.transaction(async (tx) => {
+        const [inserted] = await tx.insert(stakeholders).values({
+          project_id: projectId,
+          name: item.content,
+          source,
+          discovery_source,
+          created_at: createdAt,
+        }).returning();
+        await tx.insert(auditLog).values({
+          entity_type: field,
+          entity_id: inserted.id,
+          action: 'create',
+          actor_id: 'default',
+          before_json: null,
+          after_json: inserted as Record<string, unknown>,
+        });
       });
       break;
 
     case 'history':
     default:
       // Catch-all: store as engagement history
-      await db.insert(engagementHistory).values({
-        project_id: projectId,
-        content: item.content,
-        date: item.scan_timestamp ? item.scan_timestamp.toISOString().split('T')[0] : null,
-        source,
-        discovery_source,
-        created_at: createdAt,
+      await db.transaction(async (tx) => {
+        const [inserted] = await tx.insert(engagementHistory).values({
+          project_id: projectId,
+          content: item.content,
+          date: item.scan_timestamp ? item.scan_timestamp.toISOString().split('T')[0] : null,
+          source,
+          discovery_source,
+          created_at: createdAt,
+        }).returning();
+        await tx.insert(auditLog).values({
+          entity_type: 'history',
+          entity_id: inserted.id,
+          action: 'create',
+          actor_id: 'default',
+          before_json: null,
+          after_json: inserted as Record<string, unknown>,
+        });
       });
       break;
   }
