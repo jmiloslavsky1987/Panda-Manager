@@ -5,21 +5,24 @@
  *
  * Renders a sortable table of scheduled jobs (enabled first, then disabled).
  * Manages expanded row state and optimistic job updates/deletes.
- * Plan 24-03.
+ * Plan 24-03 (table) + 24-04 (wizard integration).
  */
 
 import { useState } from 'react';
 import { SchedulerJobRow } from './SchedulerJobRow';
 import type { ScheduledJob } from './SchedulerJobRow';
+import { CreateJobWizard } from './CreateJobWizard';
 
 interface SchedulerJobTableProps {
   initialJobs: ScheduledJob[];
   onCreateJob?: () => void;
 }
 
-export function SchedulerJobTable({ initialJobs, onCreateJob }: SchedulerJobTableProps) {
+export function SchedulerJobTable({ initialJobs }: SchedulerJobTableProps) {
   const [jobs, setJobs] = useState<ScheduledJob[]>(initialJobs);
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [editJob, setEditJob] = useState<ScheduledJob | undefined>(undefined);
 
   // Enabled jobs first, then disabled; preserve insertion order within each group
   const sorted = [...jobs].sort((a, b) => {
@@ -40,6 +43,28 @@ export function SchedulerJobTable({ initialJobs, onCreateJob }: SchedulerJobTabl
     setExpandedId((prev) => (prev === id ? null : prev));
   }
 
+  function handleEditJob(job: ScheduledJob) {
+    setEditJob(job);
+    setWizardOpen(true);
+  }
+
+  function handleJobCreated(job: ScheduledJob) {
+    setJobs((prev) => {
+      const exists = prev.find((j) => j.id === job.id);
+      if (exists) {
+        // Edit mode: update in-place
+        return prev.map((j) => (j.id === job.id ? job : j));
+      }
+      // Create mode: prepend new job
+      return [job, ...prev];
+    });
+  }
+
+  function handleOpenCreate() {
+    setEditJob(undefined);
+    setWizardOpen(true);
+  }
+
   return (
     <div>
       {/* Header row with Create Job button */}
@@ -51,7 +76,7 @@ export function SchedulerJobTable({ initialJobs, onCreateJob }: SchedulerJobTabl
         </h2>
         <button
           data-testid="create-job-button"
-          onClick={onCreateJob}
+          onClick={handleOpenCreate}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
         >
           + Create Job
@@ -83,12 +108,21 @@ export function SchedulerJobTable({ initialJobs, onCreateJob }: SchedulerJobTabl
                   onToggleExpand={() => handleToggleExpand(job.id)}
                   onJobUpdate={handleJobUpdate}
                   onJobDelete={handleJobDelete}
+                  onEdit={handleEditJob}
                 />
               ))}
             </tbody>
           </table>
         </div>
       )}
+
+      {/* Create / Edit Job wizard */}
+      <CreateJobWizard
+        open={wizardOpen}
+        onClose={() => setWizardOpen(false)}
+        onJobCreated={handleJobCreated}
+        initialJob={editJob}
+      />
     </div>
   );
 }
