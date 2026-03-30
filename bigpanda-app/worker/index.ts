@@ -14,7 +14,11 @@ import './env-loader';
 
 import { Worker } from 'bullmq';
 import { createRedisConnection } from './connection';
-import { registerAllSchedulers } from './scheduler';
+import { registerAllSchedulers, registerDbSchedulers } from './scheduler';
+import {
+  appendRunHistoryEntry,
+  insertSchedulerFailureNotification,
+} from '../lib/scheduler-notifications';
 import { readSettings } from '../lib/settings-core';
 
 // Job handler dispatch map — avoids dynamic require which can fail with tsx
@@ -67,8 +71,48 @@ const worker = new Worker(
 
 // REQUIRED: missing error listener causes worker to stop processing silently
 worker.on('error', (err) => console.error('[worker] error', err));
-worker.on('completed', (job) => console.log(`[worker] ${job.name} completed`));
-worker.on('failed', (job, err) => console.error(`[worker] ${job?.name ?? 'unknown'} failed`, err.message));
+
+worker.on('completed', (job, result) => {
+  console.log(`[worker] ${job.name} completed`);
+
+  // Write run history for DB-scheduled jobs (job.data.jobId present)
+  const jobId: number | undefined = job.data?.jobId;
+  if (jobId) {
+    const entry = {
+      timestamp: new Date().toISOString(),
+      outcome: 'success' as const,
+      duration_ms: job.processedOn
+        ? Date.now() - job.processedOn
+        : undefined,
+    };
+    appendRunHistoryEntry(jobId, entry).catch((err) =>
+      console.error('[worker] appendRunHistoryEntry error', err),
+    );
+  }
+});
+
+worker.on('failed', (job, err) => {
+  console.error(`[worker] ${job?.name ?? 'unknown'} failed`, err.message);
+
+  // Write failure notification + run history for DB-scheduled jobs
+  const jobId: number | undefined = job?.data?.jobId;
+  if (job && jobId) {
+    const entry = {
+      timestamp: new Date().toISOString(),
+      outcome: 'failure' as const,
+      error: err.message,
+      duration_ms: job.processedOn
+        ? Date.now() - job.processedOn
+        : undefined,
+    };
+    appendRunHistoryEntry(jobId, entry).catch((e) =>
+      console.error('[worker] appendRunHistoryEntry error', e),
+    );
+    insertSchedulerFailureNotification(jobId, job.name, err.message).catch((e) =>
+      console.error('[worker] insertSchedulerFailureNotification error', e),
+    );
+  }
+});
 
 // Graceful shutdown — worker.close() waits for active jobs before exiting
 const gracefulShutdown = async (signal: string) => {
@@ -84,13 +128,15 @@ async function start() {
   console.log('[worker] starting...');
   const settings = await readSettings();
   await registerAllSchedulers(settings);
+  await registerDbSchedulers();
   console.log('[worker] all schedulers registered');
 
-  // Re-register every 60s — picks up schedule changes saved via Settings UI
+  // Re-register every 60s — picks up schedule changes saved via Settings UI + DB
   setInterval(async () => {
     try {
       const fresh = await readSettings();
       await registerAllSchedulers(fresh);
+      await registerDbSchedulers();
     } catch (err) {
       console.error('[worker] settings poll error', err);
     }
