@@ -710,3 +710,21 @@ export const invites = pgTable("invites", {
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+
+// ─── Table: team_pathways (Phase ADR→Biggy bridge) ───────────────────────────
+
+export const teamPathways = pgTable('team_pathways', {
+  id:                 serial('id').primaryKey(),
+  project_id:         integer('project_id').notNull().references(() => projects.id),
+  team_name:          text('team_name').notNull(),
+  route_steps:        jsonb('route_steps').notNull().default([]),  // [{label: string}]
+  status:             integrationTrackStatusEnum('status').default('planned').notNull(),
+  notes:              text('notes'),
+  source:             text('source').notNull().default('manual'),
+  source_artifact_id: integer('source_artifact_id').references(() => artifacts.id, { onDelete: 'set null' }),
+  discovery_source:   text('discovery_source'),
+  ingested_at:        timestamp('ingested_at'),
+  created_at:         timestamp('created_at').defaultNow().notNull(),
+})
+
+export type TeamPathway = typeof teamPathways.$inferSelect

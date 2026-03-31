@@ -1,22 +1,9 @@
 'use client'
 import { useState } from 'react'
-import dynamic from 'next/dynamic'
-import { ArchitectureIntegration, TeamOnboardingStatus } from '@/lib/queries'
+import { ArchitectureIntegration, TeamOnboardingStatus, TeamPathway } from '@/lib/queries'
 import { IntegrationEditModal } from './IntegrationEditModal'
 import { TeamOnboardingTable } from './TeamOnboardingTable'
-
-// SSR-safe dynamic import: @xyflow/react uses DOM APIs unavailable in Node.js SSR.
-const InteractiveArchGraph = dynamic(
-  () => import('./InteractiveArchGraph').then((m) => ({ default: m.InteractiveArchGraph })),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="h-[400px] border border-zinc-200 rounded-lg flex items-center justify-center text-zinc-400 text-sm">
-        Loading architecture diagram...
-      </div>
-    ),
-  },
-)
+import { InteractiveArchGraph } from './InteractiveArchGraph'
 
 
 interface Props {
@@ -24,8 +11,10 @@ interface Props {
   customer: string
   integrations: ArchitectureIntegration[]
   onboardingRows: TeamOnboardingStatus[]
+  pathways: TeamPathway[]
   onIntegrationsUpdate: (integrations: ArchitectureIntegration[]) => void
   onOnboardingUpdate: (rows: TeamOnboardingStatus[]) => void
+  onPathwaysUpdate: (p: TeamPathway[]) => void
 }
 
 interface EditModalState {
@@ -38,8 +27,10 @@ export function CurrentFutureStateTab({
   customer,
   integrations,
   onboardingRows,
+  pathways,
   onIntegrationsUpdate,
   onOnboardingUpdate,
+  onPathwaysUpdate,
 }: Props) {
   const [editModal, setEditModal] = useState<EditModalState | null>(null)
 
@@ -75,8 +66,15 @@ export function CurrentFutureStateTab({
           </div>
         </div>
 
-        {/* Interactive React Flow architecture graph (VIS-02) */}
-        <InteractiveArchGraph integrations={integrations} />
+        {/* Pipeline architecture diagram */}
+        <InteractiveArchGraph
+          integrations={integrations}
+          pathways={pathways}
+          projectId={projectId}
+          onPathwaysUpdate={onPathwaysUpdate}
+          adrTeamNames={onboardingRows.filter((r) => r.track === 'ADR').map((r) => r.team_name)}
+          biggyTeamNames={onboardingRows.filter((r) => r.track === 'Biggy').map((r) => r.team_name)}
+        />
       </div>
 
       {/* Team Onboarding Status table remains below the graph */}
