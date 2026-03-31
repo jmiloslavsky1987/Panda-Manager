@@ -10,6 +10,7 @@ import { z } from 'zod';
 import * as fsPromises from 'node:fs/promises';
 import * as path from 'node:path';
 import { readSettings, writeSettings, AppSettings, MCPServerConfig } from '@/lib/settings';
+import { requireSession } from "@/lib/auth-server";
 
 // Zod schema for a single MCP server entry
 const mcpServerSchema = z.object({
@@ -44,6 +45,9 @@ const settingsUpdateSchema = z.object({
  * Returns current settings with has_api_key boolean (never the key value).
  */
 export async function GET() {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const settings = await readSettings();
   const has_api_key = Boolean(process.env.ANTHROPIC_API_KEY);
 
@@ -66,6 +70,9 @@ export async function GET() {
  * All other fields are written to ~/.bigpanda-app/settings.json via writeSettings().
  */
 export async function POST(request: Request) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const body = await request.json();
   const parsed = settingsUpdateSchema.safeParse(body);
 

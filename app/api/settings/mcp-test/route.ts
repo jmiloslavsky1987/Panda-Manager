@@ -12,6 +12,7 @@
 
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { requireSession } from "@/lib/auth-server";
 
 const mcpTestSchema = z.object({
   name: z.string(),
@@ -20,6 +21,9 @@ const mcpTestSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   let body: unknown;
   try {
     body = await request.json();

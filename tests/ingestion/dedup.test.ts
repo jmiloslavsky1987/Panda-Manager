@@ -44,11 +44,20 @@ vi.mock('@anthropic-ai/sdk', () => ({
 vi.mock('@/lib/document-extractor', () => ({
   extractDocumentText: vi.fn(),
 }));
+vi.mock('next/headers', () => ({ headers: vi.fn().mockResolvedValue(new Headers()) }));
+vi.mock('@/lib/auth', () => ({
+  auth: {
+    api: {
+      getSession: vi.fn().mockResolvedValue({ user: { id: 'test-user', email: 'test@test.com', role: 'admin' } }),
+    },
+  },
+}));
 
 import { isAlreadyIngested } from '@/app/api/ingestion/extract/route';
 import type { ExtractionItem } from '@/app/api/ingestion/extract/route';
 import { POST } from '@/app/api/ingestion/approve/route';
 import { db } from '@/db';
+import { auth as authMock } from '@/lib/auth';
 import { NextRequest } from 'next/server';
 
 // Helper to build a NextRequest with JSON body
@@ -63,6 +72,8 @@ function buildRequest(body: unknown): NextRequest {
 describe('Dedup and conflict detection (ING-08, ING-11, ING-12)', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+  // Restore auth mock after resetAllMocks clears it
+  vi.mocked(authMock.api.getSession).mockResolvedValue({ user: { id: 'test-user', email: 'test@test.com', role: 'admin' } } as any);
   });
 
   it('ING-08: detects conflict when item matches existing record', async () => {

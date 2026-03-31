@@ -13,6 +13,7 @@ import { db } from '../../../db';
 import { scheduledJobs } from '../../../db/schema';
 import { SKILL_LIST, type SkillDef } from '../../../lib/scheduler-skills';
 import { frequencyToCron, type Frequency } from '../../../lib/scheduler-utils';
+import { requireSession } from "@/lib/auth-server";
 
 // ─── Validation Schema ────────────────────────────────────────────────────────
 
@@ -41,6 +42,9 @@ const CreateJobSchema = z.object({
 // ─── GET /api/jobs ────────────────────────────────────────────────────────────
 
 export async function GET(_request: Request): Promise<Response> {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   try {
     const jobs = await db
       .select()
@@ -67,6 +71,9 @@ export async function GET(_request: Request): Promise<Response> {
 // ─── POST /api/jobs ───────────────────────────────────────────────────────────
 
 export async function POST(request: Request): Promise<Response> {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   try {
     const body: unknown = await request.json();
     const parsed = CreateJobSchema.safeParse(body);

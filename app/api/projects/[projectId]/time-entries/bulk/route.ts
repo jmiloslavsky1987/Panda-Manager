@@ -6,6 +6,7 @@ import { timeEntries } from '@/db/schema'
 import { canEdit, isLocked, getEntryStatus } from '@/lib/time-tracking'
 import { writeAuditLog } from '@/lib/audit'
 import { buildApprovalNotification } from '@/lib/time-tracking-notifications'
+import { requireSession } from "@/lib/auth-server";
 
 // ─── Request schema ────────────────────────────────────────────────────────────
 
@@ -30,6 +31,9 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const { projectId } = await params
   const numericProjectId = parseInt(projectId, 10)
 

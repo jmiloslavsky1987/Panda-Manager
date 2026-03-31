@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '../../../db'
 import { stakeholders, auditLog } from '../../../db/schema'
+import { requireSession } from "@/lib/auth-server";
 
 const postSchema = z.object({
   project_id: z.number(),
@@ -15,6 +16,9 @@ const postSchema = z.object({
 })
 
 export async function POST(request: NextRequest) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   let body: unknown
   try {
     body = await request.json()

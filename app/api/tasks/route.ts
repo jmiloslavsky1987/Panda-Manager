@@ -4,6 +4,7 @@ import { db } from '../../../db'
 import { tasks, auditLog } from '../../../db/schema'
 import { eq } from 'drizzle-orm'
 import { updateWorkstreamProgress } from '../../../lib/queries'
+import { requireSession } from "@/lib/auth-server";
 
 // ─── Validation Schemas ───────────────────────────────────────────────────────
 
@@ -27,6 +28,9 @@ const TaskCreateSchema = z.object({
 // ─── GET /api/tasks?projectId=N ───────────────────────────────────────────────
 
 export async function GET(request: NextRequest) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const { searchParams } = new URL(request.url)
   const projectIdStr = searchParams.get('projectId')
   if (!projectIdStr) {
@@ -55,6 +59,9 @@ export async function GET(request: NextRequest) {
 // ─── POST /api/tasks ──────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   let body: unknown
   try {
     body = await request.json()

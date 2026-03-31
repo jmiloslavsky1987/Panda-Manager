@@ -7,11 +7,15 @@ export const dynamic = 'force-dynamic';
 import db from '../../../../../../db';
 import { skillRuns, skillRunChunks } from '../../../../../../db/schema';
 import { eq, gt, and, asc } from 'drizzle-orm';
+import { requireSession } from "@/lib/auth-server";
 
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ runId: string }> }
 ) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const { runId } = await params;
   const encoder = new TextEncoder();
 

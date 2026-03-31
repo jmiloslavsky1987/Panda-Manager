@@ -21,6 +21,7 @@ import {
   architectureIntegrations,
 } from '@/db/schema';
 import { extractDocumentText } from '@/lib/document-extractor';
+import { requireSession } from "@/lib/auth-server";
 
 export const dynamic = 'force-dynamic';
 
@@ -301,6 +302,9 @@ const ExtractRequestSchema = z.object({
 // ─── Route Handler ────────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest): Promise<Response> {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   // Parse request body
   let body: unknown;
   try {

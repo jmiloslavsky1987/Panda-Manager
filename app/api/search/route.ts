@@ -14,8 +14,12 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { searchAllRecords, type SearchResult } from '@/lib/queries';
+import { requireSession } from "@/lib/auth-server";
 
 export async function GET(request: NextRequest) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const { searchParams } = request.nextUrl;
 
   const q       = searchParams.get('q') ?? '';

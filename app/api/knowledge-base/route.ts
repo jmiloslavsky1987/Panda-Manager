@@ -3,10 +3,14 @@ import { db } from '../../../db';
 import { knowledgeBase, auditLog, projects } from '../../../db/schema';
 import { eq, desc, and } from 'drizzle-orm';
 import { searchAllRecords } from '../../../lib/queries';
+import { requireSession } from "@/lib/auth-server";
 
 // GET /api/knowledge-base
 // Query params: q (optional free-text), project_id (optional integer filter)
 export async function GET(request: NextRequest) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   try {
     const { searchParams } = new URL(request.url);
     const q = searchParams.get('q') ?? '';
@@ -68,6 +72,9 @@ export async function GET(request: NextRequest) {
 // POST /api/knowledge-base
 // Body: { title, content, source_trace?, project_id?, linked_risk_id?, linked_history_id?, linked_date? }
 export async function POST(request: NextRequest) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   try {
     let body: unknown;
     try {

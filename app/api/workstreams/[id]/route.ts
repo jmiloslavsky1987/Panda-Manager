@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { db } from '@/db'
 import { workstreams, auditLog } from '@/db/schema'
 import { eq } from 'drizzle-orm'
+import { requireSession } from "@/lib/auth-server";
 
 const patchSchema = z.object({
   state: z.string().optional(),
@@ -17,6 +18,9 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const { id } = await params
   const numericId = parseInt(id, 10)
   if (isNaN(numericId)) return NextResponse.json({ error: 'Invalid id' }, { status: 400 })

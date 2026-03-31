@@ -23,6 +23,14 @@ vi.mock('@/lib/skill-orchestrator', () => {
     },
   };
 });
+vi.mock('next/headers', () => ({ headers: vi.fn().mockResolvedValue(new Headers()) }));
+vi.mock('@/lib/auth', () => ({
+  auth: {
+    api: {
+      getSession: vi.fn().mockResolvedValue({ user: { id: 'test-user', email: 'test@test.com', role: 'admin' } }),
+    },
+  },
+}));
 
 import db from '@/db';
 import { POST } from '../projects/[projectId]/generate-plan/route';

@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { db } from '../../../../db'
 import { stakeholders, auditLog } from '../../../../db/schema'
 import { eq } from 'drizzle-orm'
+import { requireSession } from "@/lib/auth-server";
 
 const patchSchema = z.object({
   name: z.string().min(1).optional(),
@@ -17,6 +18,9 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const { id } = await params
   const numericId = parseInt(id, 10)
 

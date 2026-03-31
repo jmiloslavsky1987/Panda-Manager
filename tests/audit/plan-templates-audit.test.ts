@@ -57,6 +57,14 @@ vi.mock('next/server', async () => {
   const actual = await vi.importActual<typeof import('next/server')>('next/server');
   return actual;
 });
+vi.mock('next/headers', () => ({ headers: vi.fn().mockResolvedValue(new Headers()) }));
+vi.mock('@/lib/auth', () => ({
+  auth: {
+    api: {
+      getSession: vi.fn().mockResolvedValue({ user: { id: 'test-user', email: 'test@test.com', role: 'admin' } }),
+    },
+  },
+}));
 
 import { db } from '@/db';
 

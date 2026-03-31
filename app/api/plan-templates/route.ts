@@ -1,13 +1,20 @@
 import { NextResponse } from 'next/server';
 import db from '../../../db';
 import { planTemplates, auditLog } from '../../../db/schema';
+import { requireSession } from "@/lib/auth-server";
 
 export async function GET() {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const templates = await db.select().from(planTemplates);
   return NextResponse.json(templates);
 }
 
 export async function POST(request: Request) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   try {
     const body = await request.json() as {
       name: string;

@@ -6,6 +6,7 @@ import { db } from '@/db'
 import { actions, auditLog } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { readSettings } from '@/lib/settings'
+import { requireSession } from "@/lib/auth-server";
 
 // ─── Validation Schema ────────────────────────────────────────────────────────
 
@@ -157,6 +158,9 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const { id } = await params
   const actionId = parseInt(id, 10)
   if (isNaN(actionId)) {

@@ -4,6 +4,7 @@ import { teamOnboardingStatus, auditLog } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { sql } from 'drizzle-orm'
 import { z } from 'zod'
+import { requireSession } from "@/lib/auth-server";
 
 const trackStatusEnum = z.enum(['live', 'in_progress', 'pilot', 'planned']).nullable().optional()
 
@@ -21,6 +22,9 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string; id: string }> }
 ) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const { projectId, id } = await params
   const numericProjectId = parseInt(projectId, 10)
   const numericId = parseInt(id, 10)
@@ -110,6 +114,9 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ projectId: string; id: string }> }
 ) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const { projectId, id } = await params
   const numericProjectId = parseInt(projectId, 10)
   const numericId = parseInt(id, 10)

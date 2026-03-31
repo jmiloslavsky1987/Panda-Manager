@@ -12,6 +12,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '../../../../db';
 import { scheduledJobs } from '../../../../db/schema';
 import { frequencyToCron, type Frequency } from '../../../../lib/scheduler-utils';
+import { requireSession } from "@/lib/auth-server";
 
 // ─── Validation Schema ────────────────────────────────────────────────────────
 
@@ -35,6 +36,9 @@ export async function PATCH(
   request: Request,
   context: { params: Promise<{ id: string }> | { id: string } },
 ): Promise<Response> {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   try {
     const { id } = await context.params;
     const jobId = parseInt(id, 10);
@@ -132,6 +136,9 @@ export async function DELETE(
   _request: Request,
   context: { params: Promise<{ id: string }> | { id: string } },
 ): Promise<Response> {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   try {
     const { id } = await context.params;
     const jobId = parseInt(id, 10);

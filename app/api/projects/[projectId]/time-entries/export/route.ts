@@ -7,6 +7,7 @@ import { timeEntries, projects } from '@/db/schema'
 import type { TimeEntry } from '@/db/schema'
 import { getEntryStatus, groupEntries, computeSubtotals } from '@/lib/time-tracking'
 import type { GroupBy } from '@/lib/time-tracking'
+import { requireSession } from "@/lib/auth-server";
 
 // ─── Export row shape ──────────────────────────────────────────────────────────
 
@@ -166,6 +167,9 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const { projectId } = await params
   const numericId = parseInt(projectId, 10)
   const { searchParams } = new URL(req.url)

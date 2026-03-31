@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/db'
 import { keyDecisions, auditLog } from '@/db/schema'
+import { requireSession } from "@/lib/auth-server";
 
 const postSchema = z.object({
   project_id: z.number().int().positive(),
@@ -10,6 +11,9 @@ const postSchema = z.object({
 })
 
 export async function POST(req: NextRequest) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const parsed = postSchema.safeParse(await req.json())
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
 

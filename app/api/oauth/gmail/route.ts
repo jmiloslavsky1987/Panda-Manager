@@ -1,8 +1,12 @@
 // GET /api/oauth/gmail — redirect user to Google OAuth consent screen
 import { NextRequest } from 'next/server';
 import { google } from 'googleapis';
+import { requireSession } from "@/lib/auth-server";
 
 export async function GET(request: NextRequest): Promise<Response> {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
   const redirectUri = process.env.GOOGLE_REDIRECT_URI;

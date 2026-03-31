@@ -14,12 +14,16 @@ import { z } from 'zod'
 import { eq, and, like, desc, count } from 'drizzle-orm'
 import db from '@/db'
 import { appNotifications } from '@/db/schema'
+import { requireSession } from "@/lib/auth-server";
 
 const TIMESHEET_USER_ID = 'default'
 
 // ─── GET ──────────────────────────────────────────────────────────────────────
 
 export async function GET(): Promise<NextResponse> {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   try {
     const notifications = await db
       .select()
@@ -49,6 +53,9 @@ const MarkReadSchema = z.object({
 })
 
 export async function PATCH(req: NextRequest): Promise<NextResponse> {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   let body: unknown
   try {
     body = await req.json()

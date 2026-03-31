@@ -12,8 +12,12 @@ import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { risks, projects } from '@/db/schema';
 import { eq, ne, and, sql } from 'drizzle-orm';
+import { requireSession } from "@/lib/auth-server";
 
 export async function GET() {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   try {
     const rows = await db
       .select({

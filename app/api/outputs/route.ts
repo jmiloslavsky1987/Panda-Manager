@@ -2,8 +2,12 @@ import { NextResponse } from 'next/server';
 import db from '../../../db';
 import { outputs, projects } from '../../../db/schema';
 import { eq, and, gte, lte, desc } from 'drizzle-orm';
+import { requireSession } from "@/lib/auth-server";
 
 export async function GET(request: Request) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const { searchParams } = new URL(request.url);
   const projectId = searchParams.get('projectId');
   const skillType = searchParams.get('skillType');
@@ -42,6 +46,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   // Register a new output (called by skill handlers on completion)
   const body = await request.json();
   const [row] = await db.insert(outputs).values(body).returning();

@@ -33,10 +33,19 @@ vi.mock('drizzle-orm', () => ({
   and: vi.fn((...args) => args),
   desc: vi.fn((col) => ({ col, dir: 'desc' })),
 }));
+vi.mock('next/headers', () => ({ headers: vi.fn().mockResolvedValue(new Headers()) }));
+vi.mock('@/lib/auth', () => ({
+  auth: {
+    api: {
+      getSession: vi.fn().mockResolvedValue({ user: { id: 'test-user', email: 'test@test.com', role: 'admin' } }),
+    },
+  },
+}));
 
 import { GET as GETQueue } from '@/app/api/discovery/queue/route';
 import { GET as GETHistory } from '@/app/api/discovery/dismiss-history/route';
 import { db } from '@/db';
+import { auth as authMock } from '@/lib/auth';
 import { NextRequest } from 'next/server';
 
 function makeRequest(url: string): NextRequest {
@@ -56,6 +65,8 @@ function setupDbSelect(rows: unknown[]) {
 
 beforeEach(() => {
   vi.resetAllMocks();
+  // Restore auth mock after resetAllMocks clears it
+  vi.mocked(authMock.api.getSession).mockResolvedValue({ user: { id: 'test-user', email: 'test@test.com', role: 'admin' } } as any);
 });
 
 describe('GET /api/discovery/queue', () => {

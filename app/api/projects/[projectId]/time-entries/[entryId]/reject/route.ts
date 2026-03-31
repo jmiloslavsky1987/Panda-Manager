@@ -7,6 +7,7 @@ import { timeEntries } from '@/db/schema'
 import { getEntryStatus } from '@/lib/time-tracking'
 import { writeAuditLog } from '@/lib/audit'
 import { buildRejectionNotification } from '@/lib/time-tracking-notifications'
+import { requireSession } from "@/lib/auth-server";
 
 const RejectSchema = z.object({
   rejected_by: z.string().optional(),
@@ -27,6 +28,9 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ projectId: string; entryId: string }> }
 ) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const { projectId, entryId } = await params
   const numericProjectId = parseInt(projectId, 10)
   const numericEntryId = parseInt(entryId, 10)

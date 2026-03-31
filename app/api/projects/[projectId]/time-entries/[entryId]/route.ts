@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { eq, and, sql } from 'drizzle-orm'
 import db from '@/db'
 import { timeEntries } from '@/db/schema'
+import { requireSession } from "@/lib/auth-server";
 
 const TimeEntryPatchSchema = z.object({
   date:        z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD').optional(),
@@ -16,6 +17,9 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ projectId: string; entryId: string }> }
 ) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const { projectId, entryId } = await params
   const numericProjectId = parseInt(projectId, 10)
   const numericEntryId   = parseInt(entryId, 10)
@@ -52,6 +56,9 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ projectId: string; entryId: string }> }
 ) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const { projectId, entryId } = await params
   const numericProjectId = parseInt(projectId, 10)
   const numericEntryId   = parseInt(entryId, 10)

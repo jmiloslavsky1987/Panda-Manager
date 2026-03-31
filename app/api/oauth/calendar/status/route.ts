@@ -3,8 +3,12 @@ import { NextResponse } from 'next/server';
 import { and, eq } from 'drizzle-orm';
 import db from '@/db';
 import { userSourceTokens } from '@/db/schema';
+import { requireSession } from "@/lib/auth-server";
 
 export async function GET(): Promise<Response> {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   try {
     const [tokenRow] = await db
       .select()
