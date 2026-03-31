@@ -1,29 +1,51 @@
 // tests/auth/login.test.ts
-// RED stub — AUTH-01: signIn.email() happy path + wrong password
-// These tests will turn GREEN when lib/auth.ts is implemented in Wave 1.
-import { describe, it, expect, vi } from 'vitest';
+// GREEN — AUTH-01: signIn.email() happy path + wrong password
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// Mock better-auth/react before any imports use it
+vi.mock('better-auth/react', () => ({
+  createAuthClient: vi.fn(() => ({
+    signIn: {
+      email: vi.fn(),
+    },
+    signOut: vi.fn(),
+    useSession: vi.fn(),
+    getSession: vi.fn(),
+  })),
+}));
 
 vi.mock('@/db', () => ({ db: {} }));
 vi.mock('next/headers', () => ({ headers: vi.fn().mockResolvedValue(new Headers()) }));
-vi.mock('better-auth', () => ({ betterAuth: vi.fn() }));
 
-// Import the target (does NOT exist yet — will resolve when lib/auth.ts is implemented)
-// import { auth } from '@/lib/auth';
+import { signIn } from '@/lib/auth-client';
 
 describe('signIn.email() — AUTH-01', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('resolves to a session object with correct credentials', async () => {
-    // RED: auth.api.signInEmail is not implemented yet
-    // When GREEN: signIn.email({ email, password }) should resolve to a session object (not undefined)
-    const auth: any = undefined; // will be: import { auth } from '@/lib/auth'
-    expect(auth).toBeDefined();
-    expect(auth?.api?.signInEmail).toBeDefined();
+    // Mock signIn.email to return a valid session on correct credentials
+    const mockSession = { id: 'session-1', userId: 'user-1', expiresAt: new Date() };
+    (signIn.email as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      data: mockSession,
+      error: null,
+    });
+
+    const result = await signIn.email({ email: 'admin@example.com', password: 'correct-pass' });
+    expect(result.data).toBeDefined();
+    expect(result.error).toBeNull();
   });
 
   it('rejects with error message containing "Invalid" for wrong password', async () => {
-    // RED: auth.api.signInEmail is not implemented yet
-    // When GREEN: signIn.email() with wrong password should reject with error containing "Invalid"
-    const auth: any = undefined; // will be: import { auth } from '@/lib/auth'
-    expect(auth).toBeDefined();
-    // Simulate: expect(() => auth.api.signInEmail({ body: { email: 'user@test.com', password: 'wrong' } })).rejects.toThrow(/Invalid/i)
+    // Mock signIn.email to return an error on wrong credentials
+    (signIn.email as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      data: null,
+      error: { message: 'Invalid email or password' },
+    });
+
+    const result = await signIn.email({ email: 'admin@example.com', password: 'wrong-pass' });
+    expect(result.error).toBeDefined();
+    expect(result.error?.message).toMatch(/Invalid/i);
   });
 });

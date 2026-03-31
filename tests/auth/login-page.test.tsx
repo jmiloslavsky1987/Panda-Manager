@@ -1,36 +1,56 @@
+// @vitest-environment jsdom
 // tests/auth/login-page.test.tsx
-// RED stub — AUTH-01: Login page renders without Sidebar/SearchBar
-// These tests will turn GREEN when app/login/page.tsx is implemented in Wave 2.
-import { describe, it, expect, vi } from 'vitest';
+// GREEN — AUTH-01: Login page renders without Sidebar/SearchBar
+import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
+
+// Polyfill ResizeObserver — required by Radix UI Checkbox in jsdom
+beforeAll(() => {
+  if (typeof window !== 'undefined' && !window.ResizeObserver) {
+    window.ResizeObserver = class ResizeObserver {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
+  }
+});
 
 vi.mock('@/db', () => ({ db: {} }));
 vi.mock('next/headers', () => ({ headers: vi.fn().mockResolvedValue(new Headers()) }));
-vi.mock('next/navigation', () => ({ redirect: vi.fn() }));
+vi.mock('next/navigation', () => ({
+  redirect: vi.fn(),
+  useRouter: vi.fn(() => ({ push: vi.fn() })),
+  usePathname: vi.fn(() => '/login'),
+}));
+vi.mock('better-auth/react', () => ({
+  createAuthClient: vi.fn(() => ({
+    signIn: { email: vi.fn() },
+    signOut: vi.fn(),
+    useSession: vi.fn(),
+    getSession: vi.fn(),
+  })),
+}));
 
-// Import the target (does NOT exist yet — will resolve when app/login/page.tsx is implemented)
-// import LoginPage from '@/app/login/page';
+import LoginPage from '@/app/login/page';
 
 describe('LoginPage — AUTH-01', () => {
-  it('renders without throwing', async () => {
-    // RED: LoginPage does not exist yet
-    const LoginPage: any = undefined;
-    expect(LoginPage).toBeDefined();
+  it('renders without throwing', () => {
+    expect(() => render(<LoginPage />)).not.toThrow();
   });
 
-  it('renders an email input, password input, and submit button', async () => {
-    // RED: LoginPage does not exist yet
-    // When GREEN: expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
-    // When GREEN: expect(screen.getByLabelText(/password/i)).toBeInTheDocument()
-    // When GREEN: expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument()
-    const LoginPage: any = undefined;
-    expect(LoginPage).toBeDefined();
+  it('renders an email input, password input, and submit button', () => {
+    render(<LoginPage />);
+    expect(screen.getByLabelText(/^email$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
   });
 
-  it('does NOT render a Sidebar or SearchBar component', async () => {
-    // RED: LoginPage does not exist yet
-    // When GREEN: verify no Sidebar or SearchBar in rendered output
-    const LoginPage: any = undefined;
-    expect(LoginPage).toBeDefined();
+  it('does NOT render a Sidebar or SearchBar component', () => {
+    render(<LoginPage />);
+    // Sidebar and SearchBar are NOT imported in login/page.tsx — verify no nav elements
+    expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
+    // The login page should have the sign-in heading (card exists) without sidebar/nav chrome
+    expect(screen.getAllByText(/sign in/i).length).toBeGreaterThan(0);
   });
 });
