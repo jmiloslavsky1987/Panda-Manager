@@ -5,14 +5,19 @@ import { NextRequest } from 'next/server';
 
 // Hoisted mocks
 const mockDbUpdate = vi.fn().mockReturnValue({ set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }) });
+const mockDbInsert = vi.fn().mockReturnValue({ values: vi.fn().mockResolvedValue([]) });
+const mockDbDelete = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) });
 const mockDbSelect = vi.fn().mockReturnValue({
   from: vi.fn().mockReturnValue({
     orderBy: vi.fn().mockResolvedValue([]),
+    where: vi.fn().mockResolvedValue([]),
   }),
 });
 const mockDbMock = {
   update: mockDbUpdate,
   select: mockDbSelect,
+  insert: mockDbInsert,
+  delete: mockDbDelete,
 };
 
 const mockSession = {
@@ -23,6 +28,7 @@ vi.mock('@/db', () => ({ db: mockDbMock }));
 vi.mock('@/db/schema', () => ({
   users: { id: 'id', email: 'email', name: 'name', role: 'role', active: 'active', createdAt: 'createdAt' },
   accounts: { userId: 'userId', password: 'password', providerId: 'providerId' },
+  invites: { id: 'id', email: 'email', role: 'role', token: 'token', invitedBy: 'invitedBy', expiresAt: 'expiresAt', createdAt: 'createdAt' },
 }));
 vi.mock('next/headers', () => ({ headers: vi.fn().mockResolvedValue(new Headers()) }));
 vi.mock('drizzle-orm', () => ({
@@ -45,6 +51,9 @@ vi.mock('@/lib/auth-server', () => ({
 vi.mock('@/lib/auth-utils', () => ({
   resolveRole: vi.fn().mockReturnValue('admin'),
 }));
+vi.mock('@/lib/email', () => ({
+  sendInviteEmail: vi.fn().mockResolvedValue(undefined),
+}));
 
 describe('User Management API — AUTH-02', () => {
   beforeEach(() => {
@@ -58,15 +67,18 @@ describe('User Management API — AUTH-02', () => {
     mockDbSelect.mockReturnValue({
       from: vi.fn().mockReturnValue({
         orderBy: vi.fn().mockResolvedValue([]),
+        where: vi.fn().mockResolvedValue([]),
       }),
     });
+    mockDbInsert.mockReturnValue({ values: vi.fn().mockResolvedValue([]) });
+    mockDbDelete.mockReturnValue({ where: vi.fn().mockResolvedValue([]) });
   });
 
   it('POST /api/settings/users creates a new user record (returns 201)', async () => {
     const { POST } = await import('@/app/api/settings/users/route');
     const req = new NextRequest('http://localhost/api/settings/users', {
       method: 'POST',
-      body: JSON.stringify({ email: 'new@test.com', password: 'secret123', name: 'New User', role: 'user' }),
+      body: JSON.stringify({ email: 'new@test.com', name: 'New User', role: 'user' }),
       headers: { 'Content-Type': 'application/json' },
     });
     const res = await POST(req);

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { users } from "@/db/schema";
-import { auth } from "@/lib/auth";
+import { users, accounts } from "@/db/schema";
+import bcrypt from "bcryptjs";
+import { randomUUID } from "crypto";
 
 export async function POST(req: NextRequest) {
   // Guard: if any user exists, refuse — setup is one-time only
@@ -9,22 +10,33 @@ export async function POST(req: NextRequest) {
   if (existing.length > 0) {
     return NextResponse.json({ error: "Setup already complete" }, { status: 403 });
   }
+
   const { email, password } = await req.json();
   if (!email || !password) {
     return NextResponse.json({ error: "Email and password required" }, { status: 400 });
   }
-  // Use better-auth server-side signUpEmail to create the first admin user.
-  // Note: disableSignUp:true only blocks the public /sign-up endpoint; server-side
-  // auth.api.signUpEmail bypasses that restriction for bootstrap purposes.
-  const result = await auth.api.signUpEmail({
-    body: {
-      email,
-      password,
-      name: email.split("@")[0],
-    },
+
+  // Insert directly — auth.api.signUpEmail() respects disableSignUp:true even server-side.
+  // Bootstrap bypasses that restriction by writing to the DB directly.
+  const userId = randomUUID();
+  const passwordHash = await bcrypt.hash(password, 12);
+
+  await db.insert(users).values({
+    id: userId,
+    name: email.split("@")[0],
+    email,
+    emailVerified: true,
+    role: "admin",
+    active: true,
   });
-  if (result && "error" in result && result.error) {
-    return NextResponse.json({ error: "Failed to create admin account" }, { status: 500 });
-  }
+
+  await db.insert(accounts).values({
+    id: randomUUID(),
+    accountId: email,
+    providerId: "credential",
+    userId,
+    password: passwordHash,
+  });
+
   return NextResponse.json({ ok: true }, { status: 201 });
 }
