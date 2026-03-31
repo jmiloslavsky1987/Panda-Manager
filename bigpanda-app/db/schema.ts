@@ -697,3 +697,15 @@ export const verifications = pgTable("verifications", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+// ─── Invite table — added for email-based invite flow ─────────────────────────
+
+export const invites = pgTable("invites", {
+  id: text("id").primaryKey(),
+  email: text("email").notNull(),
+  role: text("role").notNull().default("user"),
+  token: text("token").notNull().unique(),
+  invitedBy: text("invited_by").notNull().references(() => users.id, { onDelete: "cascade" }),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
