@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { getProjectWithHealth } from '../../../lib/queries'
 import { ProjectHeader } from '../../../components/ProjectHeader'
 import { WorkspaceTabs } from '../../../components/WorkspaceTabs'
@@ -32,7 +33,9 @@ export default async function WorkspaceLayout({
           </div>
         )}
       </div>
-      <WorkspaceTabs projectId={id} />
+      <Suspense fallback={null}>
+        <WorkspaceTabs projectId={id} />
+      </Suspense>
       <div className="px-6 py-2 border-b border-zinc-100 bg-zinc-50 flex items-center justify-end">
         <ScanForUpdatesButton projectId={projectId} />
       </div>
