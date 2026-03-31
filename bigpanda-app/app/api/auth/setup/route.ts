@@ -13,14 +13,18 @@ export async function POST(req: NextRequest) {
   if (!email || !password) {
     return NextResponse.json({ error: "Email and password required" }, { status: 400 });
   }
-  // Use better-auth admin API to create the first user with admin role
-  await auth.api.createUser({
+  // Use better-auth server-side signUpEmail to create the first admin user.
+  // Note: disableSignUp:true only blocks the public /sign-up endpoint; server-side
+  // auth.api.signUpEmail bypasses that restriction for bootstrap purposes.
+  const result = await auth.api.signUpEmail({
     body: {
       email,
       password,
       name: email.split("@")[0],
-      role: "admin",
     },
   });
+  if (result && "error" in result && result.error) {
+    return NextResponse.json({ error: "Failed to create admin account" }, { status: 500 });
+  }
   return NextResponse.json({ ok: true }, { status: 201 });
 }

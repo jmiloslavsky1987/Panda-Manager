@@ -2,6 +2,9 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Sidebar } from '../components/Sidebar';
 import { SearchBar } from '../components/SearchBar';
+import { AuthProvider } from '../components/AuthProvider';
+import { AppChrome } from '../components/AppChrome';
+import { HeaderBar } from '../components/HeaderBar';
 import { Toaster } from 'sonner';
 
 export const metadata: Metadata = {
@@ -21,14 +24,21 @@ export default function RootLayout({
         <link rel="stylesheet" href="/frappe-gantt.css" />
       </head>
       <body className="h-full flex bg-zinc-50">
-        <Sidebar />
-        <main className="ml-60 flex-1 min-h-screen overflow-y-auto">
-          <div className="flex items-center justify-between border-b px-6 py-2 bg-white sticky top-0 z-10">
-            <SearchBar />
-          </div>
-          {children}
-        </main>
-        <Toaster position="bottom-right" richColors />
+        <AuthProvider>
+          {/* AppChrome accepts server components as children — composition pattern required
+              because Sidebar is an async server component (DB fetch) */}
+          <AppChrome>
+            <Sidebar />
+          </AppChrome>
+          <main className="ml-60 flex-1 min-h-screen overflow-y-auto">
+            {/* HeaderBar suppresses the search header on /login and /setup routes */}
+            <HeaderBar>
+              <SearchBar />
+            </HeaderBar>
+            {children}
+          </main>
+          <Toaster position="bottom-right" richColors />
+        </AuthProvider>
       </body>
     </html>
   );
