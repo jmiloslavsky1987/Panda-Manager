@@ -2,5 +2,5 @@ import { redirect } from 'next/navigation'
 
 export default async function CustomerPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  redirect(`/customer/${id}/overview`)
+  redirect(`/customer/${id}/overview?tab=overview`)
 }
