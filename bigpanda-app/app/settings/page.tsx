@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import * as Tabs from '@radix-ui/react-tabs';
 import TimeTrackingSettings from '@/components/TimeTrackingSettings';
@@ -70,7 +70,7 @@ function generateId(): string {
   return `mcp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
-export default function SettingsPage() {
+function SettingsPageInner() {
   // MCP Servers state
   const [mcpServers, setMcpServers] = useState<MCPServerConfig[]>([]);
   const [addingServer, setAddingServer] = useState(false);
@@ -759,5 +759,13 @@ export default function SettingsPage() {
         </Tabs.Content>
       </Tabs.Root>
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-zinc-500 text-sm">Loading...</div>}>
+      <SettingsPageInner />
+    </Suspense>
   );
 }
