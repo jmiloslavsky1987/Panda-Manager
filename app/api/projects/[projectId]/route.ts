@@ -3,6 +3,7 @@ import { db } from '@/db'
 import { projects } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { requireSession } from "@/lib/auth-server";
+import { seedProjectFromRegistry } from '@/lib/seed-project'
 
 export async function GET(
   _req: NextRequest,
@@ -60,6 +61,11 @@ export async function PATCH(
 
   if (updated.length === 0) {
     return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+  }
+
+  // Trigger seeding when project transitions to active
+  if (status === 'active') {
+    await seedProjectFromRegistry(numericId)
   }
 
   return NextResponse.json({ ok: true })
