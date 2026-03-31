@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import * as Tabs from '@radix-ui/react-tabs';
 import TimeTrackingSettings from '@/components/TimeTrackingSettings';
+import { UsersTab } from '@/components/settings/UsersTab';
 
 interface MCPServerConfig {
   id: string;
@@ -304,8 +305,15 @@ export default function SettingsPage() {
         </div>
       )}
 
-      <Tabs.Root defaultValue="mcp-servers">
+      <Tabs.Root defaultValue="users">
         <Tabs.List className="flex border-b border-zinc-200 mb-6">
+          <Tabs.Trigger
+            value="users"
+            className={TAB_CLASS}
+            data-testid="users-tab"
+          >
+            Users
+          </Tabs.Trigger>
           <Tabs.Trigger
             value="mcp-servers"
             className={TAB_CLASS}
@@ -328,6 +336,11 @@ export default function SettingsPage() {
             Time Tracking
           </Tabs.Trigger>
         </Tabs.List>
+
+        {/* ── Users tab ── */}
+        <Tabs.Content value="users" data-testid="users-section">
+          <UsersTab />
+        </Tabs.Content>
 
         {/* ── MCP Servers tab ── */}
         <Tabs.Content

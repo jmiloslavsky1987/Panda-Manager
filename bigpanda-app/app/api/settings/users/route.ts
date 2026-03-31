@@ -10,7 +10,8 @@ import { auth } from "@/lib/auth";
 export async function GET() {
   const { session, redirectResponse } = await requireSession();
   if (redirectResponse) return redirectResponse;
-  if (resolveRole(session) !== "admin") {
+  // session is non-null here — requireSession returns null session only with redirectResponse
+  if (resolveRole(session!) !== "admin") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   const allUsers = await db
@@ -31,20 +32,22 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const { session, redirectResponse } = await requireSession();
   if (redirectResponse) return redirectResponse;
-  if (resolveRole(session) !== "admin") {
+  if (resolveRole(session!) !== "admin") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   const { email, password, name, role } = await req.json();
   if (!email || !password) {
     return NextResponse.json({ error: "Email and password required" }, { status: 400 });
   }
+  // auth.api.signUpEmail is used for admin-side user creation.
+  // The 'role' field is an additionalFields param — cast body to any to bypass strict typing.
   await auth.api.signUpEmail({
     body: {
       email,
       password,
       name: name ?? email.split("@")[0],
       role: role === "admin" ? "admin" : "user",
-    },
+    } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
   });
   return NextResponse.json({ ok: true }, { status: 201 });
 }
@@ -53,7 +56,7 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   const { session, redirectResponse } = await requireSession();
   if (redirectResponse) return redirectResponse;
-  if (resolveRole(session) !== "admin") {
+  if (resolveRole(session!) !== "admin") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   const { id, email, role, password, active } = await req.json();
@@ -61,7 +64,7 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "User id required" }, { status: 400 });
   }
   // Self-modification guard — admin cannot modify own account
-  if (id === session.user.id) {
+  if (id === session!.user.id) {
     return NextResponse.json({ error: "You cannot modify your own account" }, { status: 403 });
   }
   const updates: Record<string, unknown> = {};
@@ -71,7 +74,7 @@ export async function PUT(req: NextRequest) {
   if (Object.keys(updates).length > 0) {
     await db.update(users).set(updates).where(eq(users.id, id));
   }
-  // Password reset — hash and update accounts table directly
+  // Password reset — hash and update accounts table directly (no better-auth public API for this)
   if (password) {
     const bcrypt = await import("bcryptjs");
     const hash = await bcrypt.hash(password, 12);
@@ -87,7 +90,7 @@ export async function PUT(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   const { session, redirectResponse } = await requireSession();
   if (redirectResponse) return redirectResponse;
-  if (resolveRole(session) !== "admin") {
+  if (resolveRole(session!) !== "admin") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   const { id } = await req.json();
@@ -95,7 +98,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "User id required" }, { status: 400 });
   }
   // Self-modification guard
-  if (id === session.user.id) {
+  if (id === session!.user.id) {
     return NextResponse.json({ error: "You cannot modify your own account" }, { status: 403 });
   }
   await db.update(users).set({ active: false }).where(eq(users.id, id));
