@@ -75,7 +75,7 @@ All v2.0 requirements are complete. See `.planning/v2.0-MILESTONE-AUDIT.md` for 
 | AUTH-04 | Phase 26 | Complete |
 | AUTH-05 | Phase 26 | Complete |
 | UI-01 | Phase 27 | Pending |
-| UI-02 | Phase 27 | Pending |
+| UI-02 | Deferred | Out of scope per planning decision — visual modernization explicitly deferred to a future phase (27-CONTEXT.md) |
 | UI-03 | Phase 27 | Pending |
 | UI-04 | Phase 27 | Pending |
 | VIS-01 | Phase 28 | Pending |
@@ -89,10 +89,11 @@ All v2.0 requirements are complete. See `.planning/v2.0-MILESTONE-AUDIT.md` for 
 
 **Coverage:**
 - v3.0 requirements: 17 total
-- Mapped to phases: 17/17
-- Unmapped: 0
+- Mapped to phases: 16/17 (UI-02 deferred per user decision)
+- Unmapped: 0 (UI-02 explicitly deferred, not unmapped)
 
 ---
 *v2.0 requirements defined: 2026-03-25*
 *v3.0 requirements defined: 2026-03-30*
 *Last updated: 2026-03-30 — v3.0 roadmap created; all 17 requirements mapped across Phases 26–30*
+*Updated 2026-03-31 — UI-02 (visual modernization) moved to Deferred per Phase 27 planning decision*

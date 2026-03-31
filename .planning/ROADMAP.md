@@ -873,7 +873,7 @@ Phases 18 and 19 can run in parallel after Phase 17. Phases 23 and 24 are indepe
 ### v3.0 — Collaboration & Intelligence
 
 - [x] **Phase 26: Multi-User Auth** - Credential login, user management, role enforcement, Okta-ready schema, all routes session-protected (completed 2026-03-31)
-- [ ] **Phase 27: UI Overhaul + Templates** - Sub-tab navigation, visual modernization, TypeScript template registry, new-project seeding
+- [ ] **Phase 27: UI Overhaul + Templates** - Sub-tab navigation (UI-01), TypeScript template registry (UI-03), new-project seeding (UI-04) — visual modernization deferred to future phase
 - [ ] **Phase 28: Interactive Visuals** - React Flow engagement map, interactive workflow diagram with clickable nodes
 - [ ] **Phase 29: Project Chat** - Inline AI chat panel per project, DB context injection, hallucination constraints
 - [ ] **Phase 30: Context Hub** - Dedicated upload tab, Claude content routing, completeness analysis, per-tab gap summaries
@@ -900,15 +900,22 @@ Plans:
 - [ ] 26-05-PLAN.md — Wave 4: app/api/settings/users/route.ts + UsersTab.tsx + settings/page.tsx Users tab + human verification checkpoint
 
 ### Phase 27: UI Overhaul + Templates
-**Goal**: The workspace navigation is decluttered by grouping tabs into logical sub-tabs, the visual design is modernized throughout with updated typography, spacing, and color, and every tab type has a TypeScript-enforced required section structure — new projects created after this phase are seeded with canonical placeholder content in all 11 tabs.
+**Goal**: The workspace navigation is decluttered by grouping 14 tabs into 6 logical top-level items with a two-level sub-tab system, every tab type has a TypeScript-enforced required section structure, and new projects are seeded with instructional placeholder content in all 11 tabs — visual modernization (UI-02) is explicitly deferred to a future phase.
 **Depends on**: Phase 26
-**Requirements**: UI-01, UI-02, UI-03, UI-04
+**Requirements**: UI-01, UI-03, UI-04
 **Success Criteria** (what must be TRUE):
   1. The workspace tab bar groups related tabs under sub-tab headers (e.g., Teams and Architecture share a parent tab) — the top-level navigation shows fewer than the current 12 top-level items; URL state uses `?tab=teams&subtab=adr` pattern for deep-linking
-  2. Opening any workspace page shows updated color palette, typography, and component spacing — Radix UI / Tailwind tokens are applied consistently; no legacy inline styles remain; before/after screenshots show visible improvement
+  2. Visual modernization (UI-02) explicitly deferred to future phase — Phase 27 focuses solely on navigation grouping (UI-01), template registry (UI-03), and seeding (UI-04)
   3. `lib/tab-template-registry.ts` exports a typed map of all 11 tab types to their required section structure — the TypeScript compiler enforces that any new tab renderer references only defined sections; no DB table required
   4. Creating a new project through the wizard results in all 11 tabs pre-populated with template placeholder content — the project's Overview tab shows a completeness score below 100% (placeholder content counts as partial, not complete)
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 27-01-PLAN.md — Wave 0: Test stubs (workspace-tabs, tab-registry, seed-project, projects-patch + next-navigation mock)
+- [ ] 27-02-PLAN.md — Wave 1: lib/tab-template-registry.ts (11 tab types, satisfies Record<TabType, TabTemplate>)
+- [ ] 27-03-PLAN.md — Wave 1: WorkspaceTabs.tsx refactor + SubTabBar.tsx + layout.tsx + page.tsx redirect
+- [ ] 27-04-PLAN.md — Wave 2: migration 0022 + lib/seed-project.ts + PATCH route seeding trigger
+- [ ] 27-05-PLAN.md — Wave 3: Human verification checkpoint
 
 ### Phase 28: Interactive Visuals
 **Goal**: The static HTML engagement map and workflow diagram are replaced with interactive React components — team and integration nodes are clickable and expand to show live project data, both components load without SSR hydration errors, and the existing HTML skill exports remain available alongside the new in-app components.
@@ -950,7 +957,7 @@ v3.0 phases execute: 26 → 27 → 28/29 (parallel, both depend on 26 only) → 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 26. Multi-User Auth | 5/5 | Complete   | 2026-03-31 |
-| 27. UI Overhaul + Templates | 0/TBD | Not started | - |
+| 27. UI Overhaul + Templates | 0/5 | Not started | - |
 | 28. Interactive Visuals | 0/TBD | Not started | - |
 | 29. Project Chat | 0/TBD | Not started | - |
 | 30. Context Hub | 0/TBD | Not started | - |
@@ -969,7 +976,7 @@ v3.0 phases execute: 26 → 27 → 28/29 (parallel, both depend on 26 only) → 
 | AUTH-04 | Phase 26 |
 | AUTH-05 | Phase 26 |
 | UI-01 | Phase 27 |
-| UI-02 | Phase 27 |
+| UI-02 | Deferred — out of scope per Phase 27 planning decision |
 | UI-03 | Phase 27 |
 | UI-04 | Phase 27 |
 | VIS-01 | Phase 28 |
