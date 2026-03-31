@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
-status: planning
-last_updated: "2026-03-31T18:18:02.814Z"
-last_activity: "2026-03-31 — 26-05: /api/settings/users CRUD route, UsersTab inline form, Settings Users tab; checkpoint human-verify pending"
+status: executing
+last_updated: "2026-03-31T18:41:02.265Z"
+last_activity: "2026-03-31 — 28-03: InteractiveEngagementGraph, NodeDetailDrawer, Teams tab dynamic import complete"
 progress:
   total_phases: 33
   completed_phases: 30
   total_plans: 168
-  completed_plans: 165
+  completed_plans: 167
 ---
 
 # Project State
@@ -20,10 +20,10 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 
 ## Current Status
 
-**Phase:** Phase 26 — Multi-User Auth — In Progress
-**Plan:** 26-05 Tasks 1-2 complete; at checkpoint Task 3 (human-verify)
+**Phase:** Phase 28 — Interactive Visuals — In Progress
+**Plan:** 28-04 complete; 28-05 (human-verify checkpoint) next
 **Status:** Ready to plan
-**Last activity:** 2026-03-31 — 26-05: /api/settings/users CRUD route, UsersTab inline form, Settings Users tab; checkpoint human-verify pending
+**Last activity:** 2026-03-31 — 28-04: InteractiveArchGraph, IntegrationDetailDrawer, Architecture tab React Flow hub-and-spoke complete
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
 **Current focus:** v3.0 milestone starting. Phase 26 (Multi-User Auth) is the entry point — all other v3.0 phases depend on session infrastructure.
@@ -82,6 +82,10 @@ Phase 26 is the mandatory entry point — session infrastructure must exist befo
 - [Phase 28]: Dagre runs natively in Node.js without mocking (pure JS, no DOM dependencies)
 - [Phase 28-interactive-visuals]: Layout utility is a pure function (no React hook) — easier to test, reusable, follows single responsibility
 - [Phase 28-interactive-visuals]: Direction-specific spacing (LR 150/100, TB 100/80) — hub-and-spoke needs more space to prevent radial overlap
+- [Phase 28-interactive-visuals]: 28-03: Stakeholder nodes omitted in v3.0 — TeamsTabData has no stakeholders field; team nodes alone satisfy VIS-01
+- [Phase 28-interactive-visuals]: 28-03: Dynamic import with ssr: false for React Flow components — prevents ResizeObserver/DOM API hydration errors
+- [Phase 28-interactive-visuals]: Dynamic import with ssr: false required — @xyflow/react uses DOM APIs unavailable in Node.js SSR
+- [Phase 28-interactive-visuals]: Cast layoutedNodes to Node[] — LayoutNode[] compatible but TypeScript requires explicit cast for useState
 
 ## Previous Milestone Decisions (v2.0)
 
