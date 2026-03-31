@@ -22,6 +22,7 @@ import {
   architectureIntegrations,
   beforeState,
   teamOnboardingStatus,
+  teamPathways,
 } from '../db/schema';
 import { eq, and, inArray, lt, ne, gt, or, desc, asc } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
@@ -931,11 +932,13 @@ export async function getTeamsTabData(projectId: number): Promise<TeamsTabData> 
 
 export type BeforeState = typeof beforeState.$inferSelect;
 export type TeamOnboardingStatus = typeof teamOnboardingStatus.$inferSelect;
+export type TeamPathway = typeof teamPathways.$inferSelect;
 
 export interface ArchTabData {
   architectureIntegrations: ArchitectureIntegration[];
   beforeState: BeforeState | null;
   teamOnboardingStatus: TeamOnboardingStatus[];
+  teamPathways: TeamPathway[];
 }
 
 // ─── Architecture Tab Query ───────────────────────────────────────────────────
@@ -946,7 +949,7 @@ export interface ArchTabData {
  * and team onboarding status rows for the project.
  */
 export async function getArchTabData(projectId: number): Promise<ArchTabData> {
-  const [integrations, beforeStateRows, onboardingRows] = await Promise.all([
+  const [integrations, beforeStateRows, onboardingRows, pathwaysRows] = await Promise.all([
     db.select().from(architectureIntegrations)
       .where(eq(architectureIntegrations.project_id, projectId))
       .orderBy(asc(architectureIntegrations.phase), asc(architectureIntegrations.tool_name)),
@@ -954,10 +957,14 @@ export async function getArchTabData(projectId: number): Promise<ArchTabData> {
     db.select().from(teamOnboardingStatus)
       .where(eq(teamOnboardingStatus.project_id, projectId))
       .orderBy(asc(teamOnboardingStatus.team_name)),
+    db.select().from(teamPathways)
+      .where(eq(teamPathways.project_id, projectId))
+      .orderBy(asc(teamPathways.team_name)),
   ]);
   return {
     architectureIntegrations: integrations,
     beforeState: beforeStateRows[0] ?? null,
     teamOnboardingStatus: onboardingRows,
+    teamPathways: pathwaysRows,
   };
 }

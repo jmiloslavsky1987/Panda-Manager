@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { ArchTabData, ArchitectureIntegration, BeforeState, TeamOnboardingStatus } from '@/lib/queries'
+import { ArchTabData, ArchitectureIntegration, BeforeState, TeamOnboardingStatus, TeamPathway } from '@/lib/queries'
 import { BeforeBigPandaTab } from './BeforeBigPandaTab'
 import { CurrentFutureStateTab } from './CurrentFutureStateTab'
 
@@ -17,6 +17,7 @@ export function WorkflowDiagram({ projectId, customer, data }: Props) {
   const [integrations, setIntegrations] = useState<ArchitectureIntegration[]>(data.architectureIntegrations)
   const [beforeStateData, setBeforeStateData] = useState<BeforeState | null>(data.beforeState)
   const [onboardingRows, setOnboardingRows] = useState<TeamOnboardingStatus[]>(data.teamOnboardingStatus)
+  const [pathways, setPathways] = useState<TeamPathway[]>(data.teamPathways)
 
   return (
     <div>
@@ -52,8 +53,10 @@ export function WorkflowDiagram({ projectId, customer, data }: Props) {
           customer={customer}
           integrations={integrations}
           onboardingRows={onboardingRows}
+          pathways={pathways}
           onIntegrationsUpdate={setIntegrations}
           onOnboardingUpdate={setOnboardingRows}
+          onPathwaysUpdate={setPathways}
         />
       )}
     </div>

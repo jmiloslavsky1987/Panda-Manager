@@ -57,7 +57,8 @@ export type EntityType =
   | 'history'
   | 'businessOutcome'
   | 'team'
-  | 'note';
+  | 'note'
+  | 'team_pathway';
 
 export interface ExtractionItem {
   entityType: EntityType;

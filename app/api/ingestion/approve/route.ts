@@ -13,6 +13,7 @@ import {
   businessOutcomes,
   focusAreas,
   architectureIntegrations,
+  teamPathways,
   artifacts,
   auditLog,
 } from '@/db/schema';
@@ -26,7 +27,7 @@ export const dynamic = 'force-dynamic';
 const ApprovalItemSchema = z.object({
   entityType: z.enum([
     'action', 'risk', 'decision', 'milestone', 'stakeholder',
-    'task', 'architecture', 'history', 'businessOutcome', 'team', 'note',
+    'task', 'architecture', 'history', 'businessOutcome', 'team', 'note', 'team_pathway',
   ]),
   fields: z.record(z.string(), z.string()),
   approved: z.boolean(),
@@ -160,6 +161,15 @@ async function findConflict(
         .select({ id: architectureIntegrations.id })
         .from(architectureIntegrations)
         .where(and(eq(architectureIntegrations.project_id, projectId), ilike(architectureIntegrations.tool_name, `${toolKey}%`)));
+      return rows[0] ?? null;
+    }
+    case 'team_pathway': {
+      const key = normalize(f.team_name);
+      if (!key) return null;
+      const rows = await db
+        .select({ id: teamPathways.id })
+        .from(teamPathways)
+        .where(and(eq(teamPathways.project_id, projectId), ilike(teamPathways.team_name, `${key}%`)));
       return rows[0] ?? null;
     }
     default:
@@ -416,6 +426,34 @@ async function insertItem(
         });
       });
       break;
+
+    case 'team_pathway': {
+      // Parse route_description into [{label}] array by splitting on ' → ' or ', '
+      const rawSteps = f.route_description ?? '';
+      const stepLabels = rawSteps.split(/ → |, /).map(s => s.trim()).filter(Boolean);
+      const routeSteps = stepLabels.map(label => ({ label }));
+      await db.transaction(async (tx) => {
+        const [inserted] = await tx.insert(teamPathways).values({
+          project_id:         projectId,
+          team_name:          f.team_name ?? '',
+          route_steps:        routeSteps as unknown as typeof teamPathways.$inferInsert['route_steps'],
+          status:             (f.status as 'live' | 'in_progress' | 'pilot' | 'planned' | undefined) ?? 'planned',
+          notes:              f.notes ?? null,
+          source:             'ingestion',
+          source_artifact_id: artifactId,
+          ingested_at:        new Date(),
+        }).returning();
+        await tx.insert(auditLog).values({
+          entity_type: item.entityType,
+          entity_id:   inserted.id,
+          action:      'create',
+          actor_id:    'default',
+          before_json: null,
+          after_json:  inserted as Record<string, unknown>,
+        });
+      });
+      break;
+    }
   }
 }
 
@@ -569,6 +607,34 @@ async function mergeItem(
       break;
     }
 
+    case 'team_pathway': {
+      const [beforeRecord] = await db.select().from(teamPathways).where(eq(teamPathways.id, existingId));
+      const rawSteps = f.route_description ?? '';
+      const stepLabels = rawSteps.split(/ → |, /).map((s: string) => s.trim()).filter(Boolean);
+      const routeSteps = stepLabels.length > 0
+        ? stepLabels.map((label: string) => ({ label }))
+        : undefined;
+      const patch: Partial<typeof teamPathways.$inferInsert> = {
+        ...(routeSteps ? { route_steps: routeSteps as unknown as typeof teamPathways.$inferInsert['route_steps'] } : {}),
+        ...(f.status ? { status: f.status as 'live' | 'in_progress' | 'pilot' | 'planned' } : {}),
+        ...(f.notes ? { notes: f.notes } : {}),
+        source_artifact_id: artifactId,
+        ingested_at: new Date(),
+      };
+      await db.transaction(async (tx) => {
+        await tx.update(teamPathways).set(patch).where(eq(teamPathways.id, existingId));
+        await tx.insert(auditLog).values({
+          entity_type: item.entityType,
+          entity_id:   existingId,
+          action:      'update',
+          actor_id:    'default',
+          before_json: beforeRecord as Record<string, unknown>,
+          after_json:  { ...beforeRecord, ...patch } as Record<string, unknown>,
+        });
+      });
+      break;
+    }
+
     // decision and history are append-only — merge is not applicable
     default:
       break;
@@ -695,6 +761,21 @@ async function deleteItem(entityType: EntityType, existingId: number): Promise<v
           actor_id: 'default',
           before_json: (before as Record<string, unknown>) ?? null,
           after_json: null,
+        });
+      });
+      break;
+    }
+    case 'team_pathway': {
+      const [before] = await db.select().from(teamPathways).where(eq(teamPathways.id, existingId));
+      await db.transaction(async (tx) => {
+        await tx.delete(teamPathways).where(eq(teamPathways.id, existingId));
+        await tx.insert(auditLog).values({
+          entity_type: entityType,
+          entity_id:   existingId,
+          action:      'delete',
+          actor_id:    'default',
+          before_json: (before as Record<string, unknown>) ?? null,
+          after_json:  null,
         });
       });
       break;
