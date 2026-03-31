@@ -19,11 +19,11 @@ All v2.0 requirements are complete. See `.planning/v2.0-MILESTONE-AUDIT.md` for 
 
 ### AUTH — Multi-User Authentication
 
-- [ ] **AUTH-01**: User can log in with email and password
-- [ ] **AUTH-02**: Admin can create, edit, and deactivate user accounts from the Settings panel
-- [ ] **AUTH-03**: Admin can assign and change user roles (admin / user)
-- [ ] **AUTH-04**: Users table includes `external_id` column and role abstraction layer for future Okta OIDC integration
-- [ ] **AUTH-05**: All application routes require an authenticated session; unauthenticated requests are redirected to the login page
+- [x] **AUTH-01**: User can log in with email and password
+- [x] **AUTH-02**: Admin can create, edit, and deactivate user accounts from the Settings panel
+- [x] **AUTH-03**: Admin can assign and change user roles (admin / user)
+- [x] **AUTH-04**: Users table includes `external_id` column and role abstraction layer for future Okta OIDC integration
+- [x] **AUTH-05**: All application routes require an authenticated session; unauthenticated requests are redirected to the login page
 
 ### CTX — Context Hub
 
@@ -69,11 +69,11 @@ All v2.0 requirements are complete. See `.planning/v2.0-MILESTONE-AUDIT.md` for 
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | Phase 26 | Pending |
-| AUTH-02 | Phase 26 | Pending |
-| AUTH-03 | Phase 26 | Pending |
-| AUTH-04 | Phase 26 | Pending |
-| AUTH-05 | Phase 26 | Pending |
+| AUTH-01 | Phase 26 | Complete |
+| AUTH-02 | Phase 26 | Complete |
+| AUTH-03 | Phase 26 | Complete |
+| AUTH-04 | Phase 26 | Complete |
+| AUTH-05 | Phase 26 | Complete |
 | UI-01 | Phase 27 | Pending |
 | UI-02 | Phase 27 | Pending |
 | UI-03 | Phase 27 | Pending |

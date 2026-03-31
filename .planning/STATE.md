@@ -1,15 +1,15 @@
 ---
 gsd_state_version: 1.0
-milestone: v3.0
-milestone_name: Collaboration & Intelligence
-current_plan: "—"
-status: roadmap_created
-last_updated: "2026-03-30T22:00:00.000Z"
+milestone: v2.0
+milestone_name: — AI Ingestion & Enhanced Operations
+status: planning
+last_updated: "2026-03-31T01:21:21.270Z"
+last_activity: 2026-03-30 — v3.0 roadmap created; 17/17 requirements mapped across Phases 26–30
 progress:
-  total_phases: 5
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_phases: 33
+  completed_phases: 27
+  total_plans: 157
+  completed_plans: 152
 ---
 
 # Project State
@@ -20,10 +20,10 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 
 ## Current Status
 
-**Phase:** Phase 26 — Multi-User Auth — Not started
-**Plan:** —
-**Status:** Roadmap created; ready for Phase 26 planning
-**Last activity:** 2026-03-30 — v3.0 roadmap created; 17/17 requirements mapped across Phases 26–30
+**Phase:** Phase 26 — Multi-User Auth — In Progress
+**Plan:** 26-01 complete (Wave 0: RED stubs + package installs)
+**Status:** Plan 26-01 complete; Wave 0 Nyquist compliance achieved; ready for Plan 26-02 (Wave 1 implementation)
+**Last activity:** 2026-03-31 — 26-01 complete: better-auth + bcryptjs installed, 10 RED auth test stubs created
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
 **Current focus:** v3.0 milestone starting. Phase 26 (Multi-User Auth) is the entry point — all other v3.0 phases depend on session infrastructure.
@@ -60,6 +60,8 @@ Phase 26 is the mandatory entry point — session infrastructure must exist befo
 - **[2026-03-30] v3.0 roadmap:** pgvector/RAG deferred — structured DB query context injection is correct at single-project scope; faster, more deterministic, no new infrastructure; reconsider only if cross-project knowledge base search becomes a requirement
 - **[2026-03-30] v3.0 roadmap:** Context Hub completeness trigger = on-demand for v3.0; BullMQ-scheduled option deferred to v3.1 (infrastructure exists but on-demand simpler to validate)
 - **[2026-03-30] v3.0 roadmap:** better-auth vs iron-session to be resolved in Phase 26 planning — recommendation: use better-auth's built-in session management as the single system; do not run both in parallel
+- [Phase 26]: better-auth install requires --legacy-peer-deps due to Next.js 16 peer dep mismatch
+- [Phase 26]: Wave 0 stub pattern: const target: any = undefined; expect(target).toBeDefined() — fails RED without brittle import errors on missing modules
 
 ## Previous Milestone Decisions (v2.0)
 
