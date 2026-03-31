@@ -95,6 +95,7 @@ export const projects = pgTable('projects', {
   description: text('description'),
   start_date: text('start_date'),
   end_date: text('end_date'),
+  seeded: boolean('seeded').default(false).notNull(),
 });
 
 // ─── Table 2: workstreams ─────────────────────────────────────────────────────
