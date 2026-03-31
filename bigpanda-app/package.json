@@ -3,9 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "../start-redis.sh",
     "dev": "concurrently --names \"NEXT,WORKER\" -c \"blue,green\" \"npm run next-dev\" \"npm run worker\"",
+    "next-only": "next dev",
     "next-dev": "next dev",
-    "worker": "tsx watch worker/index.ts",
+    "worker": "tsx worker/index.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
