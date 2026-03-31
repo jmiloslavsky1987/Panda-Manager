@@ -6,7 +6,7 @@ import { sql } from 'drizzle-orm'
 import fs from 'fs'
 import path from 'path'
 import { readSettings } from '@/lib/settings'
-import { parseYaml, serializeProjectToYaml } from '../../../../../../lib/yaml-export'
+import { parseYaml, serializeProjectToYaml } from '@/lib/yaml-export'
 import { requireSession } from "@/lib/auth-server";
 
 export async function POST(

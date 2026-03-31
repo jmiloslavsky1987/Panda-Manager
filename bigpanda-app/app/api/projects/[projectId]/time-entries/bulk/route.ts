@@ -77,10 +77,9 @@ export async function POST(
           const configResult = await db.execute(
             sql`SELECT lock_after_approval FROM time_tracking_config WHERE id = 1 LIMIT 1`
           )
-          if (configResult.rows && configResult.rows.length > 0) {
-            lockAfterApproval = Boolean(
-              (configResult.rows[0] as Record<string, unknown>).lock_after_approval
-            )
+          const rows = configResult as unknown as Array<Record<string, unknown>>
+          if (rows && rows.length > 0) {
+            lockAfterApproval = Boolean(rows[0].lock_after_approval)
           }
         } catch {
           // time_tracking_config not yet created — default false
