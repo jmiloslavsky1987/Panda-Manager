@@ -1,14 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock the DB — vi.mock is hoisted, use inline vi.fn() factories (not top-level const — hoisting)
-vi.mock('@/db', () => ({
-  db: {
+// transaction must call the callback with the mocked db object so tx.insert/tx.update
+// delegate to the same vi.fn() spies configured in each test.
+vi.mock('@/db', () => {
+  const db: Record<string, any> = {
     select: vi.fn(),
     insert: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
-  },
-}));
+  };
+  db.transaction = vi.fn(async (cb: (tx: any) => Promise<unknown>) => cb(db));
+  return { db };
+});
 
 // Mock db/schema with minimal shape
 vi.mock('@/db/schema', () => ({
@@ -31,6 +35,7 @@ vi.mock('@/db/schema', () => ({
   keyDecisions: { id: 'id', project_id: 'project_id', decision: 'decision', source: 'source' },
   engagementHistory: { id: 'id', project_id: 'project_id', content: 'content', source: 'source' },
   stakeholders: { id: 'id', project_id: 'project_id', name: 'name', source: 'source' },
+  auditLog: { id: 'id', entity_type: 'entity_type', entity_id: 'entity_id', action: 'action', actor_id: 'actor_id', before_json: 'before_json', after_json: 'after_json' },
 }));
 
 // Mock drizzle-orm operators
@@ -72,9 +77,12 @@ function setupDbSelect(rows: unknown[]) {
 }
 
 // Setup chainable mock for insert
+// values() must return the chain (for .returning() chaining) AND be awaitable
+// (for insert calls with no .returning()). returning() resolves to the inserted row.
 function setupDbInsert() {
   const chain = {
-    values: vi.fn().mockResolvedValue([{ id: 999 }]),
+    values: vi.fn().mockReturnThis(),
+    returning: vi.fn().mockResolvedValue([{ id: 999 }]),
   };
   vi.mocked(db.insert).mockReturnValue(chain as any);
   return chain;
@@ -94,6 +102,8 @@ beforeEach(() => {
   vi.resetAllMocks();
   // Restore auth mock after resetAllMocks clears it
   vi.mocked(authMock.api.getSession).mockResolvedValue({ user: { id: 'test-user', email: 'test@test.com', role: 'admin' } } as any);
+  // Restore transaction implementation (resetAllMocks clears mockImplementation)
+  vi.mocked(db.transaction).mockImplementation(async (cb: (tx: any) => Promise<unknown>) => cb(db));
 });
 
 describe('POST /api/discovery/approve', () => {
@@ -251,6 +261,7 @@ describe('POST /api/discovery/approve', () => {
 
     expect(res.status).toBe(200);
     expect(data.approved).toBe(2);
-    expect(db.insert).toHaveBeenCalledTimes(2);
+    // Each item triggers 2 inserts: entity table + auditLog
+    expect(db.insert).toHaveBeenCalledTimes(4);
   });
 });
