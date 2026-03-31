@@ -34,7 +34,7 @@ All v2.0 requirements are complete. See `.planning/v2.0-MILESTONE-AUDIT.md` for 
 
 ### UI — UI & Templates
 
-- [ ] **UI-01**: Project workspace tabs are grouped into logical sub-tabs to reduce top-level navigation clutter
+- [x] **UI-01**: Project workspace tabs are grouped into logical sub-tabs to reduce top-level navigation clutter
 - [ ] **UI-02**: Color palette, typography, spacing, and component styling are modernized throughout
 - [x] **UI-03**: Each tab type has a fixed required section structure enforced by a TypeScript template registry
 - [ ] **UI-04**: New projects are seeded with template placeholder content on creation
@@ -74,7 +74,7 @@ All v2.0 requirements are complete. See `.planning/v2.0-MILESTONE-AUDIT.md` for 
 | AUTH-03 | Phase 26 | Complete |
 | AUTH-04 | Phase 26 | Complete |
 | AUTH-05 | Phase 26 | Complete |
-| UI-01 | Phase 27 | Pending |
+| UI-01 | Phase 27 | Complete |
 | UI-02 | Deferred | Out of scope per planning decision — visual modernization explicitly deferred to a future phase (27-CONTEXT.md) |
 | UI-03 | Phase 27 | Complete |
 | UI-04 | Phase 27 | Pending |
