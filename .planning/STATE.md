@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
 status: planning
-last_updated: "2026-03-31T16:52:51.847Z"
+last_updated: "2026-03-31T18:18:02.814Z"
 last_activity: "2026-03-31 — 26-05: /api/settings/users CRUD route, UsersTab inline form, Settings Users tab; checkpoint human-verify pending"
 progress:
   total_phases: 33
   completed_phases: 30
   total_plans: 168
-  completed_plans: 164
+  completed_plans: 165
 ---
 
 # Project State
@@ -80,6 +80,8 @@ Phase 26 is the mandatory entry point — session infrastructure must exist befo
 - [Phase 27-ui-overhaul-templates]: All placeholder rows tagged source='template' for Phase 30 completeness analysis zero-credit filtering
 - [Phase 28]: React Flow requires vitest alias mock for DOM API stubs in node test environment
 - [Phase 28]: Dagre runs natively in Node.js without mocking (pure JS, no DOM dependencies)
+- [Phase 28-interactive-visuals]: Layout utility is a pure function (no React hook) — easier to test, reusable, follows single responsibility
+- [Phase 28-interactive-visuals]: Direction-specific spacing (LR 150/100, TB 100/80) — hub-and-spoke needs more space to prevent radial overlap
 
 ## Previous Milestone Decisions (v2.0)
 

@@ -46,8 +46,8 @@ All v2.0 requirements are complete. See `.planning/v2.0-MILESTONE-AUDIT.md` for 
 
 ### VIS — Interactive Visuals
 
-- [ ] **VIS-01**: Teams tab engagement map is an interactive React component with clickable nodes that expand for detail
-- [ ] **VIS-02**: Architecture tab workflow diagram is an interactive React component with clickable integration nodes
+- [x] **VIS-01**: Teams tab engagement map is an interactive React component with clickable nodes that expand for detail
+- [x] **VIS-02**: Architecture tab workflow diagram is an interactive React component with clickable integration nodes
 
 ## Deferred to v3.1
 
@@ -78,8 +78,8 @@ All v2.0 requirements are complete. See `.planning/v2.0-MILESTONE-AUDIT.md` for 
 | UI-02 | Deferred | Out of scope per planning decision — visual modernization explicitly deferred to a future phase (27-CONTEXT.md) |
 | UI-03 | Phase 27 | Complete |
 | UI-04 | Phase 27 | Complete |
-| VIS-01 | Phase 28 | Pending |
-| VIS-02 | Phase 28 | Pending |
+| VIS-01 | Phase 28 | Complete |
+| VIS-02 | Phase 28 | Complete |
 | CHAT-01 | Phase 29 | Pending |
 | CHAT-02 | Phase 29 | Pending |
 | CTX-01 | Phase 30 | Pending |
