@@ -100,7 +100,7 @@ Each task was committed atomically:
 1. **Task 1: Login page, setup page, AuthProvider, SessionExpiredModal, fetchWithAuth** - `6be2f1c` (feat)
 2. **Task 2: AuthProvider + AppChrome layout integration** - `51c553f` (feat)
 
-**Plan metadata:** _(to be added after final commit)_
+**Plan metadata:** `96128e6` (docs: complete plan)
 
 ## Files Created/Modified
 
