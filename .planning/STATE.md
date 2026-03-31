@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
 status: completed
-last_updated: "2026-03-31T01:24:25.262Z"
+last_updated: "2026-03-31T01:38:51.606Z"
 last_activity: "2026-03-31 — 26-01 complete: better-auth + bcryptjs installed, 10 RED auth test stubs created"
 progress:
   total_phases: 33
   completed_phases: 27
   total_plans: 157
-  completed_plans: 153
+  completed_plans: 154
 ---
 
 # Project State
@@ -21,9 +21,9 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 ## Current Status
 
 **Phase:** Phase 26 — Multi-User Auth — In Progress
-**Plan:** 26-01 complete (Wave 0: RED stubs + package installs)
-**Status:** Plan 26-01 complete; Wave 0 Nyquist compliance achieved; ready for Plan 26-02 (Wave 1 implementation)
-**Last activity:** 2026-03-31 — 26-01 complete: better-auth + bcryptjs installed, 10 RED auth test stubs created
+**Plan:** 26-03 complete (Wave 2: auth handler, proxy.ts, requireSession on all 86 routes)
+**Status:** Plans 26-01, 26-02, 26-03 complete; all route handlers guarded; AUTH-05 server-side complete; ready for Plan 26-04 (login page + setup page)
+**Last activity:** 2026-03-31 — 26-03 complete: proxy.ts, auth catch-all, requireSession() in all 86 handlers
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
 **Current focus:** v3.0 milestone starting. Phase 26 (Multi-User Auth) is the entry point — all other v3.0 phases depend on session infrastructure.
@@ -64,6 +64,8 @@ Phase 26 is the mandatory entry point — session infrastructure must exist befo
 - [Phase 26]: Wave 0 stub pattern: const target: any = undefined; expect(target).toBeDefined() — fails RED without brittle import errors on missing modules
 - [Phase 26-multi-user-auth]: 26-02: Manual psql migration required for 0020_users_auth — drizzle-kit journal mismatch from prior manually-applied migrations; restore journal and run psql -f for auth tables
 - [Phase 26-multi-user-auth]: 26-02: cookieCache omitted from lib/auth.ts (known bug #7008 with Next.js App Router RSC); disableSignUp:true — no self-registration
+- [Phase 26-multi-user-auth]: 26-03: proxy.ts (not middleware.ts) — Next.js 16 convention; getSessionCookie() for UX redirect only; requireSession() in route handlers is the actual security boundary
+- [Phase 26-multi-user-auth]: 26-03: OAuth callback routes still guarded by requireSession() — OAuth tokens are per-app not per-user in v3.0
 
 ## Previous Milestone Decisions (v2.0)
 
