@@ -30,7 +30,7 @@ import {
   engagementHistory,
   actions,
 } from '../db/schema';
-import { parseYaml } from '../../lib/yaml-export';
+import { parseYaml } from '../lib/yaml-export';
 import { eq, sql } from 'drizzle-orm';
 
 // ─── Source directory (locked) ────────────────────────────────────────────────

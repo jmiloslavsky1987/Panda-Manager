@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 interface SearchResult {
@@ -31,7 +31,7 @@ export const TYPE_OPTIONS = [
   { value: 'time_entries',      label: 'Time Entries' },
 ];
 
-export default function SearchPage() {
+function SearchPageInner() {
   const searchParams = useSearchParams();
   const query = searchParams.get('q') ?? '';
 
@@ -181,5 +181,13 @@ export default function SearchPage() {
         </section>
       </div>
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-zinc-500 text-sm">Loading...</div>}>
+      <SearchPageInner />
+    </Suspense>
   );
 }
