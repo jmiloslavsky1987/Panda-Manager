@@ -1,26 +1,78 @@
 // tests/auth/self-mod-guard.test.ts
-// RED stub — AUTH-02: admin cannot deactivate/delete their own account
-// These tests will turn GREEN when app/api/settings/users/[id]/route.ts is implemented in Wave 3.
-import { describe, it, expect, vi } from 'vitest';
+// AUTH-02: admin cannot modify their own account
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
 
-vi.mock('@/db', () => ({ db: {} }));
+const ADMIN_ID = 'admin-self-1';
+
+const mockSession = {
+  user: { id: ADMIN_ID, email: 'admin@test.com', role: 'admin', active: true },
+};
+
+vi.mock('@/db', () => ({
+  db: {
+    update: vi.fn().mockReturnValue({
+      set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }),
+    }),
+    select: vi.fn().mockReturnValue({
+      from: vi.fn().mockReturnValue({ orderBy: vi.fn().mockResolvedValue([]) }),
+    }),
+  },
+}));
+vi.mock('@/db/schema', () => ({
+  users: { id: 'id', email: 'email', name: 'name', role: 'role', active: 'active', createdAt: 'createdAt' },
+  accounts: { userId: 'userId', password: 'password', providerId: 'providerId' },
+}));
 vi.mock('next/headers', () => ({ headers: vi.fn().mockResolvedValue(new Headers()) }));
-
-// Import the target (does NOT exist yet — will resolve when API route is implemented)
-// import { PUT, DELETE } from '@/app/api/settings/users/[id]/route';
+vi.mock('drizzle-orm', () => ({
+  eq: vi.fn((col, val) => ({ col, val })),
+}));
+vi.mock('@/lib/auth', () => ({
+  auth: {
+    api: {
+      getSession: vi.fn().mockResolvedValue(mockSession),
+      signUpEmail: vi.fn().mockResolvedValue({ user: { id: 'new-1' } }),
+    },
+  },
+}));
+vi.mock('@/lib/auth-server', () => ({
+  requireSession: vi.fn().mockResolvedValue({
+    session: mockSession,
+    redirectResponse: null,
+  }),
+}));
+vi.mock('@/lib/auth-utils', () => ({
+  resolveRole: vi.fn().mockReturnValue('admin'),
+}));
 
 describe('Self-modification guard — AUTH-02', () => {
-  it('PUT /api/settings/users/[id] where id === session.user.id returns 403', async () => {
-    // RED: route.ts does not exist yet
-    // When GREEN: mock session with user.id = '1', PUT request with id = '1', expect 403
-    const PUT: any = undefined;
-    expect(PUT).toBeDefined();
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  it('DELETE /api/settings/users/[id] where id === session.user.id returns 403', async () => {
-    // RED: route.ts does not exist yet
-    // When GREEN: mock session with user.id = '1', DELETE request with id = '1', expect 403
-    const DELETE: any = undefined;
-    expect(DELETE).toBeDefined();
+  it('PUT /api/settings/users where id === session.user.id returns 403', async () => {
+    const { PUT } = await import('@/app/api/settings/users/route');
+    const req = new NextRequest('http://localhost/api/settings/users', {
+      method: 'PUT',
+      body: JSON.stringify({ id: ADMIN_ID, email: 'newemail@test.com', role: 'user' }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const res = await PUT(req);
+    expect(res.status).toBe(403);
+    const body = await res.json();
+    expect(body.error).toBe('You cannot modify your own account');
+  });
+
+  it('PATCH /api/settings/users (deactivate) where id === session.user.id returns 403', async () => {
+    const { PATCH } = await import('@/app/api/settings/users/route');
+    const req = new NextRequest('http://localhost/api/settings/users', {
+      method: 'PATCH',
+      body: JSON.stringify({ id: ADMIN_ID }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const res = await PATCH(req);
+    expect(res.status).toBe(403);
+    const body = await res.json();
+    expect(body.error).toBe('You cannot modify your own account');
   });
 });
