@@ -64,7 +64,7 @@ Each task was committed atomically:
 
 1. **Task 1: Create phase12.spec.ts with 12 failing stubs** - `2981242` (test)
 
-**Plan metadata:** (docs commit follows)
+**Plan metadata:** `c310d5d` (docs: complete RED E2E baseline plan)
 
 ## Files Created/Modified
 

@@ -81,7 +81,7 @@ Each task was committed atomically:
 1. **Task 1: Architecture, Decisions, History, and Stakeholders tab pages** - `f96ffa0` (feat)
 2. **Task 2: Add Notes modal and POST /api/notes route** - `4709e3f` (feat)
 
-**Plan metadata:** (to be updated after final commit)
+**Plan metadata:** `400bc4d` (docs: complete plan)
 
 ## Files Created/Modified
 
