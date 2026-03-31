@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
-status: planning
-last_updated: "2026-03-31T01:21:21.270Z"
-last_activity: 2026-03-30 — v3.0 roadmap created; 17/17 requirements mapped across Phases 26–30
+status: completed
+last_updated: "2026-03-31T01:24:25.262Z"
+last_activity: "2026-03-31 — 26-01 complete: better-auth + bcryptjs installed, 10 RED auth test stubs created"
 progress:
   total_phases: 33
   completed_phases: 27
   total_plans: 157
-  completed_plans: 152
+  completed_plans: 153
 ---
 
 # Project State
@@ -62,6 +62,8 @@ Phase 26 is the mandatory entry point — session infrastructure must exist befo
 - **[2026-03-30] v3.0 roadmap:** better-auth vs iron-session to be resolved in Phase 26 planning — recommendation: use better-auth's built-in session management as the single system; do not run both in parallel
 - [Phase 26]: better-auth install requires --legacy-peer-deps due to Next.js 16 peer dep mismatch
 - [Phase 26]: Wave 0 stub pattern: const target: any = undefined; expect(target).toBeDefined() — fails RED without brittle import errors on missing modules
+- [Phase 26-multi-user-auth]: 26-02: Manual psql migration required for 0020_users_auth — drizzle-kit journal mismatch from prior manually-applied migrations; restore journal and run psql -f for auth tables
+- [Phase 26-multi-user-auth]: 26-02: cookieCache omitted from lib/auth.ts (known bug #7008 with Next.js App Router RSC); disableSignUp:true — no self-registration
 
 ## Previous Milestone Decisions (v2.0)
 
