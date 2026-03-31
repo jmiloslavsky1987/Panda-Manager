@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
-status: completed
-last_updated: "2026-03-31T02:00:46.358Z"
-last_activity: "2026-03-31 — 26-04 complete: login page, setup page, AuthProvider, SessionExpiredModal, fetchWithAuth, AppChrome layout integration"
+status: verifying
+last_updated: "2026-03-31T06:40:18.177Z"
+last_activity: "2026-03-31 — 26-05: /api/settings/users CRUD route, UsersTab inline form, Settings Users tab; checkpoint human-verify pending"
 progress:
   total_phases: 33
-  completed_phases: 28
-  total_plans: 157
-  completed_plans: 156
+  completed_phases: 29
+  total_plans: 163
+  completed_plans: 159
 ---
 
 # Project State
@@ -71,6 +71,7 @@ Phase 26 is the mandatory entry point — session infrastructure must exist befo
 - [Phase 26]: Password reset via bcryptjs direct accounts table update (no better-auth setUserPassword API in v1.5.6)
 - [Phase 26]: auth.api.signUpEmail() body cast to any for role additionalField — TS type doesn't include role in signUpEmail signature
 - [Phase 26]: Non-null assertions on session! after requireSession() — TS cannot narrow discriminated union through if-return guards
+- [Phase 27]: Use satisfies Record pattern for TypeScript-enforced exhaustive tab type coverage
 
 ## Previous Milestone Decisions (v2.0)
 
