@@ -15,6 +15,13 @@
       "when": 1774569200000,
       "tag": "0016_wizard_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1774927838438,
+      "tag": "0002_silent_mother_askani",
+      "breakpoints": true
     }
   ]
 }
