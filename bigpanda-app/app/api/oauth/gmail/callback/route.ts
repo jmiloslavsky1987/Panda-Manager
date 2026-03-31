@@ -3,8 +3,12 @@ import { NextRequest } from 'next/server';
 import { google } from 'googleapis';
 import { db } from '@/db';
 import { userSourceTokens } from '@/db/schema';
+import { requireSession } from "@/lib/auth-server";
 
 export async function GET(request: NextRequest): Promise<Response> {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
   const queryState = searchParams.get('state');

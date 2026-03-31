@@ -3,11 +3,15 @@ import { db } from '@/db'
 import { workflowSteps, e2eWorkflows } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { sql } from 'drizzle-orm'
+import { requireSession } from "@/lib/auth-server";
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string; workflowId: string }> }
 ) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const { projectId, workflowId } = await params
   const numericProjectId = parseInt(projectId, 10)
   const numericWorkflowId = parseInt(workflowId, 10)

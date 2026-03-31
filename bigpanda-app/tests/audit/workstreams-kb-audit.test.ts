@@ -63,6 +63,14 @@ vi.mock('@/lib/queries', () => ({
   searchAllRecords: vi.fn().mockResolvedValue([]),
   updateWorkstreamProgress: vi.fn().mockResolvedValue(undefined),
 }));
+vi.mock('next/headers', () => ({ headers: vi.fn().mockResolvedValue(new Headers()) }));
+vi.mock('@/lib/auth', () => ({
+  auth: {
+    api: {
+      getSession: vi.fn().mockResolvedValue({ user: { id: 'test-user', email: 'test@test.com', role: 'admin' } }),
+    },
+  },
+}));
 
 import { db } from '@/db';
 

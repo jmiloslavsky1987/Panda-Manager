@@ -3,11 +3,15 @@ import { db } from '@/db'
 import { businessOutcomes } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { sql } from 'drizzle-orm'
+import { requireSession } from "@/lib/auth-server";
 
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const { projectId } = await params
   const numericId = parseInt(projectId, 10)
   if (isNaN(numericId)) {
@@ -30,6 +34,9 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const { projectId } = await params
   const numericId = parseInt(projectId, 10)
   if (isNaN(numericId)) {

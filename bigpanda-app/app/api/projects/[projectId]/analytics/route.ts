@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm'
 import { sql } from 'drizzle-orm'
 import db from '@/db'
 import { timeEntries, projects } from '@/db/schema'
+import { requireSession } from "@/lib/auth-server";
 
 interface WeekRollupRow extends Record<string, unknown> {
   week_start: string
@@ -54,6 +55,9 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const { projectId } = await params
   const numericId = parseInt(projectId, 10)
 
@@ -138,6 +142,9 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const { projectId } = await params
   const numericId = parseInt(projectId, 10)
 

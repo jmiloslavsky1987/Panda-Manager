@@ -4,6 +4,7 @@ import path from 'path';
 import db from '@/db';
 import { skillRuns } from '@/db/schema';
 import { SkillOrchestrator } from '@/lib/skill-orchestrator';
+import { requireSession } from "@/lib/auth-server";
 
 const SKILLS_DIR = path.join(process.cwd(), 'skills');
 
@@ -11,6 +12,9 @@ export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const { projectId: projectIdStr } = await params;
   const projectId = parseInt(projectIdStr, 10);
   if (isNaN(projectId)) {

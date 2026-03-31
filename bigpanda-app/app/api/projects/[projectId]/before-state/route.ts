@@ -4,6 +4,7 @@ import { beforeState } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { sql } from 'drizzle-orm'
 import { z } from 'zod'
+import { requireSession } from "@/lib/auth-server";
 
 const putSchema = z.object({
   aggregation_hub_name: z.string().nullable().optional(),
@@ -15,6 +16,9 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const { projectId } = await params
   const numericId = parseInt(projectId, 10)
   if (isNaN(numericId)) {
@@ -43,6 +47,9 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const { projectId } = await params
   const numericId = parseInt(projectId, 10)
   if (isNaN(numericId)) {

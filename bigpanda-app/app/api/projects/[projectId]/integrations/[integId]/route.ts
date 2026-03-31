@@ -4,6 +4,7 @@ import { integrations } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { sql } from 'drizzle-orm'
 import { z } from 'zod'
+import { requireSession } from "@/lib/auth-server";
 
 const patchSchema = z.object({
   status: z.enum(['not-connected', 'configured', 'validated', 'production', 'blocked']).optional(),
@@ -14,6 +15,9 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string; integId: string }> }
 ) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const { projectId, integId } = await params
   const numericProjectId = parseInt(projectId, 10)
   const numericIntegId = parseInt(integId, 10)

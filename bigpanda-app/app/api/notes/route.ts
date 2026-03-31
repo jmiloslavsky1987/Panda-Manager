@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '../../../db'
 import { engagementHistory, auditLog } from '../../../db/schema'
+import { requireSession } from "@/lib/auth-server";
 
 export async function POST(req: NextRequest) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   try {
     const body = await req.json()
     const { projectId, content, date } = body

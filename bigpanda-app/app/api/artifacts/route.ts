@@ -3,9 +3,13 @@ import { z } from 'zod'
 import { db } from '@/db'
 import { artifacts } from '@/db/schema'
 import { eq, desc } from 'drizzle-orm'
+import { requireSession } from "@/lib/auth-server";
 
 // GET /api/artifacts?projectId=X
 export async function GET(req: NextRequest) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const projectId = parseInt(req.nextUrl.searchParams.get('projectId') ?? '', 10)
   if (isNaN(projectId)) return NextResponse.json({ error: 'projectId required' }, { status: 400 })
 
@@ -23,6 +27,9 @@ const postSchema = z.object({
 })
 
 export async function POST(req: NextRequest) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const parsed = postSchema.safeParse(await req.json())
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
 

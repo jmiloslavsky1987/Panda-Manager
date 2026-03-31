@@ -9,6 +9,7 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as os from 'node:os';
 import { z } from 'zod';
+import { requireSession } from "@/lib/auth-server";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -47,6 +48,9 @@ async function writeConfigStore(store: ScanConfigStore): Promise<void> {
 // ─── Route handlers ───────────────────────────────────────────────────────────
 
 export async function GET(request: NextRequest): Promise<Response> {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const url = new URL(request.url);
   const projectIdParam = url.searchParams.get('projectId');
 
@@ -81,6 +85,9 @@ const PostBodySchema = z.object({
 });
 
 export async function POST(request: NextRequest): Promise<Response> {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   let body: unknown;
   try {
     body = await request.json();

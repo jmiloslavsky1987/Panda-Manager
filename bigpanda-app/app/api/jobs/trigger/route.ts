@@ -10,10 +10,14 @@ import { NextResponse } from 'next/server';
 import { Queue } from 'bullmq';
 import { createApiRedisConnection } from '../../../../worker/connection';
 import { SKILL_LIST, type SkillDef } from '../../../../lib/scheduler-skills';
+import { requireSession } from "@/lib/auth-server";
 
 const SKILL_IDS = SKILL_LIST.map((s: SkillDef) => s.id);
 
 export async function POST(request: Request) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   try {
     const body = await request.json() as {
       jobId?: number;

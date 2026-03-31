@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { eq, and } from 'drizzle-orm';
 import { db } from '@/db';
+import { requireSession } from "@/lib/auth-server";
 import {
   discoveryItems,
   actions,
@@ -199,6 +200,9 @@ async function insertDiscoveredItem(item: DiscoveryItem): Promise<void> {
  * DISC-14: writes to entity table with source='discovery' attribution
  */
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   let body: unknown;
   try {
     body = await req.json();

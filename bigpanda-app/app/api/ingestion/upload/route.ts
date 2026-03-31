@@ -5,6 +5,7 @@ import { db } from '../../../../db';
 import { artifacts } from '../../../../db/schema';
 import { validateFile } from '../../../../lib/document-extractor';
 import { readSettings } from '../../../../lib/settings';
+import { requireSession } from "@/lib/auth-server";
 
 export const dynamic = 'force-dynamic';
 
@@ -23,6 +24,9 @@ export const dynamic = 'force-dynamic';
 // Valid files in a mixed batch are still processed and written.
 
 export async function POST(request: NextRequest) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   let formData: FormData;
   try {
     formData = await request.formData();

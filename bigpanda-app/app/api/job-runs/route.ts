@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import db from '../../../db';
 import { jobRuns } from '../../../db/schema';
 import { desc } from 'drizzle-orm';
+import { requireSession } from "@/lib/auth-server";
 
 const JOB_NAMES = [
   'action-sync',
@@ -14,6 +15,9 @@ const JOB_NAMES = [
 ] as const;
 
 export async function GET() {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   try {
     // Get latest run per job name using a lateral join / subquery approach
     // Fall back to simple: fetch last 100 runs, then deduplicate in JS

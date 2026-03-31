@@ -12,6 +12,7 @@ import { z } from 'zod';
 import { eq } from 'drizzle-orm';
 import db from '@/db';
 import { timeTrackingConfig } from '@/db/schema';
+import { requireSession } from "@/lib/auth-server";
 
 const patchSchema = z.object({
   enabled:               z.boolean().optional(),
@@ -28,6 +29,9 @@ const patchSchema = z.object({
 });
 
 export async function GET(): Promise<NextResponse> {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   try {
     const rows = await db.select().from(timeTrackingConfig).limit(1);
     if (rows.length === 0) {
@@ -41,6 +45,9 @@ export async function GET(): Promise<NextResponse> {
 }
 
 export async function PATCH(req: NextRequest): Promise<NextResponse> {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   try {
     const body = await req.json();
     const parsed = patchSchema.safeParse(body);

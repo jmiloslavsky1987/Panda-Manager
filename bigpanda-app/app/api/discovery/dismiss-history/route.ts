@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { eq, and, desc } from 'drizzle-orm';
 import { db } from '@/db';
 import { discoveryItems } from '@/db/schema';
+import { requireSession } from "@/lib/auth-server";
 
 export const dynamic = 'force-dynamic';
 
@@ -12,6 +13,9 @@ export const dynamic = 'force-dynamic';
  * DISC-15: Dismissed items are preserved (not deleted) — status=dismissed.
  */
 export async function GET(req: NextRequest): Promise<NextResponse> {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const { searchParams } = new URL(req.url);
   const projectIdParam = searchParams.get('projectId');
 

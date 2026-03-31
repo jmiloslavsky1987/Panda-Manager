@@ -7,6 +7,12 @@ vi.mock('@/db', () => ({
     insert: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
+    transaction: vi.fn(async (cb: (tx: unknown) => unknown) => cb({
+      select: vi.fn(),
+      insert: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    })),
   },
 }));
 
@@ -42,6 +48,14 @@ vi.mock('@anthropic-ai/sdk', () => ({
 // Mock document-extractor
 vi.mock('@/lib/document-extractor', () => ({
   extractDocumentText: vi.fn(),
+}));
+vi.mock('next/headers', () => ({ headers: vi.fn().mockResolvedValue(new Headers()) }));
+vi.mock('@/lib/auth', () => ({
+  auth: {
+    api: {
+      getSession: vi.fn().mockResolvedValue({ user: { id: 'test-user', email: 'test@test.com', role: 'admin' } }),
+    },
+  },
 }));
 
 import { POST } from '@/app/api/ingestion/approve/route';

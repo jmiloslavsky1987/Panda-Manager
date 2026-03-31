@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import ExcelJS from 'exceljs'
 import { db } from '../../../db'
 import { tasks } from '../../../db/schema'
+import { requireSession } from "@/lib/auth-server";
 
 // ─── POST /api/plan-import ────────────────────────────────────────────────────
 // Accepts multipart/form-data with:
@@ -46,6 +47,9 @@ function cellStr(row: ExcelJS.Row, colIndex: number | undefined): string | null 
 }
 
 export async function POST(request: NextRequest) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   let formData: FormData
   try {
     formData = await request.formData()

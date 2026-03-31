@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { db } from '../../../db'
 import { tasks } from '../../../db/schema'
 import { inArray } from 'drizzle-orm'
+import { requireSession } from "@/lib/auth-server";
 
 // ─── Validation Schema ────────────────────────────────────────────────────────
 
@@ -19,6 +20,9 @@ const BulkUpdateSchema = z.object({
 // ─── POST /api/tasks-bulk ─────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   let body: unknown
   try {
     body = await request.json()

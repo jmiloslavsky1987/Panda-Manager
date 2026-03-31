@@ -4,6 +4,7 @@ import { teamOnboardingStatus } from '@/db/schema'
 import { eq, asc } from 'drizzle-orm'
 import { sql } from 'drizzle-orm'
 import { z } from 'zod'
+import { requireSession } from "@/lib/auth-server";
 
 const trackStatusEnum = z.enum(['live', 'in_progress', 'pilot', 'planned']).nullable().optional()
 
@@ -21,6 +22,9 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const { projectId } = await params
   const numericId = parseInt(projectId, 10)
   if (isNaN(numericId)) {
@@ -49,6 +53,9 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const { projectId } = await params
   const numericId = parseInt(projectId, 10)
   if (isNaN(numericId)) {

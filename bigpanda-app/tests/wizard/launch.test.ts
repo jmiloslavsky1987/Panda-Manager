@@ -13,6 +13,14 @@ vi.mock('../../db', () => ({
     }),
   },
 }));
+vi.mock('next/headers', () => ({ headers: vi.fn().mockResolvedValue(new Headers()) }));
+vi.mock('@/lib/auth', () => ({
+  auth: {
+    api: {
+      getSession: vi.fn().mockResolvedValue({ user: { id: 'test-user', email: 'test@test.com', role: 'admin' } }),
+    },
+  },
+}));
 
 import { PATCH } from '../../app/api/projects/[projectId]/route';
 

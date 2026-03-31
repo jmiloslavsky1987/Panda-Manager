@@ -8,11 +8,15 @@ import db from '../../../../../db';
 import { skillRuns } from '../../../../../db/schema';
 import { existsSync } from 'fs';
 import path from 'path';
+import { requireSession } from "@/lib/auth-server";
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ skillName: string }> }
 ) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   try {
     const { skillName } = await params;
     const body = await request.json() as { projectId: number; input?: Record<string, string> };

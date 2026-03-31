@@ -18,6 +18,7 @@ import { projects, discoveryItems, userSourceTokens, actions, risks, stakeholder
 import { MCPClientPool } from '@/lib/mcp-config';
 import { readSettings } from '@/lib/settings-core';
 import { runDiscoveryScan, type DiscoveryItem } from '@/lib/discovery-scanner';
+import { requireSession } from "@/lib/auth-server";
 
 export const dynamic = 'force-dynamic';
 
@@ -71,6 +72,9 @@ async function isDismissedDuplicate(
 // ─── Route handler ────────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest): Promise<Response> {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   let body: unknown;
   try {
     body = await request.json();

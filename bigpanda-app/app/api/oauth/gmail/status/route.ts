@@ -3,8 +3,12 @@
 import { db } from '@/db';
 import { userSourceTokens } from '@/db/schema';
 import { and, eq } from 'drizzle-orm';
+import { requireSession } from "@/lib/auth-server";
 
 export async function GET(): Promise<Response> {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const [row] = await db
     .select({ email: userSourceTokens.email })
     .from(userSourceTokens)
@@ -20,6 +24,9 @@ export async function GET(): Promise<Response> {
 }
 
 export async function DELETE(): Promise<Response> {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   await db
     .delete(userSourceTokens)
     .where(

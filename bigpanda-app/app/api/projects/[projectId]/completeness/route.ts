@@ -12,6 +12,7 @@ import {
   businessOutcomes,
 } from '@/db/schema'
 import { eq, count } from 'drizzle-orm'
+import { requireSession } from "@/lib/auth-server";
 
 export type TableCounts = {
   actions: number
@@ -66,6 +67,9 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const { projectId } = await params
   const numericId = parseInt(projectId, 10)
   if (isNaN(numericId)) {

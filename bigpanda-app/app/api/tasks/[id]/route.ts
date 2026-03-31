@@ -4,6 +4,7 @@ import { db } from '../../../../db'
 import { tasks, auditLog } from '../../../../db/schema'
 import { eq } from 'drizzle-orm'
 import { updateWorkstreamProgress } from '../../../../lib/queries'
+import { requireSession } from "@/lib/auth-server";
 
 // ─── Validation Schema ────────────────────────────────────────────────────────
 
@@ -31,6 +32,9 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const { id } = await params
   const taskId = parseInt(id, 10)
   if (isNaN(taskId)) {
@@ -98,6 +102,9 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const { id } = await params
   const taskId = parseInt(id, 10)
   if (isNaN(taskId)) {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '../../../../db';
 import { knowledgeBase, auditLog } from '../../../../db/schema';
 import { eq } from 'drizzle-orm';
+import { requireSession } from "@/lib/auth-server";
 
 // PATCH /api/knowledge-base/[id]
 // Body: partial update — any combination of title, content, source_trace, linked_risk_id,
@@ -11,6 +12,9 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const { id } = await params;
   const numericId = parseInt(id, 10);
 
@@ -93,6 +97,9 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const { id } = await params;
   const numericId = parseInt(id, 10);
 

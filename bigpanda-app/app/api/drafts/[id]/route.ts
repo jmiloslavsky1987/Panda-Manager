@@ -2,11 +2,15 @@ import { NextResponse } from 'next/server';
 import db from '../../../../db';
 import { drafts } from '../../../../db/schema';
 import { eq } from 'drizzle-orm';
+import { requireSession } from "@/lib/auth-server";
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const { id } = await params;
   const draftId = parseInt(id);
   const body = await request.json() as {

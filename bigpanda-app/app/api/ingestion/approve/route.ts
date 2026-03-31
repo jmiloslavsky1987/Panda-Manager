@@ -17,6 +17,7 @@ import {
   auditLog,
 } from '@/db/schema';
 import type { EntityType, ExtractionItem } from '@/app/api/ingestion/extract/route';
+import { requireSession } from "@/lib/auth-server";
 
 export const dynamic = 'force-dynamic';
 
@@ -707,6 +708,9 @@ async function deleteItem(entityType: EntityType, existingId: number): Promise<v
 // ─── POST handler ─────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   // 1. Parse and validate body
   let body: unknown;
   try {

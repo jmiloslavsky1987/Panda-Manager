@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { eq, and, inArray } from 'drizzle-orm';
 import { db } from '@/db';
 import { discoveryItems } from '@/db/schema';
+import { requireSession } from "@/lib/auth-server";
 
 export const dynamic = 'force-dynamic';
 
@@ -26,6 +27,9 @@ const DismissRequestSchema = z.object({
  * Returns: { dismissed: N }
  */
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   let body: unknown;
   try {
     body = await req.json();

@@ -2,11 +2,15 @@ import { NextResponse } from 'next/server';
 import db from '../../../../db';
 import { planTemplates, auditLog } from '../../../../db/schema';
 import { eq } from 'drizzle-orm';
+import { requireSession } from "@/lib/auth-server";
 
 export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const { id } = await params;
   const templateId = parseInt(id, 10);
 

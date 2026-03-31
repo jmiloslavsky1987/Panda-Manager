@@ -3,6 +3,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { readSettings, writeSettings } from '@/lib/settings';
+import { requireSession } from "@/lib/auth-server";
 
 const sourceCredentialsSchema = z.object({
   slack: z
@@ -33,6 +34,9 @@ function maskToken(token: string): string {
 }
 
 export async function GET(): Promise<Response> {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const settings = await readSettings();
   const creds = settings.source_credentials;
 
@@ -66,6 +70,9 @@ export async function GET(): Promise<Response> {
 }
 
 export async function POST(request: Request): Promise<Response> {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   let body: unknown;
   try {
     body = await request.json();

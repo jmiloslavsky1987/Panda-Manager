@@ -2,8 +2,12 @@ import { NextResponse } from 'next/server';
 import db from '../../../db';
 import { drafts, projects } from '../../../db/schema';
 import { eq, desc } from 'drizzle-orm';
+import { requireSession } from "@/lib/auth-server";
 
 export async function GET() {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const pending = await db
     .select({
       id: drafts.id,
@@ -27,6 +31,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
   const body = await request.json() as {
     draft_type: string;
     content: string;
