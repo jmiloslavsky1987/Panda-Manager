@@ -59,7 +59,7 @@ export function InteractiveEngagementGraph({ data }: Props) {
 
   // Layout computed before first render — no layout "jump"
   const layoutedNodes = useMemo(
-    () => getLayoutedElements(rawNodes, rawEdges),
+    () => getLayoutedElements(rawNodes, rawEdges) as Node[],
     [rawNodes, rawEdges],
   )
 
