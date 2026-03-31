@@ -58,7 +58,7 @@ export function InteractiveArchGraph({ integrations }: Props) {
     [rawNodes, rawEdges],
   )
 
-  const [nodes, setNodes] = useState<Node[]>(layoutedNodes)
+  const [nodes, setNodes] = useState<Node[]>(layoutedNodes as Node[])
   const [edges, setEdges] = useState<Edge[]>(rawEdges)
   const [selectedIntegrationId, setSelectedIntegrationId] = useState<number | null>(null)
 
