@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
 status: verifying
-last_updated: "2026-03-31T06:41:18.605Z"
+last_updated: "2026-03-31T06:41:30.900Z"
 last_activity: "2026-03-31 — 26-05: /api/settings/users CRUD route, UsersTab inline form, Settings Users tab; checkpoint human-verify pending"
 progress:
   total_phases: 33
@@ -74,6 +74,8 @@ Phase 26 is the mandatory entry point — session infrastructure must exist befo
 - [Phase 27]: Use satisfies Record pattern for TypeScript-enforced exhaustive tab type coverage
 - [Phase 27]: Hybrid URL pattern (pathname + searchParams) preserves existing route segments with zero migration risk
 - [Phase 27]: SubTabBar component extracts secondary tab row for clean separation of concerns
+- [Phase 27-ui-overhaul-templates]: Wave 0 stubs use undefined + toBeDefined() pattern to fail RED without import crashes
+- [Phase 27-ui-overhaul-templates]: next/navigation mock defined inline in each test file (explicit vi.mock() call) for clarity
 
 ## Previous Milestone Decisions (v2.0)
 

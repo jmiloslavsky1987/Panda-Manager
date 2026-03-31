@@ -37,7 +37,7 @@ All v2.0 requirements are complete. See `.planning/v2.0-MILESTONE-AUDIT.md` for 
 - [x] **UI-01**: Project workspace tabs are grouped into logical sub-tabs to reduce top-level navigation clutter
 - [ ] **UI-02**: Color palette, typography, spacing, and component styling are modernized throughout
 - [x] **UI-03**: Each tab type has a fixed required section structure enforced by a TypeScript template registry
-- [ ] **UI-04**: New projects are seeded with template placeholder content on creation
+- [x] **UI-04**: New projects are seeded with template placeholder content on creation
 
 ### CHAT — Project Chat
 
@@ -77,7 +77,7 @@ All v2.0 requirements are complete. See `.planning/v2.0-MILESTONE-AUDIT.md` for 
 | UI-01 | Phase 27 | Complete |
 | UI-02 | Deferred | Out of scope per planning decision — visual modernization explicitly deferred to a future phase (27-CONTEXT.md) |
 | UI-03 | Phase 27 | Complete |
-| UI-04 | Phase 27 | Pending |
+| UI-04 | Phase 27 | Complete |
 | VIS-01 | Phase 28 | Pending |
 | VIS-02 | Phase 28 | Pending |
 | CHAT-01 | Phase 29 | Pending |
