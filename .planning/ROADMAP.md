@@ -925,7 +925,14 @@ Plans:
   1. The Teams tab engagement map renders as an interactive node-edge graph — clicking any team or stakeholder node expands a detail panel showing that entity's live data from the DB (status, owner, notes); the panel closes without a page reload
   2. The Architecture tab workflow diagram renders integration nodes as interactive — clicking any integration node shows its current status, type, and configuration details from the DB; layout is computed via dagre (no manual positioning)
   3. Both components load without React hydration errors in `next build && next start` mode — `dynamic(() => import(...), { ssr: false })` is applied to all `@xyflow/react` parent components; browser console shows no hydration warnings
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 28-01-PLAN.md — Wave 0: Package install (@xyflow/react + @dagrejs/dagre) + React Flow vitest mock + 4 RED test stubs
+- [ ] 28-02-PLAN.md — Wave 1: Shared graph primitives (CustomNodes.tsx, useGraphLayout.ts with dagre)
+- [ ] 28-03-PLAN.md — Wave 2: InteractiveEngagementGraph + NodeDetailDrawer + TeamEngagementMap wired (VIS-01)
+- [ ] 28-04-PLAN.md — Wave 2: InteractiveArchGraph + IntegrationDetailDrawer + CurrentFutureStateTab wired (VIS-02)
+- [ ] 28-05-PLAN.md — Wave 3: Full test suite green pass + production build hydration verification checkpoint
 
 ### Phase 29: Project Chat
 **Goal**: Every project workspace has an inline AI chat panel that answers questions using live DB data scoped to that project — responses stream to the browser, multi-turn follow-ups work within the session, and the system never generates project-specific facts (percentages, dates, names) that are not directly present in the DB query snapshot.
