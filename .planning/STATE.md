@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
-status: planning
-last_updated: "2026-04-01T13:36:46.672Z"
-last_activity: "2026-04-01 — 29-00: AI SDK installed (ai@6.0.142, @ai-sdk/anthropic@3.0.64, @ai-sdk/react@3.0.144); 17 RED test stubs created and verified"
+status: executing
+last_updated: "2026-04-01T13:56:32.783Z"
+last_activity: "2026-04-01 — 30-01: 26 RED test stubs created for CTX-01/02/03/04; tests/context/ directory established; Wave 0 pattern applied"
 progress:
   total_phases: 33
   completed_phases: 32
   total_plans: 178
-  completed_plans: 173
+  completed_plans: 174
 ---
 
 # Project State
@@ -21,9 +21,9 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 ## Current Status
 
 **Phase:** Phase 30 — Context Hub — In Progress
-**Plan:** 30-01 complete (RED test stubs created)
-**Status:** Ready to execute 30-02
-**Last activity:** 2026-04-01 — 30-01: 26 RED test stubs created for CTX-01/02/03/04; tests/context/ directory established; Wave 0 pattern applied
+**Plan:** 30-02 complete (new entity types implemented)
+**Status:** Ready to execute 30-03
+**Last activity:** 2026-04-01 — 30-02: Extended ingestion pipeline with workstream/onboarding_step/integration entity types; extract and approve routes updated; 9 RED tests turned GREEN; CTX-02 complete
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
 **Current focus:** v3.0 milestone starting. Phase 26 (Multi-User Auth) is the entry point — all other v3.0 phases depend on session infrastructure.
@@ -95,6 +95,8 @@ Phase 26 is the mandatory entry point — session infrastructure must exist befo
 - [Phase 29-00]: Wave 0 RED stubs use undefined + toBeDefined() pattern to avoid brittle import crashes on missing modules
 - [Phase 29-project-chat]: Human verification checkpoint for streaming behavior — cannot be reliably automated with headless browser tests
 - [Phase 29-project-chat]: Production build verification required before checkpoint — catches SSR/hydration issues not visible in dev mode
+- [Phase 30]: workstreams table has source column but NOT source_artifact_id or ingested_at — use source: 'ingestion' only
+- [Phase 30]: onboarding_steps and integrations tables have NO attribution columns — phase_id=1 default for onboarding_step, skip attribution entirely
 
 ## Previous Milestone Decisions (v2.0)
 
