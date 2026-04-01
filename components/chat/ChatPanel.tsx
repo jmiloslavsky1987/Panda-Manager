@@ -88,9 +88,11 @@ export function ChatPanel({ projectId, initialContext }: ChatPanelProps) {
           </div>
         ) : (
           <>
-            {messages.map((message) => (
-              <ChatMessage key={message.id} message={message} />
-            ))}
+            {messages
+              .filter((m) => m.role === 'user' || m.role === 'assistant')
+              .map((message) => (
+                <ChatMessage key={message.id} message={message as any} />
+              ))}
           </>
         )}
 
