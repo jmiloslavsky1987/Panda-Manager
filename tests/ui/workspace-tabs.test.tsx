@@ -3,7 +3,7 @@
 // GREEN tests for UI-01 — WorkspaceTabs navigation behaviors
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { WorkspaceTabs } from '../../components/WorkspaceTabs'
+import { WorkspaceTabs, TAB_GROUPS } from '../../components/WorkspaceTabs'
 
 // Mock useSearchParams hook
 const mockSearchParams = new Map<string, string | null>()
@@ -96,20 +96,22 @@ describe('WorkspaceTabs — UI-01', () => {
 })
 
 // CTX-01: Context tab registration in TAB_GROUPS
-// Wave 0 stub — fails RED via undefined + toBeDefined() pattern
 describe('Context tab registration', () => {
   it('Context tab is registered in TAB_GROUPS with standalone: true', () => {
-    const target: any = undefined;
-    expect(target).toBeDefined();
+    const contextTab = TAB_GROUPS.find((g) => g.id === 'context');
+    expect(contextTab).toBeDefined();
+    expect(contextTab?.standalone).toBe(true);
   });
 
   it('Context tab URL pattern is ?tab=context', () => {
-    const target: any = undefined;
-    expect(target).toBeDefined();
+    const contextTab = TAB_GROUPS.find((g) => g.id === 'context');
+    expect(contextTab?.id).toBe('context');
   });
 
   it('Context tab appears before Admin in the tab order', () => {
-    const target: any = undefined;
-    expect(target).toBeDefined();
+    const contextIdx = TAB_GROUPS.findIndex((g) => g.id === 'context');
+    const adminIdx = TAB_GROUPS.findIndex((g) => g.id === 'admin');
+    expect(contextIdx).toBeGreaterThan(-1);
+    expect(contextIdx).toBeLessThan(adminIdx);
   });
 })
