@@ -944,9 +944,9 @@ Plans:
   3. A question about a specific project fact (e.g., "how many open actions does Kaiser have?") returns a response that cites the actual DB record count — if the DB has 7 open actions, the response says 7; the system prompt explicitly prohibits invented numbers and the response format can be verified against a live DB query
 **Plans**: 4 plans
 Plans:
-- [ ] 29-00-PLAN.md — Install Vercel AI SDK + create RED test stubs
-- [ ] 29-01-PLAN.md — Backend: chat-context-builder.ts + streaming API route
-- [ ] 29-02-PLAN.md — Frontend: ChatPanel component + chat page + WorkspaceTabs registration
+- [x] 29-00-PLAN.md — Install Vercel AI SDK + create RED test stubs (completed 2026-04-01)
+- [x] 29-01-PLAN.md — Backend: chat-context-builder.ts + streaming API route
+- [x] 29-02-PLAN.md — Frontend: ChatPanel component + chat page + WorkspaceTabs registration
 - [ ] 29-03-PLAN.md — Human verification: streaming, multi-turn, hallucination audit
 
 ### Phase 30: Context Hub
