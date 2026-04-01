@@ -76,27 +76,27 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TEST-01 | TBD | Pending |
-| EXTR-01 | TBD | Pending |
-| EXTR-02 | TBD | Pending |
-| EXTR-03 | TBD | Pending |
-| TIME-01 | TBD | Pending |
-| TIME-02 | TBD | Pending |
-| TIME-03 | TBD | Pending |
-| WORK-01 | TBD | Pending |
-| WORK-02 | TBD | Pending |
-| WKFO-01 | TBD | Pending |
-| WKFO-02 | TBD | Pending |
-| TMLN-01 | TBD | Pending |
-| OINT-01 | TBD | Pending |
-| METR-01 | TBD | Pending |
-| HLTH-01 | TBD | Pending |
+| EXTR-01 | Phase 31 | Pending |
+| EXTR-02 | Phase 31 | Pending |
+| EXTR-03 | Phase 31 | Pending |
+| TIME-01 | Phase 32 | Pending |
+| TIME-02 | Phase 32 | Pending |
+| TIME-03 | Phase 32 | Pending |
+| WORK-01 | Phase 33 | Pending |
+| WORK-02 | Phase 33 | Pending |
+| METR-01 | Phase 34 | Pending |
+| HLTH-01 | Phase 34 | Pending |
+| TMLN-01 | Phase 34 | Pending |
+| WKFO-01 | Phase 35 | Pending |
+| WKFO-02 | Phase 35 | Pending |
+| OINT-01 | Phase 35 | Pending |
+| TEST-01 | Phase 36 | Pending |
 
 **Coverage:**
 - v4.0 requirements: 15 total
-- Mapped to phases: 0 (roadmap not yet created)
-- Unmapped: 15 ⚠️
+- Mapped to phases: 15 ✓
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-04-01*
-*Last updated: 2026-04-01 after initial definition*
+*Last updated: 2026-04-01 after roadmap creation*
