@@ -13,6 +13,34 @@ import {
 } from '@/db/schema'
 import { eq, count } from 'drizzle-orm'
 import { requireSession } from "@/lib/auth-server";
+import Anthropic from '@anthropic-ai/sdk';
+import { buildCompletenessContext } from '@/lib/completeness-context-builder';
+import { TAB_TEMPLATE_REGISTRY } from '@/lib/tab-template-registry';
+
+export const dynamic = 'force-dynamic';
+
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+const COMPLETENESS_SYSTEM = `You are a project data quality analyst. Given a project's current workspace data, identify specific quality gaps per workspace tab.
+
+Tab template requirements (what "complete" looks like per tab):
+${JSON.stringify(TAB_TEMPLATE_REGISTRY, null, 2)}
+
+Guidelines for assessment:
+- "complete" = all required fields present for all records; no placeholder values (TBD, N/A, template text); meaningful content
+- "partial" = some real data present but missing required fields, or has placeholder/TBD values
+- "empty" = no records at all (after template records are excluded) OR only records with placeholder text
+- Records with source='template' have already been excluded from the data — treat absent data as empty
+- Gaps MUST be SPECIFIC: reference actual record IDs like [A-KAISER-003], counts, and exact missing fields
+- Do NOT return "tab is incomplete" — always explain what is missing and which records need attention
+- For tabs with no real data, status = "empty" and gaps = ["No real records — all data is template placeholder or missing"]
+- Return exactly 11 entries: overview, actions, risks, milestones, teams, architecture, decisions, history, stakeholders, plan, skills`;
+
+interface CompletenessEntry {
+  tabId: string;
+  status: 'complete' | 'partial' | 'empty';
+  gaps: string[];
+}
 
 export type TableCounts = {
   actions: number
@@ -107,4 +135,70 @@ export async function GET(
   const banner = getBannerData(emptyTabLabels)
 
   return NextResponse.json({ score, populatedTabs, emptyTabs: banner.emptyTabs })
+}
+
+/**
+ * POST /api/projects/[projectId]/completeness
+ *
+ * Performs detailed completeness analysis using Claude structured outputs.
+ * Returns array of 11 entries (one per workspace tab) with status and specific gaps.
+ *
+ * Security: requireSession() at handler level.
+ * Context: buildCompletenessContext() serializes all tab data + template definitions.
+ * Output: Claude output_config.format json_schema guarantees valid JSON response.
+ */
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ projectId: string }> },
+): Promise<NextResponse> {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
+  const { projectId } = await params;
+  const projectIdNum = parseInt(projectId, 10);
+  if (isNaN(projectIdNum)) {
+    return NextResponse.json({ error: 'Invalid project ID' }, { status: 400 });
+  }
+
+  const contextPayload = await buildCompletenessContext(projectIdNum);
+
+  const message = await client.messages.create({
+    model: 'claude-opus-4-6',
+    max_tokens: 16384,
+    thinking: { type: 'adaptive' },
+    system: COMPLETENESS_SYSTEM,
+    messages: [
+      {
+        role: 'user',
+        content: `<project_data>\n${contextPayload}\n</project_data>\n\nAnalyze the project data above and return a completeness assessment for all 11 workspace tabs. Be specific — reference record IDs and exact missing fields in gap descriptions.`,
+      },
+    ],
+    output_config: {
+      format: {
+        type: 'json_schema',
+        schema: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              tabId: { type: 'string' },
+              status: { type: 'string', enum: ['complete', 'partial', 'empty'] },
+              gaps: { type: 'array', items: { type: 'string' } },
+            },
+            required: ['tabId', 'status', 'gaps'],
+            additionalProperties: false,
+          },
+        },
+      },
+    },
+  });
+
+  // Extract text content (adaptive thinking may include thinking blocks — skip them)
+  const textBlock = message.content.find(b => b.type === 'text');
+  if (!textBlock || textBlock.type !== 'text') {
+    return NextResponse.json({ error: 'No text response from Claude' }, { status: 500 });
+  }
+
+  const results: CompletenessEntry[] = JSON.parse(textBlock.text);
+  return NextResponse.json(results);
 }
