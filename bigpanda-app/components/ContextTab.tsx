@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { IngestionModal } from './IngestionModal'
 
 interface ContextTabProps {
@@ -37,8 +37,19 @@ export function ContextTab({ projectId }: ContextTabProps) {
   }
 
   // Load upload history from artifacts table
-  // (wired fully in Plan 05 — stub fetch here)
-  // [placeholder: useEffect fetch /api/projects/[projectId]/artifacts?source=ingestion]
+  useEffect(() => {
+    fetch(`/api/projects/${projectId}/artifacts`)
+      .then(res => res.ok ? res.json() : [])
+      .then((data: Array<{ id: number; name: string; status: string; createdAt: string }>) => {
+        setUploadHistory(data.map(item => ({
+          id: item.id,
+          name: item.name,
+          createdAt: item.createdAt,
+          status: item.status ?? 'pending',
+        })));
+      })
+      .catch(() => {/* silent — history is non-critical */});
+  }, [projectId]);
 
   // Completeness analysis handler (wired in Plan 05)
   async function handleAnalyze() {
