@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
 status: Ready for checkpoint
-last_updated: "2026-04-01T03:23:16.086Z"
+last_updated: "2026-04-01T03:23:30.198Z"
 last_activity: "2026-03-31 — 28-05: Phase 28 verification complete — 12/12 visual tests GREEN, production build passing"
 progress:
   total_phases: 33
   completed_phases: 31
   total_plans: 172
-  completed_plans: 170
+  completed_plans: 172
 ---
 
 # Project State
@@ -20,10 +20,10 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 
 ## Current Status
 
-**Phase:** Phase 28 — Interactive Visuals — Complete
-**Plan:** 28-05 complete (awaiting human-verify checkpoint for browser confirmation)
-**Status:** Ready for checkpoint
-**Last activity:** 2026-03-31 — 28-05: Phase 28 verification complete — 12/12 visual tests GREEN, production build passing
+**Phase:** Phase 29 — Project Chat — In Progress
+**Plan:** 29-00 complete (AI SDK installed, RED test stubs verified)
+**Status:** Active
+**Last activity:** 2026-04-01 — 29-00: AI SDK installed (ai@6.0.142, @ai-sdk/anthropic@3.0.64, @ai-sdk/react@3.0.144); 17 RED test stubs created and verified
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
 **Current focus:** v3.0 milestone starting. Phase 26 (Multi-User Auth) is the entry point — all other v3.0 phases depend on session infrastructure.
@@ -41,7 +41,7 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 | 26. Multi-User Auth | Not started |
 | 27. UI Overhaul + Templates | Not started |
 | 28. Interactive Visuals | Complete |
-| 29. Project Chat | Not started |
+| 29. Project Chat | In Progress (1/4 plans) |
 | 30. Context Hub | Not started |
 
 ## Active Work
@@ -91,6 +91,8 @@ Phase 26 is the mandatory entry point — session infrastructure must exist befo
 - [Phase 29-project-chat]: Vercel AI SDK chosen over raw Anthropic SDK for chat streaming (toUIMessageStreamResponse + useChat integration)
 - [Phase 29-project-chat]: Temperature 0.3 for anti-hallucination (balances accuracy with conversational fluency)
 - [Phase 29-project-chat]: XML-wrapped project context (<project_data> tags) for prompt injection defense
+- [Phase 29-00]: AI SDK install requires --legacy-peer-deps (Next.js 16 + React 19 peer dependency mismatch, same as Phase 26 better-auth pattern)
+- [Phase 29-00]: Wave 0 RED stubs use undefined + toBeDefined() pattern to avoid brittle import crashes on missing modules
 
 ## Previous Milestone Decisions (v2.0)
 
