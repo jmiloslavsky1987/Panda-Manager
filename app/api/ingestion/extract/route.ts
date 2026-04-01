@@ -19,6 +19,9 @@ import {
   businessOutcomes,
   focusAreas,
   architectureIntegrations,
+  workstreams,
+  onboardingSteps,
+  integrations,
 } from '@/db/schema';
 import { extractDocumentText } from '@/lib/document-extractor';
 import { requireSession } from "@/lib/auth-server";
@@ -58,7 +61,10 @@ export type EntityType =
   | 'businessOutcome'
   | 'team'
   | 'note'
-  | 'team_pathway';
+  | 'team_pathway'
+  | 'workstream'
+  | 'onboarding_step'
+  | 'integration';
 
 export interface ExtractionItem {
   entityType: EntityType;
@@ -73,7 +79,7 @@ const EXTRACTION_SYSTEM = `You are a project data extractor. Given a document, e
 Output ONLY a JSON array of extraction items — no prose before or after, no markdown code fences.
 Each item follows this exact shape:
 {
-  "entityType": "action" | "risk" | "decision" | "milestone" | "stakeholder" | "task" | "architecture" | "history" | "businessOutcome" | "team" | "note",
+  "entityType": "action" | "risk" | "decision" | "milestone" | "stakeholder" | "task" | "architecture" | "history" | "businessOutcome" | "team" | "note" | "workstream" | "onboarding_step" | "integration",
   "fields": { /* entity-specific key-value pairs as strings */ },
   "confidence": 0.85,
   "sourceExcerpt": "verbatim text this was extracted from (max 200 chars)"
@@ -85,11 +91,16 @@ Entity type guidance:
 - milestone: { name, target_date, status }
 - stakeholder: { name, role, email, account }
 - task: { title, status, owner, phase }
-- architecture: { tool_name, track, phase, status, integration_method }
+- architecture: { tool_name, track, phase, status, integration_method } — workflow phase and integration method; focus on how the tool integrates into delivery workflow
 - history: { date, content, author }
 - businessOutcome: { title, track, description, delivery_status }
 - team: { team_name, track, ingest_status }
+- workstream: { name, track, phase, status, percent_complete } — delivery workstream or project phase name; use for named delivery tracks with status and completion percentage
+- onboarding_step: { team_name, step_name, track, status, completed_date } — specific onboarding step for a team (e.g. ADR track steps); NOT the same as a generic task
+- integration: { tool_name, category, connection_status, notes } — connection status of a tool (live/pilot/planned/not-connected); focus on operational readiness and connection state, NOT architecture workflow phase
 - note: { content, context } — use for any valuable content that does not fit the above types: observations, meeting highlights, open questions, context, or anything that would be useful to preserve but has no specific schema.
+IMPORTANT disambiguation:
+- architecture vs integration: architecture = workflow phase and integration method (how it fits in delivery process); integration = connection status and operational notes (is it connected and working?)
 IMPORTANT: Do NOT discard content just because it doesn't fit a structured type. Capture it as a "note".
 If this document is a slide deck (PPTX), extract all project data visible in bullet points and speaker notes.
 Output only the raw JSON array. Never wrap it in markdown code fences.`;
@@ -285,6 +296,30 @@ export async function isAlreadyIngested(
         // rows were fetched by tool_name prefix; track check is advisory (not a DB filter to keep it simple)
         return rows.length > 0;
       }
+      return rows.length > 0;
+    }
+
+    case 'workstream': {
+      const key = normalize(f.name);
+      if (!key) return false;
+      const rows = await db.select({ id: workstreams.id }).from(workstreams)
+        .where(and(eq(workstreams.project_id, projectId), ilike(workstreams.name, `${key}%`)));
+      return rows.length > 0;
+    }
+
+    case 'onboarding_step': {
+      const key = normalize(f.step_name);
+      if (!key) return false;
+      const rows = await db.select({ id: onboardingSteps.id }).from(onboardingSteps)
+        .where(and(eq(onboardingSteps.project_id, projectId), ilike(onboardingSteps.name, `${key}%`)));
+      return rows.length > 0;
+    }
+
+    case 'integration': {
+      const key = normalize(f.tool_name);
+      if (!key) return false;
+      const rows = await db.select({ id: integrations.id }).from(integrations)
+        .where(and(eq(integrations.project_id, projectId), ilike(integrations.tool, `${key}%`)));
       return rows.length > 0;
     }
 
