@@ -1,38 +1,39 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.0
-milestone_name: — AI Ingestion & Enhanced Operations
-status: completed
-last_updated: "2026-04-01T19:33:40.489Z"
-last_activity: "2026-04-01 — 30-06: All 3 browser flows verified; CTX-01 through CTX-04 approved; 363 tests GREEN; production build clean"
+milestone: v4.0
+milestone_name: — Infrastructure & UX Foundations
+status: defining_requirements
+last_updated: "2026-04-01"
+last_activity: "2026-04-01 — Milestone v4.0 started"
 progress:
-  total_phases: 33
-  completed_phases: 33
-  total_plans: 178
-  completed_plans: 178
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-30)
+See: .planning/PROJECT.md (updated 2026-04-01)
 
 ## Current Status
 
-**Phase:** Phase 30 — Context Hub — COMPLETE
-**Plan:** 30-06 complete (Verification Gate)
-**Status:** v3.0 milestone complete
-**Last activity:** 2026-04-01 — 30-06: All 3 browser flows verified; CTX-01 through CTX-04 approved; 363 tests GREEN; production build clean
+**Phase:** Not started (defining requirements)
+**Plan:** —
+**Status:** Defining requirements
+**Last activity:** 2026-04-01 — Milestone v4.0 started
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
-**Current focus:** v3.0 complete. Planning next milestone (v4.0 — Polish & UAT). Run /gsd:new-milestone to begin.
+**Current focus:** v4.0 — Infrastructure & UX Foundations. Defining requirements.
 
 ## Milestone History
 
 - **v1.0** — Foundation + Read/Write Surface + Skills + MCP + Cross-Project (Phases 1–16, complete 2026-03-26)
 - **v2.0** — AI Ingestion & Enhanced Operations (Phases 17–25, complete 2026-03-30)
-- **v3.0** — Collaboration & Intelligence (Phases 26–30, roadmap created 2026-03-30)
+- **v3.0** — Collaboration & Intelligence (Phases 26–30, complete 2026-04-01)
+- **v4.0** — Infrastructure & UX Foundations (started 2026-04-01)
 
 ## Phase Progress (v3.0)
 

@@ -48,12 +48,16 @@ Every PS delivery intelligence the team has built — 15 AI skills, all project 
 
 ### Active
 
+<!-- v4.0 — Infrastructure & UX Foundations (2026-04-01) -->
+- [ ] Fix 13 pre-existing test failures across 6 test files (accumulated from v1.0–v3.0)
+- [ ] Move document extraction to BullMQ background job (large docs vulnerable to browser refresh killing SSE extraction)
+- [ ] Redesign time tracking as standalone top-level section with global project-assignment view (currently siloed per-project)
+- [ ] Overview tab overhaul: ADR/Biggy workstream separation, standardized phase models, removal of Project Completeness, weekly focus summary, integration tracker redesign, visual milestone timeline, new Metrics section, new Health Dashboard section
+
+<!-- Deferred to v5.0 — Polish & UAT -->
 - [ ] **UI-02**: Color palette, typography, spacing, and component styling modernized throughout (deferred from v3.0)
-- [ ] Time tracking redesign: move from per-project tab to standalone top-level section with project assignment (captured as todo)
-- [ ] Tab-by-tab UAT: thorough testing of all workspace tabs with documented fixes backlog (captured as todo)
-- [ ] UI standardization: consistent patterns for empty states, tables, status badges, loading states across all tabs and reports (captured as todo)
-- [ ] Fix 13 pre-existing test failures from earlier phases (captured as todo)
-- [ ] Move document extraction to BullMQ background job (captured as todo)
+- [ ] Tab-by-tab UAT: thorough testing of all workspace tabs with documented fixes backlog
+- [ ] UI standardization: consistent patterns for empty states, tables, status badges, loading states across all tabs and reports
 
 ### Out of Scope
 
@@ -63,13 +67,13 @@ Every PS delivery intelligence the team has built — 15 AI skills, all project 
 - Custom role builder — post-launch (BRD explicit exclusion)
 - Approver hierarchy (TT-205) — deferred; single approver sufficient for v3.0
 - pgvector/RAG knowledge base — structured DB query context injection is correct at single-project scope; reconsider only if cross-project knowledge base search becomes a requirement
-- BullMQ-scheduled completeness trigger — on-demand is correct for v3.0; scheduled option deferred to v4.0 (infrastructure exists)
+- BullMQ-scheduled completeness trigger — on-demand is correct for v3.0; scheduled option deferred to v5.0 (infrastructure exists)
 
 ## Context
 
 v3.0 shipped 2026-04-01. Full stack: Next.js 16 (Turbopack), PostgreSQL, Redis/BullMQ, better-auth, Drizzle ORM, Vercel AI SDK, @xyflow/react, @anthropic-ai/sdk. 30 phases, 178 plans completed across v1.0–v3.0. Test suite: 363 passing, 13 pre-existing failures (tracked as todo). Production build clean.
 
-Next milestone TBD — likely a polish/UAT milestone shaped by tab-by-tab testing, UI standardization, time tracking redesign, and the accumulated todos.
+v4.0 starts 2026-04-01 — Infrastructure & UX Foundations. Focus: resolving accumulated test debt, moving extraction to BullMQ, time tracking redesign, and Overview tab overhaul with ADR/Biggy workstream separation per documented requirements.
 
 This is a full rewrite of a previous Claude Code project assistant build (8 phases, React/Vite/Express/Google Drive architecture). SKILL.md files read from disk at runtime (not bundled). All data model patterns (archive-on-replace, dual-write atomicity, append-only history, source tracing, ID conventions) preserved from the original skill ecosystem.
 
@@ -103,5 +107,15 @@ This is a full rewrite of a previous Claude Code project assistant build (8 phas
 | React Flow with dynamic import + ssr:false | @xyflow/react uses DOM APIs unavailable in Node.js SSR; dynamic import prevents hydration errors | ✓ Correct — Dagre auto-layout works cleanly |
 | SSE stream for document extraction (v3.0) | Simpler to implement; acceptable for most documents | ⚠️ Revisit — large docs (>50KB) take 4–6 min; browser refresh kills extraction; BullMQ todo captured |
 
+## Current Milestone: v4.0 Infrastructure & UX Foundations
+
+**Goal:** Resolve accumulated technical debt and deliver two significant UX redesigns: time tracking as a standalone top-level section and a fully overhauled Overview tab with ADR/Biggy workstream structure.
+
+**Target features:**
+- Fix 13 pre-existing test failures across 6 test files
+- Move document extraction to BullMQ background job
+- Redesign time tracking as standalone top-level section
+- Overview tab overhaul per v4.0 requirements (ADR/Biggy phase models, metrics, health dashboard, visual timeline)
+
 ---
-*Last updated: 2026-04-01 after v3.0 milestone*
+*Last updated: 2026-04-01 after v4.0 milestone started*
