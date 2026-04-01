@@ -16,6 +16,9 @@ import {
   teamPathways,
   artifacts,
   auditLog,
+  workstreams,
+  onboardingSteps,
+  integrations,
 } from '@/db/schema';
 import type { EntityType, ExtractionItem } from '@/app/api/ingestion/extract/route';
 import { requireSession } from "@/lib/auth-server";
@@ -28,6 +31,7 @@ const ApprovalItemSchema = z.object({
   entityType: z.enum([
     'action', 'risk', 'decision', 'milestone', 'stakeholder',
     'task', 'architecture', 'history', 'businessOutcome', 'team', 'note', 'team_pathway',
+    'workstream', 'onboarding_step', 'integration',
   ]),
   fields: z.record(z.string(), z.string()),
   approved: z.boolean(),
@@ -170,6 +174,33 @@ async function findConflict(
         .select({ id: teamPathways.id })
         .from(teamPathways)
         .where(and(eq(teamPathways.project_id, projectId), ilike(teamPathways.team_name, `${key}%`)));
+      return rows[0] ?? null;
+    }
+    case 'workstream': {
+      const key = normalize(f.name);
+      if (!key) return null;
+      const rows = await db
+        .select({ id: workstreams.id })
+        .from(workstreams)
+        .where(and(eq(workstreams.project_id, projectId), ilike(workstreams.name, `${key}%`)));
+      return rows[0] ?? null;
+    }
+    case 'onboarding_step': {
+      const key = normalize(f.step_name);
+      if (!key) return null;
+      const rows = await db
+        .select({ id: onboardingSteps.id })
+        .from(onboardingSteps)
+        .where(and(eq(onboardingSteps.project_id, projectId), ilike(onboardingSteps.name, `${key}%`)));
+      return rows[0] ?? null;
+    }
+    case 'integration': {
+      const key = normalize(f.tool_name);
+      if (!key) return null;
+      const rows = await db
+        .select({ id: integrations.id })
+        .from(integrations)
+        .where(and(eq(integrations.project_id, projectId), ilike(integrations.tool, `${key}%`)));
       return rows[0] ?? null;
     }
     default:
@@ -454,6 +485,78 @@ async function insertItem(
       });
       break;
     }
+
+    case 'workstream': {
+      // workstreams table has source column but NOT source_artifact_id or ingested_at
+      await db.transaction(async (tx) => {
+        const [inserted] = await tx.insert(workstreams).values({
+          project_id: projectId,
+          name: f.name ?? '',
+          track: f.track ?? null,
+          current_status: f.status ?? null,
+          lead: f.owner ?? null,
+          state: f.state ?? null,
+          percent_complete: f.percent_complete ? parseInt(f.percent_complete, 10) : null,
+          source: 'ingestion',
+        }).returning();
+        await tx.insert(auditLog).values({
+          entity_type: item.entityType,
+          entity_id: inserted.id,
+          action: 'create',
+          actor_id: 'default',
+          before_json: null,
+          after_json: inserted as Record<string, unknown>,
+        });
+      });
+      break;
+    }
+
+    case 'onboarding_step': {
+      // onboarding_steps table has NO source/attribution columns; phase_id default to 1
+      await db.transaction(async (tx) => {
+        const [inserted] = await tx.insert(onboardingSteps).values({
+          project_id: projectId,
+          phase_id: 1, // default phase since extraction cannot determine phase
+          name: f.step_name ?? '',
+          description: f.description ?? null,
+          owner: f.team_name ?? null,
+          status: (f.status as 'not-started' | 'in-progress' | 'complete' | 'blocked' | undefined) ?? 'not-started',
+          display_order: 0,
+        }).returning();
+        await tx.insert(auditLog).values({
+          entity_type: item.entityType,
+          entity_id: inserted.id,
+          action: 'create',
+          actor_id: 'default',
+          before_json: null,
+          after_json: inserted as Record<string, unknown>,
+        });
+      });
+      break;
+    }
+
+    case 'integration': {
+      // integrations table has NO source/attribution columns
+      await db.transaction(async (tx) => {
+        const [inserted] = await tx.insert(integrations).values({
+          project_id: projectId,
+          tool: f.tool_name ?? '',
+          category: f.category ?? null,
+          status: (f.connection_status as 'not-connected' | 'configured' | 'validated' | 'production' | 'blocked' | undefined) ?? 'not-connected',
+          notes: f.notes ?? null,
+          display_order: 0,
+        }).returning();
+        await tx.insert(auditLog).values({
+          entity_type: item.entityType,
+          entity_id: inserted.id,
+          action: 'create',
+          actor_id: 'default',
+          before_json: null,
+          after_json: inserted as Record<string, unknown>,
+        });
+      });
+      break;
+    }
   }
 }
 
@@ -635,6 +738,71 @@ async function mergeItem(
       break;
     }
 
+    case 'workstream': {
+      const [beforeRecord] = await db.select().from(workstreams).where(eq(workstreams.id, existingId));
+      const patch = {
+        track: f.track ?? undefined,
+        current_status: f.status ?? undefined,
+        lead: f.owner ?? undefined,
+        state: f.state ?? undefined,
+        percent_complete: f.percent_complete ? parseInt(f.percent_complete, 10) : undefined,
+      };
+      await db.transaction(async (tx) => {
+        await tx.update(workstreams).set(patch).where(eq(workstreams.id, existingId));
+        await tx.insert(auditLog).values({
+          entity_type: item.entityType,
+          entity_id: existingId,
+          action: 'update',
+          actor_id: 'default',
+          before_json: beforeRecord as Record<string, unknown>,
+          after_json: { ...beforeRecord, ...patch } as Record<string, unknown>,
+        });
+      });
+      break;
+    }
+
+    case 'onboarding_step': {
+      const [beforeRecord] = await db.select().from(onboardingSteps).where(eq(onboardingSteps.id, existingId));
+      const patch = {
+        description: f.description ?? undefined,
+        owner: f.team_name ?? undefined,
+        status: f.status as 'not-started' | 'in-progress' | 'complete' | 'blocked' | undefined,
+      };
+      await db.transaction(async (tx) => {
+        await tx.update(onboardingSteps).set(patch).where(eq(onboardingSteps.id, existingId));
+        await tx.insert(auditLog).values({
+          entity_type: item.entityType,
+          entity_id: existingId,
+          action: 'update',
+          actor_id: 'default',
+          before_json: beforeRecord as Record<string, unknown>,
+          after_json: { ...beforeRecord, ...patch } as Record<string, unknown>,
+        });
+      });
+      break;
+    }
+
+    case 'integration': {
+      const [beforeRecord] = await db.select().from(integrations).where(eq(integrations.id, existingId));
+      const patch = {
+        category: f.category ?? undefined,
+        status: f.connection_status as 'not-connected' | 'configured' | 'validated' | 'production' | 'blocked' | undefined,
+        notes: f.notes ?? undefined,
+      };
+      await db.transaction(async (tx) => {
+        await tx.update(integrations).set(patch).where(eq(integrations.id, existingId));
+        await tx.insert(auditLog).values({
+          entity_type: item.entityType,
+          entity_id: existingId,
+          action: 'update',
+          actor_id: 'default',
+          before_json: beforeRecord as Record<string, unknown>,
+          after_json: { ...beforeRecord, ...patch } as Record<string, unknown>,
+        });
+      });
+      break;
+    }
+
     // decision and history are append-only — merge is not applicable
     default:
       break;
@@ -776,6 +944,51 @@ async function deleteItem(entityType: EntityType, existingId: number): Promise<v
           actor_id:    'default',
           before_json: (before as Record<string, unknown>) ?? null,
           after_json:  null,
+        });
+      });
+      break;
+    }
+    case 'workstream': {
+      const [before] = await db.select().from(workstreams).where(eq(workstreams.id, existingId));
+      await db.transaction(async (tx) => {
+        await tx.delete(workstreams).where(eq(workstreams.id, existingId));
+        await tx.insert(auditLog).values({
+          entity_type: entityType,
+          entity_id: existingId,
+          action: 'delete',
+          actor_id: 'default',
+          before_json: (before as Record<string, unknown>) ?? null,
+          after_json: null,
+        });
+      });
+      break;
+    }
+    case 'onboarding_step': {
+      const [before] = await db.select().from(onboardingSteps).where(eq(onboardingSteps.id, existingId));
+      await db.transaction(async (tx) => {
+        await tx.delete(onboardingSteps).where(eq(onboardingSteps.id, existingId));
+        await tx.insert(auditLog).values({
+          entity_type: entityType,
+          entity_id: existingId,
+          action: 'delete',
+          actor_id: 'default',
+          before_json: (before as Record<string, unknown>) ?? null,
+          after_json: null,
+        });
+      });
+      break;
+    }
+    case 'integration': {
+      const [before] = await db.select().from(integrations).where(eq(integrations.id, existingId));
+      await db.transaction(async (tx) => {
+        await tx.delete(integrations).where(eq(integrations.id, existingId));
+        await tx.insert(auditLog).values({
+          entity_type: entityType,
+          entity_id: existingId,
+          action: 'delete',
+          actor_id: 'default',
+          before_json: (before as Record<string, unknown>) ?? null,
+          after_json: null,
         });
       });
       break;
