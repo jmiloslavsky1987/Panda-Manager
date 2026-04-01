@@ -41,8 +41,8 @@ All v2.0 requirements are complete. See `.planning/v2.0-MILESTONE-AUDIT.md` for 
 
 ### CHAT — Project Chat
 
-- [ ] **CHAT-01**: Each project has an inline AI chat panel that answers questions using live project DB data
-- [ ] **CHAT-02**: Chat responses are constrained to current project data only — no invented facts, all answers reference specific records
+- [x] **CHAT-01**: Each project has an inline AI chat panel that answers questions using live project DB data
+- [x] **CHAT-02**: Chat responses are constrained to current project data only — no invented facts, all answers reference specific records
 
 ### VIS — Interactive Visuals
 
@@ -80,8 +80,8 @@ All v2.0 requirements are complete. See `.planning/v2.0-MILESTONE-AUDIT.md` for 
 | UI-04 | Phase 27 | Complete |
 | VIS-01 | Phase 28 | Complete |
 | VIS-02 | Phase 28 | Complete |
-| CHAT-01 | Phase 29 | Pending |
-| CHAT-02 | Phase 29 | Pending |
+| CHAT-01 | Phase 29 | Complete |
+| CHAT-02 | Phase 29 | Complete |
 | CTX-01 | Phase 30 | Pending |
 | CTX-02 | Phase 30 | Pending |
 | CTX-03 | Phase 30 | Pending |

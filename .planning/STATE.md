@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
-status: planning
-last_updated: "2026-03-31T19:53:42.310Z"
+status: Ready for checkpoint
+last_updated: "2026-04-01T03:23:16.086Z"
 last_activity: "2026-03-31 — 28-05: Phase 28 verification complete — 12/12 visual tests GREEN, production build passing"
 progress:
   total_phases: 33
   completed_phases: 31
-  total_plans: 168
-  completed_plans: 168
+  total_plans: 172
+  completed_plans: 170
 ---
 
 # Project State
@@ -88,6 +88,9 @@ Phase 26 is the mandatory entry point — session infrastructure must exist befo
 - [Phase 28-interactive-visuals]: Cast layoutedNodes to Node[] — LayoutNode[] compatible but TypeScript requires explicit cast for useState
 - [Phase 28-05]: Pre-existing build blockers resolved as deviation Rule 3 (blocking issues)
 - [Phase 28-05]: Production build verification required before browser checkpoint per VALIDATION.md research findings
+- [Phase 29-project-chat]: Vercel AI SDK chosen over raw Anthropic SDK for chat streaming (toUIMessageStreamResponse + useChat integration)
+- [Phase 29-project-chat]: Temperature 0.3 for anti-hallucination (balances accuracy with conversational fluency)
+- [Phase 29-project-chat]: XML-wrapped project context (<project_data> tags) for prompt injection defense
 
 ## Previous Milestone Decisions (v2.0)
 
