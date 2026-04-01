@@ -958,7 +958,15 @@ Plans:
   2. Approving suggestions from the Context tab writes all approved items to the correct workspace tabs in a single PostgreSQL transaction — if any write fails, no partial data is committed; re-uploading the same document does not create duplicate records (idempotency via ingestion_id)
   3. The Context tab displays a completeness status badge (complete / partial / empty) for each of the 11 workspace tabs — the analysis is triggered on demand and reflects live DB data at the time of analysis
   4. The completeness view lists specific gap descriptions per tab (e.g., "Teams tab: ADR onboarding status missing for 3 of 5 team members") — gaps reference template section definitions from Phase 27, not generic empty-record counts
-**Plans**: TBD
+**Plans**: 6 plans
+
+Plans:
+- [ ] 30-01-PLAN.md — Wave 1: RED test stubs for all 4 CTX requirements
+- [ ] 30-02-PLAN.md — Wave 2: Ingestion pipeline extension (3 new entity types: workstream, onboarding_step, integration)
+- [ ] 30-03-PLAN.md — Wave 2: Context tab UI registration, page route, ContextTab component
+- [ ] 30-04-PLAN.md — Wave 3: Completeness analysis API endpoint with structured Claude outputs
+- [ ] 30-05-PLAN.md — Wave 4: ContextTab wired to live data (upload history + completeness panel)
+- [ ] 30-06-PLAN.md — Wave 5: Full test gate + human verification checkpoint
 
 
 ## Progress (v3.0)
@@ -972,7 +980,7 @@ v3.0 phases execute: 26 → 27 → 28/29 (parallel, both depend on 26 only) → 
 | 27. UI Overhaul + Templates | 4/5 | Complete    | 2026-03-31 |
 | 28. Interactive Visuals | 5/5 | Complete   | 2026-03-31 |
 | 29. Project Chat | 4/4 | Complete    | 2026-04-01 |
-| 30. Context Hub | 0/TBD | Not started | - |
+| 30. Context Hub | 0/6 | Not started | - |
 
 ---
 
