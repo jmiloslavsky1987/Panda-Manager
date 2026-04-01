@@ -177,3 +177,52 @@ describe('Document extractor (ING-04)', () => {
     }
   });
 });
+
+// CTX-02: New entity types — workstream, onboarding_step, integration
+// Wave 0 stubs — fail RED via undefined + toBeDefined() pattern
+describe('new entity types', () => {
+  it('EntityType union includes workstream', () => {
+    const target: any = undefined;
+    expect(target).toBeDefined();
+  });
+
+  it('EntityType union includes onboarding_step', () => {
+    const target: any = undefined;
+    expect(target).toBeDefined();
+  });
+
+  it('EntityType union includes integration', () => {
+    const target: any = undefined;
+    expect(target).toBeDefined();
+  });
+
+  it('EXTRACTION_SYSTEM prompt includes field guidance for workstream', () => {
+    const target: any = undefined;
+    expect(target).toBeDefined();
+  });
+
+  it('EXTRACTION_SYSTEM prompt includes field guidance for onboarding_step', () => {
+    const target: any = undefined;
+    expect(target).toBeDefined();
+  });
+
+  it('EXTRACTION_SYSTEM prompt includes field guidance for integration', () => {
+    const target: any = undefined;
+    expect(target).toBeDefined();
+  });
+
+  it('isAlreadyIngested handles workstream entity type', () => {
+    const target: any = undefined;
+    expect(target).toBeDefined();
+  });
+
+  it('isAlreadyIngested handles onboarding_step entity type', () => {
+    const target: any = undefined;
+    expect(target).toBeDefined();
+  });
+
+  it('isAlreadyIngested handles integration entity type', () => {
+    const target: any = undefined;
+    expect(target).toBeDefined();
+  });
+});
