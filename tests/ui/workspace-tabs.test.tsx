@@ -94,3 +94,22 @@ describe('WorkspaceTabs — UI-01', () => {
     expect(deliveryLink?.getAttribute('href')).toContain('subtab=actions')
   })
 })
+
+// CTX-01: Context tab registration in TAB_GROUPS
+// Wave 0 stub — fails RED via undefined + toBeDefined() pattern
+describe('Context tab registration', () => {
+  it('Context tab is registered in TAB_GROUPS with standalone: true', () => {
+    const target: any = undefined;
+    expect(target).toBeDefined();
+  });
+
+  it('Context tab URL pattern is ?tab=context', () => {
+    const target: any = undefined;
+    expect(target).toBeDefined();
+  });
+
+  it('Context tab appears before Admin in the tab order', () => {
+    const target: any = undefined;
+    expect(target).toBeDefined();
+  });
+})
