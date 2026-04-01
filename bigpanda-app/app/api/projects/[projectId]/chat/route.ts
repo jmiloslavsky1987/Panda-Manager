@@ -69,7 +69,7 @@ Answer questions helpfully and conversationally, but always ground your response
   const result = streamText({
     model: anthropic('claude-sonnet-4-6'),
     system: systemPrompt,
-    messages: convertToModelMessages(body.messages),
+    messages: await convertToModelMessages(body.messages),
     temperature: 0.3, // Lower temperature reduces hallucination risk
   });
 
