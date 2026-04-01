@@ -942,7 +942,12 @@ Plans:
   1. The project workspace has a Chat panel accessible from the tab bar — typing a question and submitting streams an answer to the browser in real time (words appear progressively, not after a full wait); a typing indicator is visible while the response is generating
   2. Asking a follow-up question in the same session ("what about the risks?") correctly references the prior exchange — multi-turn context is maintained within the browser session without repeating the full project context on every message
   3. A question about a specific project fact (e.g., "how many open actions does Kaiser have?") returns a response that cites the actual DB record count — if the DB has 7 open actions, the response says 7; the system prompt explicitly prohibits invented numbers and the response format can be verified against a live DB query
-**Plans**: TBD
+**Plans**: 4 plans
+Plans:
+- [ ] 29-00-PLAN.md — Install Vercel AI SDK + create RED test stubs
+- [ ] 29-01-PLAN.md — Backend: chat-context-builder.ts + streaming API route
+- [ ] 29-02-PLAN.md — Frontend: ChatPanel component + chat page + WorkspaceTabs registration
+- [ ] 29-03-PLAN.md — Human verification: streaming, multi-turn, hallucination audit
 
 ### Phase 30: Context Hub
 **Goal**: Each project has a dedicated Context tab where team members can upload documents, see Claude's content routing suggestions per workspace tab, approve or reject each suggestion before any data is written, and view a per-tab completeness status that flags specific quality gaps — all document writes are transactional and idempotent.
@@ -966,7 +971,7 @@ v3.0 phases execute: 26 → 27 → 28/29 (parallel, both depend on 26 only) → 
 | 26. Multi-User Auth | 5/5 | Complete   | 2026-03-31 |
 | 27. UI Overhaul + Templates | 4/5 | Complete    | 2026-03-31 |
 | 28. Interactive Visuals | 5/5 | Complete   | 2026-03-31 |
-| 29. Project Chat | 0/TBD | Not started | - |
+| 29. Project Chat | 0/4 | In planning | - |
 | 30. Context Hub | 0/TBD | Not started | - |
 
 ---
