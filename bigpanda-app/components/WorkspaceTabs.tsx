@@ -48,6 +48,7 @@ const TAB_GROUPS: TabGroup[] = [
     ],
   },
   { id: 'skills', label: 'Skills', standalone: true },
+  { id: 'chat', label: 'Chat', standalone: true },
   {
     id: 'admin',
     label: 'Admin',
