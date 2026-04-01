@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
 status: executing
-last_updated: "2026-04-01T13:56:32.783Z"
+last_updated: "2026-04-01T13:59:56Z"
 last_activity: "2026-04-01 — 30-01: 26 RED test stubs created for CTX-01/02/03/04; tests/context/ directory established; Wave 0 pattern applied"
 progress:
   total_phases: 33
   completed_phases: 32
   total_plans: 178
-  completed_plans: 174
+  completed_plans: 175
 ---
 
 # Project State
@@ -21,9 +21,9 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 ## Current Status
 
 **Phase:** Phase 30 — Context Hub — In Progress
-**Plan:** 30-02 complete (new entity types implemented)
-**Status:** Ready to execute 30-03
-**Last activity:** 2026-04-01 — 30-02: Extended ingestion pipeline with workstream/onboarding_step/integration entity types; extract and approve routes updated; 9 RED tests turned GREEN; CTX-02 complete
+**Plan:** 30-03 complete (Context tab registered)
+**Status:** Ready to execute 30-04
+**Last activity:** 2026-04-01 — 30-03: Context tab registered in WorkspaceTabs navigation; ContextTab component created with upload, history, and completeness panel sections; 9/9 workspace-tabs tests GREEN; CTX-01 complete
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
 **Current focus:** v3.0 milestone starting. Phase 26 (Multi-User Auth) is the entry point — all other v3.0 phases depend on session infrastructure.
@@ -97,6 +97,8 @@ Phase 26 is the mandatory entry point — session infrastructure must exist befo
 - [Phase 29-project-chat]: Production build verification required before checkpoint — catches SSR/hydration issues not visible in dev mode
 - [Phase 30]: workstreams table has source column but NOT source_artifact_id or ingested_at — use source: 'ingestion' only
 - [Phase 30]: onboarding_steps and integrations tables have NO attribution columns — phase_id=1 default for onboarding_step, skip attribution entirely
+- [Phase 30-context-hub]: 30-03: TAB_GROUPS exported from WorkspaceTabs.tsx for testability — enables direct unit tests without full component rendering
+- [Phase 30-context-hub]: 30-03: IngestionModal props use open/onOpenChange (not isOpen/onClose) — verified from Phase 18 source before implementation
 
 ## Previous Milestone Decisions (v2.0)
 
