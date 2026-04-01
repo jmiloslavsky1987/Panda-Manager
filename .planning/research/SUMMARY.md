@@ -1,194 +1,303 @@
 # Project Research Summary
 
-**Project:** BigPanda AI Project Management App — v3.0 Collaboration & Intelligence
-**Domain:** AI-native PS Delivery Management — multi-user auth, per-project chat, interactive visuals, Context Hub, templates
-**Researched:** 2026-03-30
+**Project:** BigPanda Project Assistant App — v4.0 Infrastructure & UX Foundations
+**Domain:** Professional Services Project Management & Onboarding Tools
+**Researched:** 2026-04-01
 **Confidence:** HIGH
 
 ## Executive Summary
 
-The v3.0 milestone adds six capability areas on top of a mature single-user Next.js 16 + PostgreSQL + BullMQ platform. The core technical challenge is not building new features in isolation but integrating them into a working codebase in the correct order: authentication must come first because every subsequent feature depends on a verified user identity — audit log attribution, session-scoped chat, and admin-only route gating all require auth to exist before they are written. The recommended approach is a dependency-sequenced five-phase build: auth and tab templates in parallel first, then interactive visuals, per-project chat, and finally the Context Hub (most complex, highest Claude API risk, most failure modes).
+v4.0 adds critical infrastructure improvements and UX enhancements to the existing BigPanda project management application. The core enhancement is migrating document extraction from fragile Server-Sent Events to robust BullMQ background jobs, enabling browser-refresh resilience for long-running AI extraction tasks (4-6 minutes per large document). Additionally, time tracking moves from per-project tabs to a global cross-project view, and the Overview tab receives major enhancements with Health Dashboard, Metrics visualization, and AI-generated weekly focus summaries.
 
-The stack additions are lean and well-justified. `better-auth@1.5.6` is preferred over Auth.js v5 because SAML 2.0 is a native plugin rather than a multi-week custom integration, and better-auth is now maintained by the same team that acquired Auth.js. For chat, the Vercel AI SDK (`ai` + `@ai-sdk/anthropic`) provides the `useChat` hook that handles SSE stream assembly in the browser — the existing `@anthropic-ai/sdk` raw SDK stays in place for all 15 skill routes and the two SDKs coexist without conflict. The originally-considered RAG/pgvector approach should be deferred entirely: at single-project scope a structured DB query producing a 2000–4000 token context payload is faster, more deterministic, and requires no new infrastructure. `@xyflow/react@12.10.2` (React Flow v12) handles interactive node-edge diagrams.
+The recommended approach leverages existing infrastructure wherever possible. No new packages are required for BullMQ job progress tracking — the existing BullMQ 5.71.0 installation fully supports progress updates via built-in APIs. For new visualizations, add only two targeted dependencies: react-chrono for milestone timelines and Recharts for metrics charts. The critical architectural pattern is polling-based progress tracking (not SSE) with PostgreSQL as the source of truth for job state, ensuring users can navigate away and return without losing visibility into long-running operations.
 
-The dominant risk category is authentication security. CVE-2025-29927 (CVSS 9.1, March 2025) demonstrated that Next.js middleware can be bypassed by setting a single HTTP header — any app that relies solely on `middleware.ts` for auth is fully exposed. Defense-in-depth requires `requireSession()` at the top of every Route Handler and Server Action in addition to the middleware redirect. A second structural risk exists in schema design: whether future Okta integration requires a two-day config change or a two-week rewrite depends entirely on one decision made in the auth phase — adding an `okta_subject` nullable column to the `users` table and abstracting role resolution behind a `resolveRole(session)` function. Context Hub carries the highest per-feature implementation risk, with two specific failure modes requiring upfront design: transactional multi-tab writes (partial failures produce silent data inconsistency) and prompt injection via uploaded document text.
-
----
+Key risks center on data integrity and migration safety. The primary pitfall is implementing BullMQ extraction without proper state persistence — if job progress is stored only in ephemeral Redis, browser refresh loses all visibility and jobs can fail silently. Prevention requires a PostgreSQL staging table for job state and atomic commit patterns to prevent partial extraction data from polluting workspace tabs on failure. Schema migrations for workstream separation (ADR vs Biggy) must include data backfill scripts, not just DDL changes, to avoid breaking existing projects. Following these patterns from Phase 1 ensures production resilience.
 
 ## Key Findings
 
 ### Recommended Stack
 
-The existing stack (Next.js 16.2.0, React 19, PostgreSQL + Drizzle ORM 0.45.1, BullMQ + Redis, `@anthropic-ai/sdk@0.80.0`, Radix UI, Tailwind CSS, Vitest) is unchanged for v3.0. Research addressed only the six new capability areas. The milestone brief references "Next.js 14" — the running application is Next.js 16.2.0, which replaces classic middleware with a `proxy.ts` pattern and has critical compatibility implications for auth library selection.
+**Minimal new dependencies.** v4.0 requires only two new packages: react-chrono for timeline visualization and Recharts for metrics charts. The existing stack (Next.js 16.2.0, React 19, PostgreSQL + Drizzle ORM, BullMQ 5.71.0 + Redis, Anthropic SDK, Vercel AI SDK, Radix UI, Tailwind CSS) fully supports all new features.
 
-**Core technology additions:**
-- `better-auth@1.5.6`: Session management, credentials login, RBAC, Okta-ready OIDC/SAML — native SAML 2.0 plugin, TypeScript-first, Next.js 16 proxy.ts supported; use `--legacy-peer-deps` if peer dep version mismatch on install
-- `bcryptjs@^2.x` + `@types/bcryptjs`: Password hashing — pure JS, no native bindings, safe in all Next.js runtimes including Edge
-- `ai@6.0.141` + `@ai-sdk/anthropic@3.0.64` + `@ai-sdk/react@3.0.143`: Vercel AI SDK — for chat only; provides `useChat` + `streamText` + `toDataStreamResponse()`; coexists with raw `@anthropic-ai/sdk` without conflict
-- `@xyflow/react@12.10.2`: Interactive node-edge diagrams (Engagement Map, Workflow Diagram); requires `dynamic(() => import(...), { ssr: false })` in all parent components
-- `pgvector@0.2.1` + `voyageai@0.2.1`: Available but NOT RECOMMENDED for v3.0 — structured DB query context injection is correct at project data scale; defer vector search to a future phase if cross-project knowledge base search becomes a requirement
+**Core technologies:**
+- **BullMQ 5.71.0** (existing): Background job processing with progress tracking — Worker calls `job.updateProgress(percentage)` and `job.log(message)`, client polls `/api/jobs/[id]/progress` endpoint
+- **react-chrono ^3.0.0** (new): Timeline component for visual milestone representation — Declarative React component with vertical/horizontal/alternating modes, TypeScript support, SSR-safe
+- **Recharts ^2.15.0** (new): Declarative charting library for React — Composable components (`<BarChart>`, `<LineChart>`), responsive by default, pure SVG, ~60KB bundle
 
-No new packages required for Context Hub or completeness analysis — both use existing `@anthropic-ai/sdk`, Drizzle ORM, and BullMQ infrastructure.
-
-See [STACK.md](.planning/research/STACK.md) for full version compatibility table, installation commands, and alternatives considered.
+**Critical finding:** Moving from SSE to BullMQ for document extraction requires **zero new packages** — only a pattern change using existing BullMQ infrastructure. The pattern shift is polling (every 1.5-2s) over SSE because BullMQ persists job state in Redis, making it resilient to browser refresh, whereas SSE connections die on navigation.
 
 ### Expected Features
 
-**Must have (table stakes) — missing means the feature feels unshipped:**
-- Credential-based login form with persistent httpOnly cookie session
-- Role-enforced UI with server-side admin enforcement (not UI-only gating)
-- Context Hub file upload with extracted content review before DB commit (approve/reject per suggestion)
-- Per-tab completeness indicator (complete/partial/empty badge minimum)
-- Project Chat that answers questions from live project DB data — hallucinating project details is worse than no chat
-- Sub-tabs for Teams and Architecture tabs (these have the clearest multi-content-area need)
-- Templates: new project pre-populates with canonical section structure across all 11 tabs
+**Table stakes (users expect these):**
+- **Health Dashboard**: Overall health indicator, risk count by severity, active blocker count, trend indicators
+- **Metrics Section**: Onboarding completion %, integration counts by status, phase completion by workstream, time to milestone
+- **Weekly Focus Summary**: Top 3-5 priorities auto-generated and refreshed
+- **Time Tracking Global View**: Cross-project timesheet with week-based grouping and project attribution on every entry
+- **BullMQ Extraction Progress**: Polling endpoint with % complete, completion notification, error handling with retry, cancel job capability
 
-**Should have (differentiators — what makes this categorically better than Notion + manual ChatGPT):**
-- Okta-ready OIDC architecture wired but not live — environment-variable gated so IT can plug in with no app changes
-- Admin role for scheduler and user management with a separate `/admin` route group
-- Context Hub AI routing: extracted content routed to the correct tab automatically with low-confidence fallback to manual routing
-- Per-tab quality gap flags listing missing sections (upgrade from completeness badge)
-- Interactive Engagement Map with drill-down to live DB data on node click
-- Project chat multi-turn within session (follow-up questions work correctly)
-- URL-addressable sub-tab state (`?tab=teams&subtab=adr`) for deep-linking
+**Differentiators (set product apart):**
+- **Health Dashboard**: Phase health by workstream (ADR vs Biggy granularity) — most tools show overall health only
+- **Metrics**: Validation progress tracker (emphasizes quality over quantity — "X of Y integrations validated")
+- **Weekly Focus**: Auto-refresh on data change with smart ranking algorithm considering severity, milestone proximity, blocker status
+- **Time Tracking**: Bulk edit from global view extending existing bulk action infrastructure
+- **Integration Tracker**: Split by ADR vs Biggy with category grouping
 
-**Defer to v3.1 and v4+:**
-- Interactive Workflow Diagram (lower urgency than Engagement Map; add when Engagement Map pattern is validated)
-- Full per-tab gap scoring 1–5 with structured JSON output (upgrade after simple badge is shipping)
-- Multiple template types (Enterprise, SMB, Renewal) — validate single canonical template first
-- Live Okta integration (requires BigPanda IT coordination with a live Okta tenant)
-- Persistent project chat history (session-scoped is sufficient to validate chat value)
-- pgvector / RAG embeddings (anti-feature at current data scale — direct DB query is faster and more deterministic)
-
-See [FEATURES.md](.planning/research/FEATURES.md) for full feature dependency graph, anti-feature rationale, and prioritization matrix.
+**Anti-features (explicitly avoid):**
+- Real-time collaborative editing (Google Docs style) — overkill for PS delivery tool
+- Custom dashboard builder (drag-drop widgets) — premature without user feedback
+- Predictive health forecasting ("project will be red in 2 weeks") — insufficient historical data
+- Mobile app — web responsive sufficient for PS team
+- BullMQ pause/resume — adds state complexity without clear user benefit
 
 ### Architecture Approach
 
-v3.0 is additive on the existing system. No existing tables require structural changes — the only new DB table is `users` (email, password_hash, role, active, okta_subject nullable). The `audit_log.actor_id` column already exists but was always null in single-user mode; it will now be populated from session. The pattern is: `middleware.ts` as a UX redirect gate (edge-safe, no bcrypt, no DB calls) plus `requireSession()` called at the top of every Route Handler as the actual security enforcement layer. Interactive visuals become React client components reading from existing DB tables — the HTML-generating skills are not modified and their outputs remain available in the Output Library.
+v4.0 introduces three major architectural changes cleanly integrated with existing Next.js 16 / PostgreSQL / BullMQ stack: (1) BullMQ extraction job with Redis progress tracking and PostgreSQL state persistence, (2) Time tracking route refactor from `/customer/[id]/time` to `/time-tracking` with query-param filtering, (3) Overview tab overhaul with schema migration to add `track` column for ADR/Biggy separation.
 
-**Major new components:**
-1. `middleware.ts` — edge-safe cookie session gate; reads iron-session cookie, redirects unauthenticated users to /login; no bcrypt, no DB
-2. `lib/auth.ts` + `lib/session.ts` + `lib/session-edge.ts` — split auth config isolating Node.js bcrypt operations from edge-safe session decryption
-3. `app/api/chat/[id]/route.ts` + `lib/chat-context-builder.ts` — per-project chat endpoint using Vercel AI SDK `streamText`; DB snapshot approach (no vector search)
-4. `app/api/context-hub/[id]/ingest/route.ts` + `apply/route.ts` — Claude routing call returning JSON preview, then transactional DB writes via existing `discoveryItems` infrastructure
-5. `components/EngagementMapVisual.tsx` + `WorkflowDiagramVisual.tsx` — React client components; WorkflowDiagram uses React Flow with `dynamic()` + `ssr:false`
-6. `lib/tab-template-registry.ts` — TypeScript registry of fixed section structure per tab type; version-controlled, type-safe, zero runtime overhead (no DB table needed)
+**Major components:**
+1. **Document Extraction Job System** — `worker/jobs/document-extraction.ts` job handler, `POST /api/ingestion/extract-job` enqueue endpoint, `GET /api/ingestion/extract-job/[jobId]` polling endpoint, PostgreSQL staging table for atomic commit
+2. **Global Time Tracking Route** — `/app/time-tracking/page.tsx` top-level route, `GET /api/time-tracking/entries` with project/week filters, Next.js redirect from old route preserving project context
+3. **Overview Tab Components** — `HealthDashboard`, `MetricsSection`, `WeeklyFocusSummary` (cached from BullMQ scheduled job), `MilestoneTimeline`, schema migration adding `track` column to `onboarding_phases` and `onboarding_steps`
 
-See [ARCHITECTURE.md](.planning/research/ARCHITECTURE.md) for full component responsibility table, data flow diagrams, anti-patterns, and dependency-sequenced build order.
+**Critical pattern:** Polling-based progress tracking with PostgreSQL as source of truth. Extraction job updates Redis for real-time progress (ephemeral, TTL 1 hour) AND writes to PostgreSQL staging table after each chunk (persistent). Client polls PostgreSQL-backed API route, not Redis directly, ensuring progress visibility survives browser refresh.
 
 ### Critical Pitfalls
 
-1. **Middleware-only auth (CVE-2025-29927)** — Never treat `middleware.ts` as the sole auth enforcement point. Add `requireSession()` to every Route Handler and Server Action regardless of middleware. The app runs Next.js 16.2.0 (patched), but defense-in-depth is still mandatory. Block `x-middleware-subrequest` at the reverse proxy as a belt-and-suspenders measure.
+1. **SSE Route Handler Converted to Background Job Without Job State Persistence** — Browser refresh loses ALL progress visibility if job state is only in Redis. **Prevention:** Create `extraction_jobs` PostgreSQL table with `{ id, artifact_id, job_id, status, progress_message, current_chunk, total_chunks }`. Worker updates DB after each chunk. Client polls PostgreSQL-backed endpoint, not Redis job metadata directly.
 
-2. **Okta-hostile user store** — Add `okta_subject` (nullable TEXT) to the `users` table in the initial migration. Implement `resolveRole(session)` as an abstraction accepting both credential and OIDC session shapes. Without these two decisions, adding Okta later requires a data migration and full session layer rewrite.
+2. **Partial Extraction Failure Leaves Orphaned Data** — Multi-chunk extraction processes chunks 1-3, crashes on chunk 4, but chunks 1-3 already committed to workspace tables. Retry re-inserts duplicates. **Prevention:** Stage results in `extraction_jobs.items_staged` JSONB column, don't insert into workspace tables until ALL chunks complete. Atomic transaction commits all deduplicated items at end.
 
-3. **Context Hub partial write failures** — All tab writes from a single document ingestion must be wrapped in a single PostgreSQL transaction. Implement idempotency via a UUID `ingestion_id` to prevent duplicate writes on re-upload. The Claude routing call (returns JSON preview) must be decoupled from the DB write phase (transactional apply step).
+3. **BullMQ Worker Crashes Mid-Job, Redis TTL Expires Before Restart** — Large doc extraction takes 4-6 min. Worker crashes at 3 min. Default Redis TTL (5 min) expires before restart, job metadata discarded, artifact stuck in "extracting" forever. **Prevention:** Set job TTL to 30 minutes, job timeout to 20 minutes, retry attempts to 2 with exponential backoff. Heartbeat pattern: worker updates `extraction_jobs.updated_at` every 30s; cron job detects stale extractions (>10 min, status="running") and marks failed.
 
-4. **Prompt injection via uploaded documents** — Wrap all extracted document content in `<document_content>...</document_content>` delimiters in the routing prompt. Validate all Claude routing output against a strict JSON schema before any DB write is triggered. Log routing outputs to `context_hub_events` before writes for post-hoc audit.
+4. **Time Tracking Route Refactor Breaks Existing Bookmarks and Email Links** — Current route `/customer/[id]/time` bookmarked by users and embedded in email reminders. Redesign moves to `/time-tracking`. Old links → 404. **Prevention:** Add Next.js redirect in `next.config.ts` mapping `/customer/:id/time` → `/time-tracking?project=:id` (temporary redirect). Update internal link generation and email templates. Keep redirect for 6 months minimum.
 
-5. **React Flow hydration failure** — Any component using `@xyflow/react` or accessing browser APIs must be wrapped in `dynamic(() => import(...), { ssr: false })`. Never access `window`, `document`, or `ref.current` outside `useEffect`. Test with `next build && next start` — development mode does not surface all hydration errors.
-
-See [PITFALLS.md](.planning/research/PITFALLS.md) for the full pitfall list including moderate risks, the security checklist, and the "looks done but isn't" verification checklist.
-
----
+5. **Database Schema Migration for Overview Tab Breaks Existing Onboarding Data** — Migration adds `track` column to `onboarding_phases`/`onboarding_steps` but doesn't backfill existing data. Existing projects render empty sections in new UI (looks like data loss). **Prevention:** Migration includes both DDL (ALTER TABLE ADD COLUMN track) and DML (UPDATE to backfill track from phase names with heuristic). Add dual-read fallback in code: if track-filtered query returns 0 rows, fall back to old schema query pattern.
 
 ## Implications for Roadmap
 
-The research's dependency graph is clear and unambiguous: auth is the prerequisite for chat, Context Hub, admin routing, and audit log attribution. Tab templates are independent and can be built in parallel with auth. Interactive visuals depend only on existing DB tables and React Flow. Chat depends on auth. Context Hub depends on auth and benefits significantly from templates being defined first (the completeness analysis needs the template section schema as its definition of "complete"). This produces five phases, with Phase 1 containing a parallelizable sub-track.
+Based on research, suggested phase structure:
 
-### Phase 1: Multi-User Auth Foundation
-**Rationale:** Session context is required by audit log attribution, chat endpoint security, admin gating, and the `project_members` data access pattern. All 40+ existing Route Handlers need a `requireSession()` guard added — doing this as a cohesive phase is far safer than retrofitting it after other v3 features are written. The schema decisions here (okta_subject column, resolveRole abstraction) are one-time choices with permanent consequences.
-**Delivers:** Working multi-user login, session management, admin role enforcement, Okta-ready architecture, audit log actor attribution, all existing routes session-protected, `/admin` user management panel.
-**Addresses:** Credential login (table stakes), session persistence, role-enforced UI, admin dashboard, Okta-ready OIDC adapter.
-**Avoids:** CVE-2025-29927 middleware bypass, cross-user data leakage from missing project_id user membership check, Okta-hostile integer-ID user store, edge runtime crash from importing bcrypt in middleware.
+### Phase 1: BullMQ Document Extraction Migration
+**Rationale:** Critical infrastructure fix must come first. Current SSE extraction is fragile (browser refresh kills 4-6 minute operations). Background job pattern is reused by Phase 4 (Weekly Focus) — establishes job infrastructure patterns early. No dependencies on other features.
 
-### Phase 1B: Tab Templates (Parallelize with Phase 1)
-**Rationale:** Pure TypeScript registry — no new DB tables, no auth dependency, no API changes. Can be built and merged while Phase 1 is in review. Completing templates before Context Hub is important because the completeness analysis needs template section definitions to know what "complete" means per tab.
-**Delivers:** `lib/tab-template-registry.ts` with fixed section structure for all 11 tab types; workspace tabs render sections per template; new project creation seeds template defaults.
-**Addresses:** Template structure consistency, canonical empty-project structure, section definitions that unblock completeness analysis in Phase 5.
-**Avoids:** Template retrofitting data loss — expand/contract pattern applies from the start rather than as a migration against live data.
+**Delivers:** Resilient document extraction that survives browser refresh, with visible progress tracking and atomic commit preventing duplicate data on failure.
 
-### Phase 2: Interactive Visuals
-**Rationale:** DB tables already exist from v2. Components are purely additive — no new tables, no auth dependency (read-only). Can begin immediately after Phase 1 merges. The Engagement Map is the highest user-visible differentiator in the visual category and validates the React client component architecture early.
-**Delivers:** `EngagementMapVisual.tsx` (inline SVG, clickable nodes with drill-down modal), `WorkflowDiagramVisual.tsx` (React Flow + dagre layout), both wired into the architecture and overview/teams tabs.
-**Uses:** `@xyflow/react@12.10.2`, `@dagrejs/dagre`, `dynamic()` + `ssr:false` pattern for all browser-API-dependent components.
-**Avoids:** React Flow hydration failure (dynamic import required), bundle size impact on initial page load (dynamic import defers 90kb gzipped to on-demand load).
+**Stack elements:** Existing BullMQ 5.71.0, PostgreSQL staging table (`extraction_jobs`), worker job handler pattern
 
-### Phase 3: Per-Project Chat
-**Rationale:** Chat endpoint requires session protection (Phase 1 completed). Straightforward to implement once auth is in place. Structured DB-query context injection is the correct architecture — no pgvector needed. Streaming must be built in from day one, not added as an optimization.
-**Delivers:** `/customer/[id]/chat` workspace tab, `/api/chat/[id]` streaming endpoint, `lib/chat-context-builder.ts` DB snapshot utility, multi-turn session-scoped conversation with typing indicator.
-**Implements:** Per-project DB-query RAG chat (Pattern 2 from ARCHITECTURE.md) — Vercel AI SDK `streamText` + `useChat`, no vector embeddings.
-**Avoids:** Cross-project data leakage in chat responses (DAL wrapper + project-scoped queries only), non-streamed 15-second wait (critical UX failure), raw Anthropic SDK in chat endpoint (breaks `useChat` Vercel data stream protocol).
+**Critical pitfalls addressed:**
+- Job state persistence in PostgreSQL (prevents progress loss on refresh)
+- Atomic commit with staging table (prevents partial extraction duplicates)
+- Job TTL and timeout tuning (prevents silent job loss on worker crash)
 
-### Phase 4: Context Hub
-**Rationale:** Most complex feature with the most failure modes. Requires auth (Phase 1). Benefits from tab templates being defined (Phase 1B) since completeness analysis checks against template sections. The `discovery_items` approval workflow infrastructure is already in place from v2. Building this last ensures all prior infrastructure is stable and the team has proven the Claude API integration patterns in Phase 3.
-**Delivers:** `/customer/[id]/context-hub` workspace tab, document upload + AI routing + approve/reject flow, per-tab completeness badge, Context Hub and Chat added to WorkspaceTabs navigation.
-**Implements:** Claude as content router (Pattern 3 from ARCHITECTURE.md) — two-step ingest/apply API, single-transaction multi-tab writes, idempotent uploads via ingestion_id, reuse of existing `discoveryItems` infrastructure.
-**Avoids:** Context Hub partial write failures (single PostgreSQL transaction), prompt injection via document content (delimiter wrapping + JSON schema validation), duplicate writes on re-upload (idempotency key).
+**Dependencies:** None — can start immediately
+
+**Research flag:** SKIP RESEARCH — pattern established by existing `worker/jobs/skill-run.ts` and STACK.md polling pattern. Implementation is straightforward extension of existing BullMQ infrastructure.
+
+---
+
+### Phase 2: Time Tracking Global View
+**Rationale:** Standalone feature with no dependencies on Phase 1 or 3. Can be built in parallel with Phase 1. Establishes cross-project query patterns used by Phase 3 Metrics (hours logged metric).
+
+**Delivers:** Top-level `/time-tracking` route with cross-project weekly timesheet, project attribution, week grouping, quick project filter, and backward-compatible redirect from old route.
+
+**Uses:** Existing `time_entries` table, Drizzle ORM left join to projects, Next.js redirect API
+
+**Addresses features:**
+- Table stakes: global view across projects, week-based grouping, project attribution
+- Differentiator: bulk edit from global view (extends existing bulk action infrastructure)
+
+**Critical pitfalls addressed:**
+- Route redirect preserves project context (prevents bookmark/email link breakage)
+- Query scoping prevents performance trap (date range filter, user scoping, pagination, eager load projects in single query)
+
+**Dependencies:** None — independent feature
+
+**Research flag:** SKIP RESEARCH — standard Next.js route patterns, PostgreSQL JOIN queries, existing bulk action API extension. No novel patterns.
+
+---
+
+### Phase 3: Overview Tab Schema Migration
+**Rationale:** Must precede Phase 4-6 because they render workstream-separated data. Schema change is isolated (just add `track` column) and low-risk if data migration included.
+
+**Delivers:** `onboarding_phases.track` and `onboarding_steps.track` columns with backfilled data for existing projects. Enables ADR/Biggy workstream separation in UI components.
+
+**Migration pattern:**
+```sql
+ALTER TABLE onboarding_phases ADD COLUMN track TEXT;
+ALTER TABLE onboarding_steps ADD COLUMN track TEXT;
+UPDATE onboarding_phases SET track = 'ADR' WHERE name ILIKE '%ADR%';
+UPDATE onboarding_phases SET track = 'Biggy' WHERE name ILIKE '%Biggy%';
+UPDATE onboarding_steps os SET track = (SELECT track FROM onboarding_phases op WHERE op.id = os.phase_id);
+CREATE INDEX idx_onboarding_steps_track ON onboarding_steps(project_id, track);
+```
+
+**Critical pitfall addressed:** Data migration (not just DDL) prevents existing projects from rendering empty sections in new UI. Dual-read fallback code ensures graceful handling of rows where track is NULL.
+
+**Dependencies:** None — schema-only change
+
+**Research flag:** SKIP RESEARCH — standard Drizzle migration pattern. Data backfill heuristic may need adjustment based on actual phase names in production DB (validate during implementation).
+
+---
+
+### Phase 4: Overview Tab — Health Dashboard & Metrics
+**Rationale:** Builds on Phase 3 schema (workstream separation). Read-only components with no state changes — low risk. Provides immediate value (executive visibility) before tackling complex AI summary in Phase 5.
+
+**Delivers:** Health Dashboard (overall health, risk count, blocker count, trend text) and Metrics Section (onboarding %, integration counts, phase completion by workstream, time to milestone) with Recharts visualizations.
+
+**Stack elements:** Recharts ^2.15.0 for bar charts and line charts
+
+**Addresses features:**
+- Table stakes: all Health Dashboard and Metrics requirements
+- Differentiator: Phase health by workstream (ADR vs Biggy granularity)
+
+**Uses architecture components:** Read from existing tables (`risks`, `actions`, `milestones`, `integrations`, `time_entries`, `workstreams`) with aggregation queries. No new tables required.
+
+**Dependencies:** Phase 3 (schema migration for workstream separation)
+
+**Research flag:** SKIP RESEARCH — standard aggregation queries and Recharts component composition. FEATURES.md provides clear metric definitions.
+
+---
+
+### Phase 5: Overview Tab — Weekly Focus Summary (AI)
+**Rationale:** Complex feature requiring AI generation, caching, and scheduled job. Builds on BullMQ patterns from Phase 1 (job handler, scheduler integration). Isolated behind Suspense boundary — failure doesn't break other Overview sections.
+
+**Delivers:** Weekly focus summary (3 AI-generated bullets) cached in Redis, generated by scheduled BullMQ job every Monday 6am, rendered with React Suspense to prevent blocking page load.
+
+**Stack elements:** Existing BullMQ scheduler, Anthropic SDK, Redis cache
+
+**Addresses features:**
+- Table stakes: weekly focus top 3-5 priorities with circular progress bar
+- Differentiator: auto-refresh on data change with smart ranking (via scheduled regeneration)
+
+**Critical pitfall addressed:** AI call does NOT block page render. Summary generated by scheduled job, cached for 24 hours, page loads summary from cache with Suspense fallback. If cache miss, shows "Generating summary..." instead of 4-second white screen.
+
+**Dependencies:** Phase 1 (BullMQ job patterns established) — not a hard blocker but better to validate job infrastructure first
+
+**Research flag:** NEEDS LIGHT RESEARCH — Claude prompt engineering for weekly summary generation (what context to include, how to structure prompt for consistent 3-bullet output). ~2 hours research during phase planning.
+
+---
+
+### Phase 6: Overview Tab — Milestone Timeline
+**Rationale:** Visual polish after core metrics proven. Can use react-chrono library or custom Tailwind implementation. Low complexity, no state management, purely presentational.
+
+**Delivers:** Horizontal or vertical timeline showing milestones with target dates, rendered at top of Overview tab (high visual hierarchy).
+
+**Stack elements:** react-chrono ^3.0.0 (or custom Tailwind if design doesn't match library styling)
+
+**Addresses features:** Table stakes requirement for visual milestone timeline near top of Overview
+
+**Dependencies:** None (reads from existing `milestones` table) — can be built anytime after Phase 3
+
+**Research flag:** SKIP RESEARCH — react-chrono API is well-documented, STACK.md provides implementation examples. If custom Tailwind chosen, no research needed (standard CSS).
+
+---
+
+### Phase 7: Integration Tracker Redesign
+**Rationale:** Lower priority than Overview tab work. Uses same workstream separation pattern from Phase 3 schema. Standalone UI enhancement with no architecture changes.
+
+**Delivers:** Integration tracker split into ADR vs Biggy sections with category grouping (observability, incident, collaboration tools).
+
+**Addresses features:** Differentiator — split by ADR vs Biggy, category grouping
+
+**Dependencies:** Phase 3 (schema migration if `integrations.track` column doesn't exist — verify during planning)
+
+**Research flag:** SKIP RESEARCH — UI reorganization using existing `integrations` table. If schema change needed, same pattern as Phase 3.
+
+---
+
+### Phase 8: Test Failure Fixes
+**Rationale:** Last phase allows tests to be updated with knowledge of final implementation patterns. Fixing tests earlier risks cascading breakage as architecture evolves across phases 1-7.
+
+**Delivers:** All 13 failing tests in `tests/teams-arch/` directory pass, with root cause fixes (not setTimeout workarounds).
+
+**Critical pitfalls addressed:**
+- Isolate test fixes (one at a time, commit immediately, verify no passing tests broken)
+- No arbitrary timeouts or changed assertions without production code fix
+- Document why test failed and how fix addresses root cause
+
+**Dependencies:** Phases 1-7 (implementation patterns finalized)
+
+**Research flag:** SKIP RESEARCH — tests document expected behavior, no external research needed. Investigation per test to determine if bug is in test or production code.
+
+---
 
 ### Phase Ordering Rationale
 
-- Auth comes first because `requireSession()` guards must be in place before any authenticated feature is added; retrofitting 40+ route handlers after the fact is high-risk and tedious
-- Templates are parallel to auth because they have zero auth dependency and no external library requirements; completing them before Context Hub is a meaningful ordering advantage
-- Interactive visuals before chat because they are lower complexity, purely read-only, and validate the React client component architecture early
-- Chat before Context Hub because chat proves the Claude API integration pattern for the new use case and is substantially lower risk
-- Context Hub last because it has the highest number of distinct failure modes and benefits from all prior infrastructure being proven stable
+- **Phase 1 first:** Critical infrastructure fix with no dependencies. Background job pattern is reused by Phase 5 (Weekly Focus). Browser-refresh resilience is production-critical for 4-6 minute extraction operations.
+- **Phase 2 parallel:** Can build alongside Phase 1 (no shared components). Establishes cross-project query patterns reused by Phase 4 Metrics (hours logged).
+- **Phase 3 before 4-7:** Schema migration must precede any UI that renders workstream-separated data. Isolated change (just add column + backfill) reduces risk.
+- **Phase 4 before 5:** Prove static metrics work before adding AI complexity. Health Dashboard and Metrics are read-only aggregations (low risk) vs. AI summary (cache, scheduled job, prompt engineering).
+- **Phase 5 before 6:** Weekly Focus is higher value than Milestone Timeline (executive decision-making vs. visual polish). Can build Phase 6 in parallel if resources available.
+- **Phase 7 independent:** Integration Tracker can slot in anytime after Phase 3. Lower priority than Overview work.
+- **Phase 8 last:** Fix tests after implementation patterns finalized to avoid cascading breakage.
+
+**Parallel workstreams:**
+- **Week 1-2:** Phase 1 + Phase 2 in parallel (different developers)
+- **Week 3:** Phase 3 (schema migration — short, ~2 days)
+- **Week 3-4:** Phase 4 (Metrics) + Phase 6 (Timeline) in parallel
+- **Week 5:** Phase 5 (Weekly Focus)
+- **Week 6:** Phase 7 (Integration Tracker) + Phase 8 (Test Fixes) in parallel
 
 ### Research Flags
 
 Phases likely needing deeper research during planning:
-- **Phase 1 (Auth):** Verify the specific better-auth + iron-session coexistence pattern — ARCHITECTURE.md specifies iron-session for sessions while STACK.md recommends better-auth's built-in session layer; this tension must be resolved before implementation begins (recommendation: use better-auth's built-in session management, not iron-session independently)
-- **Phase 4 (Context Hub):** Claude routing prompt engineering for tab classification has no standard pattern — the routing prompt design (mapping extracted entities to 11 different tab schemas, handling low-confidence cases) requires iteration and testing on real BigPanda document types before the production implementation is written
+- **Phase 5 (Weekly Focus):** Claude prompt engineering for consistent 3-bullet summary generation. Research time budget: 2 hours. Use existing project data to prototype prompts and validate output format.
 
-Phases with standard patterns (can skip research-phase):
-- **Phase 1B (Templates):** TypeScript registry pattern is trivial; no external libraries; no research needed
-- **Phase 2 (Interactive Visuals):** React Flow official examples cover the exact patterns needed; `ssr:false` dynamic import is well-documented
-- **Phase 3 (Chat):** Vercel AI SDK RAG guide covers the exact `streamText` + `useChat` + DB context pattern end-to-end
-
----
+Phases with standard patterns (skip research-phase):
+- **Phase 1 (BullMQ Extraction):** Pattern established by existing `worker/jobs/skill-run.ts` and STACK.md polling documentation
+- **Phase 2 (Time Tracking):** Standard Next.js route patterns and PostgreSQL JOIN queries
+- **Phase 3 (Schema Migration):** Standard Drizzle migration pattern with data backfill
+- **Phase 4 (Metrics):** Standard aggregation queries and Recharts component composition
+- **Phase 6 (Milestone Timeline):** react-chrono library is well-documented with examples in STACK.md
+- **Phase 7 (Integration Tracker):** UI reorganization using existing table schema
+- **Phase 8 (Test Fixes):** Tests document expected behavior, no external research needed
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | All npm versions verified live on 2026-03-30; Next.js 16 / React 19 compatibility confirmed for all additions; pgvector deferral is a justified judgment call |
-| Features | MEDIUM-HIGH | Grounded in PROJECT.md (canonical spec) and 2026 web research; feature prioritization is well-reasoned but not validated against actual user behavior in production |
-| Architecture | HIGH | Official Next.js auth guide, official Vercel AI SDK docs, official React Flow docs; patterns are established; the better-auth vs iron-session tension is the one open question |
-| Pitfalls | HIGH | CVE-2025-29927 is a documented real-world vulnerability; all critical pitfalls verified from official sources or established PostgreSQL/Next.js SSR behavior |
+| Stack | HIGH | Existing infrastructure fully supports new features; only 2 new packages needed (react-chrono, Recharts). BullMQ job progress pattern validated via official docs and existing codebase analysis. |
+| Features | MEDIUM | Table stakes derived from training data on PM tools (Jira, Monday.com, Asana) and time tracking tools (Harvest, Toggl) — patterns consistent but unverified via web search (training data current through January 2025). Differentiators validated against existing codebase capabilities. |
+| Architecture | HIGH | All patterns grounded in existing codebase structure (`worker/index.ts`, `app/api/ingestion/extract/route.ts`, schema.ts). Schema migration strategy tested against actual table definitions. Data flow patterns validated via working BullMQ infrastructure. |
+| Pitfalls | HIGH | Derived from direct codebase inspection (current SSE extraction implementation, existing BullMQ job handlers, schema structure) and documented requirements in PROJECT.md. All pitfalls are specific to this application's architecture (Next.js 16, BullMQ, Drizzle ORM, PostgreSQL). |
 
 **Overall confidence:** HIGH
 
+Research is grounded in existing codebase analysis (not generic recommendations). All architectural recommendations integrate cleanly with validated v3.0 patterns. Stack recommendations are minimal (only 2 new packages) and well-supported by official documentation.
+
 ### Gaps to Address
 
-- **better-auth vs iron-session session layer:** ARCHITECTURE.md specifies iron-session for session management; STACK.md recommends better-auth which has its own built-in session layer. Resolve in Phase 1 planning: use better-auth's built-in session management as the single session system (recommended) and do not run both in parallel. Update implementation notes accordingly.
-- **Context Hub completeness scoring trigger:** Research leaves open whether completeness analysis is triggered on-demand (simpler for v3.0) or on a BullMQ schedule (richer but more complex). Decide before Phase 4 implementation — the BullMQ infrastructure exists and either option is viable; on-demand is recommended for v3.0.
-- **Teams and Architecture sub-tab content definitions:** Sub-tabs for Teams (ADR track vs Biggy track) and Architecture (Before-state vs Integration status) are called out in research but the exact section labels and content definitions need validation with the PS lead before Phase 1B locks the template registry.
-- **pgvector postgres.js integration:** Not a v3.0 concern, but if vector search is ever added, the `pgvector` npm package primarily documents `node-postgres` (pg) integration patterns; the app uses `postgres.js`. Raw SQL via Drizzle's `sql` tag is the confirmed fallback: `sql\`embedding <=> ${queryVector}::vector\``.
+1. **Integrations.track field existence** — FEATURES.md and ARCHITECTURE.md reference splitting integrations by ADR/Biggy track, but schema.ts doesn't show `integrations.track` column. **Resolution:** During Phase 7 planning, inspect `integrations` table schema. If column missing, add migration identical to Phase 3 pattern (ALTER TABLE ADD COLUMN track, UPDATE to backfill from integration names).
 
----
+2. **Workstream phase standardization** — FEATURES.md mentions "standardized phase models" for ADR vs Biggy comparison, but current schema has freeform `workstreams.current_status` text field. **Resolution:** During Phase 4 planning, determine if phase standardization is required for metrics. If yes, create mapping table or enum; if no, use existing percent_complete for comparison (simpler).
+
+3. **Weekly focus prompt tuning** — ARCHITECTURE.md provides example prompt template, but effectiveness depends on production data structure (action descriptions, risk details, milestone names). **Resolution:** During Phase 5 planning, prototype prompt with 3-5 real projects, validate output format consistency, refine prompt if needed. Budget 2 hours.
+
+4. **Test failure root causes** — 13 tests failing in `tests/teams-arch/` directory. PROJECT.md notes "tests were written speculatively before implementation." Unknown if failures are test bugs or implementation bugs. **Resolution:** During Phase 8, investigate each test individually to determine if bug is in test setup or production code. Fix root cause, not symptom.
+
+5. **Extraction job TTL and timeout values** — STACK.md recommends 30-minute TTL, 20-minute timeout, but optimal values depend on largest expected document size in production. **Resolution:** During Phase 1 planning, measure current extraction times for 95th percentile document size. Set timeout to 2x P95 time, TTL to 3x P95 time (with 20 min minimum).
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- [PROJECT.md](../../PROJECT.md) — canonical feature specification and v3.0 scope
-- [Next.js Official Auth Guide](https://nextjs.org/docs/app/guides/authentication) — iron-session pattern, session management
-- [Vercel AI SDK — Next.js App Router](https://ai-sdk.dev/docs/getting-started/nextjs-app-router) — `streamText` + `useChat` integration
-- [Vercel AI SDK RAG Guide](https://sdk.vercel.ai/docs/guides/rag-chatbot) — DB-backed context approach
-- [React Flow Dagre Example](https://reactflow.dev/examples/layout/dagre) — `@xyflow/react` + dagre layout patterns
-- [better-auth official docs — Next.js integration](https://better-auth.com/docs/integrations/next) — Next.js 16 proxy.ts pattern
-- [CVE-2025-29927 advisory](https://github.com/vercel/next.js/security/advisories/GHSA-f82v-jwr5-mffw) — middleware auth bypass; defense-in-depth requirement
-- [Auth.js Protecting Routes](https://authjs.dev/getting-started/session-management/protecting) — DAL pattern documentation
-- [Anthropic embeddings docs](https://docs.claude.com/en/docs/build-with-claude/embeddings) — Voyage AI official recommendation (context for deferral decision)
-- Live npm version checks (2026-03-30): `better-auth@1.5.6`, `@xyflow/react@12.10.2`, `ai@6.0.141`, `@ai-sdk/anthropic@3.0.64`, `@ai-sdk/react@3.0.143`, `voyageai@0.2.1`, `pgvector@0.2.1`
+- Existing codebase: `worker/index.ts`, `worker/scheduler.ts`, `worker/jobs/skill-run.ts`, `worker/connection.ts` — BullMQ patterns and job infrastructure
+- Existing codebase: `app/api/ingestion/extract/route.ts` — Current SSE extraction implementation with chunk processing and dedup logic
+- Existing codebase: `app/customer/[id]/overview/page.tsx`, `components/OnboardingDashboard.tsx` — Current Overview tab structure
+- Existing codebase: `db/schema.ts` — PostgreSQL schema structure for onboarding_phases, onboarding_steps, workstreams, time_entries, artifacts
+- PROJECT.md — v4.0 requirements and scope (test fixes, extraction to BullMQ, time tracking redesign, Overview overhaul)
+- BullMQ Documentation — Job Progress API (job.updateProgress, job.log, job.getState) — official docs
+- BullMQ Documentation — Repeatable Jobs (cron scheduling) — official docs
+- Next.js 16 Documentation — Route Handlers, redirects() API — official docs
+- Drizzle ORM Documentation — Migrations (SQL file generation) — official docs
 
 ### Secondary (MEDIUM confidence)
-- [PkgPulse auth comparison 2026](https://www.pkgpulse.com/blog/best-nextjs-auth-solutions-2026) — auth ecosystem survey
-- [RAG with PostgreSQL — pgDash](https://pgdash.io/blog/rag-with-postgresql.html) — structured DB query approach sufficient at small scale
-- [Mermaid.js interactive flowcharts](https://haridornala.medium.com/building-interactive-flowcharts-with-mermaid-js-and-javascript-57ec27cdc63d) — click handler patterns for Workflow Diagram alternative
-- [AI document quality gap detection — Docsie 2026](https://www.docsie.io/blog/articles/ai-document-comparison-tool-2026/) — per-section scoring patterns for Context Hub
-- [Why 95% of RAG Apps Leak Data Across Users — Medium](https://medium.com/@pswaraj0614/why-95-of-rag-apps-leak-data-across-users-and-how-i-fixed-it-0e9ded006a8c) — cross-project data scoping failure modes
-- [Next.js Security Best Practices 2026 — Authgear](https://www.authgear.com/post/nextjs-security-best-practices) — defense-in-depth patterns
+- Training data on PM tool patterns: Jira, Monday.com, Asana, Linear (2024-2025 knowledge) — used for table stakes feature definitions
+- Training data on time tracking tool patterns: Harvest, Toggl, Clockify (2024 knowledge) — used for time tracking UX patterns
+- Training data on onboarding tool patterns: Pendo, Userpilot, WalkMe (2024 knowledge) — used for onboarding completion metrics
+
+### Tertiary (LOW confidence)
+- react-chrono npm package page — version 3.0.0 current as of January 2025 (may have updates)
+- Recharts npm package page — version 2.15.0 current as of January 2025 (may have updates)
 
 ---
-*Research completed: 2026-03-30*
+*Research completed: 2026-04-01*
 *Ready for roadmap: yes*

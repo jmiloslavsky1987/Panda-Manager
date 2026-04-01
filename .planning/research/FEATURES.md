@@ -1,263 +1,311 @@
-# Feature Research
+# Feature Landscape: v4.0 Infrastructure & UX Foundations
 
-**Domain:** AI-native PS Delivery Management — v3.0 Collaboration & Intelligence milestone
-**Researched:** 2026-03-30
-**Confidence:** MEDIUM-HIGH — grounded in PROJECT.md, web research on 2026 patterns (auth, RAG chat, Mermaid interactivity, template systems), and training knowledge of the existing v2 codebase
+**Domain:** Project Management & Professional Services Onboarding Tools
+**Researched:** 2026-04-01
+**Context:** Adding features to existing BigPanda PS project management app
 
----
+## Table Stakes
 
-## Scope Note
+Features users expect in modern project management and onboarding tools. Missing these means the product feels incomplete or frustrating.
 
-This file covers only the **6 net-new feature areas in v3.0**. The existing feature landscape (11 workspace tabs, skill engine, scheduler, audit log, source badges, document ingestion, discovery scan) is already built and documented in prior research. This document answers: what do these 6 features look like in modern apps, what is table stakes vs differentiator, and what are the complexity and anti-feature traps?
+| Feature | Why Expected | Complexity | Dependencies | Notes |
+|---------|--------------|------------|--------------|-------|
+| **Health Dashboard: Overall health indicator** | Every PM tool (Jira, Monday.com, Asana) has top-line health status | Low | Existing project health_status field | Single color-coded badge or score (RED/YELLOW/GREEN) |
+| **Health Dashboard: Risk count by severity** | Users need at-a-glance risk awareness without navigating to Risks tab | Low | Existing risks table with severity field | Count of critical/high/medium/low risks with severity colors |
+| **Health Dashboard: Active blocker count** | Blockers are the #1 reason projects fail; must be surfaced prominently | Low | onboarding_steps.status='blocked', integrations.status='blocked' | Count + list of blocked items with links to detail tabs |
+| **Health Dashboard: Trend indicators** | Static snapshots misleading; users need to know if things are improving | Medium | Time-series data or snapshot comparison logic | "Getting better" vs "getting worse" arrows; requires historical snapshots or delta calculation |
+| **Metrics: Onboarding completion %** | Table stakes for onboarding tools (Pendo, Userpilot, WalkMe all show this) | Low | onboarding_steps.status counts | (completed steps / total steps) × 100 |
+| **Metrics: Integration count by status** | ADR/Biggy workstreams differentiated by integration readiness; users need counts | Low | integrations table grouped by status | Count of not-connected/configured/validated/production |
+| **Metrics: Phase completion by workstream** | Separate ADR/Biggy progress is core requirement for v4.0 | Low | workstreams table with percent_complete | Average or rollup of percent_complete by track (ADR vs Biggy) |
+| **Metrics: Time to milestone** | Every PM tool shows days-until-milestone; critical for status reporting | Low | milestones table with target_date | Days from today to next incomplete milestone |
+| **Weekly Focus: Top 3-5 priorities** | Prevents priority overload; forces clarity on what matters this week | Medium | Project data + AI/heuristic ranking | Auto-refreshes; uses actions.due_date, risks.severity, milestones.target_date to surface top priorities |
+| **Weekly Focus: Circular progress bar** | Existing pattern users expect preserved; shows % completion for focus items | Low | Existing component (already built) | Retain current ProgressRing component from OnboardingDashboard |
+| **Time Tracking: Global view across projects** | Multi-project workers need unified timesheet (Harvest, Toggl, Clockify all have this) | Medium | time_entries table with project_id | Single table showing all entries with project column/filter |
+| **Time Tracking: Week-based grouping** | Timesheets are approved weekly in PS orgs; weekly grouping is mandatory | Low | Existing time_entries.date field | Group by ISO week, show Mon-Sun boundaries |
+| **Time Tracking: Project attribution on every entry** | When viewing global log, must see which project each entry belongs to | Low | time_entries.project_id → projects.name | Join + display project name on each row |
+| **Time Tracking: Quick project switcher** | Users jump between projects frequently; dropdown or tabs expected | Low | Projects list from DB | Dropdown to filter by project or "All Projects" view |
+| **Time Tracking: Total hours by project** | Users and approvers need project-level rollups for capacity planning | Low | SUM(hours) GROUP BY project_id | Subtotal row per project or summary cards |
+| **BullMQ Extraction: Progress polling with % complete** | Long-running jobs need progress feedback (not black box) | Medium | BullMQ job.progress() API | Update job.progress(N) where N = 0-100; client polls /api/jobs/:id |
+| **BullMQ Extraction: Completion notification** | Users navigate away; need to know when extraction finishes | Low | Polling detects job.returnvalue or job.failedReason | UI shows "Complete" badge or toast when polling detects completion |
+| **BullMQ Extraction: Error handling with retry** | Network/API failures common; must allow retry without re-upload | Medium | BullMQ job state (failed) + artifact.ingestion_status | On failure, show "Retry" button that re-enqueues job with same artifactId |
+| **BullMQ Extraction: Cancel job** | Large doc extraction (4-6 min) must be cancellable if user uploaded wrong file | Medium | BullMQ job.remove() or job state update | "Cancel" button calls job.remove(); mark artifact.ingestion_status='cancelled' |
+| **Visual Milestone Timeline: Near top of Overview** | Milestones = exec-level concern; burying at bottom violates UX hierarchy | Low | Move existing component | Relocate milestone timeline section above detailed metrics |
 
----
+## Differentiators
 
-## Feature Landscape
+Features that set the product apart. Not expected, but highly valued when present.
 
-### Table Stakes (Users Expect These)
+| Feature | Value Proposition | Complexity | Dependencies | Notes |
+|---------|-------------------|------------|--------------|-------|
+| **Health Dashboard: Phase health by workstream** | Most tools show overall health; splitting by ADR vs Biggy workstream gives granular insight | Medium | workstreams table with status/percent_complete by track | Shows ADR phase health + Biggy phase health separately; allows different delivery paces to be visible |
+| **Health Dashboard: Health trend sparklines** | Text trends ("improving") are vague; 7-day sparkline shows exact trajectory | High | Historical health snapshot data (new table or JSONB log) | Micro-chart (7 data points) next to each health indicator; requires snapshot storage |
+| **Metrics: Team enablement score** | Unique to onboarding tools; quantifies "are teams ready to use BigPanda?" | Medium | team_onboarding_status table + onboarding_steps by team | % of teams with all critical onboarding steps complete |
+| **Metrics: Validation progress tracker** | Differentiator: shows how many integrations are validated (not just connected) | Low | integrations.status='validated' count | Emphasizes quality over quantity; "X of Y integrations validated" |
+| **Metrics: Adoption readiness indicator** | Goes beyond onboarding completion; predicts if customer will adopt post-launch | High | Composite: validation + team enablement + step completion + risk count | Weighted formula combining multiple signals; requires tuning |
+| **Weekly Focus: Auto-refresh on data change** | Most dashboards are static snapshots; auto-refresh keeps focus current without manual regeneration | Medium | Skill orchestrator trigger (existing) or on-demand | Trigger: new actions added, risks updated, milestone dates change |
+| **Weekly Focus: Smart ranking algorithm** | Simple due-date sort misses severity/impact; AI or weighted heuristic prioritizes intelligently | High | Claude API for ranking or custom scoring formula | Consider: risk severity, milestone proximity, action owner load, blocker status |
+| **Time Tracking: Bulk edit from global view** | Unique efficiency: select multiple entries across projects, update status/hours in one action | Medium | Existing bulk action infrastructure (already built) | Extend existing bulk actions to work in global view (not just per-project) |
+| **Time Tracking: Calendar heatmap by project** | Visual pattern detection: "I log 0 hours on Fridays for Project X" insights | High | D3.js or Recharts calendar heatmap component | Shows daily hours as color intensity; helps spot inconsistent logging |
+| **Time Tracking: Smart project suggestions** | Auto-suggest project based on: recent entries, day of week, current time | Medium | ML model or heuristic (last 10 entries by day/time) | Reduces friction: "You usually log to Project A on Monday mornings" |
+| **BullMQ Extraction: Real-time SSE progress stream (hybrid)** | Polling = 2-5s lag; SSE stream = instant progress updates | High | SSE + BullMQ event emitters | Hybrid: SSE for active users, polling fallback for disconnected clients |
+| **BullMQ Extraction: Multi-file queue with priority** | Upload 5 docs, extraction runs in parallel or priority order | High | BullMQ concurrency > 1 + job priority field | Allows "extract this first" for critical docs |
+| **BullMQ Extraction: Preview mode (extract 1st page only)** | Fast preview for large docs: extract page 1, show sample, then full extraction on confirm | Medium | Claude PDF extraction with page range | Reduces perceived latency; users verify correct doc before 4-min full extraction |
+| **Integration Tracker: Split by ADR vs Biggy** | Core v4.0 requirement: separate integration views per workstream | Medium | integrations.track field (ADR vs Biggy) | Two sections or tabs: "ADR Integrations" + "Biggy Integrations" |
+| **Integration Tracker: Category grouping** | Existing integrations.category field; group by observability/incident/collaboration | Low | integrations.category field | Collapsible sections: Observability tools, Incident tools, etc. |
+| **Workstream Progress: Standardized phase models** | ADR and Biggy use different phase names; standardize for comparison | Medium | workstreams table with normalized phase enum | Define standard phases: Discovery, Implementation, Validation, Production; map existing phase names |
+| **Workstream Progress: Side-by-side comparison** | Visual comparison: ADR at 60%, Biggy at 40% reveals delivery imbalance | Low | Two progress bars or cards side-by-side | Quick visual: are workstreams aligned or diverging? |
 
-Features that users will assume work correctly from day one. Missing or broken = the feature feels unshipped.
+## Anti-Features
 
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| **Context Hub: file upload UI** | Any document intake feature has a drag-and-drop or file picker; no upload = no feature | LOW | Already exists partially — v2 has document ingestion; v3 adds a dedicated per-project tab surface for it |
-| **Context Hub: extracted content review before commit** | Document ingestion without a review step is dangerous; users expect to see what the AI extracted before it writes to DB | MEDIUM | Approve/reject flow already exists in v2 discovery queue — same UX pattern applies here |
-| **Context Hub: per-tab completeness indicator** | If AI is doing gap analysis, the result must be visible per-tab, not buried in a report | MEDIUM | Simple traffic-light or percent-complete badge per tab; backed by a structured scoring prompt |
-| **Auth: session persistence** | Users expect to stay logged in across browser restarts; losing session on every page refresh is broken | LOW | JWT + httpOnly cookie or NextAuth.js session strategy; non-negotiable for multi-user |
-| **Auth: role-enforced UI** | Admin-only controls must be hidden/disabled for users; any visible-but-broken admin action destroys trust | MEDIUM | Role checked server-side (middleware) and client-side (conditional render); never rely on UI-only gating |
-| **Auth: credential-based login form** | Standard username/password is the baseline before any SSO; users expect a login page that works | LOW | NextAuth credentials provider covers this; password hashing with bcrypt |
-| **UI overhaul: sub-tabs for dense tabs** | When a tab has many sections (e.g., Teams with ADR track + Biggy track + velocity), sub-tabs are expected navigation | MEDIUM | shadcn/ui Tabs component + URL query params for deep-linking; applies to Teams, Architecture, potentially Outputs |
-| **Interactive visuals: clickable nodes** | If a diagram node represents an entity (team, integration, workstream), clicking it to see detail is an expected behavior | MEDIUM | Mermaid.js rendered to SVG with event listeners, or React Flow for full drag-and-drop capability |
-| **Project Chat: question gets answered from project data** | The core value promise of inline AI chat is that it knows your data; a chat that hallucinates project details is worse than no chat | HIGH | Context window must be populated from live DB query; no fabricated percentages or invented dates |
-| **Templates: new project pre-populates with defaults** | If a template system exists, creating a new project must show structured empty sections with labeled placeholders | MEDIUM | Template definitions stored in DB; applied on project create; per-tab default content seeded |
-| **Templates: consistent section structure per tab** | Users building 5+ projects expect the same section order each time; ad-hoc tab structure creates "where did I put that?" | LOW | Fixed schema per tab type enforced by template; no free-form tab content allowed |
+Features to explicitly NOT build. These add complexity without proportional value for v4.0.
 
----
-
-### Differentiators (Competitive Advantage)
-
-Features that make this tool categorically better than stitching together Notion + Slack + manual ChatGPT sessions.
-
-| Feature | Value Proposition | Complexity | Notes |
-|---------|-------------------|------------|-------|
-| **Context Hub: AI routes extracted content to the right tab** | Upload a kickoff deck and the AI populates Stakeholders, Architecture, Milestones automatically — no manual routing decision required | HIGH | Requires a routing classification prompt that maps extracted entities to tab schema; must handle ambiguous content gracefully (low-confidence → user routes manually) |
-| **Context Hub: per-tab quality gap flags** | Proactively tells the user "your Architecture tab is missing integration details" before they realize it — turns the tool from reactive to advisory | HIGH | Structured scoring prompt per tab type (1–5 scale, JSON output, missing elements listed); scheduled or on-demand trigger; gap results surfaced as inline badges |
-| **Auth: Okta-ready architecture without live Okta** | Building the SAML/OIDC adapter layer now means BigPanda's IT team can plug in Okta later with zero app changes — rare in internal tools | MEDIUM | NextAuth.js OIDC provider with environment-variable-driven issuer; SAML callback route stubbed and documented; no live Okta tenant required for v3 |
-| **Auth: admin role for scheduler + user management** | Admins can see all scheduled jobs, all users, and configure system-wide settings; regular users see only their own project workspace | MEDIUM | Role stored in DB users table; middleware checks role on /admin/* routes; admin dashboard is a separate route group |
-| **Interactive visuals: drill-down to live DB data** | Clicking a node in the Engagement Map opens a panel showing actual actions, contacts, or integrations from the DB — not static HTML | HIGH | Currently the Engagement Map and Workflow Diagram are static self-contained HTML outputs; v3 makes them React components that query the API on click |
-| **Project Chat: scoped to a single project's data** | Chat that is scoped to "this project" (not all projects, not the internet) gives answers with attribution and eliminates hallucination risk | HIGH | DB query constructs a structured context payload (project summary, open actions, risks, recent history); injected as system message; Claude answers from that payload only |
-| **Project Chat: conversation history within session** | Follow-up questions work correctly ("what about the risks I just asked about?"); stateless one-shot chat is a regression from ChatGPT | MEDIUM | Short-term conversation array maintained in component state; passed as messages[] in each API call; not persisted to DB (session only is acceptable for v3) |
-| **Templates: skill-specific defaults per tab** | Pre-populated content that matches how BigPanda PS actually runs projects (e.g., standard Architecture tab sections for a BigPanda integration) — not generic PM placeholders | MEDIUM | Template content defined by domain expert (PS lead), stored in seed data; different templates per project type (Enterprise, SMB, Renewal) if needed |
-| **UI overhaul: URL-addressable sub-tab state** | Deep-linking to `/projects/acme?tab=teams&subtab=adrstatus` makes it possible to share a specific view in Slack or bookmark a frequently-checked section | LOW | URL query parameter strategy; shadcn/ui Tabs value prop bound to searchParams |
-
----
-
-### Anti-Features (Commonly Requested, Often Problematic)
-
-| Feature | Why Requested | Why Problematic | Alternative |
-|---------|---------------|-----------------|-------------|
-| **Full SAML implementation in v3** | Okta/SSO feels like a security requirement | SAML requires live IdP integration for testing, metadata exchange with IT, certificate management — all blocked until BigPanda IT is ready | Build OIDC adapter with NextAuth.js; stub SAML callback route; document the integration steps; unblock IT to plug in when ready |
-| **Persistent Project Chat history** | Users want to see yesterday's conversation | Storing chat history in DB adds schema, migration, UI (history panel), and data privacy considerations for v3 scope | Session-scoped only for v3; full chat history is a v4 feature once chat value is validated |
-| **RAG / vector embeddings for Project Chat** | Vector search feels like the "AI-native" answer | pgvector adds infra complexity; for a single project's data, a structured DB query with a well-crafted context payload is faster, cheaper, and more deterministic | Structured context injection: query live DB → format as system message → Claude reasons over it; no embeddings required at this data scale |
-| **AI auto-commits extracted content (no review)** | Automation appeal; "why do I have to approve?" | A misrouted extraction (stakeholder placed in Architecture tab) is harder to undo than a false negative; trust requires review at least for first N uploads | Approve/reject flow inherited from v2 discovery queue; review can be one-click "accept all" once user trusts the router |
-| **Drag-and-drop diagram editing** | Power users want to reshape the Engagement Map manually | Generated diagrams represent AI synthesis of DB data; free-form editing decouples the visual from the source of truth | Make diagrams regenerable from the DB; add data editing (in the actual tabs) rather than diagram editing |
-| **Sub-tabs everywhere** | Navigation feels organized | Sub-tabs inside sub-tabs create a navigation maze; users lose their place | Sub-tabs only where a tab genuinely has 2+ independent content areas with different schemas (Teams: ADR track vs Biggy track; Architecture: Before-state vs Integration-status) |
-| **Per-user template customization** | Each PS manager works differently | Templates that diverge per-user create inconsistent project structures; cross-project search and AI context injection break when schema varies | One canonical template per project type, defined by the PS lead; customization deferred; individual exceptions handled via optional fields |
-| **Role-based field-level permissions** | Admin should see more fields per record | Field-level ACL is a significant schema and UI complexity; at 2 roles (user/admin) the cost exceeds the benefit | Route-level role gating is sufficient: admins see /admin/* routes; users do not; no field-level differentiation needed |
-
----
+| Anti-Feature | Why Avoid | What to Do Instead |
+|--------------|-----------|-------------------|
+| **Real-time collaborative editing (Google Docs style)** | Overkill for PS delivery tool; adds WebSocket/OT complexity; not requested | Use optimistic updates + refresh on save; existing pattern works |
+| **Custom dashboard builder (drag-drop widgets)** | Premature: no evidence users need customization; adds layout engine complexity | Ship opinionated Overview layout; collect feedback before customization |
+| **Time tracking: AI auto-categorization of descriptions** | "Meeting with customer" → auto-tag "Communication" category; sounds useful but low ROI for v4.0 | Manual categorization or use existing description search; defer to v5.0 if requested |
+| **Health dashboard: Predictive "project will be red in 2 weeks"** | ML/forecasting requires historical data (don't have enough yet); prone to false alarms | Show current health + trend; let users infer trajectory |
+| **Weekly focus: Manual priority override UI** | Adds complexity (drag-drop reordering, save state); auto-ranking is the value prop | If auto-ranking wrong, fix ranking algorithm; don't add manual override escape hatch |
+| **Time tracking: Mobile app** | Not requested; web responsive view sufficient for PS team (not field workers) | Ensure responsive web UI works on tablet/phone; defer native app |
+| **BullMQ extraction: Pause/resume job** | Adds state complexity (serialize Claude context mid-stream); unclear user benefit | Use cancel + restart; simpler for v4.0 |
+| **Metrics: Customizable metric formulas** | "Let users define their own metrics" = premature; no evidence of need | Ship standard metrics; iterate based on feedback |
+| **Integration tracker: Automated health checks** | "Ping each integration to verify status" = external dependency complexity | Manual status updates; defer automated checks to v5.0 |
+| **Workstream progress: Gantt chart per workstream** | Already have project-level Gantt; per-workstream Gantt = redundant detail | Use phase completion % bars; link to existing Gantt for timeline view |
+| **Time tracking: Jira/Asana integration (sync time logs)** | Integration scope creep; not in BRD; adds auth + API maintenance burden | CSV export (already built) sufficient for external tool import |
+| **BullMQ extraction: AI confidence threshold tuning** | Exposing extraction.confidence slider = expert feature; confuses non-technical users | Use fixed confidence threshold (0.7); surface low-confidence items in preview, don't expose tuning |
 
 ## Feature Dependencies
 
 ```
-[Existing] PostgreSQL schema + DB
-    └──required by──> All v3 features
+Health Dashboard
+  ├─ Overall health indicator → projects.health_status (existing)
+  ├─ Risk count → risks.severity (existing)
+  ├─ Blocker count → onboarding_steps.status, integrations.status (existing)
+  └─ Trend indicators → NEW: health snapshot history table or deltas
 
-[Existing] NextAuth.js or equivalent session layer
-    └──must exist before──> Multi-user auth (v3 builds on top, not from scratch)
+Metrics Section
+  ├─ Onboarding completion % → onboarding_steps.status (existing)
+  ├─ Integration counts → integrations.status (existing)
+  ├─ Phase completion by workstream → workstreams.percent_complete + track (existing)
+  └─ Time to milestone → milestones.target_date (existing)
 
-Multi-user auth (credential login + roles)
-    └──required by──> Admin role for scheduler view
-    └──required by──> User-scoped project access (if future multi-tenant)
-    └──unlocks──> Okta-ready OIDC architecture
+Weekly Focus Summary
+  ├─ Top priorities → actions, risks, milestones (existing)
+  ├─ Auto-refresh → Skill orchestrator trigger (existing) or on-demand
+  └─ Circular progress bar → ProgressRing component (existing)
 
-Context Hub tab (UI surface)
-    └──required by──> AI content router (needs a place to show routing decisions)
-    └──required by──> Per-tab quality gap flags (needs tab surfaces to score)
-    └──depends on──> [Existing] Document ingestion pipeline (reuses extraction logic)
-    └──depends on──> [Existing] Approve/reject review queue UX pattern
+Time Tracking Global View
+  ├─ Multi-project query → time_entries.project_id (existing)
+  ├─ Project attribution → time_entries → projects JOIN (existing schema)
+  ├─ Week grouping → time_entries.date (existing)
+  └─ Bulk actions → Existing bulk action API (extend to global scope)
 
-Per-tab quality gap flags
-    └──requires──> All 11 workspace tabs to have defined schema (already true in v2)
-    └──enhances──> Context Hub (gap flags are surfaced in Context Hub UI)
-    └──can be scheduled via──> [Existing] BullMQ scheduler infrastructure
+BullMQ Document Extraction
+  ├─ Job queue → BullMQ infrastructure (existing)
+  ├─ Progress updates → job.progress() API (BullMQ built-in)
+  ├─ Polling endpoint → NEW: /api/jobs/:id route
+  ├─ Cancel job → job.remove() (BullMQ built-in)
+  └─ Artifact status → artifacts.ingestion_status (existing)
 
-Project Chat
-    └──requires──> PostgreSQL live project data (already true)
-    └──requires──> Claude API access (already wired for skills)
-    └──enhances but does NOT require──> Context Hub (richer chat if more docs ingested)
-    └──conflicts with──> RAG/vector embeddings anti-feature (choose structured context injection instead)
+Integration Tracker Redesign
+  ├─ ADR/Biggy split → integrations.track field (NEW or existing?)
+  ├─ Category grouping → integrations.category (existing)
+  └─ Status pipeline → integrations.status (existing)
 
-Interactive Visuals (clickable Engagement Map + Workflow Diagram)
-    └──depends on──> [Existing] Team Engagement Map skill output (the HTML already generated)
-    └──depends on──> [Existing] Workflow Diagram skill output
-    └──requires──> Refactor from static HTML output to React component with API calls
-    └──enhances──> Project workspace (drill-down surfaces data from existing tabs)
-
-Templates
-    └──requires──> Project create flow (must apply template at project creation time)
-    └──requires──> All workspace tab schemas (to know what defaults to seed)
-    └──enhances──> Context Hub (templates define what gaps look like — what's "missing")
-    └──does NOT require──> Auth (templates work for single user too)
-
-UI Sub-tabs
-    └──depends on──> [Existing] shadcn/ui component library (already in stack)
-    └──enhances──> Teams tab, Architecture tab, Outputs tab (most obvious candidates)
-    └──requires──> URL query param routing strategy to avoid state loss on navigation
+Workstream Progress Separation
+  ├─ ADR vs Biggy split → workstreams.track (existing)
+  ├─ Standardized phases → NEW: phase enum or mapping table
+  └─ Side-by-side view → Two components rendering workstream data
 ```
 
-### Dependency Notes
+## MVP Recommendation
 
-- **Context Hub requires the document ingestion pipeline:** v2 already built upload → Claude extracts → approve → DB. Context Hub is a dedicated tab surface that reuses this pipeline, adds AI routing between tabs, and adds per-tab scoring. It is not a rewrite — it is an integration point.
-- **Project Chat does NOT require RAG:** At single-project scope, a structured DB query producing a 2000-4000 token context payload is sufficient. pgvector would add infra for no accuracy gain at this data scale.
-- **Interactive Visuals requires refactoring two skill outputs:** The Engagement Map and Workflow Diagram are currently generated as static self-contained HTML files. Making them interactive requires replacing the static HTML consumer with a React component that queries the API. This is the highest-complexity item in the visual interactivity feature.
-- **Templates enhance the Context Hub gap detection:** If templates define the canonical structure of each tab (e.g., "Architecture tab must have: Before-state section, Integration list, Dependency map"), then the gap scorer has a clear checklist to compare against. Build templates before or alongside gap detection.
-- **Auth is self-contained** relative to all other v3 features — it does not depend on any of them, and none of them strictly depend on it (all features work in single-user mode). Auth is an infrastructure prerequisite that should ship first so other features can layer on top.
+Prioritize for v4.0 (table stakes + high-impact differentiators):
 
----
+### Phase 1: Health Dashboard & Metrics (table stakes)
+1. **Health Dashboard** — Overall health, risk count, blocker count, text trends ("improving/stable/declining")
+2. **Metrics Section** — Onboarding %, integration counts, phase completion by workstream, time to milestone
+3. **Visual Milestone Timeline** — Move to top of Overview tab
 
-## MVP Definition
+**Why first:** Executive visibility is the primary Overview tab use case. Health + metrics answer "How is the project doing?" at a glance.
 
-### Launch With (v3.0)
+### Phase 2: Workstream Separation (v4.0 requirement)
+4. **ADR/Biggy workstream progress** — Separate sections with phase models and completion %
+5. **Integration tracker split** — ADR integrations vs Biggy integrations with category grouping
+6. **Remove Project Completeness indicator** — Per v4.0 requirements (replaced by workstream-specific metrics)
 
-The v3.0 milestone must validate the multi-user and AI-intelligence value propositions. These are the minimum features required for v3 to be considered shipped:
+**Why second:** Core v4.0 requirement. Depends on Phase 1 metrics foundation.
 
-- [ ] **Multi-user credential auth (user + admin roles)** — Unblocks multi-user; required before any other v3 feature can be used by a second person
-- [ ] **Admin route protection + admin dashboard** — Scheduler, user management, and system settings gated to admin; user sees nothing broken
-- [ ] **Okta-ready OIDC adapter (not live)** — Architecture in place; IT can plug in without app changes
-- [ ] **Context Hub tab per project** — Upload surface + AI routing + approve/reject flow
-- [ ] **Per-tab quality gap flags** — At minimum: tab completeness badge (complete/partial/empty) + list of missing sections; full 1–5 scoring is v3.1
-- [ ] **Sub-tabs for Teams and Architecture tabs** — These two have the most obvious sub-tab need (ADR vs Biggy tracks; Before-state vs Integration-status)
-- [ ] **Project Chat (session-scoped, structured context injection)** — Single-turn and multi-turn within session; scoped to one project; no RAG
-- [ ] **Templates: one canonical template applied on project create** — Pre-populated section structure for all 11 tabs; defaults defined by PS lead
-- [ ] **Interactive Engagement Map** — Nodes clickable; drill-down to team/integration detail from DB; highest user-visible differentiator in the visual category
+### Phase 3: Weekly Focus Summary (differentiator)
+7. **Top 3-5 priorities** — Auto-ranked by due date, severity, milestone proximity
+8. **Circular progress bar** — Retain existing ProgressRing component
+9. **Auto-refresh trigger** — On-demand skill run or scheduled job
 
-### Add After Validation (v3.1)
+**Why third:** High-value differentiator, but requires ranking logic. Build after static metrics proven.
 
-Features to add once v3.0 core is stable and the new users are onboarded:
+### Phase 4: Time Tracking Global View (table stakes)
+10. **Global time tracking page** — Top-level nav section (not per-project tab)
+11. **Project attribution column** — Show project name on every entry
+12. **Week grouping + project totals** — Group by week, subtotal by project
+13. **Quick project filter** — Dropdown: "All Projects" or specific project
 
-- [ ] **Interactive Workflow Diagram** — Lower urgency than Engagement Map; add when Engagement Map pattern is validated
-- [ ] **Per-tab gap scoring (1–5 with missing elements listed)** — Upgrade from simple completeness badge to structured gap report
-- [ ] **Multiple template types** (Enterprise, SMB, Renewal) — Single template first; expand when project type differentiation is confirmed needed
-- [ ] **Sub-tabs for Outputs tab** — Outputs has output type + date range filtering; sub-tabs may or may not help here; validate with usage
+**Why fourth:** Standalone feature; no dependencies on Overview tab work.
 
-### Future Consideration (v4+)
+### Phase 5: BullMQ Extraction (infrastructure fix)
+14. **Move extraction to background job** — Replace SSE with BullMQ job
+15. **Progress polling endpoint** — GET /api/jobs/:id returns progress %
+16. **Completion detection** — Poll until job.returnvalue or job.failedReason
+17. **Error handling + retry** — Show "Retry" button on failure
 
-- [ ] **Live Okta integration** — Requires BigPanda IT coordination and live Okta tenant; unblock when IT is ready
-- [ ] **Persistent Project Chat history** — Session-scoped is sufficient to validate chat value; persist only after users confirm daily use
-- [ ] **Per-user template customization** — Validate that the canonical template works consistently first; defer divergence
-- [ ] **SCIM provisioning** — User lifecycle management via Okta SCIM; enterprise-grade but not needed until team grows
+**Why last:** Fixes existing problem (browser refresh kills extraction), but lower user-facing impact than Overview/time tracking UX.
 
----
+### Defer to v5.0
+- Health trend sparklines (needs historical data table)
+- Smart time tracking suggestions (ML/heuristic complexity)
+- SSE hybrid for BullMQ (polling sufficient for v4.0)
+- Multi-file extraction queue (single-file works; no urgency)
+- Calendar heatmap (nice-to-have visual)
+- Adoption readiness score (needs validation of simpler metrics first)
 
-## Feature Prioritization Matrix
+## Complexity Notes
 
-| Feature | User Value | Implementation Cost | Priority |
-|---------|------------|---------------------|----------|
-| Multi-user credential auth | HIGH | LOW | P1 |
-| Admin role enforcement | HIGH | LOW-MEDIUM | P1 |
-| Context Hub upload + AI routing | HIGH | MEDIUM | P1 |
-| Project Chat (session-scoped) | HIGH | MEDIUM | P1 |
-| Templates (one canonical) | HIGH | MEDIUM | P1 |
-| Sub-tabs (Teams + Architecture) | MEDIUM | LOW | P1 |
-| Interactive Engagement Map | HIGH | HIGH | P1 |
-| Per-tab completeness badge | MEDIUM | MEDIUM | P1 |
-| Okta-ready OIDC architecture | MEDIUM | MEDIUM | P2 |
-| Per-tab gap scoring (1–5) | MEDIUM | MEDIUM | P2 |
-| Interactive Workflow Diagram | MEDIUM | HIGH | P2 |
-| Multiple template types | LOW | MEDIUM | P3 |
-| Persistent Chat history | LOW | MEDIUM | P3 |
-| Live Okta integration | MEDIUM | HIGH | P3 |
+| Feature | Complexity Drivers | Mitigation |
+|---------|-------------------|------------|
+| **Health trend indicators** | Requires historical snapshot data; currently no time-series storage for health | Start with text trends ("improving") based on delta from last snapshot; defer sparklines to v5.0 |
+| **Weekly focus auto-ranking** | Scoring algorithm: due date proximity + risk severity + milestone weight + blocker status = multi-variable optimization | Use simple heuristic v1: sort by (days until due date) × (severity multiplier); refine based on feedback |
+| **BullMQ progress polling** | Client must poll repeatedly; risk of stale UI if poll interval too slow or excessive server load if too fast | Poll every 2s while job active; exponential backoff after 5min; SSE upgrade deferred |
+| **Time tracking global view** | Query performance: time_entries table could grow to 10K+ rows; JOIN with projects for every row | Index on (user_id, date), paginate results, filter by date range (default: current month) |
+| **Integration tracker split** | Unclear if integrations.track field exists or needs schema change | Check schema; if missing, add integrations.track ('ADR'|'Biggy'|null) with migration |
+| **Workstream phase standardization** | ADR uses "Discovery, Implementation, Validation"; Biggy may use different names | Map existing workstreams.phase to standard enum; create mapping table if needed |
+| **Auto-refresh for weekly focus** | Risk: refresh during user interaction causes flicker or lost unsaved changes | Use optimistic UI updates; debounce refresh; show "Updated X min ago" timestamp instead of live refresh |
 
-**Priority key:**
-- P1: Must have for v3.0 launch
-- P2: Should have, add in v3.1
-- P3: Nice to have, future milestone
+## Table Stakes Behavior Details
 
----
+### Health Dashboard Expected Behaviors
 
-## Complexity Notes by Feature Area
+Based on training data patterns from Jira, Monday.com, Asana, Linear (confidence: **MEDIUM** — training data from 2024-2025, no direct web verification):
 
-### 1. Context Hub
+1. **Overall health indicator**
+   - Single badge: RED (critical issues), YELLOW (at risk), GREEN (on track)
+   - Calculated from: open critical risks + blocked items + overdue milestones
+   - Click to expand detail breakdown
 
-**Core complexity:** The AI routing step. Classifying extracted content into tab-specific buckets requires a prompt that understands the tab schema and handles ambiguous content (e.g., a timeline can belong to Milestones OR Engagement History). Low-confidence routing decisions should surface a manual routing choice rather than silently misplace content.
+2. **Risk count by severity**
+   - "3 Critical, 5 High, 2 Medium" with color-coded badges
+   - Link to Risks tab filtered by severity
 
-**Reuse opportunity:** The v2 document ingestion pipeline (upload → extraction → review → commit) is the exact pattern needed. Context Hub wraps it in a dedicated tab surface and adds the routing classification layer on top.
+3. **Active blocker count**
+   - "7 blockers" with RED badge
+   - Expandable list: "Integration X blocked", "Step Y blocked" with links
 
-**Gap scoring:** Per-tab completeness scoring is a structured prompt pattern (well-established in 2026 document AI). Score each tab against a known checklist (defined by the template). Return JSON: `{tab: "architecture", score: 3, missing: ["integration list", "dependency map"]}`. Schedule via existing BullMQ infrastructure or trigger on-demand.
+4. **Trend indicators**
+   - Text: "↑ Improving" (green), "→ Stable" (gray), "↓ Declining" (red)
+   - Based on: risk count delta, completion % delta, blocker count delta from last week/snapshot
 
-### 2. Multi-User Auth
+### Metrics Section Expected Behaviors
 
-**Core complexity:** NextAuth.js credentials provider + bcrypt password hashing + role column in users table + middleware-based route protection is the standard 2026 pattern. LOW complexity.
+1. **Onboarding completion %**
+   - Large number: "68%" with progress bar
+   - Breakdown: "34 of 50 steps complete"
 
-**Okta-ready:** Use NextAuth.js OIDC provider with environment-variable-driven configuration (`OKTA_ISSUER`, `OKTA_CLIENT_ID`, `OKTA_CLIENT_SECRET`). When env vars are set, OIDC login appears. When not set, falls back to credentials. This is zero-cost architecture for Okta-readiness.
+2. **Integration counts**
+   - Cards or table: "12 not connected, 8 configured, 5 validated, 3 production"
+   - Click to filter Integration Tracker by status
 
-**SAML complexity:** Full SAML requires `passport-saml` or `saml2-js`, certificate management, and ACS URL configuration in an Okta tenant. This is a MEDIUM complexity integration that only makes sense when BigPanda IT has an Okta tenant to test against. Defer live SAML; document the integration steps.
+3. **Phase completion by workstream**
+   - Side-by-side: "ADR: 72%" | "Biggy: 45%"
+   - Visual: two progress bars or circular indicators
 
-### 3. UI Overhaul (Sub-Tabs)
+4. **Time to milestone**
+   - "Next milestone in 12 days: Go-Live"
+   - RED if overdue, YELLOW if <7 days, GREEN if >7 days
 
-**Core complexity:** LOW. shadcn/ui `<Tabs>` component is already in the stack. The architectural decision is URL strategy: bind tab value to a query param (`?subtab=adr`) so navigation does not reset to the default sub-tab. Use Next.js `useSearchParams` and `router.replace` to maintain state without adding to browser history.
+### Time Tracking Global View Expected Behaviors
 
-**Where to apply:** Teams tab (ADR track / Biggy track / Velocity view), Architecture tab (Before-state / Integration status / Dependencies). Evaluate Outputs tab after v3.0 ships.
+Based on training data patterns from Harvest, Toggl, Clockify (confidence: **MEDIUM**):
 
-### 4. Interactive Visuals
+1. **Week-based grouping**
+   - Default view: current week (Mon-Sun)
+   - Week picker: "< Week of Mar 25 >"
+   - Each week shows total hours
 
-**Core complexity:** HIGH for the Engagement Map refactor. Currently the skill generates a static, self-contained HTML file. Making it interactive means:
-1. The skill must output structured data (JSON) in addition to or instead of monolithic HTML
-2. A React component consumes the JSON and renders a graph (React Flow or Mermaid with `onNodeClick`)
-3. Node clicks trigger API calls to fetch live DB data (team members, integration status, active actions)
+2. **Project attribution**
+   - Every row shows project name as column or badge
+   - Color-coded by project (optional)
 
-**Library recommendation:** React Flow for the Engagement Map (drag-and-drop node positioning, built-in click handlers, excellent React integration). Mermaid.js with SVG event listeners for the Workflow Diagram (Mermaid is already used in the existing skill output; add interactivity via the `click` directive and a custom click handler).
+3. **Quick project filter**
+   - Dropdown: "All Projects" (default) or specific project
+   - URL updates: /time-tracking?project=123
 
-**Mermaid limitation:** Mermaid does not natively support dynamic node data binding. Node click → panel drawer showing live data requires wiring a click event to an API call outside of Mermaid's render cycle. This is achievable but requires careful SVG DOM management.
+4. **Subtotals**
+   - Per project: "Project A: 18.5h this week"
+   - Per week: "Total: 40h"
 
-### 5. Project Chat
+### BullMQ Progress Polling Expected Behaviors
 
-**Core complexity:** MEDIUM. The pattern is well-established:
-1. On chat open, query DB for project summary payload (project metadata, open high-priority actions, unresolved risks, recent engagement history, active milestones) — approximately 2000–4000 tokens
-2. Inject as system message with explicit instruction: "Answer only from the provided project data. Do not invent numbers or dates."
-3. Pass conversation array (user + assistant turns) in each API call for multi-turn support
-4. Stream response via SSE (already wired for skills)
+Based on training data patterns from BullMQ documentation and common job queue UX (confidence: **HIGH** — BullMQ is well-documented):
 
-**Anti-hallucination critical:** The system message must explicitly prohibit invented facts. The context payload must be structured (labeled sections, not freeform). This is the constraint that makes chat trustworthy.
+1. **Progress updates**
+   - Job updates progress: 0% → 25% → 50% → 75% → 100%
+   - Client polls GET /api/jobs/:id every 2s
+   - Response: `{ id, status: 'active'|'completed'|'failed', progress: 0-100, result?, error? }`
 
-**Scope discipline:** Chat is scoped to one project at a time. "Ask across all projects" is a future feature (requires either multi-project context concatenation or a search-and-retrieve layer). Do not build cross-project chat in v3.
+2. **Completion detection**
+   - Poll response: `status: 'completed', result: { items: [...], filteredCount: N }`
+   - UI transitions: "Extracting... 73%" → "Complete! 42 items found"
 
-### 6. Templates
+3. **Error handling**
+   - Poll response: `status: 'failed', error: 'Claude API timeout'`
+   - UI shows: "Extraction failed: Claude API timeout. [Retry]"
 
-**Core complexity:** MEDIUM. Templates are seed data applied at project creation:
-1. `project_templates` table: template_id, name, description, type (Enterprise, SMB, etc.)
-2. `tab_templates` table: template_id, tab_type, section_name, default_content, sort_order
-3. On project create: apply template → seed each tab's structural sections with empty/default content
+4. **Cancel job**
+   - POST /api/jobs/:id/cancel calls job.remove()
+   - Job state → 'cancelled', artifact.ingestion_status → 'cancelled'
+   - UI shows: "Extraction cancelled. [Restart]"
 
-**Fixed structure:** Templates define the section schema for each tab. Users fill in content; they do not add or remove sections. This constraint is what makes gap detection reliable — the gap scorer knows exactly what "complete" looks like.
+## Existing Feature Integration Points
 
-**Admin management:** Template content is edited by admin users (future: admin UI; v3.0: DB seed + migration). Do not build a template editor in v3.
+**Already built (no re-implementation needed):**
 
----
+1. **Circular progress ring** — `ProgressRing` component in `OnboardingDashboard.tsx` (lines 117-151)
+2. **BullMQ job infrastructure** — Worker, Queue, scheduler in `worker/index.ts` (v1.0 Phase 4)
+3. **Time tracking approval workflow** — `time_entries` table with approval_status, submitted_by fields (v2.0 Phase 23)
+4. **Bulk actions for time entries** — `/api/projects/[projectId]/time-entries/bulk/route.ts` (v2.0 Phase 23)
+5. **Integration status pipeline** — `integrations.status` with 5-state cycle (v2.0 Phase 21)
+6. **Onboarding step tracking** — `onboarding_steps` table with status, updates log (v2.0 Phase 21)
+7. **Workstreams table** — `workstreams` with track, phase, percent_complete (v2.0 Phase 17)
+
+**Extend (not rebuild):**
+
+1. **Overview tab** — Existing `app/customer/[id]/overview/page.tsx` — add new sections, remove Project Completeness
+2. **Time tracking** — Existing `components/TimeTab.tsx` — create parallel global view component, keep per-project tab
+3. **Document extraction** — Existing SSE route `app/api/ingestion/extract/route.ts` — migrate logic to `worker/jobs/document-extraction.ts`
+
+## Open Questions for Phase Planning
+
+1. **Health snapshot storage:** New table `health_snapshots` or JSONB field `projects.health_history`?
+2. **Integrations.track field:** Exists in schema? If not, migration adds 'ADR'|'Biggy'|null with default null for existing rows?
+3. **Weekly focus refresh trigger:** On-demand (user clicks "Refresh") or scheduled job (runs nightly)?
+4. **Time tracking global view navigation:** New top-level link "Time Tracking" or Settings submenu?
+5. **BullMQ extraction job naming:** `document-extraction` (new) or extend existing job type?
+6. **Workstream phase standardization:** Map in code or add `workstream_phase_mappings` table?
 
 ## Sources
 
-- **PROJECT.md** (2026-03-25) — canonical feature specification; HIGH confidence for scope and constraints
-- **[NextAuth.js Okta provider](https://next-auth.js.org/providers/okta)** — OIDC integration pattern; HIGH confidence
-- **[SAML SSO in Next.js guide](https://itnext.io/saml-sso-in-next-js-a-step-by-step-guide-for-okta-google-microsoft-entra-dbdd215b98d3)** — SAML implementation reference; MEDIUM confidence
-- **[RAG with PostgreSQL — pgDash](https://pgdash.io/blog/rag-with-postgresql.html)** — confirms structured DB query approach sufficient at small scale; MEDIUM confidence
-- **[Mermaid.js interactive flowcharts](https://haridornala.medium.com/building-interactive-flowcharts-with-mermaid-js-and-javascript-57ec27cdc63d)** — click handler patterns; MEDIUM confidence
-- **[mermaid-graph npm package](https://www.npmjs.com/package/mermaid-graph)** — `onNodeClick` handler support; MEDIUM confidence
-- **[AI document quality gap detection — Docsie 2026](https://www.docsie.io/blog/articles/ai-document-comparison-tool-2026/)** — per-section scoring pattern; MEDIUM confidence
-- **[shadcn/ui admin dashboard patterns 2026](https://adminlte.io/blog/build-admin-dashboard-shadcn-nextjs/)** — sub-tab + sidebar navigation; HIGH confidence (already in stack)
-- **[Agentic RAG patterns 2026 — VentureBeat](https://venturebeat.com/data/six-data-shifts-that-will-shape-enterprise-ai-in-2026)** — confirms structured context injection over RAG for bounded data; MEDIUM confidence
+**Confidence: LOW-MEDIUM** — Research based on training data (project management tool patterns from 2024-2025) and existing codebase analysis. No web verification performed due to tool access restrictions.
 
----
-*Feature research for: BigPanda AI Project Management App — v3.0 new features*
-*Researched: 2026-03-30*
+**Training data sources (unverified):**
+- Project management tool UX patterns: Jira, Monday.com, Asana, Linear, ClickUp (2024-2025 knowledge)
+- Time tracking tool patterns: Harvest, Toggl, Clockify (2024 knowledge)
+- BullMQ documentation patterns (well-established, high confidence)
+- Onboarding tool patterns: Pendo, Userpilot, WalkMe (2024 knowledge)
+
+**Verified sources (codebase analysis):**
+- `/Users/jmiloslavsky/Documents/Project Assistant Code/bigpanda-app/app/customer/[id]/overview/page.tsx` — Current Overview tab implementation
+- `/Users/jmiloslavsky/Documents/Project Assistant Code/bigpanda-app/components/OnboardingDashboard.tsx` — Existing onboarding phase UI, ProgressRing component
+- `/Users/jmiloslavsky/Documents/Project Assistant Code/bigpanda-app/components/TimeTab.tsx` — Current per-project time tracking
+- `/Users/jmiloslavsky/Documents/Project Assistant Code/bigpanda-app/app/api/ingestion/extract/route.ts` — Current SSE-based document extraction
+- `/Users/jmiloslavsky/Documents/Project Assistant Code/bigpanda-app/worker/index.ts` — Existing BullMQ worker infrastructure
+- `/Users/jmiloslavsky/Documents/Project Assistant Code/.planning/PROJECT.md` — Project requirements and v4.0 scope
+
+**Recommendation:** Validate table stakes assumptions with PS team before Phase 1 implementation. If web research tools available, verify health dashboard and time tracking patterns against current (2026) Jira/Asana/Harvest UX.
