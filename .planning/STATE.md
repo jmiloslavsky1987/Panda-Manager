@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — AI Ingestion & Enhanced Operations
-status: Ready for checkpoint
-last_updated: "2026-04-01T03:23:30.198Z"
-last_activity: "2026-03-31 — 28-05: Phase 28 verification complete — 12/12 visual tests GREEN, production build passing"
+status: Active
+last_updated: "2026-04-01T04:53:22.842Z"
+last_activity: "2026-04-01 — 29-00: AI SDK installed (ai@6.0.142, @ai-sdk/anthropic@3.0.64, @ai-sdk/react@3.0.144); 17 RED test stubs created and verified"
 progress:
   total_phases: 33
-  completed_phases: 31
+  completed_phases: 32
   total_plans: 172
   completed_plans: 172
 ---
@@ -93,6 +93,8 @@ Phase 26 is the mandatory entry point — session infrastructure must exist befo
 - [Phase 29-project-chat]: XML-wrapped project context (<project_data> tags) for prompt injection defense
 - [Phase 29-00]: AI SDK install requires --legacy-peer-deps (Next.js 16 + React 19 peer dependency mismatch, same as Phase 26 better-auth pattern)
 - [Phase 29-00]: Wave 0 RED stubs use undefined + toBeDefined() pattern to avoid brittle import crashes on missing modules
+- [Phase 29-project-chat]: Human verification checkpoint for streaming behavior — cannot be reliably automated with headless browser tests
+- [Phase 29-project-chat]: Production build verification required before checkpoint — catches SSR/hydration issues not visible in dev mode
 
 ## Previous Milestone Decisions (v2.0)
 

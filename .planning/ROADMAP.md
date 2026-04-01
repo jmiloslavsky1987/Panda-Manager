@@ -875,7 +875,7 @@ Phases 18 and 19 can run in parallel after Phase 17. Phases 23 and 24 are indepe
 - [x] **Phase 26: Multi-User Auth** - Credential login, user management, role enforcement, Okta-ready schema, all routes session-protected (completed 2026-03-31)
 - [x] **Phase 27: UI Overhaul + Templates** - Sub-tab navigation (UI-01), TypeScript template registry (UI-03), new-project seeding (UI-04) — visual modernization deferred to future phase (completed 2026-03-31)
 - [x] **Phase 28: Interactive Visuals** - React Flow engagement map, interactive workflow diagram with clickable nodes (completed 2026-03-31)
-- [ ] **Phase 29: Project Chat** - Inline AI chat panel per project, DB context injection, hallucination constraints
+- [x] **Phase 29: Project Chat** - Inline AI chat panel per project, DB context injection, hallucination constraints (completed 2026-04-01)
 - [ ] **Phase 30: Context Hub** - Dedicated upload tab, Claude content routing, completeness analysis, per-tab gap summaries
 
 ## Phase Details (v3.0)
@@ -971,7 +971,7 @@ v3.0 phases execute: 26 → 27 → 28/29 (parallel, both depend on 26 only) → 
 | 26. Multi-User Auth | 5/5 | Complete   | 2026-03-31 |
 | 27. UI Overhaul + Templates | 4/5 | Complete    | 2026-03-31 |
 | 28. Interactive Visuals | 5/5 | Complete   | 2026-03-31 |
-| 29. Project Chat | 3/4 | In Progress|  |
+| 29. Project Chat | 4/4 | Complete   | 2026-04-01 |
 | 30. Context Hub | 0/TBD | Not started | - |
 
 ---
