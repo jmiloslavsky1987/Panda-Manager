@@ -27,10 +27,10 @@ All v2.0 requirements are complete. See `.planning/v2.0-MILESTONE-AUDIT.md` for 
 
 ### CTX — Context Hub
 
-- [ ] **CTX-01**: Each project workspace has a dedicated Context tab as the primary document upload interface
-- [ ] **CTX-02**: Uploaded documents are classified by Claude and extracted content is routed to the appropriate workspace tabs
-- [ ] **CTX-03**: Claude analyzes each tab's live data and surfaces specific quality gaps per tab (e.g. "Teams tab missing ADR status for 3 teams")
-- [ ] **CTX-04**: Context tab displays completeness status for all workspace tabs with gap summaries at a glance
+- [x] **CTX-01**: Each project workspace has a dedicated Context tab as the primary document upload interface
+- [x] **CTX-02**: Uploaded documents are classified by Claude and extracted content is routed to the appropriate workspace tabs
+- [x] **CTX-03**: Claude analyzes each tab's live data and surfaces specific quality gaps per tab (e.g. "Teams tab missing ADR status for 3 teams")
+- [x] **CTX-04**: Context tab displays completeness status for all workspace tabs with gap summaries at a glance
 
 ### UI — UI & Templates
 
@@ -82,10 +82,10 @@ All v2.0 requirements are complete. See `.planning/v2.0-MILESTONE-AUDIT.md` for 
 | VIS-02 | Phase 28 | Complete |
 | CHAT-01 | Phase 29 | Complete |
 | CHAT-02 | Phase 29 | Complete |
-| CTX-01 | Phase 30 | Pending |
-| CTX-02 | Phase 30 | Pending |
-| CTX-03 | Phase 30 | Pending |
-| CTX-04 | Phase 30 | Pending |
+| CTX-01 | Phase 30 | Complete |
+| CTX-02 | Phase 30 | Complete |
+| CTX-03 | Phase 30 | Complete |
+| CTX-04 | Phase 30 | Complete |
 
 **Coverage:**
 - v3.0 requirements: 17 total
