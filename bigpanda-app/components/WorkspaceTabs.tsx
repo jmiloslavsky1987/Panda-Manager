@@ -18,7 +18,7 @@ interface TabGroup {
   children?: SubTab[]
 }
 
-const TAB_GROUPS: TabGroup[] = [
+export const TAB_GROUPS: TabGroup[] = [
   { id: 'overview', label: 'Overview', standalone: true },
   {
     id: 'delivery',
@@ -49,6 +49,7 @@ const TAB_GROUPS: TabGroup[] = [
   },
   { id: 'skills', label: 'Skills', standalone: true },
   { id: 'chat', label: 'Chat', standalone: true },
+  { id: 'context', label: 'Context', standalone: true },
   {
     id: 'admin',
     label: 'Admin',
