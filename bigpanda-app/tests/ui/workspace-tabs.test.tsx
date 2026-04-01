@@ -29,7 +29,7 @@ describe('WorkspaceTabs — UI-01', () => {
     mockSearchParams.set('tab', 'overview')
   })
 
-  it('renders 6 top-level tab groups (not 14)', () => {
+  it('renders 7 top-level tab groups (not 14)', () => {
     render(<WorkspaceTabs projectId="123" />)
 
     // Primary tabs
@@ -38,7 +38,16 @@ describe('WorkspaceTabs — UI-01', () => {
     expect(screen.getByText('Team')).toBeDefined()
     expect(screen.getByText('Intel')).toBeDefined()
     expect(screen.getByText('Skills')).toBeDefined()
+    expect(screen.getByText('Chat')).toBeDefined()
     expect(screen.getByText('Admin')).toBeDefined()
+  })
+
+  it('Chat tab has standalone href with ?tab=chat', () => {
+    render(<WorkspaceTabs projectId="123" />)
+
+    const chatLink = screen.getByText('Chat').closest('a')
+    expect(chatLink?.getAttribute('href')).toContain('/customer/123/chat')
+    expect(chatLink?.getAttribute('href')).toContain('tab=chat')
   })
 
   it('renders secondary tab bar when Delivery is active', () => {
