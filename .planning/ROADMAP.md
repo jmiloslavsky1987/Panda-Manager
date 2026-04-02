@@ -87,7 +87,14 @@ Full details: `.planning/milestones/v3.0-ROADMAP.md` (archived)
   2. Extraction progress displays percentage complete and current chunk being processed
   3. Failed extraction does not leave partial data in workspace tabs (atomic commit only when complete)
   4. Long-running extraction (4-6 minutes) completes successfully even if browser refreshes mid-extraction
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 31-01-PLAN.md — extraction_jobs schema + migration + Wave 0 test scaffolds
+- [ ] 31-02-PLAN.md — Worker job handler (document-extraction.ts + worker/index.ts registration)
+- [ ] 31-03-PLAN.md — API routes: enqueue endpoint + polling endpoint + batch status endpoint
+- [ ] 31-04-PLAN.md — UI: IngestionModal SSE→polling + ContextTab inline progress + review card
+- [ ] 31-05-PLAN.md — Full test suite + build check + human UAT verification
 
 ### Phase 32: Time Tracking Global View
 **Goal**: Users can view and manage all time entries across projects from a single top-level location
@@ -156,7 +163,7 @@ Full details: `.planning/milestones/v3.0-ROADMAP.md` (archived)
 | 1–16 | v1.0 | 63/63 | Complete | 2026-03-26 |
 | 17–25 | v2.0 | 63/63 | Complete | 2026-03-30 |
 | 26–30 | v3.0 | 26/26 | Complete | 2026-04-01 |
-| 31. BullMQ Extraction | v4.0 | 0/TBD | Not started | — |
+| 31. BullMQ Extraction | v4.0 | 0/5 | Planned | — |
 | 32. Time Tracking Global | v4.0 | 0/TBD | Not started | — |
 | 33. Schema Migration | v4.0 | 0/TBD | Not started | — |
 | 34. Metrics & Health | v4.0 | 0/TBD | Not started | — |
