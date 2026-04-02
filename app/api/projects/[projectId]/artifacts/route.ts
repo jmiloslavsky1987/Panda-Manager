@@ -21,7 +21,7 @@ export async function GET(
     .select({
       id: artifacts.id,
       name: artifacts.name,
-      status: artifacts.status,
+      status: artifacts.ingestion_status,
       createdAt: artifacts.created_at,
     })
     .from(artifacts)
