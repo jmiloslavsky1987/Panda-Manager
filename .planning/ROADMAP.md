@@ -171,7 +171,7 @@ Plans:
 | 17–25 | v2.0 | 63/63 | Complete | 2026-03-30 |
 | 26–30 | v3.0 | 26/26 | Complete | 2026-04-01 |
 | 31. BullMQ Extraction | v4.0 | 5/5 | Complete | 2026-04-02 |
-| 32. Time Tracking Global | 3/5 | In Progress|  | — |
+| 32. Time Tracking Global | 4/5 | In Progress|  | — |
 | 33. Schema Migration | v4.0 | 0/TBD | Not started | — |
 | 34. Metrics & Health | v4.0 | 0/TBD | Not started | — |
 | 35. Weekly Focus | v4.0 | 0/TBD | Not started | — |
