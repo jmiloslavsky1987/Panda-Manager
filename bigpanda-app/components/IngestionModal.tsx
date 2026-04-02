@@ -9,7 +9,7 @@ import {
 } from './ui/dialog'
 import { IngestionStepper } from './IngestionStepper'
 import { ExtractionPreview } from './ExtractionPreview'
-import type { ExtractionItem } from '@/app/api/ingestion/extract/route'
+import type { ExtractionItem } from '@/lib/extraction-types'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

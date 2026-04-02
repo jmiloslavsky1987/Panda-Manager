@@ -108,7 +108,7 @@ vi.mock('next/server', () => ({
   },
 }));
 
-import type { ExtractionItem } from '@/app/api/ingestion/extract/route';
+import type { ExtractionItem } from '@/lib/extraction-types';
 
 const VALID_ENTITY_TYPES = [
   'action', 'risk', 'decision', 'milestone', 'stakeholder',
