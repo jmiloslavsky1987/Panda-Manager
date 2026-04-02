@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: — Infrastructure & UX Foundations
 status: executing
-last_updated: "2026-04-02T00:33:10.254Z"
-last_activity: "2026-04-02 — Plan 31-01 complete: extraction_jobs schema + Wave 0 tests"
+last_updated: "2026-04-02T00:46:38.569Z"
+last_activity: "2026-04-02 — Plan 31-03 complete: API routes (enqueue, polling, batch status)"
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 5
-  completed_plans: 2
+  completed_plans: 4
 ---
 
 # Project State
@@ -21,9 +21,9 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Status
 
 **Phase:** 31 (BullMQ Document Extraction Migration)
-**Plan:** 03 of 5 (in progress)
-**Status:** Executing Phase 31 — Plan 03 complete
-**Last activity:** 2026-04-02 — Plan 31-03 complete: API routes (enqueue, polling, batch status)
+**Plan:** 04 of 5 (in progress)
+**Status:** Executing Phase 31 — Plan 04 complete
+**Last activity:** 2026-04-02 — Plan 31-04 complete: UI migration to polling (IngestionModal + ContextTab)
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
 **Current focus:** v4.0 — Infrastructure & UX Foundations. Phase 31: BullMQ Document Extraction Migration.
@@ -39,7 +39,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 
 | Phase | Status |
 |-------|--------|
-| 31. BullMQ Extraction | In progress (3/5) |
+| 31. BullMQ Extraction | In progress (4/5) |
 | 32. Time Tracking Global | Not started |
 | 33. Schema Migration | Not started |
 | 34. Metrics & Health | Not started |
@@ -48,13 +48,16 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 
 ## Active Work
 
-**Phase 31 — Plan 03 Complete (2026-04-02):**
-- SSE extract route replaced with thin BullMQ enqueue endpoint (~50 lines vs 575 lines)
-- Polling endpoint created for per-job progress with inline stale detection (no cron needed)
-- Batch status endpoint created for Context Hub on-mount check with batch_complete flags
-- Shared types extracted to lib/extraction-types.ts (EntityType, ExtractionItem, isAlreadyIngested)
-- All 13 extraction tests GREEN: 5 enqueue + 4 polling + 4 batch status
-- Import paths updated in 7 files (API routes, UI components, tests)
+**Phase 31 — Plan 04 Complete (2026-04-02):**
+- IngestionModal migrated from SSE to polling: polls /api/ingestion/jobs/[jobId] every 2s
+- ContextTab polls /api/projects/[projectId]/extraction-status every 5s for background progress
+- Inline progress display: "60% — Processing chunk 3 of 5" per CONTEXT.md spec
+- Toast fires exactly once per batchId (ref-guarded with Set)
+- Ready-for-review card with review handoff: ContextTab reopens modal at reviewing stage
+- Upload button hidden while activeBatch exists (running or review)
+- All SSE/EventSource code removed from IngestionModal
+- setInterval cleanup on unmount prevents memory leaks
+- All 13 extraction tests still GREEN (no regressions)
 
 v4.0 roadmap created 2026-04-01. All 15 requirements mapped across 6 phases (31–36).
 
@@ -93,6 +96,8 @@ v4.0 roadmap created 2026-04-01. All 15 requirements mapped across 6 phases (31�
 - [Phase 31]: Worker job uses ../../lib/settings-core (NOT settings.ts — has server-only marker that crashes worker)
 - [Phase 31]: Relative imports (../../lib/*) instead of Next.js @/ alias — worker is plain Node.js process
 - [Phase 31]: Progress heartbeat: updated_at set after every chunk for stale detection (10 min threshold)
+- [Phase 31]: Polling intervals: 2s for modal (foreground), 5s for ContextTab (background) — balances responsiveness with backend load
+- [Phase 31]: Toast ref-guarded with Set — prevents duplicate notifications when polling detects batch_complete multiple times
 
 ## Accumulated Technical Context
 
