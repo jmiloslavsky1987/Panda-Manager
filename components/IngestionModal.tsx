@@ -38,12 +38,24 @@ interface IngestionModalProps {
   artifactId?: number
   /** Pre-populate the upload queue with files (e.g. from drag-and-drop on the Artifacts tab) */
   initialFiles?: File[]
+  /** Initial stage for modal (default: 'uploading') — use 'reviewing' to reopen at review stage */
+  initialStage?: Stage
+  /** Pre-loaded review items when opening at review stage (e.g. from Context Hub) */
+  initialReviewItems?: ExtractionItem[]
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function IngestionModal({ open, onOpenChange, projectId, artifactId, initialFiles }: IngestionModalProps) {
-  const [stage, setStage] = useState<Stage>('uploading')
+export function IngestionModal({
+  open,
+  onOpenChange,
+  projectId,
+  artifactId,
+  initialFiles,
+  initialStage = 'uploading',
+  initialReviewItems = []
+}: IngestionModalProps) {
+  const [stage, setStage] = useState<Stage>(initialStage)
   const [fileStatuses, setFileStatuses] = useState<FileStatus[]>([])
   const [currentFileIndex, setCurrentFileIndex] = useState(0)
   const [reviewItems, setReviewItems] = useState<ReviewItem[]>([])
@@ -54,6 +66,148 @@ export function IngestionModal({ open, onOpenChange, projectId, artifactId, init
   const [error, setError] = useState<string | null>(null)
   // Ref prevents double-firing in React StrictMode
   const autoStartedRef = useRef(false)
+  // Store jobIds for polling
+  const [jobIds, setJobIds] = useState<number[]>([])
+  // Polling interval ref for cleanup
+  const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const isPollingRef = useRef(false)
+
+  // ── Poll job status ───────────────────────────────────────────────────────
+  const startPolling = useCallback((jobIdsToCheck: number[], statuses: FileStatus[]) => {
+    if (isPollingRef.current) return // Already polling
+    isPollingRef.current = true
+
+    const poll = async () => {
+      try {
+        // Fetch status for all jobs
+        const responses = await Promise.all(
+          jobIdsToCheck.map(jobId =>
+            fetch(`/api/ingestion/jobs/${jobId}`).then(r => r.ok ? r.json() : null)
+          )
+        )
+
+        // Update per-file progress
+        responses.forEach((data, idx) => {
+          if (!data) return
+          const file = statuses[idx]
+          if (!file) return
+
+          if (data.status === 'running' || data.status === 'pending') {
+            const progress_pct = data.progress_pct || 0
+            const current_chunk = data.current_chunk || 0
+            const total_chunks = data.total_chunks || 0
+
+            if (total_chunks > 0) {
+              setExtractionMessage(
+                `${progress_pct}% — Processing chunk ${current_chunk} of ${total_chunks}`
+              )
+            } else {
+              setExtractionMessage(`Extracting ${file.name}...`)
+            }
+          } else if (data.status === 'failed') {
+            setFileStatuses(prev => prev.map((f, i) =>
+              i === idx ? { ...f, status: 'error' } : f
+            ))
+            setError(data.error_message || `Extraction failed for ${file.name}`)
+          } else if (data.status === 'completed') {
+            setFileStatuses(prev => prev.map((f, i) =>
+              i === idx ? { ...f, status: 'done' } : f
+            ))
+          }
+        })
+
+        // Check if all jobs are done
+        const allCompleted = responses.every(data => data && data.status === 'completed')
+        const anyFailed = responses.some(data => data && data.status === 'failed')
+
+        if (allCompleted || anyFailed) {
+          // Stop polling
+          if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current)
+            pollingIntervalRef.current = null
+          }
+          isPollingRef.current = false
+
+          if (allCompleted) {
+            // Fetch completed jobs to get staged_items_json
+            const completedJobsRes = await fetch(
+              `/api/projects/${projectId}/extraction-status`
+            )
+            const completedData = await completedJobsRes.json()
+
+            // Find our batch and extract all items
+            const allItems: ReviewItem[] = []
+            let totalFiltered = 0
+
+            for (const job of completedData.jobs) {
+              if (jobIdsToCheck.includes(job.id) && job.status === 'completed') {
+                const items = Array.isArray(job.staged_items_json) ? job.staged_items_json : []
+                allItems.push(...items.map((item: ExtractionItem) => ({
+                  ...item,
+                  approved: true,
+                  edited: false,
+                })))
+
+                // Track filtered count if available
+                if (job.filtered_count) {
+                  totalFiltered += job.filtered_count
+                }
+              }
+            }
+
+            setReviewItems(allItems)
+            setFilteredCount(totalFiltered)
+            setStage('reviewing')
+          }
+        }
+      } catch (err) {
+        console.error('Polling error:', err)
+      }
+    }
+
+    // Initial poll
+    poll()
+    // Poll every 2 seconds
+    pollingIntervalRef.current = setInterval(poll, 2000)
+  }, [projectId])
+
+  // ── Enqueue extraction jobs and start polling ─────────────────────────────
+  const startExtraction = useCallback(async (statuses: FileStatus[]) => {
+    // Extract artifact IDs from uploaded files
+    const artifactIds = statuses
+      .map(s => s.fileId ? Number(s.fileId) : null)
+      .filter((id): id is number => id !== null)
+
+    if (artifactIds.length === 0) {
+      setError('No valid artifact IDs to extract')
+      return
+    }
+
+    try {
+      // Enqueue all jobs at once
+      const res = await fetch('/api/ingestion/extract', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ artifactIds, projectId }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error ?? `Extraction failed (${res.status})`)
+      }
+
+      const data = await res.json() as { jobIds: number[], batchId: string }
+      setJobIds(data.jobIds)
+
+      // Mark all files as extracting
+      setFileStatuses(prev => prev.map(f => ({ ...f, status: 'extracting' })))
+
+      // Start polling
+      startPolling(data.jobIds, statuses)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Extraction failed')
+      setFileStatuses(prev => prev.map(f => ({ ...f, status: 'error' })))
+    }
+  }, [projectId, startPolling])
 
   // ── Upload all files upfront ──────────────────────────────────────────────
   const handleFileDrop = useCallback(async (acceptedFiles: File[]) => {
@@ -90,10 +244,21 @@ export function IngestionModal({ open, onOpenChange, projectId, artifactId, init
     }))
     setFileStatuses(newStatuses)
     setStage('extracting')
-    // Trigger extraction for first file
-    await extractFile(0, newStatuses)
+    // Start extraction for all files
+    await startExtraction(newStatuses)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projectId, artifactId])
+  }, [projectId, artifactId, startExtraction])
+
+  // Pre-populate reviewItems when opened at review stage
+  useEffect(() => {
+    if (open && initialStage === 'reviewing' && initialReviewItems.length > 0) {
+      setReviewItems(initialReviewItems.map(item => ({
+        ...item,
+        approved: true,
+        edited: false,
+      })))
+    }
+  }, [open, initialStage, initialReviewItems])
 
   // Auto-start upload when modal opens with initialFiles from ArtifactsDropZone
   useEffect(() => {
@@ -107,127 +272,34 @@ export function IngestionModal({ open, onOpenChange, projectId, artifactId, init
     }
   }, [open, initialFiles, handleFileDrop])
 
-  // ── Extract a single file via SSE ─────────────────────────────────────────
-  const extractFile = useCallback(async (idx: number, statuses: FileStatus[]) => {
-    const file = statuses[idx]
-    if (!file) return
-
-    setCurrentFileIndex(idx)
-    setFileStatuses(prev => prev.map((f, i) =>
-      i === idx ? { ...f, status: 'extracting' } : f
-    ))
-    setExtractionMessage(`Extracting ${file.name}…`)
-
-    const artifactIdForExtract = file.fileId ? Number(file.fileId) : (artifactId ?? null)
-    if (!artifactIdForExtract) {
-      setError(`No artifact ID available for ${file.name}`)
-      return
-    }
-
-    try {
-      // Extract route is POST+SSE — use fetch streaming (EventSource is GET-only)
-      const res = await fetch('/api/ingestion/extract', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ artifactId: artifactIdForExtract, projectId }),
-      })
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}))
-        throw new Error(err.error ?? `Extraction failed (${res.status})`)
+  // Cleanup polling on unmount or stage change
+  useEffect(() => {
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current)
+        pollingIntervalRef.current = null
       }
-
-      const items: ReviewItem[] = await new Promise((resolve, reject) => {
-        const accumulated: ReviewItem[] = []
-        const reader = res.body!.getReader()
-        const decoder = new TextDecoder()
-        let buffer = ''
-
-        async function pump() {
-          try {
-            while (true) {
-              const { done, value } = await reader.read()
-              if (done) { resolve(accumulated); break }
-              buffer += decoder.decode(value, { stream: true })
-              const lines = buffer.split('\n')
-              buffer = lines.pop() ?? ''
-              for (const line of lines) {
-                if (!line.startsWith('data: ')) continue
-                try {
-                  const parsed = JSON.parse(line.slice(6))
-                  if (parsed.type === 'progress') {
-                    setExtractionMessage(parsed.message ?? `Extracting ${file.name}…`)
-                  } else if (parsed.type === 'item') {
-                    // Individual item streaming (future use)
-                    const item: ReviewItem = {
-                      ...(parsed.item as ExtractionItem),
-                      approved: true,
-                      edited: false,
-                      conflict: parsed.item.conflict,
-                    }
-                    accumulated.push(item)
-                  } else if (parsed.type === 'complete') {
-                    // Bulk completion — extract route sends all items in one event
-                    if (parsed.filteredCount) {
-                      setFilteredCount(prev => prev + (parsed.filteredCount as number))
-                    }
-                    for (const raw of (parsed.items ?? [])) {
-                      accumulated.push({
-                        ...(raw as ExtractionItem),
-                        approved: true,
-                        edited: false,
-                        conflict: (raw as ExtractionItem & { conflict?: ReviewItem['conflict'] }).conflict,
-                      })
-                    }
-                    resolve(accumulated); return
-                  } else if (parsed.type === 'done') {
-                    resolve(accumulated); return
-                  } else if (parsed.type === 'error') {
-                    reject(new Error(parsed.message ?? 'Extraction error')); return
-                  }
-                } catch { /* ignore malformed SSE frames */ }
-              }
-            }
-          } catch (err) {
-            reject(err)
-          }
-        }
-        pump()
-      })
-
-      setReviewItems(prev => [...prev, ...items])
-      setLastExtractedArtifactId(artifactIdForExtract)
-      setFileStatuses(prev => prev.map((f, i) =>
-        i === idx ? { ...f, status: 'done' } : f
-      ))
-
-      // Advance to next file or move to reviewing stage
-      const nextIdx = idx + 1
-      if (nextIdx < statuses.length) {
-        setCurrentFileIndex(nextIdx)
-        // Wait for user to navigate to next file — extraction is triggered on demand
-        setStage('extracting')
-      } else {
-        setStage('reviewing')
-      }
-    } catch (err) {
-      setFileStatuses(prev => prev.map((f, i) =>
-        i === idx ? { ...f, status: 'error' } : f
-      ))
-      setError(err instanceof Error ? err.message : 'Extraction failed')
+      isPollingRef.current = false
     }
-  }, [projectId, artifactId])
+  }, [])
+
+  // Stop polling when leaving extracting stage
+  useEffect(() => {
+    if (stage !== 'extracting' && pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current)
+      pollingIntervalRef.current = null
+      isPollingRef.current = false
+    }
+  }, [stage])
 
   // ── User selects a file in the stepper ────────────────────────────────────
   async function handleSelectFile(idx: number) {
     const file = fileStatuses[idx]
-    if (!file || file.status === 'extracting') return
+    if (!file) return
 
-    if (file.status === 'pending') {
-      // Trigger extraction on demand
-      await extractFile(idx, fileStatuses)
-    } else {
-      setCurrentFileIndex(idx)
-    }
+    // In new flow, all files extract simultaneously via polling
+    // User just navigates between files to see their progress
+    setCurrentFileIndex(idx)
   }
 
   // ── Item change handler from ExtractionPreview ────────────────────────────
