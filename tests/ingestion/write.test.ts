@@ -1,20 +1,42 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock the DB — vi.mock is hoisted, use inline vi.fn()
-vi.mock('@/db', () => ({
-  db: {
-    select: vi.fn(),
-    insert: vi.fn(),
-    update: vi.fn(),
-    delete: vi.fn(),
-    transaction: vi.fn(async (cb: (tx: unknown) => unknown) => cb({
-      select: vi.fn(),
-      insert: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-    })),
-  },
-}));
+// Create chainable query builder pattern for Drizzle ORM
+vi.mock('@/db', () => {
+  const createMockQueryBuilder = () => ({
+    values: vi.fn().mockReturnThis(),
+    returning: vi.fn().mockResolvedValue([{ id: 'test-id', project_id: 'test-proj' }]),
+    where: vi.fn().mockReturnThis(),
+    set: vi.fn().mockReturnThis(),
+    from: vi.fn().mockReturnThis(),
+    execute: vi.fn().mockResolvedValue([]),
+  });
+
+  // Create the db methods as vi.fn() so tests can mock them
+  const selectFn = vi.fn(() => createMockQueryBuilder());
+  const insertFn = vi.fn(() => createMockQueryBuilder());
+  const updateFn = vi.fn(() => createMockQueryBuilder());
+  const deleteFn = vi.fn(() => createMockQueryBuilder());
+
+  return {
+    db: {
+      select: selectFn,
+      insert: insertFn,
+      update: updateFn,
+      delete: deleteFn,
+      transaction: vi.fn(async (cb: (tx: unknown) => unknown) => {
+        // Transaction methods use the SAME vi.fn() instances so tests can mock them
+        const txMethods = {
+          select: selectFn,
+          insert: insertFn,
+          update: updateFn,
+          delete: deleteFn,
+        };
+        return cb(txMethods);
+      }),
+    },
+  };
+});
 
 // Mock db/schema with minimal shape for all entity tables
 vi.mock('@/db/schema', () => ({
@@ -30,6 +52,7 @@ vi.mock('@/db/schema', () => ({
   architectureIntegrations: { id: 'id', project_id: 'project_id', tool_name: 'tool_name', track: 'track', source: 'source', source_artifact_id: 'source_artifact_id', ingested_at: 'ingested_at' },
   teamOnboardingStatus: { id: 'id', project_id: 'project_id', team_name: 'team_name' },
   artifacts: { id: 'id', project_id: 'project_id', ingestion_status: 'ingestion_status', ingestion_log_json: 'ingestion_log_json' },
+  auditLog: { id: 'id', entity_type: 'entity_type', entity_id: 'entity_id', action: 'action', actor_id: 'actor_id', before_json: 'before_json', after_json: 'after_json' },
   ingestionStatusEnum: vi.fn(),
 }));
 
@@ -83,7 +106,7 @@ describe('Ingestion write and logging (ING-09, ING-10)', () => {
     vi.mocked(db.select).mockReturnValue({ from: mockFrom } as any);
 
     // Stub: DB insert returns inserted row
-    const mockValues = vi.fn().mockResolvedValue([{ id: 1 }]);
+    const mockValues = vi.fn().mockReturnValue({ returning: vi.fn().mockResolvedValue([{ id: 1 }]) });
     vi.mocked(db.insert).mockReturnValue({ values: mockValues } as any);
 
     // Stub: DB update for artifact log
@@ -136,7 +159,7 @@ describe('Ingestion write and logging (ING-09, ING-10)', () => {
       .mockReturnValueOnce({ from: mockArtifactFrom } as any)
       .mockReturnValue({ from: mockFrom } as any);
 
-    const mockValues = vi.fn().mockResolvedValue([{ id: 1 }]);
+    const mockValues = vi.fn().mockReturnValue({ returning: vi.fn().mockResolvedValue([{ id: 1 }]) });
     vi.mocked(db.insert).mockReturnValue({ values: mockValues } as any);
     const mockSet = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) });
     vi.mocked(db.update).mockReturnValue({ set: mockSet } as any);
@@ -171,7 +194,7 @@ describe('Ingestion write and logging (ING-09, ING-10)', () => {
       .mockReturnValueOnce({ from: mockArtifactFrom } as any)
       .mockReturnValue({ from: mockFrom } as any);
 
-    const mockValues = vi.fn().mockResolvedValue([{ id: 1 }]);
+    const mockValues = vi.fn().mockReturnValue({ returning: vi.fn().mockResolvedValue([{ id: 1 }]) });
     vi.mocked(db.insert).mockReturnValue({ values: mockValues } as any);
     const mockSet = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) });
     vi.mocked(db.update).mockReturnValue({ set: mockSet } as any);
@@ -206,7 +229,7 @@ describe('Ingestion write and logging (ING-09, ING-10)', () => {
       .mockReturnValueOnce({ from: mockArtifactFrom } as any)
       .mockReturnValue({ from: mockFrom } as any);
 
-    const mockValues = vi.fn().mockResolvedValue([{ id: 1 }]);
+    const mockValues = vi.fn().mockReturnValue({ returning: vi.fn().mockResolvedValue([{ id: 1 }]) });
     vi.mocked(db.insert).mockReturnValue({ values: mockValues } as any);
     const mockWhereUpdate = vi.fn().mockResolvedValue([]);
     const mockSet = vi.fn().mockReturnValue({ where: mockWhereUpdate });
@@ -244,7 +267,7 @@ describe('Ingestion write and logging (ING-09, ING-10)', () => {
       .mockReturnValueOnce({ from: mockArtifactFrom } as any)
       .mockReturnValue({ from: mockFrom } as any);
 
-    const mockValues = vi.fn().mockResolvedValue([{ id: 1 }]);
+    const mockValues = vi.fn().mockReturnValue({ returning: vi.fn().mockResolvedValue([{ id: 1 }]) });
     vi.mocked(db.insert).mockReturnValue({ values: mockValues } as any);
     const mockWhereUpdate = vi.fn().mockResolvedValue([]);
     const mockSet = vi.fn().mockReturnValue({ where: mockWhereUpdate });
