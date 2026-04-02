@@ -69,7 +69,7 @@ Full details: `.planning/milestones/v3.0-ROADMAP.md` (archived)
 
 **Milestone Goal:** Resolve accumulated technical debt and deliver two significant UX redesigns: time tracking as a standalone top-level section and a fully overhauled Overview tab with ADR/Biggy workstream structure.
 
-- [ ] **Phase 31: BullMQ Document Extraction Migration** - Move extraction to background job with browser-refresh resilience
+- [x] **Phase 31: BullMQ Document Extraction Migration** - Move extraction to background job with browser-refresh resilience (completed 2026-04-01)
 - [ ] **Phase 32: Time Tracking Global View** - Standalone top-level section with cross-project timesheet
 - [ ] **Phase 33: Overview Tab Schema Migration + Workstream Structure** - Add track column for ADR/Biggy separation
 - [ ] **Phase 34: Overview Tab — Metrics & Health Dashboard** - Read-only aggregation sections with visualizations
@@ -90,11 +90,11 @@ Full details: `.planning/milestones/v3.0-ROADMAP.md` (archived)
 **Plans**: 5 plans
 
 Plans:
-- [ ] 31-01-PLAN.md — extraction_jobs schema + migration + Wave 0 test scaffolds
-- [ ] 31-02-PLAN.md — Worker job handler (document-extraction.ts + worker/index.ts registration)
-- [ ] 31-03-PLAN.md — API routes: enqueue endpoint + polling endpoint + batch status endpoint
-- [ ] 31-04-PLAN.md — UI: IngestionModal SSE→polling + ContextTab inline progress + review card
-- [ ] 31-05-PLAN.md — Full test suite + build check + human UAT verification
+- [x] 31-01-PLAN.md — extraction_jobs schema + migration + Wave 0 test scaffolds
+- [x] 31-02-PLAN.md — Worker job handler (document-extraction.ts + worker/index.ts registration)
+- [x] 31-03-PLAN.md — API routes: enqueue endpoint + polling endpoint + batch status endpoint
+- [x] 31-04-PLAN.md — UI: IngestionModal SSE→polling + ContextTab inline progress + review card
+- [x] 31-05-PLAN.md — Full test suite + build check + human UAT verification (6 tests passed, 11 bugs fixed)
 
 ### Phase 32: Time Tracking Global View
 **Goal**: Users can view and manage all time entries across projects from a single top-level location

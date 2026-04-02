@@ -7,9 +7,9 @@ last_updated: "2026-04-02T00:46:38.569Z"
 last_activity: "2026-04-02 — Plan 31-03 complete: API routes (enqueue, polling, batch status)"
 progress:
   total_phases: 6
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 5
-  completed_plans: 4
+  completed_plans: 5
 ---
 
 # Project State
@@ -21,9 +21,9 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Status
 
 **Phase:** 31 (BullMQ Document Extraction Migration)
-**Plan:** 04 of 5 (in progress)
-**Status:** Executing Phase 31 — Plan 04 complete
-**Last activity:** 2026-04-02 — Plan 31-04 complete: UI migration to polling (IngestionModal + ContextTab)
+**Plan:** 05 of 5 (complete)
+**Status:** Phase 31 Complete — All BullMQ extraction migration plans finished
+**Last activity:** 2026-04-01 — Plan 31-05 complete: Human UAT verification with 11 bugs found and fixed
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
 **Current focus:** v4.0 — Infrastructure & UX Foundations. Phase 31: BullMQ Document Extraction Migration.
@@ -39,7 +39,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 
 | Phase | Status |
 |-------|--------|
-| 31. BullMQ Extraction | In progress (4/5) |
+| 31. BullMQ Extraction | Complete (5/5) |
 | 32. Time Tracking Global | Not started |
 | 33. Schema Migration | Not started |
 | 34. Metrics & Health | Not started |
@@ -48,16 +48,26 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 
 ## Active Work
 
-**Phase 31 — Plan 04 Complete (2026-04-02):**
-- IngestionModal migrated from SSE to polling: polls /api/ingestion/jobs/[jobId] every 2s
-- ContextTab polls /api/projects/[projectId]/extraction-status every 5s for background progress
-- Inline progress display: "60% — Processing chunk 3 of 5" per CONTEXT.md spec
-- Toast fires exactly once per batchId (ref-guarded with Set)
-- Ready-for-review card with review handoff: ContextTab reopens modal at reviewing stage
-- Upload button hidden while activeBatch exists (running or review)
-- All SSE/EventSource code removed from IngestionModal
-- setInterval cleanup on unmount prevents memory leaks
-- All 13 extraction tests still GREEN (no regressions)
+**Phase 31 — Complete (2026-04-01):**
+All 5 plans complete: BullMQ document extraction migration fully verified and production-ready.
+- Plan 01: extraction_jobs schema + Wave 0 tests
+- Plan 02: BullMQ worker job handler
+- Plan 03: API routes (enqueue, polling, batch status)
+- Plan 04: UI migration to polling (IngestionModal + ContextTab)
+- Plan 05: Human UAT verification (6 tests passed, 11 bugs found and fixed)
+
+**Requirements Verified:**
+- EXTR-01: Navigation-away persistence and browser refresh resilience
+- EXTR-02: Real-time progress visibility with % and chunk labels
+- EXTR-03: Atomic commit pattern (workspace unchanged until approval)
+
+**Key Technical Achievements:**
+- Complete SSE-to-BullMQ migration for document extraction
+- Background job processing with polling-based progress updates
+- Browser-refresh resilience via PostgreSQL staging table pattern
+- Atomic commit prevents partial data on failure
+- Toast fires exactly once per batch (ref-guarded with Set)
+- Review modal handoff with pre-loaded staged items
 
 v4.0 roadmap created 2026-04-01. All 15 requirements mapped across 6 phases (31–36).
 
@@ -71,6 +81,10 @@ v4.0 roadmap created 2026-04-01. All 15 requirements mapped across 6 phases (31�
 ## Decisions
 
 **v4.0 Architectural Decisions:**
+- **[2026-04-01] Plan 31-05:** Enum value coercion required — Claude returns free-text like 'Active' but DB expects 'active' (lowercase)
+- **[2026-04-01] Plan 31-05:** ConflictResolution defaults to 'skip' on approve submission (safest default, preserves existing data)
+- **[2026-04-01] Plan 31-05:** Upload history filters by source='upload' only to exclude old ingestion pipeline records
+- **[2026-04-01] Plan 31-05:** Worker cannot use server-only imports — must use ../../lib/settings-core not settings.ts
 - **[2026-04-02] Plan 31-03:** SSE route completely replaced — extraction logic now in worker, API route only enqueues
 - **[2026-04-02] Plan 31-03:** Shared types moved to lib/extraction-types.ts — prevents import breakage, supports both API and worker
 - **[2026-04-02] Plan 31-03:** Stale detection inline in polling endpoint — no cron required, self-healing on next poll
