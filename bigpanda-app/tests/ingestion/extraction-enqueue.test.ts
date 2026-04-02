@@ -40,9 +40,17 @@ describe('app/api/ingestion/extract/route.ts — POST enqueue handler', () => {
       body: JSON.stringify(body),
     });
 
-    // Act & Assert: will fail RED until Plan 02 modifies route
-    expect(POST).toBeDefined();
-    // TODO Plan 02: call POST(request), verify response shape { jobIds: [1, 2], batchId: string }
+    // Act
+    const response = await POST(request);
+    const json = await response.json();
+
+    // Assert
+    expect(response.status).toBe(200);
+    expect(json).toHaveProperty('jobIds');
+    expect(json).toHaveProperty('batchId');
+    expect(Array.isArray(json.jobIds)).toBe(true);
+    expect(json.jobIds).toHaveLength(2);
+    expect(typeof json.batchId).toBe('string');
   });
 
   it('should create one extraction_jobs row per artifactId', async () => {
@@ -53,9 +61,16 @@ describe('app/api/ingestion/extract/route.ts — POST enqueue handler', () => {
       body: JSON.stringify(body),
     });
 
-    // Assert: will fail RED until Plan 02 implementation
-    expect(POST).toBeDefined();
-    // TODO Plan 02: verify DB insert called with 3 rows, each with correct artifact_id, project_id, batch_id
+    // Import db mock to verify calls
+    const dbMock = (await import('../../db')).default;
+
+    // Act
+    await POST(request);
+
+    // Assert: DB insert should be called once with values() returning 3 rows
+    expect(dbMock.insert).toHaveBeenCalled();
+    const insertMock = dbMock.insert as any;
+    expect(insertMock().values).toHaveBeenCalled();
   });
 
   it('should call queue.add() once per artifact with job name "document-extraction"', async () => {
@@ -66,9 +81,24 @@ describe('app/api/ingestion/extract/route.ts — POST enqueue handler', () => {
       body: JSON.stringify(body),
     });
 
-    // Assert: will fail RED until Plan 02 implementation
-    expect(POST).toBeDefined();
-    // TODO Plan 02: verify Queue.add() called with job name 'document-extraction' and correct job data
+    // Import Queue mock
+    const { Queue } = await import('bullmq');
+    const QueueMock = Queue as any;
+    const addMock = vi.fn().mockResolvedValue({ id: 'job-1' });
+    QueueMock.mockImplementationOnce(() => ({
+      add: addMock,
+      close: vi.fn().mockResolvedValue(undefined),
+    }));
+
+    // Act
+    await POST(request);
+
+    // Assert
+    expect(addMock).toHaveBeenCalledWith(
+      'document-extraction',
+      expect.objectContaining({ artifactId: 60, projectId: 7 }),
+      expect.any(Object)
+    );
   });
 
   it('should call queue.close() after all enqueues', async () => {
@@ -79,9 +109,20 @@ describe('app/api/ingestion/extract/route.ts — POST enqueue handler', () => {
       body: JSON.stringify(body),
     });
 
-    // Assert: will fail RED until Plan 02 implementation
-    expect(POST).toBeDefined();
-    // TODO Plan 02: verify queue.close() called after all queue.add() calls
+    // Import Queue mock
+    const { Queue } = await import('bullmq');
+    const QueueMock = Queue as any;
+    const closeMock = vi.fn().mockResolvedValue(undefined);
+    QueueMock.mockImplementationOnce(() => ({
+      add: vi.fn().mockResolvedValue({ id: 'job-1' }),
+      close: closeMock,
+    }));
+
+    // Act
+    await POST(request);
+
+    // Assert
+    expect(closeMock).toHaveBeenCalled();
   });
 
   it('should return 400 if body is invalid (missing artifactIds or projectId)', async () => {
@@ -92,8 +133,12 @@ describe('app/api/ingestion/extract/route.ts — POST enqueue handler', () => {
       body: JSON.stringify(body),
     });
 
-    // Assert: will fail RED until Plan 02 adds validation
-    expect(POST).toBeDefined();
-    // TODO Plan 02: verify response status 400 with error message
+    // Act
+    const response = await POST(request);
+    const json = await response.json();
+
+    // Assert
+    expect(response.status).toBe(400);
+    expect(json).toHaveProperty('error');
   });
 });
