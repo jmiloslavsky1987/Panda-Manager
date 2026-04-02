@@ -403,6 +403,7 @@ export const onboardingPhases = pgTable('onboarding_phases', {
   project_id: integer('project_id').notNull().references(() => projects.id),
   name: text('name').notNull(),
   display_order: integer('display_order').notNull().default(0),
+  track: text('track'),
   created_at: timestamp('created_at').defaultNow().notNull(),
 })
 
@@ -417,6 +418,7 @@ export const onboardingSteps = pgTable('onboarding_steps', {
   dependencies: text('dependencies').array().default([]),
   updates: jsonb('updates').default([]).notNull(),
   display_order: integer('display_order').notNull().default(0),
+  track: text('track'),
   created_at: timestamp('created_at').defaultNow().notNull(),
   updated_at: timestamp('updated_at').defaultNow().notNull(),
 })
