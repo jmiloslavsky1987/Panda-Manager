@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: — Infrastructure & UX Foundations
 status: executing
-last_updated: "2026-04-02T19:17:53.679Z"
-last_activity: "2026-04-02 — Plan 33-02 complete: Migration 0026 adds track column to onboarding tables with composite indexes"
+last_updated: "2026-04-02T23:33:49.445Z"
+last_activity: "2026-04-02 — Plan 33-03 complete: Auto-seed ADR and Biggy phases on project creation with atomic transaction"
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 15
-  completed_plans: 13
+  completed_plans: 14
 ---
 
 # Project State
@@ -21,9 +21,9 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Status
 
 **Phase:** 33 (Overview Tab Schema Migration)
-**Plan:** 03 of 5 (complete)
+**Plan:** 04 of 5 (complete)
 **Status:** In progress
-**Last activity:** 2026-04-02 — Plan 33-03 complete: Auto-seed ADR and Biggy phases on project creation with atomic transaction
+**Last activity:** 2026-04-02 — Plan 33-04 complete: API endpoint groups phases by track server-side
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
 **Current focus:** v4.0 — Infrastructure & UX Foundations. Phase 31: BullMQ Document Extraction Migration.
@@ -41,7 +41,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 |-------|--------|
 | 31. BullMQ Extraction | Complete (5/5) |
 | 32. Time Tracking Global | Complete (5/5) |
-| 33. Schema Migration | In Progress (3/5) |
+| 33. Schema Migration | In Progress (4/5) |
 | 34. Metrics & Health | Not started |
 | 35. Weekly Focus | Not started |
 | 36. Test Fixes | Not started |
@@ -49,10 +49,11 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Active Work
 
 **Phase 33 — In Progress (2026-04-02):**
-Wave 0, Wave 1, and Wave 2 complete.
+Wave 0, Wave 1, Wave 2, and Wave 3 complete.
 - Plan 01 complete: Created 23 failing RED tests for dual-track onboarding (WORK-01) and completeness removal (WORK-02)
 - Plan 02 complete: Migration 0026 adds track column (TEXT) to onboarding_phases and onboarding_steps with composite indexes for ADR/Biggy workstream separation
 - Plan 03 complete: Auto-seed ADR and Biggy phases on project creation with atomic transaction (browser verified)
+- Plan 04 complete: API endpoint groups phases by track server-side ({ adr, biggy } response shape)
 
 **Phase 32 — Complete (2026-04-02):**
 All 5 plans complete: Time Tracking Global View fully verified and production-ready.
@@ -157,6 +158,7 @@ v4.0 roadmap created 2026-04-01. All 15 requirements mapped across 6 phases (31�
 - [Phase 33]: Plan 33-02 complete: Migration 0026 adds track column (TEXT) to onboarding tables with composite indexes for ADR/Biggy separation
 - [Phase 33-03]: Auto-seeding happens atomically with project creation using db.transaction() wrapper
 - [Phase 33-03]: Only phases seeded (not steps) — steps added manually via Onboarding tab
+- [Phase 33]: Server-side grouping eliminates client-side filtering complexity for dual-track API response
 
 ## Accumulated Technical Context
 
