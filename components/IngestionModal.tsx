@@ -42,6 +42,10 @@ interface IngestionModalProps {
   initialStage?: Stage
   /** Pre-loaded review items when opening at review stage (e.g. from Context Hub) */
   initialReviewItems?: ExtractionItem[]
+  /** Artifact ID to use for approval when reopening from Context Hub (first job's artifact_id) */
+  initialArtifactId?: number
+  /** Pre-computed dedup filtered count when reopening from Context Hub */
+  initialFilteredCount?: number
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -53,7 +57,9 @@ export function IngestionModal({
   artifactId,
   initialFiles,
   initialStage = 'uploading',
-  initialReviewItems = []
+  initialReviewItems = [],
+  initialArtifactId,
+  initialFilteredCount,
 }: IngestionModalProps) {
   const [stage, setStage] = useState<Stage>(initialStage)
   const [fileStatuses, setFileStatuses] = useState<FileStatus[]>([])
@@ -258,8 +264,9 @@ export function IngestionModal({
         edited: false,
       })))
       setStage('reviewing')
+      if (initialFilteredCount !== undefined) setFilteredCount(initialFilteredCount)
     }
-  }, [open, initialStage, initialReviewItems])
+  }, [open, initialStage, initialReviewItems, initialFilteredCount])
 
   // Auto-start upload when modal opens with initialFiles from ArtifactsDropZone
   useEffect(() => {
@@ -319,7 +326,7 @@ export function IngestionModal({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           projectId,
-          artifactId: artifactId ?? lastExtractedArtifactId,
+          artifactId: artifactId ?? lastExtractedArtifactId ?? initialArtifactId,
           items: approvedItems,
           totalExtracted: reviewItems.length,
         }),
