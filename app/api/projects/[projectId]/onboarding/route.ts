@@ -19,7 +19,7 @@ export async function GET(
   }
 
   try {
-    const phases = await db.transaction(async (tx) => {
+    const grouped = await db.transaction(async (tx) => {
       await tx.execute(sql.raw(`SET LOCAL app.current_project_id = ${numericId}`))
 
       const phaseRows = await tx
@@ -28,7 +28,7 @@ export async function GET(
         .where(eq(onboardingPhases.project_id, numericId))
         .orderBy(asc(onboardingPhases.display_order))
 
-      const result = await Promise.all(
+      const phasesWithSteps = await Promise.all(
         phaseRows.map(async (phase) => {
           const steps = await tx
             .select()
@@ -39,10 +39,14 @@ export async function GET(
         })
       )
 
-      return result
+      // Group by track
+      const adr = phasesWithSteps.filter((p) => p.track === 'ADR')
+      const biggy = phasesWithSteps.filter((p) => p.track === 'Biggy')
+
+      return { adr, biggy }
     })
 
-    return NextResponse.json({ phases })
+    return NextResponse.json(grouped)
   } catch (err) {
     console.error('GET /api/projects/[projectId]/onboarding error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
