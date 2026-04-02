@@ -1,23 +1,29 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
-// Mock dependencies with captured function
-const selectMock = vi.fn();
+// Mock dependencies
+vi.mock('../../db', () => {
+  const selectMock = vi.fn();
 
-vi.mock('../../db', () => ({
-  default: {
-    select: selectMock,
-  },
-}));
+  return {
+    default: {
+      select: selectMock,
+      __selectMock: selectMock,
+    },
+  };
+});
 
 vi.mock('../../lib/auth-server', () => ({
   requireSession: vi.fn().mockResolvedValue({ session: { user: { id: 'user-1' } }, redirectResponse: null }),
 }));
 
-// Import the route handler (will fail RED — file doesn't exist yet)
+// Import the route handler
 import { GET } from '../../app/api/projects/[projectId]/extraction-status/route';
+import db from '../../db';
 
 describe('app/api/projects/[projectId]/extraction-status/route.ts — batch status handler', () => {
+  const selectMock = (db as any).__selectMock;
+
   beforeEach(() => {
     vi.clearAllMocks();
     // Default mock: return jobs with mixed status
