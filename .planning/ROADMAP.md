@@ -70,7 +70,7 @@ Full details: `.planning/milestones/v3.0-ROADMAP.md` (archived)
 **Milestone Goal:** Resolve accumulated technical debt and deliver two significant UX redesigns: time tracking as a standalone top-level section and a fully overhauled Overview tab with ADR/Biggy workstream structure.
 
 - [x] **Phase 31: BullMQ Document Extraction Migration** - Move extraction to background job with browser-refresh resilience (completed 2026-04-01)
-- [ ] **Phase 32: Time Tracking Global View** - Standalone top-level section with cross-project timesheet
+- [x] **Phase 32: Time Tracking Global View** - Standalone top-level section with cross-project timesheet (completed 2026-04-02)
 - [ ] **Phase 33: Overview Tab Schema Migration + Workstream Structure** - Add track column for ADR/Biggy separation
 - [ ] **Phase 34: Overview Tab — Metrics & Health Dashboard** - Read-only aggregation sections with visualizations
 - [ ] **Phase 35: Overview Tab — Weekly Focus & Integration Tracker** - AI-generated weekly summary and redesigned integration tracker
@@ -171,7 +171,7 @@ Plans:
 | 17–25 | v2.0 | 63/63 | Complete | 2026-03-30 |
 | 26–30 | v3.0 | 26/26 | Complete | 2026-04-01 |
 | 31. BullMQ Extraction | v4.0 | 5/5 | Complete | 2026-04-02 |
-| 32. Time Tracking Global | 4/5 | In Progress|  | — |
+| 32. Time Tracking Global | 5/5 | Complete   | 2026-04-02 | — |
 | 33. Schema Migration | v4.0 | 0/TBD | Not started | — |
 | 34. Metrics & Health | v4.0 | 0/TBD | Not started | — |
 | 35. Weekly Focus | v4.0 | 0/TBD | Not started | — |
