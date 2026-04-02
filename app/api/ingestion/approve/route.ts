@@ -1002,6 +1002,7 @@ async function deleteItem(entityType: EntityType, existingId: number): Promise<v
 // ─── POST handler ─────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  try {
   const { session, redirectResponse } = await requireSession();
   if (redirectResponse) return redirectResponse;
 
@@ -1112,4 +1113,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   // 6. Return summary
   return NextResponse.json({ written, skipped, rejected }, { status: 200 });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('[approve] unhandled error:', err);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }
