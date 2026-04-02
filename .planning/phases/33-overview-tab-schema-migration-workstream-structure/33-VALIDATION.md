@@ -2,7 +2,7 @@
 phase: 33
 slug: overview-tab-schema-migration-workstream-structure
 status: draft
-nyquist_compliant: false
+nyquist_compliant: true
 wave_0_complete: false
 created: 2026-04-02
 ---
@@ -81,6 +81,6 @@ created: 2026-04-02
 - [ ] Wave 0 covers all MISSING references
 - [ ] No watch-mode flags
 - [ ] Feedback latency < 15s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] `nyquist_compliant: true` set in frontmatter
 
 **Approval:** pending
