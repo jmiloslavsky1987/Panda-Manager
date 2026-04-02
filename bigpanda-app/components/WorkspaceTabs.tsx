@@ -54,7 +54,6 @@ export const TAB_GROUPS: TabGroup[] = [
     id: 'admin',
     label: 'Admin',
     children: [
-      { id: 'time', label: 'Time', segment: 'time' },
       { id: 'artifacts', label: 'Artifacts', segment: 'artifacts' },
       { id: 'queue', label: 'Review Queue', segment: 'queue' },
     ],

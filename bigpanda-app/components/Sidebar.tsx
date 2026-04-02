@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { BookOpen, CalendarClock, Library, Settings } from 'lucide-react';
+import { BookOpen, CalendarClock, Clock, Library, Settings } from 'lucide-react';
 import { eq, and } from 'drizzle-orm';
 import { db } from '../db';
 import { appNotifications } from '../db/schema';
@@ -79,6 +79,14 @@ export async function Sidebar() {
             <CalendarClock className="w-4 h-4" />
             Scheduler
             <NotificationBadge count={schedulerFailureCount} />
+          </Link>
+          <Link
+            href="/time-tracking"
+            className="flex items-center gap-2 text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 rounded px-2 py-1.5 text-sm transition-colors"
+            data-testid="sidebar-time-tracking-link"
+          >
+            <Clock className="w-4 h-4" />
+            Time Tracking
           </Link>
         </div>
       </nav>
