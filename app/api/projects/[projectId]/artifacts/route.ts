@@ -28,7 +28,7 @@ export async function GET(
     .where(
       and(
         eq(artifacts.project_id, projectIdNum),
-        eq(artifacts.source, 'ingestion'),
+        eq(artifacts.source, 'upload'),
       ),
     )
     .orderBy(desc(artifacts.created_at))
