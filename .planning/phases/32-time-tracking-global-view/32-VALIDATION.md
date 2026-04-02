@@ -19,7 +19,7 @@ created: 2026-04-01
 |----------|-------|
 | **Framework** | Vitest (via `vitest.config.ts`) |
 | **Config file** | `bigpanda-app/vitest.config.ts` |
-| **Quick run command** | `npx vitest run __tests__/time-tracking-global/ --reporter=verbose` |
+| **Quick run command** | `npx vitest run tests/time-tracking-global/ --reporter=verbose` |
 | **Full suite command** | `npx vitest run` |
 | **Estimated runtime** | ~15 seconds |
 
@@ -27,7 +27,7 @@ created: 2026-04-01
 
 ## Sampling Rate
 
-- **After every task commit:** Run `npx vitest run __tests__/time-tracking-global/ --reporter=verbose`
+- **After every task commit:** Run `npx vitest run tests/time-tracking-global/ --reporter=verbose`
 - **After every plan wave:** Run `npx vitest run`
 - **Before `/gsd:verify-work`:** Full suite must be green
 - **Max feedback latency:** ~15 seconds
@@ -38,13 +38,13 @@ created: 2026-04-01
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 32-W0-01 | W0 | 0 | TIME-01 | unit | `npx vitest run __tests__/time-tracking-global/api-endpoint.test.ts -x` | ❌ W0 | ⬜ pending |
-| 32-W0-02 | W0 | 0 | TIME-01, TIME-02 | unit | `npx vitest run __tests__/time-tracking-global/global-view.test.ts -x` | ❌ W0 | ⬜ pending |
-| 32-W0-03 | W0 | 0 | TIME-03 | unit | `npx vitest run __tests__/time-tracking-global/workspace-tabs.test.ts -x` | ❌ W0 | ⬜ pending |
-| 32-XX-01 | TBD | 1 | TIME-01 | unit | `npx vitest run __tests__/time-tracking-global/api-endpoint.test.ts -x` | ❌ W0 | ⬜ pending |
-| 32-XX-02 | TBD | 1 | TIME-01 | unit | `npx vitest run __tests__/time-tracking-global/global-view.test.ts -x` | ❌ W0 | ⬜ pending |
-| 32-XX-03 | TBD | 1 | TIME-02 | unit | `npx vitest run __tests__/time-tracking-global/global-view.test.ts -x` | ❌ W0 | ⬜ pending |
-| 32-XX-04 | TBD | 1 | TIME-03 | unit | `npx vitest run __tests__/time-tracking-global/workspace-tabs.test.ts -x` | ❌ W0 | ⬜ pending |
+| 32-W0-01 | W0 | 0 | TIME-01 | unit | `npx vitest run tests/time-tracking-global/api-endpoint.test.ts -x` | ❌ W0 | ⬜ pending |
+| 32-W0-02 | W0 | 0 | TIME-01, TIME-02 | unit | `npx vitest run tests/time-tracking-global/global-view.test.ts -x` | ❌ W0 | ⬜ pending |
+| 32-W0-03 | W0 | 0 | TIME-03 | unit | `npx vitest run tests/time-tracking-global/workspace-tabs.test.ts -x` | ❌ W0 | ⬜ pending |
+| 32-XX-01 | TBD | 1 | TIME-01 | unit | `npx vitest run tests/time-tracking-global/api-endpoint.test.ts -x` | ❌ W0 | ⬜ pending |
+| 32-XX-02 | TBD | 1 | TIME-01 | unit | `npx vitest run tests/time-tracking-global/global-view.test.ts -x` | ❌ W0 | ⬜ pending |
+| 32-XX-03 | TBD | 1 | TIME-02 | unit | `npx vitest run tests/time-tracking-global/global-view.test.ts -x` | ❌ W0 | ⬜ pending |
+| 32-XX-04 | TBD | 1 | TIME-03 | unit | `npx vitest run tests/time-tracking-global/workspace-tabs.test.ts -x` | ❌ W0 | ⬜ pending |
 | 32-XX-05 | TBD | 1 | TIME-03 | smoke | manual — verify redirect in browser | N/A | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
@@ -53,9 +53,9 @@ created: 2026-04-01
 
 ## Wave 0 Requirements
 
-- [ ] `__tests__/time-tracking-global/global-view.test.ts` — stubs for TIME-01 (cross-project fetch), TIME-02 (project dropdown pre-fill, optional projectId in modal)
-- [ ] `__tests__/time-tracking-global/api-endpoint.test.ts` — stubs for TIME-01 (GET /api/time-entries shape, filter params, project_name in response)
-- [ ] `__tests__/time-tracking-global/workspace-tabs.test.ts` — stubs for TIME-03 (TAB_GROUPS no longer contains 'time' subtab)
+- [ ] `tests/time-tracking-global/global-view.test.ts` — stubs for TIME-01 (cross-project fetch), TIME-02 (project dropdown pre-fill, optional projectId in modal)
+- [ ] `tests/time-tracking-global/api-endpoint.test.ts` — stubs for TIME-01 (GET /api/time-entries shape, filter params, project_name in response)
+- [ ] `tests/time-tracking-global/workspace-tabs.test.ts` — stubs for TIME-03 (TAB_GROUPS no longer contains 'time' subtab)
 
 *Existing `tests/__mocks__/` stubs for `server-only` and `@xyflow/react` already present — no new framework install needed.*
 
