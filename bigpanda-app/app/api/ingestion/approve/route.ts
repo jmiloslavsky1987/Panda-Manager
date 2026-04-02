@@ -52,6 +52,18 @@ type ApprovalItem = z.infer<typeof ApprovalItemSchema>;
 
 const APPEND_ONLY_TYPES = new Set<EntityType>(['decision', 'history', 'note']);
 
+// ─── Enum coercers (Claude returns free-text; map to valid DB values) ─────────
+
+type IntegrationStatus = 'not-connected' | 'configured' | 'validated' | 'production' | 'blocked';
+function coerceIntegrationStatus(raw: string | undefined | null): IntegrationStatus {
+  const v = (raw ?? '').toLowerCase().trim();
+  if (['production', 'prod', 'live', 'active', 'enabled', 'running'].includes(v)) return 'production';
+  if (['configured', 'setup', 'installed', 'connected'].includes(v)) return 'configured';
+  if (['validated', 'tested', 'verified', 'working'].includes(v)) return 'validated';
+  if (['blocked', 'failed', 'error', 'broken', 'disabled'].includes(v)) return 'blocked';
+  return 'not-connected';
+}
+
 // ─── Conflict detection: same dedup key as extract route ─────────────────────
 
 function normalize(value: string | undefined | null): string {
@@ -542,7 +554,7 @@ async function insertItem(
           project_id: projectId,
           tool: f.tool_name ?? '',
           category: f.category ?? null,
-          status: (f.connection_status as 'not-connected' | 'configured' | 'validated' | 'production' | 'blocked' | undefined) ?? 'not-connected',
+          status: coerceIntegrationStatus(f.connection_status),
           notes: f.notes ?? null,
           display_order: 0,
         }).returning();
@@ -786,7 +798,7 @@ async function mergeItem(
       const [beforeRecord] = await db.select().from(integrations).where(eq(integrations.id, existingId));
       const patch = {
         category: f.category ?? undefined,
-        status: f.connection_status as 'not-connected' | 'configured' | 'validated' | 'production' | 'blocked' | undefined,
+        status: f.connection_status ? coerceIntegrationStatus(f.connection_status) : undefined,
         notes: f.notes ?? undefined,
       };
       await db.transaction(async (tx) => {
