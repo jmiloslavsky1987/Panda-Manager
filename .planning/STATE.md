@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: — Infrastructure & UX Foundations
-status: planning
-last_updated: "2026-04-02T00:27:01.514Z"
-last_activity: 2026-04-01 — v4.0 roadmap created with 6 phases covering all 15 requirements
+status: executing
+last_updated: "2026-04-02T00:33:10.254Z"
+last_activity: "2026-04-02 — Plan 31-01 complete: extraction_jobs schema + Wave 0 tests"
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 5
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State
@@ -21,9 +21,9 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Status
 
 **Phase:** 31 (BullMQ Document Extraction Migration)
-**Plan:** 01 of 5 (in progress)
-**Status:** Executing Phase 31 — Plan 01 complete
-**Last activity:** 2026-04-02 — Plan 31-01 complete: extraction_jobs schema + Wave 0 tests
+**Plan:** 03 of 5 (in progress)
+**Status:** Executing Phase 31 — Plan 03 complete
+**Last activity:** 2026-04-02 — Plan 31-03 complete: API routes (enqueue, polling, batch status)
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
 **Current focus:** v4.0 — Infrastructure & UX Foundations. Phase 31: BullMQ Document Extraction Migration.
@@ -39,7 +39,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 
 | Phase | Status |
 |-------|--------|
-| 31. BullMQ Extraction | In progress (1/5) |
+| 31. BullMQ Extraction | In progress (3/5) |
 | 32. Time Tracking Global | Not started |
 | 33. Schema Migration | Not started |
 | 34. Metrics & Health | Not started |
@@ -48,10 +48,13 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 
 ## Active Work
 
-**Phase 31 — Plan 01 Complete (2026-04-02):**
-- extraction_jobs PostgreSQL table created with idempotent migration
-- Four Wave 0 RED test scaffolds define implementation contract for Plans 02-03
-- 19 test cases covering job handler, enqueue route, polling endpoint, batch status
+**Phase 31 — Plan 03 Complete (2026-04-02):**
+- SSE extract route replaced with thin BullMQ enqueue endpoint (~50 lines vs 575 lines)
+- Polling endpoint created for per-job progress with inline stale detection (no cron needed)
+- Batch status endpoint created for Context Hub on-mount check with batch_complete flags
+- Shared types extracted to lib/extraction-types.ts (EntityType, ExtractionItem, isAlreadyIngested)
+- All 13 extraction tests GREEN: 5 enqueue + 4 polling + 4 batch status
+- Import paths updated in 7 files (API routes, UI components, tests)
 
 v4.0 roadmap created 2026-04-01. All 15 requirements mapped across 6 phases (31–36).
 
@@ -65,6 +68,11 @@ v4.0 roadmap created 2026-04-01. All 15 requirements mapped across 6 phases (31�
 ## Decisions
 
 **v4.0 Architectural Decisions:**
+- **[2026-04-02] Plan 31-03:** SSE route completely replaced — extraction logic now in worker, API route only enqueues
+- **[2026-04-02] Plan 31-03:** Shared types moved to lib/extraction-types.ts — prevents import breakage, supports both API and worker
+- **[2026-04-02] Plan 31-03:** Stale detection inline in polling endpoint — no cron required, self-healing on next poll
+- **[2026-04-02] Plan 31-03:** Batch status filters for active jobs only — excludes 'failed' to keep UI response clean
+- **[2026-04-02] Plan 31-03:** queue.close() after all enqueues — prevents Redis connection leaks in API route
 - **[2026-04-02] Plan 31-01:** extraction_jobs has NO RLS (internal job tracking table, matches skill_runs/job_runs pattern)
 - **[2026-04-02] Plan 31-01:** Idempotent enum pattern (DO $$ / EXCEPTION WHEN duplicate_object) allows safe migration re-runs
 - **[2026-04-02] Plan 31-01:** Three indexes on extraction_jobs: project_id, batch_id, status for query optimization
@@ -82,6 +90,9 @@ v4.0 roadmap created 2026-04-01. All 15 requirements mapped across 6 phases (31�
 - **[Phase 30]** SSE document extraction vulnerable to browser refresh on large docs (4-6 min operations) — BullMQ migration is v4.0 Phase 31
 - **[Phase 29]** XML-wrapped project context in chat prompt prevents hallucination — temperature 0.3 for anti-hallucination
 - **[Phase 26]** requireSession() at Route Handler level is security boundary (CVE-2025-29927 defense-in-depth) — pattern established across 40+ handlers
+- [Phase 31]: Worker job uses ../../lib/settings-core (NOT settings.ts — has server-only marker that crashes worker)
+- [Phase 31]: Relative imports (../../lib/*) instead of Next.js @/ alias — worker is plain Node.js process
+- [Phase 31]: Progress heartbeat: updated_at set after every chunk for stale detection (10 min threshold)
 
 ## Accumulated Technical Context
 
