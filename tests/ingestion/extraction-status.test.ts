@@ -1,24 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
-// Mock dependencies
+// Mock dependencies with captured function
+const selectMock = vi.fn();
+
 vi.mock('../../db', () => ({
   default: {
-    select: vi.fn().mockReturnValue({
-      from: vi.fn().mockReturnValue({
-        where: vi.fn().mockResolvedValue([
-          { batch_id: 'batch-1', status: 'completed', progress_pct: 100 },
-          { batch_id: 'batch-1', status: 'completed', progress_pct: 100 },
-          { batch_id: 'batch-2', status: 'running', progress_pct: 60 },
-          { batch_id: 'batch-2', status: 'pending', progress_pct: 0 },
-        ]),
-      }),
-    }),
+    select: selectMock,
   },
 }));
 
 vi.mock('../../lib/auth-server', () => ({
-  requireSession: vi.fn().mockResolvedValue({ user: { id: 'user-1' } }),
+  requireSession: vi.fn().mockResolvedValue({ session: { user: { id: 'user-1' } }, redirectResponse: null }),
 }));
 
 // Import the route handler (will fail RED — file doesn't exist yet)
@@ -27,45 +20,91 @@ import { GET } from '../../app/api/projects/[projectId]/extraction-status/route'
 describe('app/api/projects/[projectId]/extraction-status/route.ts — batch status handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default mock: return jobs with mixed status
+    selectMock.mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          orderBy: vi.fn().mockResolvedValue([
+            { id: 1, batch_id: 'batch-1', status: 'completed', progress_pct: 100, created_at: new Date() },
+            { id: 2, batch_id: 'batch-1', status: 'completed', progress_pct: 100, created_at: new Date() },
+            { id: 3, batch_id: 'batch-2', status: 'running', progress_pct: 60, created_at: new Date() },
+            { id: 4, batch_id: 'batch-2', status: 'pending', progress_pct: 0, created_at: new Date() },
+          ]),
+        }),
+      }),
+    });
   });
 
   it('should return jobs grouped by batch_id', async () => {
     // Arrange
     const request = new NextRequest('http://localhost/api/projects/5/extraction-status');
-    const params = { projectId: '5' };
+    const params = Promise.resolve({ projectId: '5' });
 
-    // Act & Assert: will fail RED until Plan 03 creates route
-    expect(GET).toBeDefined();
-    // TODO Plan 03: call GET(request, { params }), verify response groups jobs by batch_id
+    // Act
+    const response = await GET(request, { params });
+    const json = await response.json();
+
+    // Assert
+    expect(response.status).toBe(200);
+    expect(json).toHaveProperty('jobs');
+    expect(json).toHaveProperty('batches');
+    expect(Array.isArray(json.jobs)).toBe(true);
+    expect(json.batches).toHaveProperty('batch-1');
+    expect(json.batches).toHaveProperty('batch-2');
   });
 
   it('should set batch_complete=true only when ALL jobs in batch are completed or failed (terminal)', async () => {
     // Arrange: batch-1 has all completed jobs
     const request = new NextRequest('http://localhost/api/projects/5/extraction-status');
-    const params = { projectId: '5' };
+    const params = Promise.resolve({ projectId: '5' });
 
-    // Assert: will fail RED until Plan 03 implementation
-    expect(GET).toBeDefined();
-    // TODO Plan 03: verify batch-1 has batch_complete=true, batch-2 has batch_complete=false
+    // Act
+    const response = await GET(request, { params });
+    const json = await response.json();
+
+    // Assert
+    expect(json.batches['batch-1'].batch_complete).toBe(true);
+    expect(json.batches['batch-1'].all_terminal).toBe(true);
+    expect(json.batches['batch-2'].batch_complete).toBe(false);
+    expect(json.batches['batch-2'].all_terminal).toBe(false);
   });
 
   it('should set batch_complete=false if any job in batch is pending or running', async () => {
     // Arrange: batch-2 has mixed status (running + pending)
     const request = new NextRequest('http://localhost/api/projects/5/extraction-status');
-    const params = { projectId: '5' };
+    const params = Promise.resolve({ projectId: '5' });
 
-    // Assert: will fail RED until Plan 03 implementation
-    expect(GET).toBeDefined();
-    // TODO Plan 03: verify batch-2 has batch_complete=false
+    // Act
+    const response = await GET(request, { params });
+    const json = await response.json();
+
+    // Assert
+    expect(json.batches['batch-2'].batch_complete).toBe(false);
+    expect(json.batches['batch-2'].jobs).toHaveLength(2);
+    expect(json.batches['batch-2'].jobs.some((j: any) => j.status === 'pending')).toBe(true);
+    expect(json.batches['batch-2'].jobs.some((j: any) => j.status === 'running')).toBe(true);
   });
 
-  it('should return empty array if no active jobs for project', async () => {
+  it('should return empty jobs array if no active jobs for project', async () => {
     // Arrange: mock empty result
-    const request = new NextRequest('http://localhost/api/projects/999/extraction-status');
-    const params = { projectId: '999' };
+    selectMock.mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          orderBy: vi.fn().mockResolvedValue([]),
+        }),
+      }),
+    });
 
-    // Assert: will fail RED until Plan 03 implementation
-    expect(GET).toBeDefined();
-    // TODO Plan 03: verify response is empty array []
+    const request = new NextRequest('http://localhost/api/projects/999/extraction-status');
+    const params = Promise.resolve({ projectId: '999' });
+
+    // Act
+    const response = await GET(request, { params });
+    const json = await response.json();
+
+    // Assert
+    expect(response.status).toBe(200);
+    expect(json.jobs).toEqual([]);
+    expect(json.batches).toEqual({});
   });
 });
