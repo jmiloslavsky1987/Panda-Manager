@@ -50,6 +50,8 @@ export function ContextTab({ projectId }: ContextTabProps) {
   const toastFiredRef = useRef<Set<string>>(new Set())
   const [initialStage, setInitialStage] = useState<'uploading' | 'reviewing'>('uploading')
   const [initialReviewItems, setInitialReviewItems] = useState<ExtractionItem[]>([])
+  const [initialArtifactId, setInitialArtifactId] = useState<number | undefined>(undefined)
+  const [initialFilteredCount, setInitialFilteredCount] = useState<number>(0)
 
   function toggleTab(tabId: string) {
     setExpandedTabs(prev => {
@@ -65,7 +67,11 @@ export function ContextTab({ projectId }: ContextTabProps) {
     const allItems = jobs.flatMap(j =>
       Array.isArray(j.staged_items_json) ? j.staged_items_json : []
     )
+    const totalFiltered = jobs.reduce((sum, j) => sum + (j.filtered_count ?? 0), 0)
+    const firstArtifactId = jobs[0]?.artifact_id
     setInitialReviewItems(allItems as ExtractionItem[])
+    setInitialFilteredCount(totalFiltered)
+    setInitialArtifactId(firstArtifactId)
     setInitialStage('reviewing')
     setIngestionModalOpen(true)
   }
@@ -146,6 +152,8 @@ export function ContextTab({ projectId }: ContextTabProps) {
       // Reset modal state when closing
       setInitialStage('uploading')
       setInitialReviewItems([])
+      setInitialArtifactId(undefined)
+      setInitialFilteredCount(0)
       // If batch was completed and reviewed, clear it
       if (activeBatch?.batch_complete) {
         setActiveBatch(null)
@@ -316,6 +324,8 @@ export function ContextTab({ projectId }: ContextTabProps) {
         onOpenChange={handleModalClose}
         initialStage={initialStage}
         initialReviewItems={initialReviewItems}
+        initialArtifactId={initialArtifactId}
+        initialFilteredCount={initialFilteredCount}
       />
     </div>
   )
