@@ -331,8 +331,15 @@ export function IngestionModal({
           totalExtracted: reviewItems.length,
         }),
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error ?? 'Approve failed')
+      const text = await res.text()
+      if (!text) throw new Error(`Empty response (status ${res.status})`)
+      let data: Record<string, unknown>
+      try {
+        data = JSON.parse(text)
+      } catch {
+        throw new Error(`Server error (${res.status}): ${text.slice(0, 200)}`)
+      }
+      if (!res.ok) throw new Error(data.error as string ?? 'Approve failed')
       setStage('done')
       setTimeout(() => onOpenChange(false), 1200)
     } catch (err) {
