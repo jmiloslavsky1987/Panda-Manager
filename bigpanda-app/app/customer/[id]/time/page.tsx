@@ -1,4 +1,4 @@
-import { TimeTab } from '../../../../components/TimeTab'
+import { redirect } from 'next/navigation'
 
 export default async function TimePage({
   params,
@@ -6,5 +6,5 @@ export default async function TimePage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  return <TimeTab projectId={parseInt(id, 10)} />
+  redirect(`/time-tracking?project=${id}`)
 }
