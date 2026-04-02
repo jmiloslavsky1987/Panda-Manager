@@ -76,6 +76,7 @@ export async function POST(
       await tx.execute(sql.raw(`SET LOCAL app.current_project_id = ${numericId}`))
       return tx.insert(timeEntries).values({
         project_id:  numericId,
+        user_id:     session!.user.id,
         date:        parsed.data.date,
         hours:       parsed.data.hours,
         description: parsed.data.description,
