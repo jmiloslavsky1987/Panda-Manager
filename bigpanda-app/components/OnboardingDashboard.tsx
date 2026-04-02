@@ -202,7 +202,8 @@ function StepOwnerField({
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
-  const [phases, setPhases] = useState<PhaseWithSteps[]>([])
+  const [adrPhases, setAdrPhases] = useState<PhaseWithSteps[]>([])
+  const [biggyPhases, setBiggyPhases] = useState<PhaseWithSteps[]>([])
   const [integrations, setIntegrations] = useState<Integration[]>([])
   const [risks, setRisks] = useState<Risk[]>([])
   const [milestones, setMilestones] = useState<Milestone[]>([])
@@ -225,20 +226,22 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
       fetch(`/api/projects/${projectId}`).then((r) => (r.ok ? r.json() : { project: null })),
     ])
       .then(([ob, ig, rk, ml, ps]) => {
-        const fetchedPhases: PhaseWithSteps[] = ob.phases ?? []
+        const fetchedAdr: PhaseWithSteps[] = ob.adr ?? []
+        const fetchedBiggy: PhaseWithSteps[] = ob.biggy ?? []
         const fetchedIntegrations: Integration[] = ig.integrations ?? []
         const fetchedRisks: Risk[] = rk.risks ?? rk ?? []
         const fetchedMilestones: Milestone[] = ml.milestones ?? ml ?? []
 
-        setPhases(fetchedPhases)
+        setAdrPhases(fetchedAdr)
+        setBiggyPhases(fetchedBiggy)
         setIntegrations(fetchedIntegrations)
         setRisks(Array.isArray(fetchedRisks) ? fetchedRisks : [])
         setMilestones(Array.isArray(fetchedMilestones) ? fetchedMilestones : [])
         setProjectSummary(ps.project ?? null)
 
-        // Default: collapse complete phases
+        // Default: collapse complete phases (both tracks)
         const collapseMap: Record<number, boolean> = {}
-        fetchedPhases.forEach((p) => {
+        ;[...fetchedAdr, ...fetchedBiggy].forEach((p) => {
           collapseMap[p.id] = p.steps.length > 0 && p.steps.every((s) => s.status === 'complete')
         })
         setCollapsed(collapseMap)
@@ -255,9 +258,18 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
 
   // ─── Derived stats ──────────────────────────────────────────────────────────
 
-  const allSteps = phases.flatMap((p) => p.steps)
-  const totalSteps = allSteps.length
-  const completedSteps = allSteps.filter((s) => s.status === 'complete').length
+  const adrSteps = adrPhases.flatMap((p) => p.steps)
+  const adrTotal = adrSteps.length
+  const adrComplete = adrSteps.filter((s) => s.status === 'complete').length
+  const adrPct = adrTotal > 0 ? (adrComplete / adrTotal) * 100 : 0
+
+  const biggySteps = biggyPhases.flatMap((p) => p.steps)
+  const biggyTotal = biggySteps.length
+  const biggyComplete = biggySteps.filter((s) => s.status === 'complete').length
+  const biggyPct = biggyTotal > 0 ? (biggyComplete / biggyTotal) * 100 : 0
+
+  const totalSteps = adrTotal + biggyTotal
+  const completedSteps = adrComplete + biggyComplete
   const pct = totalSteps > 0 ? (completedSteps / totalSteps) * 100 : 0
 
   // ─── Optimistic handlers ────────────────────────────────────────────────────
@@ -265,13 +277,25 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
   const cycleStepStatus = async (phaseId: number, stepId: number, currentStatus: string) => {
     const idx = STEP_STATUS_CYCLE.indexOf(currentStatus as (typeof STEP_STATUS_CYCLE)[number])
     const nextStatus = STEP_STATUS_CYCLE[(idx + 1) % STEP_STATUS_CYCLE.length]
-    setPhases((prev) =>
+
+    // Update in ADR array
+    setAdrPhases((prev) =>
       prev.map((p) =>
         p.id === phaseId
           ? { ...p, steps: p.steps.map((s) => (s.id === stepId ? { ...s, status: nextStatus } : s)) }
           : p
       )
     )
+
+    // Update in Biggy array
+    setBiggyPhases((prev) =>
+      prev.map((p) =>
+        p.id === phaseId
+          ? { ...p, steps: p.steps.map((s) => (s.id === stepId ? { ...s, status: nextStatus } : s)) }
+          : p
+      )
+    )
+
     await fetch(`/api/projects/${projectId}/onboarding/steps/${stepId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -291,7 +315,17 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
   }
 
   const updateStepOwner = (phaseId: number, stepId: number, owner: string) => {
-    setPhases((prev) =>
+    // Update in ADR array
+    setAdrPhases((prev) =>
+      prev.map((p) =>
+        p.id === phaseId
+          ? { ...p, steps: p.steps.map((s) => (s.id === stepId ? { ...s, owner } : s)) }
+          : p
+      )
+    )
+
+    // Update in Biggy array
+    setBiggyPhases((prev) =>
       prev.map((p) =>
         p.id === phaseId
           ? { ...p, steps: p.steps.map((s) => (s.id === stepId ? { ...s, owner } : s)) }
@@ -305,7 +339,9 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
     if (!text) return
     const timestamp = new Date().toISOString()
     const newUpdate = { timestamp, text }
-    setPhases((prev) =>
+
+    // Update in ADR array
+    setAdrPhases((prev) =>
       prev.map((p) =>
         p.id === phaseId
           ? {
@@ -317,6 +353,21 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
           : p
       )
     )
+
+    // Update in Biggy array
+    setBiggyPhases((prev) =>
+      prev.map((p) =>
+        p.id === phaseId
+          ? {
+              ...p,
+              steps: p.steps.map((s) =>
+                s.id === stepId ? { ...s, updates: [...(s.updates ?? []), newUpdate] } : s
+              ),
+            }
+          : p
+      )
+    )
+
     setNoteInputs((prev) => ({ ...prev, [stepId]: '' }))
     await fetch(`/api/projects/${projectId}/onboarding/steps/${stepId}`, {
       method: 'PATCH',
@@ -346,12 +397,140 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
 
   const visibleSteps = (phase: PhaseWithSteps): Step[] => phase.steps.filter(stepMatchesFilter)
 
+  // ─── Phase card renderer (DRY) ──────────────────────────────────────────────
+
+  const renderPhaseCard = (phase: PhaseWithSteps) => {
+    const matching = visibleSteps(phase)
+    const isCollapsed = collapsed[phase.id] ?? false
+    const phaseCompleted = phase.steps.filter((s) => s.status === 'complete').length
+    const phaseTotal = phase.steps.length
+
+    return (
+      <div
+        key={phase.id}
+        data-testid="phase-card"
+        className="border border-zinc-200 rounded-lg overflow-hidden"
+      >
+        {/* Phase header */}
+        <button
+          className="w-full flex items-center justify-between px-4 py-3 bg-zinc-50 hover:bg-zinc-100 transition-colors text-left"
+          onClick={() => setCollapsed((prev) => ({ ...prev, [phase.id]: !prev[phase.id] }))}
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-semibold text-zinc-900">{phase.name}</span>
+            <span className="text-xs text-zinc-500">
+              {phaseCompleted}/{phaseTotal}
+            </span>
+          </div>
+          <svg
+            className={`w-4 h-4 text-zinc-400 transition-transform ${isCollapsed ? '' : 'rotate-180'}`}
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+              clipRule="evenodd"
+            />
+          </svg>
+        </button>
+
+        {/* Phase steps */}
+        {!isCollapsed && (
+          <div className="divide-y divide-zinc-100">
+            {matching.length === 0 ? (
+              <p className="text-sm text-zinc-400 px-4 py-3">No matching steps.</p>
+            ) : (
+              matching.map((step) => (
+                <div key={step.id} className="px-4 py-3 space-y-2">
+                  <div className="flex flex-wrap items-start gap-3">
+                    {/* Name + description */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-zinc-900">{step.name}</p>
+                      {step.description && (
+                        <p className="text-xs text-zinc-500 mt-0.5">{step.description}</p>
+                      )}
+                    </div>
+
+                    {/* Status badge */}
+                    <button
+                      data-testid="step-status-badge"
+                      className={`text-xs px-2 py-0.5 rounded-full font-medium cursor-pointer ${
+                        STEP_STATUS_COLORS[step.status] ?? 'bg-zinc-100 text-zinc-600'
+                      }`}
+                      onClick={() => cycleStepStatus(phase.id, step.id, step.status)}
+                    >
+                      {step.status.replace('-', ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+                    </button>
+
+                    {/* Owner */}
+                    <StepOwnerField
+                      stepId={step.id}
+                      phaseId={phase.id}
+                      initialOwner={step.owner}
+                      projectId={projectId}
+                      onSave={updateStepOwner}
+                    />
+                  </div>
+
+                  {/* Dependencies */}
+                  {step.dependencies && step.dependencies.length > 0 && (
+                    <p className="text-xs text-zinc-400">
+                      Depends on: {step.dependencies.join(', ')}
+                    </p>
+                  )}
+
+                  {/* Update notes log */}
+                  {step.updates && step.updates.length > 0 && (
+                    <ul className="space-y-1 pl-2 border-l-2 border-zinc-100">
+                      {step.updates.map((u, i) => (
+                        <li key={i} className="text-xs text-zinc-500">
+                          <span className="text-zinc-300 mr-1">
+                            {new Date(u.timestamp).toLocaleDateString()}
+                          </span>
+                          {u.text}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
+                  {/* Add note */}
+                  <div className="flex items-center gap-2">
+                    <input
+                      data-testid="step-update-notes"
+                      type="text"
+                      placeholder="Add note…"
+                      value={noteInputs[step.id] ?? ''}
+                      onChange={(e) =>
+                        setNoteInputs((prev) => ({ ...prev, [step.id]: e.target.value }))
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') submitNote(phase.id, step.id)
+                      }}
+                      className="flex-1 text-xs border border-zinc-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+                    />
+                    <button
+                      onClick={() => submitNote(phase.id, step.id)}
+                      className="text-xs px-2 py-1 bg-zinc-800 text-white rounded hover:bg-zinc-700"
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+      </div>
+    )
+  }
+
   // ─── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <div data-testid="onboarding-dashboard" className="space-y-6 pb-10">
       {/* ── Sticky header ───────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-[5] bg-white border-b px-4 py-3 flex items-center gap-4">
+      <div className="sticky top-0 z-[5] bg-white border-b px-4 py-3 flex items-center gap-6">
         {loading ? (
           <div className="flex items-center gap-4 animate-pulse">
             <div className="w-[52px] h-[52px] rounded-full bg-zinc-200" />
@@ -359,13 +538,26 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
           </div>
         ) : (
           <>
-            <ProgressRing pct={pct} />
+            <div className="flex items-center gap-3">
+              <ProgressRing pct={adrPct} />
+              <div>
+                <p className="text-xs font-semibold text-zinc-900">ADR</p>
+                <p className="text-xs text-zinc-500">{adrComplete}/{adrTotal} steps</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <ProgressRing pct={biggyPct} />
+              <div>
+                <p className="text-xs font-semibold text-zinc-900">Biggy</p>
+                <p className="text-xs text-zinc-500">{biggyComplete}/{biggyTotal} steps</p>
+              </div>
+            </div>
             <div data-testid="project-summary" className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-zinc-900 truncate">
                 {projectSummary?.customer ?? 'Loading…'}
               </p>
               <p className="text-xs text-zinc-500">
-                {completedSteps} of {totalSteps} steps complete
+                {completedSteps} of {totalSteps} total steps
               </p>
               {projectSummary?.status_summary && (
                 <p className="text-xs text-zinc-500 line-clamp-2 mt-0.5">
@@ -406,147 +598,44 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
         />
       </div>
 
-      {/* ── Onboarding Phases section ────────────────────────────────────── */}
-      <section data-testid="onboarding-phases" className="px-4 space-y-4">
-        <h2 className="text-sm font-semibold text-zinc-700 uppercase tracking-wide">
-          Onboarding Phases
-        </h2>
-        {loading ? (
-          <div className="space-y-2 animate-pulse">
-            {[1, 2].map((i) => (
-              <div key={i} className="h-20 bg-zinc-100 rounded-lg" />
-            ))}
-          </div>
-        ) : phases.length === 0 ? (
-          <p className="text-sm text-zinc-400">No onboarding phases — check the Onboarding tab.</p>
-        ) : (
-          phases.map((phase) => {
-            const matching = visibleSteps(phase)
-            const isCollapsed = collapsed[phase.id] ?? false
-            const phaseCompleted = phase.steps.filter((s) => s.status === 'complete').length
-            const phaseTotal = phase.steps.length
+      {/* ── Onboarding Phases section (dual-track) ───────────────────────── */}
+      <div data-testid="onboarding-phases" className="px-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* ADR Column */}
+        <section data-testid="adr-track" className="space-y-4 border-l-4 border-blue-200 pl-4">
+          <h2 className="text-sm font-semibold text-zinc-700 uppercase tracking-wide">
+            ADR Onboarding
+          </h2>
+          {loading ? (
+            <div className="space-y-2 animate-pulse">
+              {[1, 2].map((i) => (
+                <div key={i} className="h-20 bg-zinc-100 rounded-lg" />
+              ))}
+            </div>
+          ) : adrPhases.length === 0 ? (
+            <p className="text-sm text-zinc-400">No ADR phases found.</p>
+          ) : (
+            adrPhases.map((phase) => renderPhaseCard(phase))
+          )}
+        </section>
 
-            return (
-              <div
-                key={phase.id}
-                data-testid="phase-card"
-                className="border border-zinc-200 rounded-lg overflow-hidden"
-              >
-                {/* Phase header */}
-                <button
-                  className="w-full flex items-center justify-between px-4 py-3 bg-zinc-50 hover:bg-zinc-100 transition-colors text-left"
-                  onClick={() => setCollapsed((prev) => ({ ...prev, [phase.id]: !prev[phase.id] }))}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold text-zinc-900">{phase.name}</span>
-                    <span className="text-xs text-zinc-500">
-                      {phaseCompleted}/{phaseTotal}
-                    </span>
-                  </div>
-                  <svg
-                    className={`w-4 h-4 text-zinc-400 transition-transform ${isCollapsed ? '' : 'rotate-180'}`}
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </button>
-
-                {/* Phase steps */}
-                {!isCollapsed && (
-                  <div className="divide-y divide-zinc-100">
-                    {matching.length === 0 ? (
-                      <p className="text-sm text-zinc-400 px-4 py-3">No matching steps.</p>
-                    ) : (
-                      matching.map((step) => (
-                        <div key={step.id} className="px-4 py-3 space-y-2">
-                          <div className="flex flex-wrap items-start gap-3">
-                            {/* Name + description */}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-zinc-900">{step.name}</p>
-                              {step.description && (
-                                <p className="text-xs text-zinc-500 mt-0.5">{step.description}</p>
-                              )}
-                            </div>
-
-                            {/* Status badge */}
-                            <button
-                              data-testid="step-status-badge"
-                              className={`text-xs px-2 py-0.5 rounded-full font-medium cursor-pointer ${
-                                STEP_STATUS_COLORS[step.status] ?? 'bg-zinc-100 text-zinc-600'
-                              }`}
-                              onClick={() => cycleStepStatus(phase.id, step.id, step.status)}
-                            >
-                              {step.status.replace('-', ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
-                            </button>
-
-                            {/* Owner */}
-                            <StepOwnerField
-                              stepId={step.id}
-                              phaseId={phase.id}
-                              initialOwner={step.owner}
-                              projectId={projectId}
-                              onSave={updateStepOwner}
-                            />
-                          </div>
-
-                          {/* Dependencies */}
-                          {step.dependencies && step.dependencies.length > 0 && (
-                            <p className="text-xs text-zinc-400">
-                              Depends on: {step.dependencies.join(', ')}
-                            </p>
-                          )}
-
-                          {/* Update notes log */}
-                          {step.updates && step.updates.length > 0 && (
-                            <ul className="space-y-1 pl-2 border-l-2 border-zinc-100">
-                              {step.updates.map((u, i) => (
-                                <li key={i} className="text-xs text-zinc-500">
-                                  <span className="text-zinc-300 mr-1">
-                                    {new Date(u.timestamp).toLocaleDateString()}
-                                  </span>
-                                  {u.text}
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-
-                          {/* Add note */}
-                          <div className="flex items-center gap-2">
-                            <input
-                              data-testid="step-update-notes"
-                              type="text"
-                              placeholder="Add note…"
-                              value={noteInputs[step.id] ?? ''}
-                              onChange={(e) =>
-                                setNoteInputs((prev) => ({ ...prev, [step.id]: e.target.value }))
-                              }
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') submitNote(phase.id, step.id)
-                              }}
-                              className="flex-1 text-xs border border-zinc-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-zinc-400"
-                            />
-                            <button
-                              onClick={() => submitNote(phase.id, step.id)}
-                              className="text-xs px-2 py-1 bg-zinc-800 text-white rounded hover:bg-zinc-700"
-                            >
-                              Add
-                            </button>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
-              </div>
-            )
-          })
-        )}
-      </section>
+        {/* Biggy Column */}
+        <section data-testid="biggy-track" className="space-y-4 border-l-4 border-green-200 pl-4">
+          <h2 className="text-sm font-semibold text-zinc-700 uppercase tracking-wide">
+            Biggy Onboarding
+          </h2>
+          {loading ? (
+            <div className="space-y-2 animate-pulse">
+              {[1, 2].map((i) => (
+                <div key={i} className="h-20 bg-zinc-100 rounded-lg" />
+              ))}
+            </div>
+          ) : biggyPhases.length === 0 ? (
+            <p className="text-sm text-zinc-400">No Biggy phases found.</p>
+          ) : (
+            biggyPhases.map((phase) => renderPhaseCard(phase))
+          )}
+        </section>
+      </div>
 
       {/* ── Integration Tracker section ──────────────────────────────────── */}
       <section data-testid="integration-tracker" className="px-4 space-y-4">
