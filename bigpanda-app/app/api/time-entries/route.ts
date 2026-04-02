@@ -7,6 +7,7 @@ import { requireSession } from '@/lib/auth-server'
 export async function GET(req: NextRequest) {
   const { session, redirectResponse } = await requireSession()
   if (redirectResponse) return redirectResponse
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { searchParams } = new URL(req.url)
   const projectId = searchParams.get('project_id')
