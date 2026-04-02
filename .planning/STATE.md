@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: — Infrastructure & UX Foundations
-status: ready_to_plan
-last_updated: "2026-04-01"
-last_activity: "2026-04-01 — v4.0 roadmap created with 6 phases"
+status: planning
+last_updated: "2026-04-02T00:27:01.514Z"
+last_activity: 2026-04-01 — v4.0 roadmap created with 6 phases covering all 15 requirements
 progress:
   total_phases: 6
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 5
+  completed_plans: 1
 ---
 
 # Project State
@@ -21,9 +21,9 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Status
 
 **Phase:** 31 (BullMQ Document Extraction Migration)
-**Plan:** Ready to plan
-**Status:** Ready to plan Phase 31
-**Last activity:** 2026-04-01 — v4.0 roadmap created with 6 phases covering all 15 requirements
+**Plan:** 01 of 5 (in progress)
+**Status:** Executing Phase 31 — Plan 01 complete
+**Last activity:** 2026-04-02 — Plan 31-01 complete: extraction_jobs schema + Wave 0 tests
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
 **Current focus:** v4.0 — Infrastructure & UX Foundations. Phase 31: BullMQ Document Extraction Migration.
@@ -39,7 +39,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 
 | Phase | Status |
 |-------|--------|
-| 31. BullMQ Extraction | Ready to plan |
+| 31. BullMQ Extraction | In progress (1/5) |
 | 32. Time Tracking Global | Not started |
 | 33. Schema Migration | Not started |
 | 34. Metrics & Health | Not started |
@@ -47,6 +47,11 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 | 36. Test Fixes | Not started |
 
 ## Active Work
+
+**Phase 31 — Plan 01 Complete (2026-04-02):**
+- extraction_jobs PostgreSQL table created with idempotent migration
+- Four Wave 0 RED test scaffolds define implementation contract for Plans 02-03
+- 19 test cases covering job handler, enqueue route, polling endpoint, batch status
 
 v4.0 roadmap created 2026-04-01. All 15 requirements mapped across 6 phases (31–36).
 
@@ -60,6 +65,10 @@ v4.0 roadmap created 2026-04-01. All 15 requirements mapped across 6 phases (31�
 ## Decisions
 
 **v4.0 Architectural Decisions:**
+- **[2026-04-02] Plan 31-01:** extraction_jobs has NO RLS (internal job tracking table, matches skill_runs/job_runs pattern)
+- **[2026-04-02] Plan 31-01:** Idempotent enum pattern (DO $$ / EXCEPTION WHEN duplicate_object) allows safe migration re-runs
+- **[2026-04-02] Plan 31-01:** Three indexes on extraction_jobs: project_id, batch_id, status for query optimization
+- **[2026-04-02] Plan 31-01:** Wave 0 tests use vi.mock() with explicit module paths to fail RED without brittle import errors
 - **[2026-04-01] v4.0 roadmap:** Phase numbering starts at 31 — Phase 30 was last phase of v3.0
 - **[2026-04-01] v4.0 roadmap:** Phases 31 and 32 can run in parallel — BullMQ extraction and time tracking share no components
 - **[2026-04-01] v4.0 roadmap:** Phase 33 is prerequisite for Phases 34 and 35 — track column migration must precede workstream-separated UI

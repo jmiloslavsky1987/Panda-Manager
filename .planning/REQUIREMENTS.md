@@ -12,9 +12,9 @@
 
 ### Document Extraction
 
-- [ ] **EXTR-01**: User can navigate away from a document upload without losing the extraction — job runs in background via BullMQ
-- [ ] **EXTR-02**: User can see extraction progress (% complete, current chunk) while the job is running
-- [ ] **EXTR-03**: A failed or partial extraction does not leave orphaned data in workspace tabs — all changes commit atomically when complete
+- [x] **EXTR-01**: User can navigate away from a document upload without losing the extraction — job runs in background via BullMQ
+- [x] **EXTR-02**: User can see extraction progress (% complete, current chunk) while the job is running
+- [x] **EXTR-03**: A failed or partial extraction does not leave orphaned data in workspace tabs — all changes commit atomically when complete
 
 ### Time Tracking
 
@@ -76,9 +76,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| EXTR-01 | Phase 31 | Pending |
-| EXTR-02 | Phase 31 | Pending |
-| EXTR-03 | Phase 31 | Pending |
+| EXTR-01 | Phase 31 | Complete |
+| EXTR-02 | Phase 31 | Complete |
+| EXTR-03 | Phase 31 | Complete |
 | TIME-01 | Phase 32 | Pending |
 | TIME-02 | Phase 32 | Pending |
 | TIME-03 | Phase 32 | Pending |
