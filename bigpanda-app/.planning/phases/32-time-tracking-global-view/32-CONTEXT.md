@@ -43,10 +43,9 @@ Redesign time tracking as a standalone top-level `/time-tracking` section. Remov
 - "Export all AMEX entries for March" works naturally by setting filters then exporting
 
 ### Calendar Import
-- Carried over with per-event project selection in the import preview
-- Auto-detection: scan event title and description for customer name matches against the projects list; pre-fill the project dropdown per event (best-effort, user can override)
-- Unmatched events (no customer name found) import as unassigned — user assigns later via bulk move
-- UI: project dropdown on each event row in the import preview, pre-filled where match is confident
+- Carried over with per-event project selection in the import preview (manual — user picks project per event)
+- No auto-detection of project from calendar invite data in this phase (explicitly deferred)
+- Unmatched or unassigned events: user uses the project dropdown per event row, or bulk move after import
 
 ### Route Changes
 - New top-level page: `/time-tracking`
@@ -104,7 +103,8 @@ Redesign time tracking as a standalone top-level `/time-tracking` section. Remov
 <deferred>
 ## Deferred Ideas
 
-None — discussion stayed within phase scope.
+- Auto-detecting project from Google Calendar invite data (e.g., matching event title/description against `projects.customer` names in DB) — noted for a future phase; calendar import stays manual project selection for now
+- Entry reassignment (inline per-row project change) — bulk move covers cross-project reassignment for this phase
 
 </deferred>
 
