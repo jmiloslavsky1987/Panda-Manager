@@ -13,17 +13,23 @@ import { Button } from './ui/button'
 import type { TimeEntry } from '@/db/schema'
 
 interface TimeEntryModalProps {
-  projectId: number
+  projectId?: number         // optional in global context — comes from dropdown selection
   entry?: TimeEntry          // undefined = create, defined = edit
   trigger: React.ReactNode
   onSuccess: () => void      // parent re-fetches on success
+  projects?: Array<{ id: number; name: string; customer: string }>  // passed by GlobalTimeView
 }
 
-export function TimeEntryModal({ projectId, entry, trigger, onSuccess }: TimeEntryModalProps) {
+export function TimeEntryModal({ projectId, entry, trigger, onSuccess, projects }: TimeEntryModalProps) {
   const isEdit = entry !== undefined
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Project selection state for global context
+  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(
+    projectId ?? (isEdit ? entry.project_id : null)
+  )
 
   const [date, setDate] = useState<string>(
     isEdit ? entry.date : new Date().toISOString().slice(0, 10)
@@ -46,15 +52,25 @@ export function TimeEntryModal({ projectId, entry, trigger, onSuccess }: TimeEnt
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+
+    // Validation: ensure project is selected in global context
+    if (!isEdit && !selectedProjectId) {
+      setError('Please select a project')
+      return
+    }
+
     setSaving(true)
     setError(null)
 
     const payload = { date, hours: String(hours), description }
 
     try {
+      // Use selectedProjectId for create, entry.project_id for edit
+      const targetProjectId = isEdit ? entry.project_id : selectedProjectId!
+
       const url = isEdit
-        ? `/api/projects/${projectId}/time-entries/${entry.id}`
-        : `/api/projects/${projectId}/time-entries`
+        ? `/api/projects/${targetProjectId}/time-entries/${entry.id}`
+        : `/api/projects/${targetProjectId}/time-entries`
       const method = isEdit ? 'PATCH' : 'POST'
 
       const res = await fetch(url, {
@@ -95,6 +111,28 @@ export function TimeEntryModal({ projectId, entry, trigger, onSuccess }: TimeEnt
           <DialogTitle>{isEdit ? 'Edit Time Entry' : 'Log Time'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Project dropdown for global context (create mode only) */}
+          {projects && !isEdit && (
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 mb-1">
+                Project <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={selectedProjectId ?? ''}
+                onChange={(e) => setSelectedProjectId(e.target.value ? parseInt(e.target.value, 10) : null)}
+                required
+                className="w-full border border-zinc-300 rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-400"
+              >
+                <option value="">Select a project...</option>
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.customer}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-zinc-700 mb-1">Date</label>
             <input
