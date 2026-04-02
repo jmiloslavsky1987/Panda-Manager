@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: — Infrastructure & UX Foundations
 status: executing
-last_updated: "2026-04-02T06:05:52.326Z"
+last_updated: "2026-04-02T06:09:05.212Z"
 last_activity: "2026-04-02 — Plan 32-02 complete: Global time tracking API endpoints with user scoping"
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 10
-  completed_plans: 7
+  completed_plans: 8
 ---
 
 # Project State
@@ -21,9 +21,9 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Status
 
 **Phase:** 32 (Time Tracking Global View)
-**Plan:** 02 of 5 (complete)
+**Plan:** 03 of 5 (complete)
 **Status:** Executing
-**Last activity:** 2026-04-02 — Plan 32-02 complete: Global time tracking API endpoints with user scoping
+**Last activity:** 2026-04-02 — Plan 32-03 complete: Navigation migration to global time tracking
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
 **Current focus:** v4.0 — Infrastructure & UX Foundations. Phase 31: BullMQ Document Extraction Migration.
@@ -40,7 +40,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 | Phase | Status |
 |-------|--------|
 | 31. BullMQ Extraction | Complete (5/5) |
-| 32. Time Tracking Global | In Progress (1/5) |
+| 32. Time Tracking Global | In Progress (3/5) |
 | 33. Schema Migration | Not started |
 | 34. Metrics & Health | Not started |
 | 35. Weekly Focus | Not started |
@@ -49,7 +49,9 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Active Work
 
 **Phase 32 — In Progress (2026-04-02):**
-Plan 01 complete: Wave 0 test scaffolds created with 9 failing RED tests for TIME-01, TIME-02, TIME-03.
+- Plan 01 complete: Wave 0 test scaffolds created with 9 failing RED tests for TIME-01, TIME-02, TIME-03
+- Plan 02 complete: Global time tracking API endpoints with user scoping
+- Plan 03 complete: Navigation migration to global time tracking (Sidebar link, tab removal, redirect)
 
 **Phase 31 — Complete (2026-04-01):**
 All 5 plans complete: BullMQ document extraction migration fully verified and production-ready.
@@ -119,6 +121,9 @@ v4.0 roadmap created 2026-04-01. All 15 requirements mapped across 6 phases (31�
 - [Phase 32]: Added user_id column to time_entries for multi-user isolation (security requirement)
 - [Phase 32]: Global endpoints filter by session.user.id to enforce user scoping
 - [Phase 32]: No RLS on time_entries - user filtering done at query level with WHERE conditions
+- [Phase 32-03]: Time Tracking link placed after Scheduler in Sidebar bottom section for logical grouping
+- [Phase 32-03]: Old /customer/[id]/time route preserved with redirect to maintain backward compatibility
+- [Phase 32-03]: Query parameter ?project=:id used to preserve project context after redirect
 
 ## Accumulated Technical Context
 
