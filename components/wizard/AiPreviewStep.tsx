@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { ExtractionPreview } from '@/components/ExtractionPreview'
 import { IngestionStepper } from '@/components/IngestionStepper'
 import type { ReviewItem } from '@/components/IngestionModal'
-import type { ExtractionItem } from '@/app/api/ingestion/extract/route'
+import type { ExtractionItem } from '@/lib/extraction-types'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

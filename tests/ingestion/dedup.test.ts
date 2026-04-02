@@ -53,8 +53,8 @@ vi.mock('@/lib/auth', () => ({
   },
 }));
 
-import { isAlreadyIngested } from '@/app/api/ingestion/extract/route';
-import type { ExtractionItem } from '@/app/api/ingestion/extract/route';
+import { isAlreadyIngested } from '@/lib/extraction-types';
+import type { ExtractionItem } from '@/lib/extraction-types';
 import { POST } from '@/app/api/ingestion/approve/route';
 import { db } from '@/db';
 import { auth as authMock } from '@/lib/auth';

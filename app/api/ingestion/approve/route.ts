@@ -20,7 +20,7 @@ import {
   onboardingSteps,
   integrations,
 } from '@/db/schema';
-import type { EntityType, ExtractionItem } from '@/app/api/ingestion/extract/route';
+import type { EntityType, ExtractionItem } from '@/lib/extraction-types';
 import { requireSession } from "@/lib/auth-server";
 
 export const dynamic = 'force-dynamic';
