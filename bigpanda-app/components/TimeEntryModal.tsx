@@ -87,6 +87,7 @@ export function TimeEntryModal({ projectId, entry, trigger, onSuccess, projects 
         return
       }
 
+      setSaving(false)
       setOpen(false)
       resetForm()
       onSuccess()
