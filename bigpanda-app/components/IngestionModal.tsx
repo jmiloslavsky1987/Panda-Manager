@@ -257,6 +257,7 @@ export function IngestionModal({
         approved: true,
         edited: false,
       })))
+      setStage('reviewing')
     }
   }, [open, initialStage, initialReviewItems])
 
