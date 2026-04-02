@@ -9,9 +9,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { eq, inArray, asc } from 'drizzle-orm';
+import { eq, asc } from 'drizzle-orm';
 import db from '@/db';
-import { extractionJobs, type ExtractionJob } from '@/db/schema';
+import { extractionJobs, artifacts, type ExtractionJob } from '@/db/schema';
 import { requireSession } from '@/lib/auth-server';
 
 export const dynamic = 'force-dynamic';
@@ -24,18 +24,17 @@ export async function GET(
   if (redirectResponse) return redirectResponse;
 
   const { projectId } = await params;
-  const jobs = await db
-    .select()
+  const rows = await db
+    .select({ job: extractionJobs, artifactStatus: artifacts.ingestion_status })
     .from(extractionJobs)
-    .where(
-      eq(extractionJobs.project_id, Number(projectId))
-    )
+    .leftJoin(artifacts, eq(extractionJobs.artifact_id, artifacts.id))
+    .where(eq(extractionJobs.project_id, Number(projectId)))
     .orderBy(asc(extractionJobs.created_at));
 
-  // Filter for active jobs only (exclude failed)
-  const activeJobs = jobs.filter((j) =>
-    ['pending', 'running', 'completed'].includes(j.status)
-  );
+  // Exclude failed jobs and jobs whose artifact has already been approved
+  const activeJobs: ExtractionJob[] = rows
+    .filter(r => ['pending', 'running', 'completed'].includes(r.job.status) && r.artifactStatus !== 'approved')
+    .map(r => r.job);
 
   // Group by batch_id
   const batches: Record<
