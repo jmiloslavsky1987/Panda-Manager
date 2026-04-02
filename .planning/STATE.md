@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: — Infrastructure & UX Foundations
-status: planning
-last_updated: "2026-04-02T18:14:45.313Z"
-last_activity: "2026-04-02 — Plan 32-05 complete: Full verification of Phase 32"
+status: executing
+last_updated: "2026-04-02T18:29:14.415Z"
+last_activity: "2026-04-02 — Plan 33-01 complete: Wave 0 test scaffolds for dual-track onboarding and completeness removal"
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 15
-  completed_plans: 11
+  completed_plans: 12
 ---
 
 # Project State
@@ -21,9 +21,9 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Status
 
 **Phase:** 33 (Overview Tab Schema Migration)
-**Plan:** 01 of 5 (complete)
+**Plan:** 02 of 5 (complete)
 **Status:** In progress
-**Last activity:** 2026-04-02 — Plan 33-01 complete: Wave 0 test scaffolds for dual-track onboarding and completeness removal
+**Last activity:** 2026-04-02 — Plan 33-02 complete: Migration 0026 adds track column to onboarding tables with composite indexes
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
 **Current focus:** v4.0 — Infrastructure & UX Foundations. Phase 31: BullMQ Document Extraction Migration.
@@ -49,8 +49,9 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Active Work
 
 **Phase 33 — In Progress (2026-04-02):**
-Wave 0 test scaffolds complete.
+Wave 0 and Wave 1 complete.
 - Plan 01 complete: Created 23 failing RED tests for dual-track onboarding (WORK-01) and completeness removal (WORK-02)
+- Plan 02 complete: Migration 0026 adds track column (TEXT) to onboarding_phases and onboarding_steps with composite indexes for ADR/Biggy workstream separation
 
 **Phase 32 — Complete (2026-04-02):**
 All 5 plans complete: Time Tracking Global View fully verified and production-ready.
@@ -152,6 +153,7 @@ v4.0 roadmap created 2026-04-01. All 15 requirements mapped across 6 phases (31�
 - [Phase 32]: Calendar import button temporarily removed due to CalendarImportModal signature incompatibility (deferred to future plan)
 - [Phase 33-01]: Used stub pattern (const x: any = undefined) to fail RED without brittle import errors
 - [Phase 33-01]: Created 23 total failing test cases across 4 test files (exceeds plan target of 17-21)
+- [Phase 33]: Plan 33-02 complete: Migration 0026 adds track column (TEXT) to onboarding tables with composite indexes for ADR/Biggy separation
 
 ## Accumulated Technical Context
 
