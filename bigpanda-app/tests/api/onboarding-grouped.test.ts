@@ -1,36 +1,35 @@
 // tests/api/onboarding-grouped.test.ts
-// Wave 0 RED stubs for WORK-01 — API grouping by track (ADR/Biggy)
+// Wave 3 GREEN tests for WORK-01 — API grouping by track (ADR/Biggy)
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { GET } from '@/app/api/projects/[projectId]/onboarding/route';
+import { NextRequest } from 'next/server';
 
 // Mock dependencies
 vi.mock('@/db', () => ({
   db: {
-    select: vi.fn().mockReturnValue({
-      from: vi.fn().mockReturnValue({
-        leftJoin: vi.fn().mockReturnValue({
-          where: vi.fn().mockReturnValue({
-            orderBy: vi.fn().mockResolvedValue([])
-          })
-        })
-      })
-    }),
     transaction: vi.fn()
   }
 }));
 
 vi.mock('@/lib/auth-server', () => ({
   requireSession: vi.fn().mockResolvedValue({
-    session: { user: { id: 1, role: 'admin' } }
+    session: { user: { id: 1, role: 'admin' } },
+    redirectResponse: null
   })
 }));
 
 vi.mock('drizzle-orm', () => ({
-  eq: vi.fn(),
-  and: vi.fn(),
-  asc: vi.fn()
+  eq: vi.fn((col, val) => ({ col, val, type: 'eq' })),
+  asc: vi.fn((col) => ({ col, type: 'asc' })),
+  sql: {
+    raw: vi.fn((query) => ({ query, type: 'raw' }))
+  }
 }));
 
 vi.mock('server-only', () => ({}));
+
+// Import mocked db after mocking
+import { db } from '@/db';
 
 describe('GET /api/projects/[id]/onboarding — API grouping (WORK-01)', () => {
   beforeEach(() => {
@@ -38,46 +37,137 @@ describe('GET /api/projects/[id]/onboarding — API grouping (WORK-01)', () => {
   });
 
   it('returns { adr: [], biggy: [] } structure (not flat { phases: [] })', async () => {
-    // Stub pattern: test will fail RED until implementation exists
-    const groupedResponse: any = undefined;
-    expect(groupedResponse).toHaveProperty('adr');
-    expect(groupedResponse).toHaveProperty('biggy');
-    // TODO Plan 33-02: import route handler, call GET, verify response shape
+    // Mock transaction to return grouped data
+    vi.mocked(db.transaction).mockImplementation(async (callback: any) => {
+      return callback({
+        execute: vi.fn(),
+        select: vi.fn().mockReturnValue({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              orderBy: vi.fn().mockResolvedValue([
+                { id: 1, track: 'ADR', name: 'Phase 1', display_order: 1, project_id: 123, created_at: new Date() }
+              ])
+            })
+          })
+        })
+      });
+    });
+
+    const req = new NextRequest('http://localhost:3000/api/projects/123/onboarding');
+    const params = Promise.resolve({ projectId: '123' });
+    const response = await GET(req, { params });
+    const data = await response.json();
+
+    expect(data).toHaveProperty('adr');
+    expect(data).toHaveProperty('biggy');
+    expect(data).not.toHaveProperty('phases');
   });
 
   it('phases with track="ADR" appear in adr array only', async () => {
-    // Stub pattern: test will fail RED until implementation exists
-    const adrPhases: any = undefined;
-    expect(adrPhases).toBeDefined();
-    expect(Array.isArray(adrPhases)).toBe(true);
-    // TODO Plan 33-02: verify ADR phases have track='ADR' and are in adr array
+    vi.mocked(db.transaction).mockImplementation(async (callback: any) => {
+      return callback({
+        execute: vi.fn(),
+        select: vi.fn().mockReturnValue({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              orderBy: vi.fn().mockResolvedValue([
+                { id: 1, track: 'ADR', name: 'ADR Phase 1', display_order: 1, project_id: 123, created_at: new Date() },
+                { id: 2, track: 'ADR', name: 'ADR Phase 2', display_order: 2, project_id: 123, created_at: new Date() },
+                { id: 3, track: 'Biggy', name: 'Biggy Phase 1', display_order: 3, project_id: 123, created_at: new Date() }
+              ])
+            })
+          })
+        })
+      });
+    });
+
+    const req = new NextRequest('http://localhost:3000/api/projects/123/onboarding');
+    const params = Promise.resolve({ projectId: '123' });
+    const response = await GET(req, { params });
+    const data = await response.json();
+
+    expect(Array.isArray(data.adr)).toBe(true);
+    expect(data.adr).toHaveLength(2);
+    expect(data.adr.every((p: any) => p.track === 'ADR')).toBe(true);
   });
 
   it('phases with track="Biggy" appear in biggy array only', async () => {
-    // Stub pattern: test will fail RED until implementation exists
-    const biggyPhases: any = undefined;
-    expect(biggyPhases).toBeDefined();
-    expect(Array.isArray(biggyPhases)).toBe(true);
-    // TODO Plan 33-02: verify Biggy phases have track='Biggy' and are in biggy array
+    vi.mocked(db.transaction).mockImplementation(async (callback: any) => {
+      return callback({
+        execute: vi.fn(),
+        select: vi.fn().mockReturnValue({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              orderBy: vi.fn().mockResolvedValue([
+                { id: 1, track: 'ADR', name: 'ADR Phase 1', display_order: 1, project_id: 123, created_at: new Date() },
+                { id: 2, track: 'Biggy', name: 'Biggy Phase 1', display_order: 2, project_id: 123, created_at: new Date() },
+                { id: 3, track: 'Biggy', name: 'Biggy Phase 2', display_order: 3, project_id: 123, created_at: new Date() }
+              ])
+            })
+          })
+        })
+      });
+    });
+
+    const req = new NextRequest('http://localhost:3000/api/projects/123/onboarding');
+    const params = Promise.resolve({ projectId: '123' });
+    const response = await GET(req, { params });
+    const data = await response.json();
+
+    expect(Array.isArray(data.biggy)).toBe(true);
+    expect(data.biggy).toHaveLength(2);
+    expect(data.biggy.every((p: any) => p.track === 'Biggy')).toBe(true);
   });
 
   it('empty track returns empty arrays (not null)', async () => {
-    // Stub pattern: test will fail RED until implementation exists
-    const emptyAdr: any = undefined;
-    const emptyBiggy: any = undefined;
-    expect(Array.isArray(emptyAdr)).toBe(true);
-    expect(Array.isArray(emptyBiggy)).toBe(true);
-    expect(emptyAdr).toHaveLength(0);
-    expect(emptyBiggy).toHaveLength(0);
-    // TODO Plan 33-02: test with no phases, verify empty arrays
+    vi.mocked(db.transaction).mockImplementation(async (callback: any) => {
+      return callback({
+        execute: vi.fn(),
+        select: vi.fn().mockReturnValue({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              orderBy: vi.fn().mockResolvedValue([])
+            })
+          })
+        })
+      });
+    });
+
+    const req = new NextRequest('http://localhost:3000/api/projects/123/onboarding');
+    const params = Promise.resolve({ projectId: '123' });
+    const response = await GET(req, { params });
+    const data = await response.json();
+
+    expect(Array.isArray(data.adr)).toBe(true);
+    expect(Array.isArray(data.biggy)).toBe(true);
+    expect(data.adr).toHaveLength(0);
+    expect(data.biggy).toHaveLength(0);
   });
 
   it('response includes steps nested under each phase', async () => {
-    // Stub pattern: test will fail RED until implementation exists
-    const phaseWithSteps: any = undefined;
+    vi.mocked(db.transaction).mockImplementation(async (callback: any) => {
+      return callback({
+        execute: vi.fn(),
+        select: vi.fn().mockReturnValue({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              orderBy: vi.fn().mockResolvedValue([
+                { id: 1, track: 'ADR', name: 'Phase 1', display_order: 1, project_id: 123, created_at: new Date() }
+              ])
+            })
+          })
+        })
+      });
+    });
+
+    const req = new NextRequest('http://localhost:3000/api/projects/123/onboarding');
+    const params = Promise.resolve({ projectId: '123' });
+    const response = await GET(req, { params });
+    const data = await response.json();
+
+    const phaseWithSteps = data.adr[0];
     expect(phaseWithSteps).toBeDefined();
     expect(phaseWithSteps).toHaveProperty('steps');
     expect(Array.isArray(phaseWithSteps.steps)).toBe(true);
-    // TODO Plan 33-02: verify PhaseWithSteps shape includes nested steps array
   });
 });
