@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: — Infrastructure & UX Foundations
-status: planning
-last_updated: "2026-04-02T04:08:44.470Z"
-last_activity: "2026-04-01 — Plan 31-05 complete: Human UAT verification with 11 bugs found and fixed"
+status: executing
+last_updated: "2026-04-02T05:56:32.456Z"
+last_activity: "2026-04-02 — Plan 32-01 complete: Wave 0 test scaffolds with 9 failing RED tests"
 progress:
   total_phases: 6
   completed_phases: 1
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 10
+  completed_plans: 6
 ---
 
 # Project State
@@ -20,10 +20,10 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 
 ## Current Status
 
-**Phase:** 31 (BullMQ Document Extraction Migration)
-**Plan:** 05 of 5 (complete)
-**Status:** Ready to plan
-**Last activity:** 2026-04-01 — Plan 31-05 complete: Human UAT verification with 11 bugs found and fixed
+**Phase:** 32 (Time Tracking Global View)
+**Plan:** 01 of 5 (complete)
+**Status:** Executing
+**Last activity:** 2026-04-02 — Plan 32-01 complete: Wave 0 test scaffolds with 9 failing RED tests
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
 **Current focus:** v4.0 — Infrastructure & UX Foundations. Phase 31: BullMQ Document Extraction Migration.
@@ -40,13 +40,16 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 | Phase | Status |
 |-------|--------|
 | 31. BullMQ Extraction | Complete (5/5) |
-| 32. Time Tracking Global | Not started |
+| 32. Time Tracking Global | In Progress (1/5) |
 | 33. Schema Migration | Not started |
 | 34. Metrics & Health | Not started |
 | 35. Weekly Focus | Not started |
 | 36. Test Fixes | Not started |
 
 ## Active Work
+
+**Phase 32 — In Progress (2026-04-02):**
+Plan 01 complete: Wave 0 test scaffolds created with 9 failing RED tests for TIME-01, TIME-02, TIME-03.
 
 **Phase 31 — Complete (2026-04-01):**
 All 5 plans complete: BullMQ document extraction migration fully verified and production-ready.
@@ -112,6 +115,7 @@ v4.0 roadmap created 2026-04-01. All 15 requirements mapped across 6 phases (31�
 - [Phase 31]: Progress heartbeat: updated_at set after every chunk for stale detection (10 min threshold)
 - [Phase 31]: Polling intervals: 2s for modal (foreground), 5s for ContextTab (background) — balances responsiveness with backend load
 - [Phase 31]: Toast ref-guarded with Set — prevents duplicate notifications when polling detects batch_complete multiple times
+- [Phase 32]: Wave 0 stub pattern applied: const x: any = undefined; expect(x).toBeDefined() — fails RED without brittle import errors
 
 ## Accumulated Technical Context
 

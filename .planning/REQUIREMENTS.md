@@ -18,9 +18,9 @@
 
 ### Time Tracking
 
-- [ ] **TIME-01**: User can view all time entries across all projects from a standalone top-level /time-tracking section
-- [ ] **TIME-02**: User can assign or attribute each time entry to a project from the global view
-- [ ] **TIME-03**: Per-project time tracking tab is removed from the workspace
+- [x] **TIME-01**: User can view all time entries across all projects from a standalone top-level /time-tracking section
+- [x] **TIME-02**: User can assign or attribute each time entry to a project from the global view
+- [x] **TIME-03**: Per-project time tracking tab is removed from the workspace
 
 ### Overview — Workstream Structure
 
@@ -79,9 +79,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EXTR-01 | Phase 31 | Complete |
 | EXTR-02 | Phase 31 | Complete |
 | EXTR-03 | Phase 31 | Complete |
-| TIME-01 | Phase 32 | Pending |
-| TIME-02 | Phase 32 | Pending |
-| TIME-03 | Phase 32 | Pending |
+| TIME-01 | Phase 32 | Complete |
+| TIME-02 | Phase 32 | Complete |
+| TIME-03 | Phase 32 | Complete |
 | WORK-01 | Phase 33 | Pending |
 | WORK-02 | Phase 33 | Pending |
 | METR-01 | Phase 34 | Pending |
