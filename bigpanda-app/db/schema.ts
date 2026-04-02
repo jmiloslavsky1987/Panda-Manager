@@ -439,6 +439,7 @@ export const integrations = pgTable('integrations', {
 export const timeEntries = pgTable('time_entries', {
   id:          serial('id').primaryKey(),
   project_id:  integer('project_id').notNull().references(() => projects.id),
+  user_id:     text('user_id').notNull().default('default'),  // Phase 32: user scoping for multi-user
   date:        text('date').notNull(),         // ISO: 'YYYY-MM-DD'
   hours:       text('hours').notNull(),        // decimal string: '1.5' — use parseFloat() in JS
   description: text('description').notNull(),

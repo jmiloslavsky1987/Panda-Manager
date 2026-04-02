@@ -2,6 +2,23 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/db'
 import { projects } from '@/db/schema'
 import { requireSession } from "@/lib/auth-server";
+import { getActiveProjects } from '@/lib/queries'
+
+export async function GET(req: NextRequest) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
+  try {
+    const activeProjects = await getActiveProjects()
+    return NextResponse.json({ projects: activeProjects })
+  } catch (err) {
+    console.error('GET /api/projects error:', err)
+    return NextResponse.json(
+      { error: 'Failed to load projects' },
+      { status: 500 }
+    )
+  }
+}
 
 export async function POST(req: NextRequest) {
   const { session, redirectResponse } = await requireSession();
