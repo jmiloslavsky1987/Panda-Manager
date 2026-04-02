@@ -31,6 +31,7 @@ interface ExtractionJob {
   filename?: string
   staged_items_json?: unknown
   filtered_count?: number
+  artifact_id?: number
 }
 
 interface ActiveBatch {
