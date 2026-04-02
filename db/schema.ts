@@ -728,3 +728,27 @@ export const teamPathways = pgTable('team_pathways', {
 })
 
 export type TeamPathway = typeof teamPathways.$inferSelect
+
+// ─── Extraction Jobs (Phase 31) ───────────────────────────────────────────────
+
+export const extractionJobStatusEnum = pgEnum('extraction_job_status', [
+  'pending', 'running', 'completed', 'failed',
+]);
+
+export const extractionJobs = pgTable('extraction_jobs', {
+  id:                serial('id').primaryKey(),
+  artifact_id:       integer('artifact_id').notNull().references(() => artifacts.id),
+  project_id:        integer('project_id').notNull().references(() => projects.id),
+  batch_id:          text('batch_id').notNull(),
+  status:            extractionJobStatusEnum('status').default('pending').notNull(),
+  progress_pct:      integer('progress_pct').default(0).notNull(),
+  current_chunk:     integer('current_chunk').default(0).notNull(),
+  total_chunks:      integer('total_chunks').default(0).notNull(),
+  staged_items_json: jsonb('staged_items_json'),
+  filtered_count:    integer('filtered_count').default(0).notNull(),
+  error_message:     text('error_message'),
+  created_at:        timestamp('created_at').defaultNow().notNull(),
+  updated_at:        timestamp('updated_at').defaultNow().notNull(),
+});
+
+export type ExtractionJob = typeof extractionJobs.$inferSelect;
