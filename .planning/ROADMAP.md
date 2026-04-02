@@ -125,7 +125,14 @@ Plans:
   3. Overview tab renders ADR and Biggy onboarding sections separately with standardized phase models
   4. Project Completeness indicator is removed from Overview tab UI
   5. Migration includes index on track column for query performance
-**Plans**: TBD
+**Plans**: 5 plans in 5 waves
+
+Plans:
+- [ ] 33-01-PLAN.md — Wave 0 test scaffolds (4 test files for WORK-01 and WORK-02)
+- [ ] 33-02-PLAN.md — Schema migration (add track column + indexes)
+- [ ] 33-03-PLAN.md — Auto-seed phases in POST /api/projects
+- [ ] 33-04-PLAN.md — API grouping (return { adr, biggy } from GET endpoint)
+- [ ] 33-05-PLAN.md — Dual-track UI + completeness removal
 
 ### Phase 34: Overview Tab — Metrics & Health Dashboard
 **Goal**: Overview tab displays actionable metrics and health indicators with visual charts
@@ -172,7 +179,7 @@ Plans:
 | 26–30 | v3.0 | 26/26 | Complete | 2026-04-01 |
 | 31. BullMQ Extraction | v4.0 | 5/5 | Complete | 2026-04-02 |
 | 32. Time Tracking Global | 5/5 | Complete    | 2026-04-02 | — |
-| 33. Schema Migration | v4.0 | 0/TBD | Not started | — |
+| 33. Schema Migration | v4.0 | 0/5 | Not started | — |
 | 34. Metrics & Health | v4.0 | 0/TBD | Not started | — |
 | 35. Weekly Focus | v4.0 | 0/TBD | Not started | — |
 | 36. Test Fixes | v4.0 | 0/TBD | Not started | — |
