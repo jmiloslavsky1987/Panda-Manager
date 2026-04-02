@@ -24,8 +24,8 @@
 
 ### Overview — Workstream Structure
 
-- [ ] **WORK-01**: Overview tab displays ADR and Biggy onboarding progress as separate parallel sections with standardized phase models (ADR: Discovery & Kickoff → Integrations → Platform Configuration → Teams → UAT; Biggy: Discovery & Kickoff → IT Knowledge Graph → Platform Configuration → Teams → Validation)
-- [ ] **WORK-02**: Project Completeness indicator is removed from the Overview tab
+- [x] **WORK-01**: Overview tab displays ADR and Biggy onboarding progress as separate parallel sections with standardized phase models (ADR: Discovery & Kickoff → Integrations → Platform Configuration → Teams → UAT; Biggy: Discovery & Kickoff → IT Knowledge Graph → Platform Configuration → Teams → Validation)
+- [x] **WORK-02**: Project Completeness indicator is removed from the Overview tab
 
 ### Overview — Weekly Focus
 
@@ -82,8 +82,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TIME-01 | Phase 32 | Complete |
 | TIME-02 | Phase 32 | Complete |
 | TIME-03 | Phase 32 | Complete |
-| WORK-01 | Phase 33 | Pending |
-| WORK-02 | Phase 33 | Pending |
+| WORK-01 | Phase 33 | Complete |
+| WORK-02 | Phase 33 | Complete |
 | METR-01 | Phase 34 | Pending |
 | HLTH-01 | Phase 34 | Pending |
 | TMLN-01 | Phase 34 | Pending |
