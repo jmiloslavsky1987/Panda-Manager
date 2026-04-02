@@ -16,6 +16,7 @@ import type { ExtractionItem } from '@/lib/extraction-types'
 export interface ReviewItem extends ExtractionItem {
   approved: boolean
   edited: boolean
+  conflictResolution?: 'merge' | 'replace' | 'skip'
   conflict?: {
     existingId: number
     existingRecord: Record<string, string>

@@ -13,6 +13,7 @@ function makeEntry(overrides: Partial<TimeEntry> = {}): TimeEntry {
   return {
     id: 1,
     project_id: 10,
+    user_id: 'default',
     date: '2026-03-01',
     hours: '2.0',
     description: 'Test entry',
