@@ -6,9 +6,10 @@
  *   - appendRunHistoryEntry: maintains a capped run history on scheduled_jobs
  *
  * Both functions are co-located here because they both relate to job run outcomes.
+ *
+ * NOTE: Does NOT import 'server-only' — this file is used by worker/index.ts (plain Node.js).
  */
 
-import 'server-only';
 import { eq } from 'drizzle-orm';
 import { db } from '../db';
 import { scheduledJobs, appNotifications } from '../db/schema';
