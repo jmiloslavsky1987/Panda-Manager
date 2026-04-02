@@ -1,7 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { toast } from 'sonner'
 import { IngestionModal } from './IngestionModal'
+import type { ExtractionItem } from '@/lib/extraction-types'
 
 interface ContextTabProps {
   projectId: string | number
@@ -20,12 +22,34 @@ interface CompletenessResult {
   gaps: string[]
 }
 
+interface ExtractionJob {
+  id: number
+  status: string
+  progress_pct: number
+  current_chunk: number
+  total_chunks: number
+  filename?: string
+  staged_items_json?: unknown
+  filtered_count?: number
+}
+
+interface ActiveBatch {
+  batchId: string
+  jobs: ExtractionJob[]
+  batch_complete: boolean
+  all_terminal: boolean
+}
+
 export function ContextTab({ projectId }: ContextTabProps) {
   const [isIngestionModalOpen, setIngestionModalOpen] = useState(false)
   const [uploadHistory, setUploadHistory] = useState<UploadHistoryItem[]>([])
   const [completeness, setCompleteness] = useState<CompletenessResult[] | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [expandedTabs, setExpandedTabs] = useState<Set<string>>(new Set())
+  const [activeBatch, setActiveBatch] = useState<ActiveBatch | null>(null)
+  const toastFiredRef = useRef<Set<string>>(new Set())
+  const [initialStage, setInitialStage] = useState<'uploading' | 'reviewing'>('uploading')
+  const [initialReviewItems, setInitialReviewItems] = useState<ExtractionItem[]>([])
 
   function toggleTab(tabId: string) {
     setExpandedTabs(prev => {
@@ -35,6 +59,53 @@ export function ContextTab({ projectId }: ContextTabProps) {
       return next
     })
   }
+
+  // Helper to open modal at review stage
+  const openModalAtReview = (jobs: ExtractionJob[]) => {
+    const allItems = jobs.flatMap(j =>
+      Array.isArray(j.staged_items_json) ? j.staged_items_json : []
+    )
+    setInitialReviewItems(allItems as ExtractionItem[])
+    setInitialStage('reviewing')
+    setIngestionModalOpen(true)
+  }
+
+  // Poll extraction status for background progress
+  useEffect(() => {
+    const checkStatus = async () => {
+      try {
+        const res = await fetch(`/api/projects/${projectId}/extraction-status`)
+        if (!res.ok) return
+        const data = await res.json()
+
+        // Find the most recent active batch (highest index)
+        const batchEntries = Object.entries(data.batches ?? {})
+        if (batchEntries.length === 0) {
+          setActiveBatch(null)
+          return
+        }
+
+        const [batchId, batch] = batchEntries[batchEntries.length - 1] as [string, any]
+        setActiveBatch({ batchId, ...batch })
+
+        // Fire toast ONCE when batch_complete becomes true
+        if (batch.batch_complete && !toastFiredRef.current.has(batchId)) {
+          toastFiredRef.current.add(batchId)
+          const totalItems = batch.jobs.reduce((sum: number, j: ExtractionJob) =>
+            sum + (Array.isArray(j.staged_items_json) ? j.staged_items_json.length : 0), 0)
+          toast.success(`Extraction complete — review ${totalItems} items`, {
+            action: { label: 'Review', onClick: () => openModalAtReview(batch.jobs) },
+          })
+        }
+      } catch (err) {
+        console.error('Failed to check extraction status:', err)
+      }
+    }
+
+    checkStatus() // Initial check on mount
+    const interval = setInterval(checkStatus, 5000) // 5s background polling
+    return () => clearInterval(interval)
+  }, [projectId])
 
   // Load upload history from artifacts table
   useEffect(() => {
@@ -68,20 +139,81 @@ export function ContextTab({ projectId }: ContextTabProps) {
     }
   }
 
+  // Handler for modal close — reset state
+  const handleModalClose = (open: boolean) => {
+    setIngestionModalOpen(open)
+    if (!open) {
+      // Reset modal state when closing
+      setInitialStage('uploading')
+      setInitialReviewItems([])
+      // If batch was completed and reviewed, clear it
+      if (activeBatch?.batch_complete) {
+        setActiveBatch(null)
+      }
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6 p-6 max-w-4xl mx-auto">
-      {/* Section 1: Upload */}
+      {/* Section 1: Upload or Extraction Progress */}
       <section className="rounded-lg border bg-card p-6">
         <h2 className="text-lg font-semibold mb-2">Upload Documents</h2>
         <p className="text-sm text-muted-foreground mb-4">
           Upload meeting notes, status reports, or any project document. Claude will extract and route content to the correct workspace tabs for your review.
         </p>
-        <button
-          onClick={() => setIngestionModalOpen(true)}
-          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-        >
-          Upload Document
-        </button>
+
+        {/* Show extraction progress if active batch exists and not complete */}
+        {activeBatch && !activeBatch.batch_complete && (
+          <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 p-4">
+            <h3 className="text-sm font-medium text-blue-900 mb-3">Extraction in Progress</h3>
+            <div className="space-y-2">
+              {activeBatch.jobs.map((job, i) => {
+                const filename = job.filename || `File ${i + 1}`
+                const progress = job.progress_pct || 0
+                const chunk = job.current_chunk || 0
+                const total = job.total_chunks || 0
+
+                return (
+                  <div key={job.id} className="text-sm text-blue-800">
+                    {total > 0
+                      ? `${filename} — ${progress}% — Processing chunk ${chunk} of ${total}`
+                      : `${filename} — Extracting...`}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Show ready-for-review card if batch complete */}
+        {activeBatch && activeBatch.batch_complete && (
+          <div className="mb-4 rounded-md border border-green-200 bg-green-50 p-4">
+            <h3 className="text-sm font-medium text-green-900 mb-2">Ready for Review</h3>
+            <p className="text-sm text-green-700 mb-3">
+              Extraction complete. Review and approve extracted items.
+            </p>
+            <button
+              onClick={() => openModalAtReview(activeBatch.jobs)}
+              className="inline-flex items-center gap-2 rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
+            >
+              Review Items
+            </button>
+          </div>
+        )}
+
+        {/* Show upload button only if no active batch */}
+        {!activeBatch && (
+          <button
+            onClick={() => {
+              setInitialStage('uploading')
+              setInitialReviewItems([])
+              setIngestionModalOpen(true)
+            }}
+            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            Upload Document
+          </button>
+        )}
       </section>
 
       {/* Section 2: Upload History */}
@@ -181,7 +313,9 @@ export function ContextTab({ projectId }: ContextTabProps) {
       <IngestionModal
         projectId={typeof projectId === 'string' ? parseInt(projectId, 10) : projectId}
         open={isIngestionModalOpen}
-        onOpenChange={setIngestionModalOpen}
+        onOpenChange={handleModalClose}
+        initialStage={initialStage}
+        initialReviewItems={initialReviewItems}
       />
     </div>
   )
