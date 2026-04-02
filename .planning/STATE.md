@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: — Infrastructure & UX Foundations
 status: executing
-last_updated: "2026-04-02T05:56:32.456Z"
-last_activity: "2026-04-02 — Plan 32-01 complete: Wave 0 test scaffolds with 9 failing RED tests"
+last_updated: "2026-04-02T06:05:52.326Z"
+last_activity: "2026-04-02 — Plan 32-02 complete: Global time tracking API endpoints with user scoping"
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 10
-  completed_plans: 6
+  completed_plans: 7
 ---
 
 # Project State
@@ -21,9 +21,9 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Status
 
 **Phase:** 32 (Time Tracking Global View)
-**Plan:** 01 of 5 (complete)
+**Plan:** 02 of 5 (complete)
 **Status:** Executing
-**Last activity:** 2026-04-02 — Plan 32-01 complete: Wave 0 test scaffolds with 9 failing RED tests
+**Last activity:** 2026-04-02 — Plan 32-02 complete: Global time tracking API endpoints with user scoping
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
 **Current focus:** v4.0 — Infrastructure & UX Foundations. Phase 31: BullMQ Document Extraction Migration.
@@ -116,6 +116,9 @@ v4.0 roadmap created 2026-04-01. All 15 requirements mapped across 6 phases (31�
 - [Phase 31]: Polling intervals: 2s for modal (foreground), 5s for ContextTab (background) — balances responsiveness with backend load
 - [Phase 31]: Toast ref-guarded with Set — prevents duplicate notifications when polling detects batch_complete multiple times
 - [Phase 32]: Wave 0 stub pattern applied: const x: any = undefined; expect(x).toBeDefined() — fails RED without brittle import errors
+- [Phase 32]: Added user_id column to time_entries for multi-user isolation (security requirement)
+- [Phase 32]: Global endpoints filter by session.user.id to enforce user scoping
+- [Phase 32]: No RLS on time_entries - user filtering done at query level with WHERE conditions
 
 ## Accumulated Technical Context
 
