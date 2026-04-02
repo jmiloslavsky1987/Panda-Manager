@@ -114,7 +114,7 @@ export function ContextTab({ projectId }: ContextTabProps) {
   }, [projectId])
 
   // Load upload history from artifacts table
-  useEffect(() => {
+  const refreshHistory = () => {
     fetch(`/api/projects/${projectId}/artifacts`)
       .then(res => res.ok ? res.json() : [])
       .then((data: Array<{ id: number; name: string; status: string; createdAt: string }>) => {
@@ -126,7 +126,8 @@ export function ContextTab({ projectId }: ContextTabProps) {
         })));
       })
       .catch(() => {/* silent — history is non-critical */});
-  }, [projectId]);
+  };
+  useEffect(() => { refreshHistory(); }, [projectId]);
 
   // Completeness analysis handler (wired in Plan 05)
   async function handleAnalyze() {
@@ -158,6 +159,7 @@ export function ContextTab({ projectId }: ContextTabProps) {
       if (activeBatch?.batch_complete) {
         setActiveBatch(null)
       }
+      refreshHistory()
     }
   }
 
