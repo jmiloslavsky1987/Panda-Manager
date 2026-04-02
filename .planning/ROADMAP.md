@@ -106,7 +106,14 @@ Plans:
   3. Time entries are grouped by week with date range headers
   4. Per-project Time Tracking tab no longer appears in customer workspace tabs
   5. Old /customer/[id]/time route redirects to /time-tracking with project filter preserved
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 32-01-PLAN.md — Wave 0 test scaffolds (3 failing stubs for TIME-01, TIME-02, TIME-03)
+- [ ] 32-02-PLAN.md — API endpoints: GET /api/time-entries (cross-project), GET /api/projects, global export + calendar import
+- [ ] 32-03-PLAN.md — Navigation surgery: Sidebar link, WorkspaceTabs Time tab removal, /customer/[id]/time redirect
+- [ ] 32-04-PLAN.md — GlobalTimeView component + TimeEntryModal global adaptation + /time-tracking page shell
+- [ ] 32-05-PLAN.md — Full test suite + build check + human UAT verification
 
 ### Phase 33: Overview Tab Schema Migration + Workstream Structure
 **Goal**: Database schema supports ADR and Biggy as separate parallel workstreams with standardized phase models
@@ -163,8 +170,8 @@ Plans:
 | 1–16 | v1.0 | 63/63 | Complete | 2026-03-26 |
 | 17–25 | v2.0 | 63/63 | Complete | 2026-03-30 |
 | 26–30 | v3.0 | 26/26 | Complete | 2026-04-01 |
-| 31. BullMQ Extraction | 4/5 | Complete    | 2026-04-02 | — |
-| 32. Time Tracking Global | v4.0 | 0/TBD | Not started | — |
+| 31. BullMQ Extraction | v4.0 | 5/5 | Complete | 2026-04-02 |
+| 32. Time Tracking Global | v4.0 | 0/5 | Not started | — |
 | 33. Schema Migration | v4.0 | 0/TBD | Not started | — |
 | 34. Metrics & Health | v4.0 | 0/TBD | Not started | — |
 | 35. Weekly Focus | v4.0 | 0/TBD | Not started | — |
