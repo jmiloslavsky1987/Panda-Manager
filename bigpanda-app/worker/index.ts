@@ -34,6 +34,7 @@ import handoffDocGenerator         from './jobs/handoff-doc-generator';
 import customerProjectTrackerJob    from './jobs/customer-project-tracker';
 import discoveryScanJob             from './jobs/discovery-scan';
 import timesheetReminderJob         from './jobs/timesheet-reminder';
+import documentExtraction           from './jobs/document-extraction';
 
 const JOB_HANDLERS: Record<string, (job: Parameters<typeof actionSync>[0]) => Promise<{ status: string }>> = {
   'action-sync':            actionSync,
@@ -49,6 +50,7 @@ const JOB_HANDLERS: Record<string, (job: Parameters<typeof actionSync>[0]) => Pr
   'customer-project-tracker':     customerProjectTrackerJob,
   'discovery-scan':               discoveryScanJob,
   'timesheet-reminder':           timesheetReminderJob,
+  'document-extraction':          documentExtraction,
 };
 
 // Worker needs its own connection — NEVER share with Queue (BullMQ requirement)
