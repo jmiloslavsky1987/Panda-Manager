@@ -327,7 +327,7 @@ export function IngestionModal({
         body: JSON.stringify({
           projectId,
           artifactId: artifactId ?? lastExtractedArtifactId ?? initialArtifactId,
-          items: approvedItems,
+          items: approvedItems.map(item => ({ ...item, conflictResolution: item.conflictResolution ?? 'skip' })),
           totalExtracted: reviewItems.length,
         }),
       })
