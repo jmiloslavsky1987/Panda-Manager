@@ -1,29 +1,37 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
-// Mock dependencies with captured functions
-const selectMock = vi.fn();
-const updateMock = vi.fn();
+// Mock dependencies
+vi.mock('../../db', () => {
+  const selectMock = vi.fn();
+  const updateMock = vi.fn();
 
-vi.mock('../../db', () => ({
-  default: {
-    select: selectMock,
-    update: () => ({
-      set: () => ({
-        where: updateMock,
+  return {
+    default: {
+      select: selectMock,
+      update: () => ({
+        set: () => ({
+          where: updateMock,
+        }),
       }),
-    }),
-  },
-}));
+      __selectMock: selectMock,
+      __updateMock: updateMock,
+    },
+  };
+});
 
 vi.mock('../../lib/auth-server', () => ({
   requireSession: vi.fn().mockResolvedValue({ session: { user: { id: 'user-1' } }, redirectResponse: null }),
 }));
 
-// Import the route handler (will fail RED — file doesn't exist yet)
+// Import the route handler
 import { GET } from '../../app/api/ingestion/jobs/[jobId]/route';
+import db from '../../db';
 
 describe('app/api/ingestion/jobs/[jobId]/route.ts — GET polling handler', () => {
+  const selectMock = (db as any).__selectMock;
+  const updateMock = (db as any).__updateMock;
+
   beforeEach(() => {
     vi.clearAllMocks();
     // Default mock: return a running job
