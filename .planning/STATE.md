@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: — Infrastructure & UX Foundations
-status: executing
-last_updated: "2026-04-03T00:18:52.918Z"
-last_activity: "2026-04-02 — Plan 33-04 complete: API endpoint groups phases by track server-side"
+status: planning
+last_updated: "2026-04-03T00:32:42.574Z"
+last_activity: "2026-04-02 — Plan 33-05 complete: Dual-track Overview UI with ADR and Biggy side-by-side"
 progress:
   total_phases: 6
   completed_phases: 3
@@ -22,7 +22,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Phase:** 33 (Overview Tab Schema Migration)
 **Plan:** 05 of 5 (complete)
-**Status:** Complete
+**Status:** Ready to plan
 **Last activity:** 2026-04-02 — Plan 33-05 complete: Dual-track Overview UI with ADR and Biggy side-by-side
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
