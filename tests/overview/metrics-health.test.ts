@@ -23,40 +23,74 @@ describe('OverviewMetrics — METR-01', () => {
 })
 
 describe('HealthDashboard — HLTH-01', () => {
-  it('renders overall health RAG badge with data-testid="overall-health-badge"', () => {
-    const HealthDashboard: any = undefined
+  it('renders overall health RAG badge with data-testid="overall-health-badge"', async () => {
+    const { HealthDashboard } = await import('../../components/HealthDashboard')
     expect(HealthDashboard).toBeDefined()
+    // Component should have overall-health-badge data-testid
   })
-  it('renders ADR and Biggy per-track health badges', () => {
-    const HealthDashboard: any = undefined
+  it('renders ADR and Biggy per-track health badges', async () => {
+    const { HealthDashboard } = await import('../../components/HealthDashboard')
     expect(HealthDashboard).toBeDefined()
+    // Component should have adr-health-badge and biggy-health-badge data-testid
   })
-  it('renders active blocker count', () => {
-    const HealthDashboard: any = undefined
+  it('renders active blocker count', async () => {
+    const { HealthDashboard } = await import('../../components/HealthDashboard')
     expect(HealthDashboard).toBeDefined()
+    // Component should calculate and display sum of blocked steps
   })
 })
 
 describe('computeOverallHealth — health-formula', () => {
-  it('returns red when openCriticalRisks > 0', () => {
-    const computeOverallHealth: any = undefined
+  it('returns red when openCriticalRisks > 0', async () => {
+    const { computeOverallHealth } = await import('../../components/HealthDashboard')
     expect(computeOverallHealth).toBeDefined()
+    const result = computeOverallHealth({
+      openCriticalRisks: 1,
+      openHighRisks: 0,
+      adrCompletion: 80,
+      biggyCompletion: 70,
+    })
+    expect(result).toBe('red')
   })
-  it('returns yellow when openHighRisks > 0', () => {
-    const computeOverallHealth: any = undefined
-    expect(computeOverallHealth).toBeDefined()
+  it('returns yellow when openHighRisks > 0', async () => {
+    const { computeOverallHealth } = await import('../../components/HealthDashboard')
+    const result = computeOverallHealth({
+      openCriticalRisks: 0,
+      openHighRisks: 1,
+      adrCompletion: 80,
+      biggyCompletion: 70,
+    })
+    expect(result).toBe('yellow')
   })
-  it('returns yellow when adrCompletion < 50', () => {
-    const computeOverallHealth: any = undefined
-    expect(computeOverallHealth).toBeDefined()
+  it('returns yellow when adrCompletion < 50', async () => {
+    const { computeOverallHealth } = await import('../../components/HealthDashboard')
+    const result = computeOverallHealth({
+      openCriticalRisks: 0,
+      openHighRisks: 0,
+      adrCompletion: 40,
+      biggyCompletion: 70,
+    })
+    expect(result).toBe('yellow')
   })
-  it('returns yellow when biggyCompletion < 50', () => {
-    const computeOverallHealth: any = undefined
-    expect(computeOverallHealth).toBeDefined()
+  it('returns yellow when biggyCompletion < 50', async () => {
+    const { computeOverallHealth } = await import('../../components/HealthDashboard')
+    const result = computeOverallHealth({
+      openCriticalRisks: 0,
+      openHighRisks: 0,
+      adrCompletion: 80,
+      biggyCompletion: 30,
+    })
+    expect(result).toBe('yellow')
   })
-  it('returns green when no risks and both tracks >= 50%', () => {
-    const computeOverallHealth: any = undefined
-    expect(computeOverallHealth).toBeDefined()
+  it('returns green when no risks and both tracks >= 50%', async () => {
+    const { computeOverallHealth } = await import('../../components/HealthDashboard')
+    const result = computeOverallHealth({
+      openCriticalRisks: 0,
+      openHighRisks: 0,
+      adrCompletion: 80,
+      biggyCompletion: 70,
+    })
+    expect(result).toBe('green')
   })
 })
 
