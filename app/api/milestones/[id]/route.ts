@@ -6,7 +6,7 @@ import { eq } from 'drizzle-orm'
 import { requireSession } from "@/lib/auth-server";
 
 const patchSchema = z.object({
-  status: z.string().optional(),
+  status: z.enum(['not_started', 'in_progress', 'completed', 'blocked']).optional(),
   target: z.string().optional(),
   owner: z.string().optional(),
   notes: z.string().optional(),
@@ -35,7 +35,7 @@ export async function PATCH(
 
   const parsed = patchSchema.safeParse(body)
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
   }
 
   const patch = parsed.data

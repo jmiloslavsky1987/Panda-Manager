@@ -7,7 +7,7 @@ import { requireSession } from "@/lib/auth-server";
 
 const patchSchema = z.object({
   severity: z.enum(['low', 'medium', 'high', 'critical']).optional(),
-  status: z.string().optional(),
+  status: z.enum(['open', 'mitigated', 'resolved', 'accepted']).optional(),
   mitigation_append: z.string().optional(),
 })
 
@@ -34,7 +34,7 @@ export async function PATCH(
 
   const parsed = patchSchema.safeParse(body)
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
   }
 
   const { severity, status, mitigation_append } = parsed.data
