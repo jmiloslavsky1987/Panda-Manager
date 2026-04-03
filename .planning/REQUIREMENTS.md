@@ -34,7 +34,7 @@
 
 ### Overview — Milestone Timeline
 
-- [ ] **TMLN-01**: Milestone timeline is positioned near the top of the Overview tab and rendered as a visual timeline (not a text list)
+- [x] **TMLN-01**: Milestone timeline is positioned near the top of the Overview tab and rendered as a visual timeline (not a text list)
 
 ### Overview — Integration Tracker
 
@@ -42,11 +42,11 @@
 
 ### Overview — Metrics
 
-- [ ] **METR-01**: Overview tab includes a Metrics section showing onboarding progress indicators: milestones completed, integration completion counts, validation progress, team enablement progress
+- [x] **METR-01**: Overview tab includes a Metrics section showing onboarding progress indicators: milestones completed, integration completion counts, validation progress, team enablement progress
 
 ### Overview — Health Dashboard
 
-- [ ] **HLTH-01**: Overview tab includes a Health Dashboard section showing: overall project health, risk status by severity, phase health by workstream (ADR vs Biggy), active blockers, and trend indicators
+- [x] **HLTH-01**: Overview tab includes a Health Dashboard section showing: overall project health, risk status by severity, phase health by workstream (ADR vs Biggy), active blockers, and trend indicators
 
 ## Future Requirements (v5.0+)
 
@@ -84,9 +84,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TIME-03 | Phase 32 | Complete |
 | WORK-01 | Phase 33 | Complete |
 | WORK-02 | Phase 33 | Complete |
-| METR-01 | Phase 34 | Pending |
-| HLTH-01 | Phase 34 | Pending |
-| TMLN-01 | Phase 34 | Pending |
+| METR-01 | Phase 34 | Complete |
+| HLTH-01 | Phase 34 | Complete |
+| TMLN-01 | Phase 34 | Complete |
 | WKFO-01 | Phase 35 | Pending |
 | WKFO-02 | Phase 35 | Pending |
 | OINT-01 | Phase 35 | Pending |
