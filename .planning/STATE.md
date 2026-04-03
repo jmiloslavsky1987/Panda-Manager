@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: — Infrastructure & UX Foundations
 status: executing
-last_updated: "2026-04-03T04:47:59.262Z"
-last_activity: "2026-04-03 — Plan 34-01 complete: Test infrastructure and RED stubs for metrics/health dashboard"
+last_updated: "2026-04-03T04:55:13.448Z"
+last_activity: "2026-04-03 — Plan 34-02 complete: Overview metrics aggregation endpoint with 5 data sources in single RLS transaction"
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 20
-  completed_plans: 17
+  completed_plans: 18
 ---
 
 # Project State
@@ -21,9 +21,9 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Status
 
 **Phase:** 34 (Metrics & Health Dashboard)
-**Plan:** 02 of 5 (complete)
+**Plan:** 03 of 5 (complete)
 **Status:** Executing
-**Last activity:** 2026-04-03 — Plan 34-02 complete: Overview metrics aggregation endpoint with 5 data sources in single RLS transaction
+**Last activity:** 2026-04-03 — Plan 34-03 complete: MilestoneTimeline and OverviewMetrics components with Recharts visual charts
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
 **Current focus:** v4.0 — Infrastructure & UX Foundations. Phase 31: BullMQ Document Extraction Migration.
@@ -42,7 +42,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 | 31. BullMQ Extraction | Complete (5/5) |
 | 32. Time Tracking Global | Complete (5/5) |
 | 33. Schema Migration | Complete (5/5) |
-| 34. Metrics & Health | In progress (1/5) |
+| 34. Metrics & Health | In progress (3/5) |
 | 35. Weekly Focus | Not started |
 | 36. Test Fixes | Not started |
 
@@ -51,6 +51,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 **Phase 34 — In Progress (2026-04-03):**
 - Plan 01 complete: Recharts installed with Vitest mock, 19 failing RED test stubs created for METR-01/HLTH-01/TMLN-01 requirements
 - Plan 02 complete: Overview metrics aggregation endpoint returns stepCounts, riskCounts, integrationCounts, milestoneOnTrack, and 8-week hours rollup in single RLS transaction
+- Plan 03 complete: MilestoneTimeline (Recharts BarChart) and OverviewMetrics (three cards with progress rings, risk donut, hours bar chart) components created, old inline milestone section removed from OnboardingDashboard
 
 **Phase 33 — Complete (2026-04-02):**
 All 5 plans complete: Overview Tab Schema Migration fully verified and production-ready.
@@ -173,6 +174,8 @@ v4.0 roadmap created 2026-04-01. All 15 requirements mapped across 6 phases (31�
 - [Phase 34-01]: ResponsiveContainer mock passes children through (renders as children as any) since it wraps other chart components
 - [Phase 34]: Helper functions (formatWeekLabel, getMondayISO, generateWeekStarts) duplicated from analytics/route.ts rather than extracted - acceptable given small size
 - [Phase 34]: Drizzle count() results cast to number using Number() wrapper to handle Postgres bigint return type
+- [Phase 34]: MilestoneTimeline is self-fetching (matches pattern of other dashboard components)
+- [Phase 34]: ProgressRing copied into OverviewMetrics.tsx (not extracted per plan spec)
 
 ## Accumulated Technical Context
 
