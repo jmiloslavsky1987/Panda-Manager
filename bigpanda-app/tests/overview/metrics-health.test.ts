@@ -61,12 +61,20 @@ describe('computeOverallHealth — health-formula', () => {
 })
 
 describe('MilestoneTimeline — TMLN-01', () => {
-  it('renders component with data-testid="milestone-timeline"', () => {
-    const MilestoneTimeline: any = undefined
+  it('renders component with data-testid="milestone-timeline"', async () => {
+    const { MilestoneTimeline } = await import('../../components/MilestoneTimeline')
     expect(MilestoneTimeline).toBeDefined()
   })
-  it('is positioned above metrics section in Overview tab', () => {
-    const MilestoneTimeline: any = undefined
-    expect(MilestoneTimeline).toBeDefined()
+  it('is positioned above metrics section in Overview tab', async () => {
+    const { readFileSync } = await import('fs')
+    const { resolve } = await import('path')
+    const sourcePath = resolve(__dirname, '../../components/OnboardingDashboard.tsx')
+    const source = readFileSync(sourcePath, 'utf-8')
+
+    // Verify MilestoneTimeline comes before risks section
+    const milestoneIndex = source.indexOf('<MilestoneTimeline')
+    const risksIndex = source.indexOf('data-testid="risks-section"')
+    expect(milestoneIndex).toBeGreaterThan(0)
+    expect(risksIndex).toBeGreaterThan(milestoneIndex)
   })
 })

@@ -22,29 +22,61 @@ vi.mock('next/navigation', () => ({
 describe('OnboardingDashboard — Dual-track UI (WORK-01)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Mock grouped API response structure
-    (global.fetch as any).mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        adr: [
-          {
-            id: 1,
-            name: 'Discovery & Kickoff',
-            track: 'ADR',
-            display_order: 1,
-            steps: [],
-          },
-        ],
-        biggy: [
-          {
-            id: 2,
-            name: 'Discovery & Kickoff',
-            track: 'Biggy',
-            display_order: 1,
-            steps: [],
-          },
-        ],
-      }),
+    // Mock API responses for all endpoints
+    (global.fetch as any).mockImplementation((url: string) => {
+      if (url.includes('/onboarding')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            adr: [
+              {
+                id: 1,
+                name: 'Discovery & Kickoff',
+                track: 'ADR',
+                display_order: 1,
+                steps: [],
+              },
+            ],
+            biggy: [
+              {
+                id: 2,
+                name: 'Discovery & Kickoff',
+                track: 'Biggy',
+                display_order: 1,
+                steps: [],
+              },
+            ],
+          }),
+        });
+      }
+      if (url.includes('/integrations')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ integrations: [] }),
+        });
+      }
+      if (url.includes('/risks')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ risks: [] }),
+        });
+      }
+      if (url.includes('/milestones')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ milestones: [] }),
+        });
+      }
+      if (url.includes('/projects/')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ project: { id: 1, name: 'Test Project' } }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({}),
+      });
     });
   });
 
@@ -69,36 +101,68 @@ describe('OnboardingDashboard — Dual-track UI (WORK-01)', () => {
 
   it('displays independent progress rings with correct percentages', async () => {
     // Mock API response with different completion rates
-    (global.fetch as any).mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        adr: [
-          {
-            id: 1,
-            name: 'Discovery & Kickoff',
-            track: 'ADR',
-            display_order: 1,
-            steps: [
-              { id: 1, name: 'Step 1', status: 'complete', phase_id: 1, project_id: 1, description: null, owner: null, dependencies: [], updates: [], display_order: 1 },
-              { id: 2, name: 'Step 2', status: 'not-started', phase_id: 1, project_id: 1, description: null, owner: null, dependencies: [], updates: [], display_order: 2 },
+    (global.fetch as any).mockImplementation((url: string) => {
+      if (url.includes('/onboarding')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            adr: [
+              {
+                id: 1,
+                name: 'Discovery & Kickoff',
+                track: 'ADR',
+                display_order: 1,
+                steps: [
+                  { id: 1, name: 'Step 1', status: 'complete', phase_id: 1, project_id: 1, description: null, owner: null, dependencies: [], updates: [], display_order: 1 },
+                  { id: 2, name: 'Step 2', status: 'not-started', phase_id: 1, project_id: 1, description: null, owner: null, dependencies: [], updates: [], display_order: 2 },
+                ],
+              },
             ],
-          },
-        ],
-        biggy: [
-          {
-            id: 2,
-            name: 'Discovery & Kickoff',
-            track: 'Biggy',
-            display_order: 1,
-            steps: [
-              { id: 3, name: 'Step 3', status: 'complete', phase_id: 2, project_id: 1, description: null, owner: null, dependencies: [], updates: [], display_order: 1 },
-              { id: 4, name: 'Step 4', status: 'complete', phase_id: 2, project_id: 1, description: null, owner: null, dependencies: [], updates: [], display_order: 2 },
-              { id: 5, name: 'Step 5', status: 'complete', phase_id: 2, project_id: 1, description: null, owner: null, dependencies: [], updates: [], display_order: 3 },
-              { id: 6, name: 'Step 6', status: 'not-started', phase_id: 2, project_id: 1, description: null, owner: null, dependencies: [], updates: [], display_order: 4 },
+            biggy: [
+              {
+                id: 2,
+                name: 'Discovery & Kickoff',
+                track: 'Biggy',
+                display_order: 1,
+                steps: [
+                  { id: 3, name: 'Step 3', status: 'complete', phase_id: 2, project_id: 1, description: null, owner: null, dependencies: [], updates: [], display_order: 1 },
+                  { id: 4, name: 'Step 4', status: 'complete', phase_id: 2, project_id: 1, description: null, owner: null, dependencies: [], updates: [], display_order: 2 },
+                  { id: 5, name: 'Step 5', status: 'complete', phase_id: 2, project_id: 1, description: null, owner: null, dependencies: [], updates: [], display_order: 3 },
+                  { id: 6, name: 'Step 6', status: 'not-started', phase_id: 2, project_id: 1, description: null, owner: null, dependencies: [], updates: [], display_order: 4 },
+                ],
+              },
             ],
-          },
-        ],
-      }),
+          }),
+        });
+      }
+      if (url.includes('/integrations')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ integrations: [] }),
+        });
+      }
+      if (url.includes('/risks')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ risks: [] }),
+        });
+      }
+      if (url.includes('/milestones')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ milestones: [] }),
+        });
+      }
+      if (url.includes('/projects/')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ project: { id: 1, name: 'Test Project' } }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({}),
+      });
     });
     const { OnboardingDashboard } = await import('../../components/OnboardingDashboard');
     render(<OnboardingDashboard projectId={1} />);
