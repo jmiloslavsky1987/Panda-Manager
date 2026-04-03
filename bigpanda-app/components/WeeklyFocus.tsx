@@ -65,6 +65,7 @@ export function WeeklyFocus({ projectId }: WeeklyFocusProps) {
   const [bulletsLoading, setBulletsLoading] = useState(true)
   const [overallPct, setOverallPct] = useState(0)
   const [generating, setGenerating] = useState(false)
+  const [generateMessage, setGenerateMessage] = useState<string | null>(null)
 
   useEffect(() => {
     async function fetchData() {
@@ -119,16 +120,36 @@ export function WeeklyFocus({ projectId }: WeeklyFocusProps) {
 
   async function handleGenerateNow() {
     setGenerating(true)
+    setGenerateMessage(null)
     try {
       const res = await fetch(`/api/projects/${projectId}/weekly-focus`, {
         method: 'POST',
       })
       if (res.ok) {
-        // Job queued successfully
-        // Could show a message or re-poll after delay
+        // Job queued successfully - show success message and refetch after delay
+        setGenerateMessage('Generation started. Refreshing in 10 seconds...')
+        setTimeout(async () => {
+          try {
+            const wfRes = await fetch(`/api/projects/${projectId}/weekly-focus`)
+            if (wfRes.ok) {
+              const wfData = await wfRes.json()
+              setBullets(wfData.bullets ?? null)
+              setGenerateMessage('Weekly focus updated successfully!')
+              setTimeout(() => setGenerateMessage(null), 3000)
+            }
+          } catch (err) {
+            console.error('Failed to refetch weekly focus:', err)
+            setGenerateMessage('Generation queued. Refresh the page to see results.')
+          }
+        }, 10000)
+      } else {
+        setGenerateMessage('Failed to generate. Please try again.')
+        setTimeout(() => setGenerateMessage(null), 3000)
       }
     } catch (err) {
       console.error('Failed to trigger weekly focus generation:', err)
+      setGenerateMessage('Error: Could not start generation.')
+      setTimeout(() => setGenerateMessage(null), 3000)
     } finally {
       setGenerating(false)
     }
@@ -184,6 +205,9 @@ export function WeeklyFocus({ projectId }: WeeklyFocusProps) {
             >
               {generating ? 'Generating...' : 'Generate Now'}
             </button>
+            {generateMessage && (
+              <p className="text-sm text-blue-600 font-medium">{generateMessage}</p>
+            )}
           </div>
         )}
       </div>
