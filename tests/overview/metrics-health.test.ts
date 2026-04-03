@@ -94,21 +94,22 @@ describe('computeOverallHealth — health-formula', () => {
   })
 })
 
-describe('MilestoneTimeline — TMLN-01', () => {
-  it('renders component with data-testid="milestone-timeline"', async () => {
-    const { MilestoneTimeline } = await import('../../components/MilestoneTimeline')
-    expect(MilestoneTimeline).toBeDefined()
-  })
-  it('is positioned above metrics section in Overview tab', async () => {
+describe('MilestoneTimeline — TMLN-01 (original dot timeline retained)', () => {
+  it('original dot-on-spine milestones section exists in OnboardingDashboard', async () => {
     const { readFileSync } = await import('fs')
     const { resolve } = await import('path')
     const sourcePath = resolve(__dirname, '../../components/OnboardingDashboard.tsx')
     const source = readFileSync(sourcePath, 'utf-8')
-
-    // Verify MilestoneTimeline comes before risks section
-    const milestoneIndex = source.indexOf('<MilestoneTimeline')
+    expect(source).toContain('data-testid="milestones-section"')
+  })
+  it('milestone section appears after risks section in OnboardingDashboard', async () => {
+    const { readFileSync } = await import('fs')
+    const { resolve } = await import('path')
+    const sourcePath = resolve(__dirname, '../../components/OnboardingDashboard.tsx')
+    const source = readFileSync(sourcePath, 'utf-8')
     const risksIndex = source.indexOf('data-testid="risks-section"')
-    expect(milestoneIndex).toBeGreaterThan(0)
-    expect(risksIndex).toBeGreaterThan(milestoneIndex)
+    const milestonesIndex = source.indexOf('data-testid="milestones-section"')
+    expect(risksIndex).toBeGreaterThan(0)
+    expect(milestonesIndex).toBeGreaterThan(risksIndex)
   })
 })
