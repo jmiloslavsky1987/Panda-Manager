@@ -163,7 +163,15 @@ Plans:
   3. Integration tracker splits into ADR and Biggy sections
   4. ADR integrations categorized by type: Inbound, Outbound, Enrichment
   5. Biggy integrations categorized by type: Real-time, Context/Knowledge/UDC
-**Plans**: TBD
+**Plans**: 6 plans
+
+Plans:
+- [ ] 35-01-PLAN.md — Wave 0: failing test scaffolds for WKFO-01, WKFO-02, OINT-01 (Redis mock + 13 RED stubs)
+- [ ] 35-02-PLAN.md — DB migration 0027 + schema update + PATCH/POST integrations API extension
+- [ ] 35-03-PLAN.md — weekly-focus BullMQ job + lock-ids update + worker registration + weekly-focus API route
+- [ ] 35-04-PLAN.md — OnboardingDashboard grouped integration tracker (ADR/Biggy/Unassigned with type sub-groups)
+- [ ] 35-05-PLAN.md — WeeklyFocus component (bullets, ProgressRing, Generate Now) + Overview page wiring
+- [ ] 35-06-PLAN.md — Full automated verification + human UAT (WKFO-01, WKFO-02, OINT-01)
 
 ### Phase 36: Test Failure Fixes
 **Goal**: Test suite passes completely with all 13 pre-existing failures resolved
@@ -188,5 +196,5 @@ Plans:
 | 32. Time Tracking Global | 5/5 | Complete    | 2026-04-02 | — |
 | 33. Schema Migration | 5/5 | Complete    | 2026-04-03 | — |
 | 34. Metrics & Health | 5/5 | Complete    | 2026-04-03 | — |
-| 35. Weekly Focus | v4.0 | 0/TBD | Not started | — |
+| 35. Weekly Focus | v4.0 | 0/6 | Not started | — |
 | 36. Test Fixes | v4.0 | 0/TBD | Not started | — |
