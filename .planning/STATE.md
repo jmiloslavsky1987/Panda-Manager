@@ -1,15 +1,15 @@
 ---
 gsd_state_version: 1.0
-milestone: v4.0
-milestone_name: — Infrastructure & UX Foundations
+milestone: v5.0
+milestone_name: Workspace UX Overhaul
 status: planning
-last_updated: "2026-04-03T17:37:03.246Z"
-last_activity: "2026-04-03 — Plan 35-06 complete: Full verification with automated tests GREEN (23 tests), production build clean, and UAT bugs fixed (Generate Now feedback + integration tracker error handling)"
+last_updated: "2026-04-03T00:00:00.000Z"
+last_activity: "2026-04-03 — v5.0 milestone started: Workspace UX Overhaul"
 progress:
-  total_phases: 6
-  completed_phases: 5
-  total_plans: 26
-  completed_plans: 26
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
@@ -20,20 +20,21 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 
 ## Current Status
 
-**Phase:** 35 (Weekly Focus & Integration Tracker)
-**Plan:** 06 of 6 (complete)
-**Status:** Ready to plan
-**Last activity:** 2026-04-03 — Plan 35-06 complete: Full verification with automated tests GREEN (23 tests), production build clean, and UAT bugs fixed (Generate Now feedback + integration tracker error handling)
+**Phase:** Not started (defining requirements)
+**Plan:** —
+**Status:** Defining requirements
+**Last activity:** 2026-04-03 — Milestone v5.0 started: Workspace UX Overhaul
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
-**Current focus:** v4.0 — Infrastructure & UX Foundations. Phase 31: BullMQ Document Extraction Migration.
+**Current focus:** v5.0 — Workspace UX Overhaul. Defining requirements.
 
 ## Milestone History
 
 - **v1.0** — Foundation + Read/Write Surface + Skills + MCP + Cross-Project (Phases 1–16, 63 plans, complete 2026-03-26)
 - **v2.0** — AI Ingestion & Enhanced Operations (Phases 17–25, 63 plans, complete 2026-03-30)
 - **v3.0** — Collaboration & Intelligence (Phases 26–30, 26 plans, complete 2026-04-01)
-- **v4.0** — Infrastructure & UX Foundations (Phases 31–36, TBD plans, started 2026-04-01)
+- **v4.0** — Infrastructure & UX Foundations (Phases 31–35 complete; Phase 36 deferred to v6.0, complete 2026-04-03)
+- **v5.0** — Workspace UX Overhaul (Phases 37+, started 2026-04-03)
 
 ## Phase Progress (v4.0)
 

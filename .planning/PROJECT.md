@@ -48,16 +48,25 @@ Every PS delivery intelligence the team has built — 15 AI skills, all project 
 
 ### Active
 
-<!-- v4.0 — Infrastructure & UX Foundations (2026-04-01) -->
-- [ ] Fix 13 pre-existing test failures across 6 test files (accumulated from v1.0–v3.0)
-- [ ] Move document extraction to BullMQ background job (large docs vulnerable to browser refresh killing SSE extraction)
-- [ ] Redesign time tracking as standalone top-level section with global project-assignment view (currently siloed per-project)
-- [ ] Overview tab overhaul: ADR/Biggy workstream separation, standardized phase models, removal of Project Completeness, weekly focus summary, integration tracker redesign, visual milestone timeline, new Metrics section, new Health Dashboard section
+<!-- v4.0 — Infrastructure & UX Foundations — COMPLETE except Phase 36 (deferred) -->
+- ✓ Move document extraction to BullMQ background job — v4.0 Phase 31
+- ✓ Time tracking as standalone global top-level section — v4.0 Phase 32
+- ✓ Overview tab overhaul: workstream separation, metrics, health dashboard, weekly focus, integration tracker — v4.0 Phases 33–35
+- [ ] Fix 6 remaining test failures (create-project, launch, extraction-status mocks) — deferred to v6.0
 
-<!-- Deferred to v5.0 — Polish & UAT -->
-- [ ] **UI-02**: Color palette, typography, spacing, and component styling modernized throughout (deferred from v3.0)
-- [ ] Tab-by-tab UAT: thorough testing of all workspace tabs with documented fixes backlog
-- [ ] UI standardization: consistent patterns for empty states, tables, status badges, loading states across all tabs and reports
+<!-- v5.0 — Workspace UX Overhaul (2026-04-03) -->
+- [ ] Actions tab converted to table layout with inline editing (no modal required for common updates)
+- [ ] Risks and Milestones tables gain inline editing with status enums replacing freeform text fields
+- [ ] Date pickers and owner autocomplete (from stakeholders) across all entity edit surfaces
+- [ ] Gantt: milestone markers, view mode switcher, task grouping by milestone, drag-to-reschedule
+- [ ] Cross-tab data sync: edits to risks/actions/milestones refresh Overview metrics in-place; clickable chart drill-downs
+- [ ] Plan tab: overdue task highlighting, bulk-action wiring, milestone grouping visible in board views
+- [ ] Global search bar across all project data (FTS API already exists, needs UI)
+- [ ] Decisions tab filtering and search; Actions tab text search
+- [ ] Artifact detail reverse lookup: show all entities extracted from that artifact
+- [ ] Engagement History auto-logs from audit log when entities are edited
+- [ ] Skills tab: progress/ETA indicator and cancel button for running jobs
+- [ ] Consistent empty states with CTAs; overdue highlighting unified across Actions/Milestones/Tasks
 
 ### Out of Scope
 
@@ -117,5 +126,22 @@ This is a full rewrite of a previous Claude Code project assistant build (8 phas
 - Redesign time tracking as standalone top-level section
 - Overview tab overhaul per v4.0 requirements (ADR/Biggy phase models, metrics, health dashboard, visual timeline)
 
+## Current Milestone: v5.0 Workspace UX Overhaul
+
+**Goal:** Replace modal-heavy, siloed tab UX with inline-editable tables, cross-tab data sync, a working Gantt with milestones, and consistent patterns across every view.
+
+**Target features:**
+- Actions table layout + inline editing
+- Risks & Milestones inline editing + status enums + date pickers + owner autocomplete
+- Gantt overhaul (milestone markers, view toggle, grouping, drag-reschedule)
+- Cross-tab data sync + clickable Overview metrics
+- Plan tab: overdue highlighting, bulk actions, milestone grouping
+- Global search bar (FTS API → UI)
+- Decisions + Actions filtering/search
+- Artifact detail reverse lookup
+- Engagement History auto-log from audit trail
+- Skills tab: job progress + cancel
+- Unified empty states + consistent overdue highlighting
+
 ---
-*Last updated: 2026-04-01 after v4.0 milestone started*
+*Last updated: 2026-04-03 after v5.0 milestone started*
