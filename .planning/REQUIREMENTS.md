@@ -8,10 +8,10 @@
 
 ### Actions Table Overhaul (ACTN)
 
-- [ ] **ACTN-01**: User can view Actions in a table layout with columns for ID, description, owner, due date, status, and source badge
+- [x] **ACTN-01**: User can view Actions in a table layout with columns for ID, description, owner, due date, status, and source badge
 - [x] **ACTN-02**: User can edit action status, owner, and due date inline by clicking the table cell — no modal required
-- [ ] **ACTN-03**: User can filter Actions by owner and due date range in addition to existing status filter
-- [ ] **ACTN-04**: User can search Actions by description text
+- [x] **ACTN-03**: User can filter Actions by owner and due date range in addition to existing status filter
+- [x] **ACTN-04**: User can search Actions by description text
 - [x] **ACTN-05**: User can bulk-update status for multiple selected actions via checkbox selection
 
 ### Inline Editing — Risks & Milestones (IEDIT)
@@ -50,7 +50,7 @@
 
 - [ ] **SRCH-01**: A global search bar accessible from the workspace header searches across all project data (actions, risks, milestones, tasks, decisions, stakeholders) using the existing full-text search API
 - [ ] **SRCH-02**: Decisions tab supports text search and date-range filtering
-- [ ] **SRCH-03**: Actions tab supports text search on the description field (in addition to status, owner, and date filters)
+- [x] **SRCH-03**: Actions tab supports text search on the description field (in addition to status, owner, and date filters)
 
 ### Artifact Traceability (ARTF)
 
@@ -100,10 +100,10 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ACTN-01 | Phase 37 | Pending |
+| ACTN-01 | Phase 37 | Complete |
 | ACTN-02 | Phase 37 | Complete |
-| ACTN-03 | Phase 37 | Pending |
-| ACTN-04 | Phase 37 | Pending |
+| ACTN-03 | Phase 37 | Complete |
+| ACTN-04 | Phase 37 | Complete |
 | ACTN-05 | Phase 37 | Complete |
 | IEDIT-01 | Phase 37 | Complete |
 | IEDIT-02 | Phase 37 | Complete |
@@ -112,7 +112,7 @@
 | FORM-01 | Phase 37 | Complete |
 | FORM-02 | Phase 37 | Complete |
 | FORM-03 | Phase 37 | Complete |
-| SRCH-03 | Phase 37 | Pending |
+| SRCH-03 | Phase 37 | Complete |
 | GNTT-01 | Phase 38 | Pending |
 | GNTT-02 | Phase 38 | Pending |
 | GNTT-03 | Phase 38 | Pending |
