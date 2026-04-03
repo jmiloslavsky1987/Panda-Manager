@@ -1,9 +1,9 @@
 ---
 phase: 37
 slug: actions-inline-editing-foundation
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: ready
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-04-03
 ---
 
@@ -38,15 +38,13 @@ created: 2026-04-03
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 37-??-01 | TBD | 0 | ACTN-02 | unit | `cd bigpanda-app && npx vitest run tests/api/actions-patch.test.ts -x` | ❌ Wave 0 | ⬜ pending |
-| 37-??-02 | TBD | 0 | ACTN-05 | unit | `cd bigpanda-app && npx vitest run tests/api/actions-bulk.test.ts -x` | ❌ Wave 0 | ⬜ pending |
-| 37-??-03 | TBD | 0 | IEDIT-01 | unit | `cd bigpanda-app && npx vitest run tests/api/risks-patch.test.ts -x` | ❌ Wave 0 | ⬜ pending |
-| 37-??-04 | TBD | 0 | IEDIT-02 | unit | `cd bigpanda-app && npx vitest run tests/api/milestones-patch.test.ts -x` | ❌ Wave 0 | ⬜ pending |
-| 37-??-05 | TBD | 0 | FORM-02 | unit | `cd bigpanda-app && npx vitest run tests/api/stakeholders-get.test.ts -x` | ❌ Wave 0 | ⬜ pending |
+| 37-01-01 | 37-01 | 0 | ACTN-02 | unit | `cd bigpanda-app && npx vitest run tests/api/actions-patch.test.ts -x` | ❌ Wave 0 | ⬜ pending |
+| 37-01-02 | 37-01 | 0 | ACTN-05 | unit | `cd bigpanda-app && npx vitest run tests/api/actions-bulk.test.ts -x` | ❌ Wave 0 | ⬜ pending |
+| 37-01-03 | 37-01 | 0 | IEDIT-01 | unit | `cd bigpanda-app && npx vitest run tests/api/risks-patch.test.ts -x` | ❌ Wave 0 | ⬜ pending |
+| 37-01-04 | 37-01 | 0 | IEDIT-02 | unit | `cd bigpanda-app && npx vitest run tests/api/milestones-patch.test.ts -x` | ❌ Wave 0 | ⬜ pending |
+| 37-01-05 | 37-01 | 0 | FORM-02 | unit | `cd bigpanda-app && npx vitest run tests/api/stakeholders-get.test.ts -x` | ❌ Wave 0 | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
-
-*Note: Task IDs will be updated with actual plan/task numbers after PLAN.md files are created.*
 
 ---
 
@@ -71,16 +69,18 @@ created: 2026-04-03
 | Milestone status dropdown shows exactly: not_started / in_progress / completed / blocked | IEDIT-04 | Enum values in dropdown UI | Click a Milestone status cell; confirm exactly 4 options present |
 | DatePickerCell opens calendar popover and saves ISO date on selection | FORM-01 | UI component interaction | Click a date cell; confirm calendar opens; select date; confirm save and display update |
 | OwnerCell accepts freeform name not in stakeholder list | FORM-03 | Datalist freeform input | Type a name not in stakeholder list; blur; confirm save without error |
+| TaskEditModal due date field shows DatePickerCell (not plain text input) | FORM-01 | UI component in modal | Open task edit modal; confirm Due Date field is a calendar picker |
+| TaskEditModal owner field shows OwnerCell with autocomplete | FORM-02 | UI component in modal | Open task edit modal; type a letter in owner field; confirm suggestions appear |
 
 ---
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 15s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 15s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** ready for execution
