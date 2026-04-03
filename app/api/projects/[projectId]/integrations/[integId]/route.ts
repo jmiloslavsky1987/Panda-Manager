@@ -6,9 +6,21 @@ import { sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { requireSession } from "@/lib/auth-server";
 
+const ADR_TYPES = ['Inbound', 'Outbound', 'Enrichment'] as const
+const BIGGY_TYPES = ['Real-time', 'Context', 'Knowledge', 'UDC'] as const
+
 const patchSchema = z.object({
   status: z.enum(['not-connected', 'configured', 'validated', 'production', 'blocked']).optional(),
   notes: z.string().optional(),
+  track: z.enum(['ADR', 'Biggy']).nullable().optional(),
+  integration_type: z.string().nullable().optional(),
+}).superRefine((data, ctx) => {
+  if (data.track === 'ADR' && data.integration_type != null && !ADR_TYPES.includes(data.integration_type as any)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['integration_type'], message: 'ADR integrations must use: Inbound, Outbound, or Enrichment' })
+  }
+  if (data.track === 'Biggy' && data.integration_type != null && !BIGGY_TYPES.includes(data.integration_type as any)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['integration_type'], message: 'Biggy integrations must use: Real-time, Context, Knowledge, or UDC' })
+  }
 })
 
 export async function PATCH(
@@ -41,13 +53,15 @@ export async function PATCH(
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
   }
 
-  const { status, notes } = parsed.data
+  const { status, notes, track, integration_type } = parsed.data
 
   const updateData: Partial<typeof integrations.$inferInsert> & { updated_at: Date } = {
     updated_at: new Date(),
   }
   if (status !== undefined) updateData.status = status
   if (notes !== undefined) updateData.notes = notes
+  if (track !== undefined) updateData.track = track
+  if (integration_type !== undefined) updateData.integration_type = integration_type
 
   try {
     await db.transaction(async (tx) => {
