@@ -13,6 +13,9 @@ export default defineConfig({
       // '@xyflow/react' uses DOM APIs (ResizeObserver, getBoundingClientRect).
       // Mock prevents import errors in node test environment.
       '@xyflow/react': path.resolve(__dirname, 'tests/__mocks__/react-flow.ts'),
+      // 'recharts' uses browser APIs (ResizeObserver, getBoundingClientRect).
+      // Mock prevents import errors in node test environment.
+      'recharts': path.resolve(__dirname, 'tests/__mocks__/recharts.ts'),
     },
   },
   resolve: {
