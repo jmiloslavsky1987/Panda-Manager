@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: — Infrastructure & UX Foundations
-status: planning
-last_updated: "2026-04-03T14:59:49.930Z"
-last_activity: "2026-04-03 — Plan 35-01 complete: Wave 0 test scaffolds for weekly focus and integration tracker (WKFO-01, WKFO-02, OINT-01)"
+status: executing
+last_updated: "2026-04-03T14:59:01Z"
+last_activity: "2026-04-03 — Plan 35-02 complete: Integration tracker backend infrastructure with track + integration_type columns and API validation (OINT-01)"
 progress:
   total_phases: 6
   completed_phases: 4
   total_plans: 26
-  completed_plans: 23
+  completed_plans: 24
 ---
 
 # Project State
@@ -49,20 +49,23 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Active Work
 
 **Phase 35 — In Progress (2026-04-03):**
-Wave 0 test scaffolds complete. Ready for implementation plans.
+Backend infrastructure for integration tracker complete. Ready for weekly focus implementation.
 - Plan 01 complete: Created 13 failing RED test stubs covering WKFO-01 (weekly focus job + API), WKFO-02 (WeeklyFocus component with ProgressRing), and OINT-01 (integration tracker grouping by track/type, PATCH API, edit form)
+- Plan 02 complete: Migration 0027 adds track + integration_type columns to integrations table with composite index; PATCH and POST API routes extended with cross-field Zod validation for ADR/Biggy type separation
 
 **Phase 35 — Requirements Verified:**
 - Wave 0 baseline established: 13 RED tests (6 weekly-focus, 7 integration-tracker)
-- No regressions: All 26 existing overview tests still pass
-- Redis mock pattern applied to weekly-focus tests
-- Wave 0 stub pattern (const x: any = undefined; expect(x).toBeDefined()) working correctly
+- Migration 0027 applied successfully to database
+- Integration API routes compile without TypeScript errors
+- Cross-field validation ensures ADR types (Inbound/Outbound/Enrichment) vs Biggy types (Real-time/Context/Knowledge/UDC)
+- No regressions in existing test suite
 
 **Key Technical Achievements:**
-- Redis mock prevents requiring real Redis instance during test runs
-- Proper RED state without import errors (Wave 0 pattern from Phase 32/33/34)
-- Test structure organized with descriptive describe blocks
-- Zero impact on existing test suite
+- Track stored as TEXT (not enum) for flexibility with API-layer validation
+- Composite index on (project_id, track) for efficient grouping queries
+- Zod .superRefine() provides custom error messages per field
+- RLS transaction pattern maintained across all integration routes
+- POST /integrations route created with 201 status on success
 
 **Phase 34 — Complete (2026-04-03):**
 All 5 plans complete: Overview Tab Metrics & Health Dashboard fully verified and production-ready.
@@ -147,6 +150,10 @@ v4.0 roadmap created 2026-04-01. All 15 requirements mapped across 6 phases (31�
 ## Decisions
 
 **v4.0 Architectural Decisions:**
+- **[2026-04-03] Plan 35-02:** Track stored as plain TEXT column (not enum) with validation at API layer for flexibility
+- **[2026-04-03] Plan 35-02:** Cross-field Zod validation using .superRefine() for track-dependent integration types (ADR vs Biggy)
+- **[2026-04-03] Plan 35-02:** Composite index on (project_id, track) for efficient integration tracker grouping queries
+- **[2026-04-03] Plan 35-02:** POST /integrations route created with same RLS transaction pattern as PATCH route
 - **[2026-04-02] Plan 33-05:** Dual-track Overview UI with ADR and Biggy side-by-side columns, independent progress rings
 - **[2026-04-02] Plan 33-05:** Completeness score and warning banner removed from Overview tab per WORK-02 requirement
 - **[2026-04-02] Plan 33-05:** Horizontal timeline layout applied to milestones section for improved visualization
