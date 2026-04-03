@@ -34,6 +34,12 @@ key-files:
     - "bigpanda-app/tests/overview/weekly-focus.test.tsx"
     - "bigpanda-app/tests/overview/integration-tracker.test.ts"
 
+uat-fixes:
+  - "Side-by-side ADR/Biggy two-column layout matching onboarding phases pattern"
+  - "Always-visible ADR/Biggy columns with empty states when no integrations assigned"
+  - "Stacked tool name + badges to prevent overlap in narrow columns"
+  - "Pipeline bar labels use flex-1/text-center + truncate to align under segments"
+
 key-decisions:
   - "10-second delay for auto-refetch after Generate Now click (balances AI generation time with user experience)"
   - "State rollback on PATCH failure prevents optimistic UI from showing incorrect data"
