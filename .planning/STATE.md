@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: — Infrastructure & UX Foundations
-status: executing
-last_updated: "2026-04-03T14:56:00.000Z"
+status: planning
+last_updated: "2026-04-03T14:59:49.930Z"
 last_activity: "2026-04-03 — Plan 35-01 complete: Wave 0 test scaffolds for weekly focus and integration tracker (WKFO-01, WKFO-02, OINT-01)"
 progress:
   total_phases: 6
   completed_phases: 4
-  total_plans: 21
-  completed_plans: 21
+  total_plans: 26
+  completed_plans: 23
 ---
 
 # Project State
@@ -21,9 +21,9 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Status
 
 **Phase:** 35 (Weekly Focus & Integration Tracker)
-**Plan:** 01 of 1 (complete)
-**Status:** Ready to plan
-**Last activity:** 2026-04-03 — Plan 35-01 complete: Wave 0 test scaffolds for weekly focus and integration tracker (WKFO-01, WKFO-02, OINT-01)
+**Plan:** 02 of 6 (complete)
+**Status:** Ready to execute
+**Last activity:** 2026-04-03 — Plan 35-02 complete: Integration tracker backend infrastructure with track + integration_type columns and API validation (OINT-01)
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
 **Current focus:** v4.0 — Infrastructure & UX Foundations. Phase 31: BullMQ Document Extraction Migration.
@@ -211,6 +211,9 @@ v4.0 roadmap created 2026-04-01. All 15 requirements mapped across 6 phases (31�
 - [Phase 34]: Active blocker count excludes integrations/actions, only counts onboarding steps with status=blocked
 - [Phase 34]: HealthDashboard fetches from same overview-metrics endpoint (no separate API needed for v4.0)
 - [Phase 34]: Timeline reverted to original dot-on-spine per user preference during UAT - TMLN-01 requirement met by both implementations
+- [Phase 35]: Redis key structure: weekly_focus:{projectId} with 7-day TTL (no week-number namespace)
+- [Phase 35]: Direct Anthropic SDK call (non-streaming, 512 tokens) instead of SkillOrchestrator for weekly focus generation
+- [Phase 35]: Scheduled job INSERT added to migration 0027 with idempotent WHERE NOT EXISTS check
 
 ## Accumulated Technical Context
 
