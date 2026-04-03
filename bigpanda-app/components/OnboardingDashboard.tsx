@@ -33,6 +33,8 @@ interface Integration {
   color: string | null
   notes: string | null
   display_order: number
+  track: 'ADR' | 'Biggy' | null
+  integration_type: string | null
 }
 
 interface Risk {
@@ -72,6 +74,9 @@ const INTEG_STATUS_CYCLE = [
   'production',
   'blocked',
 ] as const
+
+const ADR_TYPES = ['Inbound', 'Outbound', 'Enrichment'] as const
+const BIGGY_TYPES = ['Real-time', 'Context', 'Knowledge', 'UDC'] as const
 
 // ─── Status badge colors ──────────────────────────────────────────────────────
 
@@ -387,6 +392,15 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
     })
   }
 
+  const saveIntegTrack = async (integId: number, track: 'ADR' | 'Biggy' | null, integration_type: string | null) => {
+    setIntegrations((prev) => prev.map((i) => (i.id === integId ? { ...i, track, integration_type } : i)))
+    await fetch(`/api/projects/${projectId}/integrations/${integId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ track, integration_type }),
+    })
+  }
+
   // ─── Filter helpers ─────────────────────────────────────────────────────────
 
   const stepMatchesFilter = (step: Step): boolean => {
@@ -397,6 +411,168 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
   }
 
   const visibleSteps = (phase: PhaseWithSteps): Step[] => phase.steps.filter(stepMatchesFilter)
+
+  // ─── Integration grouping ───────────────────────────────────────────────────
+
+  const adrIntegrations = integrations.filter(i => i.track === 'ADR')
+  const biggyIntegrations = integrations.filter(i => i.track === 'Biggy')
+  const unassignedIntegrations = integrations.filter(i => !i.track)
+
+  // ─── Integration card renderer ──────────────────────────────────────────────
+
+  const renderIntegCard = (integ: Integration) => {
+    const sIdx = stageIndex[integ.status] ?? -1
+    const isBlocked = integ.status === 'blocked'
+
+    // Get type options for current track
+    const typeOptions = integ.track === 'ADR'
+      ? ADR_TYPES
+      : integ.track === 'Biggy'
+      ? BIGGY_TYPES
+      : []
+
+    return (
+      <div
+        key={integ.id}
+        data-testid="integration-card"
+        className="border border-zinc-200 rounded-lg p-3 space-y-3 bg-white"
+      >
+        {/* Tool name + category badge */}
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-sm font-semibold text-zinc-900">{integ.tool}</span>
+          <div className="flex items-center gap-1.5">
+            {integ.category && (
+              <span
+                className="text-xs px-2 py-0.5 rounded-full"
+                style={{
+                  backgroundColor: integ.color ? `${integ.color}20` : '#f4f4f5',
+                  color: integ.color ?? '#52525b',
+                }}
+              >
+                {integ.category}
+              </span>
+            )}
+            <span
+              className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                INTEG_STATUS_COLORS[integ.status] ?? 'bg-zinc-100 text-zinc-600'
+              }`}
+            >
+              {integ.status.replace('-', ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+            </span>
+          </div>
+        </div>
+
+        {/* Track + Type assignment */}
+        <div className="flex gap-2">
+          <select
+            value={integ.track ?? ''}
+            onChange={(e) => {
+              const newTrack = e.target.value === '' ? null : (e.target.value as 'ADR' | 'Biggy')
+              saveIntegTrack(integ.id, newTrack, integ.integration_type)
+            }}
+            className="flex-1 text-xs border border-zinc-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+          >
+            <option value="">Unassigned</option>
+            <option value="ADR">ADR</option>
+            <option value="Biggy">Biggy</option>
+          </select>
+          {integ.track && (
+            <select
+              value={integ.integration_type ?? ''}
+              onChange={(e) => {
+                const newType = e.target.value === '' ? null : e.target.value
+                saveIntegTrack(integ.id, integ.track, newType)
+              }}
+              className="flex-1 text-xs border border-zinc-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+            >
+              <option value="">No type</option>
+              {typeOptions.map(type => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
+          )}
+        </div>
+
+        {/* Pipeline bar */}
+        <div
+          data-testid="pipeline-bar"
+          className="flex gap-1 cursor-pointer"
+          title="Click a segment to update status"
+        >
+          {STAGES.map((stageName, segIdx) => {
+            const isActive = !isBlocked && sIdx >= segIdx
+            const segStatus = stageStatuses[segIdx]
+            return (
+              <button
+                key={stageName}
+                className={`flex-1 h-2 rounded-full transition-colors ${
+                  isBlocked
+                    ? 'bg-red-300'
+                    : isActive
+                    ? 'bg-green-500'
+                    : 'bg-zinc-200'
+                }`}
+                title={stageName}
+                onClick={() => cycleIntegStatus(integ.id, segStatus)}
+              />
+            )
+          })}
+        </div>
+        <div className="flex justify-between text-[10px] text-zinc-400 -mt-1">
+          {STAGES.map((s) => (
+            <span key={s}>{s}</span>
+          ))}
+        </div>
+
+        {/* Notes textarea */}
+        <textarea
+          data-testid="integration-notes"
+          rows={2}
+          placeholder="Integration notes…"
+          value={integNotes[integ.id] ?? ''}
+          onChange={(e) =>
+            setIntegNotes((prev) => ({ ...prev, [integ.id]: e.target.value }))
+          }
+          onBlur={() => saveIntegNotes(integ.id)}
+          className="w-full text-xs border border-zinc-200 rounded px-2 py-1 resize-none focus:outline-none focus:ring-1 focus:ring-zinc-400"
+        />
+      </div>
+    )
+  }
+
+  // ─── Track section renderer ─────────────────────────────────────────────────
+
+  const renderTrackSection = (
+    label: string,
+    trackIntegrations: Integration[],
+    types: readonly string[]
+  ) => {
+    const byType = types
+      .map(type => ({ type, items: trackIntegrations.filter(i => i.integration_type === type) }))
+      .filter(group => group.items.length > 0)
+    const typeless = trackIntegrations.filter(i => !i.integration_type)
+
+    if (trackIntegrations.length === 0) return null
+
+    return (
+      <div className="space-y-3">
+        <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">{label}</h3>
+        {byType.map(group => (
+          <div key={group.type} className="space-y-2">
+            <h4 className="text-xs font-medium text-zinc-400 pl-2">{group.type}</h4>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+              {group.items.map(integ => renderIntegCard(integ))}
+            </div>
+          </div>
+        ))}
+        {typeless.length > 0 && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+            {typeless.map(integ => renderIntegCard(integ))}
+          </div>
+        )}
+      </div>
+    )
+  }
 
   // ─── Phase card renderer (DRY) ──────────────────────────────────────────────
 
@@ -656,88 +832,10 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
             No integrations found — check the Integrations tab.
           </p>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-            {integrations.map((integ) => {
-              const sIdx = stageIndex[integ.status] ?? -1
-              const isBlocked = integ.status === 'blocked'
-
-              return (
-                <div
-                  key={integ.id}
-                  data-testid="integration-card"
-                  className="border border-zinc-200 rounded-lg p-3 space-y-3 bg-white"
-                >
-                  {/* Tool name + category badge */}
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-semibold text-zinc-900">{integ.tool}</span>
-                    <div className="flex items-center gap-1.5">
-                      {integ.category && (
-                        <span
-                          className="text-xs px-2 py-0.5 rounded-full"
-                          style={{
-                            backgroundColor: integ.color ? `${integ.color}20` : '#f4f4f5',
-                            color: integ.color ?? '#52525b',
-                          }}
-                        >
-                          {integ.category}
-                        </span>
-                      )}
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                          INTEG_STATUS_COLORS[integ.status] ?? 'bg-zinc-100 text-zinc-600'
-                        }`}
-                      >
-                        {integ.status.replace('-', ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Pipeline bar */}
-                  <div
-                    data-testid="pipeline-bar"
-                    className="flex gap-1 cursor-pointer"
-                    title="Click a segment to update status"
-                  >
-                    {STAGES.map((stageName, segIdx) => {
-                      const isActive = !isBlocked && sIdx >= segIdx
-                      const segStatus = stageStatuses[segIdx]
-                      return (
-                        <button
-                          key={stageName}
-                          className={`flex-1 h-2 rounded-full transition-colors ${
-                            isBlocked
-                              ? 'bg-red-300'
-                              : isActive
-                              ? 'bg-green-500'
-                              : 'bg-zinc-200'
-                          }`}
-                          title={stageName}
-                          onClick={() => cycleIntegStatus(integ.id, segStatus)}
-                        />
-                      )
-                    })}
-                  </div>
-                  <div className="flex justify-between text-[10px] text-zinc-400 -mt-1">
-                    {STAGES.map((s) => (
-                      <span key={s}>{s}</span>
-                    ))}
-                  </div>
-
-                  {/* Notes textarea */}
-                  <textarea
-                    data-testid="integration-notes"
-                    rows={2}
-                    placeholder="Integration notes…"
-                    value={integNotes[integ.id] ?? ''}
-                    onChange={(e) =>
-                      setIntegNotes((prev) => ({ ...prev, [integ.id]: e.target.value }))
-                    }
-                    onBlur={() => saveIntegNotes(integ.id)}
-                    className="w-full text-xs border border-zinc-200 rounded px-2 py-1 resize-none focus:outline-none focus:ring-1 focus:ring-zinc-400"
-                  />
-                </div>
-              )
-            })}
+          <div className="space-y-6">
+            {renderTrackSection('ADR', adrIntegrations, ADR_TYPES)}
+            {renderTrackSection('Biggy', biggyIntegrations, BIGGY_TYPES)}
+            {unassignedIntegrations.length > 0 && renderTrackSection('Unassigned', unassignedIntegrations, [])}
           </div>
         )}
       </section>
