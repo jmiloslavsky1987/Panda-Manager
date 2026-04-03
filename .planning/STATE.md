@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v5.0
 milestone_name: — Workspace UX Overhaul
 status: executing
-stopped_at: Completed 37-02-PLAN.md
-last_updated: "2026-04-03T20:20:54.167Z"
-last_activity: "2026-04-03 — Completed 37-02: Built three shared inline-edit components (InlineSelectCell, DatePickerCell, OwnerCell)"
+stopped_at: Completed 37-03-PLAN.md
+last_updated: "2026-04-03T20:21:53.416Z"
+last_activity: "2026-04-03 — Completed 37-03: API endpoints (stakeholders GET, actions bulk-update, enum validation)"
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 6
-  completed_plans: 2
-  percent: 17
+  completed_plans: 3
+  percent: 50
 ---
 
 # Project State
@@ -59,6 +59,7 @@ Progress: [█████░░░░░] 50% (Phase 37: 3/6 plans)
 - Phase 41 (polish) intentionally last — consistent overdue treatment and empty states are easiest to apply uniformly after all tabs have stabilised
 - [Phase 37]: TDD RED-first pattern established: 5 test scaffolds created before any implementation (24 tests, 9 failing, 0 syntax errors)
 - [Phase 37, Plan 02]: CSS loaded via @import in globals.css — tested with Tailwind 4 PostCSS pipeline, no build errors (simpler than public/ workaround)
+- [Phase 37]: Validation error status code standardized to 400 across all API routes for consistency (previously mixed 400/422)
 
 ## Blockers/Concerns
 
@@ -66,6 +67,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-03T20:20:54.167Z
-Stopped at: Completed 37-02-PLAN.md
+Last session: 2026-04-03T20:21:53.413Z
+Stopped at: Completed 37-03-PLAN.md
 Resume file: None

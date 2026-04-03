@@ -18,8 +18,8 @@
 
 - [x] **IEDIT-01**: User can edit Risk status, severity, owner, and mitigation inline in the Risks table row
 - [x] **IEDIT-02**: User can edit Milestone status, target date, owner, and notes inline in the Milestones table row
-- [ ] **IEDIT-03**: Risk status uses a fixed dropdown (open / mitigated / resolved / accepted) replacing the current freeform text input
-- [ ] **IEDIT-04**: Milestone status uses a fixed dropdown (not_started / in_progress / completed / blocked) replacing the current freeform text input
+- [x] **IEDIT-03**: Risk status uses a fixed dropdown (open / mitigated / resolved / accepted) replacing the current freeform text input
+- [x] **IEDIT-04**: Milestone status uses a fixed dropdown (not_started / in_progress / completed / blocked) replacing the current freeform text input
 
 ### Forms: Date Pickers & Owner Autocomplete (FORM)
 
@@ -107,8 +107,8 @@
 | ACTN-05 | Phase 37 | Complete |
 | IEDIT-01 | Phase 37 | Complete |
 | IEDIT-02 | Phase 37 | Complete |
-| IEDIT-03 | Phase 37 | Pending |
-| IEDIT-04 | Phase 37 | Pending |
+| IEDIT-03 | Phase 37 | Complete |
+| IEDIT-04 | Phase 37 | Complete |
 | FORM-01 | Phase 37 | Complete |
 | FORM-02 | Phase 37 | Complete |
 | FORM-03 | Phase 37 | Complete |
