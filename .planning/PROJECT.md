@@ -46,13 +46,14 @@ Every PS delivery intelligence the team has built — 15 AI skills, all project 
 - ✓ Project chat: Vercel AI SDK streaming, live DB context grounding, anti-hallucination XML wrapping — v3.0 Phase 29 (CHAT-01–04)
 - ✓ Context Hub: document upload tab, AI routing to 3 new entity types, upload history, completeness analysis with per-tab gap descriptions — v3.0 Phase 30 (CTX-01–04)
 
-### Active
+<!-- v4.0 — Infrastructure & UX Foundations (2026-04-03) -->
+- ✓ Document extraction moved to BullMQ background job — browser-refresh resilient, 11 UAT bugs fixed — v4.0 Phase 31 (EXTR-01–03)
+- ✓ Time tracking redesigned as standalone global /time-tracking section with cross-project view — v4.0 Phase 32 (TIME-01–03)
+- ✓ Overview tab workstream structure: ADR/Biggy dual-track, DB migration, auto-seeding on project create — v4.0 Phase 33 (WORK-01–02)
+- ✓ Overview metrics & health dashboard: Recharts visualizations, OverviewMetrics, HealthDashboard, MilestoneTimeline — v4.0 Phase 34 (METR-01, HLTH-01, TMLN-01)
+- ✓ Weekly Focus AI priorities via BullMQ + Redis, integration tracker split by ADR/Biggy workstream — v4.0 Phase 35 (WKFO-01–02, OINT-01)
 
-<!-- v4.0 — Infrastructure & UX Foundations — COMPLETE except Phase 36 (deferred) -->
-- ✓ Move document extraction to BullMQ background job — v4.0 Phase 31
-- ✓ Time tracking as standalone global top-level section — v4.0 Phase 32
-- ✓ Overview tab overhaul: workstream separation, metrics, health dashboard, weekly focus, integration tracker — v4.0 Phases 33–35
-- [ ] Fix 6 remaining test failures (create-project, launch, extraction-status mocks) — deferred to v6.0
+### Active
 
 <!-- v5.0 — Workspace UX Overhaul (2026-04-03) -->
 - [ ] Actions tab converted to table layout with inline editing (no modal required for common updates)
@@ -80,9 +81,9 @@ Every PS delivery intelligence the team has built — 15 AI skills, all project 
 
 ## Context
 
-v3.0 shipped 2026-04-01. Full stack: Next.js 16 (Turbopack), PostgreSQL, Redis/BullMQ, better-auth, Drizzle ORM, Vercel AI SDK, @xyflow/react, @anthropic-ai/sdk. 30 phases, 178 plans completed across v1.0–v3.0. Test suite: 363 passing, 13 pre-existing failures (tracked as todo). Production build clean.
+v4.0 shipped 2026-04-03. Full stack: Next.js 16 (Turbopack), PostgreSQL, Redis/BullMQ, better-auth, Drizzle ORM, Vercel AI SDK, @xyflow/react, @anthropic-ai/sdk, Recharts. 35 phases, 204 plans completed across v1.0–v4.0. Test suite: ~370 passing, 6 pre-existing failures remain (deferred to v6.0). Production build clean.
 
-v4.0 starts 2026-04-01 — Infrastructure & UX Foundations. Focus: resolving accumulated test debt, moving extraction to BullMQ, time tracking redesign, and Overview tab overhaul with ADR/Biggy workstream separation per documented requirements.
+v4.0 delivered: BullMQ extraction migration, global time tracking, full Overview tab overhaul (ADR/Biggy workstreams, metrics, health dashboard, weekly AI focus, integration tracker). Test fixes (Phase 36) deferred to v6.0 as they are mock setup issues with low production impact.
 
 This is a full rewrite of a previous Claude Code project assistant build (8 phases, React/Vite/Express/Google Drive architecture). SKILL.md files read from disk at runtime (not bundled). All data model patterns (archive-on-replace, dual-write atomicity, append-only history, source tracing, ID conventions) preserved from the original skill ecosystem.
 
@@ -114,17 +115,12 @@ This is a full rewrite of a previous Claude Code project assistant build (8 phas
 | pgvector/RAG deferred | Structured DB query context injection is correct at single-project scope; faster, more deterministic | ✓ Correct — no need emerged in v3.0 |
 | On-demand completeness trigger (not scheduled) | Simpler to validate for v3.0; BullMQ infrastructure exists if scheduled needed later | ✓ Correct — on-demand works well |
 | React Flow with dynamic import + ssr:false | @xyflow/react uses DOM APIs unavailable in Node.js SSR; dynamic import prevents hydration errors | ✓ Correct — Dagre auto-layout works cleanly |
-| SSE stream for document extraction (v3.0) | Simpler to implement; acceptable for most documents | ⚠️ Revisit — large docs (>50KB) take 4–6 min; browser refresh kills extraction; BullMQ todo captured |
-
-## Current Milestone: v4.0 Infrastructure & UX Foundations
-
-**Goal:** Resolve accumulated technical debt and deliver two significant UX redesigns: time tracking as a standalone top-level section and a fully overhauled Overview tab with ADR/Biggy workstream structure.
-
-**Target features:**
-- Fix 13 pre-existing test failures across 6 test files
-- Move document extraction to BullMQ background job
-- Redesign time tracking as standalone top-level section
-- Overview tab overhaul per v4.0 requirements (ADR/Biggy phase models, metrics, health dashboard, visual timeline)
+| SSE stream for document extraction (v3.0) | Simpler to implement; acceptable for most documents | ✓ Resolved — BullMQ background job + polling UI shipped in v4.0 Phase 31 |
+| BullMQ job + polling for extraction (v4.0) | Browser-refresh resilient; background worker decoupled from HTTP request lifecycle | ✓ Correct — 11 UAT bugs fixed; extraction completes even with browser navigate-away |
+| Global /time-tracking section (v4.0) | Cross-project time visibility is more valuable than per-project tabs; consistent with how users review time | ✓ Correct — cleaner navigation, project attribution via filter |
+| Recharts for Overview visualizations | Built-in responsive design, direct React integration, no D3 complexity for simple bar/progress charts | ✓ Good — ProgressRing, PieChart, custom charts all rendered without SSR issues |
+| Advisory lock + Redis cache for weekly-focus job | Prevents duplicate LLM calls when multiple workers run; 7-day TTL balances freshness with cost | ✓ Correct — single Claude call per project per week; on-demand trigger works cleanly |
+| Phase 36 test fixes deferred to v6.0 | All 6 failures are mock setup issues (leftJoin, db.transaction, db.query mocks) — low production impact; v5.0 UX work is higher priority | — Pending |
 
 ## Current Milestone: v5.0 Workspace UX Overhaul
 
@@ -144,4 +140,4 @@ This is a full rewrite of a previous Claude Code project assistant build (8 phas
 - Unified empty states + consistent overdue highlighting
 
 ---
-*Last updated: 2026-04-03 after v5.0 milestone started*
+*Last updated: 2026-04-03 after v4.0 milestone archived, v5.0 active*
