@@ -71,7 +71,7 @@ Full details: `.planning/milestones/v3.0-ROADMAP.md` (archived)
 
 - [x] **Phase 31: BullMQ Document Extraction Migration** - Move extraction to background job with browser-refresh resilience (completed 2026-04-01)
 - [x] **Phase 32: Time Tracking Global View** - Standalone top-level section with cross-project timesheet (completed 2026-04-02)
-- [ ] **Phase 33: Overview Tab Schema Migration + Workstream Structure** - Add track column for ADR/Biggy separation
+- [x] **Phase 33: Overview Tab Schema Migration + Workstream Structure** - Add track column for ADR/Biggy separation (completed 2026-04-03)
 - [ ] **Phase 34: Overview Tab — Metrics & Health Dashboard** - Read-only aggregation sections with visualizations
 - [ ] **Phase 35: Overview Tab — Weekly Focus & Integration Tracker** - AI-generated weekly summary and redesigned integration tracker
 - [ ] **Phase 36: Test Failure Fixes** - Resolve 13 pre-existing test failures with root-cause fixes
@@ -179,7 +179,7 @@ Plans:
 | 26–30 | v3.0 | 26/26 | Complete | 2026-04-01 |
 | 31. BullMQ Extraction | v4.0 | 5/5 | Complete | 2026-04-02 |
 | 32. Time Tracking Global | 5/5 | Complete    | 2026-04-02 | — |
-| 33. Schema Migration | 4/5 | In Progress|  | — |
+| 33. Schema Migration | 5/5 | Complete   | 2026-04-03 | — |
 | 34. Metrics & Health | v4.0 | 0/TBD | Not started | — |
 | 35. Weekly Focus | v4.0 | 0/TBD | Not started | — |
 | 36. Test Fixes | v4.0 | 0/TBD | Not started | — |

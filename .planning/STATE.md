@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: — Infrastructure & UX Foundations
 status: executing
-last_updated: "2026-04-02T23:33:49.445Z"
-last_activity: "2026-04-02 — Plan 33-03 complete: Auto-seed ADR and Biggy phases on project creation with atomic transaction"
+last_updated: "2026-04-03T00:18:52.918Z"
+last_activity: "2026-04-02 — Plan 33-04 complete: API endpoint groups phases by track server-side"
 progress:
   total_phases: 6
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 15
-  completed_plans: 14
+  completed_plans: 15
 ---
 
 # Project State
@@ -21,9 +21,9 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Status
 
 **Phase:** 33 (Overview Tab Schema Migration)
-**Plan:** 04 of 5 (complete)
-**Status:** In progress
-**Last activity:** 2026-04-02 — Plan 33-04 complete: API endpoint groups phases by track server-side
+**Plan:** 05 of 5 (complete)
+**Status:** Complete
+**Last activity:** 2026-04-02 — Plan 33-05 complete: Dual-track Overview UI with ADR and Biggy side-by-side
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
 **Current focus:** v4.0 — Infrastructure & UX Foundations. Phase 31: BullMQ Document Extraction Migration.
@@ -41,19 +41,20 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 |-------|--------|
 | 31. BullMQ Extraction | Complete (5/5) |
 | 32. Time Tracking Global | Complete (5/5) |
-| 33. Schema Migration | In Progress (4/5) |
+| 33. Schema Migration | Complete (5/5) |
 | 34. Metrics & Health | Not started |
 | 35. Weekly Focus | Not started |
 | 36. Test Fixes | Not started |
 
 ## Active Work
 
-**Phase 33 — In Progress (2026-04-02):**
-Wave 0, Wave 1, Wave 2, and Wave 3 complete.
+**Phase 33 — Complete (2026-04-02):**
+All 5 plans complete: Overview Tab Schema Migration fully verified and production-ready.
 - Plan 01 complete: Created 23 failing RED tests for dual-track onboarding (WORK-01) and completeness removal (WORK-02)
 - Plan 02 complete: Migration 0026 adds track column (TEXT) to onboarding_phases and onboarding_steps with composite indexes for ADR/Biggy workstream separation
 - Plan 03 complete: Auto-seed ADR and Biggy phases on project creation with atomic transaction (browser verified)
 - Plan 04 complete: API endpoint groups phases by track server-side ({ adr, biggy } response shape)
+- Plan 05 complete: Dual-track Overview UI with ADR and Biggy side-by-side columns, completeness indicator removed
 
 **Phase 32 — Complete (2026-04-02):**
 All 5 plans complete: Time Tracking Global View fully verified and production-ready.
@@ -110,6 +111,10 @@ v4.0 roadmap created 2026-04-01. All 15 requirements mapped across 6 phases (31�
 ## Decisions
 
 **v4.0 Architectural Decisions:**
+- **[2026-04-02] Plan 33-05:** Dual-track Overview UI with ADR and Biggy side-by-side columns, independent progress rings
+- **[2026-04-02] Plan 33-05:** Completeness score and warning banner removed from Overview tab per WORK-02 requirement
+- **[2026-04-02] Plan 33-05:** Horizontal timeline layout applied to milestones section for improved visualization
+- **[2026-04-02] Plan 33-05:** Added GET API routes for risks and milestones with RLS transaction pattern
 - **[2026-04-02] Plan 32-05:** Two bug fixes applied during UAT — user_id missing in per-project POST, saving state not reset on success
 - **[2026-04-02] Plan 32-05:** Human UAT approval confirms all 10 verification criteria passed for Phase 32
 - **[2026-04-02] Plan 32-05:** Phase 32 requirements TIME-01, TIME-02, TIME-03 all verified in browser
@@ -176,12 +181,18 @@ v4.0 roadmap created 2026-04-01. All 15 requirements mapped across 6 phases (31�
 - Query patterns: LEFT JOIN to projects, date range filter, user scoping, pagination
 - Bulk action API extension from existing v2.0 bulk actions infrastructure
 
-### Overview Tab Schema Migration (Phase 33 Context)
-- Add track column to onboarding_phases and onboarding_steps
+### Overview Tab Schema Migration (Phase 33 Context - COMPLETE)
+- Add track column to onboarding_phases and onboarding_steps (Plan 02)
 - Backfill data using heuristic: UPDATE onboarding_phases SET track = 'ADR' WHERE name ILIKE '%ADR%'
 - Create index: CREATE INDEX idx_onboarding_steps_track ON onboarding_steps(project_id, track)
 - Dual-read fallback: if track-filtered query returns 0 rows, fall back to old schema query pattern
 - Standardized phase models: ADR (Discovery & Kickoff → Integrations → Platform Configuration → Teams → UAT); Biggy (Discovery & Kickoff → IT Knowledge Graph → Platform Configuration → Teams → Validation)
+- Auto-seed ADR and Biggy phases on project creation (Plan 03)
+- API endpoint groups phases by track ({ adr, biggy } response shape) (Plan 04)
+- Dual-track Overview UI with side-by-side columns, independent progress rings (Plan 05)
+- Completeness indicator removed from Overview page (Plan 05)
+- GET API routes for risks and milestones with RLS transaction pattern (Plan 05)
+- Horizontal timeline layout for milestones visualization (Plan 05)
 
 ### Metrics & Health Dashboard (Phase 34 Context)
 - Read-only aggregation queries from existing tables: risks, actions, milestones, integrations, time_entries, workstreams
