@@ -73,7 +73,7 @@ Full details: `.planning/milestones/v3.0-ROADMAP.md` (archived)
 - [x] **Phase 32: Time Tracking Global View** - Standalone top-level section with cross-project timesheet (completed 2026-04-02)
 - [x] **Phase 33: Overview Tab Schema Migration + Workstream Structure** - Add track column for ADR/Biggy separation (completed 2026-04-03)
 - [x] **Phase 34: Overview Tab — Metrics & Health Dashboard** - Read-only aggregation sections with visualizations (completed 2026-04-03)
-- [ ] **Phase 35: Overview Tab — Weekly Focus & Integration Tracker** - AI-generated weekly summary and redesigned integration tracker
+- [x] **Phase 35: Overview Tab — Weekly Focus & Integration Tracker** - AI-generated weekly summary and redesigned integration tracker (completed 2026-04-03)
 - [ ] **Phase 36: Test Failure Fixes** - Resolve 13 pre-existing test failures with root-cause fixes
 
 ## Phase Details

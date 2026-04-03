@@ -7,9 +7,9 @@ last_updated: "2026-04-03T15:07:53.400Z"
 last_activity: "2026-04-03 — Plan 35-04 complete: Integration tracker UI refactored with grouped ADR/Biggy/Unassigned sections and type-level sub-grouping (OINT-01)"
 progress:
   total_phases: 6
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 26
-  completed_plans: 25
+  completed_plans: 26
 ---
 
 # Project State
@@ -21,9 +21,9 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 ## Current Status
 
 **Phase:** 35 (Weekly Focus & Integration Tracker)
-**Plan:** 04 of 6 (complete)
-**Status:** Ready to execute
-**Last activity:** 2026-04-03 — Plan 35-04 complete: Integration tracker UI refactored with grouped ADR/Biggy/Unassigned sections and type-level sub-grouping (OINT-01)
+**Plan:** 06 of 6 (complete)
+**Status:** Phase complete
+**Last activity:** 2026-04-03 — Plan 35-06 complete: Full verification with automated tests GREEN (23 tests), production build clean, and UAT bugs fixed (Generate Now feedback + integration tracker error handling)
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
 **Current focus:** v4.0 — Infrastructure & UX Foundations. Phase 31: BullMQ Document Extraction Migration.
@@ -43,17 +43,19 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 | 32. Time Tracking Global | Complete (5/5) |
 | 33. Schema Migration | Complete (5/5) |
 | 34. Metrics & Health | Complete (5/5) |
-| 35. Weekly Focus | In Progress (4/6) |
+| 35. Weekly Focus | Complete (6/6) |
 | 36. Test Fixes | Not started |
 
 ## Active Work
 
-**Phase 35 — In Progress (2026-04-03):**
-Integration tracker UI refactored with grouped layout. Weekly focus implementation in progress.
+**Phase 35 — Complete (2026-04-03):**
+Weekly Focus and Integration Tracker features production-ready with full test coverage and UAT verification.
 - Plan 01 complete: Created 13 failing RED test stubs covering WKFO-01 (weekly focus job + API), WKFO-02 (WeeklyFocus component with ProgressRing), and OINT-01 (integration tracker grouping by track/type, PATCH API, edit form)
 - Plan 02 complete: Migration 0027 adds track + integration_type columns to integrations table with composite index; PATCH and POST API routes extended with cross-field Zod validation for ADR/Biggy type separation
 - Plan 03 complete: WeeklyFocus component with scheduled BullMQ job generating AI-powered priority bullets cached in Redis
 - Plan 04 complete: OnboardingDashboard integration tracker refactored into grouped ADR/Biggy/Unassigned sections with type-level sub-grouping and inline editing preserved
+- Plan 05 complete: WeeklyFocus component wired into Overview page as first component with parallel API fetches
+- Plan 06 complete: Full verification with 23 Phase 35 tests GREEN, production build clean, and UAT bugs fixed (Generate Now feedback + integration tracker error handling)
 
 **Phase 35 — Requirements Verified:**
 - Wave 0 baseline established: 13 RED tests (6 weekly-focus, 7 integration-tracker)
@@ -152,6 +154,9 @@ v4.0 roadmap created 2026-04-01. All 15 requirements mapped across 6 phases (31�
 ## Decisions
 
 **v4.0 Architectural Decisions:**
+- **[2026-04-03] Plan 35-06:** 10-second auto-refetch delay after Generate Now click balances AI generation time with user experience
+- **[2026-04-03] Plan 35-06:** State rollback on PATCH failure prevents optimistic UI from showing incorrect data
+- **[2026-04-03] Plan 35-06:** Inline status messages in WeeklyFocus empty state provide clearer context than toast notifications
 - **[2026-04-03] Plan 35-02:** Track stored as plain TEXT column (not enum) with validation at API layer for flexibility
 - **[2026-04-03] Plan 35-02:** Cross-field Zod validation using .superRefine() for track-dependent integration types (ADR vs Biggy)
 - **[2026-04-03] Plan 35-02:** Composite index on (project_id, track) for efficient integration tracker grouping queries
