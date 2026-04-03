@@ -6,7 +6,7 @@
 - ✅ **v2.0** — AI Ingestion & Enhanced Operations — Phases 17–25 (shipped 2026-03-30)
 - ✅ **v3.0** — Collaboration & Intelligence — Phases 26–30 (shipped 2026-04-01)
 - ✅ **v4.0** — Infrastructure & UX Foundations — Phases 31–35 (shipped 2026-04-03)
-- 📋 **v5.0** — Workspace UX Overhaul (Phases 37+)
+- 🚧 **v5.0** — Workspace UX Overhaul (Phases 37–41)
 
 ## Phases
 
@@ -80,16 +80,79 @@ Full details: `.planning/milestones/v4.0-ROADMAP.md` (archived)
 
 </details>
 
-### 📋 v5.0 — Workspace UX Overhaul (Phases 37+)
+### 🚧 v5.0 — Workspace UX Overhaul (Phases 37–41)
 
 **Milestone Goal:** Replace modal-heavy, siloed tab UX with inline-editable tables, cross-tab data sync, a working Gantt with milestones, and consistent patterns across every view.
 
-- [ ] Phases TBD — roadmap to be created via `/gsd:plan-phase`
+- [ ] **Phase 37: Actions & Inline Editing Foundation** — Actions table layout, inline editing for Actions/Risks/Milestones, date pickers, and owner autocomplete wired across all entity edit surfaces
+- [ ] **Phase 38: Gantt Overhaul** — Milestone markers, view mode switcher, milestone-grouped swim lanes, and drag-to-reschedule with immediate DB save
+- [ ] **Phase 39: Cross-Tab Sync & Plan Tab** — Overview metrics refresh on entity edits, clickable chart drill-downs, active blocker list, Plan tab overdue highlighting, and bulk action wiring
+- [ ] **Phase 40: Search, Traceability & Skills UX** — Global search bar, Decisions filtering, artifact reverse lookup, Engagement History auto-log, and Skills job progress + cancel
+- [ ] **Phase 41: UX Polish & Consistency** — Actionable empty states, unified overdue highlighting, and consistent loading skeletons across all tabs
+
+## Phase Details
+
+### Phase 37: Actions & Inline Editing Foundation
+**Goal**: Users can manage Actions, Risks, and Milestones entirely from table rows — no modal required for common status, owner, or date updates
+**Depends on**: Phase 35 (v5.0 starting point)
+**Requirements**: ACTN-01, ACTN-02, ACTN-03, ACTN-04, ACTN-05, IEDIT-01, IEDIT-02, IEDIT-03, IEDIT-04, FORM-01, FORM-02, FORM-03, SRCH-03
+**Success Criteria** (what must be TRUE):
+  1. Actions tab renders as a table with ID, description, owner, due date, status, and source badge columns
+  2. Clicking a table cell for status, owner, or due date on an Action, Risk, or Milestone opens an inline editor in-place (no modal opens)
+  3. Risk status and Milestone status fields use fixed dropdowns (open/mitigated/resolved/accepted and not_started/in_progress/completed/blocked) rather than freeform text
+  4. Date fields on Actions, Risks, Milestones, and Tasks display a date picker component when clicked
+  5. Owner fields suggest names from the project's stakeholder list and accept freeform entry for non-listed names
+**Plans**: TBD
+
+### Phase 38: Gantt Overhaul
+**Goal**: The Gantt chart is a functional planning tool showing milestone context, supporting flexible time horizons, milestone-grouped swim lanes, and direct drag-to-reschedule
+**Depends on**: Phase 37
+**Requirements**: GNTT-01, GNTT-02, GNTT-03, GNTT-04, PLAN-03
+**Success Criteria** (what must be TRUE):
+  1. Milestone target dates appear as labelled vertical markers on the Gantt timeline
+  2. A toggle in the Gantt UI switches between Day, Week, Month, and Quarter Year view modes
+  3. Tasks are visually grouped under their parent milestone in labelled swim lanes on the Gantt
+  4. Dragging a task bar to a new date saves the updated start and end dates to the database immediately without requiring a separate save action
+**Plans**: TBD
+
+### Phase 39: Cross-Tab Sync & Plan Tab
+**Goal**: Edits made in any tab are immediately reflected in the Overview metrics, and the Plan tab surfaces overdue work and bulk actions that actually work
+**Depends on**: Phase 37
+**Requirements**: SYNC-01, SYNC-02, SYNC-03, PLAN-01, PLAN-02
+**Success Criteria** (what must be TRUE):
+  1. Saving a Risk, Action, or Milestone edit updates the Overview metrics section in-place without requiring a page navigation or manual refresh
+  2. Clicking a severity segment on the Overview risk distribution chart opens the Risks tab pre-filtered to that severity
+  3. The Overview HealthDashboard active blockers section shows a list of the actual blocked items with clickable links to their records
+  4. Tasks with past-due dates are visually highlighted in red on both the Phase Board and Task Board
+  5. Selecting multiple tasks or phases via checkbox and applying a bulk status update executes the change (bulk action is not dead UI)
+**Plans**: TBD
+
+### Phase 40: Search, Traceability & Skills UX
+**Goal**: Users can find any project entity by keyword from anywhere, trace every artifact to its extracted data, auto-see audit-driven history, and monitor or cancel running skill jobs
+**Depends on**: Phase 37
+**Requirements**: SRCH-01, SRCH-02, ARTF-01, HIST-01, SKLS-01, SKLS-02
+**Success Criteria** (what must be TRUE):
+  1. A search bar in the workspace header queries across actions, risks, milestones, tasks, decisions, and stakeholders using the existing FTS API and returns results
+  2. The Decisions tab has a text search input and a date-range filter that narrow the displayed decisions
+  3. An artifact detail view lists all entities (risks, actions, milestones, decisions) that were extracted from that artifact, each as a clickable link to its record
+  4. The Engagement History tab shows entries sourced from the audit log — who changed what and when — for risks, actions, milestones, and tasks, without any manual curation
+  5. Running or queued skill jobs display elapsed time and a progress indicator; a cancel button stops the job from the Skills tab
+**Plans**: TBD
+
+### Phase 41: UX Polish & Consistency
+**Goal**: Every tab that can be empty gives the user a clear next action, overdue items are consistently highlighted everywhere, and data-fetching tabs show skeletons instead of blank screens
+**Depends on**: Phase 39 (all overdue patterns established)
+**Requirements**: UXPOL-01, UXPOL-02, UXPOL-03
+**Success Criteria** (what must be TRUE):
+  1. Every tab capable of having zero records shows an empty state with a short description and a CTA button (not a blank area or generic "No data" text)
+  2. Overdue items display a consistent red border and background treatment in Actions, Milestones, and Tasks — all using the same visual style
+  3. All tabs that fetch data client-side show loading skeleton components during the initial data load rather than blank content areas
+**Plans**: TBD
 
 ## Progress
 
-| Phase | Milestone | Plans | Status | Completed |
-|-------|-----------|-------|--------|-----------|
+| Phase | Milestone | Plans Complete | Status | Completed |
+|-------|-----------|----------------|--------|-----------|
 | 1–16 | v1.0 | 63/63 | Complete | 2026-03-26 |
 | 17–25 | v2.0 | 63/63 | Complete | 2026-03-30 |
 | 26–30 | v3.0 | 26/26 | Complete | 2026-04-01 |
@@ -99,4 +162,8 @@ Full details: `.planning/milestones/v4.0-ROADMAP.md` (archived)
 | 34. Metrics & Health | v4.0 | 5/5 | Complete | 2026-04-03 |
 | 35. Weekly Focus | v4.0 | 6/6 | Complete | 2026-04-03 |
 | 36. Test Fixes | v6.0 | 0/TBD | Deferred | — |
-| 37+ | v5.0 | TBD | Planned | — |
+| 37. Actions & Inline Editing Foundation | v5.0 | 0/TBD | Not started | — |
+| 38. Gantt Overhaul | v5.0 | 0/TBD | Not started | — |
+| 39. Cross-Tab Sync & Plan Tab | v5.0 | 0/TBD | Not started | — |
+| 40. Search, Traceability & Skills UX | v5.0 | 0/TBD | Not started | — |
+| 41. UX Polish & Consistency | v5.0 | 0/TBD | Not started | — |

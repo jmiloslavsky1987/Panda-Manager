@@ -1,102 +1,143 @@
 # Requirements: BigPanda AI Project Management App
 
-**Defined:** 2026-04-01
-**Milestone:** v4.0 — Infrastructure & UX Foundations
-**Core Value:** Every PS delivery intelligence the team has built — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
+**Defined:** 2026-04-03
+**Milestone:** v5.0 — Workspace UX Overhaul
+**Core Value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
 
-## v4.0 Requirements
+## v5.0 Requirements
 
-### Test Failures
+### Actions Table Overhaul (ACTN)
 
-- [ ] **TEST-01**: All 13 pre-existing test failures across 6 files are resolved with root-cause fixes (not assertion workarounds)
+- [ ] **ACTN-01**: User can view Actions in a table layout with columns for ID, description, owner, due date, status, and source badge
+- [ ] **ACTN-02**: User can edit action status, owner, and due date inline by clicking the table cell — no modal required
+- [ ] **ACTN-03**: User can filter Actions by owner and due date range in addition to existing status filter
+- [ ] **ACTN-04**: User can search Actions by description text
+- [ ] **ACTN-05**: User can bulk-update status for multiple selected actions via checkbox selection
 
-### Document Extraction
+### Inline Editing — Risks & Milestones (IEDIT)
 
-- [x] **EXTR-01**: User can navigate away from a document upload without losing the extraction — job runs in background via BullMQ
-- [x] **EXTR-02**: User can see extraction progress (% complete, current chunk) while the job is running
-- [x] **EXTR-03**: A failed or partial extraction does not leave orphaned data in workspace tabs — all changes commit atomically when complete
+- [ ] **IEDIT-01**: User can edit Risk status, severity, owner, and mitigation inline in the Risks table row
+- [ ] **IEDIT-02**: User can edit Milestone status, target date, owner, and notes inline in the Milestones table row
+- [ ] **IEDIT-03**: Risk status uses a fixed dropdown (open / mitigated / resolved / accepted) replacing the current freeform text input
+- [ ] **IEDIT-04**: Milestone status uses a fixed dropdown (not_started / in_progress / completed / blocked) replacing the current freeform text input
 
-### Time Tracking
+### Forms: Date Pickers & Owner Autocomplete (FORM)
 
-- [x] **TIME-01**: User can view all time entries across all projects from a standalone top-level /time-tracking section
-- [x] **TIME-02**: User can assign or attribute each time entry to a project from the global view
-- [x] **TIME-03**: Per-project time tracking tab is removed from the workspace
+- [ ] **FORM-01**: All entity edit surfaces (Actions, Risks, Milestones, Tasks) use a date picker component for date fields instead of freeform text
+- [ ] **FORM-02**: Owner field on Actions, Risks, Milestones, and Tasks offers autocomplete suggestions drawn from the project's stakeholder list
+- [ ] **FORM-03**: Owner autocomplete allows freeform entry for names not in the stakeholder list (backwards compatible)
 
-### Overview — Workstream Structure
+### Gantt Overhaul (GNTT)
 
-- [x] **WORK-01**: Overview tab displays ADR and Biggy onboarding progress as separate parallel sections with standardized phase models (ADR: Discovery & Kickoff → Integrations → Platform Configuration → Teams → UAT; Biggy: Discovery & Kickoff → IT Knowledge Graph → Platform Configuration → Teams → Validation)
-- [x] **WORK-02**: Project Completeness indicator is removed from the Overview tab
+- [ ] **GNTT-01**: Gantt chart displays milestone target dates as labelled vertical markers on the timeline
+- [ ] **GNTT-02**: User can switch Gantt view mode between Day, Week, Month, and Quarter Year via a UI toggle
+- [ ] **GNTT-03**: Gantt chart groups tasks under their associated milestone in labelled swim lanes
+- [ ] **GNTT-04**: User can drag task bars on the Gantt to reschedule start and end dates, saving immediately to the DB
 
-### Overview — Weekly Focus
+### Cross-Tab Data Sync (SYNC)
 
-- [x] **WKFO-01**: Overview tab displays a weekly focus summary showing the top 3–5 priorities for the current week, auto-refreshed on a weekly cadence
-- [x] **WKFO-02**: Circular progress bar is retained in the weekly focus section, tied to meaningful progress data (not removed Completeness metric)
+- [ ] **SYNC-01**: Editing a Risk, Action, or Milestone in its tab triggers an in-place refresh of Overview metrics without requiring the user to navigate away and back
+- [ ] **SYNC-02**: Clicking a severity segment in the Overview risk distribution chart navigates to the Risks tab pre-filtered to that severity
+- [ ] **SYNC-03**: Overview HealthDashboard "active blockers" count is replaced with a list of the actual blocked items with links to the relevant tab
 
-### Overview — Milestone Timeline
+### Plan Tab Improvements (PLAN)
 
-- [x] **TMLN-01**: Milestone timeline is positioned near the top of the Overview tab and rendered as a visual timeline (not a text list)
+- [ ] **PLAN-01**: Tasks with past-due dates are visually highlighted (red styling) on the Task Board and Phase Board, consistent with Actions overdue style
+- [ ] **PLAN-02**: Phase Board and Task Board multi-select checkboxes are wired to a bulk status update action (currently dead UI)
+- [ ] **PLAN-03**: Gantt view colour-codes or groups tasks by their associated milestone so milestone membership is visible on the timeline
 
-### Overview — Integration Tracker
+### Global Search & Filtering (SRCH)
 
-- [x] **OINT-01**: Integration tracker is split into ADR and Biggy sections, with each section's integrations categorized by type (ADR: Inbound, Outbound, Enrichment; Biggy: Real-time, Context/Knowledge/UDC)
+- [ ] **SRCH-01**: A global search bar accessible from the workspace header searches across all project data (actions, risks, milestones, tasks, decisions, stakeholders) using the existing full-text search API
+- [ ] **SRCH-02**: Decisions tab supports text search and date-range filtering
+- [ ] **SRCH-03**: Actions tab supports text search on the description field (in addition to status, owner, and date filters)
 
-### Overview — Metrics
+### Artifact Traceability (ARTF)
 
-- [x] **METR-01**: Overview tab includes a Metrics section showing onboarding progress indicators: milestones completed, integration completion counts, validation progress, team enablement progress
+- [ ] **ARTF-01**: Artifact detail view shows a list of all entities (risks, actions, milestones, decisions) extracted from that artifact, each linking to its record
 
-### Overview — Health Dashboard
+### Engagement History & Audit Log (HIST)
 
-- [x] **HLTH-01**: Overview tab includes a Health Dashboard section showing: overall project health, risk status by severity, phase health by workstream (ADR vs Biggy), active blockers, and trend indicators
+- [ ] **HIST-01**: Engagement History tab surfaces entries from the existing audit log table showing who changed what and when for risks, actions, milestones, and tasks — automatically, without manual curation
 
-## Future Requirements (v5.0+)
+### Skills & Jobs UX (SKLS)
 
-### UI Polish
+- [ ] **SKLS-01**: Skills tab shows elapsed time and a progress indicator for currently running or queued jobs
+- [ ] **SKLS-02**: User can cancel a queued or in-progress skill job from the Skills tab
 
-- **UI-02**: Color palette, typography, spacing, and component styling modernized throughout (deferred from v3.0)
+### UX Polish & Consistency (UXPOL)
 
-### QA & Standardization
+- [ ] **UXPOL-01**: Every tab that can have zero records displays an actionable empty state with a short description and a CTA button
+- [ ] **UXPOL-02**: Overdue visual treatment (red border + background) is applied consistently to overdue items across Actions, Milestones, and Tasks
+- [ ] **UXPOL-03**: Loading skeletons are used consistently across all tabs that fetch data client-side
 
-- **QA-01**: Thorough tab-by-tab UAT with documented fixes backlog
-- **QA-02**: Consistent UI patterns for empty states, tables, status badges, loading states across all tabs and reports
+## v6.0 Requirements (Deferred)
+
+### Test Suite (TEST)
+
+- **TEST-01**: 6 remaining pre-existing test failures (create-project, launch, extraction-status DB mocks) resolved with root-cause fixes
+
+### UI Visual Overhaul (UIVIZ)
+
+- **UIVIZ-01**: Color palette, typography, spacing, and component styling modernised throughout the application
+
+### Advanced Plan Features (ADVPLAN)
+
+- **ADVPLAN-01**: Tasks and Actions can be linked to each other or promoted from one to the other
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| BullMQ job cancellation (extraction) | Adds state complexity; restart is acceptable workaround for v4.0 |
-| Bulk edit in global time tracking view | Existing per-project bulk actions sufficient; global bulk deferred to v5.0 |
-| Custom ADR/Biggy phase editor | Phase model is standardized and fixed per requirements — no user customization |
-| Redirect from old per-project time tab | Tab is removed entirely; no redirect needed |
-| Customer-facing read-only portal | Deferred — email updates sufficient |
-| pgvector/RAG knowledge base | Structured DB context sufficient at single-project scope |
+| Customer-facing read-only portal | External access deferred; email updates sufficient for now |
+| Mobile / responsive layout audit | Web-first; tablet/phone testing deferred |
+| Real-time collaborative editing (WebSockets) | High complexity; polling + refresh sufficient for current team size |
+| Undo / redo for all edits | Complex state management; not worth engineering cost at this scale |
+| In-app notifications / @mentions | No notification infrastructure; deferred |
+| Calendar import for time entries | Google Cloud Console setup required; deferred |
 
 ## Traceability
 
-Which phases cover which requirements. Updated during roadmap creation.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| EXTR-01 | Phase 31 | Complete |
-| EXTR-02 | Phase 31 | Complete |
-| EXTR-03 | Phase 31 | Complete |
-| TIME-01 | Phase 32 | Complete |
-| TIME-02 | Phase 32 | Complete |
-| TIME-03 | Phase 32 | Complete |
-| WORK-01 | Phase 33 | Complete |
-| WORK-02 | Phase 33 | Complete |
-| METR-01 | Phase 34 | Complete |
-| HLTH-01 | Phase 34 | Complete |
-| TMLN-01 | Phase 34 | Complete |
-| WKFO-01 | Phase 35 | Complete |
-| WKFO-02 | Phase 35 | Complete |
-| OINT-01 | Phase 35 | Complete |
-| TEST-01 | Phase 36 | Pending |
+| ACTN-01 | Phase 37 | Pending |
+| ACTN-02 | Phase 37 | Pending |
+| ACTN-03 | Phase 37 | Pending |
+| ACTN-04 | Phase 37 | Pending |
+| ACTN-05 | Phase 37 | Pending |
+| IEDIT-01 | Phase 37 | Pending |
+| IEDIT-02 | Phase 37 | Pending |
+| IEDIT-03 | Phase 37 | Pending |
+| IEDIT-04 | Phase 37 | Pending |
+| FORM-01 | Phase 37 | Pending |
+| FORM-02 | Phase 37 | Pending |
+| FORM-03 | Phase 37 | Pending |
+| SRCH-03 | Phase 37 | Pending |
+| GNTT-01 | Phase 38 | Pending |
+| GNTT-02 | Phase 38 | Pending |
+| GNTT-03 | Phase 38 | Pending |
+| GNTT-04 | Phase 38 | Pending |
+| PLAN-03 | Phase 38 | Pending |
+| SYNC-01 | Phase 39 | Pending |
+| SYNC-02 | Phase 39 | Pending |
+| SYNC-03 | Phase 39 | Pending |
+| PLAN-01 | Phase 39 | Pending |
+| PLAN-02 | Phase 39 | Pending |
+| SRCH-01 | Phase 40 | Pending |
+| SRCH-02 | Phase 40 | Pending |
+| ARTF-01 | Phase 40 | Pending |
+| HIST-01 | Phase 40 | Pending |
+| SKLS-01 | Phase 40 | Pending |
+| SKLS-02 | Phase 40 | Pending |
+| UXPOL-01 | Phase 41 | Pending |
+| UXPOL-02 | Phase 41 | Pending |
+| UXPOL-03 | Phase 41 | Pending |
 
 **Coverage:**
-- v4.0 requirements: 15 total
-- Mapped to phases: 15 ✓
+- v5.0 requirements: 31 distinct requirements (32 rows — ACTN-04 and SRCH-03 are the same deliverable, both mapped to Phase 37)
+- Mapped to phases: 31/31
 - Unmapped: 0 ✓
 
 ---
-*Requirements defined: 2026-04-01*
-*Last updated: 2026-04-01 after roadmap creation*
+*Requirements defined: 2026-04-03*
+*Last updated: 2026-04-03 — traceability populated after v5.0 roadmap creation*
