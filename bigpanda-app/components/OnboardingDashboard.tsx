@@ -637,6 +637,8 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
         </section>
       </div>
 
+      <hr className="border-zinc-200 mx-4" />
+
       {/* ── Integration Tracker section ──────────────────────────────────── */}
       <section data-testid="integration-tracker" className="px-4 space-y-4">
         <h2 className="text-sm font-semibold text-zinc-700 uppercase tracking-wide">
@@ -739,6 +741,8 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
         )}
       </section>
 
+      <hr className="border-zinc-200 mx-4" />
+
       {/* ── Risks & Blockers section ─────────────────────────────────────── */}
       <section data-testid="risks-section" className="px-4 space-y-3">
         <h2 className="text-sm font-semibold text-zinc-700 uppercase tracking-wide">
@@ -786,6 +790,8 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
         )}
       </section>
 
+      <hr className="border-zinc-200 mx-4" />
+
       {/* ── Milestone Timeline section ───────────────────────────────────── */}
       <section data-testid="milestones-section" className="px-4 space-y-3">
         <div className="flex items-center justify-between">
@@ -800,39 +806,53 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
           </Link>
         </div>
         {loading ? (
-          <div className="space-y-2 animate-pulse">
-            <div className="h-12 bg-zinc-100 rounded-lg" />
-          </div>
+          <div className="h-16 bg-zinc-100 rounded-lg animate-pulse" />
         ) : milestones.length === 0 ? (
           <p className="text-sm text-zinc-400">No milestones recorded.</p>
         ) : (
-          <ol className="relative border-l border-zinc-200 ml-2 space-y-4">
-            {milestones.slice(0, 10).map((m) => {
-              const statusKey = (m.status ?? '').toLowerCase().replace(/\s+/g, '_')
-              const milestoneColors: Record<string, string> = {
-                completed: 'bg-green-100 text-green-800',
-                complete: 'bg-green-100 text-green-800',
-                in_progress: 'bg-blue-100 text-blue-800',
-                not_started: 'bg-zinc-100 text-zinc-700',
-                blocked: 'bg-red-100 text-red-800',
-              }
-              const colorClass = milestoneColors[statusKey] ?? 'bg-zinc-100 text-zinc-700'
-              return (
-                <li key={m.id} className="ml-4">
-                  <div className="absolute -left-1.5 mt-1.5 w-3 h-3 rounded-full border-2 border-white bg-zinc-400" />
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm text-zinc-900">{m.name}</span>
-                    {m.date && (
-                      <span className="text-xs text-zinc-400">{m.date}</span>
-                    )}
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${colorClass}`}>
-                      {m.status ?? 'Unknown'}
-                    </span>
-                  </div>
-                </li>
-              )
-            })}
-          </ol>
+          <div className="relative overflow-x-auto pb-2">
+            {/* Horizontal spine */}
+            <div className="absolute top-5 left-0 right-0 h-px bg-zinc-200" />
+            <ol className="relative flex gap-0 min-w-max">
+              {milestones.slice(0, 10).map((m) => {
+                const statusKey = (m.status ?? '').toLowerCase().replace(/\s+/g, '_')
+                const dotColors: Record<string, string> = {
+                  completed:    'bg-green-500 border-green-500',
+                  complete:     'bg-green-500 border-green-500',
+                  in_progress:  'bg-blue-500 border-blue-500',
+                  upcoming:     'bg-white border-zinc-400',
+                  not_started:  'bg-white border-zinc-400',
+                  blocked:      'bg-red-500 border-red-500',
+                }
+                const labelColors: Record<string, string> = {
+                  completed:    'bg-green-100 text-green-800',
+                  complete:     'bg-green-100 text-green-800',
+                  in_progress:  'bg-blue-100 text-blue-800',
+                  upcoming:     'bg-zinc-100 text-zinc-600',
+                  not_started:  'bg-zinc-100 text-zinc-600',
+                  blocked:      'bg-red-100 text-red-800',
+                }
+                const dotClass   = dotColors[statusKey]   ?? 'bg-white border-zinc-400'
+                const labelClass = labelColors[statusKey] ?? 'bg-zinc-100 text-zinc-600'
+                return (
+                  <li key={m.id} className="flex flex-col items-center w-36 px-2">
+                    {/* Dot on the spine */}
+                    <div className={`w-3.5 h-3.5 rounded-full border-2 ${dotClass} z-10 mt-[11px] shrink-0`} />
+                    {/* Label card below */}
+                    <div className="mt-3 text-center space-y-1 w-full">
+                      <p className="text-xs font-medium text-zinc-800 leading-tight line-clamp-2">{m.name}</p>
+                      {(m.target ?? m.date) && (
+                        <p className="text-xs text-zinc-400">{m.target ?? m.date}</p>
+                      )}
+                      <span className={`inline-block text-xs px-2 py-0.5 rounded-full ${labelClass}`}>
+                        {m.status ?? 'unknown'}
+                      </span>
+                    </div>
+                  </li>
+                )
+              })}
+            </ol>
+          </div>
         )}
       </section>
     </div>
