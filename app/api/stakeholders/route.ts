@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '../../../db'
 import { stakeholders, auditLog } from '../../../db/schema'
+import { eq } from 'drizzle-orm'
 import { requireSession } from "@/lib/auth-server";
 
 const postSchema = z.object({
@@ -14,6 +15,28 @@ const postSchema = z.object({
   notes: z.string().optional(),
   source: z.string(),
 })
+
+export async function GET(request: NextRequest) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
+  const projectId = parseInt(request.nextUrl.searchParams.get('project_id') ?? '', 10)
+  if (isNaN(projectId)) {
+    return NextResponse.json({ error: 'project_id required' }, { status: 400 })
+  }
+
+  try {
+    const rows = await db
+      .select({ id: stakeholders.id, name: stakeholders.name, role: stakeholders.role })
+      .from(stakeholders)
+      .where(eq(stakeholders.project_id, projectId))
+
+    return NextResponse.json(rows)
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Query failed'
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
+}
 
 export async function POST(request: NextRequest) {
   const { session, redirectResponse } = await requireSession();
