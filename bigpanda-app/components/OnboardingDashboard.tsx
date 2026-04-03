@@ -456,9 +456,9 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
         className="border border-zinc-200 rounded-lg p-3 space-y-3 bg-white"
       >
         {/* Tool name + category badge */}
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-sm font-semibold text-zinc-900">{integ.tool}</span>
-          <div className="flex items-center gap-1.5">
+        <div className="space-y-1">
+          <span className="text-sm font-semibold text-zinc-900 block">{integ.tool}</span>
+          <div className="flex flex-wrap items-center gap-1.5">
             {integ.category && (
               <span
                 className="text-xs px-2 py-0.5 rounded-full"
