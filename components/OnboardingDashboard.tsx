@@ -393,12 +393,30 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
   }
 
   const saveIntegTrack = async (integId: number, track: 'ADR' | 'Biggy' | null, integration_type: string | null) => {
+    // Store previous state for rollback
+    const prevIntegrations = integrations
+
+    // Optimistic update
     setIntegrations((prev) => prev.map((i) => (i.id === integId ? { ...i, track, integration_type } : i)))
-    await fetch(`/api/projects/${projectId}/integrations/${integId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ track, integration_type }),
-    })
+
+    // Persist to API
+    try {
+      const res = await fetch(`/api/projects/${projectId}/integrations/${integId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ track, integration_type }),
+      })
+
+      if (!res.ok) {
+        console.error('Failed to update integration track:', await res.text())
+        // Rollback on failure
+        setIntegrations(prevIntegrations)
+      }
+    } catch (err) {
+      console.error('Error updating integration track:', err)
+      // Rollback on error
+      setIntegrations(prevIntegrations)
+    }
   }
 
   // ─── Filter helpers ─────────────────────────────────────────────────────────
