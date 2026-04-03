@@ -12,4 +12,5 @@ export const LOCK_IDS = {
   GANTT_SNAPSHOT:  1005,
   RISK_MONITOR:    1006,
   SKILL_RUN:       1007,  // Added Phase 5
+  WEEKLY_FOCUS:    1008,  // Phase 35 — weekly focus generation
 } as const;
