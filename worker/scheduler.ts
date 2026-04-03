@@ -40,6 +40,18 @@ export async function registerAllSchedulers(): Promise<void> {
  * Safe to call on startup and in the 60s polling loop — upsertJobScheduler is idempotent.
  * Preserves backward compatibility with registerAllSchedulers (settings-based).
  */
+/**
+ * Maps legacy settings-based job IDs to their current skill names.
+ * Used by tests and validation - not for runtime scheduling (use registerDbSchedulers).
+ */
+export const JOB_SCHEDULE_MAP: Record<string, string> = {
+  'morning-briefing': 'morning_briefing',
+  'weekly-customer-status': 'weekly_status',
+  // Legacy jobs removed from active scheduling:
+  // 'action-sync', 'weekly-briefing', 'health-refresh', 'context-updater',
+  // 'gantt-snapshot', 'risk-monitor', 'customer-project-tracker', 'discovery-scan'
+};
+
 export async function registerDbSchedulers(): Promise<void> {
   const enabledJobs = await db
     .select()
