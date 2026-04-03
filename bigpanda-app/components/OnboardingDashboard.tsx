@@ -536,9 +536,9 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
             )
           })}
         </div>
-        <div className="flex justify-between text-[10px] text-zinc-400 -mt-1">
+        <div className="flex gap-1 text-[10px] text-zinc-400 mt-0.5">
           {STAGES.map((s) => (
-            <span key={s}>{s}</span>
+            <span key={s} className="flex-1 text-center leading-tight">{s}</span>
           ))}
         </div>
 
