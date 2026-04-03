@@ -196,5 +196,5 @@ Plans:
 | 32. Time Tracking Global | 5/5 | Complete    | 2026-04-02 | — |
 | 33. Schema Migration | 5/5 | Complete    | 2026-04-03 | — |
 | 34. Metrics & Health | 5/5 | Complete    | 2026-04-03 | — |
-| 35. Weekly Focus | 3/6 | In Progress|  | — |
+| 35. Weekly Focus | 4/6 | In Progress|  | — |
 | 36. Test Fixes | v4.0 | 0/TBD | Not started | — |
