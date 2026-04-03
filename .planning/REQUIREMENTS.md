@@ -23,9 +23,9 @@
 
 ### Forms: Date Pickers & Owner Autocomplete (FORM)
 
-- [ ] **FORM-01**: All entity edit surfaces (Actions, Risks, Milestones, Tasks) use a date picker component for date fields instead of freeform text
+- [x] **FORM-01**: All entity edit surfaces (Actions, Risks, Milestones, Tasks) use a date picker component for date fields instead of freeform text
 - [x] **FORM-02**: Owner field on Actions, Risks, Milestones, and Tasks offers autocomplete suggestions drawn from the project's stakeholder list
-- [ ] **FORM-03**: Owner autocomplete allows freeform entry for names not in the stakeholder list (backwards compatible)
+- [x] **FORM-03**: Owner autocomplete allows freeform entry for names not in the stakeholder list (backwards compatible)
 
 ### Gantt Overhaul (GNTT)
 
@@ -109,9 +109,9 @@
 | IEDIT-02 | Phase 37 | Complete |
 | IEDIT-03 | Phase 37 | Pending |
 | IEDIT-04 | Phase 37 | Pending |
-| FORM-01 | Phase 37 | Pending |
+| FORM-01 | Phase 37 | Complete |
 | FORM-02 | Phase 37 | Complete |
-| FORM-03 | Phase 37 | Pending |
+| FORM-03 | Phase 37 | Complete |
 | SRCH-03 | Phase 37 | Pending |
 | GNTT-01 | Phase 38 | Pending |
 | GNTT-02 | Phase 38 | Pending |

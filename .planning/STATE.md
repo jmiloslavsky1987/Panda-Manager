@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v5.0
 milestone_name: — Workspace UX Overhaul
-status: planning
-stopped_at: Completed 37-01-PLAN.md
-last_updated: "2026-04-03T20:15:50.997Z"
-last_activity: 2026-04-03 — v5.0 roadmap created (5 phases, 31 requirements mapped)
+status: executing
+stopped_at: Completed 37-02-PLAN.md
+last_updated: "2026-04-03T20:20:54.167Z"
+last_activity: "2026-04-03 — Completed 37-02: Built three shared inline-edit components (InlineSelectCell, DatePickerCell, OwnerCell)"
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 6
-  completed_plans: 1
-  percent: 0
+  completed_plans: 2
+  percent: 17
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 ## Current Position
 
 Phase: 37 of 41 (Actions & Inline Editing Foundation)
-Plan: 1 of 6 (Wave 0 test scaffolds complete)
+Plan: 3 of 6 (API endpoints for inline editing complete)
 Status: Executing
-Last activity: 2026-04-03 — Completed 37-01: Wave 0 TDD test scaffolds (5 files, 24 tests, 9 RED)
+Last activity: 2026-04-03 — Completed 37-03: API endpoints (stakeholders GET, actions bulk-update, enum validation)
 
-Progress: [██░░░░░░░░] 17% (Phase 37: 1/6 plans)
+Progress: [█████░░░░░] 50% (Phase 37: 3/6 plans)
 
 ## Milestone History
 
@@ -44,7 +44,7 @@ Progress: [██░░░░░░░░] 17% (Phase 37: 1/6 plans)
 
 | Phase | Requirements | Status |
 |-------|-------------|--------|
-| 37. Actions & Inline Editing Foundation | ACTN-01–05, IEDIT-01–04, FORM-01–03, SRCH-03 | In progress (1/6 plans) |
+| 37. Actions & Inline Editing Foundation | ACTN-01–05, IEDIT-01–04, FORM-01–03, SRCH-03 | In progress (2/6 plans) |
 | 38. Gantt Overhaul | GNTT-01–04, PLAN-03 | Not started |
 | 39. Cross-Tab Sync & Plan Tab | SYNC-01–03, PLAN-01–02 | Not started |
 | 40. Search, Traceability & Skills UX | SRCH-01–02, ARTF-01, HIST-01, SKLS-01–02 | Not started |
@@ -58,6 +58,7 @@ Progress: [██░░░░░░░░] 17% (Phase 37: 1/6 plans)
 - Phases 38, 39, and 40 can begin planning in any order after Phase 37 ships — no shared state dependencies between Gantt, sync, and search work
 - Phase 41 (polish) intentionally last — consistent overdue treatment and empty states are easiest to apply uniformly after all tabs have stabilised
 - [Phase 37]: TDD RED-first pattern established: 5 test scaffolds created before any implementation (24 tests, 9 failing, 0 syntax errors)
+- [Phase 37, Plan 02]: CSS loaded via @import in globals.css — tested with Tailwind 4 PostCSS pipeline, no build errors (simpler than public/ workaround)
 
 ## Blockers/Concerns
 
@@ -65,6 +66,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-03T20:15:50.995Z
-Stopped at: Completed 37-01-PLAN.md
+Last session: 2026-04-03T20:20:54.167Z
+Stopped at: Completed 37-02-PLAN.md
 Resume file: None
