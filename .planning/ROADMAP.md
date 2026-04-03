@@ -170,7 +170,7 @@ Plans:
 | 34. Metrics & Health | v4.0 | 5/5 | Complete | 2026-04-03 |
 | 35. Weekly Focus | v4.0 | 6/6 | Complete | 2026-04-03 |
 | 36. Test Fixes | v6.0 | 0/TBD | Deferred | — |
-| 37. Actions & Inline Editing Foundation | v5.0 | 0/6 | Not started | — |
+| 37. Actions & Inline Editing Foundation | 1/6 | In Progress|  | — |
 | 38. Gantt Overhaul | v5.0 | 0/TBD | Not started | — |
 | 39. Cross-Tab Sync & Plan Tab | v5.0 | 0/TBD | Not started | — |
 | 40. Search, Traceability & Skills UX | v5.0 | 0/TBD | Not started | — |

@@ -9,22 +9,22 @@
 ### Actions Table Overhaul (ACTN)
 
 - [ ] **ACTN-01**: User can view Actions in a table layout with columns for ID, description, owner, due date, status, and source badge
-- [ ] **ACTN-02**: User can edit action status, owner, and due date inline by clicking the table cell — no modal required
+- [x] **ACTN-02**: User can edit action status, owner, and due date inline by clicking the table cell — no modal required
 - [ ] **ACTN-03**: User can filter Actions by owner and due date range in addition to existing status filter
 - [ ] **ACTN-04**: User can search Actions by description text
-- [ ] **ACTN-05**: User can bulk-update status for multiple selected actions via checkbox selection
+- [x] **ACTN-05**: User can bulk-update status for multiple selected actions via checkbox selection
 
 ### Inline Editing — Risks & Milestones (IEDIT)
 
-- [ ] **IEDIT-01**: User can edit Risk status, severity, owner, and mitigation inline in the Risks table row
-- [ ] **IEDIT-02**: User can edit Milestone status, target date, owner, and notes inline in the Milestones table row
+- [x] **IEDIT-01**: User can edit Risk status, severity, owner, and mitigation inline in the Risks table row
+- [x] **IEDIT-02**: User can edit Milestone status, target date, owner, and notes inline in the Milestones table row
 - [ ] **IEDIT-03**: Risk status uses a fixed dropdown (open / mitigated / resolved / accepted) replacing the current freeform text input
 - [ ] **IEDIT-04**: Milestone status uses a fixed dropdown (not_started / in_progress / completed / blocked) replacing the current freeform text input
 
 ### Forms: Date Pickers & Owner Autocomplete (FORM)
 
 - [ ] **FORM-01**: All entity edit surfaces (Actions, Risks, Milestones, Tasks) use a date picker component for date fields instead of freeform text
-- [ ] **FORM-02**: Owner field on Actions, Risks, Milestones, and Tasks offers autocomplete suggestions drawn from the project's stakeholder list
+- [x] **FORM-02**: Owner field on Actions, Risks, Milestones, and Tasks offers autocomplete suggestions drawn from the project's stakeholder list
 - [ ] **FORM-03**: Owner autocomplete allows freeform entry for names not in the stakeholder list (backwards compatible)
 
 ### Gantt Overhaul (GNTT)
@@ -101,16 +101,16 @@
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | ACTN-01 | Phase 37 | Pending |
-| ACTN-02 | Phase 37 | Pending |
+| ACTN-02 | Phase 37 | Complete |
 | ACTN-03 | Phase 37 | Pending |
 | ACTN-04 | Phase 37 | Pending |
-| ACTN-05 | Phase 37 | Pending |
-| IEDIT-01 | Phase 37 | Pending |
-| IEDIT-02 | Phase 37 | Pending |
+| ACTN-05 | Phase 37 | Complete |
+| IEDIT-01 | Phase 37 | Complete |
+| IEDIT-02 | Phase 37 | Complete |
 | IEDIT-03 | Phase 37 | Pending |
 | IEDIT-04 | Phase 37 | Pending |
 | FORM-01 | Phase 37 | Pending |
-| FORM-02 | Phase 37 | Pending |
+| FORM-02 | Phase 37 | Complete |
 | FORM-03 | Phase 37 | Pending |
 | SRCH-03 | Phase 37 | Pending |
 | GNTT-01 | Phase 38 | Pending |
