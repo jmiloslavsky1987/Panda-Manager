@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: — Infrastructure & UX Foundations
 status: executing
-last_updated: "2026-04-03T15:05:58.941Z"
-last_activity: "2026-04-03 — Plan 35-02 complete: Integration tracker backend infrastructure with track + integration_type columns and API validation (OINT-01)"
+last_updated: "2026-04-03T15:07:53.400Z"
+last_activity: "2026-04-03 — Plan 35-04 complete: Integration tracker UI refactored with grouped ADR/Biggy/Unassigned sections and type-level sub-grouping (OINT-01)"
 progress:
   total_phases: 6
   completed_phases: 4
@@ -226,6 +226,9 @@ v4.0 roadmap created 2026-04-01. All 15 requirements mapped across 6 phases (31�
 - [Phase 35]: Track dropdown includes 'Unassigned' option for null track value
 - [Phase 35]: Type dropdown only appears when track is selected (conditional rendering)
 - [Phase 35]: Unassigned section only renders when integrations with track=null exist
+- [Phase 35-05]: ProgressRing copied directly from OverviewMetrics.tsx (not extracted per Phase 34 decision)
+- [Phase 35-05]: Parallel Promise.all API calls fetch weekly-focus bullets and overview-metrics simultaneously
+- [Phase 35-05]: Overall progress computed as average of ADR and Biggy completion from stepCounts
 
 ## Accumulated Technical Context
 
