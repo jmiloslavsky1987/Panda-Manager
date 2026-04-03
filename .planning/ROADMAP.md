@@ -144,7 +144,14 @@ Plans:
   3. Milestone timeline renders as visual timeline component (not text list) near top of Overview tab
   4. All metrics are read-only aggregations computed from live database data (no manual entry)
   5. Charts render using Recharts library with responsive design
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 34-01-PLAN.md — Wave 0: Recharts install + test scaffolds (RED stubs for METR-01, HLTH-01, TMLN-01)
+- [ ] 34-02-PLAN.md — overview-metrics API endpoint (aggregated step counts, risk counts, hours)
+- [ ] 34-03-PLAN.md — MilestoneTimeline + OverviewMetrics components (Recharts charts, ProgressRings)
+- [ ] 34-04-PLAN.md — HealthDashboard component + Overview page wiring (all 4 sections composed)
+- [ ] 34-05-PLAN.md — Full automated verification + human UAT (METR-01, HLTH-01, TMLN-01)
 
 ### Phase 35: Overview Tab — Weekly Focus & Integration Tracker
 **Goal**: Overview tab shows AI-generated weekly priorities and redesigned integration tracker split by workstream
