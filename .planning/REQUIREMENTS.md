@@ -29,8 +29,8 @@
 
 ### Overview — Weekly Focus
 
-- [ ] **WKFO-01**: Overview tab displays a weekly focus summary showing the top 3–5 priorities for the current week, auto-refreshed on a weekly cadence
-- [ ] **WKFO-02**: Circular progress bar is retained in the weekly focus section, tied to meaningful progress data (not removed Completeness metric)
+- [x] **WKFO-01**: Overview tab displays a weekly focus summary showing the top 3–5 priorities for the current week, auto-refreshed on a weekly cadence
+- [x] **WKFO-02**: Circular progress bar is retained in the weekly focus section, tied to meaningful progress data (not removed Completeness metric)
 
 ### Overview — Milestone Timeline
 
@@ -38,7 +38,7 @@
 
 ### Overview — Integration Tracker
 
-- [ ] **OINT-01**: Integration tracker is split into ADR and Biggy sections, with each section's integrations categorized by type (ADR: Inbound, Outbound, Enrichment; Biggy: Real-time, Context/Knowledge/UDC)
+- [x] **OINT-01**: Integration tracker is split into ADR and Biggy sections, with each section's integrations categorized by type (ADR: Inbound, Outbound, Enrichment; Biggy: Real-time, Context/Knowledge/UDC)
 
 ### Overview — Metrics
 
@@ -87,9 +87,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | METR-01 | Phase 34 | Complete |
 | HLTH-01 | Phase 34 | Complete |
 | TMLN-01 | Phase 34 | Complete |
-| WKFO-01 | Phase 35 | Pending |
-| WKFO-02 | Phase 35 | Pending |
-| OINT-01 | Phase 35 | Pending |
+| WKFO-01 | Phase 35 | Complete |
+| WKFO-02 | Phase 35 | Complete |
+| OINT-01 | Phase 35 | Complete |
 | TEST-01 | Phase 36 | Pending |
 
 **Coverage:**
