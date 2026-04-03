@@ -432,6 +432,8 @@ export const integrations = pgTable('integrations', {
   color: text('color'),
   notes: text('notes'),
   display_order: integer('display_order').notNull().default(0),
+  track: text('track'),
+  integration_type: text('integration_type'),
   created_at: timestamp('created_at').defaultNow().notNull(),
   updated_at: timestamp('updated_at').defaultNow().notNull(),
 })
