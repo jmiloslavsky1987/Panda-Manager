@@ -102,7 +102,15 @@ Full details: `.planning/milestones/v4.0-ROADMAP.md` (archived)
   3. Risk status and Milestone status fields use fixed dropdowns (open/mitigated/resolved/accepted and not_started/in_progress/completed/blocked) rather than freeform text
   4. Date fields on Actions, Risks, Milestones, and Tasks display a date picker component when clicked
   5. Owner fields suggest names from the project's stakeholder list and accept freeform entry for non-listed names
-**Plans**: TBD
+**Plans**: 6 plans
+
+Plans:
+- [ ] 37-01-PLAN.md — Wave 0 test scaffolds (5 API test files, all RED before implementation)
+- [ ] 37-02-PLAN.md — Package install + shared components (InlineSelectCell, DatePickerCell, OwnerCell)
+- [ ] 37-03-PLAN.md — API additions (stakeholders GET, actions bulk-update, enum validation on risks/milestones)
+- [ ] 37-04-PLAN.md — Actions page refactor (ActionsTableClient with table, filters, search, bulk bar)
+- [ ] 37-05-PLAN.md — Risks + Milestones inline editing wiring
+- [ ] 37-06-PLAN.md — Human verify checkpoint (full test suite + 30-step UI verification)
 
 ### Phase 38: Gantt Overhaul
 **Goal**: The Gantt chart is a functional planning tool showing milestone context, supporting flexible time horizons, milestone-grouped swim lanes, and direct drag-to-reschedule
@@ -162,7 +170,7 @@ Full details: `.planning/milestones/v4.0-ROADMAP.md` (archived)
 | 34. Metrics & Health | v4.0 | 5/5 | Complete | 2026-04-03 |
 | 35. Weekly Focus | v4.0 | 6/6 | Complete | 2026-04-03 |
 | 36. Test Fixes | v6.0 | 0/TBD | Deferred | — |
-| 37. Actions & Inline Editing Foundation | v5.0 | 0/TBD | Not started | — |
+| 37. Actions & Inline Editing Foundation | v5.0 | 0/6 | Not started | — |
 | 38. Gantt Overhaul | v5.0 | 0/TBD | Not started | — |
 | 39. Cross-Tab Sync & Plan Tab | v5.0 | 0/TBD | Not started | — |
 | 40. Search, Traceability & Skills UX | v5.0 | 0/TBD | Not started | — |
