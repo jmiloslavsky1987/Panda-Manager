@@ -840,10 +840,9 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
           Integration Tracker
         </h2>
         {loading ? (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 animate-pulse">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-32 bg-zinc-100 rounded-lg" />
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-pulse">
+            <div className="h-32 bg-zinc-100 rounded-lg" />
+            <div className="h-32 bg-zinc-100 rounded-lg" />
           </div>
         ) : integrations.length === 0 ? (
           <p className="text-sm text-zinc-400">
@@ -851,8 +850,24 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
           </p>
         ) : (
           <div className="space-y-6">
-            {renderTrackSection('ADR', adrIntegrations, ADR_TYPES)}
-            {renderTrackSection('Biggy', biggyIntegrations, BIGGY_TYPES)}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="border-l-4 border-blue-200 pl-4">
+                {adrIntegrations.length === 0 ? (
+                  <div className="space-y-2">
+                    <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">ADR</h3>
+                    <p className="text-sm text-zinc-400">No ADR integrations — assign from Unassigned below.</p>
+                  </div>
+                ) : renderTrackSection('ADR', adrIntegrations, ADR_TYPES)}
+              </div>
+              <div className="border-l-4 border-orange-200 pl-4">
+                {biggyIntegrations.length === 0 ? (
+                  <div className="space-y-2">
+                    <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Biggy</h3>
+                    <p className="text-sm text-zinc-400">No Biggy integrations — assign from Unassigned below.</p>
+                  </div>
+                ) : renderTrackSection('Biggy', biggyIntegrations, BIGGY_TYPES)}
+              </div>
+            </div>
             {unassignedIntegrations.length > 0 && renderTrackSection('Unassigned', unassignedIntegrations, [])}
           </div>
         )}
