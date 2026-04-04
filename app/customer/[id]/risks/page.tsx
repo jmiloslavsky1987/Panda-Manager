@@ -1,4 +1,7 @@
-import { getWorkspaceData } from '../../../../lib/queries'
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Badge } from '../../../../components/ui/badge'
 import {
   Table,
@@ -10,6 +13,30 @@ import {
 } from '../../../../components/ui/table'
 import { RiskEditModal } from '../../../../components/RiskEditModal'
 import { SourceBadge } from '../../../../components/SourceBadge'
+import { InlineSelectCell } from '../../../../components/InlineSelectCell'
+import { OwnerCell } from '../../../../components/OwnerCell'
+import type { WorkspaceData } from '../../../../lib/queries'
+
+const RISK_STATUS_OPTIONS: { value: 'open' | 'mitigated' | 'resolved' | 'accepted'; label: string }[] = [
+  { value: 'open', label: 'Open' },
+  { value: 'mitigated', label: 'Mitigated' },
+  { value: 'resolved', label: 'Resolved' },
+  { value: 'accepted', label: 'Accepted' },
+]
+
+const SEVERITY_OPTIONS: { value: 'low' | 'medium' | 'high' | 'critical'; label: string }[] = [
+  { value: 'low', label: 'Low' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'high', label: 'High' },
+  { value: 'critical', label: 'Critical' },
+]
+
+const RISK_STATUS_VALUES = ['open', 'mitigated', 'resolved', 'accepted'] as const
+type RiskStatus = typeof RISK_STATUS_VALUES[number]
+
+function normaliseRiskStatus(s: string | null | undefined): RiskStatus {
+  return RISK_STATUS_VALUES.includes(s as RiskStatus) ? (s as RiskStatus) : 'open'
+}
 
 const SEVERITY_ORDER: Record<string, number> = {
   critical: 0,
@@ -30,13 +57,41 @@ function isUnresolved(status: string | null | undefined): boolean {
   return !['resolved', 'closed'].includes(s)
 }
 
-export default async function RisksPage({
+async function patchRisk(id: number, patch: Record<string, unknown>, router: ReturnType<typeof useRouter>) {
+  const res = await fetch(`/api/risks/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(patch),
+  })
+  if (!res.ok) throw new Error('Save failed')
+  router.refresh()
+}
+
+export default function RisksPage({
   params,
 }: {
   params: Promise<{ id: string }>
 }) {
-  const { id } = await params
-  const data = await getWorkspaceData(parseInt(id, 10))
+  const router = useRouter()
+  const [data, setData] = useState<WorkspaceData | null>(null)
+  const [projectId, setProjectId] = useState<number | null>(null)
+
+  useEffect(() => {
+    async function loadData() {
+      const { id } = await params
+      const parsedId = parseInt(id, 10)
+      setProjectId(parsedId)
+
+      const res = await fetch(`/api/workspace-data?project_id=${parsedId}`)
+      const result = await res.json()
+      setData(result)
+    }
+    loadData()
+  }, [params])
+
+  if (!data || projectId === null) {
+    return <div className="text-center py-8 text-zinc-400">Loading...</div>
+  }
 
   const artifactMap = new Map(data.artifacts.map((a) => [a.id, a.name]))
 
@@ -79,37 +134,57 @@ export default async function RisksPage({
                     ? mitigationText.slice(0, 150) + '…'
                     : mitigationText
                 return (
-                  <RiskEditModal
-                    key={risk.id}
-                    risk={risk}
-                    trigger={
-                      <TableRow className={highlight ? 'bg-orange-50' : ''}>
-                        <TableCell className="font-mono text-xs text-zinc-500">
-                          {risk.external_id}
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          <div className="space-y-1">
-                            <span>{risk.description.length > 100
-                              ? risk.description.slice(0, 100) + '…'
-                              : risk.description}</span>
-                            <div>
-                              <SourceBadge
-                                source={risk.source}
-                                artifactName={risk.source_artifact_id ? (artifactMap.get(risk.source_artifact_id) ?? null) : null}
-                                discoverySource={risk.discovery_source}
-                              />
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={`text-xs ${badgeClass}`}>{sevKey}</Badge>
-                        </TableCell>
-                        <TableCell className="text-sm text-zinc-600">{risk.owner ?? '—'}</TableCell>
-                        <TableCell className="text-sm text-zinc-600">{risk.status ?? '—'}</TableCell>
-                        <TableCell className="text-sm text-zinc-500">{truncatedMitigation || '—'}</TableCell>
-                      </TableRow>
-                    }
-                  />
+                  <TableRow key={risk.id} className={highlight ? 'bg-orange-50' : ''}>
+                    <TableCell className="font-mono text-xs text-zinc-500">
+                      {risk.external_id}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      <div className="space-y-1">
+                        <span>{risk.description.length > 100
+                          ? risk.description.slice(0, 100) + '…'
+                          : risk.description}</span>
+                        <div>
+                          <SourceBadge
+                            source={risk.source}
+                            artifactName={risk.source_artifact_id ? (artifactMap.get(risk.source_artifact_id) ?? null) : null}
+                            discoverySource={risk.discovery_source}
+                          />
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <InlineSelectCell
+                        value={sevKey}
+                        options={SEVERITY_OPTIONS}
+                        onSave={async (v) => patchRisk(risk.id, { severity: v }, router)}
+                        className={`text-xs font-medium ${badgeClass} px-2 py-0.5 rounded-full`}
+                      />
+                    </TableCell>
+                    <TableCell className="text-sm text-zinc-600">
+                      <OwnerCell
+                        value={risk.owner}
+                        projectId={projectId}
+                        onSave={async (v) => patchRisk(risk.id, { owner: v }, router)}
+                      />
+                    </TableCell>
+                    <TableCell className="text-sm text-zinc-600">
+                      <InlineSelectCell
+                        value={normaliseRiskStatus(risk.status)}
+                        options={RISK_STATUS_OPTIONS}
+                        onSave={async (v) => patchRisk(risk.id, { status: v }, router)}
+                      />
+                    </TableCell>
+                    <TableCell className="text-sm text-zinc-500">
+                      <RiskEditModal
+                        risk={risk}
+                        trigger={
+                          <span className="cursor-pointer hover:bg-zinc-100 rounded px-1 py-0.5">
+                            {truncatedMitigation || 'Add mitigation…'}
+                          </span>
+                        }
+                      />
+                    </TableCell>
+                  </TableRow>
                 )
               })
             )}
