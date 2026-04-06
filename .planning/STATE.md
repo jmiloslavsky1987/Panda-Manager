@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v5.0
 milestone_name: — Workspace UX Overhaul
 status: executing
-stopped_at: Completed 37-04-PLAN.md
-last_updated: "2026-04-03T21:05:53.513Z"
-last_activity: "2026-04-03 — Completed 37-03: API endpoints (stakeholders GET, actions bulk-update, enum validation)"
+stopped_at: Completed 37-05-PLAN.md
+last_updated: "2026-04-06T15:22:19Z"
+last_activity: "2026-04-06 — Completed 37-05: Inline editing for Risks, Milestones, and Task Modal"
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 6
-  completed_plans: 4
-  percent: 50
+  completed_plans: 5
+  percent: 83
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 ## Current Position
 
 Phase: 37 of 41 (Actions & Inline Editing Foundation)
-Plan: 3 of 6 (API endpoints for inline editing complete)
+Plan: 5 of 6 (Inline editing for Risks, Milestones, and Task Modal complete)
 Status: Executing
-Last activity: 2026-04-03 — Completed 37-03: API endpoints (stakeholders GET, actions bulk-update, enum validation)
+Last activity: 2026-04-06 — Completed 37-05: Inline editing for Risks, Milestones, and Task Modal
 
-Progress: [█████░░░░░] 50% (Phase 37: 3/6 plans)
+Progress: [████████░░] 83% (Phase 37: 5/6 plans)
 
 ## Milestone History
 
@@ -44,7 +44,7 @@ Progress: [█████░░░░░] 50% (Phase 37: 3/6 plans)
 
 | Phase | Requirements | Status |
 |-------|-------------|--------|
-| 37. Actions & Inline Editing Foundation | ACTN-01–05, IEDIT-01–04, FORM-01–03, SRCH-03 | In progress (2/6 plans) |
+| 37. Actions & Inline Editing Foundation | ACTN-01–05, IEDIT-01–04, FORM-01–03, SRCH-03 | In progress (5/6 plans) |
 | 38. Gantt Overhaul | GNTT-01–04, PLAN-03 | Not started |
 | 39. Cross-Tab Sync & Plan Tab | SYNC-01–03, PLAN-01–02 | Not started |
 | 40. Search, Traceability & Skills UX | SRCH-01–02, ARTF-01, HIST-01, SKLS-01–02 | Not started |
@@ -61,6 +61,9 @@ Progress: [█████░░░░░] 50% (Phase 37: 3/6 plans)
 - [Phase 37, Plan 02]: CSS loaded via @import in globals.css — tested with Tailwind 4 PostCSS pipeline, no build errors (simpler than public/ workaround)
 - [Phase 37]: Validation error status code standardized to 400 across all API routes for consistency (previously mixed 400/422)
 - [Phase 37-04]: Client-side filtering pattern established for Actions table — Server Component passes full data, client filters in-memory using URL params
+- [Phase 37-05]: Converted risks and milestones pages from Server Components to Client Components for inline editing state management
+- [Phase 37-05]: Retained RiskEditModal and MilestoneEditModal for mitigation/notes fields only (not row wrappers)
+- [Phase 37-05]: DatePickerCell and OwnerCell in TaskEditModal update local form state only (API PATCH on form submit)
 
 ## Blockers/Concerns
 
