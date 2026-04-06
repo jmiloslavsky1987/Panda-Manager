@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   DndContext,
@@ -230,6 +230,11 @@ export function TaskBoard({ tasks: initialTasks, projectId }: TaskBoardProps) {
   const [tasks, setTasks] = useState<Task[]>(initialTasks)
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [activeId, setActiveId] = useState<number | null>(null)
+
+  // Sync local state when prop changes (after router.refresh())
+  useEffect(() => {
+    setTasks(initialTasks)
+  }, [initialTasks])
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
