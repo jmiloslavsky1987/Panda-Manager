@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useCallback } from 'react'
 import { Badge } from '../../../../components/ui/badge'
 import {
   Table,
@@ -57,7 +56,7 @@ function isUnresolved(status: string | null | undefined): boolean {
   return !['resolved', 'closed'].includes(s)
 }
 
-async function patchRisk(id: number, patch: Record<string, unknown>, router: ReturnType<typeof useRouter>) {
+async function patchRisk(id: number, patch: Record<string, unknown>, refresh: () => void) {
   const res = await fetch(`/api/risks/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
@@ -67,7 +66,7 @@ async function patchRisk(id: number, patch: Record<string, unknown>, router: Ret
     const error = await res.json().catch(() => ({ error: 'Save failed' }))
     throw new Error(error.error ?? 'Save failed')
   }
-  router.refresh()
+  refresh()
 }
 
 export default function RisksPage({
@@ -75,22 +74,30 @@ export default function RisksPage({
 }: {
   params: Promise<{ id: string }>
 }) {
-  const router = useRouter()
   const [data, setData] = useState<WorkspaceData | null>(null)
   const [projectId, setProjectId] = useState<number | null>(null)
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  const refresh = useCallback(() => setRefreshKey((k) => k + 1), [])
 
   useEffect(() => {
-    async function loadData() {
+    let cancelled = false
+    ;(async () => {
       const { id } = await params
       const parsedId = parseInt(id, 10)
-      setProjectId(parsedId)
-
-      const res = await fetch(`/api/workspace-data?project_id=${parsedId}`)
-      const result = await res.json()
-      setData(result)
-    }
-    loadData()
-  }, [params])
+      if (!cancelled) setProjectId(parsedId)
+      try {
+        const res = await fetch(`/api/workspace-data?project_id=${parsedId}`)
+        if (!res.ok) return
+        const result = await res.json()
+        if (!cancelled) setData(result)
+      } catch {
+        // stay in loading state — fetch failed
+      }
+    })()
+    return () => { cancelled = true }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshKey])
 
   if (!data || projectId === null) {
     return <div className="text-center py-8 text-zinc-400">Loading...</div>
@@ -159,7 +166,7 @@ export default function RisksPage({
                       <InlineSelectCell
                         value={sevKey}
                         options={SEVERITY_OPTIONS}
-                        onSave={async (v) => patchRisk(risk.id, { severity: v }, router)}
+                        onSave={async (v) => patchRisk(risk.id, { severity: v }, refresh)}
                         className={`text-xs font-medium ${badgeClass} px-2 py-0.5 rounded-full`}
                       />
                     </TableCell>
@@ -167,14 +174,14 @@ export default function RisksPage({
                       <OwnerCell
                         value={risk.owner}
                         projectId={projectId}
-                        onSave={async (v) => patchRisk(risk.id, { owner: v }, router)}
+                        onSave={async (v) => patchRisk(risk.id, { owner: v }, refresh)}
                       />
                     </TableCell>
                     <TableCell className="text-sm text-zinc-600">
                       <InlineSelectCell
                         value={normaliseRiskStatus(risk.status)}
                         options={RISK_STATUS_OPTIONS}
-                        onSave={async (v) => patchRisk(risk.id, { status: v }, router)}
+                        onSave={async (v) => patchRisk(risk.id, { status: v }, refresh)}
                       />
                     </TableCell>
                     <TableCell className="text-sm text-zinc-500">
