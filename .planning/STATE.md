@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v5.0
 milestone_name: — Workspace UX Overhaul
-status: completed
-stopped_at: Completed 38-01-PLAN.md
-last_updated: "2026-04-06T18:46:56.858Z"
-last_activity: "2026-04-06 — Completed 37-06: Human verification and bug fixes for Phase 37"
+status: executing
+stopped_at: Completed 38-02-PLAN.md
+last_updated: "2026-04-06T18:51:14.550Z"
+last_activity: "2026-04-06 — Completed 38-02: Gantt data contracts (getMilestonesForProject, GanttMilestone, milestones wiring)"
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 10
-  completed_plans: 7
-  percent: 100
+  completed_plans: 8
+  percent: 99
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 ## Current Position
 
 Phase: 38 of 41 (Gantt Overhaul)
-Plan: 1 of 4 (Phase 38 in progress - GNTT-04 test scaffold complete)
+Plan: 2 of 4
 Status: In Progress
-Last activity: 2026-04-06 — Completed 38-01: Wave 0 test scaffold for GNTT-04
+Last activity: 2026-04-06 — Completed 38-02: Gantt data contracts (getMilestonesForProject, GanttMilestone, milestones wiring)
 
-Progress: [██████████] 99% (Phase 38: 1/4 plans complete)
+Progress: [██████████] 99% (Phase 38: 2/4 plans complete)
 
 ## Milestone History
 
@@ -68,6 +68,9 @@ Progress: [██████████] 99% (Phase 38: 1/4 plans complete)
 - [Phase 37-06]: TaskEditModal uses key props to force component remount when form resets
 - [Phase 37-06]: TaskBoard syncs local state with prop changes to handle new tasks after creation
 - [Phase 38]: Test implementation already exists - PATCH route already supports start_date and due fields
+- [Phase 38]: getMilestonesForProject orders by created_at (insertion order), matching getTasksForProject pattern
+- [Phase 38]: GanttMilestone interface includes only fields needed by chart (id, name, date, status)
+- [Phase 38]: Default Gantt viewMode changed from Week to Month for project-scale timelines
 
 ## Blockers/Concerns
 
@@ -75,6 +78,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-06T18:46:56.856Z
-Stopped at: Completed 38-01-PLAN.md
+Last session: 2026-04-06T18:51:14.547Z
+Stopped at: Completed 38-02-PLAN.md
 Resume file: None

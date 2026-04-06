@@ -29,9 +29,9 @@
 
 ### Gantt Overhaul (GNTT)
 
-- [ ] **GNTT-01**: Gantt chart displays milestone target dates as labelled vertical markers on the timeline
-- [ ] **GNTT-02**: User can switch Gantt view mode between Day, Week, Month, and Quarter Year via a UI toggle
-- [ ] **GNTT-03**: Gantt chart groups tasks under their associated milestone in labelled swim lanes
+- [x] **GNTT-01**: Gantt chart displays milestone target dates as labelled vertical markers on the timeline
+- [x] **GNTT-02**: User can switch Gantt view mode between Day, Week, Month, and Quarter Year via a UI toggle
+- [x] **GNTT-03**: Gantt chart groups tasks under their associated milestone in labelled swim lanes
 - [x] **GNTT-04**: User can drag task bars on the Gantt to reschedule start and end dates, saving immediately to the DB
 
 ### Cross-Tab Data Sync (SYNC)
@@ -44,7 +44,7 @@
 
 - [ ] **PLAN-01**: Tasks with past-due dates are visually highlighted (red styling) on the Task Board and Phase Board, consistent with Actions overdue style
 - [ ] **PLAN-02**: Phase Board and Task Board multi-select checkboxes are wired to a bulk status update action (currently dead UI)
-- [ ] **PLAN-03**: Gantt view colour-codes or groups tasks by their associated milestone so milestone membership is visible on the timeline
+- [x] **PLAN-03**: Gantt view colour-codes or groups tasks by their associated milestone so milestone membership is visible on the timeline
 
 ### Global Search & Filtering (SRCH)
 
@@ -113,11 +113,11 @@
 | FORM-02 | Phase 37 | Complete |
 | FORM-03 | Phase 37 | Complete |
 | SRCH-03 | Phase 37 | Complete |
-| GNTT-01 | Phase 38 | Pending |
-| GNTT-02 | Phase 38 | Pending |
-| GNTT-03 | Phase 38 | Pending |
+| GNTT-01 | Phase 38 | Complete |
+| GNTT-02 | Phase 38 | Complete |
+| GNTT-03 | Phase 38 | Complete |
 | GNTT-04 | Phase 38 | Complete |
-| PLAN-03 | Phase 38 | Pending |
+| PLAN-03 | Phase 38 | Complete |
 | SYNC-01 | Phase 39 | Pending |
 | SYNC-02 | Phase 39 | Pending |
 | SYNC-03 | Phase 39 | Pending |
