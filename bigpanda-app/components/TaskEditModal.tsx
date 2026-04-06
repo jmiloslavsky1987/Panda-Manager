@@ -97,7 +97,7 @@ export function TaskEditModal({ task, projectId, trigger, onSaved }: TaskEditMod
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({ error: 'Request failed' }))
-        setError(body.error ?? 'Save failed')
+        setError(typeof body.error === 'string' ? body.error : 'Save failed')
         return
       }
 
@@ -171,13 +171,19 @@ export function TaskEditModal({ task, projectId, trigger, onSaved }: TaskEditMod
             {/* Phase */}
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">Phase</label>
-              <input
+              <select
                 name="phase"
                 value={form.phase}
                 onChange={handleChange}
                 className="w-full border border-zinc-300 rounded px-3 py-1.5 text-sm"
-                placeholder="Discovery, Build…"
-              />
+              >
+                <option value="">— select —</option>
+                <option value="Discovery">Discovery</option>
+                <option value="Design">Design</option>
+                <option value="Build">Build</option>
+                <option value="Test">Test</option>
+                <option value="Go-Live">Go-Live</option>
+              </select>
             </div>
           </div>
 

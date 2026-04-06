@@ -10,16 +10,16 @@ import { requireSession } from "@/lib/auth-server";
 
 const TaskPatchSchema = z.object({
   title: z.string().min(1).optional(),
-  description: z.string().optional(),
-  owner: z.string().optional(),
-  due: z.string().optional(),
-  priority: z.string().optional(),
-  type: z.string().optional(),
-  phase: z.string().optional(),
+  description: z.string().nullable().optional(),
+  owner: z.string().nullable().optional(),
+  due: z.string().nullable().optional(),
+  priority: z.string().nullable().optional(),
+  type: z.string().nullable().optional(),
+  phase: z.string().nullable().optional(),
   workstream_id: z.number().nullable().optional(),
   blocked_by: z.number().nullable().optional(),
   milestone_id: z.number().nullable().optional(),
-  start_date: z.string().optional(),
+  start_date: z.string().nullable().optional(),
   status: z.string().optional(),
   source: z.string().optional(),
 })
