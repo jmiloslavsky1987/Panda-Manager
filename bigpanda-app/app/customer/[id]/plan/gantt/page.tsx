@@ -15,8 +15,12 @@ function addDays(dateStr: string, days: number): string {
   return d.toISOString().split('T')[0]
 }
 
-function mapTasksToGantt(tasks: Awaited<ReturnType<typeof getTasksForProject>>): GanttTask[] {
+function mapTasksToGantt(
+  tasks: Awaited<ReturnType<typeof getTasksForProject>>,
+  milestoneList: GanttMilestone[]
+): GanttTask[] {
   const today = new Date().toISOString().split('T')[0]
+  const milestoneIndexMap = new Map(milestoneList.map((m, i) => [m.id, i]))
 
   return tasks
     .filter(task => task.due || task.start_date)  // only tasks with at least one date
@@ -36,10 +40,11 @@ function mapTasksToGantt(tasks: Awaited<ReturnType<typeof getTasksForProject>>):
       // blocked_by is a single integer FK — convert to string
       const dependencies = task.blocked_by ? String(task.blocked_by) : ''
 
-      // custom_class for color coding by priority
-      const customClass =
-        task.priority === 'high' ? 'gantt-high-priority' :
-        task.priority === 'low' ? 'gantt-low-priority' : ''
+      // custom_class: encode milestone + priority info
+      const msIndex = task.milestone_id ? milestoneIndexMap.get(task.milestone_id) : undefined
+      const msClass = msIndex !== undefined ? `gantt-ms-${task.milestone_id} gantt-milestone-${msIndex % 6}` : ''
+      const priorityClass = task.priority === 'high' ? 'gantt-high-priority' : task.priority === 'low' ? 'gantt-low-priority' : ''
+      const customClass = [msClass, priorityClass].filter(Boolean).join(' ')
 
       return {
         id: String(task.id),
@@ -48,7 +53,7 @@ function mapTasksToGantt(tasks: Awaited<ReturnType<typeof getTasksForProject>>):
         end: safeEnd,
         progress,
         dependencies,
-        custom_class: customClass,
+        custom_class: customClass || undefined,
       }
     })
 }
@@ -79,7 +84,7 @@ export default async function GanttPage({
   } catch {
     // DB not available — render empty gantt
   }
-  const ganttTasks = mapTasksToGantt(tasks)
+  const ganttTasks = mapTasksToGantt(tasks, milestones)
 
   return (
     <div className="p-4">
