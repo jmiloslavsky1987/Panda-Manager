@@ -1,6 +1,6 @@
-import { getTasksForProject } from '@/lib/queries'
+import { getTasksForProject, getMilestonesForProject } from '@/lib/queries'
 import GanttChart from '@/components/GanttChart'
-import type { GanttTask } from '@/components/GanttChart'
+import type { GanttTask, GanttMilestone } from '@/components/GanttChart'
 
 function toGanttDate(dateStr: string | null, fallback: string): string {
   if (!dateStr) return fallback
@@ -62,8 +62,20 @@ export default async function GanttPage({
   const projectId = parseInt(id)
 
   let tasks: Awaited<ReturnType<typeof getTasksForProject>> = []
+  let milestones: GanttMilestone[] = []
   try {
-    tasks = await getTasksForProject(projectId)
+    const [tasksData, milestonesData] = await Promise.all([
+      getTasksForProject(projectId),
+      getMilestonesForProject(projectId),
+    ])
+    tasks = tasksData
+    // Map Milestone to GanttMilestone (only the fields GanttChart needs)
+    milestones = milestonesData.map(m => ({
+      id: m.id,
+      name: m.name,
+      date: m.date,
+      status: m.status,
+    }))
   } catch {
     // DB not available — render empty gantt
   }
@@ -77,7 +89,7 @@ export default async function GanttPage({
       </div>
       {/* gantt-container wraps GanttChart (ssr:false) — div is server-rendered so test can find it */}
       <div data-testid="gantt-container" className="overflow-x-auto">
-        <GanttChart tasks={ganttTasks} viewMode="Week" />
+        <GanttChart tasks={ganttTasks} viewMode="Month" milestones={milestones} />
       </div>
     </div>
   )

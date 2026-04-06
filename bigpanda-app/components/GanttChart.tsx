@@ -11,12 +11,20 @@ export interface GanttTask {
   custom_class?: string
 }
 
+export interface GanttMilestone {
+  id: number
+  name: string
+  date: string | null   // raw value from DB — may be ISO, 'TBD', '2026-Q3', or null
+  status: string | null
+}
+
 interface GanttChartProps {
   tasks: GanttTask[]
   viewMode?: 'Day' | 'Week' | 'Month' | 'Quarter Year'
+  milestones?: GanttMilestone[]   // passed from page; used in Plans 38-03 and 38-04
 }
 
-export default function GanttChart({ tasks, viewMode = 'Week' }: GanttChartProps) {
+export default function GanttChart({ tasks, viewMode = 'Week', milestones = [] }: GanttChartProps) {
   const svgRef = useRef<SVGSVGElement>(null)
   const ganttRef = useRef<unknown>(null)
 
