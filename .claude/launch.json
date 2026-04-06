@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "bigpanda-app",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "next-dev", "--prefix", "bigpanda-app"],
+      "port": 3000
+    }
+  ]
+}

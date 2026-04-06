@@ -1,0 +1,467 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - complementary [ref=e2]:
+    - generic [ref=e3]: BigPanda PS
+    - navigation [ref=e4]:
+      - link "Dashboard" [ref=e6] [cursor=pointer]:
+        - /url: /
+      - generic [ref=e7]: Projects
+      - list [ref=e8]:
+        - listitem [ref=e9]:
+          - link "red status KAISER" [ref=e10] [cursor=pointer]:
+            - /url: /customer/2/overview
+            - generic "red status" [ref=e11]
+            - paragraph [ref=e13]: KAISER
+        - listitem [ref=e14]:
+          - link "red status MERCK" [ref=e15] [cursor=pointer]:
+            - /url: /customer/3/overview
+            - generic "red status" [ref=e16]
+            - paragraph [ref=e18]: MERCK
+        - listitem [ref=e19]:
+          - 'link "red status AMEX Go-live: TBD" [ref=e20] [cursor=pointer]':
+            - /url: /customer/1/overview
+            - generic "red status" [ref=e21]
+            - generic [ref=e22]:
+              - paragraph [ref=e23]: AMEX
+              - paragraph [ref=e24]: "Go-live: TBD"
+      - generic [ref=e25]:
+        - link "Knowledge Base" [ref=e26] [cursor=pointer]:
+          - /url: /knowledge-base
+          - img [ref=e27]
+          - text: Knowledge Base
+        - link "Outputs" [ref=e29] [cursor=pointer]:
+          - /url: /outputs
+          - img [ref=e30]
+          - text: Outputs
+        - link "Settings" [ref=e32] [cursor=pointer]:
+          - /url: /settings
+          - img [ref=e33]
+          - text: Settings
+  - main [ref=e36]:
+    - textbox "Search all projects..." [ref=e38]
+    - generic [ref=e39]:
+      - generic [ref=e41]:
+        - heading "AMEX" [level=1] [ref=e42]
+        - generic [ref=e43]: Critical
+        - generic [ref=e44]: "Go-live: TBD"
+      - navigation [ref=e45]:
+        - generic [ref=e46]:
+          - link "Overview" [ref=e47] [cursor=pointer]:
+            - /url: /customer/1/overview
+          - link "Actions" [ref=e48] [cursor=pointer]:
+            - /url: /customer/1/actions
+          - link "Risks" [ref=e49] [cursor=pointer]:
+            - /url: /customer/1/risks
+          - link "Milestones" [ref=e50] [cursor=pointer]:
+            - /url: /customer/1/milestones
+          - link "Teams" [ref=e51] [cursor=pointer]:
+            - /url: /customer/1/teams
+          - link "Architecture" [ref=e52] [cursor=pointer]:
+            - /url: /customer/1/architecture
+          - link "Decisions" [ref=e53] [cursor=pointer]:
+            - /url: /customer/1/decisions
+          - link "Engagement History" [ref=e54] [cursor=pointer]:
+            - /url: /customer/1/history
+          - link "Stakeholders" [ref=e55] [cursor=pointer]:
+            - /url: /customer/1/stakeholders
+          - link "Plan" [ref=e56] [cursor=pointer]:
+            - /url: /customer/1/plan
+          - link "Skills" [ref=e57] [cursor=pointer]:
+            - /url: /customer/1/skills
+          - link "Time" [ref=e58] [cursor=pointer]:
+            - /url: /customer/1/time
+          - link "Artifacts" [ref=e59] [cursor=pointer]:
+            - /url: /customer/1/artifacts
+      - generic [ref=e61]:
+        - navigation [ref=e62]:
+          - link "Phase Board" [ref=e63] [cursor=pointer]:
+            - /url: /customer/1/plan/board
+          - link "Task Board" [ref=e64] [cursor=pointer]:
+            - /url: /customer/1/plan/tasks
+          - link "Gantt" [ref=e65] [cursor=pointer]:
+            - /url: /customer/1/plan/gantt
+          - link "Swimlane" [ref=e66] [cursor=pointer]:
+            - /url: /customer/1/plan/swimlane
+        - generic [ref=e67]:
+          - generic [ref=e68]:
+            - button "Sprint Summary 3/24/2026" [ref=e69]:
+              - img [ref=e70]
+              - text: Sprint Summary
+              - generic [ref=e72]: 3/24/2026
+            - button "Refresh" [ref=e73]:
+              - img [ref=e74]
+              - text: Refresh
+          - paragraph [ref=e80]: "# PA 3.0 Implementation — Weekly Sprint Summary **Week of March 17–24, 2026 | Customer: AMEX | Status: Yellow** --- **Last Week's Completions** Biggy went live in production (M-AMEX-008), and Loyalty's 4th batch of workgroups reached production (M-AMEX-007). The MC/GPN/Banking/Lumi/Cornerstone kick-off completed on 3/13 (M-AMEX-009). Global Remittance UAT is underway with a 3/26 cutover target. During the 3/17 Loyalty correlation validation session, Karthik Chekuri and Dario Teodori reviewed initial patterns, with Aaron Tran confirming the first two Loyalty Account Manager correlations as valid. Randall Hinds demoed ServiceNow E2 ticket creation. Merchant onboarding is actively progressing. **This Week's Priorities** 1. **Global Remittance UAT cutover** (target 3/26) — Mubasher Mehnaz Begum to complete A-AMEX-309/310 GR mapping and coordinate support via Kiran's contacts. 2. **Loyalty correlation validation** — Karthik Chekuri to continue reviewing higher-volume correlations (A-AMEX-334); Dario Teodori to validate test cases in the Loyalty environment (A-AMEX-328). 3. **CI data quality remediation** — Aaron Tran to review the 90-day CI list (A-AMEX-287); Sai Rashmi Akula to follow up with Laura on the CI gap report (A-AMEX-267). 4. **ITSM automation alignment** — Gratian Sequeira and Uttam Sonale to progress automation exclusion logic (A-AMEX-266/285) ahead of correlation production enablement. 5. **Dynatrace production promotion** — Midhun Raja/Chakravarthy to resolve QA-to-production connectivity and token refresh (A-AMEX-274/320), now overdue since 3/13. **At-Risk Items** Three production blockers remain unresolved: operational validation, ITSM automation alignment, and CI data quality. Correlation changes are on hold pending Mubasher's return, stalling Banking OneData pipeline review (A-AMEX-305/306) and GR dependency mapping. A-AMEX-274 (Dynatrace production move) is overdue since 3/13. Nathalie Pacheco's access gap to the Loyalty correlation UAT environment (R-AMEX-054) is blocking her validation participation. The 30-minute correlation time-window tuning (R-AMEX-053) and Grafana connection reset errors (R-AMEX-056) remain unresolved with no confirmed timelines. A-AMEX-262 (ITSM correlation tagging) missed its 3/18 due date and has no updated owner action confirmed."
+        - generic [ref=e82]:
+          - generic [ref=e83]:
+            - button "+ Add Task" [ref=e84]
+            - generic [ref=e85]: 39 tasks
+          - generic [ref=e86]:
+            - generic [ref=e87]:
+              - generic [ref=e88]:
+                - heading "To Do" [level=3] [ref=e89]
+                - generic [ref=e90]: "38"
+              - generic [ref=e91]:
+                - generic [ref=e92]:
+                  - generic [ref=e93]:
+                    - checkbox [checked] [active] [ref=e94]
+                    - button "E2E Task 1774385349940" [ref=e95]:
+                      - paragraph [ref=e96]: E2E Task 1774385349940
+                  - button "Edit" [ref=e98]
+                - generic [ref=e99]:
+                  - generic [ref=e100]:
+                    - checkbox [ref=e101]
+                    - button "Remediate Nathalie Pacheco's access to Loyalty correlation UAT environment" [ref=e102]:
+                      - paragraph [ref=e103]: Remediate Nathalie Pacheco's access to Loyalty correlation UAT environment
+                  - generic [ref=e104]:
+                    - generic [ref=e105]: 2026-03-26
+                    - generic [ref=e106]: high
+                  - button "Edit" [ref=e108]
+                - generic [ref=e109]:
+                  - generic [ref=e110]:
+                    - checkbox [ref=e111]
+                    - button "Resolve cross-org sharing method for correlation validation spreadsheet" [ref=e112]:
+                      - paragraph [ref=e113]: Resolve cross-org sharing method for correlation validation spreadsheet
+                  - generic [ref=e114]:
+                    - generic [ref=e115]: 2026-03-26
+                    - generic [ref=e116]: high
+                  - button "Edit" [ref=e118]
+                - generic [ref=e119]:
+                  - generic [ref=e120]:
+                    - checkbox [ref=e121]
+                    - button "Update correlation validation spreadsheet with Loyalty session findings" [ref=e122]:
+                      - paragraph [ref=e123]: Update correlation validation spreadsheet with Loyalty session findings
+                  - generic [ref=e124]:
+                    - generic [ref=e125]: 2026-03-26
+                    - generic [ref=e126]: high
+                  - button "Edit" [ref=e128]
+                - generic [ref=e129]:
+                  - generic [ref=e130]:
+                    - checkbox [ref=e131]
+                    - button "Continue UAT review of higher-volume Loyalty correlations" [ref=e132]:
+                      - paragraph [ref=e133]: Continue UAT review of higher-volume Loyalty correlations
+                  - generic [ref=e134]:
+                    - generic [ref=e135]: 2026-03-28
+                    - generic [ref=e136]: high
+                  - button "Edit" [ref=e138]
+                - generic [ref=e139]:
+                  - generic [ref=e140]:
+                    - checkbox [ref=e141]
+                    - button "Move Dynatrace connectivity from QA to production and refresh token" [ref=e142]:
+                      - paragraph [ref=e143]: Move Dynatrace connectivity from QA to production and refresh token
+                  - generic [ref=e144]:
+                    - generic [ref=e145]: 2026-03-26
+                    - generic [ref=e146]: high
+                  - button "Edit" [ref=e148]
+                - generic [ref=e149]:
+                  - generic [ref=e150]:
+                    - checkbox [ref=e151]
+                    - button "Follow up with Dynatrace team to confirm production enablement requirements" [ref=e152]:
+                      - paragraph [ref=e153]: Follow up with Dynatrace team to confirm production enablement requirements
+                  - generic [ref=e154]:
+                    - generic [ref=e155]: 2026-03-26
+                    - generic [ref=e156]: high
+                  - button "Edit" [ref=e158]
+                - generic [ref=e159]:
+                  - generic [ref=e160]:
+                    - checkbox [ref=e161]
+                    - button "Push BigPanda correlation tags into ServiceNow for downstream automation triggering" [ref=e162]:
+                      - paragraph [ref=e163]: Push BigPanda correlation tags into ServiceNow for downstream automation triggering
+                  - generic [ref=e164]:
+                    - generic [ref=e165]: 2026-03-26
+                    - generic [ref=e166]: high
+                  - button "Edit" [ref=e168]
+                - generic [ref=e169]:
+                  - generic [ref=e170]:
+                    - checkbox [ref=e171]
+                    - button "Implement automation exclusion logic for correlated incidents in ServiceNow" [ref=e172]:
+                      - paragraph [ref=e173]: Implement automation exclusion logic for correlated incidents in ServiceNow
+                  - generic [ref=e174]:
+                    - generic [ref=e175]: 2026-03-28
+                    - generic [ref=e176]: high
+                  - button "Edit" [ref=e178]
+                - generic [ref=e179]:
+                  - generic [ref=e180]:
+                    - checkbox [ref=e181]
+                    - button "Implement interim alert-count-in-description fallback for correlated incident detection" [ref=e182]:
+                      - paragraph [ref=e183]: Implement interim alert-count-in-description fallback for correlated incident detection
+                  - generic [ref=e184]:
+                    - generic [ref=e185]: 2026-03-28
+                    - generic [ref=e186]: high
+                  - button "Edit" [ref=e188]
+                - generic [ref=e189]:
+                  - generic [ref=e190]:
+                    - checkbox [ref=e191]
+                    - button "Create and share Loyalty correlation findings validation document" [ref=e192]:
+                      - paragraph [ref=e193]: Create and share Loyalty correlation findings validation document
+                  - generic [ref=e194]:
+                    - generic [ref=e195]: 2026-03-26
+                    - generic [ref=e196]: high
+                  - button "Edit" [ref=e198]
+                - generic [ref=e199]:
+                  - generic [ref=e200]:
+                    - checkbox [ref=e201]
+                    - button "Follow up with Laura on Loyalty CI gap report review and owner assignment" [ref=e202]:
+                      - paragraph [ref=e203]: Follow up with Laura on Loyalty CI gap report review and owner assignment
+                  - generic [ref=e204]:
+                    - generic [ref=e205]: 2026-03-26
+                    - generic [ref=e206]: high
+                  - button "Edit" [ref=e208]
+                - generic [ref=e209]:
+                  - generic [ref=e210]:
+                    - checkbox [ref=e211]
+                    - button "Review 90-day impacted CI list for data cleanliness and coordinate remediation" [ref=e212]:
+                      - paragraph [ref=e213]: Review 90-day impacted CI list for data cleanliness and coordinate remediation
+                  - generic [ref=e214]:
+                    - generic [ref=e215]: 2026-03-28
+                    - generic [ref=e216]: high
+                  - button "Edit" [ref=e218]
+                - generic [ref=e219]:
+                  - generic [ref=e220]:
+                    - checkbox [ref=e221]
+                    - button "Evaluate and tune 30-minute correlation time window for Loyalty alert bursts" [ref=e222]:
+                      - paragraph [ref=e223]: Evaluate and tune 30-minute correlation time window for Loyalty alert bursts
+                  - generic [ref=e224]:
+                    - generic [ref=e225]: 2026-03-28
+                    - generic [ref=e226]: high
+                  - button "Edit" [ref=e228]
+                - generic [ref=e229]:
+                  - generic [ref=e230]:
+                    - checkbox [ref=e231]
+                    - button "Update correlation patterns in Soft Launch following Mubasher's return" [ref=e232]:
+                      - paragraph [ref=e233]: Update correlation patterns in Soft Launch following Mubasher's return
+                  - generic [ref=e234]:
+                    - generic [ref=e235]: 2026-03-31
+                    - generic [ref=e236]: high
+                  - button "Edit" [ref=e238]
+                - generic [ref=e239]:
+                  - generic [ref=e240]:
+                    - checkbox [ref=e241]
+                    - button "Confirm Biggy MAU credit rules for automated channel-triggered invocations" [ref=e242]:
+                      - paragraph [ref=e243]: Confirm Biggy MAU credit rules for automated channel-triggered invocations
+                  - generic [ref=e244]:
+                    - generic [ref=e245]: 2026-03-26
+                    - generic [ref=e246]: high
+                  - button "Edit" [ref=e248]
+                - generic [ref=e249]:
+                  - generic [ref=e250]:
+                    - checkbox [ref=e251]
+                    - button "Validate Change Risk Assessment dashboard coverage across all change types" [ref=e252]:
+                      - paragraph [ref=e253]: Validate Change Risk Assessment dashboard coverage across all change types
+                  - generic [ref=e254]:
+                    - generic [ref=e255]: 2026-03-26
+                    - generic [ref=e256]: high
+                  - button "Edit" [ref=e258]
+                - generic [ref=e259]:
+                  - generic [ref=e260]:
+                    - checkbox [ref=e261]
+                    - button "Investigate and resolve Grafana Remote Connection Agent reset errors" [ref=e262]:
+                      - paragraph [ref=e263]: Investigate and resolve Grafana Remote Connection Agent reset errors
+                  - generic [ref=e264]:
+                    - generic [ref=e265]: 2026-03-28
+                    - generic [ref=e266]: high
+                  - button "Edit" [ref=e268]
+                - generic [ref=e269]:
+                  - generic [ref=e270]:
+                    - checkbox [ref=e271]
+                    - button "Create restricted Biggy role to prevent uncontrolled auto-provisioning of AMEX users" [ref=e272]:
+                      - paragraph [ref=e273]: Create restricted Biggy role to prevent uncontrolled auto-provisioning of AMEX users
+                  - generic [ref=e274]:
+                    - generic [ref=e275]: 2026-03-26
+                    - generic [ref=e276]: high
+                  - button "Edit" [ref=e278]
+                - generic [ref=e279]:
+                  - generic [ref=e280]:
+                    - checkbox [ref=e281]
+                    - button "Review and fix splitter/pipeline configuration for Banking OneData ingestion" [ref=e282]:
+                      - paragraph [ref=e283]: Review and fix splitter/pipeline configuration for Banking OneData ingestion
+                  - generic [ref=e284]:
+                    - generic [ref=e285]: 2026-03-28
+                    - generic [ref=e286]: high
+                  - button "Edit" [ref=e288]
+                - generic [ref=e289]:
+                  - generic [ref=e290]:
+                    - checkbox [ref=e291]
+                    - button "Create dedicated BigPanda environment for Banking/OneData visibility" [ref=e292]:
+                      - paragraph [ref=e293]: Create dedicated BigPanda environment for Banking/OneData visibility
+                  - generic [ref=e294]:
+                    - generic [ref=e295]: 2026-03-31
+                    - generic [ref=e296]: high
+                  - button "Edit" [ref=e298]
+                - generic [ref=e299]:
+                  - generic [ref=e300]:
+                    - checkbox [ref=e301]
+                    - button "Share CAR ID/domain mapping materials with Goran Simic for review" [ref=e302]:
+                      - paragraph [ref=e303]: Share CAR ID/domain mapping materials with Goran Simic for review
+                  - generic [ref=e304]:
+                    - generic [ref=e305]: 2026-03-26
+                    - generic [ref=e306]: medium
+                  - button "Edit" [ref=e308]
+                - generic [ref=e309]:
+                  - generic [ref=e310]:
+                    - checkbox [ref=e311]
+                    - button "Share dependency mapping script with Global Remittance team and run with Dario" [ref=e312]:
+                      - paragraph [ref=e313]: Share dependency mapping script with Global Remittance team and run with Dario
+                  - generic [ref=e314]:
+                    - generic [ref=e315]: 2026-03-26
+                    - generic [ref=e316]: high
+                  - button "Edit" [ref=e318]
+                - generic [ref=e319]:
+                  - generic [ref=e320]:
+                    - checkbox [ref=e321]
+                    - button "Coordinate Global Remittance domain mapping and UAT support using Kiran's contacts" [ref=e322]:
+                      - paragraph [ref=e323]: Coordinate Global Remittance domain mapping and UAT support using Kiran's contacts
+                  - generic [ref=e324]:
+                    - generic [ref=e325]: 2026-03-26
+                    - generic [ref=e326]: high
+                  - button "Edit" [ref=e328]
+                - generic [ref=e329]:
+                  - generic [ref=e330]:
+                    - checkbox [ref=e331]
+                    - button "Fix bp_description parsing to retain decimals for function availability" [ref=e332]:
+                      - paragraph [ref=e333]: Fix bp_description parsing to retain decimals for function availability
+                  - generic [ref=e334]:
+                    - generic [ref=e335]: 2026-03-28
+                    - generic [ref=e336]: high
+                  - button "Edit" [ref=e338]
+                - generic [ref=e339]:
+                  - generic [ref=e340]:
+                    - checkbox [ref=e341]
+                    - button "Investigate and resolve auto-resolve/auto-closure timing inconsistencies" [ref=e342]:
+                      - paragraph [ref=e343]: Investigate and resolve auto-resolve/auto-closure timing inconsistencies
+                  - generic [ref=e344]:
+                    - generic [ref=e345]: 2026-03-28
+                    - generic [ref=e346]: high
+                  - button "Edit" [ref=e348]
+                - generic [ref=e349]:
+                  - generic [ref=e350]:
+                    - checkbox [ref=e351]
+                    - button "Align with Loyalty team on initial deep-triage Biggy workflow design" [ref=e352]:
+                      - paragraph [ref=e353]: Align with Loyalty team on initial deep-triage Biggy workflow design
+                  - generic [ref=e354]:
+                    - generic [ref=e355]: 2026-03-31
+                    - generic [ref=e356]: high
+                  - button "Edit" [ref=e358]
+                - generic [ref=e359]:
+                  - generic [ref=e360]:
+                    - checkbox [ref=e361]
+                    - button "Provide Splunk island map (~8 islands) to enable Biggy query routing design" [ref=e362]:
+                      - paragraph [ref=e363]: Provide Splunk island map (~8 islands) to enable Biggy query routing design
+                  - generic [ref=e364]:
+                    - generic [ref=e365]: 2026-03-28
+                    - generic [ref=e366]: high
+                  - button "Edit" [ref=e368]
+                - generic [ref=e369]:
+                  - generic [ref=e370]:
+                    - checkbox [ref=e371]
+                    - button "Clarify pilot test-user groups and contractual 50-user MAU limit alignment" [ref=e372]:
+                      - paragraph [ref=e373]: Clarify pilot test-user groups and contractual 50-user MAU limit alignment
+                  - generic [ref=e374]:
+                    - generic [ref=e375]: 2026-03-28
+                    - generic [ref=e376]: medium
+                  - button "Edit" [ref=e378]
+                - generic [ref=e379]:
+                  - generic [ref=e380]:
+                    - checkbox [ref=e381]
+                    - button "Raise AIA summary pass-through concern with Nathan and validate in Soft Launch" [ref=e382]:
+                      - paragraph [ref=e383]: Raise AIA summary pass-through concern with Nathan and validate in Soft Launch
+                  - generic [ref=e384]:
+                    - generic [ref=e385]: 2026-03-28
+                    - generic [ref=e386]: medium
+                  - button "Edit" [ref=e388]
+                - generic [ref=e389]:
+                  - generic [ref=e390]:
+                    - checkbox [ref=e391]
+                    - button "Investigate incident tag updates not appearing in BigPanda Production Activity feed" [ref=e392]:
+                      - paragraph [ref=e393]: Investigate incident tag updates not appearing in BigPanda Production Activity feed
+                  - generic [ref=e394]:
+                    - generic [ref=e395]: 2026-03-31
+                    - generic [ref=e396]: medium
+                  - button "Edit" [ref=e398]
+                - generic [ref=e399]:
+                  - generic [ref=e400]:
+                    - checkbox [ref=e401]
+                    - button "Re-test Cornerstone correlation in Soft Launch with impacted CI qualifier" [ref=e402]:
+                      - paragraph [ref=e403]: Re-test Cornerstone correlation in Soft Launch with impacted CI qualifier
+                  - generic [ref=e404]:
+                    - generic [ref=e405]: 2026-03-31
+                    - generic [ref=e406]: medium
+                  - button "Edit" [ref=e408]
+                - generic [ref=e409]:
+                  - generic [ref=e410]:
+                    - checkbox [ref=e411]
+                    - button "Audit BigPanda service account membership across all required ServiceNow assignment groups" [ref=e412]:
+                      - paragraph [ref=e413]: Audit BigPanda service account membership across all required ServiceNow assignment groups
+                  - generic [ref=e414]:
+                    - generic [ref=e415]: 2026-03-28
+                    - generic [ref=e416]: high
+                  - button "Edit" [ref=e418]
+                - generic [ref=e419]:
+                  - generic [ref=e420]:
+                    - checkbox [ref=e421]
+                    - button "E2E Task 1774453549398" [ref=e422]:
+                      - paragraph [ref=e423]: E2E Task 1774453549398
+                  - button "Edit" [ref=e425]
+                - generic [ref=e426]:
+                  - generic [ref=e427]:
+                    - checkbox [ref=e428]
+                    - button "E2E Task 1774453606929" [ref=e429]:
+                      - paragraph [ref=e430]: E2E Task 1774453606929
+                  - button "Edit" [ref=e432]
+                - generic [ref=e433]:
+                  - generic [ref=e434]:
+                    - checkbox [ref=e435]
+                    - button "E2E Task 1774455029383" [ref=e436]:
+                      - paragraph [ref=e437]: E2E Task 1774455029383
+                  - button "Edit" [ref=e439]
+                - generic [ref=e440]:
+                  - generic [ref=e441]:
+                    - checkbox [ref=e442]
+                    - button "E2E Task 1774468354703" [ref=e443]:
+                      - paragraph [ref=e444]: E2E Task 1774468354703
+                  - button "Edit" [ref=e446]
+                - generic [ref=e447]:
+                  - generic [ref=e448]:
+                    - checkbox [ref=e449]
+                    - button "E2E Task 1774474560564" [ref=e450]:
+                      - paragraph [ref=e451]: E2E Task 1774474560564
+                  - button "Edit" [ref=e453]
+            - generic [ref=e454]:
+              - generic [ref=e455]:
+                - heading "In Progress" [level=3] [ref=e456]
+                - generic [ref=e457]: "0"
+              - paragraph [ref=e459]: No tasks
+            - generic [ref=e460]:
+              - generic [ref=e461]:
+                - heading "Blocked" [level=3] [ref=e462]
+                - generic [ref=e463]: "0"
+              - paragraph [ref=e465]: No tasks
+            - generic [ref=e466]:
+              - generic [ref=e467]:
+                - heading "Done" [level=3] [ref=e468]
+                - generic [ref=e469]: "1"
+              - generic [ref=e471]:
+                - generic [ref=e472]:
+                  - checkbox [ref=e473]
+                  - button "Configure BigPanda integration" [ref=e474]:
+                    - paragraph [ref=e475]: Configure BigPanda integration
+                - generic [ref=e477]: 2026-04-30
+                - button "Edit" [ref=e479]
+          - status [ref=e480]
+      - button "+ Add Notes" [ref=e481]
+  - region "Notifications alt+T"
+  - generic [ref=e486] [cursor=pointer]:
+    - button "Open Next.js Dev Tools" [ref=e487]:
+      - img [ref=e488]
+    - generic [ref=e491]:
+      - button "Open issues overlay" [ref=e492]:
+        - generic [ref=e493]:
+          - generic [ref=e494]: "0"
+          - generic [ref=e495]: "1"
+        - generic [ref=e496]: Issue
+      - button "Collapse issues badge" [ref=e497]:
+        - img [ref=e498]
+  - alert [ref=e500]
+```

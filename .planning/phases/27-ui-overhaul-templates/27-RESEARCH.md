@@ -405,7 +405,7 @@ export async function seedProjectFromRegistry(projectId: number) {
 
 **Idempotency:** Check if seeding already occurred (e.g., flag in projects table: `seeded: boolean`) to prevent duplicate placeholder rows if PATCH is called multiple times.
 
-**Placeholder identification:** Set `source: 'template'` so users can distinguish instructional placeholders from real data. Phase 30 completeness analysis must count placeholder rows as partial credit, not full credit.
+**Placeholder identification:** Set `source: 'template'` so users can distinguish instructional placeholders from real data. Phase 30 completeness analysis must **exclude** rows where `source='template'` — placeholder rows count as **zero credit** toward completeness score.
 
 ## Don't Hand-Roll
 
@@ -654,20 +654,22 @@ function getTemplate(tab: TabType): TabTemplate {
 
 ## Open Questions
 
-1. **Completeness score impact of placeholder rows**
-   - What we know: Phase 22 completeness logic counts rows in 9 tables; empty tables = lower score
-   - What's unclear: Should placeholder rows (source='template') count as partial credit (50%?) or zero credit?
-   - Recommendation: Count as 25% credit per table — encourages users to replace with real data but shows non-zero progress
+All questions resolved by user (2026-03-31).
 
-2. **Section structure for Plan tab**
-   - What we know: Plan has internal navigation (Phase Board/Task Board/Gantt/Swimlane); Business Outcomes table exists in DB
-   - What's unclear: Does Plan tab need a template registry entry if its content is already structured (phases/tasks)?
-   - Recommendation: Yes — registry entry defines "Business Outcomes" section; placeholder = 1 business outcome row with instructional text
+1. **Completeness score impact of placeholder rows** — **RESOLVED: Zero credit**
+   - Placeholder rows (source='template') count as **zero** toward completeness score
+   - Completeness logic must filter out rows where `source='template'` before calculating score
+   - Impact: new projects start at 0% completeness until users replace placeholders with real data
 
-3. **Skills tab structure**
-   - What we know: Skills tab renders SkillRunsList (job execution history); no editable sections
-   - What's unclear: What placeholder content makes sense for a read-only execution log?
-   - Recommendation: Registry entry with empty sections array; seeding logic skips (no DB writes for Skills)
+2. **Section structure for Plan tab** — **RESOLVED: Yes, needs registry entry**
+   - Plan tab requires a template registry entry
+   - Registry defines "Business Outcomes" section; seeding inserts 1 placeholder business outcome row
+   - Plan's internal navigation (Phase Board / Task Board / Gantt / Swimlane) is unaffected
+
+3. **Skills tab structure** — **RESOLVED: Skip seeding, include registry entry**
+   - Skills tab is read-only (execution log); seeding writes nothing to DB
+   - Registry entry exists (empty sections array) for compile-time exhaustiveness
+   - `seedProjectFromRegistry` skips Skills tab explicitly (no DB writes)
 
 ## Validation Architecture
 

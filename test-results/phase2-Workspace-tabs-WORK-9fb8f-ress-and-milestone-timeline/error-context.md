@@ -1,0 +1,203 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - complementary [ref=e2]:
+    - generic [ref=e3]: BigPanda PS
+    - navigation [ref=e4]:
+      - link "Dashboard" [ref=e6] [cursor=pointer]:
+        - /url: /
+      - generic [ref=e7]: Projects
+      - list [ref=e8]:
+        - listitem [ref=e9]:
+          - link "red status KAISER" [ref=e10] [cursor=pointer]:
+            - /url: /customer/2/overview
+            - generic "red status" [ref=e11]
+            - paragraph [ref=e13]: KAISER
+        - listitem [ref=e14]:
+          - link "red status MERCK" [ref=e15] [cursor=pointer]:
+            - /url: /customer/3/overview
+            - generic "red status" [ref=e16]
+            - paragraph [ref=e18]: MERCK
+        - listitem [ref=e19]:
+          - 'link "red status AMEX Go-live: TBD" [ref=e20] [cursor=pointer]':
+            - /url: /customer/1/overview
+            - generic "red status" [ref=e21]
+            - generic [ref=e22]:
+              - paragraph [ref=e23]: AMEX
+              - paragraph [ref=e24]: "Go-live: TBD"
+      - generic [ref=e25]:
+        - link "Knowledge Base" [ref=e26] [cursor=pointer]:
+          - /url: /knowledge-base
+          - img [ref=e27]
+          - text: Knowledge Base
+        - link "Outputs" [ref=e29] [cursor=pointer]:
+          - /url: /outputs
+          - img [ref=e30]
+          - text: Outputs
+        - link "Settings" [ref=e32] [cursor=pointer]:
+          - /url: /settings
+          - img [ref=e33]
+          - text: Settings
+  - main [ref=e36]:
+    - textbox "Search all projects..." [ref=e38]
+    - generic [ref=e39]:
+      - generic [ref=e41]:
+        - heading "AMEX" [level=1] [ref=e42]
+        - generic [ref=e43]: Critical
+        - generic [ref=e44]: "Go-live: TBD"
+      - navigation [ref=e45]:
+        - generic [ref=e46]:
+          - link "Overview" [ref=e47] [cursor=pointer]:
+            - /url: /customer/1/overview
+          - link "Actions" [ref=e48] [cursor=pointer]:
+            - /url: /customer/1/actions
+          - link "Risks" [ref=e49] [cursor=pointer]:
+            - /url: /customer/1/risks
+          - link "Milestones" [ref=e50] [cursor=pointer]:
+            - /url: /customer/1/milestones
+          - link "Teams" [ref=e51] [cursor=pointer]:
+            - /url: /customer/1/teams
+          - link "Architecture" [ref=e52] [cursor=pointer]:
+            - /url: /customer/1/architecture
+          - link "Decisions" [ref=e53] [cursor=pointer]:
+            - /url: /customer/1/decisions
+          - link "Engagement History" [ref=e54] [cursor=pointer]:
+            - /url: /customer/1/history
+          - link "Stakeholders" [ref=e55] [cursor=pointer]:
+            - /url: /customer/1/stakeholders
+          - link "Plan" [ref=e56] [cursor=pointer]:
+            - /url: /customer/1/plan
+          - link "Skills" [ref=e57] [cursor=pointer]:
+            - /url: /customer/1/skills
+          - link "Time" [ref=e58] [cursor=pointer]:
+            - /url: /customer/1/time
+          - link "Artifacts" [ref=e59] [cursor=pointer]:
+            - /url: /customer/1/artifacts
+      - generic [ref=e61]:
+        - generic [ref=e62]:
+          - generic [ref=e63]:
+            - img [ref=e64]
+            - generic [ref=e67]: 33%
+          - generic [ref=e68]:
+            - paragraph [ref=e69]: AMEX
+            - paragraph [ref=e70]: 1 of 3 steps complete
+            - paragraph [ref=e71]: "Strong week (3/10-3/17): Biggy now LIVE in production. Loyalty 4th batch in production. GR UAT underway (cutover target 3/26). Merchant onboarding started. MC/GPN/Banking/ Lumi/Cornerstone kick-off held 3/13. Correlation tuning active in Soft Launch with SOAR-function anchoring validated for Loyalty FE. 3 production blockers remain: operational validation, ITSM automation alignment, CI data quality. 3/17: Loyalty domain correlation validation session held — initial patterns reviewed by Karthik/Dario, first two correlations confirmed valid per Aaron Tran; ServiceNow E2 ticket creation demoed by Randall. Correlation changes on hold pending Mubasher return. Access gap for Nathalie Pacheco flagged for remediation. Time-window tuning (~30 min) under review."
+            - generic [ref=e72]: "Go-Live: TBD"
+        - generic [ref=e73]:
+          - button "All" [ref=e74]
+          - button "Not Started" [ref=e75]
+          - button "In Progress" [ref=e76]
+          - button "Complete" [ref=e77]
+          - button "Blocked" [ref=e78]
+          - textbox "Search steps…" [ref=e79]
+        - generic [ref=e80]:
+          - heading "Onboarding Phases" [level=2] [ref=e81]
+          - generic [ref=e82]:
+            - 'button "Phase 1: Technical Onboarding 1/3" [ref=e83]':
+              - generic [ref=e84]:
+                - generic [ref=e85]: "Phase 1: Technical Onboarding"
+                - generic [ref=e86]: 1/3
+              - img [ref=e87]
+            - generic [ref=e89]:
+              - generic [ref=e90]:
+                - generic [ref=e91]:
+                  - generic [ref=e92]:
+                    - paragraph [ref=e93]: Configure SIEM Integration
+                    - paragraph [ref=e94]: Connect Splunk to BigPanda ingest endpoint
+                  - button "Complete" [ref=e95] [cursor=pointer]
+                  - generic [ref=e96] [cursor=pointer]: Josh M
+                - list [ref=e97]:
+                  - listitem [ref=e98]: 3/23/2026Verified end-to-end alert flow in staging
+                - generic [ref=e99]:
+                  - textbox "Add note…" [ref=e100]
+                  - button "Add" [ref=e101]
+              - generic [ref=e102]:
+                - generic [ref=e103]:
+                  - generic [ref=e104]:
+                    - paragraph [ref=e105]: Map Alert Fields
+                    - paragraph [ref=e106]: Define field mappings for correlation
+                  - button "Not Started" [ref=e107] [cursor=pointer]
+                  - generic [ref=e108] [cursor=pointer]: Tech Lead
+                - generic [ref=e109]:
+                  - textbox "Add note…" [ref=e110]
+                  - button "Add" [ref=e111]
+              - generic [ref=e112]:
+                - generic [ref=e113]:
+                  - generic [ref=e114]:
+                    - paragraph [ref=e115]: Validate Alert Flow
+                    - paragraph [ref=e116]: Confirm alerts are flowing end-to-end
+                  - button "Not Started" [ref=e117] [cursor=pointer]
+                  - generic [ref=e118] [cursor=pointer]: Josh M
+                - generic [ref=e119]:
+                  - textbox "Add note…" [ref=e120]
+                  - button "Add" [ref=e121]
+        - generic [ref=e122]:
+          - heading "Integration Tracker" [level=2] [ref=e123]
+          - generic [ref=e124]:
+            - generic [ref=e125]:
+              - generic [ref=e126]:
+                - generic [ref=e127]: Splunk
+                - generic [ref=e128]:
+                  - generic [ref=e129]: SIEM
+                  - generic [ref=e130]: Configured
+              - generic "Click a segment to update status" [ref=e131] [cursor=pointer]:
+                - button "Not Connected" [ref=e132]
+                - button "Configured" [ref=e133]
+                - button "Validated" [ref=e134]
+                - button "Production" [ref=e135]
+              - generic [ref=e136]:
+                - generic [ref=e137]: Not Connected
+                - generic [ref=e138]: Configured
+                - generic [ref=e139]: Validated
+                - generic [ref=e140]: Production
+              - textbox "Integration notes…" [ref=e141]: Connected to ingest endpoint
+            - generic [ref=e142]:
+              - generic [ref=e143]:
+                - generic [ref=e144]: ServiceNow
+                - generic [ref=e145]:
+                  - generic [ref=e146]: ITSM
+                  - generic [ref=e147]: Not Connected
+              - generic "Click a segment to update status" [ref=e148] [cursor=pointer]:
+                - button "Not Connected" [ref=e149]
+                - button "Configured" [ref=e150]
+                - button "Validated" [ref=e151]
+                - button "Production" [ref=e152]
+              - generic [ref=e153]:
+                - generic [ref=e154]: Not Connected
+                - generic [ref=e155]: Configured
+                - generic [ref=e156]: Validated
+                - generic [ref=e157]: Production
+              - textbox "Integration notes…" [ref=e158]: Pending ITSM review
+            - generic [ref=e159]:
+              - generic [ref=e160]:
+                - generic [ref=e161]: PagerDuty
+                - generic [ref=e162]:
+                  - generic [ref=e163]: Alerting
+                  - generic [ref=e164]: Production
+              - generic "Click a segment to update status" [ref=e165] [cursor=pointer]:
+                - button "Not Connected" [ref=e166]
+                - button "Configured" [ref=e167]
+                - button "Validated" [ref=e168]
+                - button "Production" [ref=e169]
+              - generic [ref=e170]:
+                - generic [ref=e171]: Not Connected
+                - generic [ref=e172]: Configured
+                - generic [ref=e173]: Validated
+                - generic [ref=e174]: Production
+              - textbox "Integration notes…" [ref=e175]: Bidirectional sync confirmed
+        - generic [ref=e176]:
+          - heading "Risks & Blockers" [level=2] [ref=e177]
+          - paragraph [ref=e178]: No risks recorded — check the Risks tab.
+        - generic [ref=e179]:
+          - generic [ref=e180]:
+            - heading "Milestone Timeline" [level=2] [ref=e181]
+            - link "View all →" [ref=e182] [cursor=pointer]:
+              - /url: /customer/1/milestones
+          - paragraph [ref=e183]: No milestones recorded.
+      - button "+ Add Notes" [ref=e184]
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e190] [cursor=pointer]:
+    - img [ref=e191]
+  - alert [ref=e194]
+```

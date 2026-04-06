@@ -1,0 +1,95 @@
+# Page snapshot
+
+```yaml
+- generic [active]:
+  - complementary:
+    - generic: BigPanda PS
+    - navigation:
+      - generic:
+        - link:
+          - /url: /
+          - text: Dashboard
+      - generic: Projects
+      - list:
+        - listitem:
+          - link:
+            - /url: /customer/2/overview
+            - generic:
+              - paragraph: KAISER
+        - listitem:
+          - link:
+            - /url: /customer/3/overview
+            - generic:
+              - paragraph: MERCK
+        - listitem:
+          - link:
+            - /url: /customer/1/overview
+            - generic:
+              - paragraph: AMEX
+              - paragraph: "Go-live: TBD"
+      - generic:
+        - link:
+          - /url: /knowledge-base
+          - img
+          - text: Knowledge Base
+        - link:
+          - /url: /outputs
+          - img
+          - text: Outputs
+        - link:
+          - /url: /settings
+          - img
+          - text: Settings
+  - main:
+    - generic:
+      - textbox:
+        - /placeholder: Search all projects...
+    - generic:
+      - generic:
+        - heading [level=1]: Knowledge Base
+        - button: Add Entry
+      - generic:
+        - generic:
+          - generic:
+            - generic: Test KB Entry E2E
+          - generic: No source trace
+          - paragraph: E2E test content
+          - generic:
+            - button: Link to Risk
+            - button: Link to History
+        - generic:
+          - generic:
+            - generic: Test KB Entry E2E
+          - generic: No source trace
+          - paragraph: E2E test content
+          - generic:
+            - button: Link to Risk
+            - button: Link to History
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e6] [cursor=pointer]:
+    - img [ref=e7]
+  - alert
+  - dialog "Add Knowledge Base Entry" [ref=e11]:
+    - heading "Add Knowledge Base Entry" [level=2] [ref=e13]
+    - generic [ref=e14]:
+      - generic [ref=e15]:
+        - generic [ref=e16]:
+          - generic [ref=e17]: Title *
+          - textbox "Entry title" [ref=e18]: Test KB Entry E2E
+        - generic [ref=e19]:
+          - generic [ref=e20]: Content *
+          - textbox "Entry content..." [ref=e21]: E2E test content
+        - generic [ref=e22]:
+          - generic [ref=e23]: Project (optional)
+          - combobox [ref=e24]:
+            - option "— No project —" [selected]
+        - generic [ref=e25]:
+          - generic [ref=e26]: Source Trace (optional)
+          - textbox "e.g. KAISER risk R-001, 2026-03-24 — leave blank to auto-generate" [ref=e27]
+      - generic [ref=e28]:
+        - button "Cancel" [disabled]
+        - button "Saving..." [disabled]
+    - button "Close" [ref=e29]:
+      - img [ref=e30]
+      - generic [ref=e33]: Close
+```
