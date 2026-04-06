@@ -427,6 +427,16 @@ export async function getTasksForProject(projectId: number): Promise<Task[]> {
 }
 
 /**
+ * Returns all milestones for a project, ordered by created_at.
+ * Used by the Gantt page to pass milestone markers to GanttChart (GNTT-01, GNTT-03).
+ * Note: milestone.date is TEXT ('TBD', '2026-Q3', or ISO date) — callers must filter for renderable dates.
+ */
+export async function getMilestonesForProject(projectId: number): Promise<Milestone[]> {
+  return db.select().from(milestones).where(eq(milestones.project_id, projectId))
+    .orderBy(milestones.created_at)
+}
+
+/**
  * Returns workstreams for a project with percent_complete.
  * Used by progress rollup (PLAN-09).
  */
