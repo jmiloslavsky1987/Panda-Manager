@@ -33,7 +33,7 @@ type ViewMode = 'Day' | 'Week' | 'Month' | 'Quarter Year'
 const VIEW_MODES: ViewMode[] = ['Day', 'Week', 'Month', 'Quarter Year']
 const ROW_H = 36        // px per data row
 const HEADER_H = 44     // px for timeline column header
-const LEFT_W = 340      // px for left task-list panel
+const LEFT_W_DEFAULT = 380  // initial px for left task-list panel
 
 // Pixels per day at each view zoom level
 const PX_PER_DAY: Record<ViewMode, number> = {
@@ -108,14 +108,13 @@ export default function GanttChart({
   milestones = [],
 }: GanttChartProps) {
   const [viewMode, setViewMode] = useState<ViewMode>(initVM)
-  // Start with all milestone groups expanded
-  const [expanded, setExpanded] = useState<Set<string>>(
-    () => new Set(milestones.map(m => `ms-${m.id}`))
-  )
+  // Start with all milestone groups collapsed
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set())
   const [popup, setPopup] = useState<{ name: string; date: string; status: string | null } | null>(null)
   const [dragOverride, setDragOverride] = useState<Map<string, { start: Date; end: Date }>>(new Map())
-
-  const pxPerDay = PX_PER_DAY[viewMode]
+  const [leftWidth, setLeftWidth] = useState(LEFT_W_DEFAULT)
+  const [containerWidth, setContainerWidth] = useState(1200)
+  const [labelTip, setLabelTip] = useState<{ text: string; x: number; y: number } | null>(null)
 
   // ── Milestone → task grouping ─────────────────────────────────────────────
 
@@ -184,6 +183,13 @@ export default function GanttChart({
     const end   = addDays(new Date(maxT), 21)
     return { timelineStart: start, totalDays: Math.max(60, daysBetween(start, end)) }
   }, [tasks, milestones])
+
+  // Auto-scale: ensure timeline always fills the container — prevents tiny chart in Quarter/Month views
+  const pxPerDay = useMemo(() => {
+    const base = PX_PER_DAY[viewMode]
+    if (totalDays <= 0 || containerWidth <= 0) return base
+    return Math.max(base, containerWidth / totalDays)
+  }, [viewMode, totalDays, containerWidth])
 
   const totalWidth = totalDays * pxPerDay
 
@@ -265,7 +271,8 @@ export default function GanttChart({
       const ns = addDays(dragRef.current.origStart, delta)
       const ne = addDays(dragRef.current.origEnd, delta)
       dragRef.current.curStart = ns; dragRef.current.curEnd = ne
-      setDragOverride(prev => new Map(prev).set(dragRef.current!.taskId, { start: ns, end: ne }))
+      const taskId = dragRef.current.taskId  // capture before async callback
+      setDragOverride(prev => new Map(prev).set(taskId, { start: ns, end: ne }))
     }
     async function onUp() {
       if (!dragRef.current) return
@@ -327,6 +334,31 @@ export default function GanttChart({
     }
   }, [todayX, viewMode])
 
+  // Observe right panel width so pxPerDay auto-scales to fill it
+  useEffect(() => {
+    const el = rightRef.current
+    if (!el) return
+    const ro = new ResizeObserver(([entry]) => setContainerWidth(entry.contentRect.width))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  // ── Left panel resize drag ────────────────────────────────────────────────
+
+  const resizeRef = useRef<{ startX: number; startW: number } | null>(null)
+
+  useEffect(() => {
+    function onMove(e: MouseEvent) {
+      if (!resizeRef.current) return
+      const delta = e.clientX - resizeRef.current.startX
+      setLeftWidth(Math.max(200, Math.min(600, resizeRef.current.startW + delta)))
+    }
+    function onUp() { resizeRef.current = null }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp) }
+  }, [])
+
   // ── Empty state ───────────────────────────────────────────────────────────
 
   if (tasks.length === 0) {
@@ -362,13 +394,18 @@ export default function GanttChart({
         {/* ── Left panel ── */}
         <div ref={leftRef} onScroll={syncFromLeft}
           className="shrink-0 flex flex-col overflow-y-auto overflow-x-hidden border-r border-zinc-200"
-          style={{ width: LEFT_W }}>
+          style={{ width: leftWidth }}>
 
           {/* Left header */}
           <div className="flex items-center shrink-0 border-b border-zinc-200 bg-zinc-50 text-xs font-medium text-zinc-500"
             style={{ height: HEADER_H, position: 'sticky', top: 0, zIndex: 10 }}>
             <div className="w-7 pl-2 shrink-0" />
             <div className="flex-1 pl-1 truncate">Project plan</div>
+            {/* Drag this grip to resize the Project plan column */}
+            <div className="shrink-0 w-3 self-stretch cursor-col-resize flex items-center justify-center group/grip hover:bg-indigo-50"
+              onMouseDown={e => { e.preventDefault(); resizeRef.current = { startX: e.clientX, startW: leftWidth } }}>
+              <div className="w-0.5 h-5 rounded-full bg-zinc-300 group-hover/grip:bg-indigo-400 transition-colors" />
+            </div>
             <div className="w-[52px] text-right shrink-0 pr-1">Start</div>
             <div className="w-[52px] text-right shrink-0 pr-1">Due</div>
             <div className="w-10 text-right shrink-0 pr-3">Dur.</div>
@@ -386,7 +423,11 @@ export default function GanttChart({
                   style={{ height: ROW_H, background: '#f9f9f9' }}
                   onClick={() => setExpanded(p => { const n = new Set(p); isExp ? n.delete(row.key) : n.add(row.key); return n })}>
                   <div className="w-7 pl-2 shrink-0 text-[11px]" style={{ color: color.bar }}>{isExp ? '▾' : '▸'}</div>
-                  <div className="flex-1 pl-1 pr-1 truncate text-sm font-semibold" style={{ color: color.text }}>{row.label}</div>
+                  <div className="flex-1 pl-1 pr-1 truncate text-sm font-semibold" style={{ color: color.text }}
+                    onMouseEnter={e => { const r = e.currentTarget.getBoundingClientRect(); setLabelTip({ text: row.label, x: r.left, y: r.bottom + 6 }) }}
+                    onMouseLeave={() => setLabelTip(null)}>
+                    {row.label}
+                  </div>
                   <div className="w-[52px] text-right shrink-0 pr-1 text-xs text-zinc-400">
                     {row.tasks.length ? fmtShort(row.spanStart) : '—'}
                   </div>
@@ -407,7 +448,7 @@ export default function GanttChart({
                 className="flex items-center shrink-0 border-b border-zinc-100 hover:bg-zinc-50"
                 style={{ height: ROW_H }}>
                 <div className="w-7 pl-2 shrink-0 text-[10px] text-zinc-300">{row.rowNum}</div>
-                <div className="flex-1 pl-2 pr-1 truncate text-xs text-zinc-700">{row.task.name}</div>
+                <div className="flex-1 pl-2 pr-1 truncate text-xs text-zinc-700" title={row.task.name}>{row.task.name}</div>
                 <div className="w-[52px] text-right shrink-0 pr-1 text-xs text-zinc-400">{fmtShort(start)}</div>
                 <div className="w-[52px] text-right shrink-0 pr-1 text-xs text-zinc-400">{fmtShort(end)}</div>
                 <div className="w-10 text-right shrink-0 pr-3 text-xs text-zinc-400">{fmtDuration(start, end)}</div>
@@ -419,7 +460,7 @@ export default function GanttChart({
         {/* ── Right panel ── */}
         <div ref={rightRef} onScroll={syncFromRight}
           className="flex-1 overflow-auto relative">
-          <div style={{ width: Math.max(totalWidth, 800), minHeight: '100%', position: 'relative' }}>
+          <div key={viewMode} style={{ width: Math.max(totalWidth, 800), minHeight: '100%', position: 'relative' }}>
 
             {/* Timeline header */}
             <div className="flex border-b border-zinc-200 bg-zinc-50 shrink-0"
@@ -450,14 +491,14 @@ export default function GanttChart({
               {/* Milestone markers */}
               {markerPositions.map((m, mi) => {
                 // Stagger labels if close together
-                const nearby = markerPositions.slice(0, mi).filter(p => Math.abs(p.x - m.x) < 80).length
+                const nearby = markerPositions.slice(0, mi).filter(p => Math.abs(p.x - m.x) < 120).length
                 return (
                   <div key={`mk-${m.id}`} className="absolute top-0 bottom-0 pointer-events-none z-10"
                     style={{ left: m.x }}>
                     <div className="absolute top-0 bottom-0 pointer-events-none"
                       style={{ left: 0, width: 0, borderLeft: '1.5px dashed #6366f1', opacity: 0.5 }} />
                     <div className="pointer-events-auto absolute cursor-pointer rounded px-1"
-                      style={{ top: 4 + nearby * 20, left: 3, fontSize: 10, color: '#6366f1', background: 'rgba(99,102,241,0.08)', whiteSpace: 'nowrap', zIndex: 11 }}
+                      style={{ top: 4 + nearby * 24, left: 3, fontSize: 10, color: '#6366f1', background: 'rgba(99,102,241,0.08)', whiteSpace: 'nowrap', zIndex: 11 }}
                       onClick={() => setPopup({ name: m.name, date: m.date!, status: m.status })}>
                       {m.name}
                     </div>
@@ -519,6 +560,14 @@ export default function GanttChart({
           </div>
         </div>
       </div>
+
+      {/* Full-name tooltip for truncated milestone labels */}
+      {labelTip && (
+        <div className="fixed z-50 bg-zinc-800 text-white text-xs rounded px-2.5 py-1.5 shadow-lg max-w-xs pointer-events-none"
+          style={{ left: labelTip.x, top: labelTip.y }}>
+          {labelTip.text}
+        </div>
+      )}
 
       {/* Milestone click popup */}
       {popup && (
