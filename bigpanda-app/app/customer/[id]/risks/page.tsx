@@ -63,7 +63,10 @@ async function patchRisk(id: number, patch: Record<string, unknown>, router: Ret
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(patch),
   })
-  if (!res.ok) throw new Error('Save failed')
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ error: 'Save failed' }))
+    throw new Error(error.error ?? 'Save failed')
+  }
   router.refresh()
 }
 

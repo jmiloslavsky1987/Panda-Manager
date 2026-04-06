@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { DayPicker } from 'react-day-picker'
 import * as Popover from '@radix-ui/react-popover'
 import { toast } from 'sonner'
@@ -13,6 +13,13 @@ interface DatePickerCellProps {
 export function DatePickerCell({ value, onSave }: DatePickerCellProps) {
   const [open, setOpen] = useState(false)
   const [optimisticValue, setOptimisticValue] = useState(value)
+
+  // Sync optimisticValue when prop changes (e.g., after router.refresh())
+  useEffect(() => {
+    if (!open) {
+      setOptimisticValue(value)
+    }
+  }, [value, open])
 
   const parsedDate = optimisticValue && /^\d{4}-\d{2}-\d{2}/.test(optimisticValue)
     ? new Date(optimisticValue)
@@ -48,8 +55,8 @@ export function DatePickerCell({ value, onSave }: DatePickerCellProps) {
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
       <Popover.Trigger asChild>
-        <span className="cursor-pointer hover:bg-zinc-100 rounded px-1 py-0.5 text-sm">
-          {optimisticValue ?? '—'}
+        <span className="cursor-pointer hover:bg-zinc-100 rounded px-2 py-1 text-sm min-w-[80px] inline-block border border-transparent hover:border-zinc-200">
+          {optimisticValue ?? 'Set date'}
         </span>
       </Popover.Trigger>
       <Popover.Portal>
