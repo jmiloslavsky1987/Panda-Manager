@@ -9,6 +9,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import { DatePickerCell } from '@/components/DatePickerCell'
 import type { Task } from '@/lib/queries'
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -27,8 +28,8 @@ function emptyForm(task?: Task) {
     title: task?.title ?? '',
     description: task?.description ?? '',
     owner: task?.owner ?? '',
-    due: task?.due ?? '',
-    start_date: task?.start_date ?? '',
+    due: task?.due ?? null,
+    start_date: task?.start_date ?? null,
     priority: task?.priority ?? '',
     type: task?.type ?? '',
     phase: task?.phase ?? '',
@@ -180,27 +181,19 @@ export function TaskEditModal({ task, projectId, trigger, onSaved }: TaskEditMod
           <div className="grid grid-cols-2 gap-3">
             {/* Due Date */}
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1">
-                Due Date — ISO date or &apos;TBD&apos;
-              </label>
-              <input
-                name="due"
+              <label className="block text-sm font-medium text-zinc-700 mb-1">Due Date</label>
+              <DatePickerCell
                 value={form.due}
-                onChange={handleChange}
-                className="w-full border border-zinc-300 rounded px-3 py-1.5 text-sm"
-                placeholder="2026-06-30 or TBD"
+                onSave={async (v) => setForm((prev) => ({ ...prev, due: v }))}
               />
             </div>
 
             {/* Start Date */}
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">Start Date</label>
-              <input
-                name="start_date"
+              <DatePickerCell
                 value={form.start_date}
-                onChange={handleChange}
-                className="w-full border border-zinc-300 rounded px-3 py-1.5 text-sm"
-                placeholder="2026-05-01 or TBD"
+                onSave={async (v) => setForm((prev) => ({ ...prev, start_date: v }))}
               />
             </div>
           </div>
