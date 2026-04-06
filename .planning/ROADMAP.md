@@ -121,7 +121,12 @@ Plans:
   2. A toggle in the Gantt UI switches between Day, Week, Month, and Quarter Year view modes
   3. Tasks are visually grouped under their parent milestone in labelled swim lanes on the Gantt
   4. Dragging a task bar to a new date saves the updated start and end dates to the database immediately without requiring a separate save action
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 38-01-PLAN.md — Data contracts: getMilestonesForProject query, GanttMilestone type, milestone fetch in Gantt page
+- [ ] 38-02-PLAN.md — GanttChart overhaul: accordion swim lanes, view mode toggle, drag-to-reschedule with PATCH save
+- [ ] 38-03-PLAN.md — Milestone markers overlay + human verify checkpoint
 
 ### Phase 39: Cross-Tab Sync & Plan Tab
 **Goal**: Edits made in any tab are immediately reflected in the Overview metrics, and the Plan tab surfaces overdue work and bulk actions that actually work
@@ -171,7 +176,7 @@ Plans:
 | 35. Weekly Focus | v4.0 | 6/6 | Complete | 2026-04-03 |
 | 36. Test Fixes | v6.0 | 0/TBD | Deferred | — |
 | 37. Actions & Inline Editing Foundation | 6/6 | Complete    | 2026-04-06 | — |
-| 38. Gantt Overhaul | v5.0 | 0/TBD | Not started | — |
+| 38. Gantt Overhaul | v5.0 | 0/3 | Not started | — |
 | 39. Cross-Tab Sync & Plan Tab | v5.0 | 0/TBD | Not started | — |
 | 40. Search, Traceability & Skills UX | v5.0 | 0/TBD | Not started | — |
 | 41. UX Polish & Consistency | v5.0 | 0/TBD | Not started | — |
