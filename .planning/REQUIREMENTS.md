@@ -32,7 +32,7 @@
 - [ ] **GNTT-01**: Gantt chart displays milestone target dates as labelled vertical markers on the timeline
 - [ ] **GNTT-02**: User can switch Gantt view mode between Day, Week, Month, and Quarter Year via a UI toggle
 - [ ] **GNTT-03**: Gantt chart groups tasks under their associated milestone in labelled swim lanes
-- [ ] **GNTT-04**: User can drag task bars on the Gantt to reschedule start and end dates, saving immediately to the DB
+- [x] **GNTT-04**: User can drag task bars on the Gantt to reschedule start and end dates, saving immediately to the DB
 
 ### Cross-Tab Data Sync (SYNC)
 
@@ -116,7 +116,7 @@
 | GNTT-01 | Phase 38 | Pending |
 | GNTT-02 | Phase 38 | Pending |
 | GNTT-03 | Phase 38 | Pending |
-| GNTT-04 | Phase 38 | Pending |
+| GNTT-04 | Phase 38 | Complete |
 | PLAN-03 | Phase 38 | Pending |
 | SYNC-01 | Phase 39 | Pending |
 | SYNC-02 | Phase 39 | Pending |
