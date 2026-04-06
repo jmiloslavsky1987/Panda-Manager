@@ -140,7 +140,13 @@ Plans:
   3. The Overview HealthDashboard active blockers section shows a list of the actual blocked items with clickable links to their records
   4. Tasks with past-due dates are visually highlighted in red on both the Phase Board and Task Board
   5. Selecting multiple tasks or phases via checkbox and applying a bulk status update executes the change (bulk action is not dead UI)
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 39-01-PLAN.md — Wave 0 test scaffolds (5 test files covering all 5 requirements, all RED)
+- [ ] 39-02-PLAN.md — SYNC work: dispatchers, listeners, blocked tasks list, pie chart drill-down, severity filter
+- [ ] 39-03-PLAN.md — PLAN tab work: overdue card highlighting + bulk status on TaskBoard and PhaseBoard
+- [ ] 39-04-PLAN.md — Full test suite gate + human verify checkpoint (12-step UI verification)
 
 ### Phase 40: Search, Traceability & Skills UX
 **Goal**: Users can find any project entity by keyword from anywhere, trace every artifact to its extracted data, auto-see audit-driven history, and monitor or cancel running skill jobs
@@ -179,7 +185,7 @@ Plans:
 | 36. Test Fixes | v6.0 | 0/TBD | Deferred | — |
 | 37. Actions & Inline Editing Foundation | 6/6 | Complete    | 2026-04-06 | — |
 | 38. Gantt Overhaul | 3/4 | Complete    | 2026-04-06 | — |
-| 39. Cross-Tab Sync & Plan Tab | v5.0 | 0/TBD | Not started | — |
+| 39. Cross-Tab Sync & Plan Tab | v5.0 | 0/4 | Not started | — |
 | 40. Search, Traceability & Skills UX | v5.0 | 0/TBD | Not started | — |
 | 41. UX Polish & Consistency | v5.0 | 0/TBD | Not started | — |
 | 42. Ingestion Field Coverage | v5.0 | 0/TBD | Not started | — |
