@@ -16,6 +16,13 @@ export function OwnerCell({ value, projectId, onSave }: OwnerCellProps) {
   const [saving, setSaving] = useState(false)
   const datalistId = useId()
 
+  // Sync optimisticValue when prop changes (e.g., after router.refresh())
+  useEffect(() => {
+    if (!editing && !saving) {
+      setOptimisticValue(value ?? '')
+    }
+  }, [value, editing, saving])
+
   useEffect(() => {
     if (!editing) return
 

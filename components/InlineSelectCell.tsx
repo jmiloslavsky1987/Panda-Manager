@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 
 interface InlineSelectCellProps<T extends string> {
@@ -19,6 +19,13 @@ export function InlineSelectCell<T extends string>({
   const [editing, setEditing] = useState(false)
   const [optimisticValue, setOptimisticValue] = useState(value)
   const [saving, setSaving] = useState(false)
+
+  // Sync optimisticValue when prop changes (e.g., after router.refresh())
+  useEffect(() => {
+    if (!editing && !saving) {
+      setOptimisticValue(value)
+    }
+  }, [value, editing, saving])
 
   async function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
     if (saving) return
