@@ -115,7 +115,10 @@ export function TaskEditModal({ task, projectId, trigger, onSaved }: TaskEditMod
   return (
     <Dialog open={open} onOpenChange={(v) => {
       setOpen(v)
-      if (v) setForm(emptyForm(task))
+      if (v) {
+        setForm(emptyForm(task))
+        setSaving(false)
+      }
       setError(null)
     }}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
@@ -158,6 +161,7 @@ export function TaskEditModal({ task, projectId, trigger, onSaved }: TaskEditMod
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">Owner</label>
               <OwnerCell
+                key={`owner-${form.owner}-${open}`}
                 value={form.owner}
                 projectId={projectId}
                 onSave={async (v) => setForm((prev) => ({ ...prev, owner: v }))}
@@ -182,6 +186,7 @@ export function TaskEditModal({ task, projectId, trigger, onSaved }: TaskEditMod
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">Due Date</label>
               <DatePickerCell
+                key={`due-${form.due}-${open}`}
                 value={form.due}
                 onSave={async (v) => setForm((prev) => ({ ...prev, due: v }))}
               />
@@ -191,6 +196,7 @@ export function TaskEditModal({ task, projectId, trigger, onSaved }: TaskEditMod
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">Start Date</label>
               <DatePickerCell
+                key={`start-${form.start_date}-${open}`}
                 value={form.start_date}
                 onSave={async (v) => setForm((prev) => ({ ...prev, start_date: v }))}
               />
