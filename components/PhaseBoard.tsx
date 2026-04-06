@@ -9,6 +9,7 @@ import {
   useSensors,
   DragEndEvent,
   DragOverlay,
+  useDroppable,
 } from '@dnd-kit/core'
 import {
   SortableContext,
@@ -108,6 +109,23 @@ function PhaseCard({ task, projectId }: PhaseCardProps) {
   )
 }
 
+// ─── Droppable Column ─────────────────────────────────────────────────────────
+
+function DroppableColumn({ id, children }: { id: string; children: React.ReactNode }) {
+  const { setNodeRef, isOver } = useDroppable({ id })
+  return (
+    <div
+      ref={setNodeRef}
+      data-column-id={id}
+      className={`flex flex-col gap-2 min-h-[120px] rounded-lg p-2 border transition-colors ${
+        isOver ? 'bg-indigo-50 border-indigo-300' : 'bg-zinc-50 border-zinc-200'
+      }`}
+    >
+      {children}
+    </div>
+  )
+}
+
 // ─── PhaseBoard ───────────────────────────────────────────────────────────────
 
 export function PhaseBoard({ tasks: initialTasks, projectId, templates }: PhaseBoardProps) {
@@ -115,8 +133,17 @@ export function PhaseBoard({ tasks: initialTasks, projectId, templates }: PhaseB
   const [tasks, setTasks] = useState<Task[]>(initialTasks)
   const [activeId, setActiveId] = useState<number | null>(null)
 
-  // Sync when server re-fetches (e.g. after router.refresh() from AiPlanPanel commit)
-  useEffect(() => { setTasks(initialTasks) }, [initialTasks])
+  // Sync when server re-fetches (e.g. after router.refresh() from AiPlanPanel commit).
+  // Use a stable signature to avoid firing on every render due to new array references.
+  const tasksSig = initialTasks.map((t) => `${t.id}:${t.phase}:${t.title}`).join('|')
+  const prevSigRef = useRef(tasksSig)
+  useEffect(() => {
+    if (activeId !== null) return // never sync mid-drag
+    if (tasksSig === prevSigRef.current) return
+    prevSigRef.current = tasksSig
+    setTasks(initialTasks)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tasksSig, activeId])
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -124,11 +151,7 @@ export function PhaseBoard({ tasks: initialTasks, projectId, templates }: PhaseB
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   )
 
-  // Derive phases from tasks (or defaults)
-  const phases =
-    tasks.length > 0
-      ? [...new Set(tasks.map((t) => t.phase ?? 'Unassigned'))]
-      : DEFAULT_PHASES
+  const phases = DEFAULT_PHASES
 
   async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
@@ -311,17 +334,14 @@ export function PhaseBoard({ tasks: initialTasks, projectId, templates }: PhaseB
                   items={phaseTasks.map((t) => t.id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  <div
-                    data-column-id={phase}
-                    className="flex flex-col gap-2 min-h-[120px] bg-zinc-50 rounded-lg p-2 border border-zinc-200"
-                  >
+                  <DroppableColumn id={phase}>
                     {phaseTasks.map((task) => (
                       <PhaseCard key={task.id} task={task} projectId={projectId} />
                     ))}
                     {phaseTasks.length === 0 && (
                       <p className="text-xs text-zinc-400 text-center py-4">No tasks</p>
                     )}
-                  </div>
+                  </DroppableColumn>
                 </SortableContext>
               </div>
             )
