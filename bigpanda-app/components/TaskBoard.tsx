@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   DndContext,
@@ -231,10 +231,17 @@ export function TaskBoard({ tasks: initialTasks, projectId }: TaskBoardProps) {
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [activeId, setActiveId] = useState<number | null>(null)
 
-  // Sync local state when prop changes (after router.refresh())
+  // Sync with new props only when task content actually changes AND no drag is active.
+  // Using a stable signature avoids firing on every reference change (new array on each render).
+  const tasksSig = initialTasks.map((t) => `${t.id}:${t.status}:${t.title}`).join('|')
+  const prevSigRef = useRef(tasksSig)
   useEffect(() => {
+    if (activeId !== null) return // never sync mid-drag
+    if (tasksSig === prevSigRef.current) return
+    prevSigRef.current = tasksSig
     setTasks(initialTasks)
-  }, [initialTasks])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tasksSig, activeId])
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })

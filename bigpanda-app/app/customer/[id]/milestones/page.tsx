@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useCallback } from 'react'
 import { Badge } from '../../../../components/ui/badge'
 import {
   Table,
@@ -49,7 +48,7 @@ function isOverdueMilestone(date: string | null | undefined, status: string | nu
   return d < new Date()
 }
 
-async function patchMilestone(id: number, patch: Record<string, unknown>, router: ReturnType<typeof useRouter>) {
+async function patchMilestone(id: number, patch: Record<string, unknown>, refresh: () => void) {
   const res = await fetch(`/api/milestones/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
@@ -59,7 +58,7 @@ async function patchMilestone(id: number, patch: Record<string, unknown>, router
     const error = await res.json().catch(() => ({ error: 'Save failed' }))
     throw new Error(error.error ?? 'Save failed')
   }
-  router.refresh()
+  refresh()
 }
 
 export default function MilestonesPage({
@@ -67,22 +66,30 @@ export default function MilestonesPage({
 }: {
   params: Promise<{ id: string }>
 }) {
-  const router = useRouter()
   const [data, setData] = useState<WorkspaceData | null>(null)
   const [projectId, setProjectId] = useState<number | null>(null)
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  const refresh = useCallback(() => setRefreshKey((k) => k + 1), [])
 
   useEffect(() => {
-    async function loadData() {
+    let cancelled = false
+    ;(async () => {
       const { id } = await params
       const parsedId = parseInt(id, 10)
-      setProjectId(parsedId)
-
-      const res = await fetch(`/api/workspace-data?project_id=${parsedId}`)
-      const result = await res.json()
-      setData(result)
-    }
-    loadData()
-  }, [params])
+      if (!cancelled) setProjectId(parsedId)
+      try {
+        const res = await fetch(`/api/workspace-data?project_id=${parsedId}`)
+        if (!res.ok) return
+        const result = await res.json()
+        if (!cancelled) setData(result)
+      } catch {
+        // stay in loading state — fetch failed
+      }
+    })()
+    return () => { cancelled = true }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshKey])
 
   if (!data || projectId === null) {
     return <div className="text-center py-8 text-zinc-400">Loading...</div>
@@ -158,7 +165,7 @@ export default function MilestonesPage({
                         <InlineSelectCell
                           value={statusKey}
                           options={MILESTONE_STATUS_OPTIONS}
-                          onSave={async (v) => patchMilestone(m.id, { status: v }, router)}
+                          onSave={async (v) => patchMilestone(m.id, { status: v }, refresh)}
                           className={`text-xs font-medium ${badgeClass} px-2 py-0.5 rounded-full`}
                         />
                         {overdue && (
@@ -169,14 +176,14 @@ export default function MilestonesPage({
                     <TableCell className="text-sm text-zinc-600">
                       <DatePickerCell
                         value={displayDate}
-                        onSave={async (v) => patchMilestone(m.id, { target_date: v }, router)}
+                        onSave={async (v) => patchMilestone(m.id, { target_date: v }, refresh)}
                       />
                     </TableCell>
                     <TableCell className="text-sm text-zinc-600">
                       <OwnerCell
                         value={m.owner}
                         projectId={projectId}
-                        onSave={async (v) => patchMilestone(m.id, { owner: v }, router)}
+                        onSave={async (v) => patchMilestone(m.id, { owner: v }, refresh)}
                       />
                     </TableCell>
                     <TableCell className="text-sm text-zinc-400">
