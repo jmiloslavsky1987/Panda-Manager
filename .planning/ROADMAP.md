@@ -84,7 +84,7 @@ Full details: `.planning/milestones/v4.0-ROADMAP.md` (archived)
 
 **Milestone Goal:** Replace modal-heavy, siloed tab UX with inline-editable tables, cross-tab data sync, a working Gantt with milestones, and consistent patterns across every view.
 
-- [ ] **Phase 37: Actions & Inline Editing Foundation** — Actions table layout, inline editing for Actions/Risks/Milestones, date pickers, and owner autocomplete wired across all entity edit surfaces
+- [x] **Phase 37: Actions & Inline Editing Foundation** — Actions table layout, inline editing for Actions/Risks/Milestones, date pickers, and owner autocomplete wired across all entity edit surfaces (completed 2026-04-06)
 - [ ] **Phase 38: Gantt Overhaul** — Milestone markers, view mode switcher, milestone-grouped swim lanes, and drag-to-reschedule with immediate DB save
 - [ ] **Phase 39: Cross-Tab Sync & Plan Tab** — Overview metrics refresh on entity edits, clickable chart drill-downs, active blocker list, Plan tab overdue highlighting, and bulk action wiring
 - [ ] **Phase 40: Search, Traceability & Skills UX** — Global search bar, Decisions filtering, artifact reverse lookup, Engagement History auto-log, and Skills job progress + cancel
@@ -170,7 +170,7 @@ Plans:
 | 34. Metrics & Health | v4.0 | 5/5 | Complete | 2026-04-03 |
 | 35. Weekly Focus | v4.0 | 6/6 | Complete | 2026-04-03 |
 | 36. Test Fixes | v6.0 | 0/TBD | Deferred | — |
-| 37. Actions & Inline Editing Foundation | 5/6 | In Progress|  | — |
+| 37. Actions & Inline Editing Foundation | 6/6 | Complete   | 2026-04-06 | — |
 | 38. Gantt Overhaul | v5.0 | 0/TBD | Not started | — |
 | 39. Cross-Tab Sync & Plan Tab | v5.0 | 0/TBD | Not started | — |
 | 40. Search, Traceability & Skills UX | v5.0 | 0/TBD | Not started | — |
