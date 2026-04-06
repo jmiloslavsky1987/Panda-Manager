@@ -121,12 +121,13 @@ Plans:
   2. A toggle in the Gantt UI switches between Day, Week, Month, and Quarter Year view modes
   3. Tasks are visually grouped under their parent milestone in labelled swim lanes on the Gantt
   4. Dragging a task bar to a new date saves the updated start and end dates to the database immediately without requiring a separate save action
-**Plans**: 3 plans
+**Plans**: 4 plans
 
 Plans:
-- [ ] 38-01-PLAN.md — Data contracts: getMilestonesForProject query, GanttMilestone type, milestone fetch in Gantt page
-- [ ] 38-02-PLAN.md — GanttChart overhaul: accordion swim lanes, view mode toggle, drag-to-reschedule with PATCH save
-- [ ] 38-03-PLAN.md — Milestone markers overlay + human verify checkpoint
+- [ ] 38-01-PLAN.md — Wave 0 test scaffold: tasks-patch-dates.test.ts (GNTT-04 unit tests, RED before implementation)
+- [ ] 38-02-PLAN.md — Data contracts: getMilestonesForProject query, GanttMilestone type, milestone fetch in Gantt page
+- [ ] 38-03-PLAN.md — GanttChart overhaul: accordion swim lanes, view mode toggle, drag-to-reschedule with PATCH save
+- [ ] 38-04-PLAN.md — Milestone markers SVG injection + human verify checkpoint (all 5 requirements)
 
 ### Phase 39: Cross-Tab Sync & Plan Tab
 **Goal**: Edits made in any tab are immediately reflected in the Overview metrics, and the Plan tab surfaces overdue work and bulk actions that actually work
