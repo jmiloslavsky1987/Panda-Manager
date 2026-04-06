@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v5.0
 milestone_name: — Workspace UX Overhaul
 status: executing
-stopped_at: Completed 38-02-PLAN.md
-last_updated: "2026-04-06T18:51:14.550Z"
+stopped_at: Completed 38-03-PLAN.md
+last_updated: "2026-04-06T18:55:16.621Z"
 last_activity: "2026-04-06 — Completed 38-02: Gantt data contracts (getMilestonesForProject, GanttMilestone, milestones wiring)"
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 10
-  completed_plans: 8
+  completed_plans: 9
   percent: 99
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 ## Current Position
 
 Phase: 38 of 41 (Gantt Overhaul)
-Plan: 2 of 4
+Plan: 3 of 4
 Status: In Progress
-Last activity: 2026-04-06 — Completed 38-02: Gantt data contracts (getMilestonesForProject, GanttMilestone, milestones wiring)
+Last activity: 2026-04-06 — Completed 38-03: Accordion swim lanes, view mode toggle, and drag-to-reschedule
 
-Progress: [██████████] 99% (Phase 38: 2/4 plans complete)
+Progress: [██████████] 100% (Phase 38: 3/4 plans complete)
 
 ## Milestone History
 
@@ -71,6 +71,9 @@ Progress: [██████████] 99% (Phase 38: 2/4 plans complete)
 - [Phase 38]: getMilestonesForProject orders by created_at (insertion order), matching getTasksForProject pattern
 - [Phase 38]: GanttMilestone interface includes only fields needed by chart (id, name, date, status)
 - [Phase 38]: Default Gantt viewMode changed from Week to Month for project-scale timelines
+- [Phase 38]: Use gantt-ms-{milestoneId} prefix in custom_class for grouping tasks by milestone
+- [Phase 38]: All accordion groups collapsed by default to avoid overwhelming UI
+- [Phase 38]: Re-initialize frappe-gantt on expansion/collapse for correct y-axis positioning
 
 ## Blockers/Concerns
 
@@ -78,6 +81,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-06T18:51:14.547Z
-Stopped at: Completed 38-02-PLAN.md
+Last session: 2026-04-06T18:55:16.619Z
+Stopped at: Completed 38-03-PLAN.md
 Resume file: None

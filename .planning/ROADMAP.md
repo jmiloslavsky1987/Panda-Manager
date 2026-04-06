@@ -177,7 +177,7 @@ Plans:
 | 35. Weekly Focus | v4.0 | 6/6 | Complete | 2026-04-03 |
 | 36. Test Fixes | v6.0 | 0/TBD | Deferred | — |
 | 37. Actions & Inline Editing Foundation | 6/6 | Complete    | 2026-04-06 | — |
-| 38. Gantt Overhaul | 2/4 | In Progress|  | — |
+| 38. Gantt Overhaul | 3/4 | In Progress|  | — |
 | 39. Cross-Tab Sync & Plan Tab | v5.0 | 0/TBD | Not started | — |
 | 40. Search, Traceability & Skills UX | v5.0 | 0/TBD | Not started | — |
 | 41. UX Polish & Consistency | v5.0 | 0/TBD | Not started | — |
