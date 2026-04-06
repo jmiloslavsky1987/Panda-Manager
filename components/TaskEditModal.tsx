@@ -10,6 +10,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { DatePickerCell } from '@/components/DatePickerCell'
+import { OwnerCell } from '@/components/OwnerCell'
 import type { Task } from '@/lib/queries'
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -156,12 +157,10 @@ export function TaskEditModal({ task, projectId, trigger, onSaved }: TaskEditMod
             {/* Owner */}
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">Owner</label>
-              <input
-                name="owner"
+              <OwnerCell
                 value={form.owner}
-                onChange={handleChange}
-                className="w-full border border-zinc-300 rounded px-3 py-1.5 text-sm"
-                placeholder="Name or team"
+                projectId={projectId}
+                onSave={async (v) => setForm((prev) => ({ ...prev, owner: v }))}
               />
             </div>
 
