@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v5.0
 milestone_name: — Workspace UX Overhaul
 status: executing
-stopped_at: Completed 40-01-PLAN.md (Wave 0 test scaffolds)
-last_updated: "2026-04-07T03:25:44.564Z"
-last_activity: "2026-04-07 — Completed 40-03: Decisions filter + artifact extracted entities tab (SRCH-02, ARTF-01)"
+stopped_at: Completed 40-04-PLAN.md (Unified history feed with audit log entries)
+last_updated: "2026-04-07T03:33:44.177Z"
+last_activity: "2026-04-07 — Completed 40-04: Unified history feed with audit log entries (HIST-01)"
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 20
-  completed_plans: 17
+  completed_plans: 18
   percent: 99
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 ## Current Position
 
 Phase: 40 of 41 (Search, Traceability & Skills UX)
-Plan: 3 of 6
+Plan: 4 of 6
 Status: In Progress
-Last activity: 2026-04-07 — Completed 40-03: Decisions filter + artifact extracted entities tab (SRCH-02, ARTF-01)
+Last activity: 2026-04-07 — Completed 40-04: Unified history feed with audit log entries (HIST-01)
 
-Progress: [██████████] 99% (Phase 40: 3/6 plans complete)
+Progress: [██████████] 99% (Phase 40: 4/6 plans complete)
 
 ## Milestone History
 
@@ -91,6 +91,9 @@ Progress: [██████████] 99% (Phase 40: 3/6 plans complete)
 - [Phase 40-03]: DecisionsTableClient follows ActionsTableClient pattern: Server Component passes data, Client island filters with URL params
 - [Phase 40-03]: ArtifactEditModal uses Radix Tabs with lazy loading: entities fetched only when tab clicked
 - [Phase 40-03]: Fixed test mock pattern to use Map-based mockSearchParams (matches codebase pattern)
+- [Phase 40-04]: db.execute<T>() returns T[] directly (not .rows property) — consistent with tx.execute pattern
+- [Phase 40-04]: Activity badge uses bg-slate-100 text-slate-700 to distinguish from note source badges
+- [Phase 40-04]: Removed append-only banner — audit log entries surface automatically without manual curation
 
 ## Blockers/Concerns
 
@@ -98,6 +101,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-07T03:03:47.229Z
-Stopped at: Completed 40-01-PLAN.md (Wave 0 test scaffolds)
+Last session: 2026-04-07T03:33:44.174Z
+Stopped at: Completed 40-04-PLAN.md (Unified history feed with audit log entries)
 Resume file: None
