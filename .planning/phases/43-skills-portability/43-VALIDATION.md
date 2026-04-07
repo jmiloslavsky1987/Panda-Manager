@@ -41,7 +41,7 @@ created: 2026-04-07
 | 43-01-01 | 01 | 0 | SKILL-01 | unit | `npx vitest run worker/jobs/__tests__/skill-path-migration.test.ts` | ❌ W0 | ⬜ pending |
 | 43-01-02 | 01 | 1 | SKILL-01 | unit | `npx vitest run tests/skill-run-settings.test.ts` | ✅ | ⬜ pending |
 | 43-01-03 | 01 | 1 | SKILL-01 | unit | `npx vitest run worker/jobs/__tests__/skill-path-migration.test.ts` | ❌ W0 | ⬜ pending |
-| 43-02-01 | 02 | 2 | SKILL-01 | unit | `npx vitest run tests/api/` | ❌ W0 | ⬜ pending |
+| 43-01-04 | 01 | 1 | SKILL-01 | unit | `npx vitest run` | ❌ W0 | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
