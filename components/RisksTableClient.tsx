@@ -13,6 +13,7 @@ import { RiskEditModal } from '@/components/RiskEditModal'
 import { SourceBadge } from '@/components/SourceBadge'
 import { InlineSelectCell } from '@/components/InlineSelectCell'
 import { OwnerCell } from '@/components/OwnerCell'
+import { EmptyState } from '@/components/EmptyState'
 import type { Risk, Artifact } from '@/lib/queries'
 
 const RISK_STATUS_OPTIONS: { value: 'open' | 'mitigated' | 'resolved' | 'accepted'; label: string }[] = [
@@ -92,6 +93,22 @@ export function RisksTableClient({ risks, artifacts, projectId }: RisksTableClie
   const displayedRisks = severityFilter
     ? sortedRisks.filter(r => normaliseSeverity(r.severity) === severityFilter.toLowerCase())
     : sortedRisks
+
+  // Show empty state when no risks exist
+  if (risks.length === 0) {
+    return (
+      <EmptyState
+        title="No risks logged"
+        description="Risks capture potential blockers and issues. Add the first risk to start tracking."
+        action={{
+          label: 'Add Risk',
+          onClick: () => {
+            // Placeholder - wire to add risk dialog
+          },
+        }}
+      />
+    )
+  }
 
   return (
     <div className="space-y-4">

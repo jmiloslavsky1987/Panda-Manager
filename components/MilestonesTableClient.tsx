@@ -15,6 +15,7 @@ import { SourceBadge } from '@/components/SourceBadge'
 import { InlineSelectCell } from '@/components/InlineSelectCell'
 import { DatePickerCell } from '@/components/DatePickerCell'
 import { OwnerCell } from '@/components/OwnerCell'
+import { EmptyState } from '@/components/EmptyState'
 import type { Milestone, Artifact } from '@/lib/queries'
 
 const MILESTONE_STATUS_OPTIONS: { value: 'not_started' | 'in_progress' | 'completed' | 'blocked'; label: string }[] = [
@@ -84,6 +85,22 @@ export function MilestonesTableClient({ milestones, artifacts, projectId }: Mile
 
   const sortedMilestones = [...[...incomplete].sort(sortByDate), ...[...complete].sort(sortByDate)]
 
+  // Show empty state when no milestones exist
+  if (milestones.length === 0) {
+    return (
+      <EmptyState
+        title="No milestones yet"
+        description="Milestones mark key dates and deliverables. Add the first milestone to track progress."
+        action={{
+          label: 'Add Milestone',
+          onClick: () => {
+            // Placeholder - wire to add milestone dialog
+          },
+        }}
+      />
+    )
+  }
+
   return (
     <div className="space-y-4">
       <div className="rounded-md border border-zinc-200 overflow-hidden">
@@ -112,7 +129,11 @@ export function MilestonesTableClient({ milestones, artifacts, projectId }: Mile
                 const displayDate = m.target ?? m.date ?? null
                 const overdue = isOverdueMilestone(displayDate, m.status)
                 return (
-                  <TableRow key={m.id}>
+                  <TableRow
+                    key={m.id}
+                    className={overdue ? 'border-red-500 bg-red-50' : ''}
+                    data-testid={`milestone-row-${m.id}`}
+                  >
                     <TableCell className="font-mono text-xs text-zinc-500">{m.external_id}</TableCell>
                     <TableCell className="text-sm font-medium">
                       <div className="space-y-1">
