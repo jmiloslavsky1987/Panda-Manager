@@ -103,6 +103,11 @@ export function HealthDashboard({ projectId }: HealthDashboardProps) {
   if (loading) {
     return (
       <section data-testid="health-dashboard" className="px-4 space-y-4">
+        <div className="h-6 w-40 bg-zinc-100 rounded animate-pulse" />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="h-32 bg-zinc-100 rounded-lg animate-pulse" />
+          <div className="h-32 bg-zinc-100 rounded-lg animate-pulse" />
+        </div>
         <div className="h-24 bg-zinc-100 rounded-lg animate-pulse" />
       </section>
     )

@@ -112,7 +112,12 @@ export function OverviewMetrics({ projectId }: OverviewMetricsProps) {
   if (loading) {
     return (
       <section className="px-4 space-y-4">
-        <div className="h-40 bg-zinc-100 rounded-lg animate-pulse" />
+        <div className="h-6 w-32 bg-zinc-100 rounded animate-pulse mb-2" />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="h-40 bg-zinc-100 rounded-lg animate-pulse" />
+          <div className="h-40 bg-zinc-100 rounded-lg animate-pulse" />
+          <div className="h-40 bg-zinc-100 rounded-lg animate-pulse" />
+        </div>
       </section>
     )
   }

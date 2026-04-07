@@ -110,6 +110,7 @@ const TERMINAL_STATES = new Set(['completed', 'failed', 'cancelled']);
 
 export function SkillsTabClient({ projectId, recentRuns }: SkillsTabClientProps) {
   const router = useRouter();
+  const [isInitialLoading, setIsInitialLoading] = useState(recentRuns.length === 0);
   const [runningJobs, setRunningJobs] = useState<Map<string, RunningJob>>(new Map());
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [missingBadge, setMissingBadge] = useState<Set<string>>(new Set());
@@ -169,6 +170,13 @@ export function SkillsTabClient({ projectId, recentRuns }: SkillsTabClientProps)
     router.refresh();
   }
 
+  // Clear initial loading state after mount (for SSR scenarios where data is already available)
+  useEffect(() => {
+    if (recentRuns.length > 0) {
+      setIsInitialLoading(false);
+    }
+  }, [recentRuns]);
+
   // Status polling effect
   useEffect(() => {
     if (runningJobs.size === 0) return;
@@ -209,6 +217,16 @@ export function SkillsTabClient({ projectId, recentRuns }: SkillsTabClientProps)
     } else {
       triggerSkill(skillName);
     }
+  }
+
+  // Show loading skeleton on initial mount when no data
+  if (isInitialLoading) {
+    return (
+      <div className="p-6 max-w-4xl space-y-3">
+        <div className="h-6 w-48 bg-zinc-100 rounded animate-pulse" />
+        <div className="h-40 bg-zinc-100 rounded-lg animate-pulse" />
+      </div>
+    )
   }
 
   return (
