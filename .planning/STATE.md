@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v5.0
 milestone_name: — Workspace UX Overhaul
-status: completed
-stopped_at: Completed 41-01-PLAN.md
-last_updated: "2026-04-07T06:39:29.482Z"
-last_activity: "2026-04-07 — Completed 40-06: Phase gate verification — all 6 requirements verified"
+status: executing
+stopped_at: Completed 41-02-PLAN.md
+last_updated: "2026-04-07T06:47:58.450Z"
+last_activity: "2026-04-07 — Completed 41-03: Empty states for 5 server pages and expanded loading skeletons"
 progress:
   total_phases: 6
   completed_phases: 4
   total_plans: 24
-  completed_plans: 21
-  percent: 100
+  completed_plans: 23
+  percent: 99
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 
 ## Current Position
 
-Phase: 40 of 41 (Search, Traceability & Skills UX)
-Plan: 6 of 6
-Status: Complete
-Last activity: 2026-04-07 — Completed 40-06: Phase gate verification — all 6 requirements verified
+Phase: 41 of 41 (UX Polish & Consistency)
+Plan: 3 of 4
+Status: In Progress
+Last activity: 2026-04-07 — Completed 41-03: Empty states for 5 server pages and expanded loading skeletons
 
-Progress: [██████████] 100% (Phase 40: 6/6 plans complete)
+Progress: [██████████] 99% (23/24 plans complete)
 
 ## Milestone History
 
@@ -48,7 +48,7 @@ Progress: [██████████] 100% (Phase 40: 6/6 plans complete)
 | 38. Gantt Overhaul | GNTT-01–04, PLAN-03 | In progress (1/4 plans) |
 | 39. Cross-Tab Sync & Plan Tab | SYNC-01–03, PLAN-01–02 | Complete (4/4 plans) |
 | 40. Search, Traceability & Skills UX | SRCH-01–02, ARTF-01, HIST-01, SKLS-01–02 | Complete (6/6 plans) |
-| 41. UX Polish & Consistency | UXPOL-01–03 | Not started |
+| 41. UX Polish & Consistency | UXPOL-01–03 | In progress (2/4 plans) |
 
 ## Decisions
 
@@ -100,6 +100,11 @@ Progress: [██████████] 100% (Phase 40: 6/6 plans complete)
 - [Phase 40-06]: Phase gate verification pattern: automated test suite GREEN → human walkthrough → ship approval
 - [Phase 40-06]: Post-checkpoint bug fixes accepted: duplicate header and navigation param issues fixed after human verification
 - [Phase 40-06]: Skills portability tabled as future work — execution infrastructure issue out of scope for Phase 40 UX focus
+- [Phase 41]: Empty state triggered by raw props array (not filtered results) — ensures CTA shown when no data exists, not just when filters exclude all data
+- [Phase 41]: Milestones retain both Overdue badge AND row highlight — dual visual treatment for emphasis per user decision
+- [Phase 41-03]: Server Component empty states use inline structure when CTA requires client-side trigger (StakeholderEditModal pattern)
+- [Phase 41-03]: Loading skeletons match final content grid structure (3-card for OverviewMetrics, 2-column for HealthDashboard)
+- [Phase 41-03]: SkillsTabClient shows skeleton only when recentRuns is empty (initial mount scenario)
 
 ## Blockers/Concerns
 
@@ -107,6 +112,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-07T06:39:29.480Z
-Stopped at: Completed 41-01-PLAN.md
+Last session: 2026-04-07T06:44:54.576Z
+Stopped at: Completed 41-02-PLAN.md
 Resume file: None
