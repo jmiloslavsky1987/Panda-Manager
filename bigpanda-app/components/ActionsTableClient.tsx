@@ -103,6 +103,7 @@ export function ActionsTableClient({ actions, projectId }: ActionsTableClientPro
     })
     if (!res.ok) throw new Error('Save failed')
     router.refresh()
+    window.dispatchEvent(new CustomEvent('metrics:invalidate'))
   }
 
   // Bulk update status
