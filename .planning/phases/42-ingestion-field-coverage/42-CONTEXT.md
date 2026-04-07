@@ -1,6 +1,6 @@
 # Phase 42: Ingestion Field Coverage - Context
 
-**Gathered:** 2026-04-06
+**Gathered:** 2026-04-07 (updated)
 **Status:** Ready for planning
 
 <domain>
@@ -32,14 +32,16 @@ This is a backend-only phase except for two UI additions: new fields visible in 
 - No FK resolution possible; this is a data quality/consistency improvement to the extraction prompt only
 
 ### Unmatched reference handling
-- task→milestone no match: leave `milestone_id` null AND store the extracted raw name in `task.description` (appended as "Milestone ref: [name]" if description is otherwise empty, or appended to existing description) so the reference isn't silently lost
-- task→workstream no match: leave `workstream_id` null silently — no extra action
-- After approval completes: include a plain-text notice in the approval API response if any tasks had unresolved milestone references, e.g. `"3 tasks had unresolved milestone references — link them manually via the Plan tab"`
-- No retroactive backfill: existing tasks with null FKs are never touched when new milestones arrive later
+- task→milestone no match: leave `milestone_id` null AND store the extracted raw name in `task.description` as "Milestone ref: [name]" (appended to existing description, or used as full description if description is otherwise empty)
+- task→workstream no match: leave `workstream_id` null AND store the extracted raw name in `task.description` as "Workstream ref: [name]" (same pattern — consistency with milestone treatment)
+- If both refs are unresolved on the same task: append both: "Milestone ref: [m-name] | Workstream ref: [w-name]"
+- After approval completes: include a plain-text notice in the approval API response if any tasks had unresolved refs, e.g. `"3 tasks had unresolved milestone references, 1 had unresolved workstream references — link them manually via the Plan tab"`
+- No retroactive backfill: existing tasks with null FKs are never touched when new milestones/workstreams arrive later
 
 ### Update path (re-ingestion behavior)
 - Universal **fill-null-only** policy: ingested values fill empty DB fields; never overwrite values a user manually set
 - Applies to ALL new fields: `task.start_date`, `task.due`, `task.milestone_id`, `task.workstream_id`, `risk.severity`, `decision.context` (rationale), `milestone.owner`, `stakeholder.company`
+- **Fill-null-only applies to BOTH the re-ingest update path AND the merge conflict-resolution path** — user choosing "merge" still does not overwrite manually-set fields; check `beforeRecord.field` before setting (e.g., `beforeRecord.severity ? undefined : coercedSeverity`)
 - Exception clarification: `milestone_id` FK on task UPDATE can be set if currently null — consistent with fill-null-only
 - Existing update paths for actions/risks/milestones/tasks must be extended with the new fields under this policy
 
@@ -54,16 +56,23 @@ This is a backend-only phase except for two UI additions: new fields visible in 
 
 ### Extraction prompt additions (per entity type)
 - **task**: add `start_date` (ISO date), `due_date` (ISO date), `milestone_name` (verbatim), `workstream_name` (verbatim), `priority` (high/medium/low), `description`
-- **risk**: `severity` already in prompt — no change needed; fix is in the approve route
+- **risk**: `severity` already in prompt — no change needed; fix is in the approve route (write severity to DB, applying coercion)
 - **milestone**: add `owner` (verbatim name)
-- **stakeholder**: `account` is already extracted but maps to `company` in DB — fix the field name mapping in approve route (already done in update path, verify insert path)
-- **decision**: `rationale` already extracted — fix is in the approve route (add `context: f.rationale` to insert/update)
+- **stakeholder**: `account` is already extracted AND already maps to `company` in DB — **already correctly implemented in both INSERT and MERGE paths; verify only**
+- **decision**: `rationale` already extracted AND already maps to `context` in DB (`context: f.rationale ?? null`) — **already correctly implemented in INSERT path; decisions are append-only so no merge path; verify only**
 - **action**: add `notes`, `type` (minor fields, not critical)
+
+### Severity enum coercion
+- DB schema uses `severityEnum('severity', ['low', 'medium', 'high', 'critical'])` — strict Postgres enum
+- Add a `coerceRiskSeverity` helper in the approve route, consistent with the existing `coerceIntegrationStatus` pattern
+- Mapping: `'critical'|'crit'` → `'critical'`; `'high'` → `'high'`; `'medium'|'med'|'moderate'` → `'medium'`; `'low'|'minor'` → `'low'`; anything else → `'medium'` (safe default)
+- Apply coercion in both INSERT and MERGE paths before writing to DB
 
 ### Claude's Discretion
 - Exact ilike pattern for cross-entity resolution (e.g., `%name%` vs `name%` — Claude decides based on what the existing dedup uses)
 - Whether to run cross-entity resolution before or after the dedup check
 - Error handling if the DB lookup itself fails during resolution (should not block entity creation)
+- Exact string format for multi-ref appends when both milestone and workstream are unresolved on the same task
 
 </decisions>
 
@@ -72,7 +81,7 @@ This is a backend-only phase except for two UI additions: new fields visible in 
 
 ### Reusable Assets
 - `lib/extraction-types.ts` — dedup/find-existing logic per entity type; cross-entity resolution follows same ilike pattern
-- `app/api/ingestion/approve/route.ts` — three code paths: INSERT new, UPDATE existing, DELETE; new fields added to each
+- `app/api/ingestion/approve/route.ts` — three code paths: INSERT new, UPDATE existing (mergeItem), DELETE; new fields added to each; `coerceIntegrationStatus()` is the model for `coerceRiskSeverity()`
 - `worker/jobs/document-extraction.ts` — extraction prompt string; entity type guidance section is where new fields are added
 - Existing ilike fuzzy-match in `lib/extraction-types.ts` for tasks: `ilike(tasks.title, `${key}%`)` — same pattern for milestone/workstream name lookup
 
@@ -80,11 +89,12 @@ This is a backend-only phase except for two UI additions: new fields visible in 
 - `requireSession()` at every route handler — locked, must apply to any new API surface
 - Attribution fields (`source`, `source_artifact_id`, `ingested_at`) already applied uniformly to all entities — keep
 - `router.refresh()` after PATCH mutations — approval route uses `revalidatePath`, same effect
-- Fill-null-only via `f.field ?? undefined` — already used in update paths; extend to new fields
+- Fill-null-only via check-before-set in mergeItem — **must be applied to all new fields in mergeItem**, not just `?? undefined` pattern (which overwrites)
+- `coerceIntegrationStatus()` in approve route — model for `coerceRiskSeverity()`
 
 ### Integration Points
-- Approval card UI (`app/customer/[id]/context/` client components) — new fields need to be rendered in the existing card layout; server already passes `item.fields` to the client
-- Approval API response shape — add `unresolvedMilestoneRefs: number` (or similar) to the response body for the summary notice
+- Approval card UI (`components/ExtractionItemRow.tsx`, `components/ExtractionPreview.tsx`) — uses a generic `item.fields` display; new extracted fields appear automatically when added to the prompt; no structural UI changes needed unless specific per-entity layout is required
+- Approval API response shape — add `unresolvedMilestoneRefs: number` and `unresolvedWorkstreamRefs: number` (or combined message) to the response body for the summary notice
 - Cross-entity resolution happens inside the `insertNewItem` function in `approve/route.ts`, before the DB insert
 
 </code_context>
@@ -93,8 +103,11 @@ This is a backend-only phase except for two UI additions: new fields visible in 
 ## Specific Ideas
 
 - Unresolved milestone name stored in task description as: `"Milestone ref: [name]"` appended — keeps it visible without a dedicated column
-- The approval summary notice uses plain text, not a link: `"N tasks had unresolved milestone references — link them manually via the Plan tab"`
+- Unresolved workstream name stored as: `"Workstream ref: [name]"` appended — same pattern for consistency
+- The approval summary notice uses plain text, not a link: `"N tasks had unresolved milestone references, M had unresolved workstream references — link them manually via the Plan tab"`
 - Verbatim extraction instruction in prompt: add guidance like "extract names exactly as they appear in the document; do not abbreviate, normalize, or infer"
+- `coerceRiskSeverity` follows the same guard pattern as `coerceIntegrationStatus`: lowercase + trim, then match against known values, return safe default on no match
+- Fill-null-only in mergeItem: `beforeRecord.severity ? undefined : coerceRiskSeverity(f.severity)` — only fill if the existing record has no value
 
 </specifics>
 
@@ -111,4 +124,4 @@ This is a backend-only phase except for two UI additions: new fields visible in 
 ---
 
 *Phase: 42-ingestion-field-coverage*
-*Context gathered: 2026-04-06*
+*Context gathered: 2026-04-07*
