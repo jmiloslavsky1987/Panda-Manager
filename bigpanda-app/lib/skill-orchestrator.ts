@@ -41,6 +41,7 @@ export class SkillOrchestrator {
   }
 
   async run(params: SkillRunParams): Promise<void> {
+    // All callers pass skillsDir after Phase 43 migration; this fallback is retained for safety
     const skillsDir = params.skillsDir ?? path.join(process.cwd(), 'skills');
     const skillPath = path.join(skillsDir, params.skillName + '.md');
 
