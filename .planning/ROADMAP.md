@@ -176,7 +176,13 @@ Plans:
   1. Every tab capable of having zero records shows an empty state with a short description and a CTA button (not a blank area or generic "No data" text)
   2. Overdue items display a consistent red border and background treatment in Actions, Milestones, and Tasks — all using the same visual style
   3. All tabs that fetch data client-side show loading skeleton components during the initial data load rather than blank content areas
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 41-01-PLAN.md — Wave 0 TDD scaffolds (3 test files RED) + shared EmptyState component
+- [ ] 41-02-PLAN.md — Table client empty states (Actions, Risks, Milestones, Decisions) + overdue row highlighting (Actions, Milestones)
+- [ ] 41-03-PLAN.md — Server page empty states (Stakeholders, Teams, Architecture, Artifacts, History) + loading skeleton expansion (OverviewMetrics, HealthDashboard, SkillsTabClient)
+- [ ] 41-04-PLAN.md — Full test gate + human verify checkpoint (18-step UI verification)
 
 ## Progress
 
@@ -195,7 +201,7 @@ Plans:
 | 38. Gantt Overhaul | 3/4 | Complete    | 2026-04-06 | — |
 | 39. Cross-Tab Sync & Plan Tab | 4/4 | Complete    | 2026-04-07 | — |
 | 40. Search, Traceability & Skills UX | 6/6 | Complete    | 2026-04-07 | — |
-| 41. UX Polish & Consistency | v5.0 | 0/TBD | Not started | — |
+| 41. UX Polish & Consistency | v5.0 | 0/4 | Not started | — |
 | 42. Ingestion Field Coverage | v5.0 | 0/TBD | Not started | — |
 
 ### Phase 42: Ingestion Field Coverage
