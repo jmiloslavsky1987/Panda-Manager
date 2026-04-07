@@ -164,9 +164,7 @@ export function ActionsTableClient({ actions, projectId }: ActionsTableClientPro
         description="Actions track deliverables and commitments. Add the first action to get started."
         action={{
           label: 'Add Action',
-          onClick: () => {
-            // Placeholder - wire to add action dialog
-          },
+          onClick: () => router.push(`/customer/${projectId}/context`),
         }}
       />
     )

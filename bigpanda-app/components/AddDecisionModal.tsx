@@ -14,11 +14,18 @@ import { Button } from '@/components/ui/button'
 
 interface AddDecisionModalProps {
   projectId: number
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
-export function AddDecisionModal({ projectId }: AddDecisionModalProps) {
+export function AddDecisionModal({ projectId, open: controlledOpen, onOpenChange }: AddDecisionModalProps) {
   const router = useRouter()
-  const [open, setOpen] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen
+  const setOpen = (value: boolean) => {
+    setInternalOpen(value)
+    onOpenChange?.(value)
+  }
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [decision, setDecision] = useState('')

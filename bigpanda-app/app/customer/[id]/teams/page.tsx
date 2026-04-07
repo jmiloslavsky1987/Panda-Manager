@@ -25,7 +25,7 @@ export default async function TeamsPage({
         <EmptyState
           title="No team data yet"
           description="The Teams tab captures team structure, workflows, and engagement. Data populates from document ingestion or manual entry."
-          action={{ label: 'Add Team Member', onClick: () => {} }}
+          action={{ label: 'Upload Document', href: `/customer/${id}/context` }}
         />
       </div>
     )

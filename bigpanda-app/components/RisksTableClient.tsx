@@ -102,9 +102,7 @@ export function RisksTableClient({ risks, artifacts, projectId }: RisksTableClie
         description="Risks capture potential blockers and issues. Add the first risk to start tracking."
         action={{
           label: 'Add Risk',
-          onClick: () => {
-            // Placeholder - wire to add risk dialog
-          },
+          onClick: () => router.push(`/customer/${projectId}/context`),
         }}
       />
     )

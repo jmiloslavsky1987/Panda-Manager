@@ -93,9 +93,7 @@ export function MilestonesTableClient({ milestones, artifacts, projectId }: Mile
         description="Milestones mark key dates and deliverables. Add the first milestone to track progress."
         action={{
           label: 'Add Milestone',
-          onClick: () => {
-            // Placeholder - wire to add milestone dialog
-          },
+          onClick: () => router.push(`/customer/${projectId}/context`),
         }}
       />
     )
