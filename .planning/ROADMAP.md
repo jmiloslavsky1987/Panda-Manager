@@ -185,7 +185,7 @@ Plans:
 | 36. Test Fixes | v6.0 | 0/TBD | Deferred | — |
 | 37. Actions & Inline Editing Foundation | 6/6 | Complete    | 2026-04-06 | — |
 | 38. Gantt Overhaul | 3/4 | Complete    | 2026-04-06 | — |
-| 39. Cross-Tab Sync & Plan Tab | 4/4 | Complete   | 2026-04-07 | — |
+| 39. Cross-Tab Sync & Plan Tab | 4/4 | Complete    | 2026-04-07 | — |
 | 40. Search, Traceability & Skills UX | v5.0 | 0/TBD | Not started | — |
 | 41. UX Polish & Consistency | v5.0 | 0/TBD | Not started | — |
 | 42. Ingestion Field Coverage | v5.0 | 0/TBD | Not started | — |
