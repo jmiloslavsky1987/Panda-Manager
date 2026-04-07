@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import type { KeyDecision, Artifact } from '@/lib/queries'
 import { SourceBadge } from '@/components/SourceBadge'
 import { AddDecisionModal } from '@/components/AddDecisionModal'
+import { EmptyState } from '@/components/EmptyState'
 
 interface DecisionsTableClientProps {
   decisions: KeyDecision[]
@@ -67,6 +68,22 @@ export default function DecisionsTableClient({ decisions, projectId, artifacts =
   const artifactMap = useMemo(() => {
     return new Map(artifacts.map((a) => [a.id, a.name]))
   }, [artifacts])
+
+  // Show empty state when no decisions exist
+  if (decisions.length === 0) {
+    return (
+      <EmptyState
+        title="No decisions logged"
+        description="Decisions record key choices and their rationale. Log the first decision to build your record."
+        action={{
+          label: 'Log a Decision',
+          onClick: () => {
+            // Placeholder - wire to add decision dialog
+          },
+        }}
+      />
+    )
+  }
 
   return (
     <div data-testid="decisions-tab" className="space-y-6">
