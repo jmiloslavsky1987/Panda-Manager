@@ -208,7 +208,11 @@ Plans:
 **Goal**: Uploading a project document produces fully-populated entities — tasks with dates and milestone links, risks with severity, decisions with rationale, stakeholders with company — matching what the DB schema supports, so the Gantt and every other tab show real data immediately after ingestion
 **Depends on**: Phase 35 (ingestion pipeline exists; independent of v5.0 UX phases)
 **Requirements**: TBD
-**Plans:** 3/4 plans executed
+**Plans:** 5 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 42 to break down)
+- [ ] 42-01-PLAN.md — Wave 0 TDD scaffolds: extend write.test.ts + extraction-job.test.ts with RED failing cases
+- [ ] 42-02-PLAN.md — Approve route Part 1: coerceRiskSeverity + resolveEntityRef + insertItem fixes (risk, task, milestone, action)
+- [ ] 42-03-PLAN.md — Approve route Part 2: mergeItem fill-null-only + unresolvedRefs API response + IngestionModal notice
+- [ ] 42-04-PLAN.md — Extraction prompt additions + ENTITY_FIELDS update (parallel with Plan 03)
+- [ ] 42-05-PLAN.md — Full test gate + human verify checkpoint (approval card fields + unresolved refs notice)
