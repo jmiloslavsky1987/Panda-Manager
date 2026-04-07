@@ -54,7 +54,7 @@
 
 ### Skills
 
-- [ ] **SKILL-01**: Skill runner resolves SKILL.md file paths dynamically at runtime (no hardcoded absolute paths)
+- [x] **SKILL-01**: Skill runner resolves SKILL.md file paths dynamically at runtime (no hardcoded absolute paths)
 
 ## Future Requirements
 
@@ -86,7 +86,7 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SKILL-01 | Phase 43 | Pending |
+| SKILL-01 | Phase 43 | Complete |
 | NAV-01 | Phase 44 | Pending |
 | NAV-02 | Phase 44 | Pending |
 | NAV-03 | Phase 44 | Pending |

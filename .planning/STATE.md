@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v6.0
 milestone_name: — Dashboard, Navigation & Intelligence
-status: ready_to_plan
-stopped_at: v6.0 roadmap created with 7 phases (43-49)
-last_updated: "2026-04-07T00:00:00.000Z"
-last_activity: "2026-04-07 — v6.0 roadmap created"
+status: planning
+stopped_at: Completed 43-01-PLAN.md
+last_updated: "2026-04-07T23:26:03.341Z"
+last_activity: "2026-04-07 — Phase 43 complete (Skills Portability)"
 progress:
   total_phases: 7
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 10
-  completed_plans: 0
-  percent: 0
+  completed_plans: 1
+  percent: 10
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 
 ## Current Position
 
-Phase: 43 of 49 (Skills Portability)
-Plan: 0 of 1 in current phase
-Status: Ready to plan
-Last activity: 2026-04-07 — v6.0 roadmap created with 7 phases
+Phase: 43 of 49 (Skills Portability - Complete)
+Plan: 1 of 1 in current phase
+Status: Phase complete
+Last activity: 2026-04-07 — Phase 43 complete (Skills Portability)
 
-Progress: [████████████████████████████████████████░░░░░░░░░░] 86% (42/49 phases complete)
+Progress: [█░░░░░░░░░] 10% (1/10 plans in v6.0 complete)
 
 ## Milestone History
 
@@ -75,6 +75,9 @@ Progress: [███████████████████████
 - WBS templates: ADR (13 sections, 3 levels) + Biggy (6 sections, 3 levels) seeded on project creation
 - Architecture tab enhances existing Phase 21/28 work (two-tab Before/Current & Future with status tracking)
 - Team Engagement consolidates existing tables into 5-section structured report
+- **Phase 43:** resolveSkillsDir() extracted to lib/ for shared Next.js/BullMQ access
+- **Phase 43:** skill-run.ts re-exports resolveSkillsDir for backward compatibility
+- **Phase 43:** customer-project-tracker resolves settings once before loop for efficiency
 
 ## Blockers/Concerns
 
@@ -87,11 +90,11 @@ Progress: [███████████████████████
 
 **Technical debt from v5.0:**
 - Empty state CTA onClick handlers are () => {} placeholders
-- Skills execution path resolution uses hardcoded paths (Phase 43 addresses)
+- ~~Skills execution path resolution uses hardcoded paths~~ ✓ RESOLVED in Phase 43
 
 ## Session Continuity
 
-Last session: 2026-04-07
-Stopped at: v6.0 roadmap and STATE.md created
+Last session: 2026-04-07T23:26:03.339Z
+Stopped at: Completed 43-01-PLAN.md
 Resume file: None
-Next action: `/gsd:plan-phase 43` to begin Skills Portability phase
+Next action: `/gsd:plan-phase 44` to begin Navigation & Parity phase
