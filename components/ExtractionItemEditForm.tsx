@@ -7,12 +7,12 @@ import type { ReviewItem } from './IngestionModal'
 // ─── Entity field definitions ─────────────────────────────────────────────────
 
 export const ENTITY_FIELDS: Record<string, string[]> = {
-  action: ['description', 'owner', 'due_date', 'status'],
+  action: ['description', 'owner', 'due_date', 'status', 'notes', 'type'],
   risk: ['description', 'severity', 'mitigation', 'owner'],
   decision: ['decision', 'rationale', 'made_by', 'date'],
-  milestone: ['name', 'target_date', 'status'],
+  milestone: ['name', 'target_date', 'status', 'owner'],
   stakeholder: ['name', 'role', 'email', 'account'],
-  task: ['title', 'status', 'owner', 'phase'],
+  task: ['title', 'status', 'owner', 'phase', 'description', 'start_date', 'due_date', 'milestone_name', 'workstream_name', 'priority'],
   architecture: ['tool_name', 'track', 'phase', 'status', 'integration_method'],
   history: ['date', 'content', 'author'],
   businessOutcome: ['title', 'track', 'description', 'delivery_status'],
