@@ -49,7 +49,7 @@ export const SETTINGS_PATH = path.join(os.homedir(), '.bigpanda-app', 'settings.
 
 export const DEFAULTS: AppSettings = {
   workspace_path: path.join(os.homedir(), 'Documents', 'PM Application'),
-  skill_path: path.join(os.homedir(), '.claude', 'get-shit-done'),
+  skill_path: '',
   schedule: {
     morning_briefing: '0 8 * * *',
     health_check: '0 8 * * *',

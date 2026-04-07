@@ -22,11 +22,12 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = request.nextUrl;
 
-  const q       = searchParams.get('q') ?? '';
-  const account = searchParams.get('account') ?? undefined;
-  const type    = searchParams.get('type') ?? undefined;
-  const from    = searchParams.get('from') ?? undefined;
-  const to      = searchParams.get('to') ?? undefined;
+  const q         = searchParams.get('q') ?? '';
+  const account   = searchParams.get('account') ?? undefined;
+  const projectId = searchParams.get('projectId') ? Number(searchParams.get('projectId')) : undefined;
+  const type      = searchParams.get('type') ?? undefined;
+  const from      = searchParams.get('from') ?? undefined;
+  const to        = searchParams.get('to') ?? undefined;
 
   // Validate: short or missing query is not an error — return empty results
   if (!q || q.trim().length < 2) {
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const results = await searchAllRecords({ q, account, type, from, to });
+    const results = await searchAllRecords({ q, account, projectId, type, from, to });
     return NextResponse.json({ results, total: results.length });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

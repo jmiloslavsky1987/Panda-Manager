@@ -535,11 +535,12 @@ export interface SearchResult {
 export async function searchAllRecords(params: {
   q: string;
   account?: string;
+  projectId?: number;
   type?: string;
   from?: string;
   to?: string;
 }): Promise<SearchResult[]> {
-  const { q, account, type, from, to } = params;
+  const { q, account, projectId, type, from, to } = params;
 
   // Guard: no full-table scans on empty / single-char queries
   if (!q || q.trim().length < 2) return [];
@@ -564,6 +565,10 @@ export async function searchAllRecords(params: {
     return safeAccount ? ` AND ${customerCol} ILIKE '%${safeAccount}%'` : '';
   }
 
+  function projectFilter(col: string): string {
+    return projectId ? ` AND ${col} = ${projectId}` : '';
+  }
+
   // ─── 1. actions ───────────────────────────────────────────────────────────
   if (!type || type === 'actions') {
     arms.push(`
@@ -582,6 +587,7 @@ export async function searchAllRecords(params: {
       WHERE p.status IN ('active', 'draft')
         AND a.search_vec @@ plainto_tsquery('english', '${safeQ}')
         ${accountFilter('p.customer')}
+        ${projectFilter('a.project_id')}
         ${dateBounds('a.due')}
     `);
   }
@@ -604,6 +610,7 @@ export async function searchAllRecords(params: {
       WHERE p.status IN ('active', 'draft')
         AND r.search_vec @@ plainto_tsquery('english', '${safeQ}')
         ${accountFilter('p.customer')}
+        ${projectFilter('r.project_id')}
         ${dateBounds('r.last_updated')}
     `);
   }
@@ -626,6 +633,7 @@ export async function searchAllRecords(params: {
       WHERE p.status IN ('active', 'draft')
         AND kd.search_vec @@ plainto_tsquery('english', '${safeQ}')
         ${accountFilter('p.customer')}
+        ${projectFilter('kd.project_id')}
         ${dateBounds('kd.date')}
     `);
   }
@@ -648,6 +656,7 @@ export async function searchAllRecords(params: {
       WHERE p.status IN ('active', 'draft')
         AND eh.search_vec @@ plainto_tsquery('english', '${safeQ}')
         ${accountFilter('p.customer')}
+        ${projectFilter('eh.project_id')}
         ${dateBounds('eh.date')}
     `);
   }
@@ -670,6 +679,7 @@ export async function searchAllRecords(params: {
       WHERE p.status IN ('active', 'draft')
         AND s.search_vec @@ plainto_tsquery('english', '${safeQ}')
         ${accountFilter('p.customer')}
+        ${projectFilter('s.project_id')}
     `);
   }
 
@@ -691,6 +701,7 @@ export async function searchAllRecords(params: {
       WHERE p.status IN ('active', 'draft')
         AND t.search_vec @@ plainto_tsquery('english', '${safeQ}')
         ${accountFilter('p.customer')}
+        ${projectFilter('t.project_id')}
         ${dateBounds('t.due')}
     `);
   }
@@ -713,6 +724,7 @@ export async function searchAllRecords(params: {
       WHERE p.status IN ('active', 'draft')
         AND a.search_vec @@ plainto_tsquery('english', '${safeQ}')
         ${accountFilter('p.customer')}
+        ${projectFilter('a.project_id')}
     `);
   }
 
@@ -723,6 +735,9 @@ export async function searchAllRecords(params: {
   if (!type || type === 'knowledge_base') {
     const kbAccountFilter = safeAccount
       ? ` AND (kb.project_id IS NULL OR p2.customer ILIKE '%${safeAccount}%')`
+      : '';
+    const kbProjectFilter = projectId
+      ? ` AND (kb.project_id IS NULL OR kb.project_id = ${projectId})`
       : '';
     const kbDateBounds = dateBounds('kb.linked_date');
 
@@ -741,6 +756,7 @@ export async function searchAllRecords(params: {
       LEFT JOIN projects p2 ON p2.id = kb.project_id
       WHERE kb.search_vec @@ plainto_tsquery('english', '${safeQ}')
         ${kbAccountFilter}
+        ${kbProjectFilter}
         ${kbDateBounds}
     `);
   }
@@ -763,6 +779,7 @@ export async function searchAllRecords(params: {
       WHERE p.status IN ('active', 'draft')
         AND os.search_vec @@ plainto_tsquery('english', '${safeQ}')
         ${accountFilter('p.customer')}
+        ${projectFilter('os.project_id')}
         ${dateBounds("to_char(os.updated_at, 'YYYY-MM-DD')")}
     `);
   }
@@ -785,6 +802,7 @@ export async function searchAllRecords(params: {
       WHERE p.status IN ('active', 'draft')
         AND op.search_vec @@ plainto_tsquery('english', '${safeQ}')
         ${accountFilter('p.customer')}
+        ${projectFilter('op.project_id')}
         ${dateBounds("to_char(op.created_at, 'YYYY-MM-DD')")}
     `);
   }
@@ -807,6 +825,7 @@ export async function searchAllRecords(params: {
       WHERE p.status IN ('active', 'draft')
         AND i.search_vec @@ plainto_tsquery('english', '${safeQ}')
         ${accountFilter('p.customer')}
+        ${projectFilter('i.project_id')}
         ${dateBounds("to_char(i.updated_at, 'YYYY-MM-DD')")}
     `);
   }
@@ -829,6 +848,7 @@ export async function searchAllRecords(params: {
       WHERE p.status IN ('active', 'draft')
         AND te.search_vec @@ plainto_tsquery('english', '${safeQ}')
         ${accountFilter('p.customer')}
+        ${projectFilter('te.project_id')}
         ${dateBounds('te.date')}
     `);
   }
