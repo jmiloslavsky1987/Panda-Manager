@@ -9,6 +9,7 @@ import { DatePickerCell } from '@/components/DatePickerCell'
 import { OwnerCell } from '@/components/OwnerCell'
 import { ActionEditModal } from '@/components/ActionEditModal'
 import { SourceBadge } from '@/components/SourceBadge'
+import { EmptyState } from '@/components/EmptyState'
 import type { Action } from '@/lib/queries'
 
 const ACTION_STATUS_OPTIONS: { value: 'open' | 'in_progress' | 'completed' | 'cancelled'; label: string }[] = [
@@ -147,6 +148,30 @@ export function ActionsTableClient({ actions, projectId }: ActionsTableClientPro
     return 'open'
   }
 
+  // Check if action is overdue
+  function isOverdueAction(dueDate: string | null | undefined, status: string): boolean {
+    if (!dueDate || !/^\d{4}-\d{2}-\d{2}/.test(dueDate)) return false
+    if (status === 'completed' || status === 'cancelled') return false
+    const today = new Date().toISOString().split('T')[0]
+    return dueDate < today
+  }
+
+  // Show empty state when no actions exist
+  if (actions.length === 0) {
+    return (
+      <EmptyState
+        title="No actions yet"
+        description="Actions track deliverables and commitments. Add the first action to get started."
+        action={{
+          label: 'Add Action',
+          onClick: () => {
+            // Placeholder - wire to add action dialog
+          },
+        }}
+      />
+    )
+  }
+
   return (
     <div className="space-y-4">
       {/* Filter Bar */}
@@ -276,8 +301,13 @@ export function ActionsTableClient({ actions, projectId }: ActionsTableClientPro
             ) : (
               filteredActions.map(action => {
                 const normalisedStatus = normaliseStatus(action.status)
+                const overdueAction = isOverdueAction(action.due, normalisedStatus)
                 return (
-                  <TableRow key={action.id}>
+                  <TableRow
+                    key={action.id}
+                    className={overdueAction ? 'border-red-500 bg-red-50' : ''}
+                    data-testid={`action-row-${action.id}`}
+                  >
                     {/* Checkbox */}
                     <TableCell>
                       <Checkbox
