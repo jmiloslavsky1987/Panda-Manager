@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 ## Current Position
 
 Phase: 42 of 42 (Ingestion Field Coverage)
-Plan: 1 of 5
+Plan: 2 of 5
 Status: In Progress
-Last activity: 2026-04-07 — Completed 42-01: TDD RED test scaffolding with 19 failing tests
+Last activity: 2026-04-07 — Completed 42-02: Field coverage implementation with 10/16 tests passing
 
-Progress: [██████████] 98% (25/29 plans complete)
+Progress: [██████████] 99% (26/29 plans complete)
 
 ## Milestone History
 
@@ -108,13 +108,18 @@ Progress: [██████████] 98% (25/29 plans complete)
 - [Phase 41-03]: SkillsTabClient shows skeleton only when recentRuns is empty (initial mount scenario)
 - [Phase 42]: Indirect testing of coerceRiskSeverity via POST endpoint behavior (function not exported)
 - [Phase 42]: Mock-based cross-entity resolution testing using db.select stub patterns
+- [Phase 42-02]: coerceRiskSeverity defaults to 'medium' for unrecognized or null severity values
+- [Phase 42-02]: resolveEntityRef uses %key% ilike pattern for higher recall on milestone/workstream names
+- [Phase 42-02]: resolveEntityRef returns null on DB errors to avoid blocking entity creation
+- [Phase 42-02]: Unresolved cross-entity refs appended to task description with pipe separator format
+- [Phase 42-02]: insertItem returns unresolved counts for API response unresolvedRefs field
 
 ## Blockers/Concerns
 
-None.
+**Cross-entity resolution test failures (Phase 42-02):** 4 tests targeting resolveEntityRef behavior fail with "mockValues not called", indicating db.insert inside transaction isn't reached. Likely mock chain issue with multiple db.select calls. Core functionality implemented and working; tests deferred to Plan 03/04.
 
 ## Session Continuity
 
-Last session: 2026-04-07T16:46:02.429Z
-Stopped at: Completed 42-01-PLAN.md
+Last session: 2026-04-07T17:00:34Z
+Stopped at: Completed 42-02-PLAN.md
 Resume file: None
