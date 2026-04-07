@@ -89,7 +89,7 @@ Full details: `.planning/milestones/v4.0-ROADMAP.md` (archived)
 - [x] **Phase 39: Cross-Tab Sync & Plan Tab** — Overview metrics refresh on entity edits, clickable chart drill-downs, active blocker list, Plan tab overdue highlighting, and bulk action wiring (completed 2026-04-07)
 - [x] **Phase 40: Search, Traceability & Skills UX** — Global search bar, Decisions filtering, artifact reverse lookup, Engagement History auto-log, and Skills job progress + cancel (completed 2026-04-07)
 - [ ] **Phase 41: UX Polish & Consistency** — Actionable empty states, unified overdue highlighting, and consistent loading skeletons across all tabs
-- [ ] **Phase 42: Ingestion Field Coverage** — Full-field extraction for all entity types, cross-entity ID resolution (task→milestone, task→workstream), and consistent DB persistence so uploaded documents produce Gantt-ready data
+- [x] **Phase 42: Ingestion Field Coverage** — Full-field extraction for all entity types, cross-entity ID resolution (task→milestone, task→workstream), and consistent DB persistence so uploaded documents produce Gantt-ready data (completed 2026-04-07)
 
 ## Phase Details
 
@@ -202,13 +202,13 @@ Plans:
 | 39. Cross-Tab Sync & Plan Tab | 4/4 | Complete    | 2026-04-07 | — |
 | 40. Search, Traceability & Skills UX | 6/6 | Complete    | 2026-04-07 | — |
 | 41. UX Polish & Consistency | 3/4 | In Progress|  | — |
-| 42. Ingestion Field Coverage | 4/5 | In Progress|  | — |
+| 42. Ingestion Field Coverage | 5/5 | Complete   | 2026-04-07 | — |
 
 ### Phase 42: Ingestion Field Coverage
 **Goal**: Uploading a project document produces fully-populated entities — tasks with dates and milestone links, risks with severity, decisions with rationale, stakeholders with company — matching what the DB schema supports, so the Gantt and every other tab show real data immediately after ingestion
 **Depends on**: Phase 35 (ingestion pipeline exists; independent of v5.0 UX phases)
 **Requirements**: TBD
-**Plans:** 4/5 plans executed
+**Plans:** 5/5 plans complete
 
 Plans:
 - [ ] 42-01-PLAN.md — Wave 0 TDD scaffolds: extend write.test.ts + extraction-job.test.ts with RED failing cases
