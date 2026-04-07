@@ -125,7 +125,20 @@ export default async function StakeholdersPage({ params }: { params: Promise<{ i
       </div>
 
       {stakeholders.length === 0 ? (
-        <p className="text-sm text-zinc-500">No stakeholders recorded yet. Add the first one above.</p>
+        <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+          <h3 className="text-sm font-medium text-zinc-900 mb-1">No stakeholders yet</h3>
+          <p className="text-sm text-zinc-500 mb-4 max-w-sm">
+            Stakeholders record the people involved in the project. Add the first one to get started.
+          </p>
+          <StakeholderEditModal
+            projectId={projectId}
+            trigger={
+              <button className="inline-flex items-center rounded-md bg-zinc-900 text-white text-sm px-4 py-2 hover:bg-zinc-700 transition-colors">
+                Add Stakeholder
+              </button>
+            }
+          />
+        </div>
       ) : useGroups ? (
         <div className="space-y-8">
           {groups.map((group) => (
