@@ -938,7 +938,7 @@ async function mergeItem(
 
 // ─── Entity delete helpers (replace step 1) ──────────────────────────────────
 
-async function deleteItem(entityType: EntityType, existingId: number): Promise<void> {
+async function deleteItem(entityType: EntityType, existingId: number): Promise<{ unresolvedMilestones: number; unresolvedWorkstreams: number }> {
   switch (entityType) {
     case 'action': {
       const [before] = await db.select().from(actions).where(eq(actions.id, existingId));
@@ -1193,7 +1193,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       switch (item.conflictResolution) {
         case 'skip':
           skipped++;
-          return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
+          break;
 
         case 'replace': {
           const idToDelete = item.existingId ?? existing.id;
@@ -1202,7 +1202,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           unresolvedMilestoneCount += counts.unresolvedMilestones;
           unresolvedWorkstreamCount += counts.unresolvedWorkstreams;
           written++;
-          return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
+          break;
         }
 
         case 'merge': {
@@ -1211,7 +1211,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           unresolvedMilestoneCount += counts.unresolvedMilestones;
           unresolvedWorkstreamCount += counts.unresolvedWorkstreams;
           written++;
-          return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
+          break;
         }
       }
     } else {

@@ -71,6 +71,7 @@ export function IngestionModal({
   const [lastExtractedArtifactId, setLastExtractedArtifactId] = useState<number | null>(null)
   const [extractionMessage, setExtractionMessage] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
+  const [unresolvedRefs, setUnresolvedRefs] = useState<string | null>(null)
   // Ref prevents double-firing in React StrictMode
   const autoStartedRef = useRef(false)
   // Store jobIds for polling
@@ -226,6 +227,7 @@ export function IngestionModal({
     setReviewItems([])
     setFilteredCount(0)
     setError(null)
+    setUnresolvedRefs(null)
 
     const formData = new FormData()
     formData.append('project_id', String(projectId))
@@ -341,8 +343,15 @@ export function IngestionModal({
         throw new Error(`Server error (${res.status}): ${text.slice(0, 200)}`)
       }
       if (!res.ok) throw new Error(data.error as string ?? 'Approve failed')
+
+      // Extract unresolvedRefs from response and store it
+      setUnresolvedRefs(data.unresolvedRefs as string ?? null)
       setStage('done')
-      setTimeout(() => onOpenChange(false), 1200)
+
+      // Auto-close only if no unresolved refs
+      if (!data.unresolvedRefs) {
+        setTimeout(() => onOpenChange(false), 1200)
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Approve failed')
       setStage('reviewing')
@@ -467,6 +476,11 @@ export function IngestionModal({
                   <div className="text-center space-y-2">
                     <p className="text-green-600 font-medium">Ingestion complete!</p>
                     <p className="text-sm text-zinc-500">Items saved to your project.</p>
+                    {unresolvedRefs && (
+                      <p className="mt-2 text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded px-3 py-2">
+                        {unresolvedRefs}
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
