@@ -10,6 +10,7 @@ import { OwnerCell } from '@/components/OwnerCell'
 import { ActionEditModal } from '@/components/ActionEditModal'
 import { SourceBadge } from '@/components/SourceBadge'
 import { EmptyState } from '@/components/EmptyState'
+import { AddActionModal } from '@/components/AddActionModal'
 import type { Action } from '@/lib/queries'
 
 const ACTION_STATUS_OPTIONS: { value: 'open' | 'in_progress' | 'completed' | 'cancelled'; label: string }[] = [
@@ -30,6 +31,7 @@ export function ActionsTableClient({ actions, projectId }: ActionsTableClientPro
   const router = useRouter()
   const searchParams = useSearchParams()
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const [addModalOpen, setAddModalOpen] = useState(false)
 
   // Read filter values from URL params
   const q = searchParams.get('q') ?? ''
@@ -159,19 +161,30 @@ export function ActionsTableClient({ actions, projectId }: ActionsTableClientPro
   // Show empty state when no actions exist
   if (actions.length === 0) {
     return (
-      <EmptyState
-        title="No actions yet"
-        description="Actions track deliverables and commitments. Add the first action to get started."
-        action={{
-          label: 'Add Action',
-          onClick: () => router.push(`/customer/${projectId}/context`),
-        }}
-      />
+      <>
+        <EmptyState
+          title="No actions yet"
+          description="Actions track deliverables and commitments. Add the first action to get started."
+          action={{
+            label: 'Add Action',
+            onClick: () => setAddModalOpen(true),
+          }}
+        />
+        <AddActionModal
+          projectId={projectId}
+          open={addModalOpen}
+          onOpenChange={setAddModalOpen}
+        />
+      </>
     )
   }
 
   return (
     <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold text-zinc-900">Actions</h2>
+        <AddActionModal projectId={projectId} open={addModalOpen} onOpenChange={setAddModalOpen} />
+      </div>
       {/* Filter Bar */}
       <div className="flex flex-wrap items-center gap-3 border-b pb-3">
         {/* Search input */}
