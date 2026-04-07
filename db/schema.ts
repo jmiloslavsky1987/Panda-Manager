@@ -342,7 +342,7 @@ export const jobRuns = pgTable('job_runs', {
 
 // ─── Enum: skill_run_status ───────────────────────────────────────────────────
 export const skillRunStatusEnum = pgEnum('skill_run_status', [
-  'pending', 'running', 'completed', 'failed',
+  'pending', 'running', 'completed', 'failed', 'cancelled',
 ]);
 
 // ─── Table 15: skill_runs ─────────────────────────────────────────────────────
