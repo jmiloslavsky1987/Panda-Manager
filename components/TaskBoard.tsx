@@ -234,10 +234,10 @@ function BulkToolbar({ selectedIds, onClear, onComplete }: BulkToolbarProps) {
             className="text-xs border border-zinc-200 rounded px-1 py-1"
             aria-label="status"
           >
-            <option value="todo">To Do</option>
-            <option value="in_progress">In Progress</option>
-            <option value="blocked">Blocked</option>
-            <option value="done">Done</option>
+            <option value="todo">todo</option>
+            <option value="in_progress">in_progress</option>
+            <option value="blocked">blocked</option>
+            <option value="done">done</option>
           </select>
           <button type="submit" className="px-2 py-1 text-xs bg-zinc-900 text-white rounded">Apply</button>
           <button type="button" onClick={() => setMode(null)} className="px-2 py-1 text-xs rounded hover:bg-zinc-100">Cancel</button>

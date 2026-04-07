@@ -55,9 +55,11 @@ const STATUS_COLORS: Record<string, string> = {
 interface PhaseCardProps {
   task: Task
   projectId: number
+  selected: boolean
+  onSelect: (id: number) => void
 }
 
-function PhaseCard({ task, projectId }: PhaseCardProps) {
+function PhaseCard({ task, projectId, selected, onSelect }: PhaseCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
   })
@@ -68,22 +70,37 @@ function PhaseCard({ task, projectId }: PhaseCardProps) {
     opacity: isDragging ? 0.4 : 1,
   }
 
+  const today = new Date().toISOString().split('T')[0]
+  const isOverdue = !!task.due && task.due < today && task.status !== 'done'
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       data-testid="task-card"
-      className="bg-white border border-zinc-200 rounded-lg p-3 shadow-sm flex flex-col gap-1.5"
+      className={`bg-white border rounded-lg p-3 shadow-sm flex flex-col gap-1.5 ${
+        isOverdue ? 'border-red-500 bg-red-50' : 'border-zinc-200'
+      }`}
     >
-      <div
-        className="cursor-grab text-sm font-medium text-zinc-900 leading-snug break-words"
-        {...attributes}
-        {...listeners}
-      >
-        {task.title}
+      <div className="flex items-start gap-2">
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={() => onSelect(task.id)}
+          onClick={(e) => e.stopPropagation()}
+          className="w-3.5 h-3.5 rounded border-zinc-300 cursor-pointer mt-0.5"
+          aria-label={`Select task ${task.title}`}
+        />
+        <div
+          className="flex-1 cursor-grab text-sm font-medium text-zinc-900 leading-snug break-words"
+          {...attributes}
+          {...listeners}
+        >
+          {task.title}
+        </div>
       </div>
 
-      <div className="flex items-center gap-1.5 flex-wrap">
+      <div className="flex items-center gap-1.5 flex-wrap pl-6">
         {task.owner && <span className="text-xs text-zinc-500">{task.owner}</span>}
         {task.due && <span className="text-xs text-zinc-400">{task.due}</span>}
         {task.priority && (
@@ -96,15 +113,62 @@ function PhaseCard({ task, projectId }: PhaseCardProps) {
         </span>
       </div>
 
-      <TaskEditModal
-        task={task}
-        projectId={projectId}
-        trigger={
-          <button className="text-xs text-zinc-400 hover:text-zinc-700 underline-offset-2 hover:underline self-start">
-            Edit
-          </button>
-        }
-      />
+      <div className="pl-6">
+        <TaskEditModal
+          task={task}
+          projectId={projectId}
+          trigger={
+            <button className="text-xs text-zinc-400 hover:text-zinc-700 underline-offset-2 hover:underline self-start">
+              Edit
+            </button>
+          }
+        />
+      </div>
+    </div>
+  )
+}
+
+// ─── Phase Bulk Toolbar ───────────────────────────────────────────────────────
+
+interface PhaseBulkToolbarProps {
+  selectedIds: number[]
+  onClear: () => void
+  onComplete: () => void
+}
+
+function PhaseBulkToolbar({ selectedIds, onClear, onComplete }: PhaseBulkToolbarProps) {
+  const router = useRouter()
+  const [statusInput, setStatusInput] = useState<'todo' | 'in_progress' | 'blocked' | 'done'>('todo')
+
+  async function handleApply(e: React.FormEvent) {
+    e.preventDefault()
+    await fetch('/api/tasks-bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ task_ids: selectedIds, patch: { status: statusInput } }),
+    })
+    onComplete()
+    router.refresh()
+  }
+
+  return (
+    <div className="flex items-center gap-3 bg-zinc-900 text-white rounded-lg px-4 py-2 text-sm">
+      <span className="font-medium">{selectedIds.length} selected</span>
+      <form onSubmit={handleApply} className="flex items-center gap-2">
+        <label className="text-xs">status:</label>
+        <select
+          value={statusInput}
+          onChange={(e) => setStatusInput(e.target.value as typeof statusInput)}
+          className="text-xs text-zinc-900 border border-zinc-300 rounded px-1 py-1"
+        >
+          <option value="todo">todo</option>
+          <option value="in_progress">in_progress</option>
+          <option value="blocked">blocked</option>
+          <option value="done">done</option>
+        </select>
+        <button type="submit" className="px-2 py-1 text-xs bg-white text-zinc-900 rounded">Apply</button>
+      </form>
+      <button onClick={onClear} className="px-2 py-1 text-xs rounded hover:bg-zinc-700">Clear</button>
     </div>
   )
 }
@@ -132,6 +196,7 @@ export function PhaseBoard({ tasks: initialTasks, projectId, templates }: PhaseB
   const router = useRouter()
   const [tasks, setTasks] = useState<Task[]>(initialTasks)
   const [activeId, setActiveId] = useState<number | null>(null)
+  const [selected, setSelected] = useState<Set<number>>(new Set())
 
   // Sync when server re-fetches (e.g. after router.refresh() from AiPlanPanel commit).
   // Use a stable signature to avoid firing on every render due to new array references.
@@ -150,6 +215,22 @@ export function PhaseBoard({ tasks: initialTasks, projectId, templates }: PhaseB
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   )
+
+  function toggleSelect(id: number) {
+    setSelected(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
+
+  function clearSelected() {
+    setSelected(new Set())
+  }
 
   const phases = DEFAULT_PHASES
 
@@ -311,6 +392,15 @@ export function PhaseBoard({ tasks: initialTasks, projectId, templates }: PhaseB
         <span className="ml-auto text-sm text-zinc-400">{tasks.length} tasks</span>
       </div>
 
+      {/* Bulk toolbar — shows when 2+ selected */}
+      {Array.from(selected).length >= 2 && (
+        <PhaseBulkToolbar
+          selectedIds={Array.from(selected)}
+          onClear={clearSelected}
+          onComplete={clearSelected}
+        />
+      )}
+
       {/* Phase Kanban */}
       <DndContext
         sensors={sensors}
@@ -336,7 +426,13 @@ export function PhaseBoard({ tasks: initialTasks, projectId, templates }: PhaseB
                 >
                   <DroppableColumn id={phase}>
                     {phaseTasks.map((task) => (
-                      <PhaseCard key={task.id} task={task} projectId={projectId} />
+                      <PhaseCard
+                        key={task.id}
+                        task={task}
+                        projectId={projectId}
+                        selected={selected.has(task.id)}
+                        onSelect={toggleSelect}
+                      />
                     ))}
                     {phaseTasks.length === 0 && (
                       <p className="text-xs text-zinc-400 text-center py-4">No tasks</p>
