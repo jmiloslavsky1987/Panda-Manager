@@ -77,7 +77,7 @@ describe('computeAuditDiff (HIST-01)', () => {
 
 // Import HistoryPage component for integration tests
 // This import will fail until the component exists
-import HistoryPage from '@/app/customer/[accountId]/history/page'
+import HistoryPage from '@/app/customer/[id]/history/page'
 
 describe('HistoryPage - Unified Feed (HIST-01)', () => {
   beforeEach(() => {
@@ -89,7 +89,7 @@ describe('HistoryPage - Unified Feed (HIST-01)', () => {
     // When implemented, it should fetch both audit entries and notes
     // and merge them by created_at in descending order
 
-    render(<HistoryPage params={{ accountId: '1' }} />)
+    render(<HistoryPage params={Promise.resolve({ id: '1' })} />)
 
     // Placeholder assertion - will fail because component doesn't exist
     expect(true).toBe(false)
@@ -99,7 +99,7 @@ describe('HistoryPage - Unified Feed (HIST-01)', () => {
     // This test will fail because HistoryPage doesn't exist yet
     // When implemented, audit log entries should have an "Activity" badge
 
-    render(<HistoryPage params={{ accountId: '1' }} />)
+    render(<HistoryPage params={Promise.resolve({ id: '1' })} />)
 
     // Placeholder assertion
     expect(true).toBe(false)
@@ -109,7 +109,7 @@ describe('HistoryPage - Unified Feed (HIST-01)', () => {
     // This test will fail because HistoryPage doesn't exist yet
     // Notes should keep their existing badge (AI, Manual, etc.)
 
-    render(<HistoryPage params={{ accountId: '1' }} />)
+    render(<HistoryPage params={Promise.resolve({ id: '1' })} />)
 
     // Placeholder assertion
     expect(true).toBe(false)
