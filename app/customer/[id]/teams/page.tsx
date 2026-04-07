@@ -15,9 +15,9 @@ export default async function TeamsPage({
   ])
 
   // Check if truly empty
-  const isEmpty = data.teamOnboardingStatuses.length === 0 &&
-    data.e2eWorkflows.length === 0 &&
-    data.businessOutcomes.length === 0
+  const isEmpty = data.e2eWorkflows.length === 0 &&
+    data.businessOutcomes.length === 0 &&
+    data.architectureIntegrations.length === 0
 
   if (isEmpty) {
     return (
