@@ -48,22 +48,22 @@
 
 ### Global Search & Filtering (SRCH)
 
-- [ ] **SRCH-01**: A global search bar accessible from the workspace header searches across all project data (actions, risks, milestones, tasks, decisions, stakeholders) using the existing full-text search API
-- [ ] **SRCH-02**: Decisions tab supports text search and date-range filtering
+- [x] **SRCH-01**: A global search bar accessible from the workspace header searches across all project data (actions, risks, milestones, tasks, decisions, stakeholders) using the existing full-text search API
+- [x] **SRCH-02**: Decisions tab supports text search and date-range filtering
 - [x] **SRCH-03**: Actions tab supports text search on the description field (in addition to status, owner, and date filters)
 
 ### Artifact Traceability (ARTF)
 
-- [ ] **ARTF-01**: Artifact detail view shows a list of all entities (risks, actions, milestones, decisions) extracted from that artifact, each linking to its record
+- [x] **ARTF-01**: Artifact detail view shows a list of all entities (risks, actions, milestones, decisions) extracted from that artifact, each linking to its record
 
 ### Engagement History & Audit Log (HIST)
 
-- [ ] **HIST-01**: Engagement History tab surfaces entries from the existing audit log table showing who changed what and when for risks, actions, milestones, and tasks — automatically, without manual curation
+- [x] **HIST-01**: Engagement History tab surfaces entries from the existing audit log table showing who changed what and when for risks, actions, milestones, and tasks — automatically, without manual curation
 
 ### Skills & Jobs UX (SKLS)
 
-- [ ] **SKLS-01**: Skills tab shows elapsed time and a progress indicator for currently running or queued jobs
-- [ ] **SKLS-02**: User can cancel a queued or in-progress skill job from the Skills tab
+- [x] **SKLS-01**: Skills tab shows elapsed time and a progress indicator for currently running or queued jobs
+- [x] **SKLS-02**: User can cancel a queued or in-progress skill job from the Skills tab
 
 ### UX Polish & Consistency (UXPOL)
 
@@ -123,12 +123,12 @@
 | SYNC-03 | Phase 39 | Complete |
 | PLAN-01 | Phase 39 | Complete |
 | PLAN-02 | Phase 39 | Complete |
-| SRCH-01 | Phase 40 | Pending |
-| SRCH-02 | Phase 40 | Pending |
-| ARTF-01 | Phase 40 | Pending |
-| HIST-01 | Phase 40 | Pending |
-| SKLS-01 | Phase 40 | Pending |
-| SKLS-02 | Phase 40 | Pending |
+| SRCH-01 | Phase 40 | Complete |
+| SRCH-02 | Phase 40 | Complete |
+| ARTF-01 | Phase 40 | Complete |
+| HIST-01 | Phase 40 | Complete |
+| SKLS-01 | Phase 40 | Complete |
+| SKLS-02 | Phase 40 | Complete |
 | UXPOL-01 | Phase 41 | Pending |
 | UXPOL-02 | Phase 41 | Pending |
 | UXPOL-03 | Phase 41 | Pending |
