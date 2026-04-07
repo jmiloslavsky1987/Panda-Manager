@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Badge } from './ui/badge';
@@ -58,6 +58,11 @@ interface SkillRun {
   created_at: Date;
 }
 
+interface RunningJob {
+  runId: string;
+  startedAt: Date;
+}
+
 interface SkillsTabClientProps {
   projectId: number;
   recentRuns: SkillRun[];
@@ -84,18 +89,34 @@ function statusLabel(status: string): string {
   }
 }
 
+// ── ElapsedTime sub-component ──────────────────────────────────────────────────
+
+function ElapsedTime({ startedAt }: { startedAt: Date }) {
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - startedAt.getTime()) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [startedAt]);
+  const m = Math.floor(elapsed / 60);
+  const s = elapsed % 60;
+  return <span className="text-xs text-zinc-500">{m}m {s}s</span>;
+}
+
 // ── Main component ─────────────────────────────────────────────────────────────
+
+const TERMINAL_STATES = new Set(['completed', 'failed', 'cancelled']);
 
 export function SkillsTabClient({ projectId, recentRuns }: SkillsTabClientProps) {
   const router = useRouter();
-  const [running, setRunning] = useState<Set<string>>(new Set());
+  const [runningJobs, setRunningJobs] = useState<Map<string, RunningJob>>(new Map());
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [missingBadge, setMissingBadge] = useState<Set<string>>(new Set());
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [expandedInput, setExpandedInput] = useState<string | null>(null);
 
   async function triggerSkill(skillName: string) {
-    setRunning(prev => new Set(prev).add(skillName));
     setErrors(prev => { const n = { ...prev }; delete n[skillName]; return n; });
     setMissingBadge(prev => { const n = new Set(prev); n.delete(skillName); return n; });
 
@@ -124,14 +145,53 @@ export function SkillsTabClient({ projectId, recentRuns }: SkillsTabClientProps)
         return;
       }
 
-      router.push(`/customer/${projectId}/skills/${data.runId}`);
+      // Store runId and start tracking progress (no navigation)
+      setRunningJobs(prev => {
+        const next = new Map(prev);
+        next.set(skillName, { runId: data.runId!, startedAt: new Date() });
+        return next;
+      });
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Network error';
       setErrors(prev => ({ ...prev, [skillName]: msg }));
-    } finally {
-      setRunning(prev => { const n = new Set(prev); n.delete(skillName); return n; });
     }
   }
+
+  async function cancelJob(skillName: string) {
+    const job = runningJobs.get(skillName);
+    if (!job) return;
+    await fetch(`/api/skills/runs/${job.runId}/cancel`, { method: 'POST' });
+    setRunningJobs(prev => {
+      const next = new Map(prev);
+      next.delete(skillName);
+      return next;
+    });
+    router.refresh();
+  }
+
+  // Status polling effect
+  useEffect(() => {
+    if (runningJobs.size === 0) return;
+    const interval = setInterval(async () => {
+      for (const [skillName, { runId }] of runningJobs) {
+        try {
+          const res = await fetch(`/api/skills/runs/${runId}`);
+          const data = await res.json();
+          if (TERMINAL_STATES.has(data.status)) {
+            setRunningJobs(prev => {
+              const next = new Map(prev);
+              next.delete(skillName);
+              return next;
+            });
+            router.refresh();
+          }
+        } catch {
+          // Ignore polling errors
+        }
+      }
+    }, 5000);
+    return () => clearInterval(interval); // CRITICAL: prevent unmount leak
+  }, [runningJobs, router]);
 
   function handleRunClick(skillName: string) {
     if (INPUT_REQUIRED_SKILLS.has(skillName)) {
@@ -154,7 +214,7 @@ export function SkillsTabClient({ projectId, recentRuns }: SkillsTabClientProps)
       <div className="divide-y divide-zinc-100 border border-zinc-200 rounded-lg overflow-hidden mb-8">
         {ALL_SKILLS.map((skill) => {
           const isWired = WIRED_SKILLS.has(skill.name);
-          const isRunning = running.has(skill.name);
+          const isRunning = runningJobs.has(skill.name);
           const hasError = !!errors[skill.name];
           const hasMissing = missingBadge.has(skill.name);
           const isInputExpanded = expandedInput === skill.name;
@@ -182,17 +242,37 @@ export function SkillsTabClient({ projectId, recentRuns }: SkillsTabClientProps)
                   </span>
                 )}
 
-                {/* Run button — wired skills only */}
-                {isWired ? (
+                {/* Progress indicator + Cancel button for running jobs */}
+                {isRunning && (
+                  <div className="flex items-center gap-2">
+                    <svg className="animate-spin h-4 w-4 text-zinc-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                    <ElapsedTime startedAt={runningJobs.get(skill.name)!.startedAt} />
+                    <button
+                      onClick={() => cancelJob(skill.name)}
+                      className="text-xs text-red-500 hover:text-red-700 hover:underline"
+                      data-testid={`cancel-skill-${skill.name}`}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+
+                {/* Run button — wired skills only, shown when NOT running */}
+                {isWired && !isRunning && (
                   <button
                     data-run={skill.name}
                     onClick={() => handleRunClick(skill.name)}
-                    disabled={isRunning}
                     className="shrink-0 text-sm px-3 py-1.5 rounded-md bg-zinc-900 text-white hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
-                    {isRunning ? 'Starting…' : isInputExpanded ? 'Run' : 'Run'}
+                    {isInputExpanded ? 'Run' : 'Run'}
                   </button>
-                ) : (
+                )}
+
+                {/* Disabled Run button for unwired skills */}
+                {!isWired && (
                   <span
                     title="Coming in a future update"
                     className="shrink-0 text-sm px-3 py-1.5 rounded-md bg-zinc-100 text-zinc-400 cursor-not-allowed"
