@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v5.0
 milestone_name: — Workspace UX Overhaul
 status: executing
-stopped_at: Completed 42-01-PLAN.md
-last_updated: "2026-04-07T16:46:02.432Z"
-last_activity: "2026-04-07 — Completed 41-03: Empty states for 5 server pages and expanded loading skeletons"
+stopped_at: Completed 42-03-PLAN.md
+last_updated: "2026-04-07T17:11:51.885Z"
+last_activity: "2026-04-07 — Completed 42-04: Extended extraction prompt with new field coverage and updated approval form fields"
 progress:
   total_phases: 6
   completed_phases: 5
   total_plans: 29
-  completed_plans: 25
+  completed_plans: 28
   percent: 99
 ---
 
@@ -28,9 +28,9 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 Phase: 42 of 42 (Ingestion Field Coverage)
 Plan: 4 of 5
 Status: In Progress
-Last activity: 2026-04-07 — Completed 42-04: Extended extraction prompt with new field coverage and updated approval form fields
+Last activity: 2026-04-07 — Completed 42-03: Fill-null-only merge guards and unresolvedRefs UI with auto-close suppression
 
-Progress: [██████████] 99% (27/29 plans complete)
+Progress: [██████████] 100% (232/233 plans complete)
 
 ## Milestone History
 
@@ -115,6 +115,8 @@ Progress: [██████████] 99% (27/29 plans complete)
 - [Phase 42-02]: insertItem returns unresolved counts for API response unresolvedRefs field
 - [Phase 42-04]: Export EXTRACTION_SYSTEM constant for test verification (enables prompt content testing)
 - [Phase 42-04]: Fixed test imports to use ES6 import instead of try/catch require pattern (proper module loading in Vitest)
+- [Phase 42]: mergeItem fill-null-only pattern: beforeRecord.field ? undefined : (newValue) with || for strings
+- [Phase 42]: IngestionModal auto-close suppressed when unresolvedRefs present (forces user awareness)
 
 ## Blockers/Concerns
 
@@ -122,6 +124,6 @@ Progress: [██████████] 99% (27/29 plans complete)
 
 ## Session Continuity
 
-Last session: 2026-04-07T17:06:43Z
-Stopped at: Completed 42-04-PLAN.md
+Last session: 2026-04-07T17:11:51.883Z
+Stopped at: Completed 42-03-PLAN.md
 Resume file: None
