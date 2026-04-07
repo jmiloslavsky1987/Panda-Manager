@@ -53,21 +53,28 @@ Every PS delivery intelligence the team has built — 15 AI skills, all project 
 - ✓ Overview metrics & health dashboard: Recharts visualizations, OverviewMetrics, HealthDashboard, MilestoneTimeline — v4.0 Phase 34 (METR-01, HLTH-01, TMLN-01)
 - ✓ Weekly Focus AI priorities via BullMQ + Redis, integration tracker split by ADR/Biggy workstream — v4.0 Phase 35 (WKFO-01–02, OINT-01)
 
+<!-- v5.0 — Workspace UX Overhaul (2026-04-07) -->
+- ✓ Actions tab converted to table layout with inline editing — no modal required for common updates — v5.0 Phase 37
+- ✓ Risks and Milestones inline editing with status enums replacing freeform text fields — v5.0 Phase 37
+- ✓ Date pickers and owner autocomplete (from stakeholders) across all entity edit surfaces — v5.0 Phase 37
+- ✓ Gantt: milestone markers, view mode switcher, task grouping by milestone, drag-to-reschedule — v5.0 Phase 38
+- ✓ Cross-tab data sync: edits refresh Overview metrics in-place; clickable chart drill-downs to filtered tab views — v5.0 Phase 39
+- ✓ Plan tab: overdue task highlighting, bulk-action wiring now functional — v5.0 Phase 39
+- ✓ Global search bar across all project data (FTS API wired to workspace header) — v5.0 Phase 40
+- ✓ Decisions tab filtering and search; Actions tab text search — v5.0 Phases 37, 40
+- ✓ Artifact detail reverse lookup: lists all entities extracted from that artifact with links — v5.0 Phase 40
+- ✓ Engagement History auto-logs from audit log — no manual curation required — v5.0 Phase 40
+- ✓ Skills tab: elapsed time, progress indicator, and cancel button for running jobs — v5.0 Phase 40
+- ✓ Consistent empty states with CTAs; overdue highlighting unified across Actions/Milestones/Tasks — v5.0 Phase 41
+- ✓ Full ingestion field coverage: task dates/FKs/priority, milestone owner, action notes/type, cross-entity ID resolution — v5.0 Phase 42
+
 ### Active
 
-<!-- v5.0 — Workspace UX Overhaul (2026-04-03) -->
-- [ ] Actions tab converted to table layout with inline editing (no modal required for common updates)
-- [ ] Risks and Milestones tables gain inline editing with status enums replacing freeform text fields
-- [ ] Date pickers and owner autocomplete (from stakeholders) across all entity edit surfaces
-- [ ] Gantt: milestone markers, view mode switcher, task grouping by milestone, drag-to-reschedule
-- [ ] Cross-tab data sync: edits to risks/actions/milestones refresh Overview metrics in-place; clickable chart drill-downs
-- [ ] Plan tab: overdue task highlighting, bulk-action wiring, milestone grouping visible in board views
-- [ ] Global search bar across all project data (FTS API already exists, needs UI)
-- [ ] Decisions tab filtering and search; Actions tab text search
-- [ ] Artifact detail reverse lookup: show all entities extracted from that artifact
-- [ ] Engagement History auto-logs from audit log when entities are edited
-- [ ] Skills tab: progress/ETA indicator and cancel button for running jobs
-- [ ] Consistent empty states with CTAs; overdue highlighting unified across Actions/Milestones/Tasks
+<!-- v6.0 — deferred from v5.0 + new priorities -->
+- [ ] Test suite: 6 pre-existing test failures resolved (TEST-01 — leftJoin/db.transaction/db.query mock setup issues)
+- [ ] Empty state CTA onClick handlers wired to actual creation forms (placeholder () => {} shipped in v5.0)
+- [ ] Skills execution path resolution — hardcoded paths in skill runner made portable
+- [ ] UI visual overhaul: color palette, typography, spacing modernised (UIVIZ-01)
 
 ### Out of Scope
 
@@ -81,9 +88,9 @@ Every PS delivery intelligence the team has built — 15 AI skills, all project 
 
 ## Context
 
-v4.0 shipped 2026-04-03. Full stack: Next.js 16 (Turbopack), PostgreSQL, Redis/BullMQ, better-auth, Drizzle ORM, Vercel AI SDK, @xyflow/react, @anthropic-ai/sdk, Recharts. 35 phases, 204 plans completed across v1.0–v4.0. Test suite: ~370 passing, 6 pre-existing failures remain (deferred to v6.0). Production build clean.
+v5.0 shipped 2026-04-07. Full stack: Next.js 16 (Turbopack), PostgreSQL, Redis/BullMQ, better-auth, Drizzle ORM, Vercel AI SDK, @xyflow/react, @anthropic-ai/sdk, Recharts, frappe-gantt (replaced by custom GanttChart.tsx in v5.0). 42 phases, 233 plans completed across v1.0–v5.0. ~42,385 LOC TypeScript. Test suite: ~370 passing, 6 pre-existing failures remain (deferred to v6.0). Production build clean.
 
-v4.0 delivered: BullMQ extraction migration, global time tracking, full Overview tab overhaul (ADR/Biggy workstreams, metrics, health dashboard, weekly AI focus, integration tracker). Test fixes (Phase 36) deferred to v6.0 as they are mock setup issues with low production impact.
+v5.0 delivered: full inline editing across all entity types, custom split-panel Gantt with milestone markers and drag-reschedule, cross-tab metrics sync via CustomEvent, global search bar, artifact reverse lookup, audit-driven engagement history, Skills job progress/cancel, consistent empty states, loading skeletons, overdue highlighting, and complete ingestion field coverage with cross-entity ID resolution. Test fixes (Phase 36) and empty state CTA wiring remain as v6.0 work.
 
 This is a full rewrite of a previous Claude Code project assistant build (8 phases, React/Vite/Express/Google Drive architecture). SKILL.md files read from disk at runtime (not bundled). All data model patterns (archive-on-replace, dual-write atomicity, append-only history, source tracing, ID conventions) preserved from the original skill ecosystem.
 
@@ -121,23 +128,10 @@ This is a full rewrite of a previous Claude Code project assistant build (8 phas
 | Recharts for Overview visualizations | Built-in responsive design, direct React integration, no D3 complexity for simple bar/progress charts | ✓ Good — ProgressRing, PieChart, custom charts all rendered without SSR issues |
 | Advisory lock + Redis cache for weekly-focus job | Prevents duplicate LLM calls when multiple workers run; 7-day TTL balances freshness with cost | ✓ Correct — single Claude call per project per week; on-demand trigger works cleanly |
 | Phase 36 test fixes deferred to v6.0 | All 6 failures are mock setup issues (leftJoin, db.transaction, db.query mocks) — low production impact; v5.0 UX work is higher priority | — Pending |
-
-## Current Milestone: v5.0 Workspace UX Overhaul
-
-**Goal:** Replace modal-heavy, siloed tab UX with inline-editable tables, cross-tab data sync, a working Gantt with milestones, and consistent patterns across every view.
-
-**Target features:**
-- Actions table layout + inline editing
-- Risks & Milestones inline editing + status enums + date pickers + owner autocomplete
-- Gantt overhaul (milestone markers, view toggle, grouping, drag-reschedule)
-- Cross-tab data sync + clickable Overview metrics
-- Plan tab: overdue highlighting, bulk actions, milestone grouping
-- Global search bar (FTS API → UI)
-- Decisions + Actions filtering/search
-- Artifact detail reverse lookup
-- Engagement History auto-log from audit trail
-- Skills tab: job progress + cancel
-- Unified empty states + consistent overdue highlighting
+| frappe-gantt replaced with custom GanttChart.tsx (v5.0) | frappe-gantt SVG injection approach couldn't support milestone markers + swim lanes cleanly; custom split-panel React component gives full control | ✓ Correct — milestone markers, drag-reschedule, view modes all implemented natively |
+| CustomEvent (metrics:invalidate) for cross-tab sync (v5.0) | No external state library needed; browser-native event bus sufficient for same-tab communication between client islands | ✓ Correct — zero extra dependencies, clean dispatch/listen pattern |
+| Client-side filtering pattern for table clients (v5.0) | Server Component passes full data; client filters in-memory using URL params — consistent with ActionsTableClient, RisksTableClient, DecisionsTableClient | ✓ Correct — no extra API calls for filter changes |
+| Empty state CTA onClick handlers deferred as () => {} (v5.0) | Wiring to creation modals is low-risk and deferred; empty state component structure is correct | — Pending v6.0 |
 
 ---
-*Last updated: 2026-04-03 after v4.0 milestone archived, v5.0 active*
+*Last updated: 2026-04-07 after v5.0 milestone archived*

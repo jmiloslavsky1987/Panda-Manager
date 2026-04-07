@@ -4,7 +4,7 @@ milestone: v5.0
 milestone_name: — Workspace UX Overhaul
 status: completed
 stopped_at: Completed 42-05-PLAN.md
-last_updated: "2026-04-07T18:26:50.738Z"
+last_updated: "2026-04-07T19:08:45.466Z"
 last_activity: "2026-04-07 — Completed 42-05: Integration gate and human verification"
 progress:
   total_phases: 6
@@ -18,10 +18,10 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-03)
+See: .planning/PROJECT.md (updated 2026-04-07)
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
-**Current focus:** v5.0 — Workspace UX Overhaul. Phase 37 ready to plan.
+**Current focus:** v5.0 complete — archived 2026-04-07. Planning v6.0 next milestone.
 
 ## Current Position
 
@@ -120,10 +120,10 @@ Progress: [██████████] 100% (233/233 plans complete)
 
 ## Blockers/Concerns
 
-**Cross-entity resolution test failures (Phase 42-02):** 4 tests targeting resolveEntityRef behavior fail with "mockValues not called", indicating db.insert inside transaction isn't reached. Likely mock chain issue with multiple db.select calls. Core functionality implemented and working; tests deferred to Plan 03/04.
+None — v5.0 complete. Known tech debt recorded in MILESTONES.md and RETROSPECTIVE.md.
 
 ## Session Continuity
 
-Last session: 2026-04-07T18:14:23.770Z
-Stopped at: Completed 42-05-PLAN.md
+Last session: 2026-04-07 — v5.0 milestone archived
+Stopped at: Complete — planning next milestone
 Resume file: None

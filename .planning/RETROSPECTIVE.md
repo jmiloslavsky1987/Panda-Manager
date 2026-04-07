@@ -105,6 +105,56 @@
 
 ---
 
+## Milestone: v5.0 — Workspace UX Overhaul
+
+**Shipped:** 2026-04-07
+**Phases:** 6 (37–42) | **Plans:** 29 | **Duration:** 5 days (2026-04-03 → 2026-04-07)
+**Code delta:** ~42,385 LOC TypeScript (cumulative)
+
+### What Was Built
+
+- **Inline editing (Phase 37):** ActionsTableClient table layout, InlineSelectCell/DatePickerCell/OwnerCell shared components, inline row editing for Risks/Milestones, stakeholder owner autocomplete, bulk status bar — zero modals for common updates
+- **Custom Gantt (Phase 38):** Complete replacement of frappe-gantt with custom split-panel GanttChart.tsx — milestone markers as dashed indigo vertical lines, accordion swim lanes, Day/Week/Month/Quarter view toggle, drag-to-reschedule with immediate PATCH save, ResizeObserver for container fill
+- **Cross-tab sync (Phase 39):** CustomEvent (metrics:invalidate) dispatch pattern after every entity PATCH, clickable risk severity pie chart drill-down, active blocker list, overdue card highlighting on TaskBoard/PhaseBoard, bulk status update wired through
+- **Search + traceability (Phase 40):** GlobalSearchBar in workspace header (FTS API, 300ms debounce), Decisions tab text/date filtering, ArtifactEditModal with lazy-loading entity tab, Engagement History from audit log (no manual curation), Skills tab elapsed timer + cancel button
+- **UX polish (Phase 41):** EmptyState component with per-entity CTA, unified overdue treatment (red border + background) across Actions/Milestones/Tasks, loading skeletons for OverviewMetrics/HealthDashboard/SkillsTabClient
+- **Ingestion field coverage (Phase 42):** coerceRiskSeverity, resolveEntityRef (ilike pattern for higher recall), mergeItem fill-null-only guards, unresolvedRefs API response + IngestionModal notice, ENTITY_FIELDS extended for task/milestone/action, SYNC-01 gap fixed post-audit
+
+### What Worked
+
+- **Audit-then-fix pattern:** Milestone audit caught the SYNC-01 integration gap (IngestionModal not dispatching metrics:invalidate) before archiving — 2-line fix prevented a user-facing refresh bug shipping with the milestone
+- **Gate plans as required checkpoints:** Every phase ended with a test suite gate + human verification plan; bugs found during Phase 38 and 40 verification (drag race condition, header duplicate) were caught and fixed before proceeding
+- **CustomEvent for cross-tab sync:** Zero new dependencies, clean dispatch/listen pattern; the metrics:invalidate event was the right abstraction level — easy to extend to ingestion in Phase 42 once the pattern existed
+- **Client-side filtering consistency:** Server Component passes full data, ActionsTableClient/RisksTableClient/DecisionsTableClient all filter client-side via URL params — consistent pattern across all table views
+
+### What Was Inefficient
+
+- **frappe-gantt SVG injection dead end:** Phase 38 original plan called for SVG DOM injection into frappe-gantt for milestone markers; abandoned mid-plan for a full custom Gantt replacement — the replacement was ultimately better, but the discovery cost time
+- **Phase 41 VERIFICATION.md gap:** gsd-verifier was not run for Phase 41 despite all plans completing — audit caught this as a process gap; SUMMARY frontmatter confirmed delivery but the formal step was skipped
+- **Empty state CTA placeholders:** onClick handlers shipped as `() => {}` — the component structure is correct but the wiring to creation modals was deferred as tech debt, meaning the feature is cosmetically complete but not functionally useful
+
+### Patterns Established
+
+- **Split-panel Gantt pattern (GanttChart.tsx):** Left panel (task names, ResizeObserver drag grip), right panel (SVG timeline, pxPerDay auto-scale, milestone dashed markers, drag-override overlay) — reuse for any timeline visualization
+- **metrics:invalidate CustomEvent pattern:** Dispatch after any entity PATCH/POST that changes counts/status; listen in OverviewMetrics/HealthDashboard useEffect — zero extra dependencies, extend for new event types
+- **Merge fill-null-only pattern:** `beforeRecord.field ? undefined : (newValue)` — used in mergeItem to prevent ingestion from overwriting manual edits; apply to any AI-assisted merge with user-authoritative fields
+- **Phase 39 gate verification protocol:** Automated test suite GREEN → 12-step manual browser walkthrough → ship approval; now standard for all phase gates
+
+### Key Lessons
+
+1. **Replace don't patch third-party chart libraries** — SVG injection into frappe-gantt was fragile and limited; a custom React component gave full control with less total code
+2. **Always run gsd-verifier at phase close** — Phase 41 skipping VERIFICATION.md was caught by the milestone audit; the cost of running the verifier is lower than the cost of the audit finding the gap
+3. **Audit integration gaps between phases, not just within them** — SYNC-01 gap was a cross-phase connection issue (Phase 39 pattern, Phase 42 consumer) invisible to per-phase verification
+4. **Deferred wiring creates user confusion** — empty state CTAs that don't work look broken, not "partially complete"; defer only things users won't encounter in real usage
+
+### Cost Observations
+
+- Model: Claude Sonnet 4.6 throughout
+- Sessions: ~8 sessions across 5 days
+- Notable: 6 phases including the large Phase 37 inline editing foundation ran in 5 days; parallel independent phases (38/39/40 could proceed after 37) would have been faster with true parallel planning
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -115,6 +165,7 @@
 | v2.0 | 9 | ~4 days | Added ingestion, wizard, enhanced ops |
 | v3.0 | 5 | 3 days | Auth + AI features; wave pattern now automatic |
 | v4.0 | 5 | 3 days | Infrastructure migration + UI overhaul; parallel wave execution mature |
+| v5.0 | 6 | 5 days | Full UX overhaul; custom Gantt, cross-tab sync, global search, polish |
 
 ### Cumulative Quality
 
@@ -124,6 +175,7 @@
 | v2.0 | ~325 | Ingestion, wizard, audit, time tracking |
 | v3.0 | 363 | Auth, visuals, chat, context hub |
 | v4.0 | ~370 | BullMQ extraction, global time, Overview metrics/health/focus |
+| v5.0 | ~370 | Inline editing, custom Gantt, cross-tab sync, global search, empty states (6 pre-existing failures remain) |
 
 ### Top Lessons (Verified Across Milestones)
 
@@ -131,3 +183,4 @@
 2. **Production build before every human checkpoint** — enforced since Phase 28; catches SSR issues dev mode hides
 3. **Capture decisions with rationale at the moment they're made** — STATE.md decisions log has paid off in every resume-work session
 4. **UAT drives more real improvements than automated tests** — Phases 34 and 35 UAT both discovered meaningful UX issues invisible to unit tests; human eyes on real browser are irreplaceable
+5. **Milestone audit catches cross-phase integration gaps** — SYNC-01 and Phase 41 verification gap would not have been caught by per-phase verification alone; auditing before archiving is non-negotiable
