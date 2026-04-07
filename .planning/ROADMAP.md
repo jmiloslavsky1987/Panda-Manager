@@ -158,7 +158,15 @@ Plans:
   3. An artifact detail view lists all entities (risks, actions, milestones, decisions) that were extracted from that artifact, each as a clickable link to its record
   4. The Engagement History tab shows entries sourced from the audit log — who changed what and when — for risks, actions, milestones, and tasks, without any manual curation
   5. Running or queued skill jobs display elapsed time and a progress indicator; a cancel button stops the job from the Skills tab
-**Plans**: TBD
+**Plans**: 6 plans
+
+Plans:
+- [ ] 40-01-PLAN.md — Wave 0 TDD test scaffolds (6 test files, all RED before implementation)
+- [ ] 40-02-PLAN.md — GlobalSearchBar component + workspace header integration (SRCH-01)
+- [ ] 40-03-PLAN.md — Decisions tab filtering + Artifact reverse lookup (SRCH-02, ARTF-01)
+- [ ] 40-04-PLAN.md — Audit log query + Engagement History unified feed (HIST-01)
+- [ ] 40-05-PLAN.md — Skills job progress indicator + cancel endpoint (SKLS-01, SKLS-02)
+- [ ] 40-06-PLAN.md — Full test gate + human verification checkpoint
 
 ### Phase 41: UX Polish & Consistency
 **Goal**: Every tab that can be empty gives the user a clear next action, overdue items are consistently highlighted everywhere, and data-fetching tabs show skeletons instead of blank screens
