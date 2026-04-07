@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   Dialog,
   DialogContent,
@@ -62,6 +63,7 @@ export function IngestionModal({
   initialArtifactId,
   initialFilteredCount,
 }: IngestionModalProps) {
+  const router = useRouter()
   const [stage, setStage] = useState<Stage>(initialStage)
   const [fileStatuses, setFileStatuses] = useState<FileStatus[]>([])
   const [currentFileIndex, setCurrentFileIndex] = useState(0)
@@ -347,6 +349,8 @@ export function IngestionModal({
       // Extract unresolvedRefs from response and store it
       setUnresolvedRefs(data.unresolvedRefs as string ?? null)
       setStage('done')
+      window.dispatchEvent(new CustomEvent('metrics:invalidate'))
+      router.refresh()
 
       // Auto-close only if no unresolved refs
       if (!data.unresolvedRefs) {
