@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 ## Current Position
 
 Phase: 40 of 41 (Search, Traceability & Skills UX)
-Plan: 1 of 6
+Plan: 2 of 6
 Status: In Progress
-Last activity: 2026-04-07 — Completed 40-01: Wave 0 test scaffolds (6 test files, 27 tests, all RED)
+Last activity: 2026-04-07 — Completed 40-02: GlobalSearchBar component and workspace header integration (SRCH-01)
 
-Progress: [██████████] 98% (Phase 40: 1/6 plans complete)
+Progress: [██████████] 98% (Phase 40: 2/6 plans complete)
 
 ## Milestone History
 
@@ -85,6 +85,9 @@ Progress: [██████████] 98% (Phase 40: 1/6 plans complete)
 - [Phase 39]: Phase gate verification pattern established: automated tests GREEN → 12-step manual verification → ship approval
 - [Phase 40]: Test directory structure: tests/search/, tests/artifacts/, tests/history/, tests/skills/ (consistent with existing test organization)
 - [Phase 40]: Nyquist TDD Wave 0 pattern: 6 test scaffolds created RED-first (27 test cases, all failing on import or assertion)
+- [Phase 40-02]: Replaced Radix Popover Portal with conditional div for GlobalSearchBar dropdown (Portal doesn't render in jsdom tests)
+- [Phase 40-02]: 300ms debounce chosen for search input (balances responsiveness with API load)
+- [Phase 40-02]: TABLE_TO_TAB map handles entity type → tab path translation for navigation
 
 ## Blockers/Concerns
 
