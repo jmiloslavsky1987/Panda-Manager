@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useCallback } from 'react'
+import { useMemo, useCallback, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { KeyDecision, Artifact } from '@/lib/queries'
 import { SourceBadge } from '@/components/SourceBadge'
@@ -16,6 +16,7 @@ interface DecisionsTableClientProps {
 export default function DecisionsTableClient({ decisions, projectId, artifacts = [] }: DecisionsTableClientProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const [addModalOpen, setAddModalOpen] = useState(false)
 
   const q = searchParams.get('q') ?? ''
   const fromDate = searchParams.get('from') ?? ''
@@ -72,16 +73,21 @@ export default function DecisionsTableClient({ decisions, projectId, artifacts =
   // Show empty state when no decisions exist
   if (decisions.length === 0) {
     return (
-      <EmptyState
-        title="No decisions logged"
-        description="Decisions record key choices and their rationale. Log the first decision to build your record."
-        action={{
-          label: 'Log a Decision',
-          onClick: () => {
-            // Placeholder - wire to add decision dialog
-          },
-        }}
-      />
+      <>
+        <EmptyState
+          title="No decisions logged"
+          description="Decisions record key choices and their rationale. Log the first decision to build your record."
+          action={{
+            label: 'Log a Decision',
+            onClick: () => setAddModalOpen(true),
+          }}
+        />
+        <AddDecisionModal
+          projectId={projectId}
+          open={addModalOpen}
+          onOpenChange={setAddModalOpen}
+        />
+      </>
     )
   }
 
@@ -89,7 +95,7 @@ export default function DecisionsTableClient({ decisions, projectId, artifacts =
     <div data-testid="decisions-tab" className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-zinc-900">Key Decisions</h2>
-        <AddDecisionModal projectId={projectId} />
+        <AddDecisionModal projectId={projectId} open={addModalOpen} onOpenChange={setAddModalOpen} />
       </div>
 
       {/* Filter controls */}

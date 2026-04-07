@@ -20,7 +20,7 @@ export default async function ArchitecturePage({ params }: { params: Promise<{ i
         <EmptyState
           title="No architecture data yet"
           description="The Architecture tab visualises integrations and team pathways. Data populates from document ingestion."
-          action={{ label: 'Add Component', onClick: () => {} }}
+          action={{ label: 'Upload Document', href: `/customer/${id}/context` }}
         />
       </div>
     )
