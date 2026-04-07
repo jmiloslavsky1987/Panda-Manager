@@ -8,14 +8,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import ArtifactEditModal from '@/components/ArtifactEditModal'
+import { ArtifactEditModal } from '@/components/ArtifactEditModal'
+
+// Mock router that can be updated per test
+const mockRouter = { push: vi.fn(), refresh: vi.fn() }
 
 // Mock Next.js navigation
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: vi.fn(),
-    refresh: vi.fn(),
-  }),
+  useRouter: () => mockRouter,
   useSearchParams: () => ({
     get: vi.fn(() => null),
     toString: vi.fn(() => ''),
@@ -24,10 +24,12 @@ vi.mock('next/navigation', () => ({
 
 const mockArtifact = {
   id: 1,
+  external_id: 'ART-001',
+  name: 'Technical Architecture Document',
+  status: 'complete',
+  owner: 'John Doe',
+  description: 'Architecture details...',
   project_id: 1,
-  title: 'Technical Architecture Document',
-  content: 'Architecture details...',
-  type: 'technical',
   created_at: new Date('2026-03-15T10:00:00Z'),
   updated_at: new Date('2026-03-15T10:00:00Z'),
 }
@@ -35,17 +37,23 @@ const mockArtifact = {
 describe('ArtifactEditModal - Extracted Entities (ARTF-01)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockRouter.push.mockClear()
+    mockRouter.refresh.mockClear()
     global.fetch = vi.fn()
   })
 
-  it('modal has two tabs: Details and Extracted Entities', () => {
+  it('modal has two tabs: Details and Extracted Entities', async () => {
+    const user = userEvent.setup({ delay: null })
     render(
       <ArtifactEditModal
         artifact={mockArtifact}
-        isOpen={true}
-        onClose={vi.fn()}
+        projectId={1}
+        trigger={<button>Edit</button>}
       />
     )
+
+    // Click the trigger to open the modal
+    await user.click(screen.getByText('Edit'))
 
     expect(screen.getByText('Details')).toBeInTheDocument()
     expect(screen.getByText('Extracted Entities')).toBeInTheDocument()
@@ -73,10 +81,13 @@ describe('ArtifactEditModal - Extracted Entities (ARTF-01)', () => {
     render(
       <ArtifactEditModal
         artifact={mockArtifact}
-        isOpen={true}
-        onClose={vi.fn()}
+        projectId={1}
+        trigger={<button>Edit</button>}
       />
     )
+
+    // Click the trigger to open modal
+    await user.click(screen.getByText('Edit'))
 
     // Click Extracted Entities tab
     const entitiesTab = screen.getByText('Extracted Entities')
@@ -85,8 +96,7 @@ describe('ArtifactEditModal - Extracted Entities (ARTF-01)', () => {
     // Should fetch entities
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/artifacts/1/entities'),
-        expect.any(Object)
+        expect.stringContaining('/api/artifacts/1/extracted')
       )
     })
 
@@ -119,27 +129,30 @@ describe('ArtifactEditModal - Extracted Entities (ARTF-01)', () => {
     render(
       <ArtifactEditModal
         artifact={mockArtifact}
-        isOpen={true}
-        onClose={vi.fn()}
+        projectId={1}
+        trigger={<button>Edit</button>}
       />
     )
+
+    // Click the trigger to open modal
+    await user.click(screen.getByText('Edit'))
 
     // Click Extracted Entities tab
     const entitiesTab = screen.getByText('Extracted Entities')
     await user.click(entitiesTab)
 
     await waitFor(() => {
-      expect(screen.getByText('R-001')).toBeInTheDocument()
+      expect(screen.getByText(/R-001/)).toBeInTheDocument()
     })
 
-    // Risk link should point to /customer/1/risks
-    const riskLink = screen.getByText('R-001').closest('a')
-    expect(riskLink).toHaveAttribute('href', '/customer/1/risks')
+    // Click the risk button - should navigate
+    const riskButton = screen.getByText(/R-001/).closest('button')
+    await user.click(riskButton!)
+
+    expect(mockRouter.push).toHaveBeenCalledWith('/customer/1/risks')
   })
 
   it('clicking a link closes the modal', async () => {
-    const mockOnClose = vi.fn()
-
     ;(global.fetch as any).mockResolvedValueOnce({
       ok: true,
       json: async () => ({
@@ -162,25 +175,33 @@ describe('ArtifactEditModal - Extracted Entities (ARTF-01)', () => {
     render(
       <ArtifactEditModal
         artifact={mockArtifact}
-        isOpen={true}
-        onClose={mockOnClose}
+        projectId={1}
+        trigger={<button>Edit</button>}
       />
     )
+
+    // Click the trigger to open modal
+    await user.click(screen.getByText('Edit'))
 
     // Click Extracted Entities tab
     const entitiesTab = screen.getByText('Extracted Entities')
     await user.click(entitiesTab)
 
     await waitFor(() => {
-      expect(screen.getByText('R-001')).toBeInTheDocument()
+      expect(screen.getByText(/R-001/)).toBeInTheDocument()
     })
 
-    // Click the risk link
-    const riskLink = screen.getByText('R-001')
-    await user.click(riskLink)
+    // Verify modal is open (has title)
+    expect(screen.getByText('Edit Artifact ART-001')).toBeInTheDocument()
 
-    // Modal should close
-    expect(mockOnClose).toHaveBeenCalled()
+    // Click the risk button
+    const riskButton = screen.getByText(/R-001/).closest('button')
+    await user.click(riskButton!)
+
+    // Modal should close (title should disappear)
+    await waitFor(() => {
+      expect(screen.queryByText('Edit Artifact ART-001')).not.toBeInTheDocument()
+    })
   })
 
   it('shows all entity types grouped with counts', async () => {
@@ -201,10 +222,13 @@ describe('ArtifactEditModal - Extracted Entities (ARTF-01)', () => {
     render(
       <ArtifactEditModal
         artifact={mockArtifact}
-        isOpen={true}
-        onClose={vi.fn()}
+        projectId={1}
+        trigger={<button>Edit</button>}
       />
     )
+
+    // Click the trigger to open modal
+    await user.click(screen.getByText('Edit'))
 
     // Click Extracted Entities tab
     const entitiesTab = screen.getByText('Extracted Entities')

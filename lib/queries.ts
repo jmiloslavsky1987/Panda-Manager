@@ -978,3 +978,31 @@ export async function getArchTabData(projectId: number): Promise<ArchTabData> {
     teamPathways: pathwaysRows,
   };
 }
+
+// ─── Extracted Entities Query (ARTF-01) ──────────────────────────────────────
+
+export interface ExtractedEntities {
+  risks: Risk[]
+  actions: Action[]
+  milestones: Milestone[]
+  decisions: KeyDecision[]
+}
+
+/**
+ * Returns all entities extracted from a specific artifact.
+ * Used by the "Extracted Entities" tab in ArtifactEditModal (ARTF-01).
+ */
+export async function getEntitiesExtractedFromArtifact(artifactId: number): Promise<ExtractedEntities> {
+  const [extractedRisks, extractedActions, extractedMilestones, extractedDecisions] = await Promise.all([
+    db.select().from(risks).where(eq(risks.source_artifact_id, artifactId)),
+    db.select().from(actions).where(eq(actions.source_artifact_id, artifactId)),
+    db.select().from(milestones).where(eq(milestones.source_artifact_id, artifactId)),
+    db.select().from(keyDecisions).where(eq(keyDecisions.source_artifact_id, artifactId)),
+  ])
+  return {
+    risks: extractedRisks,
+    actions: extractedActions,
+    milestones: extractedMilestones,
+    decisions: extractedDecisions,
+  }
+}
