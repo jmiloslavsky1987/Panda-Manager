@@ -49,7 +49,7 @@ interface SkillRun {
   run_id: string;
   project_id: number | null;
   skill_name: string;
-  status: 'pending' | 'running' | 'completed' | 'failed';
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
   input: string | null;
   full_output: string | null;
   error_message: string | null;
