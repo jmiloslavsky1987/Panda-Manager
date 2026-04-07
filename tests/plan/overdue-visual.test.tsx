@@ -23,22 +23,23 @@ describe('PLAN-01: overdue visual styling', () => {
   it('TaskCard renders with red border and bg-red-50 when task is overdue', () => {
     const overdueTask: Task = {
       id: 1,
-      external_id: 'TASK-001',
+      project_id: 1,
       title: 'Overdue task',
-      status: 'todo',
-      due: '2020-01-01', // Past date
+      description: null,
       owner: 'Alice',
+      due: '2020-01-01', // Past date
       priority: null,
+      type: null,
       phase: null,
-      milestone_id: null,
+      workstream_id: null,
       blocked_by: null,
-      notes: null,
+      milestone_id: null,
+      start_date: null,
+      status: 'todo',
       source: 'manual',
       source_artifact_id: null,
-      discovery_source: null,
-      project_id: 1,
-      created_at: '2026-04-01',
-      updated_at: '2026-04-01',
+      ingested_at: null,
+      created_at: new Date('2026-04-01'),
     }
 
     render(<TaskBoard tasks={[overdueTask]} projectId={1} />)
@@ -52,22 +53,23 @@ describe('PLAN-01: overdue visual styling', () => {
   it('TaskCard does NOT render red styling when task is done even if past due', () => {
     const doneTask: Task = {
       id: 2,
-      external_id: 'TASK-002',
+      project_id: 1,
       title: 'Done task',
-      status: 'done',
-      due: '2020-01-01', // Past date
+      description: null,
       owner: 'Bob',
+      due: '2020-01-01', // Past date
       priority: null,
+      type: null,
       phase: null,
-      milestone_id: null,
+      workstream_id: null,
       blocked_by: null,
-      notes: null,
+      milestone_id: null,
+      start_date: null,
+      status: 'done',
       source: 'manual',
       source_artifact_id: null,
-      discovery_source: null,
-      project_id: 1,
-      created_at: '2026-04-01',
-      updated_at: '2026-04-01',
+      ingested_at: null,
+      created_at: new Date('2026-04-01'),
     }
 
     render(<TaskBoard tasks={[doneTask]} projectId={1} />)
@@ -81,22 +83,23 @@ describe('PLAN-01: overdue visual styling', () => {
   it('TaskCard does NOT render red styling when task has no due date', () => {
     const noDueTask: Task = {
       id: 3,
-      external_id: 'TASK-003',
+      project_id: 1,
       title: 'No due date task',
-      status: 'todo',
-      due: null,
+      description: null,
       owner: 'Charlie',
+      due: null,
       priority: null,
+      type: null,
       phase: null,
-      milestone_id: null,
+      workstream_id: null,
       blocked_by: null,
-      notes: null,
+      milestone_id: null,
+      start_date: null,
+      status: 'todo',
       source: 'manual',
       source_artifact_id: null,
-      discovery_source: null,
-      project_id: 1,
-      created_at: '2026-04-01',
-      updated_at: '2026-04-01',
+      ingested_at: null,
+      created_at: new Date('2026-04-01'),
     }
 
     render(<TaskBoard tasks={[noDueTask]} projectId={1} />)
@@ -110,22 +113,23 @@ describe('PLAN-01: overdue visual styling', () => {
   it('PhaseBoard PhaseCard renders with red border when task is overdue', () => {
     const overdueTask: Task = {
       id: 4,
-      external_id: 'TASK-004',
+      project_id: 1,
       title: 'Overdue phase task',
-      status: 'in_progress',
-      due: '2020-01-01', // Past date
+      description: null,
       owner: 'Diana',
+      due: '2020-01-01', // Past date
       priority: null,
+      type: null,
       phase: 'Discovery',
-      milestone_id: null,
+      workstream_id: null,
       blocked_by: null,
-      notes: null,
+      milestone_id: null,
+      start_date: null,
+      status: 'in_progress',
       source: 'manual',
       source_artifact_id: null,
-      discovery_source: null,
-      project_id: 1,
-      created_at: '2026-04-01',
-      updated_at: '2026-04-01',
+      ingested_at: null,
+      created_at: new Date('2026-04-01'),
     }
 
     render(<PhaseBoard tasks={[overdueTask]} projectId={1} templates={[]} />)
