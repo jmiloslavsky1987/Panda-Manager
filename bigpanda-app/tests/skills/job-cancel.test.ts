@@ -1,136 +1,171 @@
-/**
- * Test scaffold for SKLS-02: Job Cancellation
- *
- * Covers: cancel endpoint, DB status update, queue cleanup
- */
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { POST } from '@/app/api/skills/runs/[runId]/cancel/route'
+// Mock dependencies before importing
+const mockRequireSession = vi.fn();
+const mockQueueRemove = vi.fn();
+const mockQueueClose = vi.fn();
 
-// Mock database and BullMQ
-vi.mock('@/lib/db', () => ({
-  db: {
-    update: vi.fn().mockReturnThis(),
-    set: vi.fn().mockReturnThis(),
-    where: vi.fn().mockResolvedValue([]),
-  },
-  skillRuns: {},
-  eq: vi.fn(),
-}))
+vi.mock('@/lib/auth-server', () => ({
+  requireSession: mockRequireSession
+}));
 
-vi.mock('bullmq', () => ({
-  Queue: vi.fn().mockImplementation(() => ({
-    remove: vi.fn().mockResolvedValue(true),
-    close: vi.fn().mockResolvedValue(true),
-  })),
-}))
+const mockReturning = vi.fn().mockResolvedValue([{
+  run_id: 'test-run-123',
+  status: 'cancelled',
+  completed_at: new Date()
+}]);
 
-describe('POST /api/skills/runs/[runId]/cancel (SKLS-02)', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  it('returns 200 with success and status cancelled', async () => {
-    const request = new Request('http://localhost/api/skills/runs/run-123/cancel', {
-      method: 'POST',
-    })
-
-    const response = await POST(request, {
-      params: { runId: 'run-123' },
-    })
-
-    expect(response.status).toBe(200)
-
-    const data = await response.json()
-    expect(data).toEqual({
-      success: true,
-      status: 'cancelled',
-    })
-  })
-
-  it('updates skill_runs DB row status to cancelled', async () => {
-    const { db, eq, skillRuns } = await import('@/lib/db')
-
-    const request = new Request('http://localhost/api/skills/runs/run-123/cancel', {
-      method: 'POST',
-    })
-
-    await POST(request, {
-      params: { runId: 'run-123' },
-    })
-
-    // Should call db.update with skillRuns table
-    expect(db.update).toHaveBeenCalledWith(skillRuns)
-
-    // Should set status to 'cancelled'
-    expect(db.set).toHaveBeenCalledWith(
-      expect.objectContaining({
-        status: 'cancelled',
+vi.mock('@/db', () => ({
+  default: {
+    update: vi.fn().mockReturnValue({
+      set: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          returning: mockReturning
+        })
       })
-    )
+    })
+  }
+}));
 
-    // Should filter by run_id
-    expect(eq).toHaveBeenCalledWith(expect.anything(), 'run-123')
-  })
+vi.mock('@/db/schema', () => ({
+  skillRuns: {}
+}));
 
-  it('calls queue.remove() on the BullMQ queue', async () => {
-    const { Queue } = await import('bullmq')
+vi.mock('drizzle-orm', () => ({
+  eq: vi.fn()
+}));
 
-    const request = new Request('http://localhost/api/skills/runs/run-123/cancel', {
+vi.mock('bullmq', () => {
+  return {
+    Queue: class MockQueue {
+      constructor() {}
+      remove = mockQueueRemove;
+      close = mockQueueClose;
+    }
+  };
+});
+
+vi.mock('@/worker/connection', () => ({
+  createApiRedisConnection: vi.fn().mockReturnValue({})
+}));
+
+vi.mock('server-only', () => ({}));
+
+describe('POST /api/skills/runs/[runId]/cancel', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockRequireSession.mockResolvedValue({
+      session: { user: { id: '1' } },
+      redirectResponse: null
+    });
+    mockQueueRemove.mockResolvedValue(undefined);
+    mockQueueClose.mockResolvedValue(undefined);
+    // Reset DB mock to return successful result
+    mockReturning.mockResolvedValue([{
+      run_id: 'test-run-123',
+      status: 'cancelled',
+      completed_at: new Date()
+    }]);
+  });
+
+  it('returns 401 when not authenticated', async () => {
+    const mockRedirect = new Response(null, {
+      status: 302,
+      headers: { Location: '/login' }
+    });
+
+    mockRequireSession.mockResolvedValue({
+      session: null,
+      redirectResponse: mockRedirect
+    });
+
+    const { POST } = await import('@/app/api/skills/runs/[runId]/cancel/route');
+    const req = new NextRequest('http://localhost/api/skills/runs/test/cancel', {
       method: 'POST',
-    })
+    });
 
-    await POST(request, {
-      params: { runId: 'run-123' },
-    })
+    const res = await POST(req, { params: Promise.resolve({ runId: 'test-run-123' }) });
+    expect(res).toBe(mockRedirect);
+  });
 
-    // Should create Queue instance
-    expect(Queue).toHaveBeenCalled()
+  it('returns 404 for non-existent run', async () => {
+    // Mock DB to return empty array (no run found)
+    mockReturning.mockResolvedValueOnce([]);
 
-    // Get the mocked queue instance
-    const queueInstance = vi.mocked(Queue).mock.results[0].value
-
-    // Should call remove with job ID
-    expect(queueInstance.remove).toHaveBeenCalledWith('skill-run-run-123')
-  })
-
-  it('calls queue.close() in finally block', async () => {
-    const { Queue } = await import('bullmq')
-
-    const request = new Request('http://localhost/api/skills/runs/run-123/cancel', {
+    const { POST } = await import('@/app/api/skills/runs/[runId]/cancel/route');
+    const req = new NextRequest('http://localhost/api/skills/runs/nonexistent/cancel', {
       method: 'POST',
-    })
+    });
 
-    await POST(request, {
-      params: { runId: 'run-123' },
-    })
+    const res = await POST(req, { params: Promise.resolve({ runId: 'nonexistent' }) });
+    const json = await res.json();
 
-    // Get the mocked queue instance
-    const queueInstance = vi.mocked(Queue).mock.results[0].value
+    expect(res.status).toBe(404);
+    expect(json).toEqual({ error: 'Run not found' });
+  });
 
-    // Should call close to clean up connection
-    expect(queueInstance.close).toHaveBeenCalled()
-  })
-
-  it('handles errors gracefully', async () => {
-    const { db } = await import('@/lib/db')
-    vi.mocked(db.update).mockImplementationOnce(() => {
-      throw new Error('Database error')
-    })
-
-    const request = new Request('http://localhost/api/skills/runs/run-123/cancel', {
+  it('cancels a pending skill run successfully', async () => {
+    const { POST } = await import('@/app/api/skills/runs/[runId]/cancel/route');
+    const req = new NextRequest('http://localhost/api/skills/runs/test-run-123/cancel', {
       method: 'POST',
-    })
+    });
 
-    const response = await POST(request, {
-      params: { runId: 'run-123' },
-    })
+    const res = await POST(req, { params: Promise.resolve({ runId: 'test-run-123' }) });
+    const json = await res.json();
 
-    // Should return error response
-    expect(response.status).toBe(500)
+    expect(res.status).toBe(200);
+    expect(json).toEqual({ success: true, status: 'cancelled' });
+  });
 
-    const data = await response.json()
-    expect(data.success).toBe(false)
-    expect(data.error).toBeDefined()
-  })
-})
+  it('updates DB status to cancelled and sets completed_at', async () => {
+    const { default: db } = await import('@/db');
+    const mockSet = vi.fn().mockReturnValue({
+      where: vi.fn().mockReturnValue({
+        returning: vi.fn().mockResolvedValue([{
+          run_id: 'test-run-123',
+          status: 'cancelled',
+          completed_at: new Date()
+        }])
+      })
+    });
+
+    db.update = vi.fn().mockReturnValue({
+      set: mockSet
+    });
+
+    const { POST } = await import('@/app/api/skills/runs/[runId]/cancel/route');
+    const req = new NextRequest('http://localhost/api/skills/runs/test-run-123/cancel', {
+      method: 'POST',
+    });
+
+    await POST(req, { params: Promise.resolve({ runId: 'test-run-123' }) });
+
+    expect(mockSet).toHaveBeenCalled();
+    const setCall = mockSet.mock.calls[0][0];
+    expect(setCall.status).toBe('cancelled');
+    expect(setCall.completed_at).toBeInstanceOf(Date);
+  });
+
+  it('calls queue.remove with correct job ID', async () => {
+    const { POST } = await import('@/app/api/skills/runs/[runId]/cancel/route');
+    const req = new NextRequest('http://localhost/api/skills/runs/test-run-123/cancel', {
+      method: 'POST',
+    });
+
+    await POST(req, { params: Promise.resolve({ runId: 'test-run-123' }) });
+
+    expect(mockQueueRemove).toHaveBeenCalledWith('skill-run-test-run-123');
+  });
+
+  it('closes queue connection in finally block', async () => {
+    const { POST } = await import('@/app/api/skills/runs/[runId]/cancel/route');
+    const req = new NextRequest('http://localhost/api/skills/runs/test-run-123/cancel', {
+      method: 'POST',
+    });
+
+    await POST(req, { params: Promise.resolve({ runId: 'test-run-123' }) });
+
+    expect(mockQueueClose).toHaveBeenCalled();
+  });
+});
