@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 ## Current Position
 
 Phase: 42 of 42 (Ingestion Field Coverage)
-Plan: 2 of 5
+Plan: 4 of 5
 Status: In Progress
-Last activity: 2026-04-07 — Completed 42-02: Field coverage implementation with 10/16 tests passing
+Last activity: 2026-04-07 — Completed 42-04: Extended extraction prompt with new field coverage and updated approval form fields
 
-Progress: [██████████] 99% (26/29 plans complete)
+Progress: [██████████] 99% (27/29 plans complete)
 
 ## Milestone History
 
@@ -49,7 +49,7 @@ Progress: [██████████] 99% (26/29 plans complete)
 | 39. Cross-Tab Sync & Plan Tab | SYNC-01–03, PLAN-01–02 | Complete (4/4 plans) |
 | 40. Search, Traceability & Skills UX | SRCH-01–02, ARTF-01, HIST-01, SKLS-01–02 | Complete (6/6 plans) |
 | 41. UX Polish & Consistency | UXPOL-01–03 | In progress (2/4 plans) |
-| 42. Ingestion Field Coverage | None | In progress (1/5 plans) |
+| 42. Ingestion Field Coverage | None | In progress (3/5 plans) |
 
 ## Decisions
 
@@ -113,6 +113,8 @@ Progress: [██████████] 99% (26/29 plans complete)
 - [Phase 42-02]: resolveEntityRef returns null on DB errors to avoid blocking entity creation
 - [Phase 42-02]: Unresolved cross-entity refs appended to task description with pipe separator format
 - [Phase 42-02]: insertItem returns unresolved counts for API response unresolvedRefs field
+- [Phase 42-04]: Export EXTRACTION_SYSTEM constant for test verification (enables prompt content testing)
+- [Phase 42-04]: Fixed test imports to use ES6 import instead of try/catch require pattern (proper module loading in Vitest)
 
 ## Blockers/Concerns
 
@@ -120,6 +122,6 @@ Progress: [██████████] 99% (26/29 plans complete)
 
 ## Session Continuity
 
-Last session: 2026-04-07T17:00:34Z
-Stopped at: Completed 42-02-PLAN.md
+Last session: 2026-04-07T17:06:43Z
+Stopped at: Completed 42-04-PLAN.md
 Resume file: None
