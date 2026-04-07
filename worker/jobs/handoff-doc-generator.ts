@@ -1,15 +1,15 @@
 // bigpanda-app/worker/jobs/handoff-doc-generator.ts
 // On-demand BullMQ handler — delegates to SkillOrchestrator + registers output
 import type { Job } from 'bullmq';
-import path from 'path';
 import { randomUUID } from 'crypto';
 import { eq } from 'drizzle-orm';
 import db from '../../db';
 import { skillRuns, outputs } from '../../db/schema';
 import { SkillOrchestrator } from '../../lib/skill-orchestrator';
+import { readSettings } from '../../lib/settings-core';
+import { resolveSkillsDir } from '../../lib/skill-path';
 
 const orchestrator = new SkillOrchestrator();
-const SKILLS_DIR = path.join(__dirname, '../../skills');
 
 export default async function handoffDocGeneratorJob(job: Job): Promise<{ status: string }> {
   const { projectId, input, runId: existingRunId } = job.data as {
@@ -26,6 +26,9 @@ export default async function handoffDocGeneratorJob(job: Job): Promise<{ status
   }
 
   try {
+    const settings = await readSettings();
+    const SKILLS_DIR = resolveSkillsDir(settings.skill_path ?? '');
+
     await orchestrator.run({
       skillName: 'handoff-doc-generator',
       projectId,
