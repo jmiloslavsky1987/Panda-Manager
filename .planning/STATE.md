@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v5.0
 milestone_name: — Workspace UX Overhaul
 status: executing
-stopped_at: Completed 40-04-PLAN.md (Unified history feed with audit log entries)
-last_updated: "2026-04-07T03:33:44.177Z"
+stopped_at: Completed 40-05-PLAN.md (Skills job progress + cancel)
+last_updated: "2026-04-07T03:44:57.592Z"
 last_activity: "2026-04-07 — Completed 40-04: Unified history feed with audit log entries (HIST-01)"
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 20
-  completed_plans: 18
+  completed_plans: 19
   percent: 99
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 ## Current Position
 
 Phase: 40 of 41 (Search, Traceability & Skills UX)
-Plan: 4 of 6
+Plan: 5 of 6
 Status: In Progress
-Last activity: 2026-04-07 — Completed 40-04: Unified history feed with audit log entries (HIST-01)
+Last activity: 2026-04-07 — Completed 40-05: Skills job progress + cancel (SKLS-01, SKLS-02)
 
-Progress: [██████████] 99% (Phase 40: 4/6 plans complete)
+Progress: [██████████] 100% (Phase 40: 5/6 plans complete)
 
 ## Milestone History
 
@@ -47,7 +47,7 @@ Progress: [██████████] 99% (Phase 40: 4/6 plans complete)
 | 37. Actions & Inline Editing Foundation | ACTN-01–05, IEDIT-01–04, FORM-01–03, SRCH-03 | Complete (6/6 plans) |
 | 38. Gantt Overhaul | GNTT-01–04, PLAN-03 | In progress (1/4 plans) |
 | 39. Cross-Tab Sync & Plan Tab | SYNC-01–03, PLAN-01–02 | Complete (4/4 plans) |
-| 40. Search, Traceability & Skills UX | SRCH-01–02, ARTF-01, HIST-01, SKLS-01–02 | In progress (3/6 plans) |
+| 40. Search, Traceability & Skills UX | SRCH-01–02, ARTF-01, HIST-01, SKLS-01–02 | In progress (5/6 plans) |
 | 41. UX Polish & Consistency | UXPOL-01–03 | Not started |
 
 ## Decisions
@@ -94,6 +94,9 @@ Progress: [██████████] 99% (Phase 40: 4/6 plans complete)
 - [Phase 40-04]: db.execute<T>() returns T[] directly (not .rows property) — consistent with tx.execute pattern
 - [Phase 40-04]: Activity badge uses bg-slate-100 text-slate-700 to distinguish from note source badges
 - [Phase 40-04]: Removed append-only banner — audit log entries surface automatically without manual curation
+- [Phase 40]: Map state tracking chosen over Set for running jobs — stores runId + startedAt for elapsed timer and cancellation
+- [Phase 40]: Status polling interval set to 5 seconds — balances responsiveness with API load, stops automatically on terminal state
+- [Phase 40]: Removed router.push navigation after skill trigger — keeps user on Skills tab to monitor progress in-place
 
 ## Blockers/Concerns
 
@@ -101,6 +104,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-07T03:33:44.174Z
-Stopped at: Completed 40-04-PLAN.md (Unified history feed with audit log entries)
+Last session: 2026-04-07T03:44:57.590Z
+Stopped at: Completed 40-05-PLAN.md (Skills job progress + cancel)
 Resume file: None
