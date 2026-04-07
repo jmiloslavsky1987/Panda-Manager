@@ -649,7 +649,8 @@ async function mergeItem(
   item: ApprovalItem,
   existingId: number,
   artifactId: number,
-): Promise<void> {
+  projectId: number,
+): Promise<{ unresolvedMilestones: number; unresolvedWorkstreams: number }> {
   const f = item.fields;
   const attribution = {
     source_artifact_id: artifactId,
@@ -659,7 +660,13 @@ async function mergeItem(
   switch (item.entityType) {
     case 'action': {
       const [beforeRecord] = await db.select().from(actions).where(eq(actions.id, existingId));
-      const patch = { owner: f.owner ?? undefined, due: f.due_date ?? undefined, ...attribution };
+      const patch = {
+        owner: f.owner ?? undefined,
+        due: f.due_date ?? undefined,
+        notes: beforeRecord.notes ? undefined : (f.notes || undefined),
+        type: (beforeRecord.type && beforeRecord.type !== 'action') ? undefined : (f.type || undefined),
+        ...attribution,
+      };
       await db.transaction(async (tx) => {
         await tx.update(actions).set(patch).where(eq(actions.id, existingId));
         await tx.insert(auditLog).values({
@@ -676,7 +683,12 @@ async function mergeItem(
 
     case 'risk': {
       const [beforeRecord] = await db.select().from(risks).where(eq(risks.id, existingId));
-      const patch = { owner: f.owner ?? undefined, mitigation: f.mitigation ?? undefined, ...attribution };
+      const patch = {
+        owner: f.owner ?? undefined,
+        mitigation: f.mitigation ?? undefined,
+        severity: beforeRecord.severity ? undefined : coerceRiskSeverity(f.severity),
+        ...attribution,
+      };
       await db.transaction(async (tx) => {
         await tx.update(risks).set(patch).where(eq(risks.id, existingId));
         await tx.insert(auditLog).values({
@@ -693,7 +705,12 @@ async function mergeItem(
 
     case 'milestone': {
       const [beforeRecord] = await db.select().from(milestones).where(eq(milestones.id, existingId));
-      const patch = { target: f.target_date ?? undefined, status: f.status ?? undefined, ...attribution };
+      const patch = {
+        target: f.target_date ?? undefined,
+        status: f.status ?? undefined,
+        owner: beforeRecord.owner ? undefined : (f.owner ?? undefined),
+        ...attribution,
+      };
       await db.transaction(async (tx) => {
         await tx.update(milestones).set(patch).where(eq(milestones.id, existingId));
         await tx.insert(auditLog).values({
@@ -727,7 +744,34 @@ async function mergeItem(
 
     case 'task': {
       const [beforeRecord] = await db.select().from(tasks).where(eq(tasks.id, existingId));
-      const patch = { owner: f.owner ?? undefined, status: f.status ?? undefined, ...attribution };
+
+      // Resolve FKs BEFORE transaction (same pattern as insertItem)
+      const milestoneId = (!beforeRecord.milestone_id && f.milestone_name)
+        ? await resolveEntityRef('milestones', f.milestone_name, projectId)
+        : null;
+      const workstreamId = (!beforeRecord.workstream_id && f.workstream_name)
+        ? await resolveEntityRef('workstreams', f.workstream_name, projectId)
+        : null;
+
+      // Track unresolved refs for response notice
+      let unresolvedMilestones = 0;
+      let unresolvedWorkstreams = 0;
+      if (f.milestone_name && !beforeRecord.milestone_id && milestoneId === null) unresolvedMilestones++;
+      if (f.workstream_name && !beforeRecord.workstream_id && workstreamId === null) unresolvedWorkstreams++;
+
+      const patch = {
+        owner: f.owner ?? undefined,
+        phase: f.phase ?? undefined,
+        status: f.status ?? undefined,
+        start_date: beforeRecord.start_date ? undefined : (f.start_date || undefined),
+        due: beforeRecord.due ? undefined : (f.due_date || undefined),
+        description: beforeRecord.description ? undefined : (f.description || undefined),
+        priority: beforeRecord.priority ? undefined : (f.priority || undefined),
+        milestone_id: milestoneId ?? undefined,
+        workstream_id: workstreamId ?? undefined,
+        ...attribution,
+      };
+
       await db.transaction(async (tx) => {
         await tx.update(tasks).set(patch).where(eq(tasks.id, existingId));
         await tx.insert(auditLog).values({
@@ -739,7 +783,7 @@ async function mergeItem(
           after_json: { ...beforeRecord, ...patch } as Record<string, unknown>,
         });
       });
-      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
+      return { unresolvedMilestones, unresolvedWorkstreams };
     }
 
     case 'businessOutcome': {
@@ -1163,7 +1207,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
         case 'merge': {
           const idToMerge = item.existingId ?? existing.id;
-          await mergeItem(item, idToMerge, artifactId);
+          const counts = await mergeItem(item, idToMerge, artifactId, projectId);
+          unresolvedMilestoneCount += counts.unresolvedMilestones;
+          unresolvedWorkstreamCount += counts.unresolvedWorkstreams;
           written++;
           return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
         }
@@ -1201,14 +1247,18 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     .where(eq(artifacts.id, artifactId));
 
   // 6. Return summary
-  const response: { written: number; skipped: number; rejected: number; unresolvedRefs?: string } = { written, skipped, rejected };
-  if (unresolvedMilestoneCount > 0 || unresolvedWorkstreamCount > 0) {
-    const parts: string[] = [];
-    if (unresolvedMilestoneCount > 0) parts.push(`${unresolvedMilestoneCount} milestone ref(s) unresolved`);
-    if (unresolvedWorkstreamCount > 0) parts.push(`${unresolvedWorkstreamCount} workstream ref(s) unresolved`);
-    response.unresolvedRefs = parts.join(', ');
+  const parts: string[] = [];
+  if (unresolvedMilestoneCount > 0) {
+    parts.push(`${unresolvedMilestoneCount} task${unresolvedMilestoneCount === 1 ? '' : 's'} had unresolved milestone references`);
   }
-  return NextResponse.json(response, { status: 200 });
+  if (unresolvedWorkstreamCount > 0) {
+    parts.push(`${unresolvedWorkstreamCount} task${unresolvedWorkstreamCount === 1 ? '' : 's'} had unresolved workstream references`);
+  }
+  const unresolvedRefs = parts.length > 0
+    ? `${parts.join(', ')} — link them manually via the Plan tab`
+    : null;
+
+  return NextResponse.json({ written, skipped, rejected, unresolvedRefs }, { status: 200 });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error('[approve] unhandled error:', err);
