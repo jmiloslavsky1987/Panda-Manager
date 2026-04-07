@@ -4,6 +4,7 @@ import { ProjectHeader } from '../../../components/ProjectHeader'
 import { WorkspaceTabs } from '../../../components/WorkspaceTabs'
 import { AddNotesModal } from '../../../components/AddNotesModal'
 import { ScanForUpdatesButton } from '../../../components/ScanForUpdatesButton'
+import GlobalSearchBar from '../../../components/GlobalSearchBar'
 
 export default async function WorkspaceLayout({
   children,
@@ -24,14 +25,17 @@ export default async function WorkspaceLayout({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-6 pt-6 pb-2 border-b border-zinc-200 bg-white">
-        {project ? (
-          <ProjectHeader project={project} />
-        ) : (
-          <div className="flex items-center gap-3">
-            <h1 className="font-semibold text-xl text-zinc-400">Loading project…</h1>
-          </div>
-        )}
+      <div className="px-6 pt-6 pb-2 border-b border-zinc-200 bg-white flex items-center justify-between">
+        <div>
+          {project ? (
+            <ProjectHeader project={project} />
+          ) : (
+            <div className="flex items-center gap-3">
+              <h1 className="font-semibold text-xl text-zinc-400">Loading project…</h1>
+            </div>
+          )}
+        </div>
+        {project && <GlobalSearchBar projectId={project.id} />}
       </div>
       <Suspense fallback={null}>
         <WorkspaceTabs projectId={id} />
