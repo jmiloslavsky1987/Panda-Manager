@@ -183,7 +183,11 @@ export function SkillsTabClient({ projectId, recentRuns }: SkillsTabClientProps)
               next.delete(skillName);
               return next;
             });
-            router.refresh();
+            if (data.status === 'completed') {
+              router.push(`/customer/${projectId}/skills/${runId}`);
+            } else {
+              router.refresh();
+            }
           }
         } catch {
           // Ignore polling errors
