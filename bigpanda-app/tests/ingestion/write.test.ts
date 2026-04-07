@@ -295,3 +295,466 @@ describe('Ingestion write and logging (ING-09, ING-10)', () => {
     expect(typeof log.completed_at).toBe('string');
   });
 });
+
+describe('Phase 42 — new field coverage', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  // coerceRiskSeverity tests (indirect via POST endpoint behavior)
+  it('coerceRiskSeverity: critical → critical', async () => {
+    const mockWhere = vi.fn().mockResolvedValue([]);
+    const mockFrom = vi.fn().mockReturnValue({ where: mockWhere });
+    const mockArtifactWhere = vi.fn().mockResolvedValue([{
+      id: 10,
+      ingestion_log_json: { filename: 'test.docx', uploaded_at: '2026-01-01T00:00:00Z' },
+    }]);
+    const mockArtifactFrom = vi.fn().mockReturnValue({ where: mockArtifactWhere });
+    vi.mocked(db.select)
+      .mockReturnValueOnce({ from: mockArtifactFrom } as any)
+      .mockReturnValue({ from: mockFrom } as any);
+
+    const mockValues = vi.fn().mockReturnValue({ returning: vi.fn().mockResolvedValue([{ id: 1 }]) });
+    vi.mocked(db.insert).mockReturnValue({ values: mockValues } as any);
+    const mockSet = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) });
+    vi.mocked(db.update).mockReturnValue({ set: mockSet } as any);
+
+    const req = buildRequest({
+      artifactId: 10,
+      projectId: 1,
+      totalExtracted: 1,
+      items: [{
+        entityType: 'risk',
+        fields: { description: 'High risk', severity: 'critical' },
+        approved: true,
+      }],
+    });
+
+    await POST(req);
+
+    expect(mockValues).toHaveBeenCalled();
+    const insertedRecord = mockValues.mock.calls[0][0];
+    expect(insertedRecord.severity).toBe('critical');
+  });
+
+  it('coerceRiskSeverity: medium → medium, default fallback', async () => {
+    const mockWhere = vi.fn().mockResolvedValue([]);
+    const mockFrom = vi.fn().mockReturnValue({ where: mockWhere });
+    const mockArtifactWhere = vi.fn().mockResolvedValue([{
+      id: 10,
+      ingestion_log_json: { filename: 'test.docx', uploaded_at: '2026-01-01T00:00:00Z' },
+    }]);
+    const mockArtifactFrom = vi.fn().mockReturnValue({ where: mockArtifactWhere });
+    vi.mocked(db.select)
+      .mockReturnValueOnce({ from: mockArtifactFrom } as any)
+      .mockReturnValue({ from: mockFrom } as any);
+
+    const mockValues = vi.fn().mockReturnValue({ returning: vi.fn().mockResolvedValue([{ id: 1 }]) });
+    vi.mocked(db.insert).mockReturnValue({ values: mockValues } as any);
+    const mockSet = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) });
+    vi.mocked(db.update).mockReturnValue({ set: mockSet } as any);
+
+    const req = buildRequest({
+      artifactId: 10,
+      projectId: 1,
+      totalExtracted: 1,
+      items: [{
+        entityType: 'risk',
+        fields: { description: 'Unknown risk', severity: 'nonsense' },
+        approved: true,
+      }],
+    });
+
+    await POST(req);
+
+    expect(mockValues).toHaveBeenCalled();
+    const insertedRecord = mockValues.mock.calls[0][0];
+    expect(insertedRecord.severity).toBe('medium'); // default fallback
+  });
+
+  // insertItem tests
+  it('insertItem(risk): severity field present in insert values', async () => {
+    const mockWhere = vi.fn().mockResolvedValue([]);
+    const mockFrom = vi.fn().mockReturnValue({ where: mockWhere });
+    const mockArtifactWhere = vi.fn().mockResolvedValue([{
+      id: 10,
+      ingestion_log_json: { filename: 'test.docx', uploaded_at: '2026-01-01T00:00:00Z' },
+    }]);
+    const mockArtifactFrom = vi.fn().mockReturnValue({ where: mockArtifactWhere });
+    vi.mocked(db.select)
+      .mockReturnValueOnce({ from: mockArtifactFrom } as any)
+      .mockReturnValue({ from: mockFrom } as any);
+
+    const mockValues = vi.fn().mockReturnValue({ returning: vi.fn().mockResolvedValue([{ id: 1 }]) });
+    vi.mocked(db.insert).mockReturnValue({ values: mockValues } as any);
+    const mockSet = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) });
+    vi.mocked(db.update).mockReturnValue({ set: mockSet } as any);
+
+    const req = buildRequest({
+      artifactId: 10,
+      projectId: 1,
+      totalExtracted: 1,
+      items: [{
+        entityType: 'risk',
+        fields: { description: 'Data breach risk', severity: 'high' },
+        approved: true,
+      }],
+    });
+
+    await POST(req);
+
+    expect(mockValues).toHaveBeenCalled();
+    const insertedRecord = mockValues.mock.calls[0][0];
+    expect(insertedRecord.severity).toBeDefined();
+    expect(insertedRecord.severity).toBe('high');
+  });
+
+  it('insertItem(task): start_date, due, description, priority fields present', async () => {
+    const mockWhere = vi.fn().mockResolvedValue([]);
+    const mockFrom = vi.fn().mockReturnValue({ where: mockWhere });
+    const mockArtifactWhere = vi.fn().mockResolvedValue([{
+      id: 10,
+      ingestion_log_json: { filename: 'test.docx', uploaded_at: '2026-01-01T00:00:00Z' },
+    }]);
+    const mockArtifactFrom = vi.fn().mockReturnValue({ where: mockArtifactWhere });
+    vi.mocked(db.select)
+      .mockReturnValueOnce({ from: mockArtifactFrom } as any)
+      .mockReturnValue({ from: mockFrom } as any);
+
+    const mockValues = vi.fn().mockReturnValue({ returning: vi.fn().mockResolvedValue([{ id: 1 }]) });
+    vi.mocked(db.insert).mockReturnValue({ values: mockValues } as any);
+    const mockSet = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) });
+    vi.mocked(db.update).mockReturnValue({ set: mockSet } as any);
+
+    const req = buildRequest({
+      artifactId: 10,
+      projectId: 1,
+      totalExtracted: 1,
+      items: [{
+        entityType: 'task',
+        fields: {
+          title: 'Deploy API',
+          start_date: '2026-05-01',
+          due_date: '2026-05-15',
+          description: 'Deploy to production',
+          priority: 'high',
+          milestone_name: 'Go Live',
+          workstream_name: 'Infrastructure',
+        },
+        approved: true,
+      }],
+    });
+
+    await POST(req);
+
+    expect(mockValues).toHaveBeenCalled();
+    const insertedRecord = mockValues.mock.calls[0][0];
+    expect(insertedRecord.start_date).toBe('2026-05-01');
+    expect(insertedRecord.due).toBe('2026-05-15');
+    expect(insertedRecord.description).toBe('Deploy to production');
+    expect(insertedRecord.priority).toBe('high');
+  });
+
+  it('insertItem(milestone): owner field present', async () => {
+    const mockWhere = vi.fn().mockResolvedValue([]);
+    const mockFrom = vi.fn().mockReturnValue({ where: mockWhere });
+    const mockArtifactWhere = vi.fn().mockResolvedValue([{
+      id: 10,
+      ingestion_log_json: { filename: 'test.docx', uploaded_at: '2026-01-01T00:00:00Z' },
+    }]);
+    const mockArtifactFrom = vi.fn().mockReturnValue({ where: mockArtifactWhere });
+    vi.mocked(db.select)
+      .mockReturnValueOnce({ from: mockArtifactFrom } as any)
+      .mockReturnValue({ from: mockFrom } as any);
+
+    const mockValues = vi.fn().mockReturnValue({ returning: vi.fn().mockResolvedValue([{ id: 1 }]) });
+    vi.mocked(db.insert).mockReturnValue({ values: mockValues } as any);
+    const mockSet = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) });
+    vi.mocked(db.update).mockReturnValue({ set: mockSet } as any);
+
+    const req = buildRequest({
+      artifactId: 10,
+      projectId: 1,
+      totalExtracted: 1,
+      items: [{
+        entityType: 'milestone',
+        fields: { name: 'Beta Launch', owner: 'Alice Johnson' },
+        approved: true,
+      }],
+    });
+
+    await POST(req);
+
+    expect(mockValues).toHaveBeenCalled();
+    const insertedRecord = mockValues.mock.calls[0][0];
+    expect(insertedRecord.owner).toBe('Alice Johnson');
+  });
+
+  // mergeItem fill-null-only tests
+  it('mergeItem(risk) fill-null-only: non-null severity not overwritten', async () => {
+    const mockArtifactWhere = vi.fn().mockResolvedValue([{
+      id: 10,
+      ingestion_log_json: { filename: 'test.docx', uploaded_at: '2026-01-01T00:00:00Z' },
+    }]);
+    const mockArtifactFrom = vi.fn().mockReturnValue({ where: mockArtifactWhere });
+
+    // Conflict check: returns existing record with id 99
+    const mockConflictWhere = vi.fn().mockResolvedValue([{ id: 99 }]);
+    const mockConflictFrom = vi.fn().mockReturnValue({ where: mockConflictWhere });
+
+    // beforeRecord select: returns existing risk with non-null severity
+    const mockBeforeWhere = vi.fn().mockResolvedValue([{ id: 99, severity: 'high' }]);
+    const mockBeforeFrom = vi.fn().mockReturnValue({ where: mockBeforeWhere });
+
+    vi.mocked(db.select)
+      .mockReturnValueOnce({ from: mockArtifactFrom } as any)    // artifact fetch
+      .mockReturnValueOnce({ from: mockConflictFrom } as any)     // conflict check
+      .mockReturnValueOnce({ from: mockBeforeFrom } as any);      // beforeRecord fetch
+
+    const mockSet = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([{ id: 99 }]) });
+    vi.mocked(db.update).mockReturnValue({ set: mockSet } as any);
+    const mockValues = vi.fn().mockReturnValue({ returning: vi.fn().mockResolvedValue([{ id: 1 }]) });
+    vi.mocked(db.insert).mockReturnValue({ values: mockValues } as any);
+
+    const req = buildRequest({
+      artifactId: 10,
+      projectId: 1,
+      totalExtracted: 1,
+      items: [{
+        entityType: 'risk',
+        fields: { description: 'Existing risk', severity: 'critical' },
+        approved: true,
+      }],
+    });
+
+    await POST(req);
+
+    expect(mockSet).toHaveBeenCalled();
+    const patchObject = mockSet.mock.calls[0][0];
+    expect(patchObject.severity).toBeUndefined(); // NOT overwritten
+  });
+
+  it('mergeItem(task) fill-null-only: null start_date gets filled', async () => {
+    const mockArtifactWhere = vi.fn().mockResolvedValue([{
+      id: 10,
+      ingestion_log_json: { filename: 'test.docx', uploaded_at: '2026-01-01T00:00:00Z' },
+    }]);
+    const mockArtifactFrom = vi.fn().mockReturnValue({ where: mockArtifactWhere });
+
+    // Conflict check: returns existing task with id 88
+    const mockConflictWhere = vi.fn().mockResolvedValue([{ id: 88 }]);
+    const mockConflictFrom = vi.fn().mockReturnValue({ where: mockConflictWhere });
+
+    // beforeRecord select: returns existing task with null start_date
+    const mockBeforeWhere = vi.fn().mockResolvedValue([{ id: 88, start_date: null }]);
+    const mockBeforeFrom = vi.fn().mockReturnValue({ where: mockBeforeWhere });
+
+    vi.mocked(db.select)
+      .mockReturnValueOnce({ from: mockArtifactFrom } as any)
+      .mockReturnValueOnce({ from: mockConflictFrom } as any)
+      .mockReturnValueOnce({ from: mockBeforeFrom } as any);
+
+    const mockSet = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([{ id: 88 }]) });
+    vi.mocked(db.update).mockReturnValue({ set: mockSet } as any);
+    const mockValues = vi.fn().mockReturnValue({ returning: vi.fn().mockResolvedValue([{ id: 1 }]) });
+    vi.mocked(db.insert).mockReturnValue({ values: mockValues } as any);
+
+    const req = buildRequest({
+      artifactId: 10,
+      projectId: 1,
+      totalExtracted: 1,
+      items: [{
+        entityType: 'task',
+        fields: { title: 'Existing task', start_date: '2026-06-01' },
+        approved: true,
+      }],
+    });
+
+    await POST(req);
+
+    expect(mockSet).toHaveBeenCalled();
+    const patchObject = mockSet.mock.calls[0][0];
+    expect(patchObject.start_date).toBe('2026-06-01'); // Filled
+  });
+
+  // Cross-entity resolution tests
+  it('resolveEntityRef: exactly 1 milestone match → milestone_id set', async () => {
+    const mockArtifactWhere = vi.fn().mockResolvedValue([{
+      id: 10,
+      ingestion_log_json: { filename: 'test.docx', uploaded_at: '2026-01-01T00:00:00Z' },
+    }]);
+    const mockArtifactFrom = vi.fn().mockReturnValue({ where: mockArtifactWhere });
+
+    // Milestone lookup returns exactly 1 match
+    const mockMilestoneWhere = vi.fn().mockResolvedValue([{ id: 123 }]);
+    const mockMilestoneFrom = vi.fn().mockReturnValue({ where: mockMilestoneWhere });
+
+    // No conflict
+    const mockConflictWhere = vi.fn().mockResolvedValue([]);
+    const mockConflictFrom = vi.fn().mockReturnValue({ where: mockConflictWhere });
+
+    vi.mocked(db.select)
+      .mockReturnValueOnce({ from: mockArtifactFrom } as any)
+      .mockReturnValueOnce({ from: mockMilestoneFrom } as any)  // milestone lookup
+      .mockReturnValue({ from: mockConflictFrom } as any);
+
+    const mockValues = vi.fn().mockReturnValue({ returning: vi.fn().mockResolvedValue([{ id: 1 }]) });
+    vi.mocked(db.insert).mockReturnValue({ values: mockValues } as any);
+    const mockSet = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) });
+    vi.mocked(db.update).mockReturnValue({ set: mockSet } as any);
+
+    const req = buildRequest({
+      artifactId: 10,
+      projectId: 1,
+      totalExtracted: 1,
+      items: [{
+        entityType: 'task',
+        fields: { title: 'Task with milestone', milestone_name: 'Go Live' },
+        approved: true,
+      }],
+    });
+
+    await POST(req);
+
+    expect(mockValues).toHaveBeenCalled();
+    const insertedRecord = mockValues.mock.calls[0][0];
+    expect(insertedRecord.milestone_id).toBe(123);
+  });
+
+  it('resolveEntityRef: 0 matches → milestone_id null, description appended', async () => {
+    const mockArtifactWhere = vi.fn().mockResolvedValue([{
+      id: 10,
+      ingestion_log_json: { filename: 'test.docx', uploaded_at: '2026-01-01T00:00:00Z' },
+    }]);
+    const mockArtifactFrom = vi.fn().mockReturnValue({ where: mockArtifactWhere });
+
+    // Milestone lookup returns 0 matches
+    const mockMilestoneWhere = vi.fn().mockResolvedValue([]);
+    const mockMilestoneFrom = vi.fn().mockReturnValue({ where: mockMilestoneWhere });
+
+    // No conflict
+    const mockConflictWhere = vi.fn().mockResolvedValue([]);
+    const mockConflictFrom = vi.fn().mockReturnValue({ where: mockConflictWhere });
+
+    vi.mocked(db.select)
+      .mockReturnValueOnce({ from: mockArtifactFrom } as any)
+      .mockReturnValueOnce({ from: mockMilestoneFrom } as any)
+      .mockReturnValue({ from: mockConflictFrom } as any);
+
+    const mockValues = vi.fn().mockReturnValue({ returning: vi.fn().mockResolvedValue([{ id: 1 }]) });
+    vi.mocked(db.insert).mockReturnValue({ values: mockValues } as any);
+    const mockSet = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) });
+    vi.mocked(db.update).mockReturnValue({ set: mockSet } as any);
+
+    const req = buildRequest({
+      artifactId: 10,
+      projectId: 1,
+      totalExtracted: 1,
+      items: [{
+        entityType: 'task',
+        fields: { title: 'Task without match', milestone_name: 'Unknown Sprint' },
+        approved: true,
+      }],
+    });
+
+    await POST(req);
+
+    expect(mockValues).toHaveBeenCalled();
+    const insertedRecord = mockValues.mock.calls[0][0];
+    expect(insertedRecord.milestone_id).toBeNull();
+    expect(insertedRecord.description).toContain('Milestone ref: Unknown Sprint');
+  });
+
+  it('resolveEntityRef: both milestone and workstream unresolved → description includes both', async () => {
+    const mockArtifactWhere = vi.fn().mockResolvedValue([{
+      id: 10,
+      ingestion_log_json: { filename: 'test.docx', uploaded_at: '2026-01-01T00:00:00Z' },
+    }]);
+    const mockArtifactFrom = vi.fn().mockReturnValue({ where: mockArtifactWhere });
+
+    // Both lookups return 0 matches
+    const mockEmptyWhere = vi.fn().mockResolvedValue([]);
+    const mockEmptyFrom = vi.fn().mockReturnValue({ where: mockEmptyWhere });
+
+    // No conflict
+    const mockConflictWhere = vi.fn().mockResolvedValue([]);
+    const mockConflictFrom = vi.fn().mockReturnValue({ where: mockConflictWhere });
+
+    vi.mocked(db.select)
+      .mockReturnValueOnce({ from: mockArtifactFrom } as any)
+      .mockReturnValueOnce({ from: mockEmptyFrom } as any)   // milestone lookup
+      .mockReturnValueOnce({ from: mockEmptyFrom } as any)   // workstream lookup
+      .mockReturnValue({ from: mockConflictFrom } as any);
+
+    const mockValues = vi.fn().mockReturnValue({ returning: vi.fn().mockResolvedValue([{ id: 1 }]) });
+    vi.mocked(db.insert).mockReturnValue({ values: mockValues } as any);
+    const mockSet = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) });
+    vi.mocked(db.update).mockReturnValue({ set: mockSet } as any);
+
+    const req = buildRequest({
+      artifactId: 10,
+      projectId: 1,
+      totalExtracted: 1,
+      items: [{
+        entityType: 'task',
+        fields: {
+          title: 'Task with both unresolved',
+          milestone_name: 'Alpha Sprint',
+          workstream_name: 'Backend',
+        },
+        approved: true,
+      }],
+    });
+
+    await POST(req);
+
+    expect(mockValues).toHaveBeenCalled();
+    const insertedRecord = mockValues.mock.calls[0][0];
+    expect(insertedRecord.description).toContain('Milestone ref: Alpha Sprint');
+    expect(insertedRecord.description).toContain('Workstream ref: Backend');
+  });
+
+  // unresolvedRefs in API response
+  it('unresolvedRefs: at least one task with unresolved ref → response includes message', async () => {
+    const mockArtifactWhere = vi.fn().mockResolvedValue([{
+      id: 10,
+      ingestion_log_json: { filename: 'test.docx', uploaded_at: '2026-01-01T00:00:00Z' },
+    }]);
+    const mockArtifactFrom = vi.fn().mockReturnValue({ where: mockArtifactWhere });
+
+    // Milestone lookup returns 0 matches
+    const mockMilestoneWhere = vi.fn().mockResolvedValue([]);
+    const mockMilestoneFrom = vi.fn().mockReturnValue({ where: mockMilestoneWhere });
+
+    // No conflict
+    const mockConflictWhere = vi.fn().mockResolvedValue([]);
+    const mockConflictFrom = vi.fn().mockReturnValue({ where: mockConflictWhere });
+
+    vi.mocked(db.select)
+      .mockReturnValueOnce({ from: mockArtifactFrom } as any)
+      .mockReturnValueOnce({ from: mockMilestoneFrom } as any)
+      .mockReturnValue({ from: mockConflictFrom } as any);
+
+    const mockValues = vi.fn().mockReturnValue({ returning: vi.fn().mockResolvedValue([{ id: 1 }]) });
+    vi.mocked(db.insert).mockReturnValue({ values: mockValues } as any);
+    const mockSet = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) });
+    vi.mocked(db.update).mockReturnValue({ set: mockSet } as any);
+
+    const req = buildRequest({
+      artifactId: 10,
+      projectId: 1,
+      totalExtracted: 1,
+      items: [{
+        entityType: 'task',
+        fields: { title: 'Task with unresolved', milestone_name: 'Unknown' },
+        approved: true,
+      }],
+    });
+
+    const res = await POST(req);
+    const data = await res.json();
+
+    expect(data.unresolvedRefs).toBeDefined();
+    expect(data.unresolvedRefs).not.toBeNull();
+  });
+});
