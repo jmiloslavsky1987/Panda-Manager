@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { getWorkspaceData, getAuditLogForProject, computeAuditDiff } from '../../../../lib/queries'
 import { SourceBadge } from '../../../../components/SourceBadge'
+import { EmptyState } from '../../../../components/EmptyState'
 import type { EngagementHistoryRow, AuditLogEntry } from '../../../../lib/queries'
 
 const SOURCE_STYLES: Record<string, string> = {
@@ -61,7 +62,10 @@ export default async function HistoryPage({ params }: { params: Promise<{ id: st
       </a>
 
       {feed.length === 0 ? (
-        <p className="text-sm text-zinc-500">No engagement history recorded yet.</p>
+        <EmptyState
+          title="No history yet"
+          description="Activity will appear here automatically as you work. Changes to risks, actions, milestones, and tasks are recorded automatically."
+        />
       ) : (
         <div className="space-y-3">
           {feed.map((item, idx) => {

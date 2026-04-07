@@ -40,7 +40,18 @@ export default async function ArtifactsPage({ params }: { params: Promise<{ id: 
         {/* Rows */}
         <div className="space-y-1" data-testid="artifacts-table">
           {artifacts.length === 0 ? (
-            <p className="py-4 text-center text-zinc-400 text-sm">No artifacts yet</p>
+            <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+              <h3 className="text-sm font-medium text-zinc-900 mb-1">No artifacts yet</h3>
+              <p className="text-sm text-zinc-500 mb-4 max-w-sm">
+                Artifacts are documents uploaded via the Context Hub. Upload a document to extract project data.
+              </p>
+              <a
+                href={`/customer/${projectId}/context`}
+                className="inline-flex items-center rounded-md border border-zinc-300 bg-white text-sm px-4 py-2 hover:bg-zinc-50 transition-colors"
+              >
+                Upload a document
+              </a>
+            </div>
           ) : (
             artifacts.map(artifact => (
               <ArtifactEditModal
