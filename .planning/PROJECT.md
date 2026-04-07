@@ -70,11 +70,15 @@ Every PS delivery intelligence the team has built — 15 AI skills, all project 
 
 ### Active
 
-<!-- v6.0 — deferred from v5.0 + new priorities -->
-- [ ] Test suite: 6 pre-existing test failures resolved (TEST-01 — leftJoin/db.transaction/db.query mock setup issues)
-- [ ] Empty state CTA onClick handlers wired to actual creation forms (placeholder () => {} shipped in v5.0)
-- [ ] Skills execution path resolution — hardcoded paths in skill runner made portable
-- [ ] UI visual overhaul: color palette, typography, spacing modernised (UIVIZ-01)
+<!-- v6.0 — Dashboard, Navigation, Parity, WBS, Team Engagement, Architecture, Skills Portability -->
+- [ ] **DASH-01–06**: Portfolio dashboard — health summary, status chart, multi-project table with filtering/sort/search, exceptions panel, drill-down
+- [ ] **NAV-01–05**: Tab restructure — Plan first in Delivery, WBS/Task Board/Gantt promoted to top level, Swimlane removed, Decisions → Delivery, Intel removed, Engagement History → Admin
+- [ ] **RISK-01–02**: Risks parity with Actions — multi-dimension filtering, multi-select bulk actions
+- [ ] **MILE-01–02**: Milestones parity with Actions — multi-dimension filtering, multi-select bulk actions
+- [ ] **WBS-01–05**: Phase Board → WBS — both ADR + Biggy templates, collapsible hierarchy, context-upload auto-classify, Generate Plan gap-fill, manual edit
+- [ ] **TEAM-01–04**: Team Engagement Overview — 5-section engagement map, context-upload extraction, missing-data warnings, manual edit
+- [ ] **ARCH-01–04**: Architecture tab update — Before State + Current & Future State two-tab diagram, ADR + AI tracks, onboarding status table, context-upload extraction
+- [ ] **SKILL-01**: Skills portability — dynamic SKILL.md path resolution (no hardcoded paths)
 
 ### Out of Scope
 
@@ -133,5 +137,18 @@ This is a full rewrite of a previous Claude Code project assistant build (8 phas
 | Client-side filtering pattern for table clients (v5.0) | Server Component passes full data; client filters in-memory using URL params — consistent with ActionsTableClient, RisksTableClient, DecisionsTableClient | ✓ Correct — no extra API calls for filter changes |
 | Empty state CTA onClick handlers deferred as () => {} (v5.0) | Wiring to creation modals is low-risk and deferred; empty state component structure is correct | — Pending v6.0 |
 
+## Current Milestone: v6.0 — Dashboard, Navigation & Intelligence
+
+**Goal:** Upgrade the portfolio dashboard, restructure navigation, achieve parity across Risks/Milestones, replace Phase Board with AI-driven WBS, and enhance Team Engagement and Architecture views with context-upload extraction.
+
+**Target features:**
+- Portfolio-level dashboard with health summary, exceptions panel, and multi-project table
+- Delivery tab restructure: Plan first, WBS/Gantt/Task Board at top level, Swimlane removed, Decisions moved in
+- Risks and Milestones match Actions tab (filtering, multi-select, bulk actions)
+- Phase Board replaced with dual-template WBS (ADR + Biggy) with AI auto-classify and Generate Plan
+- Team Engagement Overview: 5-section map auto-populated from context uploads
+- Architecture tab: Before State + Current & Future State two-tab visual diagram auto-populated from context
+- Skills portability: dynamic SKILL.md path resolution
+
 ---
-*Last updated: 2026-04-07 after v5.0 milestone archived*
+*Last updated: 2026-04-07 after v6.0 milestone started*
