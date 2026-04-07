@@ -21,7 +21,7 @@ import { readSettings } from '../../lib/settings-core';
 
 const CHUNK_CHAR_LIMIT = 80_000; // ~20k tokens; leaves headroom for system prompt + JSON output
 
-const EXTRACTION_SYSTEM = `You are a project data extractor. Given a document, extract all structured project data.
+export const EXTRACTION_SYSTEM = `You are a project data extractor. Given a document, extract all structured project data.
 Output ONLY a JSON array of extraction items — no prose before or after, no markdown code fences.
 Each item follows this exact shape:
 {
@@ -31,12 +31,12 @@ Each item follows this exact shape:
   "sourceExcerpt": "verbatim text this was extracted from (max 200 chars)"
 }
 Entity type guidance:
-- action: { description, owner, due_date, status }
+- action: { description, owner, due_date, status, notes (additional notes or null), type (category or null) }
 - risk: { description, severity, mitigation, owner }
 - decision: { decision, rationale, made_by, date }
-- milestone: { name, target_date, status }
+- milestone: { name, target_date, status, owner (verbatim name or null) }
 - stakeholder: { name, role, email, account }
-- task: { title, status, owner, phase }
+- task: { title, status, owner, phase, description, start_date (ISO date string or null), due_date (ISO date string or null), priority ("high", "medium", or "low" or null), milestone_name (verbatim name as it appears in the document or null), workstream_name (verbatim name as it appears in the document or null) }
 - architecture: { tool_name, track, phase, status, integration_method } — workflow phase and integration method; focus on how the tool integrates into delivery workflow
 - history: { date, content, author }
 - businessOutcome: { title, track, description, delivery_status }
@@ -45,9 +45,14 @@ Entity type guidance:
 - onboarding_step: { team_name, step_name, track, status, completed_date } — specific onboarding step for a team (e.g. ADR track steps); NOT the same as a generic task
 - integration: { tool_name, category, connection_status, notes } — connection status of a tool (live/pilot/planned/not-connected); focus on operational readiness and connection state, NOT architecture workflow phase
 - note: { content, context } — use for any valuable content that does not fit the above types: observations, meeting highlights, open questions, context, or anything that would be useful to preserve but has no specific schema.
+
 IMPORTANT disambiguation:
 - architecture vs integration: architecture = workflow phase and integration method (how it fits in delivery process); integration = connection status and operational notes (is it connected and working?)
+
 IMPORTANT: Do NOT discard content just because it doesn't fit a structured type. Capture it as a "note".
+
+Extract all names (owners, milestone names, workstream names) exactly as they appear in the document. Do not abbreviate, normalize, or infer names. Use null for any field not explicitly present in the document.
+
 If this document is a slide deck (PPTX), extract all project data visible in bullet points and speaker notes.
 Output only the raw JSON array. Never wrap it in markdown code fences.`;
 
