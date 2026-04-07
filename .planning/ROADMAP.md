@@ -117,10 +117,10 @@ Full details: `.planning/milestones/v5.0-ROADMAP.md` (archived)
   1. User can run any skill from any deployment environment without path configuration
   2. Skill runner automatically discovers SKILL.md files relative to project root
   3. Skills execute correctly in both development and production deployments
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 43-01: [TBD]
+- [ ] 43-01-PLAN.md — Extract resolveSkillsDir to lib/skill-path.ts, migrate 3 worker jobs and 3 API routes, write migration tests
 
 ### Phase 44: Navigation & Parity
 **Goal**: Navigation restructure complete, Risks and Milestones match Actions table capabilities
