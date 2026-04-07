@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import {
   Table,
   TableBody,
@@ -64,6 +64,8 @@ interface RisksTableClientProps {
 
 export function RisksTableClient({ risks, artifacts, projectId }: RisksTableClientProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const severityFilter = searchParams.get('severity') ?? ''
 
   async function patchRisk(id: number, patch: Record<string, unknown>) {
     const res = await fetch(`/api/risks/${id}`, {
@@ -76,6 +78,7 @@ export function RisksTableClient({ risks, artifacts, projectId }: RisksTableClie
       throw new Error(err.error ?? 'Save failed')
     }
     router.refresh()
+    window.dispatchEvent(new CustomEvent('metrics:invalidate'))
   }
 
   const artifactMap = new Map(artifacts.map((a) => [a.id, a.name]))
@@ -85,6 +88,10 @@ export function RisksTableClient({ risks, artifacts, projectId }: RisksTableClie
     const bOrder = SEVERITY_ORDER[b.severity ?? 'low'] ?? 4
     return aOrder - bOrder
   })
+
+  const displayedRisks = severityFilter
+    ? sortedRisks.filter(r => normaliseSeverity(r.severity) === severityFilter.toLowerCase())
+    : sortedRisks
 
   return (
     <div className="space-y-4">
@@ -101,14 +108,14 @@ export function RisksTableClient({ risks, artifacts, projectId }: RisksTableClie
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedRisks.length === 0 ? (
+            {displayedRisks.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center text-zinc-400 py-8">
                   No risks found.
                 </TableCell>
               </TableRow>
             ) : (
-              sortedRisks.map((risk) => {
+              displayedRisks.map((risk) => {
                 const sevKey = normaliseSeverity(risk.severity)
                 const badgeClass = severityBadgeColors[sevKey] ?? 'bg-zinc-100 text-zinc-700'
                 const highlight = (sevKey === 'critical' || sevKey === 'high') && isUnresolved(risk.status)

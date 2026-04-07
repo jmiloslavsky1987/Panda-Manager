@@ -68,6 +68,7 @@ export function MilestonesTableClient({ milestones, artifacts, projectId }: Mile
       throw new Error(err.error ?? 'Save failed')
     }
     router.refresh()
+    window.dispatchEvent(new CustomEvent('metrics:invalidate'))
   }
 
   const artifactMap = new Map(artifacts.map((a) => [a.id, a.name]))
