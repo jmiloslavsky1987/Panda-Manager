@@ -1020,6 +1020,7 @@ export interface AuditLogEntry {
   before_json: Record<string, any> | null
   after_json: Record<string, any> | null
   created_at: Date
+  [key: string]: unknown
 }
 
 /**
