@@ -64,6 +64,38 @@ function coerceIntegrationStatus(raw: string | undefined | null): IntegrationSta
   return 'not-connected';
 }
 
+type RiskSeverity = 'low' | 'medium' | 'high' | 'critical';
+function coerceRiskSeverity(raw: string | undefined | null): RiskSeverity {
+  const v = (raw ?? '').toLowerCase().trim();
+  if (['critical', 'crit'].includes(v)) return 'critical';
+  if (['high'].includes(v)) return 'high';
+  if (['medium', 'med', 'moderate'].includes(v)) return 'medium';
+  if (['low', 'minor'].includes(v)) return 'low';
+  return 'medium';
+}
+
+async function resolveEntityRef(
+  tableName: 'milestones' | 'workstreams',
+  nameField: string,
+  projectId: number,
+): Promise<number | null> {
+  try {
+    const key = normalize(nameField);
+    if (!key) return null;
+    if (tableName === 'milestones') {
+      const rows = await db.select({ id: milestones.id }).from(milestones)
+        .where(and(eq(milestones.project_id, projectId), ilike(milestones.name, `%${key}%`)));
+      return rows.length === 1 ? rows[0].id : null;
+    } else {
+      const rows = await db.select({ id: workstreams.id }).from(workstreams)
+        .where(and(eq(workstreams.project_id, projectId), ilike(workstreams.name, `%${key}%`)));
+      return rows.length === 1 ? rows[0].id : null;
+    }
+  } catch {
+    return null;
+  }
+}
+
 // ─── Conflict detection: same dedup key as extract route ─────────────────────
 
 function normalize(value: string | undefined | null): string {
