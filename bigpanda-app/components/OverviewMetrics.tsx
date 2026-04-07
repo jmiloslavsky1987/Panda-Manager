@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { PieChart, Pie, Cell, Tooltip, BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from 'recharts'
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -71,29 +72,39 @@ const RISK_SEVERITY_COLORS: Record<string, string> = {
 // ─── Component ─────────────────────────────────────────────────────────────────
 
 export function OverviewMetrics({ projectId }: OverviewMetricsProps) {
+  const router = useRouter()
   const [data, setData] = useState<OverviewMetricsData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
 
-  useEffect(() => {
-    async function fetchMetrics() {
-      try {
-        const res = await fetch(`/api/projects/${projectId}/overview-metrics`)
-        if (!res.ok) {
-          setError(true)
-          setLoading(false)
-          return
-        }
-        const metrics = await res.json()
-        setData(metrics)
-      } catch (err) {
+  // Shared fetchMetrics function for initial load and invalidation
+  const fetchMetrics = async () => {
+    try {
+      const res = await fetch(`/api/projects/${projectId}/overview-metrics`)
+      if (!res.ok) {
         setError(true)
-      } finally {
         setLoading(false)
+        return
       }
+      const metrics = await res.json()
+      setData(metrics)
+    } catch (err) {
+      setError(true)
+    } finally {
+      setLoading(false)
     }
+  }
 
+  // Initial fetch on mount
+  useEffect(() => {
     fetchMetrics()
+  }, [projectId])
+
+  // Listen for metrics:invalidate events
+  useEffect(() => {
+    const handleInvalidate = () => { fetchMetrics() }
+    window.addEventListener('metrics:invalidate', handleInvalidate)
+    return () => { window.removeEventListener('metrics:invalidate', handleInvalidate) }
   }, [projectId])
 
   // ─── Loading state ───────────────────────────────────────────────────────────
@@ -142,6 +153,13 @@ export function OverviewMetrics({ projectId }: OverviewMetricsProps) {
   // ─── Prepare hours chart data ────────────────────────────────────────────────
 
   const hasHours = data.weeklyRollup.some(w => w.hours > 0)
+
+  // ─── Pie chart click handler ─────────────────────────────────────────────────
+
+  const handlePieClick = (data: any) => {
+    if (!data?.severity) return
+    router.push(`/customer/${projectId}/risks?severity=${data.severity.toLowerCase()}`)
+  }
 
   // ─── Custom tooltips ─────────────────────────────────────────────────────────
 
@@ -206,6 +224,8 @@ export function OverviewMetrics({ projectId }: OverviewMetricsProps) {
                   innerRadius={50}
                   outerRadius={80}
                   paddingAngle={2}
+                  onClick={handlePieClick}
+                  style={{ cursor: 'pointer' }}
                 >
                   {riskChartData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
