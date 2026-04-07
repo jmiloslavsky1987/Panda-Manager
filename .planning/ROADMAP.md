@@ -202,7 +202,7 @@ Plans:
 | 39. Cross-Tab Sync & Plan Tab | 4/4 | Complete    | 2026-04-07 | — |
 | 40. Search, Traceability & Skills UX | 6/6 | Complete    | 2026-04-07 | — |
 | 41. UX Polish & Consistency | 3/4 | In Progress|  | — |
-| 42. Ingestion Field Coverage | 5/5 | Complete   | 2026-04-07 | — |
+| 42. Ingestion Field Coverage | 5/5 | Complete    | 2026-04-07 | — |
 
 ### Phase 42: Ingestion Field Coverage
 **Goal**: Uploading a project document produces fully-populated entities — tasks with dates and milestone links, risks with severity, decisions with rationale, stakeholders with company — matching what the DB schema supports, so the Gantt and every other tab show real data immediately after ingestion
