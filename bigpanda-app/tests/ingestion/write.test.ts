@@ -526,6 +526,7 @@ describe('Phase 42 — new field coverage', () => {
         entityType: 'risk',
         fields: { description: 'Existing risk', severity: 'critical' },
         approved: true,
+        conflictResolution: 'merge',
       }],
     });
 
@@ -569,6 +570,7 @@ describe('Phase 42 — new field coverage', () => {
         entityType: 'task',
         fields: { title: 'Existing task', start_date: '2026-06-01' },
         approved: true,
+        conflictResolution: 'merge',
       }],
     });
 
