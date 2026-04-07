@@ -121,18 +121,10 @@ describe('worker/jobs/document-extraction.ts — processDocumentExtraction()', (
   });
 });
 
-describe('Phase 42 — extraction prompt field coverage', () => {
-  // Import EXTRACTION_SYSTEM to test prompt string content
-  // This will FAIL RED if EXTRACTION_SYSTEM is not exported yet
-  let EXTRACTION_SYSTEM: string;
+// Import EXTRACTION_SYSTEM for field coverage tests
+import { EXTRACTION_SYSTEM } from '../../worker/jobs/document-extraction';
 
-  try {
-    const module = require('../../worker/jobs/document-extraction');
-    EXTRACTION_SYSTEM = module.EXTRACTION_SYSTEM;
-  } catch (err) {
-    // Expected to fail RED — EXTRACTION_SYSTEM not yet exported
-    EXTRACTION_SYSTEM = '';
-  }
+describe('Phase 42 — extraction prompt field coverage', () => {
 
   it('task guidance includes milestone_name', () => {
     expect(EXTRACTION_SYSTEM).toContain('milestone_name');
