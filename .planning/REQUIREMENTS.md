@@ -36,14 +36,14 @@
 
 ### Cross-Tab Data Sync (SYNC)
 
-- [ ] **SYNC-01**: Editing a Risk, Action, or Milestone in its tab triggers an in-place refresh of Overview metrics without requiring the user to navigate away and back
-- [ ] **SYNC-02**: Clicking a severity segment in the Overview risk distribution chart navigates to the Risks tab pre-filtered to that severity
-- [ ] **SYNC-03**: Overview HealthDashboard "active blockers" count is replaced with a list of the actual blocked items with links to the relevant tab
+- [x] **SYNC-01**: Editing a Risk, Action, or Milestone in its tab triggers an in-place refresh of Overview metrics without requiring the user to navigate away and back
+- [x] **SYNC-02**: Clicking a severity segment in the Overview risk distribution chart navigates to the Risks tab pre-filtered to that severity
+- [x] **SYNC-03**: Overview HealthDashboard "active blockers" count is replaced with a list of the actual blocked items with links to the relevant tab
 
 ### Plan Tab Improvements (PLAN)
 
-- [ ] **PLAN-01**: Tasks with past-due dates are visually highlighted (red styling) on the Task Board and Phase Board, consistent with Actions overdue style
-- [ ] **PLAN-02**: Phase Board and Task Board multi-select checkboxes are wired to a bulk status update action (currently dead UI)
+- [x] **PLAN-01**: Tasks with past-due dates are visually highlighted (red styling) on the Task Board and Phase Board, consistent with Actions overdue style
+- [x] **PLAN-02**: Phase Board and Task Board multi-select checkboxes are wired to a bulk status update action (currently dead UI)
 - [x] **PLAN-03**: Gantt view colour-codes or groups tasks by their associated milestone so milestone membership is visible on the timeline
 
 ### Global Search & Filtering (SRCH)
@@ -118,11 +118,11 @@
 | GNTT-03 | Phase 38 | Complete |
 | GNTT-04 | Phase 38 | Complete |
 | PLAN-03 | Phase 38 | Complete |
-| SYNC-01 | Phase 39 | Pending |
-| SYNC-02 | Phase 39 | Pending |
-| SYNC-03 | Phase 39 | Pending |
-| PLAN-01 | Phase 39 | Pending |
-| PLAN-02 | Phase 39 | Pending |
+| SYNC-01 | Phase 39 | Complete |
+| SYNC-02 | Phase 39 | Complete |
+| SYNC-03 | Phase 39 | Complete |
+| PLAN-01 | Phase 39 | Complete |
+| PLAN-02 | Phase 39 | Complete |
 | SRCH-01 | Phase 40 | Pending |
 | SRCH-02 | Phase 40 | Pending |
 | ARTF-01 | Phase 40 | Pending |
