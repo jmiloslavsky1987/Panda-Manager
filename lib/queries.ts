@@ -1027,7 +1027,7 @@ export interface AuditLogEntry {
  * Joins to each entity type to filter by project_id (audit_log has no direct project_id column).
  */
 export async function getAuditLogForProject(projectId: number): Promise<AuditLogEntry[]> {
-  const results = await db.execute(sql`
+  const results = await db.execute<AuditLogEntry>(sql`
     SELECT
       a.id,
       a.entity_type,
@@ -1066,7 +1066,7 @@ export async function getAuditLogForProject(projectId: number): Promise<AuditLog
     ORDER BY a.created_at DESC
   `)
 
-  return results.rows as AuditLogEntry[]
+  return results as AuditLogEntry[]
 }
 
 // ─── Audit Diff Computation (HIST-01) ────────────────────────────────────────
