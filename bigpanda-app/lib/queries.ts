@@ -23,6 +23,7 @@ import {
   beforeState,
   teamOnboardingStatus,
   teamPathways,
+  auditLog,
 } from '../db/schema';
 import { eq, and, inArray, lt, ne, gt, or, desc, asc } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
@@ -1005,4 +1006,98 @@ export async function getEntitiesExtractedFromArtifact(artifactId: number): Prom
     milestones: extractedMilestones,
     decisions: extractedDecisions,
   }
+}
+
+// ─── Audit Log Query (HIST-01) ───────────────────────────────────────────────
+
+export interface AuditLogEntry {
+  id: number
+  entity_type: string
+  entity_id: number
+  external_id: string | null
+  action: string
+  actor_id: string | null
+  before_json: Record<string, any> | null
+  after_json: Record<string, any> | null
+  created_at: Date
+}
+
+/**
+ * Returns audit log entries for all entities belonging to a project.
+ * Joins to each entity type to filter by project_id (audit_log has no direct project_id column).
+ */
+export async function getAuditLogForProject(projectId: number): Promise<AuditLogEntry[]> {
+  const results = await db.execute(sql`
+    SELECT
+      a.id,
+      a.entity_type,
+      a.entity_id,
+      a.action,
+      a.actor_id,
+      a.before_json,
+      a.after_json,
+      a.created_at,
+      CASE
+        WHEN a.entity_type = 'risks' THEN r.external_id
+        WHEN a.entity_type = 'actions' THEN ac.external_id
+        WHEN a.entity_type = 'milestones' THEN m.external_id
+        WHEN a.entity_type = 'tasks' THEN CAST(t.id AS TEXT)
+        WHEN a.entity_type = 'stakeholders' THEN CAST(s.id AS TEXT)
+        WHEN a.entity_type = 'artifacts' THEN CAST(art.id AS TEXT)
+        WHEN a.entity_type = 'decisions' THEN CAST(kd.id AS TEXT)
+        ELSE NULL
+      END as external_id
+    FROM audit_log a
+    LEFT JOIN risks r ON a.entity_type = 'risks' AND a.entity_id = r.id
+    LEFT JOIN actions ac ON a.entity_type = 'actions' AND a.entity_id = ac.id
+    LEFT JOIN milestones m ON a.entity_type = 'milestones' AND a.entity_id = m.id
+    LEFT JOIN tasks t ON a.entity_type = 'tasks' AND a.entity_id = t.id
+    LEFT JOIN stakeholders s ON a.entity_type = 'stakeholders' AND a.entity_id = s.id
+    LEFT JOIN artifacts art ON a.entity_type = 'artifacts' AND a.entity_id = art.id
+    LEFT JOIN key_decisions kd ON a.entity_type = 'decisions' AND a.entity_id = kd.id
+    WHERE
+      (r.project_id = ${projectId} OR
+       ac.project_id = ${projectId} OR
+       m.project_id = ${projectId} OR
+       t.project_id = ${projectId} OR
+       s.project_id = ${projectId} OR
+       art.project_id = ${projectId} OR
+       kd.project_id = ${projectId})
+    ORDER BY a.created_at DESC
+  `)
+
+  return results.rows as AuditLogEntry[]
+}
+
+// ─── Audit Diff Computation (HIST-01) ────────────────────────────────────────
+
+const AUDIT_SYSTEM_FIELDS = new Set([
+  'id', 'project_id', 'created_at', 'updated_at', 'external_id',
+  'source_artifact_id', 'source', 'discovery_source', 'tsvector',
+])
+
+/**
+ * Computes human-readable field-level diff from audit log before/after JSON.
+ * Returns "Created" if before is null, "Deleted" if after is null,
+ * otherwise returns changed fields as "field: oldVal → newVal, ..."
+ * System fields are excluded from the diff.
+ */
+export function computeAuditDiff(
+  before: Record<string, any> | null,
+  after: Record<string, any> | null
+): string {
+  if (!before) return 'Created'
+  if (!after) return 'Deleted'
+
+  const changes: string[] = []
+  const allKeys = new Set([...Object.keys(before), ...Object.keys(after)])
+
+  for (const key of allKeys) {
+    if (AUDIT_SYSTEM_FIELDS.has(key)) continue
+    if (before[key] !== after[key]) {
+      changes.push(`${key}: ${before[key] ?? 'null'} → ${after[key] ?? 'null'}`)
+    }
+  }
+
+  return changes.length > 0 ? changes.join(', ') : 'No changes'
 }
