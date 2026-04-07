@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v6.0
 milestone_name: — Dashboard, Navigation & Intelligence
-status: defining_requirements
-stopped_at: Requirements defined, roadmap pending
+status: ready_to_plan
+stopped_at: v6.0 roadmap created with 7 phases (43-49)
 last_updated: "2026-04-07T00:00:00.000Z"
-last_activity: "2026-04-07 — Milestone v6.0 started, requirements defined"
+last_activity: "2026-04-07 — v6.0 roadmap created"
 progress:
-  total_phases: 0
+  total_phases: 7
   completed_phases: 0
-  total_plans: 0
+  total_plans: 10
   completed_plans: 0
   percent: 0
 ---
@@ -21,14 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-07)
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
-**Current focus:** v6.0 — Defining requirements
+**Current focus:** v6.0 Phase 43 (Skills Portability)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-04-07 — Milestone v6.0 started
+Phase: 43 of 49 (Skills Portability)
+Plan: 0 of 1 in current phase
+Status: Ready to plan
+Last activity: 2026-04-07 — v6.0 roadmap created with 7 phases
+
+Progress: [████████████████████████████████████████░░░░░░░░░░] 86% (42/49 phases complete)
 
 ## Milestone History
 
@@ -37,26 +39,59 @@ Last activity: 2026-04-07 — Milestone v6.0 started
 - **v3.0** — Collaboration & Intelligence (Phases 26–30, 26 plans, complete 2026-04-01)
 - **v4.0** — Infrastructure & UX Foundations (Phases 31–35 complete; Phase 36 deferred, complete 2026-04-03)
 - **v5.0** — Workspace UX Overhaul (Phases 37–42, 29 plans, complete 2026-04-07)
+- **v6.0** — Dashboard, Navigation & Intelligence (Phases 43–49, 10 plans estimated, in progress)
+
+## v6.0 Phase Structure
+
+| Phase | Focus | Requirements | Plans |
+|-------|-------|--------------|-------|
+| 43 | Skills Portability | SKILL-01 | 1 |
+| 44 | Navigation & Parity | NAV-01–05, RISK-01–02, MILE-01–02 | 2 |
+| 45 | Database Schema Foundation | WBS-01–02 | 1 |
+| 46 | Context Upload Extraction Expansion | WBS-03, TEAM-02, ARCH-04 | 1 |
+| 47 | Work Breakdown Structure | WBS-04–05 | 2 |
+| 48 | Architecture & Team Engagement | ARCH-01–03, TEAM-01, TEAM-03–04 | 2 |
+| 49 | Portfolio Dashboard | DASH-01–06 | 1 |
+
+**Coverage:** 25/25 requirements mapped ✓
 
 ## Accumulated Context
 
+**Tech Stack:**
 - Next.js 16 (Turbopack), PostgreSQL, Redis/BullMQ, better-auth, Drizzle ORM, Vercel AI SDK, @xyflow/react, Recharts
-- 42 phases complete, ~42,385 LOC TypeScript, ~370 passing tests, 6 pre-existing test failures (deferred past v6.0)
-- requireSession() at Route Handler level is the auth security boundary (CVE-2025-29927 defense-in-depth)
-- CustomEvent (metrics:invalidate) pattern for cross-tab sync — no external state library
-- Client-side filtering pattern: Server Component passes full data, Client island filters in-memory
-- BullMQ background jobs + polling for long-running operations (extraction, skills)
-- Advisory lock + Redis cache for weekly-focus job (7-day TTL, single Claude call per project per week)
+- 42 phases complete, ~42,385 LOC TypeScript, ~370 passing tests
+- 6 pre-existing test failures (mock setup issues, deferred past v6.0)
+
+**Established Patterns:**
+- requireSession() at Route Handler level (CVE-2025-29927 defense-in-depth)
+- CustomEvent (metrics:invalidate) for cross-tab sync
+- Client-side filtering: Server Component passes full data, Client island filters in-memory
+- BullMQ background jobs + polling for long-running operations
+- Advisory lock + Redis cache for scheduled jobs (7-day TTL pattern)
 - React Flow with dynamic import + ssr:false for diagram components
-- WBS templates: ADR (13 top-level sections, 3 levels deep) + Biggy (6 top-level sections, 3 levels deep)
-- Architecture tab and Teams tab already exist from v2.0 (Phase 21) + v3.0 (Phase 28) — v6.0 enhances them
+
+**v6.0 Key Decisions:**
+- Phase ordering: Skills first (quick win) → Navigation + Parity (structural) → Schema → Extraction → Features → Portfolio (aggregates all)
+- WBS templates: ADR (13 sections, 3 levels) + Biggy (6 sections, 3 levels) seeded on project creation
+- Architecture tab enhances existing Phase 21/28 work (two-tab Before/Current & Future with status tracking)
+- Team Engagement consolidates existing tables into 5-section structured report
 
 ## Blockers/Concerns
 
-None — v6.0 requirements defined. Ready to create roadmap.
+**Research-flagged risks:**
+- Phase 44: Navigation restructure may break external links (add redirects for /intel, /phase-board old URLs)
+- Phase 46: AI extraction prompt expansion could degrade existing entity routing accuracy (monitor 80%+ baseline)
+- Phase 47: Deep tree rendering performance (100+ nodes) — use Set-based state + React.memo()
+- Phase 47: Generate Plan gap-fill hallucinations — validate stakeholder names against DB
+- Phase 49: N+1 query explosion in portfolio dashboard — single aggregation query or parallel Promise.all()
+
+**Technical debt from v5.0:**
+- Empty state CTA onClick handlers are () => {} placeholders
+- Skills execution path resolution uses hardcoded paths (Phase 43 addresses)
 
 ## Session Continuity
 
-Last session: 2026-04-07 — v6.0 milestone started
-Stopped at: Requirements defined — roadmap creation next
+Last session: 2026-04-07
+Stopped at: v6.0 roadmap and STATE.md created
 Resume file: None
+Next action: `/gsd:plan-phase 43` to begin Skills Portability phase

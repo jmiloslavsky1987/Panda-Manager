@@ -86,12 +86,7 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DASH-01 | Phase 48 | Pending |
-| DASH-02 | Phase 48 | Pending |
-| DASH-03 | Phase 48 | Pending |
-| DASH-04 | Phase 48 | Pending |
-| DASH-05 | Phase 48 | Pending |
-| DASH-06 | Phase 48 | Pending |
+| SKILL-01 | Phase 43 | Pending |
 | NAV-01 | Phase 44 | Pending |
 | NAV-02 | Phase 44 | Pending |
 | NAV-03 | Phase 44 | Pending |
@@ -104,17 +99,22 @@
 | WBS-01 | Phase 45 | Pending |
 | WBS-02 | Phase 45 | Pending |
 | WBS-03 | Phase 46 | Pending |
-| WBS-04 | Phase 45 | Pending |
-| WBS-05 | Phase 45 | Pending |
-| TEAM-01 | Phase 47 | Pending |
 | TEAM-02 | Phase 46 | Pending |
-| TEAM-03 | Phase 47 | Pending |
-| TEAM-04 | Phase 47 | Pending |
-| ARCH-01 | Phase 47 | Pending |
-| ARCH-02 | Phase 47 | Pending |
-| ARCH-03 | Phase 47 | Pending |
 | ARCH-04 | Phase 46 | Pending |
-| SKILL-01 | Phase 43 | Pending |
+| WBS-04 | Phase 47 | Pending |
+| WBS-05 | Phase 47 | Pending |
+| ARCH-01 | Phase 48 | Pending |
+| ARCH-02 | Phase 48 | Pending |
+| ARCH-03 | Phase 48 | Pending |
+| TEAM-01 | Phase 48 | Pending |
+| TEAM-03 | Phase 48 | Pending |
+| TEAM-04 | Phase 48 | Pending |
+| DASH-01 | Phase 49 | Pending |
+| DASH-02 | Phase 49 | Pending |
+| DASH-03 | Phase 49 | Pending |
+| DASH-04 | Phase 49 | Pending |
+| DASH-05 | Phase 49 | Pending |
+| DASH-06 | Phase 49 | Pending |
 
 **Coverage:**
 - v6.0 requirements: 25 total
@@ -123,4 +123,4 @@
 
 ---
 *Requirements defined: 2026-04-07*
-*Last updated: 2026-04-07 after initial definition*
+*Last updated: 2026-04-07 after roadmap creation*

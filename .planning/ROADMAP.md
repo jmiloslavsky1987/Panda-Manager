@@ -7,6 +7,7 @@
 - ✅ **v3.0** — Collaboration & Intelligence — Phases 26–30 (shipped 2026-04-01)
 - ✅ **v4.0** — Infrastructure & UX Foundations — Phases 31–35 (shipped 2026-04-03)
 - ✅ **v5.0** — Workspace UX Overhaul — Phases 37–42 (shipped 2026-04-07)
+- 🚧 **v6.0** — Dashboard, Navigation & Intelligence — Phases 43–49 (in progress)
 
 ## Phases
 
@@ -94,7 +95,139 @@ Full details: `.planning/milestones/v5.0-ROADMAP.md` (archived)
 
 </details>
 
+### 🚧 v6.0 — Dashboard, Navigation & Intelligence (In Progress)
+
+**Milestone Goal:** Upgrade the portfolio dashboard, restructure navigation, achieve parity across Risks/Milestones, replace Phase Board with AI-driven WBS, and enhance Team Engagement and Architecture views with context-upload extraction.
+
+- [ ] **Phase 43: Skills Portability** - Dynamic SKILL.md path resolution for deployment flexibility
+- [ ] **Phase 44: Navigation & Parity** - Tab restructure, Risks/Milestones filtering and bulk actions
+- [ ] **Phase 45: Database Schema Foundation** - New tables for WBS, Team Engagement, Architecture; query functions
+- [ ] **Phase 46: Context Upload Extraction Expansion** - Extend extraction to WBS/Team/Architecture entity types
+- [ ] **Phase 47: Work Breakdown Structure** - Collapsible WBS tree with AI Generate Plan and manual CRUD
+- [ ] **Phase 48: Architecture & Team Engagement** - Two-tab Architecture diagrams + 5-section Team report
+- [ ] **Phase 49: Portfolio Dashboard** - Multi-project table with health summary and exceptions panel
+
+## Phase Details
+
+### Phase 43: Skills Portability
+**Goal**: Skill runner resolves SKILL.md paths dynamically at runtime without hardcoded absolute paths
+**Depends on**: Nothing (standalone infrastructure improvement)
+**Requirements**: SKILL-01
+**Success Criteria** (what must be TRUE):
+  1. User can run any skill from any deployment environment without path configuration
+  2. Skill runner automatically discovers SKILL.md files relative to project root
+  3. Skills execute correctly in both development and production deployments
+**Plans**: TBD
+
+Plans:
+- [ ] 43-01: [TBD]
+
+### Phase 44: Navigation & Parity
+**Goal**: Navigation restructure complete, Risks and Milestones match Actions table capabilities
+**Depends on**: Phase 43
+**Requirements**: NAV-01, NAV-02, NAV-03, NAV-04, NAV-05, RISK-01, RISK-02, MILE-01, MILE-02
+**Success Criteria** (what must be TRUE):
+  1. User sees Plan as first sub-tab under Delivery
+  2. User accesses WBS, Task Board, and Gantt as direct Delivery sub-tabs at same level as Plan
+  3. User finds Decisions under Delivery tab; Intel tab no longer exists
+  4. User finds Engagement History under Admin tab
+  5. Old URLs (/intel, /phase-board) redirect to new locations without 404 errors
+  6. User can filter Risks table by status, severity, owner, and date range
+  7. User can multi-select risks and apply bulk status updates
+  8. User can filter Milestones table by status, owner, and date range
+  9. User can multi-select milestones and apply bulk field updates
+**Plans**: TBD
+
+Plans:
+- [ ] 44-01: [TBD]
+- [ ] 44-02: [TBD]
+
+### Phase 45: Database Schema Foundation
+**Goal**: All new tables, columns, seed data, and query functions exist to support WBS, Team Engagement, and Architecture features
+**Depends on**: Phase 44
+**Requirements**: WBS-01, WBS-02
+**Success Criteria** (what must be TRUE):
+  1. Database contains wbs_templates, wbs_items, wbs_task_assignments, team_engagement_sections, arch_tracks, and arch_nodes tables
+  2. Projects table has exec_action_required and dependency_projects columns
+  3. New project creation automatically seeds both ADR and Biggy WBS template structures
+  4. Query functions (getWbsItems, getTeamEngagementSections, getArchNodes) return correct data
+  5. Drizzle schema migrations run without errors in dev and test environments
+**Plans**: TBD
+
+Plans:
+- [ ] 45-01: [TBD]
+
+### Phase 46: Context Upload Extraction Expansion
+**Goal**: Document uploads auto-populate WBS tasks, Team Engagement sections, and Architecture nodes
+**Depends on**: Phase 45
+**Requirements**: WBS-03, TEAM-02, ARCH-04
+**Success Criteria** (what must be TRUE):
+  1. User uploads a document containing WBS tasks and they appear in correct WBS nodes
+  2. User uploads a document with team engagement details and they populate the 5-section report
+  3. User uploads architecture diagrams/docs and nodes appear in correct tracks
+  4. Extraction maintains 80%+ classification accuracy on existing entity types (actions, risks, milestones)
+  5. Extraction job completes and routes all new entity types without errors
+**Plans**: TBD
+
+Plans:
+- [ ] 46-01: [TBD]
+
+### Phase 47: Work Breakdown Structure
+**Goal**: Phase Board replaced with collapsible WBS tree supporting both ADR and Biggy templates with AI gap-fill
+**Depends on**: Phase 46
+**Requirements**: WBS-04, WBS-05
+**Success Criteria** (what must be TRUE):
+  1. User sees 3-level collapsible WBS hierarchy displaying both ADR and Biggy structures
+  2. User can expand/collapse any WBS node to see child tasks
+  3. User clicks "Generate Plan" and AI fills gaps in WBS based on project context
+  4. User can manually add, edit, reorder, and delete tasks within any WBS node
+  5. WBS tree renders without lag with 100+ nodes
+**Plans**: TBD
+
+Plans:
+- [ ] 47-01: [TBD]
+- [ ] 47-02: [TBD]
+
+### Phase 48: Architecture & Team Engagement
+**Goal**: Architecture tab shows two-tab diagram with status tracking; Team Engagement displays 5-section map
+**Depends on**: Phase 47
+**Requirements**: ARCH-01, ARCH-02, ARCH-03, TEAM-01, TEAM-03, TEAM-04
+**Success Criteria** (what must be TRUE):
+  1. User sees Architecture tab with two sub-tabs: Before State and Current & Future State
+  2. Current & Future State shows ADR Track and AI Assistant Track with per-node Live/In Progress/Planned status
+  3. Team Onboarding Status table below diagrams shows per-team, per-capability colored indicators
+  4. User sees Team Engagement Overview with 5 sections: Business Outcomes, Architecture, E2E Workflows, Teams & Engagement, Top Focus Areas
+  5. Sections with missing data display visible warnings prompting user to add content
+  6. User can manually edit all fields in every Team Engagement section
+  7. Architecture diagram nodes are draggable and positions persist across sessions
+**Plans**: TBD
+
+Plans:
+- [ ] 48-01: [TBD]
+- [ ] 48-02: [TBD]
+
+### Phase 49: Portfolio Dashboard
+**Goal**: Multi-project portfolio view with health summary, filterable table, exceptions panel, and drill-down
+**Depends on**: Phase 48
+**Requirements**: DASH-01, DASH-02, DASH-03, DASH-04, DASH-05, DASH-06
+**Success Criteria** (what must be TRUE):
+  1. User sees portfolio dashboard showing active project count, on track/at risk/off track counts, overdue milestones, and blocked projects
+  2. User sees visual status distribution chart summarizing portfolio health
+  3. User sees multi-project table with name, owner, team, phase, health, % complete, next milestone, risk level, dependency status, last updated, and exec flag
+  4. User can filter portfolio table by status, owner, team, phase, priority, date, risk level, and dependency state
+  5. User can sort and search the portfolio table
+  6. User sees exceptions panel surfacing projects with overdue milestones, stale updates, open blockers, missing ownership, or unresolved dependencies
+  7. User clicks a portfolio table row and navigates to that project's workspace
+  8. Portfolio dashboard queries complete in <500ms with 20+ projects
+**Plans**: TBD
+
+Plans:
+- [ ] 49-01: [TBD]
+
 ## Progress
+
+**Execution Order:**
+Phases execute in numeric order: 43 → 44 → 45 → 46 → 47 → 48 → 49
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -109,3 +242,10 @@ Full details: `.planning/milestones/v5.0-ROADMAP.md` (archived)
 | 40. Search, Traceability & Skills UX | v5.0 | 6/6 | Complete | 2026-04-07 |
 | 41. UX Polish & Consistency | v5.0 | 4/4 | Complete | 2026-04-07 |
 | 42. Ingestion Field Coverage | v5.0 | 5/5 | Complete | 2026-04-07 |
+| 43. Skills Portability | v6.0 | 0/1 | Not started | - |
+| 44. Navigation & Parity | v6.0 | 0/2 | Not started | - |
+| 45. Database Schema Foundation | v6.0 | 0/1 | Not started | - |
+| 46. Context Upload Extraction Expansion | v6.0 | 0/1 | Not started | - |
+| 47. Work Breakdown Structure | v6.0 | 0/2 | Not started | - |
+| 48. Architecture & Team Engagement | v6.0 | 0/2 | Not started | - |
+| 49. Portfolio Dashboard | v6.0 | 0/1 | Not started | - |
