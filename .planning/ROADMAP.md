@@ -201,14 +201,14 @@ Plans:
 | 38. Gantt Overhaul | 3/4 | Complete    | 2026-04-06 | — |
 | 39. Cross-Tab Sync & Plan Tab | 4/4 | Complete    | 2026-04-07 | — |
 | 40. Search, Traceability & Skills UX | 6/6 | Complete    | 2026-04-07 | — |
-| 41. UX Polish & Consistency | v5.0 | 0/4 | Not started | — |
+| 41. UX Polish & Consistency | 1/4 | In Progress|  | — |
 | 42. Ingestion Field Coverage | v5.0 | 0/TBD | Not started | — |
 
 ### Phase 42: Ingestion Field Coverage
 **Goal**: Uploading a project document produces fully-populated entities — tasks with dates and milestone links, risks with severity, decisions with rationale, stakeholders with company — matching what the DB schema supports, so the Gantt and every other tab show real data immediately after ingestion
 **Depends on**: Phase 35 (ingestion pipeline exists; independent of v5.0 UX phases)
 **Requirements**: TBD
-**Plans:** 6/6 plans complete
+**Plans:** 1/4 plans executed
 
 Plans:
 - [ ] TBD (run /gsd:plan-phase 42 to break down)

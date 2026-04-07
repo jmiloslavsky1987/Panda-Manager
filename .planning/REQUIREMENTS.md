@@ -67,9 +67,9 @@
 
 ### UX Polish & Consistency (UXPOL)
 
-- [ ] **UXPOL-01**: Every tab that can have zero records displays an actionable empty state with a short description and a CTA button
-- [ ] **UXPOL-02**: Overdue visual treatment (red border + background) is applied consistently to overdue items across Actions, Milestones, and Tasks
-- [ ] **UXPOL-03**: Loading skeletons are used consistently across all tabs that fetch data client-side
+- [x] **UXPOL-01**: Every tab that can have zero records displays an actionable empty state with a short description and a CTA button
+- [x] **UXPOL-02**: Overdue visual treatment (red border + background) is applied consistently to overdue items across Actions, Milestones, and Tasks
+- [x] **UXPOL-03**: Loading skeletons are used consistently across all tabs that fetch data client-side
 
 ## v6.0 Requirements (Deferred)
 
@@ -129,9 +129,9 @@
 | HIST-01 | Phase 40 | Complete |
 | SKLS-01 | Phase 40 | Complete |
 | SKLS-02 | Phase 40 | Complete |
-| UXPOL-01 | Phase 41 | Pending |
-| UXPOL-02 | Phase 41 | Pending |
-| UXPOL-03 | Phase 41 | Pending |
+| UXPOL-01 | Phase 41 | Complete |
+| UXPOL-02 | Phase 41 | Complete |
+| UXPOL-03 | Phase 41 | Complete |
 
 **Coverage:**
 - v5.0 requirements: 31 distinct requirements (32 rows — ACTN-04 and SRCH-03 are the same deliverable, both mapped to Phase 37)
