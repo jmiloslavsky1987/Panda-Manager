@@ -52,11 +52,12 @@ created: 2026-04-06
 
 ## Wave 0 Requirements
 
-- [ ] `bigpanda-app/__tests__/search.test.ts` — stubs for SRCH-01
-- [ ] `bigpanda-app/__tests__/decisions-filter.test.ts` — stubs for SRCH-02
-- [ ] `bigpanda-app/__tests__/artifact-traceability.test.ts` — stubs for ARTF-01
-- [ ] `bigpanda-app/__tests__/engagement-history.test.ts` — stubs for HIST-01
-- [ ] `bigpanda-app/__tests__/skills-job-monitor.test.ts` — stubs for SKLS-01, SKLS-02
+- [ ] `bigpanda-app/tests/search/global-search.test.tsx` — stubs for SRCH-01
+- [ ] `bigpanda-app/tests/search/decisions-filter.test.tsx` — stubs for SRCH-02
+- [ ] `bigpanda-app/tests/artifacts/extracted-entities.test.tsx` — stubs for ARTF-01
+- [ ] `bigpanda-app/tests/history/audit-log-feed.test.tsx` — stubs for HIST-01
+- [ ] `bigpanda-app/tests/skills/job-progress.test.tsx` — stubs for SKLS-01
+- [ ] `bigpanda-app/tests/skills/job-cancel.test.ts` — stubs for SKLS-02
 
 ---
 
