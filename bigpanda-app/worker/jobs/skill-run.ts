@@ -7,8 +7,6 @@
 //   try/catch → update status to failed, re-throw
 
 import type { Job } from 'bullmq';
-import path from 'path';
-import os from 'os';
 import { sql, eq } from 'drizzle-orm';
 import db from '../../db';
 import { skillRuns, outputs, drafts } from '../../db/schema';
@@ -17,6 +15,9 @@ import { MCPClientPool } from '../../lib/mcp-config';
 import { generateFile } from '../../lib/file-gen';
 import { getProjectById } from '../../lib/queries';
 import { readSettings } from '../../lib/settings-core';
+
+// Re-export resolveSkillsDir from shared lib for backward compatibility
+export { resolveSkillsDir } from '../../lib/skill-path';
 
 // Singleton orchestrator — reused across job invocations within the same worker process
 const orchestrator = new SkillOrchestrator();
@@ -29,26 +30,6 @@ export const FILE_SKILLS = new Set([
   'team-engagement-map',
   'workflow-diagram',
 ]);
-
-/**
- * resolveSkillsDir — Pure helper for SET-02 path resolution.
- * Exported for unit testing without mocking the full job dependency chain.
- *
- * Rules:
- *   1. If skillPath is set and absolute → use it as-is
- *   2. If skillPath is set but relative → resolve from homedir
- *   3. If skillPath is empty/whitespace → fall back to __dirname-relative path
- */
-export function resolveSkillsDir(skillPath: string, dirnameRef: string = __dirname): string {
-  const trimmed = skillPath.trim();
-  if (!trimmed) {
-    return path.join(dirnameRef, '../../skills');
-  }
-  if (trimmed.startsWith('/')) {
-    return trimmed;
-  }
-  return path.join(os.homedir(), trimmed);
-}
 
 export default async function skillRunJob(job: Job): Promise<{ status: string }> {
   const { runId, skillName, projectId, input } = job.data as {
