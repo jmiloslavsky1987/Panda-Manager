@@ -9,6 +9,8 @@ import { skillRuns } from '../../../../../db/schema';
 import { existsSync } from 'fs';
 import path from 'path';
 import { requireSession } from "@/lib/auth-server";
+import { readSettings } from '@/lib/settings';
+import { resolveSkillsDir } from '@/lib/skill-path';
 
 export async function POST(
   request: Request,
@@ -26,7 +28,9 @@ export async function POST(
     }
 
     // Pre-flight SKILL.md check — return 422 if missing so UI can show error badge
-    const skillPath = path.join(process.cwd(), 'skills', skillName + '.md');
+    const settings = await readSettings();
+    const skillsDir = resolveSkillsDir(settings.skill_path ?? '');
+    const skillPath = path.join(skillsDir, skillName + '.md');
     if (!existsSync(skillPath)) {
       return NextResponse.json({ error: 'SKILL.md not found', skillName }, { status: 422 });
     }

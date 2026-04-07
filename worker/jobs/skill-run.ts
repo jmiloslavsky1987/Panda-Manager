@@ -15,9 +15,10 @@ import { MCPClientPool } from '../../lib/mcp-config';
 import { generateFile } from '../../lib/file-gen';
 import { getProjectById } from '../../lib/queries';
 import { readSettings } from '../../lib/settings-core';
+import { resolveSkillsDir } from '../../lib/skill-path';
 
 // Re-export resolveSkillsDir from shared lib for backward compatibility
-export { resolveSkillsDir } from '../../lib/skill-path';
+export { resolveSkillsDir };
 
 // Singleton orchestrator — reused across job invocations within the same worker process
 const orchestrator = new SkillOrchestrator();
