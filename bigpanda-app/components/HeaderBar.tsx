@@ -2,7 +2,7 @@
 import { usePathname } from "next/navigation";
 
 // Routes where the top header bar (SearchBar) must be suppressed
-const NO_CHROME_PATHS = ["/login", "/setup"];
+const NO_CHROME_PATHS = ["/login", "/setup", "/customer/"];
 
 interface HeaderBarProps {
   children: React.ReactNode;
