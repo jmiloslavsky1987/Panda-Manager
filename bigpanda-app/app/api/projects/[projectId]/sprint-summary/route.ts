@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { eq, sql } from 'drizzle-orm';
-import path from 'path';
 import db from '@/db';
 import { projects, skillRuns } from '@/db/schema';
 import { SkillOrchestrator } from '@/lib/skill-orchestrator';
 import { requireSession } from "@/lib/auth-server";
-
-const SKILLS_DIR = path.join(process.cwd(), 'skills');
+import { readSettings } from '@/lib/settings';
+import { resolveSkillsDir } from '@/lib/skill-path';
 
 // GET — return stored sprint summary (or null if not yet generated)
 export async function GET(
@@ -52,6 +51,9 @@ export async function POST(
       status: 'running',
       started_at: new Date(),
     }).returning();
+
+    const settings = await readSettings();
+    const SKILLS_DIR = resolveSkillsDir(settings.skill_path ?? '');
 
     const orchestrator = new SkillOrchestrator();
     await orchestrator.run({
