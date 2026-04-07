@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v5.0
 milestone_name: — Workspace UX Overhaul
-status: completed
+status: executing
 stopped_at: Completed 40-01-PLAN.md (Wave 0 test scaffolds)
-last_updated: "2026-04-07T03:03:47.231Z"
-last_activity: "2026-04-07 — Completed 39-04: Phase gate verification (all 5 requirements verified end-to-end)"
+last_updated: "2026-04-07T03:25:44.564Z"
+last_activity: "2026-04-07 — Completed 40-03: Decisions filter + artifact extracted entities tab (SRCH-02, ARTF-01)"
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 20
-  completed_plans: 15
-  percent: 100
+  completed_plans: 17
+  percent: 99
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 ## Current Position
 
 Phase: 40 of 41 (Search, Traceability & Skills UX)
-Plan: 2 of 6
+Plan: 3 of 6
 Status: In Progress
-Last activity: 2026-04-07 — Completed 40-02: GlobalSearchBar component and workspace header integration (SRCH-01)
+Last activity: 2026-04-07 — Completed 40-03: Decisions filter + artifact extracted entities tab (SRCH-02, ARTF-01)
 
-Progress: [██████████] 98% (Phase 40: 2/6 plans complete)
+Progress: [██████████] 99% (Phase 40: 3/6 plans complete)
 
 ## Milestone History
 
@@ -47,7 +47,7 @@ Progress: [██████████] 98% (Phase 40: 2/6 plans complete)
 | 37. Actions & Inline Editing Foundation | ACTN-01–05, IEDIT-01–04, FORM-01–03, SRCH-03 | Complete (6/6 plans) |
 | 38. Gantt Overhaul | GNTT-01–04, PLAN-03 | In progress (1/4 plans) |
 | 39. Cross-Tab Sync & Plan Tab | SYNC-01–03, PLAN-01–02 | Complete (4/4 plans) |
-| 40. Search, Traceability & Skills UX | SRCH-01–02, ARTF-01, HIST-01, SKLS-01–02 | In progress (1/6 plans) |
+| 40. Search, Traceability & Skills UX | SRCH-01–02, ARTF-01, HIST-01, SKLS-01–02 | In progress (3/6 plans) |
 | 41. UX Polish & Consistency | UXPOL-01–03 | Not started |
 
 ## Decisions
@@ -88,6 +88,9 @@ Progress: [██████████] 98% (Phase 40: 2/6 plans complete)
 - [Phase 40-02]: Replaced Radix Popover Portal with conditional div for GlobalSearchBar dropdown (Portal doesn't render in jsdom tests)
 - [Phase 40-02]: 300ms debounce chosen for search input (balances responsiveness with API load)
 - [Phase 40-02]: TABLE_TO_TAB map handles entity type → tab path translation for navigation
+- [Phase 40-03]: DecisionsTableClient follows ActionsTableClient pattern: Server Component passes data, Client island filters with URL params
+- [Phase 40-03]: ArtifactEditModal uses Radix Tabs with lazy loading: entities fetched only when tab clicked
+- [Phase 40-03]: Fixed test mock pattern to use Map-based mockSearchParams (matches codebase pattern)
 
 ## Blockers/Concerns
 
