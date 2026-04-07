@@ -1,303 +1,266 @@
 # Project Research Summary
 
-**Project:** BigPanda Project Assistant App — v4.0 Infrastructure & UX Foundations
-**Domain:** Professional Services Project Management & Onboarding Tools
-**Researched:** 2026-04-01
+**Project:** BigPanda AI Project Management App — v6.0 Milestone
+**Domain:** Enterprise Project Portfolio Management + Professional Services Delivery
+**Researched:** 2026-04-07
 **Confidence:** HIGH
 
 ## Executive Summary
 
-v4.0 adds critical infrastructure improvements and UX enhancements to the existing BigPanda project management application. The core enhancement is migrating document extraction from fragile Server-Sent Events to robust BullMQ background jobs, enabling browser-refresh resilience for long-running AI extraction tasks (4-6 minutes per large document). Additionally, time tracking moves from per-project tabs to a global cross-project view, and the Overview tab receives major enhancements with Health Dashboard, Metrics visualization, and AI-generated weekly focus summaries.
+v6.0 adds portfolio dashboard, Work Breakdown Structure (WBS), Team Engagement Overview, and architecture diagrams to an existing mature Next.js 16 application (42,385 LOC). Research reveals **minimal new dependencies required** — only one new library (`@radix-ui/react-collapsible` for WBS tree). The existing stack (React 19, PostgreSQL, BullMQ, Vercel AI SDK, React Flow) fully supports all new features with established patterns already proven in v1.0-v5.0.
 
-The recommended approach leverages existing infrastructure wherever possible. No new packages are required for BullMQ job progress tracking — the existing BullMQ 5.71.0 installation fully supports progress updates via built-in APIs. For new visualizations, add only two targeted dependencies: react-chrono for milestone timelines and Recharts for metrics charts. The critical architectural pattern is polling-based progress tracking (not SSE) with PostgreSQL as the source of truth for job state, ensuring users can navigate away and return without losing visibility into long-running operations.
+The recommended approach prioritizes **data layer first** (schema + queries), then **extraction infrastructure** (enables auto-population from document uploads), then **features in dependency order** (WBS and Architecture are independent, Team Engagement consolidates existing tables, Portfolio aggregates everything). This order maximizes testability and reuses proven patterns like client-side filtering, BullMQ background jobs, and CustomEvent metrics sync.
 
-Key risks center on data integrity and migration safety. The primary pitfall is implementing BullMQ extraction without proper state persistence — if job progress is stored only in ephemeral Redis, browser refresh loses all visibility and jobs can fail silently. Prevention requires a PostgreSQL staging table for job state and atomic commit patterns to prevent partial extraction data from polluting workspace tabs on failure. Schema migrations for workstream separation (ADR vs Biggy) must include data backfill scripts, not just DDL changes, to avoid breaking existing projects. Following these patterns from Phase 1 ensures production resilience.
+Key risks center on **performance at scale** (portfolio queries with 20+ projects, tree rendering with 100+ nodes), **AI prompt expansion degrading existing extraction accuracy**, and **navigation restructure breaking external links**. All risks have clear mitigation strategies from existing codebase patterns and can be addressed proactively during implementation.
 
 ## Key Findings
 
 ### Recommended Stack
 
-**Minimal new dependencies.** v4.0 requires only two new packages: react-chrono for timeline visualization and Recharts for metrics charts. The existing stack (Next.js 16.2.0, React 19, PostgreSQL + Drizzle ORM, BullMQ 5.71.0 + Redis, Anthropic SDK, Vercel AI SDK, Radix UI, Tailwind CSS) fully supports all new features.
+**Core finding:** v6.0 requires ZERO major new dependencies. All features can be built with existing libraries plus one optional enhancement.
 
 **Core technologies:**
-- **BullMQ 5.71.0** (existing): Background job processing with progress tracking — Worker calls `job.updateProgress(percentage)` and `job.log(message)`, client polls `/api/jobs/[id]/progress` endpoint
-- **react-chrono ^3.0.0** (new): Timeline component for visual milestone representation — Declarative React component with vertical/horizontal/alternating modes, TypeScript support, SSR-safe
-- **Recharts ^2.15.0** (new): Declarative charting library for React — Composable components (`<BarChart>`, `<LineChart>`), responsive by default, pure SVG, ~60KB bundle
+- **Next.js 16.2.0** (App Router) — current, no changes needed
+- **React 19.2.4** — all dependencies verified compatible
+- **PostgreSQL + Drizzle ORM** — handles new tables (wbs_items, team_engagement_sections, arch_nodes) with existing patterns
+- **Vercel AI SDK 6.0.x** — `generateObject()` with Zod schemas for WBS AI features, already installed
+- **@xyflow/react 12.10.2** — React Flow for architecture diagrams, reuses existing pattern from org charts
+- **Recharts 3.8.1** — portfolio health charts, reuses existing Overview components
+- **BullMQ 5.71.0** — document extraction expansion, no worker infrastructure changes needed
 
-**Critical finding:** Moving from SSE to BullMQ for document extraction requires **zero new packages** — only a pattern change using existing BullMQ infrastructure. The pattern shift is polling (every 1.5-2s) over SSE because BullMQ persists job state in Redis, making it resilient to browser refresh, whereas SSE connections die on navigation.
+**New dependency (recommended):**
+- **@radix-ui/react-collapsible 1.1.12** — WBS tree collapse/expand with native accessibility. App already uses 7 Radix UI primitives; this maintains consistency.
+
+**Rejected alternatives:**
+- TanStack Table — deferred until 100+ projects; current client-side filtering pattern works
+- react-arborist — overkill for 3-level WBS depth; Radix Collapsible simpler and consistent
+- date-fns — native Date API sufficient for current scope
 
 ### Expected Features
 
-**Table stakes (users expect these):**
-- **Health Dashboard**: Overall health indicator, risk count by severity, active blocker count, trend indicators
-- **Metrics Section**: Onboarding completion %, integration counts by status, phase completion by workstream, time to milestone
-- **Weekly Focus Summary**: Top 3-5 priorities auto-generated and refreshed
-- **Time Tracking Global View**: Cross-project timesheet with week-based grouping and project attribution on every entry
-- **BullMQ Extraction Progress**: Polling endpoint with % complete, completion notification, error handling with retry, cancel job capability
+**Must have (table stakes):**
+- **Portfolio dashboard multi-project table** — filter/sort/search across all projects with health rollup (expected in all PM tools)
+- **Portfolio health summary** — visual red/yellow/green counts for exec view
+- **WBS collapsible hierarchy** — 3-5 level tree with visual indentation (standard in MS Project, Smartsheet)
+- **WBS manual CRUD** — full add/edit/delete at any level (read-only WBS violates PM norms)
+- **Team Engagement contact list** — stakeholder directory per team (baseline for multi-team PM)
+- **Architecture before/after comparison** — current vs future state diagrams (universal in migration projects)
+- **Context upload extraction routing** — uploaded data appears in relevant tabs automatically
 
-**Differentiators (set product apart):**
-- **Health Dashboard**: Phase health by workstream (ADR vs Biggy granularity) — most tools show overall health only
-- **Metrics**: Validation progress tracker (emphasizes quality over quantity — "X of Y integrations validated")
-- **Weekly Focus**: Auto-refresh on data change with smart ranking algorithm considering severity, milestone proximity, blocker status
-- **Time Tracking**: Bulk edit from global view extending existing bulk action infrastructure
-- **Integration Tracker**: Split by ADR vs Biggy with category grouping
+**Should have (differentiators):**
+- **Portfolio exceptions panel** — proactive "what needs attention now" surface (reduces cognitive load)
+- **WBS dual template (ADR + Biggy)** — pre-seeded domain-specific structures (competitors have single generic template)
+- **WBS AI auto-classify** — intelligent task routing to WBS nodes (no competitor has this)
+- **WBS Generate Plan gap-fill** — AI identifies missing nodes and suggests additions (novel feature)
+- **Team Engagement Business Outcomes section** — strategic layer most PM tools lack
+- **Architecture track-specific visualization** — dual-track (ADR + AI) with parallel phases (PS delivery-specific)
 
-**Anti-features (explicitly avoid):**
-- Real-time collaborative editing (Google Docs style) — overkill for PS delivery tool
-- Custom dashboard builder (drag-drop widgets) — premature without user feedback
-- Predictive health forecasting ("project will be red in 2 weeks") — insufficient historical data
-- Mobile app — web responsive sufficient for PS team
-- BullMQ pause/resume — adds state complexity without clear user benefit
+**Defer (v2+):**
+- Real-time collaboration cursors — adds WebSocket complexity for review surface
+- Resource allocation/leveling — finance system is source of truth
+- Custom dashboard widget builder — infinite config = support burden
+- OCR/video transcription — digital docs (PDF/DOCX/PPTX) cover use cases
 
 ### Architecture Approach
 
-v4.0 introduces three major architectural changes cleanly integrated with existing Next.js 16 / PostgreSQL / BullMQ stack: (1) BullMQ extraction job with Redis progress tracking and PostgreSQL state persistence, (2) Time tracking route refactor from `/customer/[id]/time` to `/time-tracking` with query-param filtering, (3) Overview tab overhaul with schema migration to add `track` column for ADR/Biggy separation.
+v6.0 extends existing patterns without architectural changes. Build order: **schema first** (new tables), **extraction second** (enables auto-population), **features third** (in dependency order), **portfolio last** (aggregates everything).
 
 **Major components:**
-1. **Document Extraction Job System** — `worker/jobs/document-extraction.ts` job handler, `POST /api/ingestion/extract-job` enqueue endpoint, `GET /api/ingestion/extract-job/[jobId]` polling endpoint, PostgreSQL staging table for atomic commit
-2. **Global Time Tracking Route** — `/app/time-tracking/page.tsx` top-level route, `GET /api/time-tracking/entries` with project/week filters, Next.js redirect from old route preserving project context
-3. **Overview Tab Components** — `HealthDashboard`, `MetricsSection`, `WeeklyFocusSummary` (cached from BullMQ scheduled job), `MilestoneTimeline`, schema migration adding `track` column to `onboarding_phases` and `onboarding_steps`
+1. **Portfolio Dashboard** (new) — aggregates all project data with health scoring; Server Component + Client filtering pattern
+2. **WBS Tree** (replaces Phase Board) — collapsible hierarchy with AI-powered gap-fill; Radix Collapsible + BullMQ Generate Plan job
+3. **Team Engagement Overview** (consolidates existing) — 5-section structured report; single `team_engagement_sections` table with JSONB content
+4. **Architecture Diagrams** (enhances existing) — two-tab React Flow (Before State / Current & Future); new `arch_nodes` table with track_id FK
+5. **Context Upload Expansion** (infrastructure) — extends extraction prompt with 3 new entity types (wbs_item, team_engagement_section, arch_node)
 
-**Critical pattern:** Polling-based progress tracking with PostgreSQL as source of truth. Extraction job updates Redis for real-time progress (ephemeral, TTL 1 hour) AND writes to PostgreSQL staging table after each chunk (persistent). Client polls PostgreSQL-backed API route, not Redis directly, ensuring progress visibility survives browser refresh.
+**Key patterns reused:**
+- **Server Component + Client Island filtering** — portfolio table, WBS tree (pattern used 6× in v5.0)
+- **BullMQ background jobs** — Generate Plan, extraction (existing infrastructure)
+- **Structured JSON in JSONB columns** — flexible schema per entity type (wbs_templates.structure_json, team_engagement_sections.content_json)
+- **CustomEvent cross-tab sync** — metrics:invalidate refreshes dashboards (established in Phase 39)
+- **React Flow with SSR disabled** — architecture diagrams reuse org chart pattern (dynamic import + ssr:false)
 
 ### Critical Pitfalls
 
-1. **SSE Route Handler Converted to Background Job Without Job State Persistence** — Browser refresh loses ALL progress visibility if job state is only in Redis. **Prevention:** Create `extraction_jobs` PostgreSQL table with `{ id, artifact_id, job_id, status, progress_message, current_chunk, total_chunks }`. Worker updates DB after each chunk. Client polls PostgreSQL-backed endpoint, not Redis job metadata directly.
+1. **N+1 Query Explosion in Portfolio Dashboard** — Sequential per-project queries result in 60+ DB calls with 20 projects (3-5s page load). **Avoid:** Single aggregation query with JOINs + GROUP BY, or materialized view with cached rollup. **Phase:** DASH-01 (establish pattern immediately).
 
-2. **Partial Extraction Failure Leaves Orphaned Data** — Multi-chunk extraction processes chunks 1-3, crashes on chunk 4, but chunks 1-3 already committed to workspace tables. Retry re-inserts duplicates. **Prevention:** Stage results in `extraction_jobs.items_staged` JSONB column, don't insert into workspace tables until ALL chunks complete. Atomic transaction commits all deduplicated items at end.
+2. **AI Extraction Prompt Expansion Degrades Existing Routing** — Adding 4+ entity types causes misclassification of existing entities (actions → notes, risks → milestones); accuracy drops from 85% to 60%. **Avoid:** Two-pass extraction (first pass with original 14-entity prompt, second pass with new types) or hierarchical classification (route to entity-specific sub-prompts). **Phases:** WBS-03, TEAM-02, ARCH-03 (all expand prompt).
 
-3. **BullMQ Worker Crashes Mid-Job, Redis TTL Expires Before Restart** — Large doc extraction takes 4-6 min. Worker crashes at 3 min. Default Redis TTL (5 min) expires before restart, job metadata discarded, artifact stuck in "extracting" forever. **Prevention:** Set job TTL to 30 minutes, job timeout to 20 minutes, retry attempts to 2 with exponential backoff. Heartbeat pattern: worker updates `extraction_jobs.updated_at` every 30s; cron job detects stale extractions (>10 min, status="running") and marks failed.
+3. **Deep Tree Hierarchy Render Thrashing** — Flat array state (`expandedNodes: string[]`) causes O(N) lookups and full tree re-render on every toggle; 100-node tree becomes laggy (300-500ms per expand). **Avoid:** Set-based state (`Set<string>`), React.memo() on nodes, normalized tree structure (Map<nodeId, Node>). **Phase:** WBS-02 (establish performant pattern immediately).
 
-4. **Time Tracking Route Refactor Breaks Existing Bookmarks and Email Links** — Current route `/customer/[id]/time` bookmarked by users and embedded in email reminders. Redesign moves to `/time-tracking`. Old links → 404. **Prevention:** Add Next.js redirect in `next.config.ts` mapping `/customer/:id/time` → `/time-tracking?project=:id` (temporary redirect). Update internal link generation and email templates. Keep redirect for 6 months minimum.
+4. **Generate Plan Gap-Fill Hallucinates Tasks** — Without full project context, Claude invents plausible but irrelevant tasks ("Set up Kubernetes" when using managed infra, mentions non-existent stakeholders). **Avoid:** Full project context in prompt (stakeholders, integrations, outcomes), template-based generation (select/customize vs invent), confidence scoring + review queue, sanity checks (validate stakeholder names against DB). **Phase:** WBS-04 (implement validation from start).
 
-5. **Database Schema Migration for Overview Tab Breaks Existing Onboarding Data** — Migration adds `track` column to `onboarding_phases`/`onboarding_steps` but doesn't backfill existing data. Existing projects render empty sections in new UI (looks like data loss). **Prevention:** Migration includes both DDL (ALTER TABLE ADD COLUMN track) and DML (UPDATE to backfill track from phase names with heuristic). Add dual-read fallback in code: if track-filtered query returns 0 rows, fall back to old schema query pattern.
+5. **Navigation Restructure Breaks External Links** — Old URLs (bookmarked, Slack messages, email links) 404 after tab restructure (`/intel` removed, `/decisions` → `/delivery/decisions`, `/phase-board` → `/wbs`). **Avoid:** Redirect middleware for old URLs, comprehensive href audit, link testing, deprecation banner for 2 weeks post-launch. **Phase:** NAV-01 (add redirects as part of implementation).
 
 ## Implications for Roadmap
 
-Based on research, suggested phase structure:
+Based on research, suggested 6-phase structure optimizing for testability and dependency resolution:
 
-### Phase 1: BullMQ Document Extraction Migration
-**Rationale:** Critical infrastructure fix must come first. Current SSE extraction is fragile (browser refresh kills 4-6 minute operations). Background job pattern is reused by Phase 4 (Weekly Focus) — establishes job infrastructure patterns early. No dependencies on other features.
+### Phase 1: Database Schema & Core Queries (Foundation)
+**Rationale:** All features depend on new tables. Migrate schema before any feature work. Enables parallel development of features once queries exist.
 
-**Delivers:** Resilient document extraction that survives browser refresh, with visible progress tracking and atomic commit preventing duplicate data on failure.
+**Delivers:**
+- New tables: `wbs_templates`, `wbs_items`, `wbs_task_assignments`, `team_engagement_sections`, `arch_tracks`, `arch_nodes`
+- New columns: `projects.exec_action_required`, `projects.dependency_projects`
+- Query functions: `getPortfolioDashboardData()`, `getWbsItems()`, `getTeamEngagementSections()`, `getArchNodes()`
+- Seed data: ADR + Biggy WBS templates, arch_tracks (Before State, ADR, Biggy)
 
-**Stack elements:** Existing BullMQ 5.71.0, PostgreSQL staging table (`extraction_jobs`), worker job handler pattern
+**Avoids:** Schema changes mid-feature development (Pitfall: integration gotchas)
 
-**Critical pitfalls addressed:**
-- Job state persistence in PostgreSQL (prevents progress loss on refresh)
-- Atomic commit with staging table (prevents partial extraction duplicates)
-- Job TTL and timeout tuning (prevents silent job loss on worker crash)
-
-**Dependencies:** None — can start immediately
-
-**Research flag:** SKIP RESEARCH — pattern established by existing `worker/jobs/skill-run.ts` and STACK.md polling pattern. Implementation is straightforward extension of existing BullMQ infrastructure.
+**Research flag:** NONE — database patterns well-established in v1.0-v5.0
 
 ---
 
-### Phase 2: Time Tracking Global View
-**Rationale:** Standalone feature with no dependencies on Phase 1 or 3. Can be built in parallel with Phase 1. Establishes cross-project query patterns used by Phase 3 Metrics (hours logged metric).
+### Phase 2: Context Upload Extraction Expansion (Infrastructure)
+**Rationale:** Once extraction works, all downstream features can be auto-populated from document uploads. Enables testing features with real data.
 
-**Delivers:** Top-level `/time-tracking` route with cross-project weekly timesheet, project attribution, week grouping, quick project filter, and backward-compatible redirect from old route.
+**Delivers:**
+- Extended `EXTRACTION_SYSTEM` prompt with 3 new entity types (wbs_item, team_engagement_section, arch_node)
+- Routing logic for new tables with FK resolution (template_id, track_id, parent_id)
+- Deduplication logic in `isAlreadyIngested()` for new types
 
-**Uses:** Existing `time_entries` table, Drizzle ORM left join to projects, Next.js redirect API
+**Avoids:** AI extraction prompt expansion degrading existing entity routing (Pitfall #2) via two-pass extraction pattern
 
-**Addresses features:**
-- Table stakes: global view across projects, week-based grouping, project attribution
-- Differentiator: bulk edit from global view (extends existing bulk action infrastructure)
-
-**Critical pitfalls addressed:**
-- Route redirect preserves project context (prevents bookmark/email link breakage)
-- Query scoping prevents performance trap (date range filter, user scoping, pagination, eager load projects in single query)
-
-**Dependencies:** None — independent feature
-
-**Research flag:** SKIP RESEARCH — standard Next.js route patterns, PostgreSQL JOIN queries, existing bulk action API extension. No novel patterns.
+**Research flag:** MEDIUM — Prompt engineering for multi-entity extraction; monitor classification accuracy with test documents
 
 ---
 
-### Phase 3: Overview Tab Schema Migration
-**Rationale:** Must precede Phase 4-6 because they render workstream-separated data. Schema change is isolated (just add `track` column) and low-risk if data migration included.
+### Phase 3: Work Breakdown Structure (Independent Feature)
+**Rationale:** WBS is self-contained, doesn't depend on Team Engagement or Architecture. Can be built/tested in parallel with Phase 4.
 
-**Delivers:** `onboarding_phases.track` and `onboarding_steps.track` columns with backfilled data for existing projects. Enables ADR/Biggy workstream separation in UI components.
+**Delivers:**
+- WBS collapsible tree component (Radix Collapsible) with inline edit
+- WBS page replacing Phase Board in navigation
+- Generate Plan AI feature (Claude API + BullMQ job)
+- Auto-classify tasks to WBS nodes (from context upload)
 
-**Migration pattern:**
-```sql
-ALTER TABLE onboarding_phases ADD COLUMN track TEXT;
-ALTER TABLE onboarding_steps ADD COLUMN track TEXT;
-UPDATE onboarding_phases SET track = 'ADR' WHERE name ILIKE '%ADR%';
-UPDATE onboarding_phases SET track = 'Biggy' WHERE name ILIKE '%Biggy%';
-UPDATE onboarding_steps os SET track = (SELECT track FROM onboarding_phases op WHERE op.id = os.phase_id);
-CREATE INDEX idx_onboarding_steps_track ON onboarding_steps(project_id, track);
-```
+**Addresses:** WBS-01 through WBS-05 from FEATURES.md
 
-**Critical pitfall addressed:** Data migration (not just DDL) prevents existing projects from rendering empty sections in new UI. Dual-read fallback code ensures graceful handling of rows where track is NULL.
+**Avoids:** Deep tree render thrashing (Pitfall #3) via Set-based state + React.memo()
 
-**Dependencies:** None — schema-only change
+**Avoids:** Generate Plan hallucinations (Pitfall #4) via full context + sanity checks
 
-**Research flag:** SKIP RESEARCH — standard Drizzle migration pattern. Data backfill heuristic may need adjustment based on actual phase names in production DB (validate during implementation).
+**Research flag:** LOW — Radix Collapsible API verified, Vercel AI SDK structured output verified, patterns exist in codebase
 
 ---
 
-### Phase 4: Overview Tab — Health Dashboard & Metrics
-**Rationale:** Builds on Phase 3 schema (workstream separation). Read-only components with no state changes — low risk. Provides immediate value (executive visibility) before tackling complex AI summary in Phase 5.
+### Phase 4: Architecture Diagrams (Independent Feature)
+**Rationale:** Reuses existing React Flow patterns from Phase 28 (org charts). Independent of WBS and Team Engagement. Can be built in parallel with Phase 3.
 
-**Delivers:** Health Dashboard (overall health, risk count, blocker count, trend text) and Metrics Section (onboarding %, integration counts, phase completion by workstream, time to milestone) with Recharts visualizations.
+**Delivers:**
+- Two-tab diagram view (Before State / Current & Future State)
+- React Flow component with horizontal layout + custom nodes
+- Node drag/edit with position persistence
+- Context-upload extraction to populate diagrams
 
-**Stack elements:** Recharts ^2.15.0 for bar charts and line charts
+**Addresses:** ARCH-01 through ARCH-04 from FEATURES.md
 
-**Addresses features:**
-- Table stakes: all Health Dashboard and Metrics requirements
-- Differentiator: Phase health by workstream (ADR vs Biggy granularity)
+**Avoids:** Dual-state diagram confusion (Pitfall #7) via visual state indicators and persistent labels
 
-**Uses architecture components:** Read from existing tables (`risks`, `actions`, `milestones`, `integrations`, `time_entries`, `workstreams`) with aggregation queries. No new tables required.
-
-**Dependencies:** Phase 3 (schema migration for workstream separation)
-
-**Research flag:** SKIP RESEARCH — standard aggregation queries and Recharts component composition. FEATURES.md provides clear metric definitions.
+**Research flag:** NONE — React Flow patterns established, architecture entity types already exist in extraction system
 
 ---
 
-### Phase 5: Overview Tab — Weekly Focus Summary (AI)
-**Rationale:** Complex feature requiring AI generation, caching, and scheduled job. Builds on BullMQ patterns from Phase 1 (job handler, scheduler integration). Isolated behind Suspense boundary — failure doesn't break other Overview sections.
+### Phase 5: Team Engagement Overview (Consolidates Existing)
+**Rationale:** Consolidates scattered tables into unified view. Requires data migration if preserving existing project data. Sequential after extraction (Phase 2) to enable auto-population.
 
-**Delivers:** Weekly focus summary (3 AI-generated bullets) cached in Redis, generated by scheduled BullMQ job every Monday 6am, rendered with React Suspense to prevent blocking page load.
+**Delivers:**
+- 5-section structured report (Business Outcomes, Architecture, E2E Workflows, Teams, Focus Areas)
+- Unified `team_engagement_sections` table with flexible JSONB content
+- Context-upload extraction for all sections
+- Missing-data warnings (completeness analysis extension)
 
-**Stack elements:** Existing BullMQ scheduler, Anthropic SDK, Redis cache
+**Addresses:** TEAM-01 through TEAM-04 from FEATURES.md
 
-**Addresses features:**
-- Table stakes: weekly focus top 3-5 priorities with circular progress bar
-- Differentiator: auto-refresh on data change with smart ranking (via scheduled regeneration)
+**Avoids:** Stale report data (Pitfall #6) via client component + metrics:invalidate listener (existing HealthDashboard pattern)
 
-**Critical pitfall addressed:** AI call does NOT block page render. Summary generated by scheduled job, cached for 24 hours, page loads summary from cache with Suspense fallback. If cache miss, shows "Generating summary..." instead of 4-second white screen.
-
-**Dependencies:** Phase 1 (BullMQ job patterns established) — not a hard blocker but better to validate job infrastructure first
-
-**Research flag:** NEEDS LIGHT RESEARCH — Claude prompt engineering for weekly summary generation (what context to include, how to structure prompt for consistent 3-bullet output). ~2 hours research during phase planning.
+**Research flag:** LOW — Components exist in v3.0 Phase 30, entity types in extraction system v5.0
 
 ---
 
-### Phase 6: Overview Tab — Milestone Timeline
-**Rationale:** Visual polish after core metrics proven. Can use react-chrono library or custom Tailwind implementation. Low complexity, no state management, purely presentational.
+### Phase 6: Portfolio Dashboard (Aggregates Everything)
+**Rationale:** Depends on all features being complete for full testing. Aggregates data from WBS, Architecture, Team Engagement. Sequential last to validate end-to-end integration.
 
-**Delivers:** Horizontal or vertical timeline showing milestones with target dates, rendered at top of Overview tab (high visual hierarchy).
+**Delivers:**
+- Multi-project table with filter/sort/search (client-side)
+- Portfolio health summary (Recharts rollup)
+- Exceptions panel (overdue actions + high risks + exec escalations)
+- Drill-down navigation to project workspaces
 
-**Stack elements:** react-chrono ^3.0.0 (or custom Tailwind if design doesn't match library styling)
+**Addresses:** DASH-01 through DASH-06 from FEATURES.md
 
-**Addresses features:** Table stakes requirement for visual milestone timeline near top of Overview
+**Avoids:** N+1 query explosion (Pitfall #1) via single aggregation query or parallel Promise.all()
 
-**Dependencies:** None (reads from existing `milestones` table) — can be built anytime after Phase 3
-
-**Research flag:** SKIP RESEARCH — react-chrono API is well-documented, STACK.md provides implementation examples. If custom Tailwind chosen, no research needed (standard CSS).
-
----
-
-### Phase 7: Integration Tracker Redesign
-**Rationale:** Lower priority than Overview tab work. Uses same workstream separation pattern from Phase 3 schema. Standalone UI enhancement with no architecture changes.
-
-**Delivers:** Integration tracker split into ADR vs Biggy sections with category grouping (observability, incident, collaboration tools).
-
-**Addresses features:** Differentiator — split by ADR vs Biggy, category grouping
-
-**Dependencies:** Phase 3 (schema migration if `integrations.track` column doesn't exist — verify during planning)
-
-**Research flag:** SKIP RESEARCH — UI reorganization using existing `integrations` table. If schema change needed, same pattern as Phase 3.
-
----
-
-### Phase 8: Test Failure Fixes
-**Rationale:** Last phase allows tests to be updated with knowledge of final implementation patterns. Fixing tests earlier risks cascading breakage as architecture evolves across phases 1-7.
-
-**Delivers:** All 13 failing tests in `tests/teams-arch/` directory pass, with root cause fixes (not setTimeout workarounds).
-
-**Critical pitfalls addressed:**
-- Isolate test fixes (one at a time, commit immediately, verify no passing tests broken)
-- No arbitrary timeouts or changed assertions without production code fix
-- Document why test failed and how fix addresses root cause
-
-**Dependencies:** Phases 1-7 (implementation patterns finalized)
-
-**Research flag:** SKIP RESEARCH — tests document expected behavior, no external research needed. Investigation per test to determine if bug is in test or production code.
+**Research flag:** NONE — Aggregation patterns well-documented, client-side filtering pattern used 6× in codebase
 
 ---
 
 ### Phase Ordering Rationale
 
-- **Phase 1 first:** Critical infrastructure fix with no dependencies. Background job pattern is reused by Phase 5 (Weekly Focus). Browser-refresh resilience is production-critical for 4-6 minute extraction operations.
-- **Phase 2 parallel:** Can build alongside Phase 1 (no shared components). Establishes cross-project query patterns reused by Phase 4 Metrics (hours logged).
-- **Phase 3 before 4-7:** Schema migration must precede any UI that renders workstream-separated data. Isolated change (just add column + backfill) reduces risk.
-- **Phase 4 before 5:** Prove static metrics work before adding AI complexity. Health Dashboard and Metrics are read-only aggregations (low risk) vs. AI summary (cache, scheduled job, prompt engineering).
-- **Phase 5 before 6:** Weekly Focus is higher value than Milestone Timeline (executive decision-making vs. visual polish). Can build Phase 6 in parallel if resources available.
-- **Phase 7 independent:** Integration Tracker can slot in anytime after Phase 3. Lower priority than Overview work.
-- **Phase 8 last:** Fix tests after implementation patterns finalized to avoid cascading breakage.
+**Why data layer first (Phase 1):** Migrations are blocking; establish schema before parallel feature work. Enables independent testing of queries via Drizzle.
 
-**Parallel workstreams:**
-- **Week 1-2:** Phase 1 + Phase 2 in parallel (different developers)
-- **Week 3:** Phase 3 (schema migration — short, ~2 days)
-- **Week 3-4:** Phase 4 (Metrics) + Phase 6 (Timeline) in parallel
-- **Week 5:** Phase 5 (Weekly Focus)
-- **Week 6:** Phase 7 (Integration Tracker) + Phase 8 (Test Fixes) in parallel
+**Why extraction second (Phase 2):** Auto-population from uploads enables realistic testing of all downstream features. Critical infrastructure for v6.0 value prop (AI-powered data ingestion).
+
+**Why WBS + Architecture in parallel (Phases 3-4):** Both are independent, reuse existing patterns, and have no cross-dependencies. Parallelization saves time.
+
+**Why Team Engagement after extraction (Phase 5):** Consolidation requires existing tables to stabilize; benefits from extraction already working.
+
+**Why portfolio last (Phase 6):** Aggregates all other features; validating portfolio view confirms end-to-end integration. Quick win (low complexity) to close milestone.
 
 ### Research Flags
 
-Phases likely needing deeper research during planning:
-- **Phase 5 (Weekly Focus):** Claude prompt engineering for consistent 3-bullet summary generation. Research time budget: 2 hours. Use existing project data to prototype prompts and validate output format.
+**Phases needing deeper research during planning:**
+- **Phase 2 (Extraction Expansion):** Prompt engineering for 3 new entity types while maintaining 85% accuracy on existing types. Monitor with test document battery.
+- **Phase 3 (WBS Generate Plan):** Validation logic to prevent hallucinated tasks. Test with minimal-context projects to verify sanity checks work.
 
-Phases with standard patterns (skip research-phase):
-- **Phase 1 (BullMQ Extraction):** Pattern established by existing `worker/jobs/skill-run.ts` and STACK.md polling documentation
-- **Phase 2 (Time Tracking):** Standard Next.js route patterns and PostgreSQL JOIN queries
-- **Phase 3 (Schema Migration):** Standard Drizzle migration pattern with data backfill
-- **Phase 4 (Metrics):** Standard aggregation queries and Recharts component composition
-- **Phase 6 (Milestone Timeline):** react-chrono library is well-documented with examples in STACK.md
-- **Phase 7 (Integration Tracker):** UI reorganization using existing table schema
-- **Phase 8 (Test Fixes):** Tests document expected behavior, no external research needed
+**Phases with standard patterns (skip research-phase):**
+- **Phase 1 (Schema):** Database migration patterns established in v1.0-v5.0
+- **Phase 4 (Architecture):** React Flow patterns from Phase 28 (org charts)
+- **Phase 5 (Team Engagement):** Components exist in v3.0 Phase 30
+- **Phase 6 (Portfolio):** Client-side filtering pattern used 6× in v5.0
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Existing infrastructure fully supports new features; only 2 new packages needed (react-chrono, Recharts). BullMQ job progress pattern validated via official docs and existing codebase analysis. |
-| Features | MEDIUM | Table stakes derived from training data on PM tools (Jira, Monday.com, Asana) and time tracking tools (Harvest, Toggl) — patterns consistent but unverified via web search (training data current through January 2025). Differentiators validated against existing codebase capabilities. |
-| Architecture | HIGH | All patterns grounded in existing codebase structure (`worker/index.ts`, `app/api/ingestion/extract/route.ts`, schema.ts). Schema migration strategy tested against actual table definitions. Data flow patterns validated via working BullMQ infrastructure. |
-| Pitfalls | HIGH | Derived from direct codebase inspection (current SSE extraction implementation, existing BullMQ job handlers, schema structure) and documented requirements in PROJECT.md. All pitfalls are specific to this application's architecture (Next.js 16, BullMQ, Drizzle ORM, PostgreSQL). |
+| Stack | HIGH | All peer dependencies verified React 19 compatible; only 1 new library needed; existing patterns proven |
+| Features | MEDIUM-HIGH | Table stakes validated against industry PM tools (Jira, Asana, MS Project); differentiators are PS-specific but validated against existing v1.0-v5.0 patterns |
+| Architecture | HIGH | Reuses 4 existing patterns (Server+Client filtering, BullMQ jobs, JSONB storage, CustomEvent sync); no novel paradigms |
+| Pitfalls | HIGH | 5 critical pitfalls identified from codebase analysis; all have clear mitigation strategies and precedent in existing code |
 
-**Overall confidence:** HIGH
-
-Research is grounded in existing codebase analysis (not generic recommendations). All architectural recommendations integrate cleanly with validated v3.0 patterns. Stack recommendations are minimal (only 2 new packages) and well-supported by official documentation.
+**Overall confidence:** HIGH — v6.0 is an extension of mature system with proven patterns, not greenfield development.
 
 ### Gaps to Address
 
-1. **Integrations.track field existence** — FEATURES.md and ARCHITECTURE.md reference splitting integrations by ADR/Biggy track, but schema.ts doesn't show `integrations.track` column. **Resolution:** During Phase 7 planning, inspect `integrations` table schema. If column missing, add migration identical to Phase 3 pattern (ALTER TABLE ADD COLUMN track, UPDATE to backfill from integration names).
+**Performance testing needed:** Portfolio queries and WBS tree rendering have scale thresholds (20 projects, 100 nodes). Validate with load testing early in each phase:
+- Phase 1: Test portfolio query with 25 test projects
+- Phase 3: Test WBS tree with 120-node test structure
 
-2. **Workstream phase standardization** — FEATURES.md mentions "standardized phase models" for ADR vs Biggy comparison, but current schema has freeform `workstreams.current_status` text field. **Resolution:** During Phase 4 planning, determine if phase standardization is required for metrics. If yes, create mapping table or enum; if no, use existing percent_complete for comparison (simpler).
+**Extraction accuracy monitoring:** No current measurement of classification accuracy. Add during Phase 2:
+- Baseline: Run 10 test documents through v5.0 extraction, measure action/risk/milestone precision
+- Post-expansion: Run same documents through v6.0, compare accuracy (must be ≥80%)
 
-3. **Weekly focus prompt tuning** — ARCHITECTURE.md provides example prompt template, but effectiveness depends on production data structure (action descriptions, risk details, milestone names). **Resolution:** During Phase 5 planning, prototype prompt with 3-5 real projects, validate output format consistency, refine prompt if needed. Budget 2 hours.
-
-4. **Test failure root causes** — 13 tests failing in `tests/teams-arch/` directory. PROJECT.md notes "tests were written speculatively before implementation." Unknown if failures are test bugs or implementation bugs. **Resolution:** During Phase 8, investigate each test individually to determine if bug is in test setup or production code. Fix root cause, not symptom.
-
-5. **Extraction job TTL and timeout values** — STACK.md recommends 30-minute TTL, 20-minute timeout, but optimal values depend on largest expected document size in production. **Resolution:** During Phase 1 planning, measure current extraction times for 95th percentile document size. Set timeout to 2x P95 time, TTL to 3x P95 time (with 20 min minimum).
+**Navigation redirect coverage:** Enumerate all v5.0 URLs and verify redirects work. Add integration test during Phase NAV-01:
+- Test matrix: 20+ old URLs → verify 301 redirects to correct new URLs
+- Monitor 404 logs first week post-launch for missed patterns
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- Existing codebase: `worker/index.ts`, `worker/scheduler.ts`, `worker/jobs/skill-run.ts`, `worker/connection.ts` — BullMQ patterns and job infrastructure
-- Existing codebase: `app/api/ingestion/extract/route.ts` — Current SSE extraction implementation with chunk processing and dedup logic
-- Existing codebase: `app/customer/[id]/overview/page.tsx`, `components/OnboardingDashboard.tsx` — Current Overview tab structure
-- Existing codebase: `db/schema.ts` — PostgreSQL schema structure for onboarding_phases, onboarding_steps, workstreams, time_entries, artifacts
-- PROJECT.md — v4.0 requirements and scope (test fixes, extraction to BullMQ, time tracking redesign, Overview overhaul)
-- BullMQ Documentation — Job Progress API (job.updateProgress, job.log, job.getState) — official docs
-- BullMQ Documentation — Repeatable Jobs (cron scheduling) — official docs
-- Next.js 16 Documentation — Route Handlers, redirects() API — official docs
-- Drizzle ORM Documentation — Migrations (SQL file generation) — official docs
+- **Existing codebase:** `/bigpanda-app/` — 42,385 LOC analyzed for patterns, dependencies, and integration points
+- **STACK.md research:** npm registry verification of all library versions + React 19 peer dependencies
+- **Radix UI Collapsible:** [Official docs](https://www.radix-ui.com/primitives/docs/components/collapsible) v1.1.12
+- **Vercel AI SDK:** [Official structured output docs](https://ai-sdk.dev/docs/ai-sdk-core/generating-structured-data)
+- **@xyflow/react:** [npm registry](https://www.npmjs.com/package/@xyflow/react) v12.10.2 verified current
 
 ### Secondary (MEDIUM confidence)
-- Training data on PM tool patterns: Jira, Monday.com, Asana, Linear (2024-2025 knowledge) — used for table stakes feature definitions
-- Training data on time tracking tool patterns: Harvest, Toggl, Clockify (2024 knowledge) — used for time tracking UX patterns
-- Training data on onboarding tool patterns: Pendo, Userpilot, WalkMe (2024 knowledge) — used for onboarding completion metrics
+- **PM domain patterns:** Training knowledge of Jira Portfolio, Asana Portfolios, Monday.com, Microsoft Project, Smartsheet (pre-Jan 2025; patterns stable)
+- **Next.js aggregation patterns:** O(N) query pitfalls documented in community + observed in HealthDashboard.tsx lines 72-87
+- **LLM prompt engineering:** Attention dilution and recency bias documented in prompt engineering research
 
-### Tertiary (LOW confidence)
-- react-chrono npm package page — version 3.0.0 current as of January 2025 (may have updates)
-- Recharts npm package page — version 2.15.0 current as of January 2025 (may have updates)
+### Tertiary (LOW confidence, needs validation)
+- **AI-powered task classification in 2026 PM tools:** Training data cutoff Jan 2025; WBS auto-classify may not have direct competitor precedent
+- **Current Jira/Asana features:** Training data likely accurate but unverified for 2026 versions
 
 ---
-*Research completed: 2026-04-01*
-*Ready for roadmap: yes*
+*Research completed: 2026-04-07*
+*Ready for roadmap: YES*

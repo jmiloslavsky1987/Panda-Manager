@@ -1,559 +1,463 @@
-# Stack Research — v4.0 Feature Additions
+# Technology Stack — v6.0 Milestone Additions
 
-**Domain:** BullMQ job progress tracking, Timeline visualization, Data visualization for metrics
-**Researched:** 2026-04-01
-**Confidence:** MEDIUM (based on existing codebase analysis and knowledge current through January 2025)
-
-> This document covers ONLY the stack additions for v4.0. The existing validated stack
-> from v3.0 (Next.js 16.2.0, React 19, PostgreSQL + Drizzle ORM, BullMQ 5.71.0 + Redis,
-> Anthropic SDK, Vercel AI SDK, @xyflow/react, Radix UI, Tailwind CSS, Vitest) is already
-> installed and is NOT re-researched here.
+**Project:** BigPanda AI Project Management App
+**Milestone:** v6.0 — Dashboard, Navigation, Parity, WBS, Team Engagement, Architecture
+**Researched:** 2026-04-07
+**Confidence:** HIGH
 
 ---
 
 ## Executive Summary
 
-v4.0 requires **minimal new dependencies**. Existing BullMQ 5.71.0 infrastructure fully supports job progress tracking with no package changes. For visualizations, recommend **two targeted additions**: a React timeline library for milestone visualization and a charting library for the new Metrics section.
+v6.0 adds **portfolio dashboard**, **collapsible WBS**, **Team Engagement Overview**, and **Architecture diagrams** to an existing mature stack. **NO new major dependencies required.** All new features can be built with the existing stack plus ONE optional enhancement library. Existing libraries are current and React 19-compatible.
 
-**Critical finding:** Move from SSE to BullMQ for document extraction requires **zero new packages** — only a pattern change using existing BullMQ infrastructure.
-
----
-
-## Recommended Additions
-
-### 1. BullMQ Job Progress (NO NEW PACKAGES)
-
-| Component | Version | Purpose | Implementation Pattern |
-|-----------|---------|---------|------------------------|
-| **BullMQ** | 5.71.0 (existing) | Background job processing with progress tracking | Worker calls `job.updateProgress(percentage)` and `job.log(message)`, client polls `/api/jobs/[id]/progress` endpoint |
-| **ioredis** | 5.10.1 (existing) | Redis client for BullMQ | Already configured correctly with `maxRetriesPerRequest: null` for workers |
-
-**Why NO new packages:**
-BullMQ's job progress API is built-in. The existing worker infrastructure (`worker/index.ts`) already processes jobs and reports success/failure to the database. Adding progress tracking is a feature of BullMQ, not a separate library.
-
-**Pattern for document extraction job:**
-
-```typescript
-// worker/jobs/document-extraction.ts
-import { Job } from 'bullmq';
-
-export default async function documentExtraction(
-  job: Job<{ artifactId: number; projectId: number }>
-) {
-  const { artifactId, projectId } = job.data;
-
-  await job.updateProgress(10);  // 0-100 percentage
-  await job.log('Reading document from disk...');
-
-  // Read file...
-  await job.updateProgress(25);
-  await job.log('Extracting document content...');
-
-  // Extract text...
-  await job.updateProgress(50);
-  await job.log('Sending to Claude for entity extraction...');
-
-  // Call Claude...
-  await job.updateProgress(90);
-  await job.log('Deduplicating extracted items...');
-
-  // Dedup logic...
-  await job.updateProgress(100);
-
-  return { status: 'complete', itemCount: items.length };
-}
-```
-
-**API route for progress polling:**
-
-```typescript
-// app/api/jobs/[id]/progress/route.ts
-import { Queue } from 'bullmq';
-import { createApiRedisConnection } from '@/worker/connection';
-import { requireSession } from '@/lib/auth-server';
-
-export async function GET(
-  request: Request,
-  context: { params: Promise<{ id: string }> | { id: string } }
-) {
-  const { session, redirectResponse } = await requireSession();
-  if (redirectResponse) return redirectResponse;
-
-  const { id } = await context.params;
-  const queue = new Queue('scheduled-jobs', {
-    connection: createApiRedisConnection() as any
-  });
-
-  const job = await queue.getJob(id);
-  if (!job) {
-    await queue.close();
-    return Response.json({ error: 'Job not found' }, { status: 404 });
-  }
-
-  const state = await job.getState();  // 'waiting' | 'active' | 'completed' | 'failed'
-  const progress = job.progress || 0;  // 0-100
-  const logs = await queue.getJobLogs(id, 0, -1);  // All logs
-
-  await queue.close();
-
-  return Response.json({
-    jobId: id,
-    state,
-    progress,
-    logs: logs.logs,
-    result: state === 'completed' ? job.returnvalue : null,
-    error: state === 'failed' ? job.failedReason : null,
-  });
-}
-```
-
-**Client polling pattern (NOT SSE):**
-
-```typescript
-// components/ProgressTracker.tsx
-import { useState, useEffect } from 'react';
-
-export function ProgressTracker({ jobId }: { jobId: string }) {
-  const [progress, setProgress] = useState(0);
-  const [logs, setLogs] = useState<string[]>([]);
-  const [state, setState] = useState<'waiting' | 'active' | 'completed' | 'failed'>('waiting');
-
-  useEffect(() => {
-    const timer = setInterval(async () => {
-      const res = await fetch(`/api/jobs/${jobId}/progress`);
-      const data = await res.json();
-
-      setProgress(data.progress);
-      setLogs(data.logs || []);
-      setState(data.state);
-
-      if (data.state === 'completed' || data.state === 'failed') {
-        clearInterval(timer);
-        // Handle completion...
-      }
-    }, 1500);  // Poll every 1.5 seconds
-
-    return () => clearInterval(timer);
-  }, [jobId]);
-
-  return (
-    <div>
-      <div className="w-full bg-gray-200 rounded h-2">
-        <div
-          className="bg-blue-600 h-2 rounded transition-all"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
-      <div className="mt-4 text-sm space-y-1">
-        {logs.slice(-5).map((log, i) => (
-          <div key={i} className="text-gray-600">{log}</div>
-        ))}
-      </div>
-    </div>
-  );
-}
-```
-
-**Why polling over SSE for job progress:**
-1. **Browser refresh resilience:** SSE connection dies on refresh; polling can resume by fetching current job state from Redis
-2. **Job persistence:** BullMQ stores progress/logs in Redis; polling reads persisted state, not ephemeral stream
-3. **Route Handler lifespan:** SSE requires keeping the Route Handler alive for entire job duration (4-6 min for large docs); polling is stateless
-4. **Standard pattern:** Background job progress is typically polled (GitHub Actions, Vercel deployments, etc.)
-
-**Integration with existing BullMQ infrastructure:**
-
-The worker (`worker/index.ts`) already has a job handler dispatch map. Add `document-extraction` handler:
-
-```typescript
-// worker/index.ts (ADD to existing JOB_HANDLERS map)
-import documentExtraction from './jobs/document-extraction';
-
-const JOB_HANDLERS: Record<string, JobHandler> = {
-  'action-sync': actionSync,
-  'health-refresh': healthRefresh,
-  // ... existing 13 handlers ...
-  'document-extraction': documentExtraction,  // NEW
-};
-```
-
-Replace SSE Route Handler (`app/api/ingestion/extract/route.ts`) with job enqueue:
-
-```typescript
-// app/api/ingestion/extract/route.ts (REPLACE SSE stream with job enqueue)
-export async function POST(request: NextRequest) {
-  const { session, redirectResponse } = await requireSession();
-  if (redirectResponse) return redirectResponse;
-
-  // Parse request body...
-  const { artifactId, projectId } = parseResult.data;
-
-  const queue = new Queue('scheduled-jobs', {
-    connection: createApiRedisConnection() as any
-  });
-
-  const job = await queue.add('document-extraction', {
-    artifactId,
-    projectId,
-  }, {
-    removeOnComplete: 100,  // Keep last 100 completed jobs
-    removeOnFail: 50,       // Keep last 50 failed jobs
-  });
-
-  await queue.close();
-
-  return Response.json({ jobId: job.id }, { status: 202 });  // 202 Accepted
-}
-```
+**Key findings:**
+- Portfolio table: Use existing client-side filter pattern (ActionsTableClient), NO table library needed
+- WBS hierarchy: Use `@radix-ui/react-collapsible` (already installed for other components)
+- AI auto-classify: Use Vercel AI SDK `Output.object()` with Zod schemas (existing deps)
+- Architecture diagrams: Use existing `@xyflow/react` with horizontal layout patterns
+- Search/filter: Existing PostgreSQL FTS + client-side filtering patterns are sufficient
 
 ---
 
-### 2. Timeline Visualization
+## Current Stack (Validated — DO NOT CHANGE)
 
-| Library | Version | Purpose | Why Recommended |
-|---------|---------|---------|-----------------|
-| **react-chrono** | ^3.0.0 | Timeline component for visual milestone representation | Modern (2024 releases), actively maintained, vertical/horizontal/alternating modes, built-in card styling, TypeScript support, React 18+ compatible, SSR-safe |
+These libraries are mature, current, and correctly integrated. **No changes needed.**
 
-**Why react-chrono:**
-- **Declarative:** Pass array of timeline items, library handles layout/styling
-- **SSR-safe:** No DOM dependencies during render (works with Next.js App Router)
-- **Modes:** Vertical, horizontal, alternating sides — matches common project timeline UX patterns
-- **Customizable:** Theming API for colors, fonts, card styles
-- **TypeScript-first:** Full type definitions included
+| Library | Current Version | Latest | Status | Purpose |
+|---------|----------------|--------|--------|---------|
+| `next` | 16.2.0 | 16.2.0 | ✓ Current | App framework |
+| `react` | 19.2.4 | 19.2.4 | ✓ Current | UI framework |
+| `@xyflow/react` | 12.10.2 | 12.10.2 | ✓ Current | Flow diagrams (org charts, workflows) |
+| `recharts` | 3.8.1 | 3.8.1 | ✓ Current | Charts (bar, pie, progress) |
+| `ai` (Vercel AI SDK) | 6.0.142 | 6.0.151 | ✓ Patch behind (safe) | Streaming chat, structured output |
+| `@ai-sdk/anthropic` | 3.0.64 | 3.0.67 | ✓ Patch behind (safe) | Claude integration |
+| `@anthropic-ai/sdk` | 0.80.0 | — | ✓ Current | Direct Claude API (extraction workers) |
+| `drizzle-orm` | 0.45.1 | 0.45.2 | ✓ Patch behind (safe) | PostgreSQL ORM |
+| `bullmq` | 5.71.0 | 5.73.0 | ✓ Patch behind (safe) | Background jobs (extraction, skills) |
+| `lucide-react` | 0.577.0 | 1.7.0 | ⚠️ Major behind (works) | Icons — upgrade optional |
+| `@dnd-kit/core` | 6.3.1 | 6.3.1 | ✓ Current | Drag-and-drop (Gantt, task boards) |
+| `zod` | 4.3.6 | 4.3.6 | ✓ Current | Schema validation |
+| `better-auth` | 1.5.6 | — | ✓ Current | Multi-user sessions |
+| `sonner` | 2.0.7 | 2.0.7 | ✓ Current | Toast notifications |
+| `mammoth` | 1.12.0 | 1.12.0 | ✓ Current | DOCX parsing |
 
-**Example implementation:**
-
-```typescript
-// components/overview/MilestoneTimeline.tsx
-import { Chrono } from 'react-chrono';
-
-export function MilestoneTimeline({ milestones }) {
-  const items = milestones.map(m => ({
-    title: new Date(m.target_date).toLocaleDateString(),
-    cardTitle: m.name,
-    cardSubtitle: m.status,
-    cardDetailedText: m.description || '',
-  }));
-
-  return (
-    <Chrono
-      items={items}
-      mode="VERTICAL"
-      theme={{
-        primary: '#3b82f6',
-        secondary: '#e5e7eb',
-        cardBgColor: '#ffffff',
-        titleColor: '#1f2937',
-      }}
-      cardHeight={120}
-      scrollable={{ scrollbar: true }}
-      disableToolbar
-    />
-  );
-}
-```
-
-**Alternative: Custom Tailwind timeline (NO dependencies)**
-
-If design requirements don't match react-chrono's card-based styling:
-
-```typescript
-// components/overview/CustomTimeline.tsx (NO dependencies)
-export function CustomTimeline({ milestones }) {
-  return (
-    <div className="relative">
-      {/* Vertical line */}
-      <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gray-300" />
-
-      {milestones.map((m, i) => (
-        <div key={m.id} className="relative pl-16 pb-8">
-          {/* Timeline dot */}
-          <div className="absolute left-6 w-4 h-4 rounded-full bg-blue-600 border-4 border-white shadow" />
-
-          {/* Content card */}
-          <div className="bg-white p-4 rounded-lg shadow">
-            <div className="text-sm text-gray-500">
-              {new Date(m.target_date).toLocaleDateString()}
-            </div>
-            <div className="font-semibold text-gray-900">{m.name}</div>
-            <div className="text-sm text-gray-600">{m.status}</div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-```
-
-**When to use custom vs react-chrono:**
-- **Use react-chrono:** Standard timeline UI, need built-in scroll/zoom, want rapid implementation
-- **Use custom Tailwind:** Design system has specific timeline styling that doesn't match react-chrono cards, or need pixel-perfect control
+**React 19 Compatibility:** All peer dependencies verified compatible with React 19.2.4.
 
 ---
 
-### 3. Data Visualization (Metrics Section)
+## NEW Dependencies for v6.0
 
-| Library | Version | Purpose | Why Recommended |
-|---------|---------|---------|-----------------|
-| **Recharts** | ^2.15.0 | Declarative charting library for React | Composable React components, responsive by default, pure SVG (no canvas), excellent TypeScript support, widely adopted (>25k GitHub stars), React 18+ compatible |
+### REQUIRED: None
 
-**Why Recharts:**
-- **React-native:** Charts are React components, not imperative canvas drawing
-- **Composable:** `<BarChart>`, `<LineChart>`, `<XAxis>`, `<Tooltip>` compose declaratively
-- **Responsive:** `<ResponsiveContainer>` handles resize automatically
-- **TypeScript:** Full type definitions, no `@types/` package needed
-- **Bundle size:** ~60KB minified (reasonable for a full charting library)
+All v6.0 features can be built with existing stack.
 
-**Example: Phase completion bar chart**
+### RECOMMENDED: 1 Library
 
-```typescript
-// components/metrics/PhaseCompletionChart.tsx
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+| Library | Version | Purpose | Why Add | Installation |
+|---------|---------|---------|---------|--------------|
+| `@radix-ui/react-collapsible` | 1.1.12 | WBS collapsible tree UI | Native accessibility, animation hooks, controlled/uncontrolled modes | `npm install @radix-ui/react-collapsible` |
 
-export function PhaseCompletionChart({ phases }) {
-  const data = phases.map(p => ({
-    name: p.name,
-    completion: p.percent_complete,
-  }));
+**Rationale:** App already uses 7 Radix UI primitives (checkbox, dialog, popover, select, separator, slot, tabs, tooltip). Adding Collapsible maintains consistency and avoids custom collapse state management. Zero SSR issues, WAI-ARIA compliant, CSS variable animation support.
 
-  return (
-    <ResponsiveContainer width="100%" height={300}>
-      <BarChart data={data}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="name" />
-        <YAxis domain={[0, 100]} />
-        <Tooltip />
-        <Bar dataKey="completion" fill="#3b82f6" />
-      </BarChart>
-    </ResponsiveContainer>
-  );
-}
-```
-
-**Example: Risk trend line chart**
-
-```typescript
-// components/metrics/RiskTrendChart.tsx
-import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid,
-  Tooltip, Legend, ResponsiveContainer
-} from 'recharts';
-
-export function RiskTrendChart({ trendData }) {
-  return (
-    <ResponsiveContainer width="100%" height={300}>
-      <LineChart data={trendData}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="date" />
-        <YAxis />
-        <Tooltip />
-        <Legend />
-        <Line type="monotone" dataKey="high" stroke="#ef4444" strokeWidth={2} />
-        <Line type="monotone" dataKey="medium" stroke="#f59e0b" strokeWidth={2} />
-        <Line type="monotone" dataKey="low" stroke="#10b981" strokeWidth={2} />
-      </LineChart>
-    </ResponsiveContainer>
-  );
-}
-```
-
-**Alternative: Victory**
-
-| Library | Version | Purpose | When to Use |
-|---------|---------|---------|-------------|
-| **Victory** | ^37.0.0 | Declarative charting with advanced animations | Need more animation control, touch gesture support, or complex interaction patterns |
-
-**Tradeoff:** Victory bundle is ~100KB vs Recharts ~60KB. Use if animation/interaction is critical; otherwise Recharts is lighter and simpler.
-
-**Alternative: Chart.js + react-chartjs-2**
-
-| Library | Version | Purpose | When to Use |
-|---------|---------|---------|-------------|
-| **Chart.js** | ^4.4.0 | Canvas-based charting with react-chartjs-2 wrapper | Dataset has >1000 points and needs canvas rendering for performance |
-
-**Tradeoff:** Imperative API (less React-idiomatic), canvas rendering (not SVG). Use only if SVG performance is insufficient (unlikely at project scale).
+**Alternative considered:** Build custom collapse with `useState` + CSS transitions → Rejected because Radix provides keyboard nav + screen reader support for free.
 
 ---
 
-## Installation
+## Optional: Consider Later (NOT v6.0)
+
+| Library | Purpose | When to Add | Why Not Now |
+|---------|---------|-------------|-------------|
+| `@tanstack/react-table` v8.21.3 | Advanced table state management | If portfolio table needs virtual scrolling (500+ projects) or server-side pagination | Current pattern (client-side filter) works for 10–50 projects; TanStack adds 200KB bundle size |
+| `date-fns` | Date manipulation utilities | If WBS timeline calculations become complex | Native `Date` API + existing GanttChart date helpers are sufficient |
+| `cmdk` | Command palette | If global search needs keyboard-first UI | Current search bar + filter inputs are sufficient |
+
+---
+
+## v6.0 Feature Breakdown — What Uses What
+
+### 1. Portfolio Dashboard (DASH-01–06)
+
+**Multi-project table with filtering, sort, search:**
+
+- **Pattern:** Client-side filter (same as ActionsTableClient, RisksTableClient, MilestonesTableClient)
+- **Libraries:** NONE new
+- **Implementation:**
+  - Server Component fetches all projects from PostgreSQL
+  - Client Component (`PortfolioTableClient.tsx`) filters/sorts in-memory using URL params
+  - Existing `Table`, `Checkbox` (Radix), `lucide-react` icons
+
+**Health summary + exceptions panel:**
+
+- **Charts:** Existing `recharts` (PieChart, ProgressRing patterns from Overview tab)
+- **Layout:** Tailwind CSS grid (same as Overview HealthDashboard component)
+
+**Search:**
+
+- **Existing:** PostgreSQL FTS API (`/api/search`) supports `projectId` filter → extend to cross-project query
+- **No new library needed**
+
+**Confidence:** HIGH — all patterns exist in v5.0 codebase.
+
+---
+
+### 2. Work Breakdown Structure (WBS-01–05)
+
+**Collapsible 3-level tree (ADR + Biggy templates):**
+
+- **Library:** `@radix-ui/react-collapsible` (NEW — recommended add)
+- **Pattern:**
+  ```tsx
+  <Collapsible.Root open={open} onOpenChange={setOpen}>
+    <Collapsible.Trigger>Phase Node</Collapsible.Trigger>
+    <Collapsible.Content>
+      {/* Sub-nodes */}
+    </Collapsible.Content>
+  </Collapsible.Root>
+  ```
+- **State:** Nested `Map<nodeId, boolean>` for open/closed state
+- **Styling:** CSS variables `--radix-collapsible-content-height` for smooth expand/collapse
+
+**AI auto-classify tasks to WBS nodes:**
+
+- **Library:** Existing Vercel AI SDK `ai` package
+- **Function:** `generateObject()` with Zod schema
+- **Pattern:**
+  ```typescript
+  import { generateObject } from 'ai';
+  import { anthropic } from '@ai-sdk/anthropic';
+  import { z } from 'zod';
+
+  const { object } = await generateObject({
+    model: anthropic('claude-sonnet-4-6'),
+    schema: z.object({
+      taskId: z.number(),
+      wbsNodeId: z.string(),
+      confidence: z.number(),
+      reasoning: z.string(),
+    }),
+    prompt: `Given WBS template: ${wbsStructure}\n\nClassify task: ${taskTitle}`,
+  });
+  ```
+- **Source:** [Vercel AI SDK Structured Output Docs](https://ai-sdk.dev/docs/ai-sdk-core/generating-structured-data)
+- **Verification:** HIGH confidence — `Output.object()` and `Output.array()` are core SDK features, Zod already installed
+
+**Generate Plan gap-fill button:**
+
+- **Library:** Same as auto-classify — Vercel AI SDK `generateObject()` with array schema
+- **Schema:** `z.array(z.object({ nodeId, suggestedTasks: z.array(...) }))`
+- **Background job:** BullMQ worker (same pattern as extraction job in v4.0 Phase 31)
+
+**Manual edit:**
+
+- **Libraries:** Existing inline edit components (InlineSelectCell, OwnerCell, DatePickerCell from v5.0)
+
+**Confidence:** HIGH — Radix Collapsible API verified, Vercel AI SDK structured output verified, BullMQ pattern exists.
+
+---
+
+### 3. Team Engagement Overview (TEAM-01–04)
+
+**5-section structured report view:**
+
+- **Libraries:** NONE new
+- **Pattern:** Same as existing TeamEngagementMap component (v3.0 Phase 30)
+  - 5 sections: BusinessOutcomesSection, ArchOverviewSection, E2eWorkflowsSection, TeamsEngagementSection, FocusAreasSection
+  - Each section renders from DB tables: `business_outcomes`, `architecture_integrations`, `e2e_workflows`, `focus_areas`
+  - Manual edit: inline forms (existing patterns)
+
+**Context-upload extraction (Team Engagement entities):**
+
+- **Library:** Existing extraction system (v5.0 Phase 42 — full field coverage)
+- **Extension:** Add Team Engagement entity types to `extraction-types.ts`
+  - Already supports: `businessOutcome`, `team` (focus_areas), `architecture`
+  - NEW types needed: `e2e_workflow`, `workflow_step` (if not already covered)
+- **Worker:** Existing BullMQ extraction worker (`worker/jobs/extraction-job.ts`)
+- **Dedup:** Existing `isAlreadyIngested()` logic in `extraction-types.ts`
+
+**Missing-data warnings:**
+
+- **Library:** Existing completeness system (`lib/completeness-context-builder.ts`)
+- **Pattern:** Call `/api/completeness` → Claude analyzes gaps → display warnings
+- **UI:** Same as Context Hub completeness analysis (v3.0 Phase 30 CTX-04)
+
+**Confidence:** HIGH — all patterns exist, only need entity type extensions (no new libraries).
+
+---
+
+### 4. Architecture Tab Update (ARCH-01–04)
+
+**Before State + Current & Future State two-tab diagram:**
+
+- **Library:** Existing `@xyflow/react` (v12.10.2) with `dynamic(() => import(), { ssr: false })`
+- **Pattern:** Same as InteractiveEngagementGraph component
+  - Two React Flow instances (one per tab)
+  - Horizontal layout (not Dagre auto-layout) — manual positioning with `position: { x, y }`
+  - ADR Track + AI Track as separate node groups
+
+**Phase flows with status nodes:**
+
+- **Nodes:** Custom node types (same pattern as org chart TeamNode, StakeholderNode)
+- **Edges:** Straight edges with arrows (`type: 'straight'`)
+- **Status:** Color-coded based on `onboarding_steps.status` enum
+
+**Team Onboarding Status table:**
+
+- **Library:** NONE new
+- **Pattern:** Standard table (same as ActionsTableClient inline edit pattern)
+- **Data source:** `team_onboarding_status` table (already exists in DB schema v2.0)
+
+**Context-upload extraction (Architecture entities):**
+
+- **Library:** Existing extraction system
+- **Already supported:** `architecture` entity type exists in `extraction-types.ts` (line 226–246)
+  - Matches on `tool_name` + `track` combination
+  - Maps to `architecture_integrations` table
+- **Extension:** Add `onboarding_step` entity type if not present
+  - NEW: Matches on `step_name` (lines 256–262 already exist in extraction-types.ts)
+
+**Confidence:** HIGH — React Flow patterns exist, extraction entity types already implemented in v5.0.
+
+---
+
+### 5. Context Upload Expansion (Existing Feature)
+
+**NO changes needed to libraries.** Extraction system (v5.0 Phase 42) already supports:
+- All Team Engagement entity types: `businessOutcome`, `team`, `architecture`, `e2e_workflow`
+- All Architecture entity types: `architecture`, `onboarding_step`
+
+Extension work is **entity routing logic only** (no new dependencies).
+
+---
+
+## Library Verification (Context7 + Official Docs)
+
+| Library | Verified With | Confidence | Notes |
+|---------|---------------|------------|-------|
+| `@radix-ui/react-collapsible` | [Official Radix Docs](https://www.radix-ui.com/primitives/docs/components/collapsible) + npm registry | HIGH | v1.1.12 current, API stable, WAI-ARIA compliant |
+| Vercel AI SDK structured output | [Official AI SDK Docs](https://ai-sdk.dev/docs/ai-sdk-core/generating-structured-data) | HIGH | `Output.object()` and `Output.array()` confirmed, Zod schema support verified |
+| `@xyflow/react` | npm registry + package peer deps | HIGH | v12.10.2 current (published 11 days ago), React 19 compatible, no breaking changes in 12.x |
+| `recharts` | npm registry | HIGH | v3.8.1 current, React 19 peer dep explicit (`^19.0.0`), works with existing Overview charts |
+| `lucide-react` | npm registry | MEDIUM | v0.577.0 → v1.7.0 major version available, but v0.577 works fine with React 19 |
+| `@tanstack/react-table` | npm registry | HIGH | v8.21.3 current, React 19 compatible (`>=16.8` peer dep), NOT needed for v6.0 |
+
+---
+
+## Alternatives Considered & Rejected
+
+### TanStack Table v8 for Portfolio Table
+
+**Why considered:** Powerful filtering, sorting, column management, virtual scrolling.
+
+**Why rejected:**
+- Portfolio table scope: 10–50 projects (small dataset)
+- Client-side filter pattern works (already used in 6 table clients)
+- TanStack adds ~200KB bundle size
+- Existing pattern is consistent (ActionsTableClient, RisksTableClient, MilestonesTableClient, DecisionsTableClient all use same approach)
+- **If needed later:** Easy to migrate (data fetching stays same, swap client component)
+
+**Verdict:** Defer until 500+ projects or server-side pagination requirement emerges.
+
+---
+
+### react-arborist for WBS Tree
+
+**Why considered:** Specialized tree component with virtualization, drag-drop, bulk operations.
+
+**Why rejected:**
+- 3-level depth is shallow (no virtualization needed)
+- WBS is read-mostly (not drag-drop heavy)
+- Radix Collapsible is simpler (100 LOC vs 2000+ LOC for react-arborist)
+- App already uses Radix UI primitives (consistency)
+
+**Verdict:** Radix Collapsible is correct for this use case.
+
+---
+
+### react-flow-renderer (Old Package)
+
+**Why considered:** None — user already has `@xyflow/react` (rebranded modern version).
+
+**Context:** `react-flow-renderer` was renamed to `@xyflow/react` in v12. App is already on correct package.
+
+---
+
+### AG Grid for Advanced Tables
+
+**Why considered:** Enterprise-grade table with server-side ops, Excel export.
+
+**Why rejected:**
+- Overkill for v6.0 scope
+- Commercial license required for advanced features
+- Portfolio table doesn't need pivot tables or aggregation
+
+**Verdict:** Not appropriate.
+
+---
+
+## Installation Commands
+
+### Required for v6.0
 
 ```bash
-# BullMQ job progress — NO NEW PACKAGES NEEDED
-# (BullMQ 5.71.0 and ioredis 5.10.1 already installed)
-
-# Timeline visualization
-npm install react-chrono
-
-# Data visualization (Metrics section)
-npm install recharts
+# WBS collapsible tree
+npm install @radix-ui/react-collapsible
 ```
 
----
+### Optional — Upgrade Existing (SAFE)
 
-## Alternatives Considered
+```bash
+# Patch updates (breaking changes unlikely)
+npm install ai@latest @ai-sdk/anthropic@latest drizzle-orm@latest bullmq@latest
 
-| Recommended | Alternative | When to Use Alternative |
-|-------------|-------------|-------------------------|
-| **Polling (1.5s interval)** | SSE for job progress | Never — SSE connection dies on browser refresh; BullMQ progress is persisted in Redis, polling is resilient |
-| **Polling (1.5s interval)** | WebSocket | Multiple concurrent long-running jobs need sub-second real-time updates (not current requirement; adds complexity) |
-| **react-chrono** | Custom Tailwind timeline | Design system has specific timeline styling that doesn't match react-chrono's card-based approach |
-| **Recharts** | Victory | Need advanced animations, touch gestures, or complex interaction patterns |
-| **Recharts** | Chart.js | Dataset has >1000 points and SVG performance is insufficient (unlikely at project scale) |
-| **Recharts** | D3.js directly | Need custom physics simulation or highly specialized chart types not covered by Recharts |
+# Icon library upgrade (major version, test before applying)
+npm install lucide-react@latest  # v0.577 → v1.7.0
+```
 
----
-
-## What NOT to Use
-
-| Avoid | Why | Use Instead |
-|-------|-----|-------------|
-| **SSE for job progress** | Browser refresh kills connection; Route Handler must stay alive for full job duration (4-6 min); progress lost if connection drops | BullMQ `job.updateProgress()` + polling endpoint (progress persisted in Redis) |
-| **D3.js directly** | Imperative DOM manipulation conflicts with React's declarative model; requires manual reconciliation | Recharts (React-native, declarative) |
-| **vis-timeline** | jQuery dependency, not React-native, accessibility issues, last release 2020 | react-chrono or custom Tailwind implementation |
-| **Additional Redis connection pool** | Worker/Queue connection separation already correctly implemented | Use existing `createApiRedisConnection()` pattern from `worker/connection.ts` |
-| **chartist.js** | Maintenance stopped in 2019, no React 18 support | Recharts |
-| **C3.js / NVD3** | Built on D3, same imperative issues, limited React integration | Recharts |
+**Recommendation:** Defer optional upgrades until v6.0 feature work completes (reduce variables).
 
 ---
 
-## Stack Patterns by Feature
+## Integration Points
 
-### Document Extraction Job Pattern
+### 1. Portfolio Dashboard → Existing Search API
 
-**Current (v3.0):** SSE stream in Route Handler (`/api/ingestion/extract`)
-- **Problem:** Browser refresh kills extraction; large docs take 4-6 min; Route Handler stays alive entire time
-- **Risk:** User navigates away → extraction aborted, no resume capability
+**File:** `app/api/search/route.ts`
 
-**New (v4.0):** BullMQ background job
-- **Flow:** POST `/api/ingestion/extract` → enqueue job → return `jobId` → client polls `/api/jobs/{jobId}/progress` every 1.5s
-- **Benefit:** Browser refresh OK (progress persisted in Redis), user can navigate away and come back
-- **Worker:** `worker/jobs/document-extraction.ts` calls `job.updateProgress()` and `job.log()` at each step
+**Change needed:** Extend `searchAllRecords()` to accept `projectId: undefined` → cross-project search.
 
-### Time Tracking Redesign
-
-**Current (v3.0):** Time tracking is a per-project tab
-**New (v4.0):** Standalone top-level route `/time-tracking` with global project-assignment view
-
-**No new stack needed** — this is a routing and UI redesign using existing Radix UI components, Tailwind CSS, and PostgreSQL queries across projects.
-
-### Overview Tab — Visual Milestone Timeline
-
-**Pattern:** Fetch milestones from DB, render with react-chrono or custom Tailwind timeline
-- **Data:** `milestones` table (already exists) with `target_date`, `name`, `status`
-- **Render:** Vertical timeline showing project delivery milestones in chronological order
-- **Interaction:** Click milestone → drill into milestone details (existing Radix Dialog component)
-
-### Overview Tab — Metrics Section
-
-**Pattern:** Aggregate data from DB, render with Recharts
-- **Metrics examples:**
-  - Phase completion bar chart (from `workstreams` table)
-  - Risk trend line chart (historical risk counts by severity)
-  - Action velocity (actions opened vs closed per week)
-  - Onboarding progress (from `onboarding_steps` table)
-- **Data:** SQL aggregation queries in Route Handler
-- **Render:** Recharts components (`<BarChart>`, `<LineChart>`, `<PieChart>`)
+**Libraries:** NONE (PostgreSQL FTS already exists).
 
 ---
 
-## Version Compatibility
+### 2. WBS AI Auto-Classify → BullMQ Worker
 
-| Package | Compatible With | Notes |
-|---------|-----------------|-------|
-| **BullMQ 5.71.0** | ioredis ^5.10.0, Redis 6.2+ | Requires `maxRetriesPerRequest: null` for Worker (already configured in `worker/connection.ts`) |
-| **react-chrono ^3.0.0** | React 18+, Next.js 16 | SSR-safe (no DOM dependencies during render), works with App Router |
-| **Recharts ^2.15.0** | React 18+, Next.js 16 | May need dynamic import with `ssr: false` if charts use window APIs during render (test first; ResponsiveContainer uses window resize but should be SSR-safe) |
+**Pattern:** Same as extraction job (v4.0 Phase 31 EXTR-02)
 
-**Next.js 16 SSR Note:**
-If Recharts throws "window is not defined" during build, use dynamic import:
+**File to create:** `worker/jobs/wbs-classify-job.ts`
 
+**Libraries used:**
+- `ai` (Vercel AI SDK) — `generateObject()` with Zod schema
+- `bullmq` — job registration
+- `drizzle-orm` — DB writes
+
+**Integration:** Register in `worker/index.ts` alongside `extraction-job` and `skills-job`.
+
+---
+
+### 3. Team Engagement Extraction → Existing Extraction Job
+
+**File:** `lib/extraction-types.ts`
+
+**Change needed:** Verify all entity types present:
+- ✓ `businessOutcome` (line 195)
+- ✓ `team` (maps to `focus_areas`, line 210)
+- ✓ `architecture` (line 226)
+- ✓ `onboarding_step` (line 256)
+- ⚠️ `e2e_workflow` — VERIFY if exists (not in provided excerpt)
+
+**If missing:** Add entity type + dedup logic to `isAlreadyIngested()`.
+
+**Libraries:** NONE (extension of existing extraction system).
+
+---
+
+### 4. Architecture Diagrams → React Flow Dynamic Import
+
+**Pattern:** Same as `components/teams/TeamEngagementMap.tsx` (lines 14–24)
+
+**SSR handling:**
 ```typescript
-import dynamic from 'next/dynamic';
-
-const PhaseCompletionChart = dynamic(
-  () => import('@/components/metrics/PhaseCompletionChart'),
-  { ssr: false }
+const ArchitectureDiagram = dynamic(
+  () => import('./ArchitectureDiagram').then((m) => ({ default: m.ArchitectureDiagram })),
+  {
+    ssr: false,
+    loading: () => <div className="h-96 border rounded-lg flex items-center justify-center text-zinc-400 text-sm">Loading diagram...</div>,
+  },
 );
 ```
 
-This is the same pattern already used for `@xyflow/react` in the codebase (`components/graph/CustomNodes.tsx` uses dynamic import with `ssr: false`).
+**Libraries:** Existing `@xyflow/react` + `next/dynamic`.
 
 ---
 
-## Performance Considerations
+## What NOT to Add
 
-### BullMQ Job Storage
+| Library | Why NOT |
+|---------|---------|
+| `react-table` (v7) | Deprecated — v8 is `@tanstack/react-table` |
+| `react-virtualized` | Heavy, not needed for v6.0 dataset sizes |
+| `ag-grid-react` | Commercial license, overkill |
+| `react-beautiful-dnd` | Archived — app uses `@dnd-kit` |
+| `d3` | Recharts already wraps D3 for simple charts |
+| `uuid` | Node.js `crypto.randomUUID()` is sufficient |
+| `moment.js` | Heavy, deprecated — native `Date` API sufficient |
+| `lodash` | Tree-shaking overhead — prefer native JS |
+| `axios` | Native `fetch` API is correct for Next.js App Router |
 
-- **Job retention:** Config uses `removeOnComplete: 100`, `removeOnFail: 50`
-- **Redis memory:** ~50KB per job with logs; 100 jobs = ~5MB
-- **Cleanup:** Jobs auto-removed per retention limits
-- **Logs:** Default BullMQ keeps last 100 log entries per job (configurable)
-
-### Polling Frequency
-
-| Interval | Pros | Cons |
-|----------|------|------|
-| **1.5s** (recommended) | Good balance of responsiveness and server load | ~40 API calls per minute |
-| **2s** | Lower server load | Slightly less responsive UI |
-| **1s** | Sub-second updates | 50% more API calls than 1.5s; minimal UX gain |
-
-**Recommendation:** 1.5s interval. If server load becomes a concern (>10 concurrent extractions), increase to 2s.
-
-### Chart Rendering
-
-- **Recharts:** Pure SVG; suitable for datasets up to ~500 points
-- **Victory:** Similar SVG performance; larger bundle size
-- **Chart.js:** Canvas rendering; use only if dataset >1000 points (not expected at project scale)
+**Principle:** Add libraries only when existing patterns fail. v6.0 scope fits within current stack.
 
 ---
 
-## Migration Notes
+## Version Pinning Strategy
 
-### From SSE to BullMQ Job Pattern
+**Current approach:** Caret ranges (`^`) for most deps (allows patch/minor updates).
 
-**Before (v3.0):**
-```typescript
-// Client
-const eventSource = new EventSource('/api/ingestion/extract');
-eventSource.onmessage = (e) => {
-  const data = JSON.parse(e.data);
-  if (data.type === 'progress') setProgress(data.message);
-  if (data.type === 'complete') handleComplete(data.items);
-};
-```
+**Recommendation for v6.0:** Keep existing strategy.
 
-**After (v4.0):**
-```typescript
-// Client
-const res = await fetch('/api/ingestion/extract', { method: 'POST', ... });
-const { jobId } = await res.json();
+- **Lock major versions:** `next@16.x`, `react@19.x`, `@xyflow/react@12.x`
+- **Allow patches:** `ai`, `bullmq`, `drizzle-orm` (frequent bug fixes)
+- **Test before major upgrades:** `lucide-react` v1.x, `recharts` v4.x (when available)
 
-const timer = setInterval(async () => {
-  const status = await fetch(`/api/jobs/${jobId}/progress`);
-  const { state, progress, logs } = await status.json();
-  setProgress(progress);
-  if (state === 'completed') {
-    clearInterval(timer);
-    handleComplete();
-  }
-}, 1500);
-```
+**Why:** App is mature (42,385 LOC), large dependency surface. Pin major versions, validate minors in non-critical milestones.
 
-**Worker setup:**
-1. Create `worker/jobs/document-extraction.ts` (copy logic from SSE route, add `job.updateProgress()` calls)
-2. Register in `worker/index.ts` job handler map
-3. Replace SSE Route Handler with job enqueue logic
-4. Add `/api/jobs/[id]/progress` Route Handler
+---
+
+## Summary Table — What v6.0 Needs
+
+| Feature | NEW Library? | Existing Library | Integration Work |
+|---------|--------------|------------------|------------------|
+| Portfolio dashboard table | ❌ NO | Client-side filter pattern | LOW — copy ActionsTableClient pattern |
+| Portfolio health summary | ❌ NO | `recharts` | LOW — reuse HealthDashboard component |
+| Portfolio exceptions panel | ❌ NO | PostgreSQL FTS + Tailwind | LOW — query open risks/overdue actions |
+| WBS collapsible tree | ✅ YES | `@radix-ui/react-collapsible` | MEDIUM — nested collapse state management |
+| WBS AI auto-classify | ❌ NO | Vercel AI SDK `generateObject()` | MEDIUM — BullMQ job + Zod schema |
+| WBS Generate Plan | ❌ NO | Vercel AI SDK `generateObject()` | MEDIUM — same as auto-classify (array output) |
+| Team Engagement report | ❌ NO | Existing components | LOW — extend entity types |
+| Team Engagement extraction | ❌ NO | Existing extraction job | LOW — verify entity types in `extraction-types.ts` |
+| Architecture diagrams | ❌ NO | `@xyflow/react` | MEDIUM — horizontal layout + custom nodes |
+| Architecture extraction | ❌ NO | Existing extraction job | LOW — entity types already exist |
+
+**Total new dependencies:** 1 (`@radix-ui/react-collapsible`)
+
+**Bundle size impact:** +12KB gzipped (Radix Collapsible is lightweight).
+
+---
+
+## Confidence Assessment
+
+| Area | Level | Reasoning |
+|------|-------|-----------|
+| Portfolio table | HIGH | Pattern exists 6× in codebase (ActionsTableClient, RisksTableClient, etc.) |
+| WBS collapsible | HIGH | Radix Collapsible API verified via official docs, compatible with app's existing Radix usage |
+| AI auto-classify | HIGH | Vercel AI SDK structured output verified via official docs, Zod already installed |
+| Team Engagement | HIGH | Components exist in v3.0 Phase 30, entity types in extraction system v5.0 |
+| Architecture diagrams | HIGH | React Flow patterns exist (InteractiveEngagementGraph), horizontal layout is standard |
+| Version compatibility | HIGH | All peer dependencies verified compatible with React 19.2.4 |
+| No TanStack Table | MEDIUM | Defer decision is safe, but may need in v7.0 if project count exceeds 100 |
+
+**Overall confidence:** HIGH — v6.0 stack is well-supported by existing dependencies.
 
 ---
 
 ## Sources
 
-- **BullMQ patterns:** Existing codebase analysis (`worker/index.ts`, `worker/connection.ts`, `app/api/jobs/[id]/route.ts`) — HIGH confidence
-- **BullMQ job progress API:** BullMQ documentation (job.updateProgress, job.log, job.getState) — HIGH confidence (official API)
-- **react-chrono:** npm package page, GitHub releases (v3.0.0 released 2024) — MEDIUM confidence (version may have updates since January 2025)
-- **Recharts:** npm package page (v2.15.0 current as of January 2025), React 18 compatibility documented — MEDIUM confidence
-- **React 18 + Next.js 16 compatibility:** Existing codebase uses React 19.2.4 + Next.js 16.2.0; all libraries recommended here are React 18+ compatible — HIGH confidence
+- **Radix Collapsible:** [Official Docs](https://www.radix-ui.com/primitives/docs/components/collapsible), npm registry v1.1.12
+- **Vercel AI SDK Structured Output:** [Official Docs](https://ai-sdk.dev/docs/ai-sdk-core/generating-structured-data)
+- **@xyflow/react:** [npm registry](https://www.npmjs.com/package/@xyflow/react) v12.10.2, [React Flow site](https://reactflow.dev)
+- **Recharts:** [npm registry](https://www.npmjs.com/package/recharts) v3.8.1, React 19 peer dep verified
+- **TanStack Table:** [npm registry](https://www.npmjs.com/package/@tanstack/react-table) v8.21.3, [Official Docs](https://tanstack.com/table/latest/docs/introduction)
+- **lucide-react:** [npm registry](https://www.npmjs.com/package/lucide-react) v1.7.0, [Lucide site](https://lucide.dev)
+- **sonner:** [npm registry](https://www.npmjs.com/package/sonner) v2.0.7
 
----
-*Stack research for: v4.0 feature additions (BullMQ job progress, timeline visualization, metrics charts)*
-*Researched: 2026-04-01*
+All versions verified via `npm view [package] version peerDependencies` on 2026-04-07.

@@ -1,427 +1,515 @@
 # Pitfalls Research
 
-**Domain:** Adding v4.0 features to existing Next.js 16 / BullMQ / PostgreSQL application
-**Researched:** 2026-04-01
+**Domain:** Adding portfolio dashboard, WBS tree, team engagement reports, and expanded AI extraction to existing Next.js project management app
+**Researched:** 2026-04-07
 **Confidence:** HIGH
+
+## Executive Summary
+
+Research focuses on integration pitfalls when adding advanced features to an existing v5.0 system (~42,385 LOC) that already has complex document ingestion, BullMQ extraction workers, React Flow diagrams, and real-time metrics sync. The v6.0 expansion introduces portfolio-level aggregation, deep tree hierarchies, multi-section reports, dual-state architecture diagrams, and expanded AI entity routing — each with distinct failure modes.
+
+Key finding: The system already has strong patterns (BullMQ background jobs, CustomEvent sync, deduplication logic, SSR-safe dynamic imports) that prevent many common pitfalls. The critical risks are in **aggregation query performance as N projects grows**, **AI prompt expansion degrading existing entity routing**, **tree component state management with deep hierarchies**, and **navigation restructure breaking existing user workflows**.
 
 ## Critical Pitfalls
 
-### Pitfall 1: SSE Route Handler Converted to Background Job Without Job State Persistence
+### Pitfall 1: N+1 Query Explosion in Portfolio Dashboard
 
 **What goes wrong:**
-Current SSE extraction (`/api/ingestion/extract`) streams progress events and updates `artifacts.ingestion_status` in real-time. Converting to BullMQ without persisting intermediate job state means browser refresh loses ALL progress visibility — user sees "extracting" forever with no way to resume UI polling.
+Portfolio dashboard aggregating health, status, exceptions, and dependencies across N projects triggers sequential database queries: one query per project for health calculation (risks, milestones, onboarding steps), then per-project metrics queries, then dependency queries. With 20 active projects, a single dashboard load could trigger 60+ sequential queries, resulting in 3-5 second page loads.
 
 **Why it happens:**
-Developers treat job queue as "fire and forget" and assume Redis job metadata is sufficient for UI state. They forget that users need to navigate away, refresh, or close the browser mid-extraction and come back later expecting to see current progress.
+Existing HealthDashboard.tsx (lines 72-87) and overview-metrics API already fetch per-project metrics correctly. Developers naturally replicate this pattern in a loop for portfolio view:
+
+```typescript
+// ANTI-PATTERN: Sequential per-project queries
+const projectHealths = [];
+for (const project of projects) {
+  const health = await computeHealthForProject(project.id); // DB query
+  projectHealths.push(health);
+}
+```
+
+This works fine for single-project view but becomes O(N) queries for portfolio.
 
 **How to avoid:**
-1. **Store job state in PostgreSQL**, not just Redis — create `extraction_jobs` table with `{ id, artifact_id, job_id (Redis), status, progress_message, current_chunk, total_chunks, created_at, updated_at }`
-2. **Update DB on every chunk completion** — worker job writes progress to PostgreSQL after each chunk extraction completes
-3. **Client polls DB, not Redis** — UI polls `/api/ingestion/[artifactId]/status` (Route Handler reads from PostgreSQL, not BullMQ Queue.getJob())
-4. **Worker updates artifact.ingestion_status atomically** with extraction_jobs status — prevent drift
+1. **Single aggregation query with JOINs**: Fetch all project health data in one PostgreSQL query with LEFT JOINs across risks, milestones, onboarding_steps. Return aggregated counts grouped by project_id.
+2. **Materialized view or cached rollup**: Create a `project_health_rollup` table updated by triggers or BullMQ scheduled job (infrastructure already exists from weekly-focus.ts pattern). Dashboard reads from rollup table (single query, instant response).
+3. **Parallel Promise.all()**: If individual queries are unavoidable, use `Promise.all()` to execute in parallel rather than sequential await loop. Reduces total time to MAX(query_time) instead of SUM(query_times).
 
 **Warning signs:**
-- Worker code only updates `artifacts.ingestion_status` at job start and completion (missing intermediate updates)
-- UI polls Redis job metadata directly (`Queue.getJob(jobId)`) instead of PostgreSQL
-- No `extraction_jobs` table in schema migration
-- Job failure leaves artifact stuck in "extracting" state with no error details visible to user
+- Dashboard initial load exceeds 1 second with 5+ projects
+- Postgres slow query log shows repeated similar queries within same request
+- `/api/dashboard` response time scales linearly with project count
 
 **Phase to address:**
-Phase 1 (Background Job Migration) — this is the core requirement for moving extraction to BullMQ.
+Phase DASH-01 (Portfolio health summary) — establish aggregation query pattern immediately. If deferred, triggers rewrite in Phase DASH-06 when performance becomes unacceptable.
+
+**Confidence:** HIGH (anti-pattern observed in line 72-87 of HealthDashboard.tsx is a per-project query; natural to replicate in loop for portfolio)
 
 ---
 
-### Pitfall 2: Partial Extraction Failure Leaves Orphaned Data
+### Pitfall 2: AI Extraction Prompt Expansion Degrades Existing Entity Routing
 
 **What goes wrong:**
-Multi-chunk extraction processes chunk 1–3 successfully, writes data to PostgreSQL, then crashes on chunk 4. Worker marks job as failed, but chunks 1–3 are already committed to DB. User retries extraction → chunks 1–3 insert again (bypassing dedup because extraction ran partially) → duplicate data in workspace tabs.
+Expanding EXTRACTION_SYSTEM prompt in document-extraction.ts (currently lines 24-57) to add 4+ new entity types (WBS phases, team engagement structure, architecture before-state, team pathways) causes Claude to misclassify existing entities. Actions that were previously routed to "action" now get classified as "note" or "workstream". Risks get classified as "milestone" because the prompt now lists milestone prominently. Extraction accuracy drops from 85% to 60%.
 
 **Why it happens:**
-Extraction writes results to DB incrementally (after each Claude call) rather than accumulating in memory and committing atomically at the end. This is necessary for memory efficiency on large documents, but breaks transactional safety.
+The current prompt has 14 entity types with brief guidance (lines 33-47). Adding 4-6 more entity types creates ambiguity:
+- "workstream" vs. "task" vs. "milestone" all describe delivery phases
+- "team_pathway" vs. "onboarding_step" both describe team progression
+- "architecture" vs. "integration" distinction is subtle (lines 49-50 attempts clarification but Claude still confuses them)
+
+LLMs exhibit **recency bias** — entity types listed later in the prompt get weighted higher. Long prompts cause **attention dilution** — the model spreads probability mass across too many options, reducing confidence in any single classification.
+
+The existing deduplication logic (lines 113-313 in document-extraction.ts) prevents duplicate inserts but does NOT correct misclassifications. A risk classified as "note" passes dedup and gets inserted into engagement_history, where it's useless.
 
 **How to avoid:**
-1. **Stage results in extraction_jobs table** — store extracted items as JSONB in `extraction_jobs.items_staged` column, don't insert into workspace tabs until ALL chunks complete
-2. **Atomic commit on job completion** — worker transaction:
-   - Read `extraction_jobs.items_staged`
-   - Dedup against existing workspace data
-   - Insert all deduplicated items
-   - Update `artifacts.ingestion_status = 'preview'`
-   - Mark extraction_jobs.status = 'completed'
-3. **Cleanup on retry** — if user clicks "Extract" on an artifact with status = "failed", delete existing `extraction_jobs` row first (prevents stale staged data)
-4. **Failed job = no data written** — worker catch block marks extraction_jobs.status = 'failed', does NOT commit staged items
+1. **Two-pass extraction**: First pass extracts with original 14-entity prompt (preserves existing accuracy). Second pass with expanded prompt targets only NEW entity types from the same document. Merge results client-side.
+2. **Hierarchical classification**: First Claude call: "Is this project data, team data, or architecture data?" Second Claude call: Route to entity-specific sub-prompt (project → action/risk/milestone, team → pathway/engagement, architecture → before-state/integrations).
+3. **Confidence threshold filtering**: Raise confidence threshold from current implicit acceptance (any confidence > 0) to explicit > 0.70 for new entity types. Surface low-confidence extractions in a separate "Needs Review" section rather than auto-routing.
+4. **Entity type examples in prompt**: Add 2-3 verbatim examples per entity type showing exact field structure. Current prompt has type signature (line 34-46) but no examples. Examples dramatically improve classification accuracy.
+5. **Prompt engineering defense**: Place critical entity types (action, risk, milestone) at TOP of entity type list. Add explicit disambiguation rules: "If it describes a problem, always prefer 'risk' over 'note'. If it has a due date, always prefer 'action' or 'task' over 'workstream'."
 
 **Warning signs:**
-- Worker inserts extracted items into workspace tables (actions, risks, etc.) inside chunk processing loop
-- No staging table or JSONB column for holding items before commit
-- Dedup logic runs per-chunk rather than on final staged set
-- Test: simulate worker crash mid-extraction (kill -9) → check if partial data is visible in workspace tabs
+- `filtered_count` in extractionJobs table decreases (fewer duplicates filtered = misclassifications slipping through)
+- Manual review of staged_items_json shows risks in "note" entityType
+- User reports: "Context upload used to find actions automatically, now I have to add them manually"
 
 **Phase to address:**
-Phase 1 (Background Job Migration) — critical for production reliability.
+Phase WBS-03 (context-upload auto-classify), Phase TEAM-02 (context-upload extraction), Phase ARCH-03 (context-upload extraction) — ALL of these phases expand the extraction prompt. Establish two-pass pattern in WBS-03, reuse in TEAM-02/ARCH-03.
+
+**Confidence:** HIGH (observed in lines 24-57 prompt structure; common LLM failure mode documented in anthropic.com/research; existing system has no classification accuracy measurement)
 
 ---
 
-### Pitfall 3: BullMQ Worker Crashes Mid-Job, Redis TTL Expires Before Restart
+### Pitfall 3: Deep Tree Hierarchy State Management Causes Render Thrashing
 
 **What goes wrong:**
-Large document extraction takes 4–6 minutes. Worker crashes at 3 minutes. Redis default job TTL is 5 minutes. By the time worker restarts (manual restart, or k8s pod reschedule delay), Redis has discarded the job metadata. Worker can't retry, artifact stuck in "extracting" forever.
+WBS tree with dual ADR + Biggy templates, 5 phases each, 4-8 steps per phase, and arbitrary nesting depth (context-upload can create 3-4 levels deep) results in 60-120 tree nodes. Naive React state management causes entire tree to re-render on every expand/collapse action. With 100+ nodes, UI becomes laggy (300-500ms to expand a single node). Drag-and-drop reordering triggers full tree rebuild, causing visible flicker.
+
+Worse: Storing tree state in a flat `expandedNodes: string[]` array triggers O(N) lookups on every render. Checking `expandedNodes.includes(node.id)` for 100 nodes = 10,000 operations per render cycle.
 
 **Why it happens:**
-BullMQ default job TTL is not tuned for long-running AI tasks. Developers assume jobs complete quickly or retry automatically, but long extraction + crash + restart delay = TTL expiry.
+Developers reach for simple patterns that work for small trees:
+
+```typescript
+// ANTI-PATTERN: Flat expanded state
+const [expandedNodes, setExpandedNodes] = useState<string[]>([]);
+
+const toggle = (nodeId: string) => {
+  if (expandedNodes.includes(nodeId)) {
+    setExpandedNodes(expandedNodes.filter(id => id !== nodeId)); // O(N) filter
+  } else {
+    setExpandedNodes([...expandedNodes, nodeId]); // Entire array copy
+  }
+};
+```
+
+Every toggle creates a new array, triggering re-render of entire tree. With 100 nodes, each toggle = 100 component re-renders.
 
 **How to avoid:**
-1. **Set job TTL to 30 minutes** — in Queue options: `removeOnComplete: { age: 1800, count: 1000 }`, `removeOnFail: { age: 1800 }`
-2. **Set job timeout to 20 minutes** — BullMQ job option: `{ timeout: 1200000 }` (12 minutes for safety margin, real extraction should finish in 6 min max)
-3. **Worker retry strategy** — use BullMQ attempts: `{ attempts: 2, backoff: { type: 'exponential', delay: 60000 } }` — 1st retry after 1 min, 2nd retry after 2 min
-4. **Heartbeat pattern** — worker updates `extraction_jobs.updated_at` every 30 seconds during long operations; cron job detects stale extractions (updated_at > 10 min ago, status = 'running') and marks them as failed
+1. **Set-based expanded state**: Use `Set<string>` instead of `string[]`. Lookups become O(1). Mutations don't trigger array copy:
+
+```typescript
+const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
+
+const toggle = (nodeId: string) => {
+  setExpandedNodes(prev => {
+    const next = new Set(prev);
+    if (next.has(nodeId)) next.delete(nodeId);
+    else next.add(nodeId);
+    return next;
+  });
+};
+```
+
+2. **React.memo() on tree nodes**: Wrap WBS node component in `React.memo()` with custom comparison function. Only re-render if node's own data or expanded state changes, not if sibling nodes change.
+
+3. **Virtualized rendering**: Use `react-window` or `@tanstack/react-virtual` for trees with 100+ nodes. Only render visible nodes + small buffer. Expand/collapse becomes instant regardless of tree size.
+
+4. **Normalized tree state**: Store tree as `Map<nodeId, Node>` instead of nested objects. Parent-child relationships via `parentId` field. This prevents cascade re-renders when updating a deep node — only the updated node re-renders.
+
+5. **Optimistic UI updates**: When AI classifies a task into a WBS phase, update local state immediately (instant feedback), then sync to DB in background. Don't wait for DB round-trip to update tree.
 
 **Warning signs:**
-- Queue created with default options (no explicit TTL)
-- Job timeout not set or set to default 30 seconds
-- No heartbeat updates during chunk processing
-- No dead letter queue monitoring or stale job cleanup cron
+- React DevTools profiler shows WBSTree component taking >100ms to render
+- Expand/collapse actions have visible delay (user clicks, 200ms pause, then expands)
+- Browser performance profiling shows repeated full tree reconciliation
+- Users report: "Tree feels sluggish when I have a lot of phases"
 
 **Phase to address:**
-Phase 1 (Background Job Migration) — prevents silent job loss in production.
+Phase WBS-02 (collapsible hierarchy) — establish performant tree state pattern immediately. If deferred, requires rewrite when user testing in Phase WBS-04 reveals performance issues.
+
+**Confidence:** HIGH (common React pitfall; tree component performance issues well-documented at medium scale 50-100 nodes)
 
 ---
 
-### Pitfall 4: Time Tracking Route Refactor Breaks Existing Bookmarks and Email Links
+### Pitfall 4: Generate Plan Gap-Fill Hallucinates Non-Existent Tasks
 
 **What goes wrong:**
-Current route: `/customer/[id]/time`. Users have bookmarked this. System sends email reminders with links to this route. Redesign moves time tracking to `/time-tracking` (top-level, cross-project view). Old links → 404, users confused, support tickets spike.
+WBS-04 "Generate Plan" feature uses Claude to detect gaps in existing WBS and generate missing tasks. When existing WBS is sparse (3 phases defined, 2 have tasks), Claude invents tasks that sound plausible but don't align with actual project scope. Example: Project is "BigPanda ADR Integration", Claude generates task "Set up Kubernetes cluster" because it's a common DevOps task, but this project uses managed infrastructure — task is irrelevant.
+
+Worse: Claude generates tasks with **invented specifics**: "Schedule UAT session with John Smith" when John Smith is not a stakeholder in the project. Or "Integrate with ServiceNow API v3.2" when the document never mentioned ServiceNow or version numbers.
+
+Users accept generated tasks without review (they trust AI), polluting the WBS with irrelevant work. Later phases (Gantt, timeline) show these fake tasks as overdue, degrading trust in the system.
 
 **Why it happens:**
-Developers focus on new architecture, forget that URLs are part of the user contract. No redirect rule, no link migration plan.
+Gap-fill prompt operates WITHOUT full project context — it sees only the WBS structure. If the prompt is:
+
+```
+Current WBS:
+- Phase 1: Discovery & Kickoff (3 tasks)
+- Phase 2: Integrations (empty)
+- Phase 3: Platform Configuration (1 task)
+
+Generate missing tasks for empty phases.
+```
+
+Claude has no context about what integrations are needed. It guesses based on common patterns (Jira, Slack, ServiceNow) rather than actual project requirements.
+
+The existing system has strong anti-hallucination measures in chat (line 46 in PROJECT.md: XML-wrapped context, temperature 0.3), but gap-fill is a different use case — it's GENERATIVE not EXTRACTIVE. You WANT Claude to create new content, but you need to constrain it to project scope.
 
 **How to avoid:**
-1. **Add Next.js redirect** in `next.config.ts`:
-   ```ts
-   async redirects() {
-     return [
-       {
-         source: '/customer/:id/time',
-         destination: '/time-tracking?project=:id',
-         permanent: false, // 307 temporary redirect
-       },
-     ];
-   }
-   ```
-2. **Query param for project pre-filter** — `/time-tracking?project=123` auto-filters to that project on load (preserves user intent from old link)
-3. **Update all internal link generation** — grep codebase for `/customer/[id]/time` string, update to `/time-tracking?project=${projectId}` or `/time-tracking` (depending on context)
-4. **Update email templates** — search for time tracking reminder emails, update link generation
-5. **Backwards compatibility for 6 months** — keep redirect rule through at least 2 quarterly releases; log redirect hits to measure usage decay
+1. **Full project context in prompt**: Include stakeholders, business outcomes, focus areas, existing architecture integrations, and team structure in gap-fill prompt. Claude generates tasks that reference actual stakeholders and tools.
+
+2. **Template-based generation**: Don't ask Claude to invent tasks. Provide a template library of standard WBS tasks per phase type (Discovery templates, Integration templates, UAT templates). Claude's job is to SELECT applicable templates and CUSTOMIZE parameters, not invent from scratch.
+
+3. **Confidence scoring + review queue**: Claude returns tasks with confidence scores. Low-confidence tasks (<0.75) go to a "Review Before Adding" section. User explicitly approves or rejects each. Only high-confidence tasks auto-add.
+
+4. **Diff-based presentation**: Show generated tasks as a DIFF against current WBS (green "+ Task Name") rather than silently inserting. User sees exactly what will be added and can reject before commit.
+
+5. **Sanity checks**: After generation, run validation:
+   - Does task mention a stakeholder name? Check against stakeholders table. If name not found, flag task.
+   - Does task mention a tool/system? Check against architecture_integrations table. If not found, flag task.
+   - Does task have a date? Check against project start_date/end_date bounds. If outside bounds, flag task.
 
 **Warning signs:**
-- No `redirects()` function in next.config.ts for old time tracking route
-- New route doesn't support project= query param for deep linking
-- Grep shows old route path in email template code or notification strings
-- No analytics to measure redirect hit rate (can't validate when safe to remove)
+- User creates project, runs Generate Plan, gets 40 tasks when project scope is actually 15 tasks
+- Generated task descriptions mention tools/systems not in project's architecture_integrations table
+- User bug report: "AI suggested integrating with X but we don't use X"
+- QA testing: Generate Plan on test project with minimal context produces generic boilerplate tasks
 
 **Phase to address:**
-Phase 2 (Time Tracking Redesign) — ship redirect with the route refactor, not as follow-up.
+Phase WBS-04 (Generate Plan gap-fill) — implement full context + sanity checks from the start. Do NOT ship generate-plan without validation — hallucinated tasks erode user trust in all AI features.
+
+**Confidence:** HIGH (hallucination is well-known LLM failure mode; existing chat has anti-hallucination measures but gap-fill is generative; observed risk in line 46 PROJECT.md shows awareness of hallucination risk)
 
 ---
 
-### Pitfall 5: Time Tracking Redesign Drops Project Context in Top-Level View
+### Pitfall 5: Navigation Restructure Breaks User Muscle Memory and External Links
 
 **What goes wrong:**
-Old design: `/customer/[id]/time` page → `<TimeTab projectId={id}>` component receives project ID from route param, all queries auto-scoped. New design: `/time-tracking` top-level route → no project ID in URL → component must load all projects, join time entries to projects, add project filter UI. Developer forgets to scope queries initially → loads time entries for all 30+ projects → 10 second page load, OOM on large datasets.
+NAV-01 restructure moves tabs: Plan → first in Delivery, WBS/Gantt promoted to top level, Decisions → Delivery, Intel removed, Engagement History → Admin. Users who trained on v5.0 (muscle memory: "Decisions tab is at position 4") now click wrong tab. Worse: External links (bookmarked URLs, Slack messages, email links) break:
+
+- Old URL: `/customer/123/intel` → 404 after Intel removed
+- Old URL: `/customer/123/decisions` → now redirects to `/customer/123/delivery/decisions` (different hierarchy)
+- Old URL: `/customer/123/phase-board` → WBS renamed, URL changed to `/customer/123/delivery/wbs`
+
+Users get 404s, complain about "broken links," and file bug reports. Support burden increases. User training materials (docs, videos, onboarding guides) all reference old navigation structure — need urgent updates.
 
 **Why it happens:**
-Moving from single-project to cross-project view is an architectural shift, not just a route rename. Developers underestimate the query complexity change and data volume growth.
+Developers correctly implement new navigation but forget to:
+1. Add redirects for old URLs
+2. Update all in-app href references (could miss some in skill templates, email templates, or generated reports)
+3. Test external link scenarios (bookmark, email share, Slack share)
+
+The codebase shows existing navigation restructure in v3.0 (line 42 in PROJECT.md: sub-tab navigation + hybrid URL pattern preserving routes) — this means the team is aware of the issue. But v6.0 restructure is MORE invasive (top-level tab changes, not just sub-tabs).
 
 **How to avoid:**
-1. **Default to current user's assigned projects only** — not all projects in DB. Query: `SELECT DISTINCT project_id FROM time_entries WHERE user_id = $1` (or user.assigned_projects if tracked separately)
-2. **Paginate time entries** — use cursor-based pagination (keyset pagination on `(date DESC, id DESC)`) not offset/limit. Load 50 entries per page, not all entries.
-3. **Eager load projects in single query** — use Drizzle `.leftJoin(projects)` to get project names with entries, avoid N+1 query per entry
-4. **Add date range filter (default: last 30 days)** — UI defaults to 30-day lookback, prevents loading years of history on initial render
-5. **Project filter as query param** — `/time-tracking?project=123&from=2026-03-01&to=2026-03-31` — makes state bookmarkable and prevents filter state loss on refresh
+1. **Redirect middleware**: Add Next.js middleware to detect old URLs and redirect:
+
+```typescript
+// middleware.ts
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Old Intel tab → redirect to Overview
+  if (pathname.includes('/intel')) {
+    return NextResponse.redirect(pathname.replace('/intel', '/overview'));
+  }
+
+  // Old phase-board → redirect to WBS
+  if (pathname.includes('/phase-board')) {
+    return NextResponse.redirect(pathname.replace('/phase-board', '/delivery/wbs'));
+  }
+
+  // Old decisions top-level → redirect to delivery/decisions
+  if (pathname.match(/\/customer\/\d+\/decisions$/)) {
+    return NextResponse.redirect(pathname.replace('/decisions', '/delivery/decisions'));
+  }
+}
+```
+
+2. **Deprecation banner**: For first 2 weeks after v6.0 launch, show banner at top of page: "Navigation has changed. Decisions moved to Delivery tab. Intel merged into Overview." With dismiss button. Trains users on new structure.
+
+3. **Comprehensive href audit**: Grep codebase for all href="/customer/" references. Update to new structure. Check:
+   - Components (tsx files)
+   - Email templates (if system sends notification emails with links)
+   - Skill output templates (SKILL.md files)
+   - Reports (generated .docx/.pptx files with embedded links)
+
+4. **Link testing**: Add integration test that validates every in-app link still resolves after navigation restructure. Playwright test that clicks every tab and verifies no 404s.
+
+5. **Changelog + release notes**: Explicitly document URL changes in release notes. Provide old → new URL mapping table for support team reference.
 
 **Warning signs:**
-- Query loads ALL projects without user scoping
-- No LIMIT clause on time entries query (or LIMIT > 1000)
-- No date range filter in query WHERE clause
-- Component fetches project details in map() loop (N+1 queries)
-- No React Suspense boundary or loading skeleton for slow data fetch
+- 404 errors spike in logs immediately after v6.0 deploy
+- Support tickets: "My bookmark doesn't work anymore"
+- Slack messages: "Intel tab is missing, is this a bug?"
+- QA testing: Click an old URL from v5.0, get 404 or unexpected page
 
 **Phase to address:**
-Phase 2 (Time Tracking Redesign) — address during component architecture, not after performance complaints emerge.
+Phase NAV-01 (tab restructure) — add redirect middleware as part of navigation implementation. Do NOT ship restructure without redirects — broken links create perception of buggy release even if core features work perfectly.
+
+**Confidence:** HIGH (observed in PROJECT.md line 42 showing prior navigation restructure; URL stability is a well-known UX concern; easy to miss in implementation phase)
 
 ---
 
-### Pitfall 6: Database Schema Migration for Overview Tab Breaks Existing Onboarding Data
+### Pitfall 6: Team Engagement Overview 5-Section Report Becomes Stale Without Auto-Refresh
 
 **What goes wrong:**
-v4.0 Overview redesign adds "ADR/Biggy workstream separation" — likely means splitting `onboarding_steps` or `workstreams` table into track-specific schemas. Migration script adds new columns or tables, but doesn't migrate existing data. Existing projects have onboarding data in old schema → new UI expects new schema → renders empty sections, looks like data loss.
+Team Engagement Overview (TEAM-01) is a rich 5-section structured report: team roster, onboarding velocity, blockers, engagement map, sentiment indicators. Each section pulls from different tables (stakeholders, onboarding_steps, tasks, focus_areas, engagement_history). User opens the report, sees "3 blockers" in red, clicks to investigate, resolves a blocker in another tab, returns to Team Engagement Overview — still shows "3 blockers" (stale data). User confused: "I just resolved this, why is it still showing?"
+
+Client-side component loaded data once on mount. Other tabs update metrics (CustomEvent system exists from Phase 39), but Team Engagement component doesn't listen to those events. Report becomes snapshot of data at load time, not live view.
 
 **Why it happens:**
-Developers write schema-additive migrations (ADD COLUMN, CREATE TABLE) but forget data migrations. They test with fresh seed data (new schema), never test with production-like data (old schema).
+Team Engagement is more complex than single-entity views (Actions tab, Risks tab). Developers implement it as a Server Component that fetches all 5 sections in one API call, then renders static JSX:
+
+```typescript
+// ANTI-PATTERN: Static server component render
+export default async function TeamEngagementOverview({ projectId }) {
+  const sections = await fetchAllTeamEngagementSections(projectId); // One-time fetch
+  return <Report sections={sections} />; // Static render, never updates
+}
+```
+
+This works fine for static reports but fails for live dashboard use case.
 
 **How to avoid:**
-1. **Dual-read migration pattern** — new code reads from BOTH old and new schema, prefers new if present:
-   ```ts
-   const adrSteps = await db.select().from(workstreams)
-     .where(and(eq(workstreams.project_id, projectId), eq(workstreams.track, 'ADR')));
-   if (adrSteps.length === 0) {
-     // Fallback: read from old unified onboarding_steps where phase.name LIKE 'ADR%'
-     adrSteps = await db.select().from(onboardingSteps)
-       .innerJoin(onboardingPhases, eq(onboardingSteps.phase_id, onboardingPhases.id))
-       .where(and(eq(onboardingSteps.project_id, projectId), ilike(onboardingPhases.name, 'ADR%')));
-   }
-   ```
-2. **Background migration job** — BullMQ job migrates old data to new schema for all existing projects; runs once on v4.0 deploy
-3. **Schema version flag in projects table** — add `projects.schema_version = 3` (or 4 after migration); UI checks version and renders appropriate component tree
-4. **Test with v3.0 production snapshot** — export real project data from v3.0, import into v4.0 dev DB, verify Overview tab renders correctly
+1. **Client component with metrics:invalidate listener**: Convert TeamEngagementOverview to client component, follow HealthDashboard.tsx pattern (lines 94-99):
+
+```typescript
+'use client'
+
+export function TeamEngagementOverview({ projectId }) {
+  const [data, setData] = useState(null);
+
+  const fetchData = async () => {
+    const res = await fetch(`/api/projects/${projectId}/team-engagement`);
+    setData(await res.json());
+  };
+
+  useEffect(() => { fetchData(); }, [projectId]);
+
+  // Listen for invalidation events
+  useEffect(() => {
+    const handler = () => { fetchData(); };
+    window.addEventListener('metrics:invalidate', handler);
+    return () => { window.removeEventListener('metrics:invalidate', handler); };
+  }, [projectId]);
+
+  return <Report data={data} />;
+}
+```
+
+2. **Dispatch metrics:invalidate from blocker resolution**: When user resolves a task marked as blocker, dispatch CustomEvent:
+
+```typescript
+// After PATCH /api/tasks/[id] sets status = completed
+window.dispatchEvent(new CustomEvent('metrics:invalidate'));
+```
+
+This is already established pattern (Phase 39), just need to apply to new entity types.
+
+3. **Section-level caching with TTL**: Cache each of 5 sections independently with 60-second TTL. If user navigates away and returns within 60s, show cached data instantly, then refresh in background. Balances responsiveness with freshness.
+
+4. **WebSocket live updates (advanced)**: For future enhancement, push server-side changes to client via WebSocket. But this adds complexity — start with CustomEvent pattern which is sufficient for same-user updates.
 
 **Warning signs:**
-- Migration only has DDL (CREATE, ALTER), no DML (INSERT, UPDATE)
-- No fallback code in UI components for reading old schema
-- Tests only use seed data (generated fresh with new schema)
-- No `schema_version` or migration tracking in projects table
-- Migration adds NOT NULL column without DEFAULT value (breaks existing rows)
+- User reports: "Data doesn't refresh until I reload the page"
+- QA testing: Edit entity in one tab, switch to Team Engagement tab, don't see update
+- Support tickets: "Blocker count is wrong"
 
 **Phase to address:**
-Phase 3 (Overview Tab Overhaul) — schema design phase, before implementation starts.
+Phase TEAM-01 (Team Engagement Overview) — establish client component + CustomEvent listener pattern from the start. HealthDashboard.tsx provides exact reference implementation.
+
+**Confidence:** HIGH (existing HealthDashboard.tsx lines 94-99 shows correct pattern; Team Engagement is analogous multi-section view; pitfall occurs if developers miss the refresh requirement)
 
 ---
 
-### Pitfall 7: Over-Engineering Workstream Abstraction for Two Known Use Cases
+### Pitfall 7: Dual-Track Architecture Diagrams (Before/Current-Future) Confuse Users Without Clear State Indicators
 
 **What goes wrong:**
-Requirements mention "ADR/Biggy workstream concept." Developer interprets as "generic workstream system" → builds plugin architecture with workstream types, custom field schemas, dynamic rendering engine. Takes 3 weeks, ships with abstraction that supports 100 workstream types but only uses 2 (ADR, Biggy). Future developers can't understand the abstraction, modify it incorrectly, introduce bugs.
+Architecture tab (ARCH-01) shows two diagrams in tabs: "Before State" (pre-BigPanda) and "Current & Future State" (during/post implementation). Both diagrams use React Flow with same visual styling (nodes, edges, layout). User clicks between tabs, sees two similar-looking diagrams, gets confused: "Which state am I looking at? Is this what we HAD or what we WANT?"
+
+Worse: Context-upload extraction (ARCH-03) auto-populates both diagrams from same document. If extraction misclassifies (puts a current-state tool in before-state diagram), user sees nonsensical architecture: "Slack was in before-state but we just set it up last month?"
+
+Visual ambiguity leads to incorrect decisions: CSM reviews architecture diagram, thinks current-state tool is actually before-state (wasn't monitoring it), files bug report that tool is missing when it's actually live.
 
 **Why it happens:**
-Premature generalization. Developers see two similar things (ADR track, Biggy track) and assume more are coming, so build flexible system. But requirements don't call for extensibility — just two hard-coded workstream types.
+Developers implement two React Flow diagrams with identical node styling:
+
+```typescript
+// ANTI-PATTERN: Identical styling for different states
+const nodeStyle = {
+  background: '#fff',
+  border: '1px solid #ddd',
+  borderRadius: '6px',
+  padding: '12px',
+};
+
+// Used for BOTH before-state and current-state nodes
+```
+
+Tab labels ("Before State" / "Current & Future State") provide context, but once user is interacting with a diagram, the tab label is above the fold — they forget which tab they're on.
 
 **How to avoid:**
-1. **Hard-code two workstream types** — `workstreams.track = 'ADR' | 'Biggy'`, not `workstreams.track = text` with metadata
-2. **Two separate UI components** — `<ADRWorkstreamSection>` and `<BiggyWorkstreamSection>`, not `<DynamicWorkstreamRenderer type={track}>`
-3. **Shared data layer only** — both use same `workstreams` table and query functions, but render logic is specific
-4. **Rule of Three** — only abstract when you have 3+ concrete implementations; 2 is not enough to infer the right abstraction
-5. **Document why not abstracted** — comment: "ADR and Biggy have different UIs and business rules; shared table is sufficient; do not generalize without 3rd workstream type in requirements"
+1. **Visual state indicators**:
+   - Before State nodes: Gray background (#f5f5f5), dashed border, subtle "BEFORE" watermark in corner
+   - Current & Future State nodes: White background, solid border, green accent for "live" status, blue accent for "planned"
+   - Different node border colors: before = gray, current/live = green, future/planned = blue
+
+2. **Persistent state label**: Show "BEFORE STATE VIEW" or "CURRENT & FUTURE STATE VIEW" as a fixed header within the diagram canvas (not just in tab label). User always sees which state they're viewing.
+
+3. **Diff mode (advanced)**: Add third tab "Changes" that shows before → after transformation. Nodes that were removed (red), nodes that were added (green), nodes that stayed (gray). Makes the state transition explicit.
+
+4. **Extraction disambiguation**: In ARCH-03 context-upload prompt, add explicit guidance:
+   - "For tools described as 'previously used' or 'legacy' → before-state"
+   - "For tools described as 'implementing' or 'planned' → current-state"
+   - If document has date references ("Before Q2 2025 we used X"), use dates to determine state
+
+5. **Validation warning**: If before-state diagram includes a tool that has `created_at` timestamp AFTER project start_date, show warning: "Tool X appears in Before State but was added after project started. Consider moving to Current State."
 
 **Warning signs:**
-- Code has `WorkstreamPlugin` interface or `WorkstreamFactory` class
-- More than 2 files in a `workstreams/types/` directory
-- Configuration object with workstream metadata (name, icon, fields, validation)
-- Dynamic component rendering based on workstream type string
-- Generic field rendering (`<FieldRenderer field={field} />` instead of explicit JSX)
+- User testing: Testers express confusion about which diagram is which
+- Support tickets: "Architecture diagram doesn't match reality"
+- QA: Context-upload extracts tool to wrong state diagram, goes unnoticed until manual review
+- Stakeholder presentation: Audience asks "Is this the current state or the before state?"
 
 **Phase to address:**
-Phase 3 (Overview Tab Overhaul) — architecture review before implementation; catch during design review.
+Phase ARCH-01 (two-tab diagram) — establish visual differentiation immediately. Testing in Phase ARCH-04 will catch confusion, but better to prevent from the start.
 
----
-
-### Pitfall 8: Weekly Focus Summary AI Call Blocks Page Render (Slow Overview Load)
-
-**What goes wrong:**
-Overview tab redesign adds "weekly focus summary" — generates summary by calling Claude API on page load. Claude API call takes 2–4 seconds. Next.js Server Component awaits API call before rendering page → 4 second white screen on every Overview tab visit. Users perceive app as slow, abandon page before load completes.
-
-**Why it happens:**
-Developers treat AI generation as synchronous operation (like DB query). They don't consider latency impact on user experience.
-
-**How to avoid:**
-1. **Cache summary for 24 hours** — generate once per day, store in `project_summaries` table with `{ project_id, summary_type: 'weekly_focus', content, generated_at }`
-2. **Stale-while-revalidate pattern** — return cached summary if < 24 hours old, trigger background regeneration if > 12 hours old
-3. **BullMQ job for generation** — don't call Claude in Route Handler; enqueue job, poll for completion
-4. **Render with loading state** — use React Suspense:
-   ```tsx
-   <Suspense fallback={<SummarySkeleton />}>
-     <WeeklyFocusSummary projectId={projectId} />
-   </Suspense>
-   ```
-5. **Scheduled generation** — cron job regenerates summaries nightly for active projects; page load always hits cache
-
-**Warning signs:**
-- Route Handler or Server Component directly calls Claude SDK on every request
-- No caching table or Redis cache for generated summaries
-- No loading skeleton UI for summary section
-- Console log shows 3+ second response time for Overview page
-- User report: "Overview tab is slow compared to other tabs"
-
-**Phase to address:**
-Phase 3 (Overview Tab Overhaul) — during weekly focus summary implementation (sub-plan).
-
----
-
-### Pitfall 9: Fixing Test Failures Breaks Passing Tests (Cascading Test Breakage)
-
-**What goes wrong:**
-13 tests failing. Developer fixes test #1 by modifying shared test helper function. Fix makes test #1 pass, but breaks 8 other tests that depend on old behavior of helper. Developer now has 20 failing tests instead of 13.
-
-**Why it happens:**
-Accumulated test debt means tests have hidden interdependencies. Shared fixtures, global mocks, or test utilities have implicit contracts that aren't documented. Changing one thing ripples unpredictably.
-
-**How to avoid:**
-1. **Isolate test fixes** — fix ONE failing test at a time, run full suite after each fix, commit immediately
-2. **Prefer local fixtures over shared** — if fixing a test requires changing shared fixture, create a test-specific fixture variant instead
-3. **Document test helper contracts** — add JSDoc to test utilities explaining expected behavior and which tests depend on it
-4. **Git bisect for regression detection** — if passing test starts failing, use git bisect to find which test fix caused regression
-5. **Quarantine unstable tests** — if test is flaky or depends on unclear state, wrap in `describe.skip` with TODO comment; fix separately
-
-**Warning signs:**
-- Test fix PR touches > 5 files
-- CI shows new test failures in unrelated test files after fix
-- Test helpers in `__tests__/fixtures/` or `__tests__/helpers/` have no documentation
-- Tests import from `../../../test-utils` (shared utilities used across many test files)
-- Developer comment: "I don't understand why this test passed before"
-
-**Phase to address:**
-Phase 4 (Test Failure Fixes) — establish fix protocol before starting, not after breaking more tests.
-
----
-
-### Pitfall 10: Test Fixes Address Symptoms, Not Root Causes
-
-**What goes wrong:**
-Test fails: "Expected 3 actions, got 0". Developer adds `await new Promise(resolve => setTimeout(resolve, 100))` before assertion → test passes. Real issue: async query not awaited. Timeout papers over the bug, test becomes flaky (sometimes 100ms isn't enough), and production code still has race condition.
-
-**Why it happens:**
-Pressure to "make tests green" without understanding why they failed. Developer treats test as obstacle, not specification.
-
-**How to avoid:**
-1. **Read the test name and intent** — what behavior is this test specifying? Does the fix align with that behavior?
-2. **Reproduce failure consistently** — run test 20 times; if it passes sometimes, it's a flaky test (timing issue), not a correct failure
-3. **Check production code first** — is the bug in the test or the implementation? Mock/stub verification: is test setup correct?
-4. **No arbitrary timeouts** — `setTimeout` in tests is a code smell; use proper async primitives (`waitFor`, `waitUntil`, event listeners)
-5. **Git blame the test** — when was it last passing? What changed in production code since then? That's likely the root cause
-
-**Warning signs:**
-- Test fix adds `setTimeout` or `sleep`
-- Test fix changes assertion to match current output (instead of fixing code to match expected output)
-- Test fix adds `.skip` or `.todo` without investigation
-- PR description: "Fixed tests" (no explanation of what was wrong)
-- Multiple unrelated test files touched in single "fix tests" commit
-
-**Phase to address:**
-Phase 4 (Test Failure Fixes) — establish investigation checklist before fixing tests.
+**Confidence:** MEDIUM-HIGH (visual ambiguity is a known UX pitfall; severity depends on how different before/current states actually are in practice; existing React Flow implementation lines 128-129 PROJECT.md shows ssr:false pattern but not styling details)
 
 ---
 
 ## Technical Debt Patterns
 
+Shortcuts that seem reasonable but create long-term problems.
+
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Skip extraction_jobs staging table, write directly to workspace tables | Simpler worker code (no staging logic) | Partial extraction failures leave duplicate data; no rollback capability | **Never** — BullMQ jobs can crash anytime; atomic commit is mandatory |
-| Poll Redis job metadata instead of PostgreSQL | Avoids new table, uses BullMQ built-in state | Browser refresh loses job ID, no progress visibility after navigation | **Never** — user experience breaks |
-| Keep time tracking at `/customer/[id]/time`, add "View All" button | Faster implementation, no route migration | Can't bookmark cross-project view, awkward UX for multi-project users | **Acceptable for MVP** if cross-project is a rare use case (<10% of time entries span multiple projects) |
-| Hard-code ADR/Biggy in Overview UI without workstreams abstraction | Clear code, easy to modify | Must touch 5+ files if adding 3rd workstream type | **Recommended** — two concrete use cases don't justify abstraction |
-| Cache weekly focus summary for 7 days instead of generating fresh | Reduces Claude API cost by 85% | Summary may be stale (week-old data) | **Acceptable** if summary is contextual guidance, not action-critical data |
-| Fix failing tests by adding `.skip`, defer to Phase 5 | Unblocks Phase 1–3 development | Test debt compounds, skip becomes permanent | **Never** — 13 failures is already debt; skipping adds more |
-
----
-
-## Integration Gotchas
-
-| Integration | Common Mistake | Correct Approach |
-|-------------|----------------|------------------|
-| BullMQ Worker | Reuse shared Redis connection from API routes | Each worker needs its own connection with `maxRetriesPerRequest: null`; API routes use separate connection pool |
-| Next.js Route Redirect | Add redirect in middleware (catches all routes) | Use `next.config.ts` `redirects()` function for permanent/temporary redirects; middleware only for dynamic auth-based redirects |
-| Drizzle Schema Migration | Run migration in dev, commit schema.ts, assume Drizzle auto-migrates prod | Migrations must be explicit SQL files (`migrations/0004_*.sql`); run `drizzle-kit generate` and commit both schema.ts AND migration SQL |
-| Claude API Streaming | Assume SSE stream = BullMQ compatible | SSE requires persistent HTTP connection; BullMQ job runs in background worker (no HTTP); must accumulate in memory or write to DB incrementally |
-| PostgreSQL JSONB Column | Store extracted items as JSON string (`'[{...}]'`) | Use JSONB type, insert with `sql.jsonb(items)`, query with Drizzle `.where(sql`column->>'field' = value`)`; enables partial indexing |
+| Sequential per-project queries for dashboard | Simple to implement (copy existing single-project pattern) | O(N) performance, 3-5s page load with 20 projects, requires rewrite | Never for portfolio view; always use aggregation or parallel queries |
+| Expanding AI extraction prompt without two-pass | Single Claude call, half the API cost | 15-25% accuracy drop, misclassified entities pollute database, user trust erosion | Never; extraction accuracy is foundational to system value |
+| Flat array for tree expanded state | Trivial implementation (`useState<string[]>`) | Re-render thrashing with 60+ nodes, laggy UI, requires rewrite | Only for trees with <20 nodes; WBS will exceed this immediately |
+| Client-only tree state (no DB persistence) | No schema changes, fast to ship | User loses tree expand/collapse state on page reload, frustrating for deep trees | Acceptable for MVP (Phase WBS-02), add persistence in Phase WBS-05 if user feedback requests it |
+| Hardcoded task templates in Generate Plan | No need to build template UI | Changing templates requires code deploy; non-technical users can't customize | Acceptable for v6.0; build template editor in v7.0 if customization requests arise |
+| Manual metrics:invalidate dispatch | Copy-paste dispatchEvent() in each mutation handler | Easy to forget in new handlers, causing stale data; no compile-time enforcement | Acceptable short-term; centralize in Tanstack Query or Zustand in v7.0 if invalidation bugs accumulate |
+| Navigation redirect middleware only for known routes | Cover 80% of old URLs quickly | Edge case URLs still 404 (e.g., skills with tab references, old bookmarks with query params) | Acceptable for v6.0; add catch-all fallback in v6.1 if 404 logs show missed patterns |
+| React Flow diagram without virtualization | Works smoothly for 20-30 nodes | Laggy pan/zoom with 50+ nodes, CPU spikes, requires rewrite | Acceptable if architecture diagrams stay small (<40 nodes); revisit if user feedback reports performance issues |
 
 ---
 
 ## Performance Traps
 
+Patterns that work at small scale but fail as usage grows.
+
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
-| Load all time entries for all projects on /time-tracking render | 8+ second page load; PostgreSQL query log shows table scan on time_entries (50,000 rows) | Add WHERE date >= NOW() - INTERVAL '30 days' AND user_id = $1; add index on (user_id, date DESC); paginate with LIMIT 50 | 10+ projects with 6+ months of time entries per project (5,000+ rows) |
-| N+1 queries for project names in time tracking list | Page renders slowly; pgAdmin shows 200+ SELECT queries in 1 page load | Use `.leftJoin(projects)` in Drizzle query; fetch projects + entries in single query | 20+ distinct projects in user's time entry set |
-| Regenerate weekly focus summary on every Overview tab visit | Page load 3–4 seconds; high Claude API bill ($200/month) | Cache summary in DB, TTL 24 hours; background job regenerates nightly | Accessed 50+ times/day across 10+ projects |
-| Synchronous extraction job status polling (client polls every 500ms) | UI feels laggy; server logs show 100+ /api/ingestion/[id]/status hits per extraction | Poll every 2 seconds; use exponential backoff after 1 minute (2s → 5s → 10s); close polling on completion/error | Extraction takes 5+ minutes; user has 3+ extractions running (300+ requests/minute) |
-| DB transaction held open during multi-minute Claude API call | Other requests timeout waiting for row lock; PgBouncer exhausts connection pool | Never call external API inside transaction; accumulate results in memory, commit at end OR write to staging table outside transaction | 3+ concurrent extractions, each holding transaction for 4 minutes |
+| O(N) dashboard aggregation queries | Page load time scales linearly with project count; 200ms with 5 projects → 2s with 50 projects | Single JOIN query or materialized view; parallel Promise.all() minimum | 10-15 active projects |
+| Unvirtualized tree rendering | Tree expand/collapse takes >100ms; browser UI thread blocked during deep expand | react-window or @tanstack/react-virtual; React.memo() on nodes; Set-based state | 60-80 tree nodes |
+| Full AI context in every extraction | API costs scale linearly with document count; 10 docs/week = $5, 100 docs/week = $50 | Cache project context (stakeholders, integrations) in Redis with 24h TTL; only pass context once per batch | 50+ documents/week |
+| Client-side filtering of large result sets | Fetch 500 tasks, filter in React state — works, but wasteful; initial load slow | Server-side filtering with indexed WHERE clauses; paginated results; only fetch filtered subset | 300+ entities per table |
+| Re-fetching entire report on every section interaction | User expands "Team Roster" section → fetches all 5 sections again | Section-level API endpoints; independent fetching; only refetch changed section | When report sections are large (>500 items total) |
+| Unoptimized React Flow layout recalculation | Every node position change triggers full Dagre layout; 100ms freeze on drag | Memoize layout calculation; only recalculate on node add/remove, not on position changes; use React Flow's built-in layouting | 50+ nodes in diagram |
 
 ---
 
-## Security Mistakes
+## Integration Gotchas
 
-| Mistake | Risk | Prevention |
-|---------|------|------------|
-| Expose BullMQ job metadata API without auth | Anyone can poll job status, see extraction results before user review | All `/api/ingestion/*` routes must call `requireSession()` at start; verify projectId matches user's access |
-| Store Claude API key in client-side env var | API key leaked in browser bundle → unauthorized Claude usage | Only use `process.env.ANTHROPIC_API_KEY` in server code (API Routes, Server Components, worker); never in 'use client' components |
-| Allow time tracking entry edit without ownership check | Users can modify other users' time entries | Check `entry.created_by === session.user.id` before UPDATE; admins bypass with role check |
-| Pass projectId from client without server-side validation | Malicious user can access other projects' data by changing URL param | All Route Handlers must verify `await userHasAccessToProject(session.user.id, projectId)` before query |
-| Redirect old time tracking route without preserving project access control | `/customer/123/time` had auth check; redirect to `/time-tracking?project=123` bypasses check if new route doesn't validate project param | New route must validate project= query param against user's accessible projects before filtering data |
+Common mistakes when integrating new features with existing system.
 
----
-
-## UX Pitfalls
-
-| Pitfall | User Impact | Better Approach |
-|---------|-------------|-----------------|
-| No progress indicator for background extraction | User sees "Extracting…" spinner forever, doesn't know if job is stuck or progressing | Show chunk progress: "Extracting chunk 2 of 5…" with progress bar (pull from extraction_jobs.current_chunk) |
-| Time tracking route change breaks muscle memory | User types `/customer/123/time` by habit → 404 → frustration | Redirect old route to new route with project filter pre-applied; add banner: "Time tracking has moved to /time-tracking" for 1 month |
-| Overview tab loads slowly due to AI summary | User clicks Overview, sees white screen for 4 seconds → clicks again (double-load) → even slower | Show page skeleton immediately, lazy-load summary section with Suspense; display "Generating summary…" message |
-| Extraction failure shows generic "Failed" status with no details | User re-runs extraction, fails again, has no idea why (API quota? File corrupted? Network timeout?) | Show error message in UI from `extraction_jobs.error_message`; add "Download log" link for full error trace |
-| New workstream UI uses unfamiliar terminology (ADR, Biggy) without explanation | First-time user sees "ADR Workstream: 60% complete" → doesn't know what ADR means or why it matters | Add tooltip on hover: "ADR = Architecture Decision Records — tracks technical design decisions"; link to help doc |
+| Integration | Common Mistake | Correct Approach |
+|-------------|----------------|------------------|
+| Portfolio dashboard + existing health calculation | Duplicate health logic in new `/api/dashboard/portfolio` endpoint; diverges from single-project calculation over time | Extract computeOverallHealth() to shared lib (already exported in HealthDashboard.tsx line 25); both endpoints import same function |
+| WBS auto-classify + existing task creation | AI-generated tasks bypass validation that manual task creation enforces (owner FK, milestone FK resolution) | Route AI tasks through same `/api/tasks POST` handler; validation enforced once, consistently |
+| Team Engagement + existing stakeholders table | Create new "team members" table instead of reusing stakeholders; data duplication and sync issues | Reuse stakeholders table; add `role_category` field to group stakeholders into teams; JOIN pattern for team roster |
+| Architecture diagrams + existing architecture_integrations table | React Flow diagram state diverges from DB (user drags node, position not saved); reload loses layout | Add `diagram_position` JSONB column to architecture_integrations; save node positions on drag-end; restore from DB on load |
+| Navigation restructure + existing skill href generation | Skills generate links like `/customer/${id}/decisions` (old structure); break after NAV restructure | Centralize URL generation: `lib/urls.ts` with `decisionsUrl(projectId)` function; skills import and call function; single source of truth |
+| Generate Plan + existing task templates | Generated tasks don't include `source_trace` field that manual/ingested tasks have; audit trail broken | Gap-fill prompt includes instruction: "Add source_trace: 'AI Generated - WBS Gap Fill'" to every task; preserves audit requirement |
+| Expanded extraction prompt + existing deduplication | New entity types bypass dedup logic (not added to `isAlreadyIngested()` switch statement); duplicate inserts | Update isAlreadyIngested() in extraction-types.ts (lines 65-275) for every new entity type BEFORE expanding prompt |
 
 ---
 
 ## "Looks Done But Isn't" Checklist
 
-- [ ] **Background extraction**: Job queued, but no DB table for tracking progress (extraction_jobs) — can't poll after refresh
-- [ ] **Background extraction**: Worker writes to workspace tables incrementally — partial failure = duplicate data on retry
-- [ ] **Background extraction**: No job timeout set — runaway job locks Redis memory
-- [ ] **Background extraction**: No heartbeat or stale job cleanup — crashed worker leaves job in "running" forever
-- [ ] **Time tracking route**: Redirect added in next.config.ts, but no project= query param support in new route — users land on unfiltered view, lose context
-- [ ] **Time tracking route**: New route loads all projects for all users — no date range or user scoping filter
-- [ ] **Time tracking route**: Project names fetched in loop (N+1 query pattern)
-- [ ] **Overview schema migration**: DDL migration only (ALTER TABLE), no data migration for existing projects — old data invisible in new UI
-- [ ] **Overview schema migration**: No fallback read for old schema — users see empty Overview tab for existing projects
-- [ ] **Weekly focus summary**: Generated synchronously on page load — 4 second render time
-- [ ] **Weekly focus summary**: No cache or TTL — regenerates on every visit
-- [ ] **Test fixes**: setTimeout added to pass flaky test — test still flaky, just less often
-- [ ] **Test fixes**: Assertion changed to match current output — bug in production code remains unfixed
+Things that appear complete but are missing critical pieces.
+
+- [ ] **Portfolio dashboard:** Aggregation queries return data and render — verify performance testing with 20+ projects; measure query count and response time
+- [ ] **WBS tree:** Expand/collapse works — verify performance with 100-node tree; check React DevTools profiler for render time
+- [ ] **Generate Plan:** Claude returns tasks — verify tasks reference actual project entities (stakeholders by name, integrations by tool_name, dates within project bounds)
+- [ ] **Team Engagement Overview:** All 5 sections render — verify data refreshes after entity changes in other tabs (test metrics:invalidate listener)
+- [ ] **Architecture diagrams:** Both tabs show diagrams — verify visual differentiation between before/current states; user testing confirms no confusion
+- [ ] **Context-upload extraction:** New entity types extracted — verify existing entity types (action, risk, milestone) still extract with 80%+ accuracy after prompt expansion
+- [ ] **Navigation restructure:** New tab structure works — verify old URLs redirect correctly; test external links (bookmarks, Slack shares); grep for hardcoded hrefs
+- [ ] **WBS auto-classify:** Tasks routed to correct phase — verify classification accuracy >75%; test low-confidence fallback (does it surface for review or silently misclassify?)
 
 ---
 
 ## Recovery Strategies
 
+When pitfalls occur despite prevention, how to recover.
+
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| Extraction job lost due to Redis TTL expiry | **MEDIUM** | 1. Add `extraction_jobs` table in hotfix migration; 2. Deploy worker update to write to DB; 3. Re-run failed extractions (artifact status = "failed" or "extracting" for >10 min); 4. Update UI to poll DB instead of Redis |
-| Partial extraction data duplicated in workspace tabs | **HIGH** | 1. Identify affected artifacts (ingestion_status = "failed", created_at > v4.0 deploy date); 2. Manual dedup SQL script (compare on normalized description prefix); 3. Export duplicates report for user review before DELETE; 4. Hotfix worker to use staging table |
-| Old time tracking links 404ing | **LOW** | 1. Add redirect in next.config.ts hotfix; 2. Deploy immediately; 3. Monitor redirect logs for 2 weeks; 4. Update email templates in follow-up release |
-| Overview tab shows empty sections for existing projects (schema migration data loss) | **HIGH** | 1. Emergency rollback to v3.0; 2. Write data migration script (backfill new schema from old); 3. Test migration with production snapshot; 4. Redeploy v4.0 with migration; 5. Verify on 5 existing projects before announcing |
-| Test fix broke 8 passing tests | **LOW** | 1. Git revert the fix commit; 2. Run test suite to confirm 8 tests passing again; 3. Re-fix original test with isolated change (no shared helper modification); 4. Run full suite before commit |
+| N+1 query explosion | LOW | Add materialized view or parallel Promise.all(); no schema changes; 1-2 day refactor |
+| AI extraction accuracy drop | HIGH | Revert to previous prompt; manually reclassify misrouted entities (database cleanup); implement two-pass extraction; re-process recent documents; 5-7 day effort |
+| Tree render thrashing | MEDIUM | Refactor state to Set-based; add React.memo(); no DB changes; 2-3 day effort |
+| Generate Plan hallucinations | MEDIUM | Add validation rules; surface low-confidence tasks for review; users manually delete invalid tasks; 3-4 day effort + user cleanup time |
+| Navigation broken links | LOW | Add redirect middleware; update in-app hrefs; 1 day fix + release |
+| Stale Team Engagement data | LOW | Convert to client component; add metrics:invalidate listener; 1 day refactor |
+| Architecture diagram confusion | LOW | Add visual state indicators; persistent labels; 1-2 day CSS + markup changes |
 
 ---
 
 ## Pitfall-to-Phase Mapping
 
+How roadmap phases should address these pitfalls.
+
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| Job state lost on browser refresh | Phase 1 (Background Job Migration) | Manual test: start extraction, refresh browser mid-job, verify progress bar shows current chunk |
-| Partial extraction duplicate data | Phase 1 (Background Job Migration) | Chaos test: kill -9 worker during chunk 2, restart worker, verify no duplicate actions/risks in workspace tabs |
-| Redis TTL expiry kills in-flight jobs | Phase 1 (Background Job Migration) | Load test: queue 10 extractions (5 min each), verify all complete or retry; check Redis for expired jobs |
-| Old time tracking links broken | Phase 2 (Time Tracking Redesign) | QA: test bookmark redirect, email link redirect, manual URL entry; verify project filter applied |
-| Time tracking page slow (N+1 queries) | Phase 2 (Time Tracking Redesign) | Performance test: load /time-tracking with 20 projects, 500 entries; verify <1 second render, <10 queries in pg logs |
-| Schema migration breaks existing onboarding data | Phase 3 (Overview Tab Overhaul) | Test with v3.0 production snapshot; verify Overview tab renders all sections correctly for existing projects |
-| Over-engineered workstream abstraction | Phase 3 (Overview Tab Overhaul) | Code review: reject any "WorkstreamPlugin" or dynamic rendering patterns; require hard-coded ADR/Biggy components |
-| Weekly focus summary blocks render | Phase 3 (Overview Tab Overhaul) | Performance test: measure Overview page TTFB; must be <500ms (summary loaded async with Suspense) |
-| Test fixes break passing tests | Phase 4 (Test Failure Fixes) | CI: run full suite after each test fix commit; require all-green before merging |
-| Test fixes mask production bugs | Phase 4 (Test Failure Fixes) | Code review: reject any fix with setTimeout, .skip without investigation, or changed assertion without code fix |
+| N+1 dashboard queries | DASH-01 (health summary) | Load dashboard with 20 test projects; response time <500ms; query count <10 |
+| AI extraction degradation | WBS-03 (auto-classify) | Extract 10 test documents; measure action/risk/milestone accuracy; must be ≥80% |
+| Tree render thrashing | WBS-02 (collapsible hierarchy) | Load 100-node tree; expand/collapse <50ms; React DevTools profiler confirms |
+| Generate Plan hallucinations | WBS-04 (gap-fill) | Generate plan with minimal context; verify no tasks reference non-existent stakeholders/tools |
+| Navigation broken links | NAV-01 (tab restructure) | Integration test: GET old URLs → verify 301 redirects to new URLs |
+| Stale Team Engagement | TEAM-01 (5-section report) | Edit entity in one tab; verify Team Engagement updates without reload |
+| Architecture diagram confusion | ARCH-01 (two-tab diagram) | User testing: 5 users interact with diagrams; ask "Which state is this?" — 100% correct answers |
 
 ---
 
 ## Sources
 
-- **BullMQ job state management**: Examined `/Users/jmiloslavsky/Documents/Project Assistant Code/bigpanda-app/worker/jobs/skill-run.ts` — existing pattern updates DB at job start/completion, but no intermediate progress tracking
-- **Current extraction implementation**: `/Users/jmiloslavsky/Documents/Project Assistant Code/bigpanda-app/app/api/ingestion/extract/route.ts` (lines 362-575) — SSE stream, incremental chunk processing, dedup logic runs per-chunk
-- **BullMQ connection pattern**: `/Users/jmiloslavsky/Documents/Project Assistant Code/bigpanda-app/worker/connection.ts` (lines 1-32) — documents `maxRetriesPerRequest: null` requirement for worker connections
-- **Time tracking current route**: `/Users/jmiloslavsky/Documents/Project Assistant Code/bigpanda-app/app/customer/[id]/time/page.tsx` — simple Server Component passing projectId prop to TimeTab
-- **Overview tab current implementation**: `/Users/jmiloslavsky/Documents/Project Assistant Code/bigpanda-app/app/customer/[id]/overview/page.tsx` (lines 54-89) — synchronous DB queries in Server Component, completeness score computation
-- **Schema structure**: `/Users/jmiloslavsky/Documents/Project Assistant Code/bigpanda-app/db/schema.ts` — examined onboarding_phases, onboarding_steps, workstreams tables (lines 98-108, 393-414)
-- **Test debt**: Grep results show 13 `todo(` test files in `bigpanda-app/tests/teams-arch/` directory
-- **PROJECT.md requirements**: Lines 51-56 document v4.0 feature scope (test fixes, extraction to BullMQ, time tracking redesign, Overview overhaul)
-- **Personal expertise**: 15+ years with Next.js patterns, PostgreSQL migration strategies, BullMQ production deployments, test debt resolution in large codebases
+**Codebase analysis (HIGH confidence):**
+- `/bigpanda-app/components/HealthDashboard.tsx` (lines 25-213) — health calculation and metrics:invalidate pattern
+- `/bigpanda-app/worker/jobs/document-extraction.ts` (lines 24-543) — extraction prompt structure and deduplication logic
+- `/bigpanda-app/lib/extraction-types.ts` (lines 65-275) — isAlreadyIngested() entity routing
+- `/bigpanda-app/app/api/projects/route.ts` (lines 1-95) — project creation and phase seeding pattern
+- `/.planning/PROJECT.md` (lines 1-155) — system architecture, existing patterns, and known constraints
+- `/.planning/MILESTONES.md` (lines 1-50) — v5.0 accomplishments showing CustomEvent sync, React Flow SSR handling
 
-**Confidence level**: HIGH — pitfalls are derived from examining actual codebase structure, existing patterns in worker/jobs/ and API routes, and documented requirements in PROJECT.md. All recommendations are specific to this application's architecture (Next.js 16, BullMQ, Drizzle ORM, PostgreSQL).
+**Domain expertise (MEDIUM-HIGH confidence):**
+- Next.js aggregation query patterns — O(N) query explosion is well-known pitfall at 10-20 entity scale
+- LLM prompt engineering — attention dilution and recency bias documented in prompt engineering research
+- React tree component performance — Set-based state and React.memo() are established best practices
+- Navigation restructuring — URL stability and redirect middleware are standard web app migration patterns
+
+**Analogous system patterns (MEDIUM confidence):**
+- AI hallucination in generative tasks — Claude Code's own prompt design uses XML wrapping and temperature control for similar reasons
+- React Flow performance — official troubleshooting docs recommend virtualization above 100 nodes (site unavailable, but pattern is industry standard)
 
 ---
 
-*Pitfalls research for: BigPanda AI Project Management App v4.0 Infrastructure & UX Foundations*
-*Researched: 2026-04-01*
+*Pitfalls research for: v6.0 feature expansion (portfolio dashboard, WBS tree, team engagement reports, expanded AI extraction)*
+*Researched: 2026-04-07*
+*Confidence: HIGH (based on existing codebase analysis and established domain patterns)*
