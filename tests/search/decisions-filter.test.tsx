@@ -9,19 +9,25 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import DecisionsTableClient from '@/components/DecisionsTableClient'
 
+// Mock searchParams that can be updated per test
+const mockSearchParams = new Map<string, string | null>()
+
 // Mock Next.js navigation
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: vi.fn(),
     refresh: vi.fn(),
   }),
-  useSearchParams: () => {
-    const params = new URLSearchParams()
-    return {
-      get: (key: string) => params.get(key),
-      toString: () => params.toString(),
-    }
-  },
+  useSearchParams: () => ({
+    get: (key: string) => mockSearchParams.get(key) ?? null,
+    toString: () => {
+      const params = new URLSearchParams()
+      mockSearchParams.forEach((value, key) => {
+        if (value) params.set(key, value)
+      })
+      return params.toString()
+    },
+  }),
 }))
 
 const mockDecisions = [
@@ -57,6 +63,7 @@ const mockDecisions = [
 describe('DecisionsTableClient (SRCH-02)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockSearchParams.clear()
   })
 
   it('renders all decisions without filter', () => {
@@ -68,11 +75,7 @@ describe('DecisionsTableClient (SRCH-02)', () => {
   })
 
   it('text filter narrows to matching decisions', () => {
-    // Mock useSearchParams to return 'q=budget'
-    vi.mocked(require('next/navigation').useSearchParams).mockReturnValue({
-      get: (key: string) => (key === 'q' ? 'budget' : null),
-      toString: () => 'q=budget',
-    })
+    mockSearchParams.set('q', 'budget')
 
     render(<DecisionsTableClient decisions={mockDecisions} projectId={1} />)
 
@@ -83,11 +86,7 @@ describe('DecisionsTableClient (SRCH-02)', () => {
   })
 
   it('from date filter excludes earlier decisions', () => {
-    // Mock useSearchParams to return 'from=2026-03-01'
-    vi.mocked(require('next/navigation').useSearchParams).mockReturnValue({
-      get: (key: string) => (key === 'from' ? '2026-03-01' : null),
-      toString: () => 'from=2026-03-01',
-    })
+    mockSearchParams.set('from', '2026-03-01')
 
     render(<DecisionsTableClient decisions={mockDecisions} projectId={1} />)
 
@@ -98,11 +97,7 @@ describe('DecisionsTableClient (SRCH-02)', () => {
   })
 
   it('to date filter excludes later decisions', () => {
-    // Mock useSearchParams to return 'to=2026-02-28'
-    vi.mocked(require('next/navigation').useSearchParams).mockReturnValue({
-      get: (key: string) => (key === 'to' ? '2026-02-28' : null),
-      toString: () => 'to=2026-02-28',
-    })
+    mockSearchParams.set('to', '2026-02-28')
 
     render(<DecisionsTableClient decisions={mockDecisions} projectId={1} />)
 
@@ -113,15 +108,8 @@ describe('DecisionsTableClient (SRCH-02)', () => {
   })
 
   it('combined filters apply together', () => {
-    // Mock useSearchParams to return 'q=PostgreSQL&from=2026-03-01'
-    vi.mocked(require('next/navigation').useSearchParams).mockReturnValue({
-      get: (key: string) => {
-        if (key === 'q') return 'PostgreSQL'
-        if (key === 'from') return '2026-03-01'
-        return null
-      },
-      toString: () => 'q=PostgreSQL&from=2026-03-01',
-    })
+    mockSearchParams.set('q', 'PostgreSQL')
+    mockSearchParams.set('from', '2026-03-01')
 
     render(<DecisionsTableClient decisions={mockDecisions} projectId={1} />)
 
