@@ -36,7 +36,7 @@ export default function GlobalSearchBar({ projectId }: GlobalSearchBarProps) {
     const timer = setTimeout(async () => {
       setLoading(true)
       try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&account=${projectId}`, {})
+        const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&projectId=${projectId}`, {})
         const data = await res.json()
         setResults(data.results ?? [])
         setOpen(true)
