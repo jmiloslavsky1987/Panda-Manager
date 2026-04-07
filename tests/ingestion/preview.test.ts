@@ -268,12 +268,12 @@ describe('Extraction preview (ING-05, ING-06, ING-07)', () => {
   });
 
   it('ENTITY_FIELDS covers all 10 entity types with correct fields', () => {
-    expect(ENTITY_FIELDS['action']).toEqual(['description', 'owner', 'due_date', 'status']);
+    expect(ENTITY_FIELDS['action']).toEqual(['description', 'owner', 'due_date', 'status', 'notes', 'type']);
     expect(ENTITY_FIELDS['risk']).toEqual(['description', 'severity', 'mitigation', 'owner']);
     expect(ENTITY_FIELDS['decision']).toEqual(['decision', 'rationale', 'made_by', 'date']);
-    expect(ENTITY_FIELDS['milestone']).toEqual(['name', 'target_date', 'status']);
+    expect(ENTITY_FIELDS['milestone']).toEqual(['name', 'target_date', 'status', 'owner']);
     expect(ENTITY_FIELDS['stakeholder']).toEqual(['name', 'role', 'email', 'account']);
-    expect(ENTITY_FIELDS['task']).toEqual(['title', 'status', 'owner', 'phase']);
+    expect(ENTITY_FIELDS['task']).toEqual(['title', 'status', 'owner', 'phase', 'description', 'start_date', 'due_date', 'milestone_name', 'workstream_name', 'priority']);
     expect(ENTITY_FIELDS['architecture']).toEqual(['tool_name', 'track', 'phase', 'status', 'integration_method']);
     expect(ENTITY_FIELDS['history']).toEqual(['date', 'content', 'author']);
     expect(ENTITY_FIELDS['businessOutcome']).toEqual(['title', 'track', 'description', 'delivery_status']);
