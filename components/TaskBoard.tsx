@@ -61,12 +61,17 @@ function TaskCard({ task, projectId, selected, onSelect }: TaskCardProps) {
     opacity: isDragging ? 0.4 : 1,
   }
 
+  const today = new Date().toISOString().split('T')[0]
+  const isOverdue = !!task.due && task.due < today && task.status !== 'done'
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       data-testid="task-card"
-      className="bg-white border border-zinc-200 rounded-lg p-3 shadow-sm flex flex-col gap-1.5"
+      className={`bg-white border rounded-lg p-3 shadow-sm flex flex-col gap-1.5 ${
+        isOverdue ? 'border-red-500 bg-red-50' : 'border-zinc-200'
+      }`}
     >
       <div className="flex items-start gap-2">
         <input
@@ -126,7 +131,8 @@ function BulkToolbar({ selectedIds, onClear, onComplete }: BulkToolbarProps) {
   const [ownerInput, setOwnerInput] = useState('')
   const [dueInput, setDueInput] = useState('')
   const [phaseInput, setPhaseInput] = useState('')
-  const [mode, setMode] = useState<'owner' | 'due' | 'phase' | null>(null)
+  const [statusInput, setStatusInput] = useState<'todo' | 'in_progress' | 'blocked' | 'done'>('todo')
+  const [mode, setMode] = useState<'owner' | 'due' | 'phase' | 'status' | null>(null)
 
   async function bulkUpdate(patch: Record<string, string>) {
     await fetch('/api/tasks-bulk', {
@@ -165,6 +171,12 @@ function BulkToolbar({ selectedIds, onClear, onComplete }: BulkToolbarProps) {
           >
             Move to Phase
           </button>
+          <button
+            onClick={() => setMode('status')}
+            className="px-2.5 py-1 text-xs border border-zinc-300 rounded hover:bg-zinc-100"
+          >
+            Change Status
+          </button>
         </>
       ) : mode === 'owner' ? (
         <form
@@ -196,7 +208,7 @@ function BulkToolbar({ selectedIds, onClear, onComplete }: BulkToolbarProps) {
           <button type="submit" className="px-2 py-1 text-xs bg-zinc-900 text-white rounded">Apply</button>
           <button type="button" onClick={() => setMode(null)} className="px-2 py-1 text-xs rounded hover:bg-zinc-100">Cancel</button>
         </form>
-      ) : (
+      ) : mode === 'phase' ? (
         <form
           onSubmit={(e) => { e.preventDefault(); bulkUpdate({ phase: phaseInput }) }}
           className="flex items-center gap-1.5"
@@ -211,7 +223,26 @@ function BulkToolbar({ selectedIds, onClear, onComplete }: BulkToolbarProps) {
           <button type="submit" className="px-2 py-1 text-xs bg-zinc-900 text-white rounded">Apply</button>
           <button type="button" onClick={() => setMode(null)} className="px-2 py-1 text-xs rounded hover:bg-zinc-100">Cancel</button>
         </form>
-      )}
+      ) : mode === 'status' ? (
+        <form
+          className="flex items-center gap-2"
+          onSubmit={(e) => { e.preventDefault(); bulkUpdate({ status: statusInput }) }}
+        >
+          <select
+            value={statusInput}
+            onChange={(e) => setStatusInput(e.target.value as typeof statusInput)}
+            className="text-xs border border-zinc-200 rounded px-1 py-1"
+            aria-label="status"
+          >
+            <option value="todo">To Do</option>
+            <option value="in_progress">In Progress</option>
+            <option value="blocked">Blocked</option>
+            <option value="done">Done</option>
+          </select>
+          <button type="submit" className="px-2 py-1 text-xs bg-zinc-900 text-white rounded">Apply</button>
+          <button type="button" onClick={() => setMode(null)} className="px-2 py-1 text-xs rounded hover:bg-zinc-100">Cancel</button>
+        </form>
+      ) : null}
 
       <button
         onClick={onClear}
