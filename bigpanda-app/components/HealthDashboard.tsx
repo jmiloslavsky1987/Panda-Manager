@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -16,6 +17,7 @@ interface OverviewMetricsData {
   weeklyRollup: { weekLabel: string; hours: number; variance: number | null }[]
   weeklyTarget: number | null
   totalHoursThisWeek: number
+  blockedTasks: { id: number; title: string }[]
 }
 
 // ─── Health Formula (exported for testing) ────────────────────────────────────
@@ -66,25 +68,34 @@ export function HealthDashboard({ projectId }: HealthDashboardProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
 
-  useEffect(() => {
-    async function fetchMetrics() {
-      try {
-        const res = await fetch(`/api/projects/${projectId}/overview-metrics`)
-        if (!res.ok) {
-          setError(true)
-          setLoading(false)
-          return
-        }
-        const metrics = await res.json()
-        setData(metrics)
-      } catch (err) {
+  // Shared fetchMetrics function for initial load and invalidation
+  const fetchMetrics = async () => {
+    try {
+      const res = await fetch(`/api/projects/${projectId}/overview-metrics`)
+      if (!res.ok) {
         setError(true)
-      } finally {
         setLoading(false)
+        return
       }
+      const metrics = await res.json()
+      setData(metrics)
+    } catch (err) {
+      setError(true)
+    } finally {
+      setLoading(false)
     }
+  }
 
+  // Initial fetch on mount
+  useEffect(() => {
     fetchMetrics()
+  }, [projectId])
+
+  // Listen for metrics:invalidate events
+  useEffect(() => {
+    const handleInvalidate = () => { fetchMetrics() }
+    window.addEventListener('metrics:invalidate', handleInvalidate)
+    return () => { window.removeEventListener('metrics:invalidate', handleInvalidate) }
   }, [projectId])
 
   // ─── Loading state ───────────────────────────────────────────────────────────
@@ -169,9 +180,28 @@ export function HealthDashboard({ projectId }: HealthDashboardProps) {
 
         {/* Active Blockers */}
         <div>
-          <p className={activeBlockers > 0 ? 'text-sm text-red-600' : 'text-sm text-zinc-500'}>
-            {activeBlockers} active blocker{activeBlockers !== 1 ? 's' : ''}
-          </p>
+          <p className="text-sm font-medium text-zinc-600 mb-2">Active Blockers</p>
+          {(data.blockedTasks ?? []).length === 0 ? (
+            <p className="text-sm text-zinc-400">No blocked tasks</p>
+          ) : (
+            <ul className="space-y-1">
+              {(data.blockedTasks ?? []).slice(0, 5).map(task => (
+                <li key={task.id}>
+                  <Link
+                    href={`/customer/${projectId}/plan/tasks`}
+                    className="text-sm text-blue-600 hover:underline truncate block"
+                  >
+                    {task.title}
+                  </Link>
+                </li>
+              ))}
+              {(data.blockedTasks ?? []).length > 5 && (
+                <li className="text-sm text-zinc-400">
+                  and {(data.blockedTasks ?? []).length - 5} more
+                </li>
+              )}
+            </ul>
+          )}
         </div>
       </div>
     </section>

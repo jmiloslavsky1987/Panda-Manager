@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { count, eq, sql } from 'drizzle-orm'
+import { count, eq, sql, and } from 'drizzle-orm'
 import db from '@/db'
-import { onboardingSteps, risks, integrations, milestones, projects, timeEntries } from '@/db/schema'
+import { onboardingSteps, risks, integrations, milestones, projects, timeEntries, tasks } from '@/db/schema'
 import { requireSession } from '@/lib/auth-server'
 
 // --- Helper functions (copied from analytics/route.ts) ---
@@ -190,6 +190,12 @@ export async function GET(
         }
       })
 
+      // 6. blockedTasks: tasks with status='blocked' for this project
+      const blockedTasksRows = await tx
+        .select({ id: tasks.id, title: tasks.title })
+        .from(tasks)
+        .where(and(eq(tasks.project_id, numericId), eq(tasks.status, 'blocked')))
+
       return {
         stepCounts,
         riskCounts,
@@ -198,6 +204,7 @@ export async function GET(
         weeklyRollup,
         weeklyTarget,
         totalHoursThisWeek,
+        blockedTasks: blockedTasksRows,
       }
     })
 
