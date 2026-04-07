@@ -87,7 +87,7 @@ Full details: `.planning/milestones/v4.0-ROADMAP.md` (archived)
 - [x] **Phase 37: Actions & Inline Editing Foundation** — Actions table layout, inline editing for Actions/Risks/Milestones, date pickers, and owner autocomplete wired across all entity edit surfaces (completed 2026-04-06)
 - [x] **Phase 38: Gantt Overhaul** — Milestone markers, view mode switcher, milestone-grouped swim lanes, and drag-to-reschedule with immediate DB save (completed 2026-04-06)
 - [x] **Phase 39: Cross-Tab Sync & Plan Tab** — Overview metrics refresh on entity edits, clickable chart drill-downs, active blocker list, Plan tab overdue highlighting, and bulk action wiring (completed 2026-04-07)
-- [ ] **Phase 40: Search, Traceability & Skills UX** — Global search bar, Decisions filtering, artifact reverse lookup, Engagement History auto-log, and Skills job progress + cancel
+- [x] **Phase 40: Search, Traceability & Skills UX** — Global search bar, Decisions filtering, artifact reverse lookup, Engagement History auto-log, and Skills job progress + cancel (completed 2026-04-07)
 - [ ] **Phase 41: UX Polish & Consistency** — Actionable empty states, unified overdue highlighting, and consistent loading skeletons across all tabs
 - [ ] **Phase 42: Ingestion Field Coverage** — Full-field extraction for all entity types, cross-entity ID resolution (task→milestone, task→workstream), and consistent DB persistence so uploaded documents produce Gantt-ready data
 
@@ -194,7 +194,7 @@ Plans:
 | 37. Actions & Inline Editing Foundation | 6/6 | Complete    | 2026-04-06 | — |
 | 38. Gantt Overhaul | 3/4 | Complete    | 2026-04-06 | — |
 | 39. Cross-Tab Sync & Plan Tab | 4/4 | Complete    | 2026-04-07 | — |
-| 40. Search, Traceability & Skills UX | 5/6 | In Progress|  | — |
+| 40. Search, Traceability & Skills UX | 6/6 | Complete   | 2026-04-07 | — |
 | 41. UX Polish & Consistency | v5.0 | 0/TBD | Not started | — |
 | 42. Ingestion Field Coverage | v5.0 | 0/TBD | Not started | — |
 
@@ -202,7 +202,7 @@ Plans:
 **Goal**: Uploading a project document produces fully-populated entities — tasks with dates and milestone links, risks with severity, decisions with rationale, stakeholders with company — matching what the DB schema supports, so the Gantt and every other tab show real data immediately after ingestion
 **Depends on**: Phase 35 (ingestion pipeline exists; independent of v5.0 UX phases)
 **Requirements**: TBD
-**Plans:** 5/6 plans executed
+**Plans:** 6/6 plans complete
 
 Plans:
 - [ ] TBD (run /gsd:plan-phase 42 to break down)
