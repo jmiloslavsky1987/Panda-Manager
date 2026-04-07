@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import {
   Table,
@@ -16,6 +17,7 @@ import { InlineSelectCell } from '@/components/InlineSelectCell'
 import { DatePickerCell } from '@/components/DatePickerCell'
 import { OwnerCell } from '@/components/OwnerCell'
 import { EmptyState } from '@/components/EmptyState'
+import { AddMilestoneModal } from '@/components/AddMilestoneModal'
 import type { Milestone, Artifact } from '@/lib/queries'
 
 const MILESTONE_STATUS_OPTIONS: { value: 'not_started' | 'in_progress' | 'completed' | 'blocked'; label: string }[] = [
@@ -57,6 +59,7 @@ interface MilestonesTableClientProps {
 
 export function MilestonesTableClient({ milestones, artifacts, projectId }: MilestonesTableClientProps) {
   const router = useRouter()
+  const [addModalOpen, setAddModalOpen] = useState(false)
 
   async function patchMilestone(id: number, patch: Record<string, unknown>) {
     const res = await fetch(`/api/milestones/${id}`, {
@@ -88,19 +91,30 @@ export function MilestonesTableClient({ milestones, artifacts, projectId }: Mile
   // Show empty state when no milestones exist
   if (milestones.length === 0) {
     return (
-      <EmptyState
-        title="No milestones yet"
-        description="Milestones mark key dates and deliverables. Add the first milestone to track progress."
-        action={{
-          label: 'Add Milestone',
-          onClick: () => router.push(`/customer/${projectId}/context`),
-        }}
-      />
+      <>
+        <EmptyState
+          title="No milestones yet"
+          description="Milestones mark key dates and deliverables. Add the first milestone to track progress."
+          action={{
+            label: 'Add Milestone',
+            onClick: () => setAddModalOpen(true),
+          }}
+        />
+        <AddMilestoneModal
+          projectId={projectId}
+          open={addModalOpen}
+          onOpenChange={setAddModalOpen}
+        />
+      </>
     )
   }
 
   return (
     <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold text-zinc-900">Milestones</h2>
+        <AddMilestoneModal projectId={projectId} open={addModalOpen} onOpenChange={setAddModalOpen} />
+      </div>
       <div className="rounded-md border border-zinc-200 overflow-hidden">
         <Table>
           <TableHeader>

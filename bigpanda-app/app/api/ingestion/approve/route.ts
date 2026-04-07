@@ -264,7 +264,7 @@ async function insertItem(
   item: ApprovalItem,
   projectId: number,
   artifactId: number,
-): Promise<void> {
+): Promise<{ unresolvedMilestones: number; unresolvedWorkstreams: number }> {
   const f = item.fields;
   const attribution = {
     source: 'ingestion' as const,
@@ -282,6 +282,8 @@ async function insertItem(
           owner: f.owner ?? null,
           due: f.due_date ?? null,
           status: 'open',
+          notes: f.notes ?? null,
+          type: f.type ?? 'action',
           ...attribution,
         }).returning();
         await tx.insert(auditLog).values({
@@ -293,7 +295,7 @@ async function insertItem(
           after_json: inserted as Record<string, unknown>,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
 
     case 'risk':
       await db.transaction(async (tx) => {
@@ -303,6 +305,7 @@ async function insertItem(
           description: f.description ?? '',
           owner: f.owner ?? null,
           mitigation: f.mitigation ?? null,
+          severity: coerceRiskSeverity(f.severity),
           ...attribution,
         }).returning();
         await tx.insert(auditLog).values({
@@ -314,7 +317,7 @@ async function insertItem(
           after_json: inserted as Record<string, unknown>,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
 
     case 'milestone':
       await db.transaction(async (tx) => {
@@ -325,6 +328,7 @@ async function insertItem(
           target: f.target_date ?? null,
           date: f.target_date ?? null,
           status: f.status ?? null,
+          owner: f.owner ?? null,
           ...attribution,
         }).returning();
         await tx.insert(auditLog).values({
@@ -336,7 +340,7 @@ async function insertItem(
           after_json: inserted as Record<string, unknown>,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
 
     case 'decision':
       await db.transaction(async (tx) => {
@@ -356,7 +360,7 @@ async function insertItem(
           after_json: inserted as Record<string, unknown>,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
 
     case 'history':
       await db.transaction(async (tx) => {
@@ -375,7 +379,7 @@ async function insertItem(
           after_json: inserted as Record<string, unknown>,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
 
     case 'stakeholder':
       await db.transaction(async (tx) => {
@@ -396,9 +400,36 @@ async function insertItem(
           after_json: inserted as Record<string, unknown>,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
 
-    case 'task':
+    case 'task': {
+      // Cross-entity resolution BEFORE transaction (failure must not block insert)
+      const milestoneId = f.milestone_name
+        ? await resolveEntityRef('milestones', f.milestone_name, projectId)
+        : null;
+      const workstreamId = f.workstream_name
+        ? await resolveEntityRef('workstreams', f.workstream_name, projectId)
+        : null;
+
+      // Build description with unresolved ref appends
+      let taskDescription: string | null = f.description ?? null;
+      const unresolvedParts: string[] = [];
+      let unresolvedMilestones = 0;
+      let unresolvedWorkstreams = 0;
+
+      if (f.milestone_name && milestoneId === null) {
+        unresolvedParts.push(`Milestone ref: ${f.milestone_name}`);
+        unresolvedMilestones = 1;
+      }
+      if (f.workstream_name && workstreamId === null) {
+        unresolvedParts.push(`Workstream ref: ${f.workstream_name}`);
+        unresolvedWorkstreams = 1;
+      }
+      if (unresolvedParts.length > 0) {
+        const refSuffix = unresolvedParts.join(' | ');
+        taskDescription = taskDescription ? `${taskDescription}\n${refSuffix}` : refSuffix;
+      }
+
       await db.transaction(async (tx) => {
         const [inserted] = await tx.insert(tasks).values({
           project_id: projectId,
@@ -406,6 +437,12 @@ async function insertItem(
           owner: f.owner ?? null,
           phase: f.phase ?? null,
           status: f.status ?? 'todo',
+          start_date: f.start_date ?? null,
+          due: f.due_date ?? null,
+          description: taskDescription,
+          priority: f.priority ?? null,
+          milestone_id: milestoneId,
+          workstream_id: workstreamId,
           ...attribution,
         }).returning();
         await tx.insert(auditLog).values({
@@ -417,7 +454,8 @@ async function insertItem(
           after_json: inserted as Record<string, unknown>,
         });
       });
-      break;
+      return { unresolvedMilestones, unresolvedWorkstreams };
+    }
 
     case 'businessOutcome':
       await db.transaction(async (tx) => {
@@ -437,7 +475,7 @@ async function insertItem(
           after_json: inserted as Record<string, unknown>,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
 
     case 'team':
       // team maps to focus_areas table (consistent with extract route)
@@ -457,7 +495,7 @@ async function insertItem(
           after_json: inserted as Record<string, unknown>,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
 
     case 'architecture':
       await db.transaction(async (tx) => {
@@ -479,7 +517,7 @@ async function insertItem(
           after_json: inserted as Record<string, unknown>,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
 
     case 'note':
       // Free-form notes that don't fit a structured entity type — saved to engagement_history
@@ -500,7 +538,7 @@ async function insertItem(
           after_json: inserted as Record<string, unknown>,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
 
     case 'team_pathway': {
       // Parse route_description into [{label}] array by splitting on ' → ' or ', '
@@ -527,7 +565,7 @@ async function insertItem(
           after_json:  inserted as Record<string, unknown>,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
     }
 
     case 'workstream': {
@@ -552,7 +590,7 @@ async function insertItem(
           after_json: inserted as Record<string, unknown>,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
     }
 
     case 'onboarding_step': {
@@ -576,7 +614,7 @@ async function insertItem(
           after_json: inserted as Record<string, unknown>,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
     }
 
     case 'integration': {
@@ -599,9 +637,10 @@ async function insertItem(
           after_json: inserted as Record<string, unknown>,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
     }
   }
+  return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
 }
 
 // ─── Entity update helpers (merge) ───────────────────────────────────────────
@@ -632,7 +671,7 @@ async function mergeItem(
           after_json: { ...beforeRecord, ...patch } as Record<string, unknown>,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
     }
 
     case 'risk': {
@@ -649,7 +688,7 @@ async function mergeItem(
           after_json: { ...beforeRecord, ...patch } as Record<string, unknown>,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
     }
 
     case 'milestone': {
@@ -666,7 +705,7 @@ async function mergeItem(
           after_json: { ...beforeRecord, ...patch } as Record<string, unknown>,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
     }
 
     case 'stakeholder': {
@@ -683,7 +722,7 @@ async function mergeItem(
           after_json: { ...beforeRecord, ...patch } as Record<string, unknown>,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
     }
 
     case 'task': {
@@ -700,7 +739,7 @@ async function mergeItem(
           after_json: { ...beforeRecord, ...patch } as Record<string, unknown>,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
     }
 
     case 'businessOutcome': {
@@ -717,7 +756,7 @@ async function mergeItem(
           after_json: { ...beforeRecord, ...patch } as Record<string, unknown>,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
     }
 
     case 'team': {
@@ -734,7 +773,7 @@ async function mergeItem(
           after_json: { ...beforeRecord, ...patch } as Record<string, unknown>,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
     }
 
     case 'architecture': {
@@ -751,7 +790,7 @@ async function mergeItem(
           after_json: { ...beforeRecord, ...patch } as Record<string, unknown>,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
     }
 
     case 'team_pathway': {
@@ -779,7 +818,7 @@ async function mergeItem(
           after_json:  { ...beforeRecord, ...patch } as Record<string, unknown>,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
     }
 
     case 'workstream': {
@@ -802,7 +841,7 @@ async function mergeItem(
           after_json: { ...beforeRecord, ...patch } as Record<string, unknown>,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
     }
 
     case 'onboarding_step': {
@@ -823,7 +862,7 @@ async function mergeItem(
           after_json: { ...beforeRecord, ...patch } as Record<string, unknown>,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
     }
 
     case 'integration': {
@@ -844,12 +883,12 @@ async function mergeItem(
           after_json: { ...beforeRecord, ...patch } as Record<string, unknown>,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
     }
 
     // decision and history are append-only — merge is not applicable
     default:
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
   }
 }
 
@@ -870,7 +909,7 @@ async function deleteItem(entityType: EntityType, existingId: number): Promise<v
           after_json: null,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
     }
     case 'risk': {
       const [before] = await db.select().from(risks).where(eq(risks.id, existingId));
@@ -885,7 +924,7 @@ async function deleteItem(entityType: EntityType, existingId: number): Promise<v
           after_json: null,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
     }
     case 'milestone': {
       const [before] = await db.select().from(milestones).where(eq(milestones.id, existingId));
@@ -900,7 +939,7 @@ async function deleteItem(entityType: EntityType, existingId: number): Promise<v
           after_json: null,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
     }
     case 'stakeholder': {
       const [before] = await db.select().from(stakeholders).where(eq(stakeholders.id, existingId));
@@ -915,7 +954,7 @@ async function deleteItem(entityType: EntityType, existingId: number): Promise<v
           after_json: null,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
     }
     case 'task': {
       const [before] = await db.select().from(tasks).where(eq(tasks.id, existingId));
@@ -930,7 +969,7 @@ async function deleteItem(entityType: EntityType, existingId: number): Promise<v
           after_json: null,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
     }
     case 'businessOutcome': {
       const [before] = await db.select().from(businessOutcomes).where(eq(businessOutcomes.id, existingId));
@@ -945,7 +984,7 @@ async function deleteItem(entityType: EntityType, existingId: number): Promise<v
           after_json: null,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
     }
     case 'team': {
       const [before] = await db.select().from(focusAreas).where(eq(focusAreas.id, existingId));
@@ -960,7 +999,7 @@ async function deleteItem(entityType: EntityType, existingId: number): Promise<v
           after_json: null,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
     }
     case 'architecture': {
       const [before] = await db.select().from(architectureIntegrations).where(eq(architectureIntegrations.id, existingId));
@@ -975,7 +1014,7 @@ async function deleteItem(entityType: EntityType, existingId: number): Promise<v
           after_json: null,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
     }
     case 'team_pathway': {
       const [before] = await db.select().from(teamPathways).where(eq(teamPathways.id, existingId));
@@ -990,7 +1029,7 @@ async function deleteItem(entityType: EntityType, existingId: number): Promise<v
           after_json:  null,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
     }
     case 'workstream': {
       const [before] = await db.select().from(workstreams).where(eq(workstreams.id, existingId));
@@ -1005,7 +1044,7 @@ async function deleteItem(entityType: EntityType, existingId: number): Promise<v
           after_json: null,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
     }
     case 'onboarding_step': {
       const [before] = await db.select().from(onboardingSteps).where(eq(onboardingSteps.id, existingId));
@@ -1020,7 +1059,7 @@ async function deleteItem(entityType: EntityType, existingId: number): Promise<v
           after_json: null,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
     }
     case 'integration': {
       const [before] = await db.select().from(integrations).where(eq(integrations.id, existingId));
@@ -1035,11 +1074,11 @@ async function deleteItem(entityType: EntityType, existingId: number): Promise<v
           after_json: null,
         });
       });
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
     }
     // decision and history: append-only, never deleted via approve route
     default:
-      break;
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
   }
 }
 
@@ -1082,6 +1121,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   let written = 0;
   let skipped = 0;
   const rejected = items.filter(i => !i.approved).length;
+  let unresolvedMilestoneCount = 0;
+  let unresolvedWorkstreamCount = 0;
 
   for (let idx = 0; idx < items.length; idx++) {
     const item = items[idx];
@@ -1108,26 +1149,30 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       switch (item.conflictResolution) {
         case 'skip':
           skipped++;
-          break;
+          return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
 
         case 'replace': {
           const idToDelete = item.existingId ?? existing.id;
           await deleteItem(item.entityType as EntityType, idToDelete);
-          await insertItem(item, projectId, artifactId);
+          const counts = await insertItem(item, projectId, artifactId);
+          unresolvedMilestoneCount += counts.unresolvedMilestones;
+          unresolvedWorkstreamCount += counts.unresolvedWorkstreams;
           written++;
-          break;
+          return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
         }
 
         case 'merge': {
           const idToMerge = item.existingId ?? existing.id;
           await mergeItem(item, idToMerge, artifactId);
           written++;
-          break;
+          return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
         }
       }
     } else {
       // No conflict — direct insert
-      await insertItem(item, projectId, artifactId);
+      const counts = await insertItem(item, projectId, artifactId);
+      unresolvedMilestoneCount += counts.unresolvedMilestones;
+      unresolvedWorkstreamCount += counts.unresolvedWorkstreams;
       written++;
     }
   }
@@ -1156,7 +1201,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     .where(eq(artifacts.id, artifactId));
 
   // 6. Return summary
-  return NextResponse.json({ written, skipped, rejected }, { status: 200 });
+  const response: { written: number; skipped: number; rejected: number; unresolvedRefs?: string } = { written, skipped, rejected };
+  if (unresolvedMilestoneCount > 0 || unresolvedWorkstreamCount > 0) {
+    const parts: string[] = [];
+    if (unresolvedMilestoneCount > 0) parts.push(`${unresolvedMilestoneCount} milestone ref(s) unresolved`);
+    if (unresolvedWorkstreamCount > 0) parts.push(`${unresolvedWorkstreamCount} workstream ref(s) unresolved`);
+    response.unresolvedRefs = parts.join(', ');
+  }
+  return NextResponse.json(response, { status: 200 });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error('[approve] unhandled error:', err);

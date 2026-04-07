@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useState } from 'react'
 import {
   Table,
   TableBody,
@@ -14,6 +15,7 @@ import { SourceBadge } from '@/components/SourceBadge'
 import { InlineSelectCell } from '@/components/InlineSelectCell'
 import { OwnerCell } from '@/components/OwnerCell'
 import { EmptyState } from '@/components/EmptyState'
+import { AddRiskModal } from '@/components/AddRiskModal'
 import type { Risk, Artifact } from '@/lib/queries'
 
 const RISK_STATUS_OPTIONS: { value: 'open' | 'mitigated' | 'resolved' | 'accepted'; label: string }[] = [
@@ -67,6 +69,7 @@ export function RisksTableClient({ risks, artifacts, projectId }: RisksTableClie
   const router = useRouter()
   const searchParams = useSearchParams()
   const severityFilter = searchParams.get('severity') ?? ''
+  const [addModalOpen, setAddModalOpen] = useState(false)
 
   async function patchRisk(id: number, patch: Record<string, unknown>) {
     const res = await fetch(`/api/risks/${id}`, {
@@ -97,19 +100,30 @@ export function RisksTableClient({ risks, artifacts, projectId }: RisksTableClie
   // Show empty state when no risks exist
   if (risks.length === 0) {
     return (
-      <EmptyState
-        title="No risks logged"
-        description="Risks capture potential blockers and issues. Add the first risk to start tracking."
-        action={{
-          label: 'Add Risk',
-          onClick: () => router.push(`/customer/${projectId}/context`),
-        }}
-      />
+      <>
+        <EmptyState
+          title="No risks logged"
+          description="Risks capture potential blockers and issues. Add the first risk to start tracking."
+          action={{
+            label: 'Add Risk',
+            onClick: () => setAddModalOpen(true),
+          }}
+        />
+        <AddRiskModal
+          projectId={projectId}
+          open={addModalOpen}
+          onOpenChange={setAddModalOpen}
+        />
+      </>
     )
   }
 
   return (
     <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold text-zinc-900">Risks</h2>
+        <AddRiskModal projectId={projectId} open={addModalOpen} onOpenChange={setAddModalOpen} />
+      </div>
       <div className="rounded-md border border-zinc-200 overflow-hidden">
         <Table>
           <TableHeader>

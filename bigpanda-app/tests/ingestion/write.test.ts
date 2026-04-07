@@ -43,6 +43,7 @@ vi.mock('@/db/schema', () => ({
   actions: { id: 'id', project_id: 'project_id', description: 'description', source: 'source', source_artifact_id: 'source_artifact_id', ingested_at: 'ingested_at' },
   risks: { id: 'id', project_id: 'project_id', description: 'description', source: 'source', source_artifact_id: 'source_artifact_id', ingested_at: 'ingested_at' },
   milestones: { id: 'id', project_id: 'project_id', name: 'name', source: 'source', source_artifact_id: 'source_artifact_id', ingested_at: 'ingested_at' },
+  workstreams: { id: 'id', project_id: 'project_id', name: 'name' },
   keyDecisions: { id: 'id', project_id: 'project_id', decision: 'decision', source: 'source', source_artifact_id: 'source_artifact_id', ingested_at: 'ingested_at' },
   engagementHistory: { id: 'id', project_id: 'project_id', content: 'content', source: 'source', source_artifact_id: 'source_artifact_id', ingested_at: 'ingested_at' },
   stakeholders: { id: 'id', project_id: 'project_id', name: 'name', email: 'email', source: 'source', source_artifact_id: 'source_artifact_id', ingested_at: 'ingested_at' },
@@ -79,6 +80,9 @@ vi.mock('@/lib/auth', () => ({
       getSession: vi.fn().mockResolvedValue({ user: { id: 'test-user', email: 'test@test.com', role: 'admin' } }),
     },
   },
+}));
+vi.mock('@/lib/auth-server', () => ({
+  requireSession: vi.fn().mockResolvedValue({ session: { user: { id: 'test-user' } }, redirectResponse: null }),
 }));
 
 import { POST } from '@/app/api/ingestion/approve/route';
@@ -438,8 +442,6 @@ describe('Phase 42 — new field coverage', () => {
           due_date: '2026-05-15',
           description: 'Deploy to production',
           priority: 'high',
-          milestone_name: 'Go Live',
-          workstream_name: 'Infrastructure',
         },
         approved: true,
       }],
