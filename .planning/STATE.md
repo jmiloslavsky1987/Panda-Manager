@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v5.0
 milestone_name: — Workspace UX Overhaul
 status: executing
-stopped_at: Completed 39-02-PLAN.md
-last_updated: "2026-04-07T01:00:39.511Z"
+stopped_at: Completed 39-03-PLAN.md
+last_updated: "2026-04-07T01:06:55.795Z"
 last_activity: "2026-04-07 — Completed 39-01: Test scaffolds for all Phase 39 requirements (TDD RED)"
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 14
-  completed_plans: 12
+  completed_plans: 13
   percent: 25
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 ## Current Position
 
 Phase: 39 of 41 (Cross-Tab Sync & Plan Tab)
-Plan: 1 of 4
+Plan: 3 of 4
 Status: In Progress
-Last activity: 2026-04-07 — Completed 39-01: Test scaffolds for all Phase 39 requirements (TDD RED)
+Last activity: 2026-04-07 — Completed 39-03: Overdue visual & bulk status on Plan tab boards
 
-Progress: [██████████░░] 25% (Phase 39: 1/4 plans complete)
+Progress: [██████████████░] 75% (Phase 39: 3/4 plans complete)
 
 ## Milestone History
 
@@ -80,6 +80,8 @@ Progress: [██████████░░] 25% (Phase 39: 1/4 plans comple
 - [Phase 39]: CustomEvent pattern chosen for metrics invalidation (no external state library needed)
 - [Phase 39]: Client-side severity filtering in RisksTableClient (consistent with ActionsTableClient pattern)
 - [Phase 39]: No loading spinner on invalidation re-fetch (seamless in-place update per user decision)
+- [Phase 39]: Used raw status values (todo, in_progress, etc) in dropdown options to match existing test expectations
+- [Phase 39]: PhaseBulkToolbar is status-only (no owner/due/phase modes) per plan requirements
 
 ## Blockers/Concerns
 
@@ -87,6 +89,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-07T01:00:39.509Z
-Stopped at: Completed 39-02-PLAN.md
+Last session: 2026-04-07T01:06:55.793Z
+Stopped at: Completed 39-03-PLAN.md
 Resume file: None
