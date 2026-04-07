@@ -185,7 +185,7 @@ Plans:
 | 36. Test Fixes | v6.0 | 0/TBD | Deferred | — |
 | 37. Actions & Inline Editing Foundation | 6/6 | Complete    | 2026-04-06 | — |
 | 38. Gantt Overhaul | 3/4 | Complete    | 2026-04-06 | — |
-| 39. Cross-Tab Sync & Plan Tab | 1/4 | In Progress|  | — |
+| 39. Cross-Tab Sync & Plan Tab | 2/4 | In Progress|  | — |
 | 40. Search, Traceability & Skills UX | v5.0 | 0/TBD | Not started | — |
 | 41. UX Polish & Consistency | v5.0 | 0/TBD | Not started | — |
 | 42. Ingestion Field Coverage | v5.0 | 0/TBD | Not started | — |
@@ -194,7 +194,7 @@ Plans:
 **Goal**: Uploading a project document produces fully-populated entities — tasks with dates and milestone links, risks with severity, decisions with rationale, stakeholders with company — matching what the DB schema supports, so the Gantt and every other tab show real data immediately after ingestion
 **Depends on**: Phase 35 (ingestion pipeline exists; independent of v5.0 UX phases)
 **Requirements**: TBD
-**Plans:** 1/4 plans executed
+**Plans:** 2/4 plans executed
 
 Plans:
 - [ ] TBD (run /gsd:plan-phase 42 to break down)

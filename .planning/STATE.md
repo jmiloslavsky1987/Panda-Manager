@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v5.0
 milestone_name: — Workspace UX Overhaul
 status: executing
-stopped_at: Completed 39-01-PLAN.md
-last_updated: "2026-04-07T00:52:15Z"
+stopped_at: Completed 39-02-PLAN.md
+last_updated: "2026-04-07T01:00:39.511Z"
 last_activity: "2026-04-07 — Completed 39-01: Test scaffolds for all Phase 39 requirements (TDD RED)"
 progress:
   total_phases: 6
   completed_phases: 2
-  total_plans: 10
-  completed_plans: 11
-  percent: 110
+  total_plans: 14
+  completed_plans: 12
+  percent: 25
 ---
 
 # Project State
@@ -77,6 +77,9 @@ Progress: [██████████░░] 25% (Phase 39: 1/4 plans comple
 - [Phase 39]: Test scaffolds created before implementation (Nyquist TDD compliance) — 11 tests, 9 RED, 2 GREEN (negative cases)
 - [Phase 39]: Custom event pattern (metrics:invalidate) chosen for cross-tab metrics refresh
 - [Phase 39]: Client-side severity filtering pattern for RisksTableClient (consistent with ActionsTableClient)
+- [Phase 39]: CustomEvent pattern chosen for metrics invalidation (no external state library needed)
+- [Phase 39]: Client-side severity filtering in RisksTableClient (consistent with ActionsTableClient pattern)
+- [Phase 39]: No loading spinner on invalidation re-fetch (seamless in-place update per user decision)
 
 ## Blockers/Concerns
 
@@ -84,6 +87,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-07T00:52:15Z
-Stopped at: Completed 39-01-PLAN.md
-Resume file: .planning/phases/39-cross-tab-sync-plan-tab/39-02-PLAN.md
+Last session: 2026-04-07T01:00:39.509Z
+Stopped at: Completed 39-02-PLAN.md
+Resume file: None
