@@ -120,3 +120,49 @@ describe('worker/jobs/document-extraction.ts — processDocumentExtraction()', (
     // TODO Plan 02: verify no INSERT calls to actions, risks, milestones, etc. — only extraction_jobs table updated
   });
 });
+
+describe('Phase 42 — extraction prompt field coverage', () => {
+  // Import EXTRACTION_SYSTEM to test prompt string content
+  // This will FAIL RED if EXTRACTION_SYSTEM is not exported yet
+  let EXTRACTION_SYSTEM: string;
+
+  try {
+    const module = require('../../worker/jobs/document-extraction');
+    EXTRACTION_SYSTEM = module.EXTRACTION_SYSTEM;
+  } catch (err) {
+    // Expected to fail RED — EXTRACTION_SYSTEM not yet exported
+    EXTRACTION_SYSTEM = '';
+  }
+
+  it('task guidance includes milestone_name', () => {
+    expect(EXTRACTION_SYSTEM).toContain('milestone_name');
+  });
+
+  it('task guidance includes workstream_name', () => {
+    expect(EXTRACTION_SYSTEM).toContain('workstream_name');
+  });
+
+  it('task guidance includes start_date', () => {
+    expect(EXTRACTION_SYSTEM).toContain('start_date');
+  });
+
+  it('task guidance includes due_date', () => {
+    expect(EXTRACTION_SYSTEM).toContain('due_date');
+  });
+
+  it('task guidance includes priority', () => {
+    expect(EXTRACTION_SYSTEM).toContain('priority');
+  });
+
+  it('task guidance includes description', () => {
+    expect(EXTRACTION_SYSTEM).toContain('description');
+  });
+
+  it('milestone guidance includes owner', () => {
+    expect(EXTRACTION_SYSTEM).toContain('owner');
+  });
+
+  it('prompt includes verbatim extraction instruction', () => {
+    expect(EXTRACTION_SYSTEM).toContain('verbatim');
+  });
+});
