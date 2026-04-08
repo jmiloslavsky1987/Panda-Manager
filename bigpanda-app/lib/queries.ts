@@ -24,6 +24,11 @@ import {
   teamOnboardingStatus,
   teamPathways,
   auditLog,
+  wbsItems,
+  teamEngagementSections,
+  archTracks,
+  archNodes,
+  archTeamStatus,
 } from '../db/schema';
 import { eq, and, inArray, lt, ne, gt, or, desc, asc } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
@@ -43,6 +48,11 @@ export type Artifact = typeof artifacts.$inferSelect;
 export type Output = typeof outputs.$inferSelect;
 export type Task = typeof tasks.$inferSelect;
 export type PlanTemplate = typeof planTemplates.$inferSelect;
+export type WbsItem = typeof wbsItems.$inferSelect;
+export type TeamEngagementSection = typeof teamEngagementSections.$inferSelect;
+export type ArchTrack = typeof archTracks.$inferSelect;
+export type ArchNode = typeof archNodes.$inferSelect;
+export type ArchTeamStatus = typeof archTeamStatus.$inferSelect;
 
 export interface ProjectWithHealth extends Project {
   health: 'green' | 'yellow' | 'red';
@@ -1121,4 +1131,59 @@ export function computeAuditDiff(
   }
 
   return changes.length > 0 ? changes.join(', ') : 'No changes'
+}
+
+// ─── v6.0 Queries ─────────────────────────────────────────────────────────────
+
+/**
+ * Returns WBS items for a project filtered by track, ordered by level then display_order.
+ * Used by Phase 47 WBS UI to render hierarchical task structures.
+ */
+export async function getWbsItems(projectId: number, track: string): Promise<WbsItem[]> {
+  return db
+    .select()
+    .from(wbsItems)
+    .where(and(eq(wbsItems.project_id, projectId), eq(wbsItems.track, track)))
+    .orderBy(asc(wbsItems.level), asc(wbsItems.display_order));
+}
+
+/**
+ * Returns team engagement sections for a project, ordered by display_order.
+ * Used by Phase 48 Team Engagement UI.
+ */
+export async function getTeamEngagementSections(projectId: number): Promise<TeamEngagementSection[]> {
+  return db
+    .select()
+    .from(teamEngagementSections)
+    .where(eq(teamEngagementSections.project_id, projectId))
+    .orderBy(asc(teamEngagementSections.display_order));
+}
+
+/**
+ * Returns architecture tracks and nodes for a project.
+ * Used by Phase 48 Architecture UI to render track flows.
+ */
+export async function getArchNodes(projectId: number): Promise<{ tracks: ArchTrack[]; nodes: ArchNode[] }> {
+  const tracks = await db
+    .select()
+    .from(archTracks)
+    .where(eq(archTracks.project_id, projectId))
+    .orderBy(asc(archTracks.display_order));
+  const nodes = await db
+    .select()
+    .from(archNodes)
+    .where(eq(archNodes.project_id, projectId))
+    .orderBy(asc(archNodes.display_order));
+  return { tracks, nodes };
+}
+
+/**
+ * Returns architecture team status rows for a project.
+ * Used by Phase 48 Architecture Team Status section.
+ */
+export async function getArchTeamStatus(projectId: number): Promise<ArchTeamStatus[]> {
+  return db
+    .select()
+    .from(archTeamStatus)
+    .where(eq(archTeamStatus.project_id, projectId));
 }
