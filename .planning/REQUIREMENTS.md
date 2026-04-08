@@ -17,11 +17,11 @@
 
 ### Navigation
 
-- [ ] **NAV-01**: Delivery tab shows Plan as first sub-tab; old Intel and Phase Board URLs redirect to new locations (no broken links)
-- [ ] **NAV-02**: WBS, Task Board, and Gantt are promoted to direct sub-tabs of Delivery at the same level as Plan, Actions, Risks, and Milestones (no longer nested under Plan)
-- [ ] **NAV-03**: Swimlane view is removed from the application
-- [ ] **NAV-04**: Decisions sub-tab is moved from the Intel tab into the Delivery tab
-- [ ] **NAV-05**: Intel tab is removed; Engagement History sub-tab is moved to the Admin tab
+- [x] **NAV-01**: Delivery tab shows Plan as first sub-tab; old Intel and Phase Board URLs redirect to new locations (no broken links)
+- [x] **NAV-02**: WBS, Task Board, and Gantt are promoted to direct sub-tabs of Delivery at the same level as Plan, Actions, Risks, and Milestones (no longer nested under Plan)
+- [x] **NAV-03**: Swimlane view is removed from the application
+- [x] **NAV-04**: Decisions sub-tab is moved from the Intel tab into the Delivery tab
+- [x] **NAV-05**: Intel tab is removed; Engagement History sub-tab is moved to the Admin tab
 
 ### Risks & Milestones Parity
 
@@ -87,11 +87,11 @@
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | SKILL-01 | Phase 43 | Complete |
-| NAV-01 | Phase 44 | Pending |
-| NAV-02 | Phase 44 | Pending |
-| NAV-03 | Phase 44 | Pending |
-| NAV-04 | Phase 44 | Pending |
-| NAV-05 | Phase 44 | Pending |
+| NAV-01 | Phase 44 | Complete |
+| NAV-02 | Phase 44 | Complete |
+| NAV-03 | Phase 44 | Complete |
+| NAV-04 | Phase 44 | Complete |
+| NAV-05 | Phase 44 | Complete |
 | RISK-01 | Phase 44 | Pending |
 | RISK-02 | Phase 44 | Pending |
 | MILE-01 | Phase 44 | Pending |

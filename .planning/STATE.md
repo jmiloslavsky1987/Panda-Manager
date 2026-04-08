@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v6.0
 milestone_name: — Dashboard, Navigation & Intelligence
-status: completed
-stopped_at: Phase 44 context gathered
-last_updated: "2026-04-08T03:03:57.634Z"
-last_activity: 2026-04-07 — Phase 43 complete (Skills Portability)
+status: in_progress
+stopped_at: Completed 44-01-PLAN.md
+last_updated: "2026-04-08T04:50:56Z"
+last_activity: 2026-04-08 — Phase 44 Plan 01 complete (Navigation Restructure)
 progress:
   total_phases: 7
   completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
-  percent: 10
+  total_plans: 10
+  completed_plans: 2
+  percent: 20
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-07)
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
-**Current focus:** v6.0 Phase 43 (Skills Portability)
+**Current focus:** v6.0 Phase 44 (Navigation & Parity)
 
 ## Current Position
 
-Phase: 43 of 49 (Skills Portability - Complete)
-Plan: 1 of 1 in current phase
-Status: Phase complete
-Last activity: 2026-04-07 — Phase 43 complete (Skills Portability)
+Phase: 44 of 49 (Navigation & Parity - In Progress)
+Plan: 2 of 3 in current phase
+Status: In progress
+Last activity: 2026-04-08 — Phase 44 Plan 01 complete (Navigation Restructure)
 
-Progress: [█░░░░░░░░░] 10% (1/10 plans in v6.0 complete)
+Progress: [██░░░░░░░░] 20% (2/10 plans in v6.0 complete)
 
 ## Milestone History
 
@@ -78,11 +78,15 @@ Progress: [█░░░░░░░░░] 10% (1/10 plans in v6.0 complete)
 - **Phase 43:** resolveSkillsDir() extracted to lib/ for shared Next.js/BullMQ access
 - **Phase 43:** skill-run.ts re-exports resolveSkillsDir for backward compatibility
 - **Phase 43:** customer-project-tracker resolves settings once before loop for efficiency
+- **Phase 44 Plan 01:** Intel tab removed entirely — Decisions moved to Delivery, Engagement History to Admin
+- **Phase 44 Plan 01:** Plan layout dissolved — board content now renders directly at /plan route
+- **Phase 44 Plan 01:** Old /plan/* sub-routes redirect for backward compatibility
+- **Phase 44 Plan 01:** Wave 0 test stubs created for bulk-update APIs (RED now, GREEN after Plans 02/03)
 
 ## Blockers/Concerns
 
 **Research-flagged risks:**
-- Phase 44: Navigation restructure may break external links (add redirects for /intel, /phase-board old URLs)
+- ~~Phase 44: Navigation restructure may break external links (add redirects for /intel, /phase-board old URLs)~~ ✓ MITIGATED in Plan 01 (redirects added for all /plan/* routes)
 - Phase 46: AI extraction prompt expansion could degrade existing entity routing accuracy (monitor 80%+ baseline)
 - Phase 47: Deep tree rendering performance (100+ nodes) — use Set-based state + React.memo()
 - Phase 47: Generate Plan gap-fill hallucinations — validate stakeholder names against DB
@@ -94,7 +98,7 @@ Progress: [█░░░░░░░░░] 10% (1/10 plans in v6.0 complete)
 
 ## Session Continuity
 
-Last session: 2026-04-08T03:03:57.631Z
-Stopped at: Phase 44 context gathered
-Resume file: .planning/phases/44-navigation-parity/44-CONTEXT.md
-Next action: `/gsd:plan-phase 44` to begin Navigation & Parity phase
+Last session: 2026-04-08T04:50:56Z
+Stopped at: Completed 44-01-PLAN.md
+Resume file: .planning/phases/44-navigation-parity/44-01-SUMMARY.md
+Next action: Execute 44-02-PLAN.md (Risks Bulk Actions) or 44-03-PLAN.md (Milestones Bulk Actions)

@@ -120,7 +120,7 @@ Full details: `.planning/milestones/v5.0-ROADMAP.md` (archived)
 **Plans**: 1 plan
 
 Plans:
-- [ ] 43-01-PLAN.md — Extract resolveSkillsDir to lib/skill-path.ts, migrate 3 worker jobs and 3 API routes, write migration tests
+- [x] 43-01-PLAN.md — Extract resolveSkillsDir to lib/skill-path.ts, migrate 3 worker jobs and 3 API routes, write migration tests (completed 2026-04-07)
 
 ### Phase 44: Navigation & Parity
 **Goal**: Navigation restructure complete, Risks and Milestones match Actions table capabilities
@@ -139,7 +139,7 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 44-01-PLAN.md — Wave 0 test stubs + Navigation restructure (TAB_GROUPS, route files, plan layout dissolution)
+- [x] 44-01-PLAN.md — Wave 0 test stubs + Navigation restructure (TAB_GROUPS, route files, plan layout dissolution) (completed 2026-04-08)
 - [ ] 44-02-PLAN.md — Risks parity: full filter bar + multi-select + /api/risks/bulk-update
 - [ ] 44-03-PLAN.md — Milestones parity: full filter bar + multi-select + /api/milestones/bulk-update
 
