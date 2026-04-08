@@ -27,8 +27,8 @@
 
 - [x] **RISK-01**: User can filter the Risks table by multiple dimensions (status, severity, owner, date range)
 - [x] **RISK-02**: User can multi-select risks and apply bulk status or field updates
-- [ ] **MILE-01**: User can filter the Milestones table by multiple dimensions (status, owner, date range)
-- [ ] **MILE-02**: User can multi-select milestones and apply bulk status or field updates
+- [x] **MILE-01**: User can filter the Milestones table by multiple dimensions (status, owner, date range)
+- [x] **MILE-02**: User can multi-select milestones and apply bulk status or field updates
 
 ### Work Breakdown Structure
 
@@ -94,8 +94,8 @@
 | NAV-05 | Phase 44 | Complete |
 | RISK-01 | Phase 44 | Complete |
 | RISK-02 | Phase 44 | Complete |
-| MILE-01 | Phase 44 | Pending |
-| MILE-02 | Phase 44 | Pending |
+| MILE-01 | Phase 44 | Complete |
+| MILE-02 | Phase 44 | Complete |
 | WBS-01 | Phase 45 | Pending |
 | WBS-02 | Phase 45 | Pending |
 | WBS-03 | Phase 46 | Pending |

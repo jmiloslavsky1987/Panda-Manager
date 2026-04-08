@@ -100,7 +100,7 @@ Full details: `.planning/milestones/v5.0-ROADMAP.md` (archived)
 **Milestone Goal:** Upgrade the portfolio dashboard, restructure navigation, achieve parity across Risks/Milestones, replace Phase Board with AI-driven WBS, and enhance Team Engagement and Architecture views with context-upload extraction.
 
 - [x] **Phase 43: Skills Portability** - Dynamic SKILL.md path resolution for deployment flexibility (completed 2026-04-07)
-- [ ] **Phase 44: Navigation & Parity** - Tab restructure, Risks/Milestones filtering and bulk actions
+- [x] **Phase 44: Navigation & Parity** - Tab restructure, Risks/Milestones filtering and bulk actions (completed 2026-04-08)
 - [ ] **Phase 45: Database Schema Foundation** - New tables for WBS, Team Engagement, Architecture; query functions
 - [ ] **Phase 46: Context Upload Extraction Expansion** - Extend extraction to WBS/Team/Architecture entity types
 - [ ] **Phase 47: Work Breakdown Structure** - Collapsible WBS tree with AI Generate Plan and manual CRUD
@@ -244,7 +244,7 @@ Phases execute in numeric order: 43 → 44 → 45 → 46 → 47 → 48 → 49
 | 41. UX Polish & Consistency | v5.0 | 4/4 | Complete | 2026-04-07 |
 | 42. Ingestion Field Coverage | v5.0 | 5/5 | Complete | 2026-04-07 |
 | 43. Skills Portability | 1/1 | Complete    | 2026-04-08 | - |
-| 44. Navigation & Parity | 2/3 | In Progress|  | - |
+| 44. Navigation & Parity | 3/3 | Complete   | 2026-04-08 | - |
 | 45. Database Schema Foundation | v6.0 | 0/1 | Not started | - |
 | 46. Context Upload Extraction Expansion | v6.0 | 0/1 | Not started | - |
 | 47. Work Breakdown Structure | v6.0 | 0/2 | Not started | - |
