@@ -242,7 +242,7 @@ Phases execute in numeric order: 43 → 44 → 45 → 46 → 47 → 48 → 49
 | 40. Search, Traceability & Skills UX | v5.0 | 6/6 | Complete | 2026-04-07 |
 | 41. UX Polish & Consistency | v5.0 | 4/4 | Complete | 2026-04-07 |
 | 42. Ingestion Field Coverage | v5.0 | 5/5 | Complete | 2026-04-07 |
-| 43. Skills Portability | 1/1 | Complete   | 2026-04-07 | - |
+| 43. Skills Portability | 1/1 | Complete    | 2026-04-08 | - |
 | 44. Navigation & Parity | v6.0 | 0/2 | Not started | - |
 | 45. Database Schema Foundation | v6.0 | 0/1 | Not started | - |
 | 46. Context Upload Extraction Expansion | v6.0 | 0/1 | Not started | - |
