@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v6.0
 milestone_name: — Dashboard, Navigation & Intelligence
 status: executing
-stopped_at: Completed 45-02-PLAN.md
-last_updated: "2026-04-08T15:54:54.227Z"
+stopped_at: Completed 46-02-PLAN.md
+last_updated: "2026-04-08T16:02:28Z"
 last_activity: 2026-04-08 — Phase 45 Plan 01 complete (Database Schema Foundation)
 progress:
   total_phases: 7
-  completed_phases: 3
-  total_plans: 8
-  completed_plans: 7
-  percent: 40
+  completed_phases: 4
+  total_plans: 10
+  completed_plans: 6
+  percent: 60
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 
 ## Current Position
 
-Phase: 46 of 49 (Context Upload Extraction Expansion - In Progress)
-Plan: 1 of 2 in current phase
-Status: In progress
-Last activity: 2026-04-08 — Phase 46 Plan 01 complete (Extraction Prompt Expansion)
+Phase: 46 of 49 (Context Upload Extraction Expansion - Complete)
+Plan: 2 of 2 in current phase
+Status: Complete
+Last activity: 2026-04-08 — Phase 46 Plan 02 complete (Entity Deduplication & Routing Logic)
 
-Progress: [████░░░░░░] 50% (5/10 plans in v6.0 complete)
+Progress: [█████░░░░░] 60% (6/10 plans in v6.0 complete)
 
 ## Milestone History
 
@@ -91,6 +91,9 @@ Progress: [████░░░░░░] 50% (5/10 plans in v6.0 complete)
 - **Phase 46 Plan 01:** Wave 0 TDD approach: created test scaffolds first (3 extraction + 3 dedup tests) before implementation
 - **Phase 46 Plan 01:** Entity field design: wbs_task uses track+parent_section_name+level for hierarchical routing, team_engagement uses section_name enum for 5-section validation, arch_node uses track+node_name for capability classification
 - **Phase 46 Plan 01:** Disambiguation rules added to prompt: wbs_task vs task (hierarchical WBS items vs generic tasks), team_engagement vs team (section content vs team metadata)
+- **Phase 46 Plan 02:** WBS parent matching uses ilike with wildcard on both sides for abbreviated parent names
+- **Phase 46 Plan 02:** Team Engagement content append uses '\n\n---\n\n' separator to visually distinguish entries
+- **Phase 46 Plan 02:** Architecture node upsert uses onConflictDoUpdate on (project_id, track_id, name) composite key
 
 ## Blockers/Concerns
 
