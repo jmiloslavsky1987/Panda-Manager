@@ -185,11 +185,12 @@ Plans:
   3. User clicks "Generate Plan" and AI fills gaps in WBS based on project context
   4. User can manually add, edit, reorder, and delete tasks within any WBS node
   5. WBS tree renders without lag with 100+ nodes
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 47-01: [TBD]
-- [ ] 47-02: [TBD]
+- [ ] 47-01-PLAN.md — Wave 0 RED test scaffolds (5 files) + WBS CRUD API routes (add/edit/delete/reorder) + deleteWbsSubtree helper
+- [ ] 47-02-PLAN.md — WBS tree UI: WbsTree.tsx (tabs, expand/collapse, DndContext) + WbsNode.tsx (inline edit, status, add child, delete confirm)
+- [ ] 47-03-PLAN.md — Generate Plan: wbs/generate API route + wbs-generate-plan job + WbsGeneratePlanModal with preview + confirm
 
 ### Phase 48: Architecture & Team Engagement
 **Goal**: Architecture tab shows two-tab diagram with status tracking; Team Engagement displays 5-section map
