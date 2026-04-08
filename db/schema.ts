@@ -75,6 +75,11 @@ export const integrationTrackStatusEnum = pgEnum('integration_track_status', [
   'live', 'in_progress', 'pilot', 'planned',
 ]);
 
+// ─── v6.0 Enums ──────────────────────────────────────────────────────────────
+
+export const wbsItemStatusEnum = pgEnum('wbs_item_status', ['not_started', 'in_progress', 'complete']);
+export const archNodeStatusEnum = pgEnum('arch_node_status', ['planned', 'in_progress', 'live']);
+
 // ─── Table 1: projects ────────────────────────────────────────────────────────
 
 export const projects = pgTable('projects', {
@@ -96,6 +101,7 @@ export const projects = pgTable('projects', {
   start_date: text('start_date'),
   end_date: text('end_date'),
   seeded: boolean('seeded').default(false).notNull(),
+  exec_action_required: boolean('exec_action_required').default(false).notNull(),
 });
 
 // ─── Table 2: workstreams ─────────────────────────────────────────────────────
@@ -757,3 +763,99 @@ export const extractionJobs = pgTable('extraction_jobs', {
 });
 
 export type ExtractionJob = typeof extractionJobs.$inferSelect;
+
+// ─── v6.0 Tables ─────────────────────────────────────────────────────────────
+
+// ─── WBS Items (Work Breakdown Structure) ────────────────────────────────────
+
+export const wbsItems = pgTable('wbs_items', {
+  id: serial('id').primaryKey(),
+  project_id: integer('project_id').notNull().references(() => projects.id),
+  parent_id: integer('parent_id').references((): AnyPgColumn => wbsItems.id),
+  level: integer('level').notNull(),
+  name: text('name').notNull(),
+  track: text('track').notNull(),
+  status: wbsItemStatusEnum('status').default('not_started').notNull(),
+  display_order: integer('display_order').default(0).notNull(),
+  source_trace: text('source_trace'),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+});
+
+export type WbsItem = typeof wbsItems.$inferSelect;
+export type WbsItemInsert = typeof wbsItems.$inferInsert;
+
+// ─── WBS Task Assignments (join table) ───────────────────────────────────────
+
+export const wbsTaskAssignments = pgTable('wbs_task_assignments', {
+  id: serial('id').primaryKey(),
+  wbs_item_id: integer('wbs_item_id').notNull().references(() => wbsItems.id),
+  task_id: integer('task_id').notNull().references(() => tasks.id),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+});
+
+// ─── Team Engagement Sections ─────────────────────────────────────────────────
+
+export const teamEngagementSections = pgTable('team_engagement_sections', {
+  id: serial('id').primaryKey(),
+  project_id: integer('project_id').notNull().references(() => projects.id),
+  name: text('name').notNull(),
+  content: text('content').default('').notNull(),
+  display_order: integer('display_order').default(0).notNull(),
+  source_trace: text('source_trace'),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+  updated_at: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export type TeamEngagementSection = typeof teamEngagementSections.$inferSelect;
+
+// ─── Architecture Tracks ──────────────────────────────────────────────────────
+
+export const archTracks = pgTable('arch_tracks', {
+  id: serial('id').primaryKey(),
+  project_id: integer('project_id').notNull().references(() => projects.id),
+  name: text('name').notNull(),
+  display_order: integer('display_order').default(0).notNull(),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+});
+
+export type ArchTrack = typeof archTracks.$inferSelect;
+
+// ─── Architecture Nodes ───────────────────────────────────────────────────────
+
+export const archNodes = pgTable('arch_nodes', {
+  id: serial('id').primaryKey(),
+  track_id: integer('track_id').notNull().references(() => archTracks.id),
+  project_id: integer('project_id').notNull().references(() => projects.id),
+  name: text('name').notNull(),
+  display_order: integer('display_order').default(0).notNull(),
+  status: archNodeStatusEnum('status').default('planned').notNull(),
+  notes: text('notes'),
+  source_trace: text('source_trace'),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+});
+
+export type ArchNode = typeof archNodes.$inferSelect;
+
+// ─── Architecture Team Status ─────────────────────────────────────────────────
+
+export const archTeamStatus = pgTable('arch_team_status', {
+  id: serial('id').primaryKey(),
+  project_id: integer('project_id').notNull().references(() => projects.id),
+  team_name: text('team_name').notNull(),
+  capability_stage: text('capability_stage').notNull(),
+  status: text('status').default('not_started').notNull(),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+});
+
+export type ArchTeamStatus = typeof archTeamStatus.$inferSelect;
+
+// ─── Project Dependencies ─────────────────────────────────────────────────────
+
+export const projectDependencies = pgTable('project_dependencies', {
+  id: serial('id').primaryKey(),
+  source_project_id: integer('source_project_id').notNull().references(() => projects.id),
+  depends_on_project_id: integer('depends_on_project_id').notNull().references(() => projects.id),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+});
+
+export type ProjectDependency = typeof projectDependencies.$inferSelect;
