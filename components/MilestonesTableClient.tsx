@@ -1,7 +1,7 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useState, useMemo, useCallback } from 'react'
 import { Badge } from '@/components/ui/badge'
 import {
   Table,
@@ -11,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { Checkbox } from '@/components/ui/checkbox'
 import { MilestoneEditModal } from '@/components/MilestoneEditModal'
 import { SourceBadge } from '@/components/SourceBadge'
 import { InlineSelectCell } from '@/components/InlineSelectCell'
@@ -59,7 +60,26 @@ interface MilestonesTableClientProps {
 
 export function MilestonesTableClient({ milestones, artifacts, projectId }: MilestonesTableClientProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [addModalOpen, setAddModalOpen] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+
+  // Read filter values from URL params
+  const statusFilter = searchParams.get('status') ?? ''
+  const ownerFilter = searchParams.get('owner') ?? ''
+  const fromDate = searchParams.get('from') ?? ''
+  const toDate = searchParams.get('to') ?? ''
+
+  // Update URL param helper
+  const updateParam = useCallback((key: string, value: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (value) {
+      params.set(key, value)
+    } else {
+      params.delete(key)
+    }
+    router.push(`?${params.toString()}`, { scroll: false })
+  }, [router, searchParams])
 
   async function patchMilestone(id: number, patch: Record<string, unknown>) {
     const res = await fetch(`/api/milestones/${id}`, {
@@ -75,18 +95,93 @@ export function MilestonesTableClient({ milestones, artifacts, projectId }: Mile
     window.dispatchEvent(new CustomEvent('metrics:invalidate'))
   }
 
+  // Bulk update status
+  async function bulkUpdateStatus(status: string) {
+    await fetch('/api/milestones/bulk-update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ milestone_ids: Array.from(selectedIds), patch: { status } }),
+    })
+    setSelectedIds(new Set())
+    router.refresh()
+    window.dispatchEvent(new CustomEvent('metrics:invalidate'))
+  }
+
+  // Toggle single checkbox
+  function toggleSelection(id: number) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
+
+  // Toggle all checkboxes
+  function toggleSelectAll() {
+    if (selectedIds.size === filteredMilestones.length && filteredMilestones.length > 0) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(filteredMilestones.map(m => m.id)))
+    }
+  }
+
   const artifactMap = new Map(artifacts.map((a) => [a.id, a.name]))
 
-  const incomplete = milestones.filter((m) => (m.status ?? '').toLowerCase() !== 'completed')
-  const complete = milestones.filter((m) => (m.status ?? '').toLowerCase() === 'completed')
+  // Get unique owners for dropdown
+  const uniqueOwners = useMemo(() => {
+    const owners = new Set<string>()
+    milestones.forEach(m => {
+      if (m.owner) owners.add(m.owner)
+    })
+    return Array.from(owners).sort()
+  }, [milestones])
 
+  // Sort helper function (preserved from original)
   const sortByDate = (a: Milestone, b: Milestone) => {
     const aDate = a.target ?? a.date ?? ''
     const bDate = b.target ?? b.date ?? ''
     return aDate.localeCompare(bDate)
   }
 
-  const sortedMilestones = [...[...incomplete].sort(sortByDate), ...[...complete].sort(sortByDate)]
+  // Filter milestones based on URL params, then apply incomplete-first sort
+  const filteredMilestones = useMemo(() => {
+    let result = [...milestones]
+
+    // Apply status filter
+    if (statusFilter) {
+      result = result.filter(m => normaliseMilestoneStatus(m.status) === statusFilter)
+    }
+
+    // Apply owner filter
+    if (ownerFilter) {
+      result = result.filter(m => m.owner === ownerFilter)
+    }
+
+    // Apply date range filter (on target ?? date field)
+    if (fromDate) {
+      result = result.filter(m => {
+        const d = m.target ?? m.date ?? ''
+        if (!/^\d{4}-\d{2}-\d{2}/.test(d)) return true  // keep non-ISO rows
+        return d >= fromDate
+      })
+    }
+    if (toDate) {
+      result = result.filter(m => {
+        const d = m.target ?? m.date ?? ''
+        if (!/^\d{4}-\d{2}-\d{2}/.test(d)) return true  // keep non-ISO rows
+        return d <= toDate
+      })
+    }
+
+    // Preserve incomplete-first order (split, sort each half, concat)
+    const incomplete = result.filter(m => normaliseMilestoneStatus(m.status) !== 'completed')
+    const complete = result.filter(m => normaliseMilestoneStatus(m.status) === 'completed')
+    return [...incomplete.sort(sortByDate), ...complete.sort(sortByDate)]
+  }, [milestones, statusFilter, ownerFilter, fromDate, toDate])
 
   // Show empty state when no milestones exist
   if (milestones.length === 0) {
@@ -115,10 +210,99 @@ export function MilestonesTableClient({ milestones, artifacts, projectId }: Mile
         <h2 className="text-xl font-semibold text-zinc-900">Milestones</h2>
         <AddMilestoneModal projectId={projectId} open={addModalOpen} onOpenChange={setAddModalOpen} />
       </div>
+
+      {/* Filter Bar */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        <select
+          value={statusFilter}
+          onChange={e => updateParam('status', e.target.value)}
+          className="border rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-400"
+        >
+          <option value="">All statuses</option>
+          <option value="not_started">Not Started</option>
+          <option value="in_progress">In Progress</option>
+          <option value="completed">Completed</option>
+          <option value="blocked">Blocked</option>
+        </select>
+        <select
+          value={ownerFilter}
+          onChange={e => updateParam('owner', e.target.value)}
+          className="border rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-400"
+        >
+          <option value="">All owners</option>
+          {uniqueOwners.map(o => <option key={o} value={o}>{o}</option>)}
+        </select>
+        <label className="flex items-center gap-1 text-sm text-zinc-600">
+          From
+          <input
+            type="date"
+            value={fromDate}
+            onChange={e => updateParam('from', e.target.value)}
+            className="border rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-400"
+          />
+        </label>
+        <label className="flex items-center gap-1 text-sm text-zinc-600">
+          To
+          <input
+            type="date"
+            value={toDate}
+            onChange={e => updateParam('to', e.target.value)}
+            className="border rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-400"
+          />
+        </label>
+        {(statusFilter || ownerFilter || fromDate || toDate) && (
+          <button
+            onClick={() => {
+              updateParam('status', '')
+              updateParam('owner', '')
+              updateParam('from', '')
+              updateParam('to', '')
+            }}
+            className="text-sm text-zinc-500 hover:text-zinc-800 border rounded px-2 py-1"
+          >
+            Clear filters
+          </button>
+        )}
+      </div>
+
+      {/* Bulk Action Bar (floating above table when rows selected) */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-3 bg-zinc-50 border rounded px-4 py-2 mb-2">
+          <span className="text-sm font-medium">{selectedIds.size} selected</span>
+          <select
+            onChange={e => {
+              if (e.target.value) {
+                bulkUpdateStatus(e.target.value)
+                e.target.value = '' // Reset
+              }
+            }}
+            className="border rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-400"
+          >
+            <option value="">Change status...</option>
+            <option value="not_started">Not Started</option>
+            <option value="in_progress">In Progress</option>
+            <option value="completed">Completed</option>
+            <option value="blocked">Blocked</option>
+          </select>
+          <button
+            onClick={() => setSelectedIds(new Set())}
+            className="text-sm text-zinc-600 hover:text-zinc-800"
+          >
+            Clear
+          </button>
+        </div>
+      )}
+
       <div className="rounded-md border border-zinc-200 overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-12">
+                <Checkbox
+                  checked={filteredMilestones.length > 0 && selectedIds.size === filteredMilestones.length}
+                  onCheckedChange={toggleSelectAll}
+                />
+              </TableHead>
               <TableHead className="w-[130px]">ID</TableHead>
               <TableHead>Name</TableHead>
               <TableHead className="w-[160px]">Status</TableHead>
@@ -128,14 +312,14 @@ export function MilestonesTableClient({ milestones, artifacts, projectId }: Mile
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedMilestones.length === 0 ? (
+            {filteredMilestones.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-zinc-400 py-8">
+                <TableCell colSpan={7} className="text-center text-zinc-400 py-8">
                   No milestones found.
                 </TableCell>
               </TableRow>
             ) : (
-              sortedMilestones.map((m) => {
+              filteredMilestones.map((m) => {
                 const statusKey = normaliseMilestoneStatus(m.status)
                 const badgeClass = statusBadgeColors[statusKey] ?? 'bg-zinc-100 text-zinc-700'
                 const displayDate = m.target ?? m.date ?? null
@@ -146,6 +330,12 @@ export function MilestonesTableClient({ milestones, artifacts, projectId }: Mile
                     className={overdue ? 'border-red-500 bg-red-50' : ''}
                     data-testid={`milestone-row-${m.id}`}
                   >
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedIds.has(m.id)}
+                        onCheckedChange={() => toggleSelection(m.id)}
+                      />
+                    </TableCell>
                     <TableCell className="font-mono text-xs text-zinc-500">{m.external_id}</TableCell>
                     <TableCell className="text-sm font-medium">
                       <div className="space-y-1">
