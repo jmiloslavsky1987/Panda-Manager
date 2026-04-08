@@ -1,34 +1,45 @@
 'use client'
 import { useState } from 'react'
-import type { ArchitectureIntegration, TeamPathway } from '@/lib/queries'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import type { ArchitectureIntegration, TeamPathway, ArchTrack, ArchNode } from '@/lib/queries'
 import { IntegrationDetailDrawer } from './IntegrationDetailDrawer'
 import { TeamPathwayBridge } from './TeamPathwayBridge'
+import { DndContext, PointerSensor, useSensor, useSensors, DragEndEvent, closestCenter } from '@dnd-kit/core'
+import { SortableContext, useSortable, horizontalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import * as Tooltip from '@radix-ui/react-tooltip'
 
 interface Props {
   integrations:      ArchitectureIntegration[]
   pathways:          TeamPathway[]
   projectId:         number
+  tracks:            ArchTrack[]
+  nodes:             ArchNode[]
   onPathwaysUpdate:  (p: TeamPathway[]) => void
   onEdit?:           (integration: ArchitectureIntegration) => void
   adrTeamNames?:     string[]
   biggyTeamNames?:   string[]
 }
 
-const ADR_PHASES = [
-  'Event Ingest',
-  'Alert Intelligence',
-  'Incident Intelligence',
-  'Console',
-  'Workflow Automation',
-]
+// Node status badge colors
+function nodeBadgeClass(status: string): string {
+  switch (status) {
+    case 'live':        return 'bg-green-100 text-green-700'
+    case 'in_progress': return 'bg-blue-100 text-blue-600'
+    case 'planned':     return 'bg-zinc-100 text-zinc-500'
+    default:            return 'bg-zinc-100 text-zinc-500'
+  }
+}
 
-const BIGGY_PHASES = [
-  'Knowledge Sources (Ingested)',
-  'Real-Time Query Sources',
-  'Biggy Capabilities',
-  'Console',
-  'Outputs & Actions',
-]
+function nodeStatusLabel(status: string): string {
+  switch (status) {
+    case 'live':        return 'Live'
+    case 'in_progress': return 'In Progress'
+    case 'planned':     return 'Planned'
+    default:            return status
+  }
+}
 
 // Card background + border driven by STATUS (matches reference screenshot)
 function cardBg(status: string): string {
@@ -125,24 +136,102 @@ function ConsoleNode({ track }: { track: string }) {
   )
 }
 
-function PhaseColumn({
+function SortablePhaseColumn({
+  node,
   phase,
   integrations,
   track,
   onCardClick,
+  onStatusClick,
 }: {
+  node: ArchNode
   phase: string
   integrations: ArchitectureIntegration[]
   track: string
   onCardClick: (i: ArchitectureIntegration) => void
+  onStatusClick?: (node: ArchNode) => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: node.id })
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  return (
+    <div ref={setNodeRef} style={style} className="flex items-start">
+      <div className="flex-shrink-0 pt-[40px]">
+        <span
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing text-zinc-300 hover:text-zinc-500 mr-1 text-xs"
+          title="Drag to reorder"
+        >
+          ⠿
+        </span>
+      </div>
+      <PhaseColumn
+        phase={phase}
+        integrations={integrations}
+        track={track}
+        node={node}
+        onCardClick={onCardClick}
+        onStatusClick={onStatusClick}
+      />
+    </div>
+  )
+}
+
+function PhaseColumn({
+  phase,
+  integrations,
+  track,
+  node,
+  onCardClick,
+  onStatusClick,
+}: {
+  phase: string
+  integrations: ArchitectureIntegration[]
+  track: string
+  node?: ArchNode
+  onCardClick: (i: ArchitectureIntegration) => void
+  onStatusClick?: (node: ArchNode) => void
 }) {
   const isConsole = phase === 'Console'
 
   return (
     <div className="flex flex-col w-[180px] flex-shrink-0">
       {/* Header */}
-      <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 text-center mb-3 min-h-[40px] flex items-end justify-center px-1 leading-tight">
-        {phase}
+      <div className="text-center mb-3 min-h-[40px] flex flex-col items-center justify-end px-1">
+        <Tooltip.Provider>
+          <Tooltip.Root>
+            <Tooltip.Trigger asChild>
+              <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 leading-tight">
+                {phase}
+              </div>
+            </Tooltip.Trigger>
+            {node?.notes && (
+              <Tooltip.Portal>
+                <Tooltip.Content
+                  className="bg-zinc-900 text-white text-xs px-2 py-1 rounded shadow-lg max-w-xs"
+                  sideOffset={5}
+                >
+                  {node.notes}
+                  <Tooltip.Arrow className="fill-zinc-900" />
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            )}
+          </Tooltip.Root>
+        </Tooltip.Provider>
+        {node && onStatusClick && (
+          <button
+            onClick={() => onStatusClick(node)}
+            className={`mt-1 px-2 py-0.5 rounded-full text-[10px] font-semibold cursor-pointer transition-colors ${nodeBadgeClass(node.status)}`}
+            title="Click to cycle status"
+          >
+            {nodeStatusLabel(node.status)}
+          </button>
+        )}
       </div>
 
       {/* Content */}
@@ -162,21 +251,30 @@ function PhaseColumn({
 }
 
 function TrackPipeline({
-  track,
-  phases,
+  trackData,
+  nodes,
   integrations,
   teamNames,
   onCardClick,
+  onStatusClick,
+  onDragEnd,
+  sensors,
 }: {
-  track: string
-  phases: string[]
+  trackData: ArchTrack
+  nodes: ArchNode[]
   integrations: ArchitectureIntegration[]
   teamNames: string[]
   onCardClick: (i: ArchitectureIntegration) => void
+  onStatusClick: (node: ArchNode) => void
+  onDragEnd: (event: DragEndEvent, trackId: number) => void
+  sensors: ReturnType<typeof useSensors>
 }) {
-  const isADR = track === 'ADR'
+  const isADR = trackData.name.includes('ADR')
   const borderClass = isADR ? 'border-l-blue-600' : 'border-l-amber-500'
   const labelClass = isADR ? 'text-blue-700' : 'text-amber-600'
+
+  // Sort nodes by display_order
+  const sortedNodes = [...nodes].sort((a, b) => a.display_order - b.display_order)
   const byPhase = (p: string) => integrations.filter((i) => i.phase === p)
 
   return (
@@ -184,7 +282,7 @@ function TrackPipeline({
       {/* Track label + optional team names */}
       <div className="flex items-baseline gap-2 mb-5">
         <span className={`text-[11px] font-bold uppercase tracking-widest ${labelClass}`}>
-          {isADR ? 'ADR Track' : 'Biggy AI Track'}
+          {trackData.name}
         </span>
         {teamNames.length > 0 && (
           <span className="text-[11px] text-zinc-400">
@@ -193,20 +291,30 @@ function TrackPipeline({
         )}
       </div>
 
-      {/* Phase pipeline */}
-      <div className="flex items-start">
-        {phases.map((phase, idx) => (
-          <div key={phase} className="flex items-start">
-            <PhaseColumn
-              phase={phase}
-              integrations={byPhase(phase)}
-              track={track}
-              onCardClick={onCardClick}
-            />
-            {idx < phases.length - 1 && <Arrow />}
+      {/* Phase pipeline with drag-and-drop */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={(e) => onDragEnd(e, trackData.id)}
+      >
+        <SortableContext items={sortedNodes.map((n) => n.id)} strategy={horizontalListSortingStrategy}>
+          <div className="flex items-start">
+            {sortedNodes.map((node, idx) => (
+              <div key={node.id} className="flex items-start">
+                <SortablePhaseColumn
+                  node={node}
+                  phase={node.name}
+                  integrations={byPhase(node.name)}
+                  track={trackData.name}
+                  onCardClick={onCardClick}
+                  onStatusClick={onStatusClick}
+                />
+                {idx < sortedNodes.length - 1 && <Arrow />}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </SortableContext>
+      </DndContext>
     </div>
   )
 }
@@ -215,16 +323,87 @@ export function InteractiveArchGraph({
   integrations,
   pathways,
   projectId,
+  tracks,
+  nodes,
   onPathwaysUpdate,
   adrTeamNames = [],
   biggyTeamNames = [],
 }: Props) {
+  const router = useRouter()
   const [selectedIntegration, setSelectedIntegration] = useState<ArchitectureIntegration | null>(null)
+  const [localNodes, setLocalNodes] = useState<ArchNode[]>(nodes)
 
-  const adrIntegrations   = integrations.filter((i) => i.track === 'ADR')
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  )
+
+  // Status cycle: planned → in_progress → live → planned
+  const statusCycle = { planned: 'in_progress', in_progress: 'live', live: 'planned' } as const
+
+  async function handleStatusClick(node: ArchNode) {
+    const newStatus = statusCycle[node.status as keyof typeof statusCycle]
+    const prev = [...localNodes]
+    setLocalNodes(localNodes.map((n) => (n.id === node.id ? { ...n, status: newStatus } : n)))
+    try {
+      const res = await fetch(`/api/projects/${projectId}/arch-nodes/${node.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      })
+      if (!res.ok) throw new Error('Status update failed')
+      router.refresh()
+    } catch {
+      setLocalNodes(prev)
+      toast.error('Status update failed — please try again')
+    }
+  }
+
+  async function handleDragEnd(event: DragEndEvent, trackId: number) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    const trackNodes = localNodes
+      .filter((n) => n.track_id === trackId)
+      .sort((a, b) => a.display_order - b.display_order)
+    const oldIndex = trackNodes.findIndex((n) => n.id === Number(active.id))
+    const newIndex = trackNodes.findIndex((n) => n.id === Number(over.id))
+
+    if (oldIndex === -1 || newIndex === -1) return
+
+    const reordered = arrayMove(trackNodes, oldIndex, newIndex)
+    // Optimistic: update localNodes with new display_order
+    const updatedNodes = localNodes.map((n) => {
+      const reorderedNode = reordered.find((r) => r.id === n.id)
+      return reorderedNode ? { ...n, display_order: reordered.indexOf(reorderedNode) + 1 } : n
+    })
+    setLocalNodes(updatedNodes)
+
+    const draggedNode = trackNodes[oldIndex]
+    const targetNode = trackNodes[newIndex]
+    try {
+      const res = await fetch(`/api/projects/${projectId}/arch-nodes/reorder`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nodeId: draggedNode.id, trackId, newDisplayOrder: targetNode.display_order }),
+      })
+      if (!res.ok) throw new Error('Reorder failed')
+      router.refresh()
+    } catch {
+      setLocalNodes(nodes) // rollback to original prop
+      toast.error('Reorder failed — please try again')
+    }
+  }
+
+  // Group nodes by track
+  const sortedTracks = [...tracks].sort((a, b) => a.display_order - b.display_order)
+  const adrIntegrations = integrations.filter((i) => i.track === 'ADR')
   const biggyIntegrations = integrations.filter((i) => i.track === 'Biggy')
 
-  if (integrations.length === 0) {
+  if (integrations.length === 0 && localNodes.length === 0) {
     return (
       <div className="h-[200px] border border-zinc-200 rounded-lg flex items-center justify-center text-zinc-400 text-sm">
         Add integrations to see the architecture diagram
@@ -237,13 +416,15 @@ export function InteractiveArchGraph({
       <div className="flex-1 min-w-0">
         {/* Top navigation row */}
         <div className="flex items-center gap-2 mb-1 flex-wrap">
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-600 text-white">
-            ADR Track
-          </span>
-          <span className="text-zinc-400 text-xs">↓ then</span>
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-amber-500 text-white">
-            Biggy AI Track
-          </span>
+          {sortedTracks.map((track) => {
+            const isADR = track.name.includes('ADR')
+            const bgClass = isADR ? 'bg-blue-600' : 'bg-amber-500'
+            return (
+              <span key={track.id} className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${bgClass} text-white`}>
+                {track.name}
+              </span>
+            )
+          })}
           <span className="text-xs text-zinc-400 ml-1">
             Team-by-team rollout · see status table below
           </span>
@@ -253,28 +434,35 @@ export function InteractiveArchGraph({
         {/* Horizontally scrollable pipeline */}
         <div className="overflow-x-auto pb-2">
           <div className="space-y-8" style={{ minWidth: '1080px' }}>
-            <TrackPipeline
-              track="ADR"
-              phases={ADR_PHASES}
-              integrations={adrIntegrations}
-              teamNames={adrTeamNames}
-              onCardClick={setSelectedIntegration}
-            />
+            {sortedTracks.map((track, trackIdx) => {
+              const trackNodes = localNodes.filter((n) => n.track_id === track.id)
+              const isADR = track.name.includes('ADR')
+              const trackIntegrations = isADR ? adrIntegrations : biggyIntegrations
+              const trackTeamNames = isADR ? adrTeamNames : biggyTeamNames
 
-            {/* Team Pathway Bridge — replaces static separator */}
-            <TeamPathwayBridge
-              pathways={pathways}
-              projectId={projectId}
-              onPathwaysUpdate={onPathwaysUpdate}
-            />
-
-            <TrackPipeline
-              track="Biggy"
-              phases={BIGGY_PHASES}
-              integrations={biggyIntegrations}
-              teamNames={biggyTeamNames}
-              onCardClick={setSelectedIntegration}
-            />
+              return (
+                <div key={track.id}>
+                  <TrackPipeline
+                    trackData={track}
+                    nodes={trackNodes}
+                    integrations={trackIntegrations}
+                    teamNames={trackTeamNames}
+                    onCardClick={setSelectedIntegration}
+                    onStatusClick={handleStatusClick}
+                    onDragEnd={handleDragEnd}
+                    sensors={sensors}
+                  />
+                  {/* Team Pathway Bridge between tracks */}
+                  {trackIdx === 0 && sortedTracks.length > 1 && (
+                    <TeamPathwayBridge
+                      pathways={pathways}
+                      projectId={projectId}
+                      onPathwaysUpdate={onPathwaysUpdate}
+                    />
+                  )}
+                </div>
+              )
+            })}
           </div>
         </div>
       </div>

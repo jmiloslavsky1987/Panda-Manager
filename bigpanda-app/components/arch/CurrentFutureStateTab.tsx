@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { ArchitectureIntegration, TeamOnboardingStatus, TeamPathway } from '@/lib/queries'
+import { ArchitectureIntegration, TeamOnboardingStatus, TeamPathway, ArchTrack, ArchNode } from '@/lib/queries'
 import { IntegrationEditModal } from './IntegrationEditModal'
 import { TeamOnboardingTable } from './TeamOnboardingTable'
 import { InteractiveArchGraph } from './InteractiveArchGraph'
@@ -12,6 +12,8 @@ interface Props {
   integrations: ArchitectureIntegration[]
   onboardingRows: TeamOnboardingStatus[]
   pathways: TeamPathway[]
+  tracks: ArchTrack[]
+  nodes: ArchNode[]
   onIntegrationsUpdate: (integrations: ArchitectureIntegration[]) => void
   onOnboardingUpdate: (rows: TeamOnboardingStatus[]) => void
   onPathwaysUpdate: (p: TeamPathway[]) => void
@@ -28,6 +30,8 @@ export function CurrentFutureStateTab({
   integrations,
   onboardingRows,
   pathways,
+  tracks,
+  nodes,
   onIntegrationsUpdate,
   onOnboardingUpdate,
   onPathwaysUpdate,
@@ -71,6 +75,8 @@ export function CurrentFutureStateTab({
           integrations={integrations}
           pathways={pathways}
           projectId={projectId}
+          tracks={tracks}
+          nodes={nodes}
           onPathwaysUpdate={onPathwaysUpdate}
           adrTeamNames={onboardingRows.filter((r) => r.track === 'ADR').map((r) => r.team_name)}
           biggyTeamNames={onboardingRows.filter((r) => r.track === 'Biggy').map((r) => r.team_name)}
