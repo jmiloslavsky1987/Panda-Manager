@@ -52,6 +52,10 @@ vi.mock('@/db/schema', () => ({
   focusAreas: { id: 'id', project_id: 'project_id', title: 'title', source: 'source', source_artifact_id: 'source_artifact_id', ingested_at: 'ingested_at' },
   architectureIntegrations: { id: 'id', project_id: 'project_id', tool_name: 'tool_name', track: 'track', source: 'source', source_artifact_id: 'source_artifact_id', ingested_at: 'ingested_at' },
   teamOnboardingStatus: { id: 'id', project_id: 'project_id', team_name: 'team_name' },
+  wbsItems: { id: 'id', project_id: 'project_id', name: 'name', track: 'track', parent_id: 'parent_id' },
+  teamEngagementSections: { id: 'id', project_id: 'project_id', name: 'name', content: 'content' },
+  archNodes: { id: 'id', project_id: 'project_id', track_id: 'track_id', name: 'name' },
+  archTracks: { id: 'id', project_id: 'project_id', name: 'name' },
   artifacts: { id: 'id', project_id: 'project_id', ingestion_status: 'ingestion_status', ingestion_log_json: 'ingestion_log_json' },
   auditLog: { id: 'id', entity_type: 'entity_type', entity_id: 'entity_id', action: 'action', actor_id: 'actor_id', before_json: 'before_json', after_json: 'after_json' },
   ingestionStatusEnum: vi.fn(),
@@ -760,5 +764,178 @@ describe('Phase 42 — new field coverage', () => {
 
     expect(data.unresolvedRefs).toBeDefined();
     expect(data.unresolvedRefs).not.toBeNull();
+  });
+});
+
+describe('Phase 46 — insertItem routing for wbs_task, team_engagement, arch_node', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe('insertItem - wbs_task', () => {
+    it('should create wbsItem with correct parent_id via fuzzy parent_section_name match', async () => {
+      const mockArtifactWhere = vi.fn().mockResolvedValue([{
+        id: 10,
+        ingestion_log_json: { filename: 'test.docx', uploaded_at: '2026-01-01T00:00:00Z' },
+      }]);
+      const mockArtifactFrom = vi.fn().mockReturnValue({ where: mockArtifactWhere });
+
+      // Parent section lookup returns match (id: 5)
+      const mockParentWhere = vi.fn().mockResolvedValue([{ id: 5, name: 'Solution Design' }]);
+      const mockParentFrom = vi.fn().mockReturnValue({ where: mockParentWhere });
+
+      // No conflict
+      const mockConflictWhere = vi.fn().mockResolvedValue([]);
+      const mockConflictFrom = vi.fn().mockReturnValue({ where: mockConflictWhere });
+
+      vi.mocked(db.select)
+        .mockReturnValueOnce({ from: mockArtifactFrom } as any)
+        .mockReturnValueOnce({ from: mockParentFrom } as any)  // parent lookup
+        .mockReturnValue({ from: mockConflictFrom } as any);
+
+      const mockValues = vi.fn().mockReturnValue({ returning: vi.fn().mockResolvedValue([{ id: 1 }]) });
+      vi.mocked(db.insert).mockReturnValue({ values: mockValues } as any);
+      const mockSet = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) });
+      vi.mocked(db.update).mockReturnValue({ set: mockSet } as any);
+
+      const req = buildRequest({
+        artifactId: 10,
+        projectId: 1,
+        totalExtracted: 1,
+        items: [{
+          entityType: 'wbs_task',
+          fields: {
+            title: 'Define alert routing rules',
+            track: 'ADR',
+            parent_section_name: 'Solution',
+            level: '2',
+            status: 'in_progress',
+            description: 'Document all routing rules'
+          },
+          approved: true,
+        }],
+      });
+
+      await POST(req);
+
+      expect(mockValues).toHaveBeenCalled();
+      const insertedRecord = mockValues.mock.calls[0][0];
+      expect(insertedRecord.parent_id).toBe(5);
+      expect(insertedRecord.name).toBe('Define alert routing rules');
+      expect(insertedRecord.track).toBe('ADR');
+      expect(insertedRecord.level).toBe(2);
+    });
+  });
+
+  describe('insertItem - team_engagement', () => {
+    it('should append content to existing section (not overwrite)', async () => {
+      const mockArtifactWhere = vi.fn().mockResolvedValue([{
+        id: 10,
+        ingestion_log_json: { filename: 'test.docx', uploaded_at: '2026-01-01T00:00:00Z' },
+      }]);
+      const mockArtifactFrom = vi.fn().mockReturnValue({ where: mockArtifactWhere });
+
+      // Section lookup returns existing section with content
+      const mockSectionWhere = vi.fn().mockResolvedValue([{
+        id: 3,
+        content: 'Existing content here',
+      }]);
+      const mockSectionFrom = vi.fn().mockReturnValue({ where: mockSectionWhere });
+
+      // No conflict
+      const mockConflictWhere = vi.fn().mockResolvedValue([]);
+      const mockConflictFrom = vi.fn().mockReturnValue({ where: mockConflictWhere });
+
+      vi.mocked(db.select)
+        .mockReturnValueOnce({ from: mockArtifactFrom } as any)
+        .mockReturnValueOnce({ from: mockSectionFrom } as any)  // section lookup
+        .mockReturnValue({ from: mockConflictFrom } as any);
+
+      const mockValues = vi.fn().mockReturnValue({ returning: vi.fn().mockResolvedValue([{ id: 1 }]) });
+      vi.mocked(db.insert).mockReturnValue({ values: mockValues } as any);
+      const mockWhereUpdate = vi.fn().mockResolvedValue([]);
+      const mockSet = vi.fn().mockReturnValue({ where: mockWhereUpdate });
+      vi.mocked(db.update).mockReturnValue({ set: mockSet } as any);
+
+      const req = buildRequest({
+        artifactId: 10,
+        projectId: 1,
+        totalExtracted: 1,
+        items: [{
+          entityType: 'team_engagement',
+          fields: {
+            section_name: 'Business Outcomes',
+            content: 'New content to append',
+          },
+          approved: true,
+        }],
+      });
+
+      await POST(req);
+
+      expect(mockSet).toHaveBeenCalled();
+      const updateArgs = mockSet.mock.calls[0][0];
+      expect(updateArgs.content).toContain('Existing content here');
+      expect(updateArgs.content).toContain('New content to append');
+      expect(updateArgs.content).toContain('---'); // separator
+    });
+  });
+
+  describe('insertItem - arch_node', () => {
+    it('should upsert arch_node (insert or update status + notes)', async () => {
+      const mockArtifactWhere = vi.fn().mockResolvedValue([{
+        id: 10,
+        ingestion_log_json: { filename: 'test.docx', uploaded_at: '2026-01-01T00:00:00Z' },
+      }]);
+      const mockArtifactFrom = vi.fn().mockReturnValue({ where: mockArtifactWhere });
+
+      // Track lookup returns match (id: 7)
+      const mockTrackWhere = vi.fn().mockResolvedValue([{ id: 7 }]);
+      const mockTrackFrom = vi.fn().mockReturnValue({ where: mockTrackWhere });
+
+      // No conflict
+      const mockConflictWhere = vi.fn().mockResolvedValue([]);
+      const mockConflictFrom = vi.fn().mockReturnValue({ where: mockConflictWhere });
+
+      vi.mocked(db.select)
+        .mockReturnValueOnce({ from: mockArtifactFrom } as any)
+        .mockReturnValueOnce({ from: mockTrackFrom } as any)  // track lookup
+        .mockReturnValue({ from: mockConflictFrom } as any);
+
+      const mockOnConflictDoUpdate = vi.fn().mockReturnValue({
+        returning: vi.fn().mockResolvedValue([{ id: 1 }]),
+      });
+      const mockValues = vi.fn().mockReturnValue({
+        onConflictDoUpdate: mockOnConflictDoUpdate,
+      });
+      vi.mocked(db.insert).mockReturnValue({ values: mockValues } as any);
+      const mockSet = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) });
+      vi.mocked(db.update).mockReturnValue({ set: mockSet } as any);
+
+      const req = buildRequest({
+        artifactId: 10,
+        projectId: 1,
+        totalExtracted: 1,
+        items: [{
+          entityType: 'arch_node',
+          fields: {
+            track: 'ADR Track',
+            node_name: 'Event Ingest',
+            status: 'live',
+            notes: 'Syslog configured',
+          },
+          approved: true,
+        }],
+      });
+
+      await POST(req);
+
+      expect(mockValues).toHaveBeenCalled();
+      const insertedRecord = mockValues.mock.calls[0][0];
+      expect(insertedRecord.track_id).toBe(7);
+      expect(insertedRecord.name).toBe('Event Ingest');
+      expect(insertedRecord.status).toBe('live');
+      expect(mockOnConflictDoUpdate).toHaveBeenCalled();
+    });
   });
 });
