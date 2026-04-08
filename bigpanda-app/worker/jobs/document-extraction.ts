@@ -25,7 +25,7 @@ export const EXTRACTION_SYSTEM = `You are a project data extractor. Given a docu
 Output ONLY a JSON array of extraction items — no prose before or after, no markdown code fences.
 Each item follows this exact shape:
 {
-  "entityType": "action" | "risk" | "decision" | "milestone" | "stakeholder" | "task" | "architecture" | "history" | "businessOutcome" | "team" | "note" | "workstream" | "onboarding_step" | "integration",
+  "entityType": "action" | "risk" | "decision" | "milestone" | "stakeholder" | "task" | "architecture" | "history" | "businessOutcome" | "team" | "note" | "workstream" | "onboarding_step" | "integration" | "wbs_task" | "team_engagement" | "arch_node",
   "fields": { /* entity-specific key-value pairs as strings */ },
   "confidence": 0.85,
   "sourceExcerpt": "verbatim text this was extracted from (max 200 chars)"
@@ -44,10 +44,15 @@ Entity type guidance:
 - workstream: { name, track, phase, status, percent_complete } — delivery workstream or project phase name; use for named delivery tracks with status and completion percentage
 - onboarding_step: { team_name, step_name, track, status, completed_date } — specific onboarding step for a team (e.g. ADR track steps); NOT the same as a generic task
 - integration: { tool_name, category, connection_status, notes } — connection status of a tool (live/pilot/planned/not-connected); focus on operational readiness and connection state, NOT architecture workflow phase
+- wbs_task: { title, track ("ADR" or "Biggy"), parent_section_name (exact match from WBS template — e.g., "Solution Design", "Platform Configuration", "Integrations"), level (1, 2, or 3 — 1 for top-level sections, 2 for sub-items, 3 for leaf tasks), status ("not_started", "in_progress", or "complete"), description (task details or null) } — task that belongs in WBS structure; extract track and parent section verbatim as they appear in document; use level to indicate hierarchy depth
+- team_engagement: { section_name ("Business Outcomes" | "Architecture" | "E2E Workflows" | "Teams & Engagement" | "Top Focus Areas"), content (markdown text for this section) } — content for Team Engagement Map sections; extract verbatim section names; use for engagement data, team details, business outcomes, workflow descriptions
+- arch_node: { track ("ADR Track" | "AI Assistant Track"), node_name (tool or capability name — e.g., "Event Ingest", "Alert Intelligence", "Knowledge Sources"), status ("planned" | "in_progress" | "live"), notes (integration details, status notes, or null) } — architecture capability or tool node; extract track verbatim; use for system components, tools, integrations mentioned in architecture context
 - note: { content, context } — use for any valuable content that does not fit the above types: observations, meeting highlights, open questions, context, or anything that would be useful to preserve but has no specific schema.
 
 IMPORTANT disambiguation:
 - architecture vs integration: architecture = workflow phase and integration method (how it fits in delivery process); integration = connection status and operational notes (is it connected and working?)
+- wbs_task vs task: wbs_task = hierarchical WBS template items with track + parent section; task = generic project tasks. If document mentions WBS structure, ADR/Biggy tracks, or explicit template sections → wbs_task. Otherwise → task.
+- team_engagement vs team: team_engagement = section content for Team Engagement Map (5 specific sections); team = team metadata (name, track, ingest_status). Use team_engagement for prose/paragraph content about engagement, outcomes, workflows.
 
 IMPORTANT: Do NOT discard content just because it doesn't fit a structured type. Capture it as a "note".
 
@@ -73,7 +78,10 @@ export type EntityType =
   | 'team_pathway'
   | 'workstream'
   | 'onboarding_step'
-  | 'integration';
+  | 'integration'
+  | 'wbs_task'
+  | 'team_engagement'
+  | 'arch_node';
 
 export interface ExtractionItem {
   entityType: EntityType;
@@ -491,7 +499,13 @@ export default async function documentExtractionJob(job: Job): Promise<{ status:
 
     const newItems = dedupResults
       .filter(r => !r.alreadyIngested)
-      .map(r => r.item);
+      .map(r => {
+        const item = r.item;
+        const cleanedFields = Object.fromEntries(
+          Object.entries(item.fields).filter(([, v]) => v != null)
+        ) as Record<string, string>;
+        return { ...item, fields: cleanedFields };
+      });
     const filteredCount = allRawItems.length - newItems.length;
 
     // 7. Mark completed with staged items
