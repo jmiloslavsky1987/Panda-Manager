@@ -250,7 +250,7 @@ Phases execute in numeric order: 43 → 44 → 45 → 46 → 47 → 48 → 49
 | 44. Navigation & Parity | 3/3 | Complete   | 2026-04-08 | - |
 | 45. Database Schema Foundation | 2/2 | Complete    | 2026-04-08 | - |
 | 46. Context Upload Extraction Expansion | 2/2 | Complete    | 2026-04-08 | - |
-| 47. Work Breakdown Structure | 1/3 | In Progress|  | - |
+| 47. Work Breakdown Structure | 2/3 | In Progress|  | - |
 | 48. Architecture & Team Engagement | v6.0 | 0/2 | Not started | - |
 | 49. Portfolio Dashboard | v6.0 | 0/1 | Not started | - |
 
@@ -259,7 +259,7 @@ Phases execute in numeric order: 43 → 44 → 45 → 46 → 47 → 48 → 49
 **Goal:** [To be planned]
 **Requirements**: TBD
 **Depends on:** Phase 49
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 
 Plans:
 - [ ] TBD (run /gsd:plan-phase 50 to break down)
