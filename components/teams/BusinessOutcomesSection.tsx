@@ -3,17 +3,29 @@
 import type { BusinessOutcome } from '@/lib/queries'
 import { WarnBanner } from './WarnBanner'
 import { InlineEditModal } from './InlineEditModal'
-import { SourceBadge } from '@/components/SourceBadge'
 import { useState } from 'react'
 
-// Design tokens
-const ADR = { text: '#1e40af', bg: '#eff6ff', border: '#bfdbfe' }
-const BIGGY = { text: '#6d28d9', bg: '#f5f3ff', border: '#ddd6fe' }
+// Track emoji mapping
+function trackEmoji(track: string) {
+  if (track === 'ADR') return '⚡'
+  if (track === 'Biggy') return '🤖'
+  if (track === 'Both') return '🔄'
+  return '📊'
+}
 
-function trackStyle(track: string) {
-  if (track === 'ADR') return ADR
-  if (track === 'Biggy') return BIGGY
-  return { text: '#374151', bg: '#f3f4f6', border: '#d1d5db' }
+// Left border color for cards (4px)
+function leftBorderColor(track: string) {
+  if (track === 'ADR') return '#1e40af'
+  if (track === 'Biggy') return '#6d28d9'
+  if (track === 'Both') return '#6d28d9'
+  return '#6b7280'
+}
+
+// Track badge colors
+function trackBadgeStyle(track: string) {
+  if (track === 'ADR') return { bg: '#eff6ff', text: '#1e40af', border: '#bfdbfe' }
+  if (track === 'Biggy') return { bg: '#f5f3ff', text: '#6d28d9', border: '#ddd6fe' }
+  return { bg: '#f3f4f6', text: '#374151', border: '#d1d5db' }
 }
 
 function statusBadge(status: string) {
@@ -22,6 +34,8 @@ function statusBadge(status: string) {
       return { bg: '#dcfce7', text: '#14532d', label: 'Live' }
     case 'in_progress':
       return { bg: '#fef3c7', text: '#92400e', label: 'In Progress' }
+    case 'pilot':
+      return { bg: '#fef3c7', text: '#92400e', label: 'Pilot' }
     case 'blocked':
       return { bg: '#fee2e2', text: '#991b1b', label: 'Blocked' }
     case 'planned':
@@ -96,9 +110,6 @@ export function BusinessOutcomesSection({ projectId, outcomes, onUpdate }: Props
   return (
     <section>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-zinc-900">
-          Business Value &amp; Expected Outcomes
-        </h2>
         <button
           onClick={() => setModalOpen(true)}
           className="text-sm px-3 py-1.5 rounded-md border border-zinc-300 hover:bg-zinc-50"
@@ -110,37 +121,35 @@ export function BusinessOutcomesSection({ projectId, outcomes, onUpdate }: Props
       {outcomes.length === 0 ? (
         <WarnBanner message="No business outcomes recorded — add outcomes to populate this section." />
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
           {outcomes.map((outcome) => {
-            const ts = trackStyle(outcome.track ?? 'ADR')
-            const badge = statusBadge(outcome.delivery_status ?? 'planned')
+            const leftBorder = leftBorderColor(outcome.track ?? 'ADR')
+            const emoji = trackEmoji(outcome.track ?? 'ADR')
+            const pill = statusBadge(outcome.delivery_status ?? 'planned')
             const tracksArr = outcome.track === 'Both' ? ['ADR', 'Biggy'] : [outcome.track ?? 'ADR']
             return (
               <div
                 key={outcome.id}
-                className="rounded-lg border p-4 space-y-2"
-                style={{ borderColor: ts.border, background: ts.bg }}
+                className="rounded-xl border border-zinc-200 bg-white p-4 flex flex-col gap-3"
+                style={{ borderLeftWidth: '4px', borderLeftColor: leftBorder }}
               >
-                {/* icon + title */}
+                {/* emoji circle + title */}
                 <div className="flex items-start gap-3">
-                  <div
-                    className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xs font-bold"
-                    style={{ background: outcome.track === 'Both' ? 'linear-gradient(135deg, #1e40af, #6d28d9)' : ts.text }}
-                  >
-                    {outcome.track === 'Both' ? 'B' : (outcome.track ?? 'A')[0]}
+                  <div className="w-8 h-8 rounded-full border border-zinc-200 flex-shrink-0 flex items-center justify-center text-lg">
+                    {emoji}
                   </div>
-                  <p className="font-semibold text-zinc-900 text-sm">{outcome.title}</p>
+                  <p className="font-bold text-zinc-900 text-sm leading-tight">{outcome.title}</p>
                 </div>
 
-                {/* track pills */}
+                {/* track badges */}
                 <div className="flex gap-1 flex-wrap">
                   {tracksArr.map((t) => {
-                    const s = trackStyle(t)
+                    const s = trackBadgeStyle(t)
                     return (
                       <span
                         key={t}
-                        className="text-xs px-2 py-0.5 rounded-full font-medium"
-                        style={{ background: s.bg, color: s.text, border: `1px solid ${s.border}` }}
+                        className="rounded-full px-2 py-0.5 text-xs font-semibold border"
+                        style={{ background: s.bg, color: s.text, borderColor: s.border }}
                       >
                         {t}
                       </span>
@@ -148,26 +157,22 @@ export function BusinessOutcomesSection({ projectId, outcomes, onUpdate }: Props
                   })}
                 </div>
 
-                {/* status badge */}
-                <span
-                  className="inline-block text-xs px-2 py-0.5 rounded-full font-medium"
-                  style={{ background: badge.bg, color: badge.text }}
-                >
-                  {badge.label}
-                </span>
-
-                {/* mapping note */}
-                {outcome.mapping_note && (
-                  <p className="text-xs text-zinc-500 italic">{outcome.mapping_note}</p>
+                {/* description */}
+                {outcome.description && (
+                  <p className="text-sm text-zinc-600">{outcome.description}</p>
                 )}
 
-                {/* source badge */}
-                <div className="ml-2">
-                  <SourceBadge
-                    source={outcome.source ?? 'manual'}
-                    artifactName={null}
-                    discoverySource={outcome.discovery_source}
-                  />
+                {/* divider + status/mapping row */}
+                <div className="flex items-center justify-between gap-2 pt-3 border-t border-zinc-100 mt-auto">
+                  <span
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold"
+                    style={{ background: pill.bg, color: pill.text }}
+                  >
+                    <span>◑</span> {pill.label}
+                  </span>
+                  {outcome.mapping_note && (
+                    <span className="text-xs text-zinc-400 italic text-right">{outcome.mapping_note}</span>
+                  )}
                 </div>
               </div>
             )

@@ -120,17 +120,20 @@ function Arrow() {
 
 function ConsoleNode({ track }: { track: string }) {
   const isADR = track === 'ADR'
+  const isBiggy = track.includes('Biggy') || track.includes('AI')
+  const icon = isADR ? '🐼' : isBiggy ? '🦉' : '💻'
+  const label = isADR ? 'BigPanda Console' : isBiggy ? 'Biggy AI Console' : 'Console'
+  const bgColor = isADR ? 'bg-zinc-900' : isBiggy ? 'bg-amber-500' : 'bg-zinc-700'
+
   return (
     <div className="flex flex-col items-center justify-start pt-2">
       <div
-        className={`w-[72px] h-[72px] rounded-full flex items-center justify-center shadow-md ${
-          isADR ? 'bg-zinc-900' : 'bg-amber-500'
-        }`}
+        className={`w-[72px] h-[72px] rounded-full flex items-center justify-center shadow-md ${bgColor}`}
       >
-        <span className="text-3xl select-none">{isADR ? '🐼' : '🤖'}</span>
+        <span className="text-3xl select-none">{icon}</span>
       </div>
       <div className="text-xs text-zinc-600 mt-2 font-medium text-center leading-tight">
-        {isADR ? 'BigPanda Console' : 'Biggy AI Console'}
+        {label}
       </div>
     </div>
   )
@@ -206,7 +209,7 @@ function PhaseColumn({
         <Tooltip.Provider>
           <Tooltip.Root>
             <Tooltip.Trigger asChild>
-              <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 leading-tight">
+              <div className="text-xs font-bold uppercase tracking-wider text-zinc-500 leading-tight mb-2">
                 {phase}
               </div>
             </Tooltip.Trigger>
@@ -269,9 +272,10 @@ function TrackPipeline({
   onDragEnd: (event: DragEndEvent, trackId: number) => void
   sensors: ReturnType<typeof useSensors>
 }) {
-  const isADR = trackData.name.includes('ADR')
-  const borderClass = isADR ? 'border-l-blue-600' : 'border-l-amber-500'
-  const labelClass = isADR ? 'text-blue-700' : 'text-amber-600'
+  const isADR = trackData.name === 'ADR'
+  const isBiggy = trackData.name.includes('Biggy')
+  const borderClass = isADR ? 'border-l-blue-600' : isBiggy ? 'border-l-amber-500' : 'border-l-zinc-400'
+  const labelClass = isADR ? 'text-blue-700' : isBiggy ? 'text-amber-700' : 'text-zinc-600'
 
   // Sort nodes by display_order
   const sortedNodes = [...nodes].sort((a, b) => a.display_order - b.display_order)
@@ -400,8 +404,6 @@ export function InteractiveArchGraph({
 
   // Group nodes by track
   const sortedTracks = [...tracks].sort((a, b) => a.display_order - b.display_order)
-  const adrIntegrations = integrations.filter((i) => i.track === 'ADR')
-  const biggyIntegrations = integrations.filter((i) => i.track === 'Biggy')
 
   if (integrations.length === 0 && localNodes.length === 0) {
     return (
@@ -436,12 +438,20 @@ export function InteractiveArchGraph({
           <div className="space-y-8" style={{ minWidth: '1080px' }}>
             {sortedTracks.map((track, trackIdx) => {
               const trackNodes = localNodes.filter((n) => n.track_id === track.id)
+              const trackIntegrations = integrations.filter((i) => i.track === track.name)
               const isADR = track.name.includes('ADR')
-              const trackIntegrations = isADR ? adrIntegrations : biggyIntegrations
               const trackTeamNames = isADR ? adrTeamNames : biggyTeamNames
 
               return (
                 <div key={track.id}>
+                  {/* Track separator (except for first track) */}
+                  {trackIdx > 0 && (
+                    <div className="flex items-center gap-2 my-2">
+                      <div className="flex-1 border-t-2 border-zinc-300" />
+                      <span className="text-xs font-bold text-zinc-500 px-2">↓ {track.name.toUpperCase()} ↓</span>
+                      <div className="flex-1 border-t-2 border-zinc-300" />
+                    </div>
+                  )}
                   <TrackPipeline
                     trackData={track}
                     nodes={trackNodes}

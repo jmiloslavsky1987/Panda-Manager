@@ -4,15 +4,21 @@ import { useState } from 'react'
 import type { E2eWorkflowWithSteps, WorkflowStep } from '@/lib/queries'
 import { WarnBanner } from './WarnBanner'
 import { InlineEditModal } from './InlineEditModal'
-import { SourceBadge } from '@/components/SourceBadge'
 
-// Design tokens
-const ADR = { text: '#1e40af', bg: '#eff6ff', border: '#bfdbfe' }
-const BIGGY = { text: '#6d28d9', bg: '#f5f3ff', border: '#ddd6fe' }
-
-function stepTokens(track: string) {
-  if (track === 'Biggy') return BIGGY
-  return ADR
+// Track colors for step cards
+function stepTrackStyle(track: string) {
+  switch (track) {
+    case 'ADR':
+      return { bg: '#eff6ff', border: '#bfdbfe', text: '#1e40af', label: 'ADR' }
+    case 'Biggy':
+      return { bg: '#f5f3ff', border: '#ddd6fe', text: '#6d28d9', label: 'BIGGY' }
+    case 'E2E':
+      return { bg: '#dcfce7', border: '#bbf7d0', text: '#14532d', label: 'E2E' }
+    case 'CILA':
+      return { bg: '#f3f4f6', border: '#d1d5db', text: '#374151', label: 'CILA' }
+    default:
+      return { bg: '#f3f4f6', border: '#d1d5db', text: '#374151', label: track }
+  }
 }
 
 function stepStatusPill(status: string) {
@@ -123,7 +129,6 @@ export function E2eWorkflowsSection({ projectId, workflows, onUpdate }: Props) {
   return (
     <section>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-zinc-900">End-to-End Workflows</h2>
         <button
           onClick={() => setWorkflowModalOpen(true)}
           className="text-sm px-3 py-1.5 rounded-md border border-zinc-300 hover:bg-zinc-50"
@@ -137,20 +142,17 @@ export function E2eWorkflowsSection({ projectId, workflows, onUpdate }: Props) {
       ) : (
         <div className="space-y-6">
           {workflows.map((wf) => (
-            <div key={wf.id} className="border border-zinc-200 rounded-lg p-4 space-y-3">
+            <div key={wf.id} className="border border-zinc-200 rounded-xl bg-white p-4 space-y-3">
+              {/* Header row: E2E pill + workflow name + team name */}
               <div className="flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="font-semibold text-zinc-800 text-sm">{wf.team_name}</p>
-                    <SourceBadge
-                      source={wf.source ?? 'manual'}
-                      artifactName={null}
-                      discoverySource={wf.discovery_source}
-                    />
+                <div className="flex items-center gap-3">
+                  <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full px-3 py-1 text-xs font-bold">
+                    E2E
+                  </span>
+                  <div>
+                    <p className="font-bold text-zinc-900 text-sm">{wf.workflow_name || 'Unnamed Workflow'}</p>
+                    <p className="text-xs text-zinc-500 mt-0.5">{wf.team_name}</p>
                   </div>
-                  {wf.workflow_name && (
-                    <p className="text-xs text-zinc-500">{wf.workflow_name}</p>
-                  )}
                 </div>
                 <button
                   onClick={() => setStepModal({ workflowId: wf.id, open: true })}
@@ -160,32 +162,43 @@ export function E2eWorkflowsSection({ projectId, workflows, onUpdate }: Props) {
                 </button>
               </div>
 
-              {/* Steps flow */}
+              {/* Steps flow - horizontal scrollable */}
               {wf.steps.length > 0 ? (
-                <div className="flex flex-wrap items-center gap-1">
-                  {wf.steps.map((step, idx) => {
-                    const tk = stepTokens(step.track ?? 'ADR')
-                    const pill = stepStatusPill(step.status ?? 'planned')
-                    return (
-                      <div key={step.id} className="flex items-center gap-1">
-                        {idx > 0 && (
-                          <span className="text-zinc-400 text-sm select-none">&rarr;</span>
-                        )}
-                        <div
-                          className="flex flex-col items-center px-3 py-1.5 rounded-md border text-xs"
-                          style={{ background: tk.bg, borderColor: tk.border, color: tk.text }}
-                        >
-                          <span className="font-medium">{step.label}</span>
-                          <span
-                            className="mt-0.5 px-1.5 rounded-full text-xs"
-                            style={{ background: pill.bg, color: pill.text }}
+                <div className="overflow-x-auto">
+                  <div className="flex items-stretch gap-2">
+                    {wf.steps.map((step, idx) => {
+                      const trackStyle = stepTrackStyle(step.track ?? 'ADR')
+                      const pill = stepStatusPill(step.status ?? 'planned')
+                      return (
+                        <div key={step.id} className="flex items-center gap-2">
+                          {idx > 0 && (
+                            <span className="text-zinc-400 text-lg select-none">→</span>
+                          )}
+                          <div
+                            className="rounded-lg border p-3 min-w-[140px] flex flex-col gap-1"
+                            style={{ borderColor: trackStyle.border, background: trackStyle.bg }}
                           >
-                            {pill.label}
-                          </span>
+                            {/* Track label */}
+                            <span
+                              className="text-[10px] font-bold uppercase tracking-wider"
+                              style={{ color: trackStyle.text }}
+                            >
+                              {trackStyle.label}
+                            </span>
+                            {/* Step name */}
+                            <span className="font-semibold text-sm text-zinc-900">{step.label}</span>
+                            {/* Status pill at bottom */}
+                            <span
+                              className="mt-auto px-2 py-0.5 rounded-full text-xs font-medium text-center"
+                              style={{ background: pill.bg, color: pill.text }}
+                            >
+                              {pill.label}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    )
-                  })}
+                      )
+                    })}
+                  </div>
                 </div>
               ) : (
                 <p className="text-xs text-zinc-400">No steps yet — click "+ Add Step" to begin.</p>

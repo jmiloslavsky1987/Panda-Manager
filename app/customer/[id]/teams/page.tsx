@@ -1,5 +1,5 @@
 import { getTeamsTabData, getProjectById } from '@/lib/queries'
-import { TeamsPageTabs } from '@/components/teams/TeamsPageTabs'
+import { TeamEngagementMap } from '@/components/teams/TeamEngagementMap'
 import { EmptyState } from '@/components/EmptyState'
 
 export default async function TeamsPage({
@@ -17,7 +17,8 @@ export default async function TeamsPage({
   // Check if truly empty
   const isEmpty = data.e2eWorkflows.length === 0 &&
     data.businessOutcomes.length === 0 &&
-    data.architectureIntegrations.length === 0
+    data.architectureIntegrations.length === 0 &&
+    data.focusAreas.length === 0
 
   if (isEmpty) {
     return (
@@ -33,7 +34,7 @@ export default async function TeamsPage({
 
   return (
     <div data-testid="teams-tab" className="space-y-8">
-      <TeamsPageTabs
+      <TeamEngagementMap
         projectId={projectId}
         customer={project.customer}
         data={data}

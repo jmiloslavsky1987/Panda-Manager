@@ -4,16 +4,26 @@ import { useState } from 'react'
 import type { FocusArea } from '@/lib/queries'
 import { WarnBanner } from './WarnBanner'
 import { InlineEditModal } from './InlineEditModal'
-import { SourceBadge } from '@/components/SourceBadge'
 
-// Design tokens
-const ADR = { text: '#1e40af', bg: '#eff6ff', border: '#bfdbfe' }
-const BIGGY = { text: '#6d28d9', bg: '#f5f3ff', border: '#ddd6fe' }
+// Left border color for cards (4px)
+function leftBorderColor(tracks: string | null) {
+  if (!tracks) return '#6b7280'
+  const trackList = tracks.toLowerCase()
+  const hasADR = trackList.includes('adr')
+  const hasBiggy = trackList.includes('biggy')
 
-function trackTokens(t: string) {
-  if (t.trim() === 'ADR') return ADR
-  if (t.trim() === 'Biggy') return BIGGY
-  return { text: '#374151', bg: '#f3f4f6', border: '#d1d5db' }
+  if (hasADR && hasBiggy) return '#0d9488' // teal for both
+  if (hasADR) return '#1e40af' // blue for ADR
+  if (hasBiggy) return '#6d28d9' // purple for Biggy
+  return '#6b7280' // gray for other
+}
+
+// Track badge style
+function trackBadgeStyle(track: string) {
+  const t = track.trim()
+  if (t === 'ADR') return { bg: '#eff6ff', text: '#1e40af', border: '#bfdbfe' }
+  if (t === 'Biggy') return { bg: '#f5f3ff', text: '#6d28d9', border: '#ddd6fe' }
+  return { bg: '#f3f4f6', text: '#374151', border: '#d1d5db' }
 }
 
 const FOCUS_AREA_FIELDS = [
@@ -101,7 +111,6 @@ export function FocusAreasSection({ projectId, focusAreas, onUpdate }: Props) {
   return (
     <section>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-zinc-900">Top Focus Areas</h2>
         <button
           onClick={() => setAddModalOpen(true)}
           className="text-sm px-3 py-1.5 rounded-md border border-zinc-300 hover:bg-zinc-50"
@@ -116,10 +125,14 @@ export function FocusAreasSection({ projectId, focusAreas, onUpdate }: Props) {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {displayAreas.map((area) => {
             const trackList = area.tracks ? area.tracks.split(',').map((t) => t.trim()).filter(Boolean) : []
+            const leftBorder = leftBorderColor(area.tracks)
+            const statusText = [area.current_status, area.next_step].filter(Boolean).join(' → ')
+
             return (
               <div
                 key={area.id}
-                className="border border-zinc-200 rounded-lg p-4 space-y-2 bg-white relative"
+                className="border border-zinc-200 rounded-xl bg-white p-4 flex flex-col gap-3 relative"
+                style={{ borderLeftWidth: '4px', borderLeftColor: leftBorder }}
               >
                 {/* edit icon */}
                 <button
@@ -130,17 +143,15 @@ export function FocusAreasSection({ projectId, focusAreas, onUpdate }: Props) {
                   &#9998;
                 </button>
 
-                <p className="font-semibold text-zinc-900 text-sm pr-6">{area.title}</p>
-
-                {/* tracks pills */}
+                {/* Track badge in top-right area */}
                 {trackList.length > 0 && (
-                  <div className="flex gap-1 flex-wrap">
+                  <div className="flex gap-1 flex-wrap pr-6">
                     {trackList.map((t) => {
-                      const tk = trackTokens(t)
+                      const tk = trackBadgeStyle(t)
                       return (
                         <span
                           key={t}
-                          className="text-xs px-2 py-0.5 rounded-full font-medium"
+                          className="text-xs px-2 py-0.5 rounded-full font-semibold"
                           style={{ background: tk.bg, color: tk.text, border: `1px solid ${tk.border}` }}
                         >
                           {t}
@@ -150,33 +161,33 @@ export function FocusAreasSection({ projectId, focusAreas, onUpdate }: Props) {
                   </div>
                 )}
 
-                {/* why it matters */}
+                {/* Title */}
+                <p className="font-bold text-zinc-900 text-sm pr-6">{area.title}</p>
+
+                {/* Description (why it matters) */}
                 {area.why_it_matters && (
-                  <p className="text-xs text-zinc-600 italic">{area.why_it_matters}</p>
+                  <p className="text-sm text-zinc-600">{area.why_it_matters}</p>
                 )}
 
-                {/* current status → next step */}
-                {(area.current_status || area.next_step) && (
-                  <p className="text-xs text-zinc-500">
-                    {area.current_status}
-                    {area.current_status && area.next_step && ' \u2192 '}
-                    {area.next_step}
-                  </p>
+                {/* Current status & next step */}
+                {statusText && (
+                  <div>
+                    <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">Current Status &amp; Next Step</p>
+                    <p className="text-sm text-zinc-700 mt-1">{statusText}</p>
+                  </div>
                 )}
 
-                {/* owners */}
-                <div className="text-xs text-zinc-400 space-y-0.5 pt-1 border-t border-zinc-100">
-                  {area.bp_owner && <p>BP: {area.bp_owner}</p>}
-                  {area.customer_owner && <p>Customer: {area.customer_owner}</p>}
-                </div>
+                {/* Horizontal separator */}
+                <hr className="border-zinc-100" />
 
-                {/* source badge */}
-                <div className="ml-2">
-                  <SourceBadge
-                    source={area.source ?? 'manual'}
-                    artifactName={null}
-                    discoverySource={area.discovery_source}
-                  />
+                {/* Footer: owners */}
+                <div className="flex gap-4 text-xs text-zinc-500">
+                  {area.customer_owner && (
+                    <span><span className="font-semibold">AMEX:</span> {area.customer_owner}</span>
+                  )}
+                  {area.bp_owner && (
+                    <span><span className="font-semibold">BigPanda:</span> {area.bp_owner}</span>
+                  )}
                 </div>
               </div>
             )

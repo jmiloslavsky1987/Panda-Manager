@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import dynamic from 'next/dynamic'
 import type { TeamsTabData, BusinessOutcome, E2eWorkflowWithSteps, FocusArea } from '@/lib/queries'
 import { BusinessOutcomesSection } from './BusinessOutcomesSection'
 import { ArchOverviewSection } from './ArchOverviewSection'
@@ -8,20 +7,19 @@ import { E2eWorkflowsSection } from './E2eWorkflowsSection'
 import { TeamsEngagementSection } from './TeamsEngagementSection'
 import { FocusAreasSection } from './FocusAreasSection'
 
-// SSR-safe dynamic import: @xyflow/react uses ResizeObserver and DOM APIs unavailable in Node.js SSR.
-// dynamic() with { ssr: false } prevents hydration errors.
-// Verified with: next build && next start (dev mode does NOT surface hydration errors).
-const InteractiveEngagementGraph = dynamic(
-  () => import('./InteractiveEngagementGraph').then((m) => ({ default: m.InteractiveEngagementGraph })),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="h-96 border border-zinc-200 rounded-lg flex items-center justify-center text-zinc-400 text-sm">
-        Loading engagement graph...
+function SectionHeader({ n, title }: { n: number; title: string }) {
+  return (
+    <div className="mb-6">
+      <div className="flex items-center gap-3 mb-3">
+        <span className="w-8 h-8 rounded-full bg-zinc-800 text-white flex items-center justify-center text-sm font-bold flex-shrink-0 flex-none">
+          {n}
+        </span>
+        <h2 className="text-xl font-bold text-zinc-900">{title}</h2>
       </div>
-    ),
-  },
-)
+      <hr className="border-zinc-200" />
+    </div>
+  )
+}
 
 interface Props {
   projectId: number
@@ -36,28 +34,33 @@ export function TeamEngagementMap({ projectId, customer, data }: Props) {
 
   return (
     <div className="space-y-10">
-      {/* Interactive React Flow engagement graph (VIS-01) — prepended above existing sections */}
-      <section>
-        <h2 className="text-lg font-semibold text-zinc-900 mb-4">Engagement Map</h2>
-        <InteractiveEngagementGraph data={{ ...data, e2eWorkflows: workflows }} />
-      </section>
-
+      <SectionHeader n={1} title="Business Value &amp; Expected Outcomes" />
       <BusinessOutcomesSection
         projectId={projectId}
         outcomes={outcomes}
         onUpdate={setOutcomes}
       />
+
+      <SectionHeader n={2} title="Architecture Overview" />
       <ArchOverviewSection integrations={data.architectureIntegrations} />
+
+      <SectionHeader n={3} title="End-to-End Workflows" />
       <E2eWorkflowsSection
         projectId={projectId}
         workflows={workflows}
         onUpdate={setWorkflows}
       />
+
+      <SectionHeader n={4} title="Teams &amp; Engagement Status" />
       <TeamsEngagementSection
         customer={customer}
         workflows={workflows}
         openActions={data.openActions}
+        teamOnboardingStatus={data.teamOnboardingStatus}
+        stakeholders={data.stakeholders}
       />
+
+      <SectionHeader n={5} title="Top Focus Areas" />
       <FocusAreasSection
         projectId={projectId}
         focusAreas={focusAreas}

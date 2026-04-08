@@ -918,6 +918,8 @@ export interface TeamsTabData {
   focusAreas: FocusArea[];
   architectureIntegrations: ArchitectureIntegration[];
   openActions: OpenAction[];  // open + in_progress actions for the project, sorted by id asc
+  teamOnboardingStatus: TeamOnboardingStatus[];
+  stakeholders: Stakeholder[];
 }
 
 // ─── Teams Tab Query ──────────────────────────────────────────────────────────
@@ -929,7 +931,7 @@ export interface TeamsTabData {
  * and open/in_progress actions (for the Teams & Engagement Status section).
  */
 export async function getTeamsTabData(projectId: number): Promise<TeamsTabData> {
-  const [outcomes, workflows, steps, areas, archIntegrations, openActs] = await Promise.all([
+  const [outcomes, workflows, steps, areas, archIntegrations, openActs, onboardingRows, stakeholderRows] = await Promise.all([
     db.select().from(businessOutcomes).where(eq(businessOutcomes.project_id, projectId)),
     db.select().from(e2eWorkflows).where(eq(e2eWorkflows.project_id, projectId)),
     db.select().from(workflowSteps)
@@ -951,6 +953,8 @@ export async function getTeamsTabData(projectId: number): Promise<TeamsTabData> 
         inArray(actions.status, ['open', 'in_progress'])
       )
     ).orderBy(asc(actions.id)),
+    db.select().from(teamOnboardingStatus).where(eq(teamOnboardingStatus.project_id, projectId)).orderBy(asc(teamOnboardingStatus.team_name)),
+    db.select().from(stakeholders).where(eq(stakeholders.project_id, projectId)).orderBy(asc(stakeholders.name)),
   ]);
 
   const stepsMap = new Map<number, WorkflowStep[]>();
@@ -966,6 +970,8 @@ export async function getTeamsTabData(projectId: number): Promise<TeamsTabData> 
     focusAreas: areas,
     architectureIntegrations: archIntegrations,
     openActions: openActs,
+    teamOnboardingStatus: onboardingRows,
+    stakeholders: stakeholderRows,
   };
 }
 
