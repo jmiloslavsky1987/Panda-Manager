@@ -204,11 +204,12 @@ Plans:
   5. Sections with missing data display visible warnings prompting user to add content
   6. User can manually edit all fields in every Team Engagement section
   7. Architecture diagram nodes are draggable and positions persist across sessions
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 48-01: [TBD]
-- [ ] 48-02: [TBD]
+- [ ] 48-01-PLAN.md — Wave 0 RED test stubs + PATCH /arch-nodes/[nodeId] status cycling API + PATCH /arch-nodes/reorder display_order API
+- [ ] 48-02-PLAN.md — TeamEngagementOverview component (4 sections + WarnBanners) + Teams page Overview/Detail sub-tab wiring
+- [ ] 48-03-PLAN.md — InteractiveArchGraph rewiring: DB-driven columns from arch_nodes, status badge click-to-cycle, @dnd-kit column drag-reorder
 
 ### Phase 49: Portfolio Dashboard
 **Goal**: Multi-project portfolio view with health summary, filterable table, exceptions panel, and drill-down
@@ -251,7 +252,7 @@ Phases execute in numeric order: 43 → 44 → 45 → 46 → 47 → 48 → 49
 | 45. Database Schema Foundation | 2/2 | Complete    | 2026-04-08 | - |
 | 46. Context Upload Extraction Expansion | 2/2 | Complete    | 2026-04-08 | - |
 | 47. Work Breakdown Structure | 3/3 | Complete    | 2026-04-08 | - |
-| 48. Architecture & Team Engagement | v6.0 | 0/2 | Not started | - |
+| 48. Architecture & Team Engagement | v6.0 | 0/3 | Not started | - |
 | 49. Portfolio Dashboard | v6.0 | 0/1 | Not started | - |
 
 ### Phase 50: Extraction Intelligence — Full-spectrum prompt rewrite and semantic post-classifier to surface all entity types from any document across every project tab
