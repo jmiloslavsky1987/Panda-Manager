@@ -19,6 +19,10 @@ import {
   workstreams,
   onboardingSteps,
   integrations,
+  wbsItems,
+  teamEngagementSections,
+  archNodes,
+  archTracks,
 } from '@/db/schema';
 import type { EntityType, ExtractionItem } from '@/lib/extraction-types';
 import { requireSession } from "@/lib/auth-server";
@@ -32,8 +36,11 @@ const ApprovalItemSchema = z.object({
     'action', 'risk', 'decision', 'milestone', 'stakeholder',
     'task', 'architecture', 'history', 'businessOutcome', 'team', 'note', 'team_pathway',
     'workstream', 'onboarding_step', 'integration',
+    'wbs_task', 'team_engagement', 'arch_node',
   ]),
-  fields: z.record(z.string(), z.string()),
+  fields: z.record(z.string(), z.union([z.string(), z.null()])).transform(
+    f => Object.fromEntries(Object.entries(f).filter(([, v]) => v != null)) as Record<string, string>
+  ),
   approved: z.boolean(),
   conflictResolution: z.enum(['merge', 'replace', 'skip']).optional(),
   existingId: z.number().optional(),
@@ -632,6 +639,138 @@ async function insertItem(
           entity_type: item.entityType,
           entity_id: inserted.id,
           action: 'create',
+          actor_id: 'default',
+          before_json: null,
+          after_json: inserted as Record<string, unknown>,
+        });
+      });
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
+    }
+
+    case 'wbs_task': {
+      // Step 1: Fuzzy match parent section by name
+      const parentRows = await db
+        .select({ id: wbsItems.id, name: wbsItems.name })
+        .from(wbsItems)
+        .where(
+          and(
+            eq(wbsItems.project_id, projectId),
+            eq(wbsItems.track, f.track ?? 'ADR'),
+            ilike(wbsItems.name, `%${f.parent_section_name ?? ''}%`),
+          ),
+        );
+
+      const parentId = parentRows.length > 0 ? parentRows[0].id : null;
+
+      // Step 2: Insert wbs_item
+      await db.transaction(async (tx) => {
+        const [inserted] = await tx.insert(wbsItems).values({
+          project_id: projectId,
+          name: f.title ?? '',
+          track: f.track ?? 'ADR',
+          level: parseInt(f.level ?? '3', 10),
+          parent_id: parentId,
+          status: f.status as 'not_started' | 'in_progress' | 'complete' | undefined ?? 'not_started',
+          source_trace: 'extraction',
+          display_order: 999, // append to end; user can reorder
+        }).returning();
+
+        await tx.insert(auditLog).values({
+          entity_type: 'wbs_task',
+          entity_id: inserted.id,
+          action: 'create',
+          actor_id: 'default',
+          before_json: null,
+          after_json: inserted as Record<string, unknown>,
+        });
+      });
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
+    }
+
+    case 'team_engagement': {
+      // Append content to existing section (not overwrite)
+      const sectionRows = await db
+        .select({ id: teamEngagementSections.id, content: teamEngagementSections.content })
+        .from(teamEngagementSections)
+        .where(
+          and(
+            eq(teamEngagementSections.project_id, projectId),
+            eq(teamEngagementSections.name, f.section_name ?? ''),
+          ),
+        );
+
+      if (sectionRows.length === 0) {
+        throw new Error(`Team Engagement section not found: ${f.section_name}`);
+      }
+
+      const section = sectionRows[0];
+      const existingContent = section.content || '';
+      const newContent = f.content ?? '';
+      const separator = existingContent.length > 0 ? '\n\n---\n\n' : '';
+      const mergedContent = existingContent + separator + newContent;
+
+      await db.transaction(async (tx) => {
+        await tx
+          .update(teamEngagementSections)
+          .set({ content: mergedContent })
+          .where(eq(teamEngagementSections.id, section.id));
+
+        await tx.insert(auditLog).values({
+          entity_type: 'team_engagement',
+          entity_id: section.id,
+          action: 'update',
+          actor_id: 'default',
+          before_json: { content: existingContent } as Record<string, unknown>,
+          after_json: { content: mergedContent } as Record<string, unknown>,
+        });
+      });
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
+    }
+
+    case 'arch_node': {
+      // Step 1: Resolve track_id from track name
+      const trackRows = await db
+        .select({ id: archTracks.id })
+        .from(archTracks)
+        .where(
+          and(
+            eq(archTracks.project_id, projectId),
+            ilike(archTracks.name, `%${f.track ?? ''}%`),
+          ),
+        );
+
+      if (trackRows.length === 0) {
+        throw new Error(`Architecture track not found: ${f.track}`);
+      }
+
+      const trackId = trackRows[0].id;
+
+      // Step 2: Upsert arch_node (insert or update if exists)
+      await db.transaction(async (tx) => {
+        const [inserted] = await tx
+          .insert(archNodes)
+          .values({
+            project_id: projectId,
+            track_id: trackId,
+            name: f.node_name ?? '',
+            status: f.status as 'planned' | 'in_progress' | 'live' | undefined ?? 'planned',
+            notes: f.notes ?? null,
+            source_trace: 'extraction',
+            display_order: 999,
+          })
+          .onConflictDoUpdate({
+            target: [archNodes.project_id, archNodes.track_id, archNodes.name],
+            set: {
+              status: f.status as 'planned' | 'in_progress' | 'live' | undefined ?? 'planned',
+              notes: f.notes ?? null,
+            },
+          })
+          .returning();
+
+        await tx.insert(auditLog).values({
+          entity_type: 'arch_node',
+          entity_id: inserted.id,
+          action: 'create_or_update',
           actor_id: 'default',
           before_json: null,
           after_json: inserted as Record<string, unknown>,
