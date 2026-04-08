@@ -36,7 +36,7 @@
 - [x] **WBS-02**: Both ADR and Biggy WBS template structures seed automatically on project creation
 - [x] **WBS-03**: When context is uploaded, extracted tasks are auto-classified to the nearest WBS node via AI (with fallback to manual assignment)
 - [ ] **WBS-04**: "Generate Plan" button analyzes available project context, identifies missing WBS tasks, and fills gaps; re-runnable to catch tasks not covered in earlier runs
-- [ ] **WBS-05**: User can manually add, edit, reorder, and delete tasks within any WBS node
+- [x] **WBS-05**: User can manually add, edit, reorder, and delete tasks within any WBS node
 
 ### Team Engagement Overview
 
@@ -102,7 +102,7 @@
 | TEAM-02 | Phase 46 | Complete |
 | ARCH-04 | Phase 46 | Complete |
 | WBS-04 | Phase 47 | Pending |
-| WBS-05 | Phase 47 | Pending |
+| WBS-05 | Phase 47 | Complete |
 | ARCH-01 | Phase 48 | Pending |
 | ARCH-02 | Phase 48 | Pending |
 | ARCH-03 | Phase 48 | Pending |
