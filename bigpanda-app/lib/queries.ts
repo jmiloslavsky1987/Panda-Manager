@@ -1,6 +1,6 @@
 /* server-only omitted — see STATE.md 2026-03-19 01-02 */
 
-import { db } from '../db';
+import db from '../db';
 import {
   projects,
   actions,
@@ -1145,6 +1145,60 @@ export async function getWbsItems(projectId: number, track: string): Promise<Wbs
     .from(wbsItems)
     .where(and(eq(wbsItems.project_id, projectId), eq(wbsItems.track, track)))
     .orderBy(asc(wbsItems.level), asc(wbsItems.display_order));
+}
+
+/**
+ * Recursively deletes a wbs_item and all its descendants.
+ * Fetches all items for the project, builds descendant set via BFS, deletes all in one batch.
+ * Used by Phase 47 WBS DELETE route and UI cleanup.
+ */
+export async function deleteWbsSubtree(itemId: number): Promise<void> {
+  // First get the item to find its project_id
+  const [item] = await db
+    .select({ project_id: wbsItems.project_id })
+    .from(wbsItems)
+    .where(eq(wbsItems.id, itemId))
+    .limit(1);
+
+  if (!item) {
+    // Item doesn't exist, nothing to delete
+    return;
+  }
+
+  // Fetch all items for the project to build the tree
+  const allItems = await db
+    .select({ id: wbsItems.id, parent_id: wbsItems.parent_id })
+    .from(wbsItems)
+    .where(eq(wbsItems.project_id, item.project_id));
+
+  // Build children map for BFS traversal
+  const childrenMap = new Map<number | null, number[]>();
+  for (const wbsItem of allItems) {
+    const parentId = wbsItem.parent_id;
+    if (!childrenMap.has(parentId)) {
+      childrenMap.set(parentId, []);
+    }
+    childrenMap.get(parentId)!.push(wbsItem.id);
+  }
+
+  // BFS to collect all descendant IDs
+  const idsToDelete: number[] = [itemId];
+  const queue = [itemId];
+
+  while (queue.length > 0) {
+    const currentId = queue.shift()!;
+    const children = childrenMap.get(currentId) || [];
+
+    for (const childId of children) {
+      idsToDelete.push(childId);
+      queue.push(childId);
+    }
+  }
+
+  // Delete all items in one batch
+  if (idsToDelete.length > 0) {
+    await db.delete(wbsItems).where(inArray(wbsItems.id, idsToDelete));
+  }
 }
 
 /**
