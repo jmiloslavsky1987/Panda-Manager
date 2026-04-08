@@ -4,13 +4,13 @@ milestone: v6.0
 milestone_name: — Dashboard, Navigation & Intelligence
 status: executing
 stopped_at: Completed 45-02-PLAN.md
-last_updated: "2026-04-08T08:17:50.295Z"
+last_updated: "2026-04-08T15:54:54.227Z"
 last_activity: 2026-04-08 — Phase 45 Plan 01 complete (Database Schema Foundation)
 progress:
   total_phases: 7
   completed_phases: 3
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 8
+  completed_plans: 7
   percent: 40
 ---
 
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 
 ## Current Position
 
-Phase: 45 of 49 (Database Schema Foundation - In Progress)
-Plan: 2 of 2 in current phase
+Phase: 46 of 49 (Context Upload Extraction Expansion - In Progress)
+Plan: 1 of 2 in current phase
 Status: In progress
-Last activity: 2026-04-08 — Phase 45 Plan 01 complete (Database Schema Foundation)
+Last activity: 2026-04-08 — Phase 46 Plan 01 complete (Extraction Prompt Expansion)
 
-Progress: [████░░░░░░] 40% (4/10 plans in v6.0 complete)
+Progress: [████░░░░░░] 50% (5/10 plans in v6.0 complete)
 
 ## Milestone History
 
@@ -88,6 +88,9 @@ Progress: [████░░░░░░] 40% (4/10 plans in v6.0 complete)
 - **Phase 45 Plan 01:** Self-referencing wbs_items.parent_id uses AnyPgColumn cast for Drizzle type compatibility
 - **Phase 45 Plan 01:** WBS track stored as text ('ADR'|'Biggy') rather than pgEnum for flexibility
 - **Phase 45 Plan 01:** Architecture node status uses dedicated arch_node_status enum separate from WBS status
+- **Phase 46 Plan 01:** Wave 0 TDD approach: created test scaffolds first (3 extraction + 3 dedup tests) before implementation
+- **Phase 46 Plan 01:** Entity field design: wbs_task uses track+parent_section_name+level for hierarchical routing, team_engagement uses section_name enum for 5-section validation, arch_node uses track+node_name for capability classification
+- **Phase 46 Plan 01:** Disambiguation rules added to prompt: wbs_task vs task (hierarchical WBS items vs generic tasks), team_engagement vs team (section content vs team metadata)
 
 ## Blockers/Concerns
 
@@ -104,7 +107,7 @@ Progress: [████░░░░░░] 40% (4/10 plans in v6.0 complete)
 
 ## Session Continuity
 
-Last session: 2026-04-08T08:10:04.481Z
-Stopped at: Completed 45-02-PLAN.md
+Last session: 2026-04-08T15:53:44Z
+Stopped at: Completed 46-01-PLAN.md
 Resume file: None
-Next action: Execute 44-03-PLAN.md (Milestones Bulk Actions)
+Next action: Execute 46-02-PLAN.md (Entity Deduplication Logic)

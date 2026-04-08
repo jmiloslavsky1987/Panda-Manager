@@ -34,14 +34,14 @@
 
 - [x] **WBS-01**: Phase Board is replaced with a WBS view that displays both ADR and Biggy WBS templates as a collapsible 3-level hierarchy within a single project workspace
 - [x] **WBS-02**: Both ADR and Biggy WBS template structures seed automatically on project creation
-- [ ] **WBS-03**: When context is uploaded, extracted tasks are auto-classified to the nearest WBS node via AI (with fallback to manual assignment)
+- [x] **WBS-03**: When context is uploaded, extracted tasks are auto-classified to the nearest WBS node via AI (with fallback to manual assignment)
 - [ ] **WBS-04**: "Generate Plan" button analyzes available project context, identifies missing WBS tasks, and fills gaps; re-runnable to catch tasks not covered in earlier runs
 - [ ] **WBS-05**: User can manually add, edit, reorder, and delete tasks within any WBS node
 
 ### Team Engagement Overview
 
 - [ ] **TEAM-01**: Teams sub-tab (renamed "Team Engagement Overview") displays a 5-section engagement map: Business Outcomes, Architecture, E2E Workflows, Teams & Engagement, and Top Focus Areas
-- [ ] **TEAM-02**: Context upload extracts and routes structured data to populate all Team Engagement Map sections automatically
+- [x] **TEAM-02**: Context upload extracts and routes structured data to populate all Team Engagement Map sections automatically
 - [ ] **TEAM-03**: Sections with missing or incomplete data display a visible warning prompting the user to supply required content
 - [ ] **TEAM-04**: User can manually edit all fields in every section of the Team Engagement Map
 
@@ -50,7 +50,7 @@
 - [ ] **ARCH-01**: Architecture tab displays two sub-tabs: Before State (legacy flow with customer pain points) and Current & Future State
 - [ ] **ARCH-02**: Current & Future State shows ADR Track (Event Ingest → Alert Intelligence → Incident Intelligence → Console → Workflow Automation) and AI Assistant Track (Knowledge Sources → Real-Time Query → AI Capabilities → Console → Outputs & Actions), each with per-node status indicators (Live / In Progress / Planned)
 - [ ] **ARCH-03**: A Team Onboarding Status table below both tracks shows per-team, per-capability-stage status with colored indicators
-- [ ] **ARCH-04**: Context upload extracts and routes architecture data (tool names, integration statuses, team names, phase assignments) to populate both diagram tabs
+- [x] **ARCH-04**: Context upload extracts and routes architecture data (tool names, integration statuses, team names, phase assignments) to populate both diagram tabs
 
 ### Skills
 
@@ -98,9 +98,9 @@
 | MILE-02 | Phase 44 | Complete |
 | WBS-01 | Phase 45 | Complete |
 | WBS-02 | Phase 45 | Complete |
-| WBS-03 | Phase 46 | Pending |
-| TEAM-02 | Phase 46 | Pending |
-| ARCH-04 | Phase 46 | Pending |
+| WBS-03 | Phase 46 | Complete |
+| TEAM-02 | Phase 46 | Complete |
+| ARCH-04 | Phase 46 | Complete |
 | WBS-04 | Phase 47 | Pending |
 | WBS-05 | Phase 47 | Pending |
 | ARCH-01 | Phase 48 | Pending |
