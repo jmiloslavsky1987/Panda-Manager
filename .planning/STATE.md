@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v6.0
 milestone_name: — Dashboard, Navigation & Intelligence
 status: in_progress
-stopped_at: Completed 44-01-PLAN.md
-last_updated: "2026-04-08T04:50:56Z"
-last_activity: 2026-04-08 — Phase 44 Plan 01 complete (Navigation Restructure)
+stopped_at: Completed 44-02-PLAN.md
+last_updated: "2026-04-08T06:03:08.463Z"
+last_activity: 2026-04-08 — Phase 44 Plan 02 complete (Risks Bulk Actions)
 progress:
   total_phases: 7
   completed_phases: 1
-  total_plans: 10
-  completed_plans: 2
-  percent: 20
+  total_plans: 4
+  completed_plans: 3
+  percent: 30
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 ## Current Position
 
 Phase: 44 of 49 (Navigation & Parity - In Progress)
-Plan: 2 of 3 in current phase
+Plan: 3 of 3 in current phase
 Status: In progress
-Last activity: 2026-04-08 — Phase 44 Plan 01 complete (Navigation Restructure)
+Last activity: 2026-04-08 — Phase 44 Plan 02 complete (Risks Bulk Actions)
 
-Progress: [██░░░░░░░░] 20% (2/10 plans in v6.0 complete)
+Progress: [███░░░░░░░] 30% (3/10 plans in v6.0 complete)
 
 ## Milestone History
 
@@ -82,6 +82,9 @@ Progress: [██░░░░░░░░] 20% (2/10 plans in v6.0 complete)
 - **Phase 44 Plan 01:** Plan layout dissolved — board content now renders directly at /plan route
 - **Phase 44 Plan 01:** Old /plan/* sub-routes redirect for backward compatibility
 - **Phase 44 Plan 01:** Wave 0 test stubs created for bulk-update APIs (RED now, GREEN after Plans 02/03)
+- **Phase 44 Plan 02:** Filter bar inline (not collapsible) for Risks table — matches Actions UX pattern
+- **Phase 44 Plan 02:** Bulk update API pattern established for risks (Zod validation + inArray)
+- **Phase 44 Plan 02:** Date filtering uses created_at.toISOString().split('T')[0] for string comparison
 
 ## Blockers/Concerns
 
@@ -98,7 +101,7 @@ Progress: [██░░░░░░░░] 20% (2/10 plans in v6.0 complete)
 
 ## Session Continuity
 
-Last session: 2026-04-08T04:50:56Z
-Stopped at: Completed 44-01-PLAN.md
-Resume file: .planning/phases/44-navigation-parity/44-01-SUMMARY.md
-Next action: Execute 44-02-PLAN.md (Risks Bulk Actions) or 44-03-PLAN.md (Milestones Bulk Actions)
+Last session: 2026-04-08T06:03:08.461Z
+Stopped at: Completed 44-02-PLAN.md
+Resume file: .planning/phases/44-navigation-parity/44-02-SUMMARY.md
+Next action: Execute 44-03-PLAN.md (Milestones Bulk Actions)
