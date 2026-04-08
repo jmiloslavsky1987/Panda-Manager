@@ -140,8 +140,8 @@ Plans:
 
 Plans:
 - [x] 44-01-PLAN.md — Wave 0 test stubs + Navigation restructure (TAB_GROUPS, route files, plan layout dissolution) (completed 2026-04-08)
-- [ ] 44-02-PLAN.md — Risks parity: full filter bar + multi-select + /api/risks/bulk-update
-- [ ] 44-03-PLAN.md — Milestones parity: full filter bar + multi-select + /api/milestones/bulk-update
+- [x] 44-02-PLAN.md — Risks parity: full filter bar + multi-select + /api/risks/bulk-update (completed 2026-04-08)
+- [x] 44-03-PLAN.md — Milestones parity: full filter bar + multi-select + /api/milestones/bulk-update (completed 2026-04-08)
 
 ### Phase 45: Database Schema Foundation
 **Goal**: All new tables, columns, seed data, and query functions exist to support WBS, Team Engagement, and Architecture features
@@ -244,7 +244,7 @@ Phases execute in numeric order: 43 → 44 → 45 → 46 → 47 → 48 → 49
 | 41. UX Polish & Consistency | v5.0 | 4/4 | Complete | 2026-04-07 |
 | 42. Ingestion Field Coverage | v5.0 | 5/5 | Complete | 2026-04-07 |
 | 43. Skills Portability | 1/1 | Complete    | 2026-04-08 | - |
-| 44. Navigation & Parity | 3/3 | Complete    | 2026-04-08 | - |
+| 44. Navigation & Parity | 3/3 | Complete   | 2026-04-08 | - |
 | 45. Database Schema Foundation | v6.0 | 0/1 | Not started | - |
 | 46. Context Upload Extraction Expansion | v6.0 | 0/1 | Not started | - |
 | 47. Work Breakdown Structure | v6.0 | 0/2 | Not started | - |
