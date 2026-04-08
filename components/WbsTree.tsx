@@ -11,15 +11,17 @@ import {
 } from '@dnd-kit/core'
 import type { WbsItem } from '@/lib/queries'
 import { WbsNode } from './WbsNode'
+import { WbsGeneratePlanModal } from './WbsGeneratePlanModal'
 import { toast } from 'sonner'
 
 interface WbsTreeProps {
   adrItems: WbsItem[]
   biggyItems: WbsItem[]
   projectId: number
+  showGeneratePlan?: boolean
 }
 
-export function WbsTree({ adrItems, biggyItems, projectId }: WbsTreeProps) {
+export function WbsTree({ adrItems, biggyItems, projectId, showGeneratePlan }: WbsTreeProps) {
   const router = useRouter()
   const [activeTrack, setActiveTrack] = useState<'ADR' | 'Biggy'>('ADR')
 
@@ -104,11 +106,29 @@ export function WbsTree({ adrItems, biggyItems, projectId }: WbsTreeProps) {
     setExpandedIds(updater)
   }
 
+  // Handle Generate Plan confirmation — expand newly added items' parent sections
+  const handleGenerateConfirmed = (newParentIds: number[]) => {
+    setExpandedIds(prev => {
+      const next = new Set(prev)
+      newParentIds.forEach(id => next.add(id))
+      return next
+    })
+    router.refresh() // Reload WBS items from server
+  }
+
   // Get root nodes (parent_id === null)
   const rootNodes = childrenMap.get(null) ?? []
 
   return (
     <div className="flex flex-col">
+      {/* Header with Generate Plan button */}
+      {showGeneratePlan && (
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-lg font-semibold text-zinc-800">Work Breakdown Structure</h1>
+          <WbsGeneratePlanModal projectId={projectId} onConfirmed={handleGenerateConfirmed} />
+        </div>
+      )}
+
       {/* Tab switcher */}
       <div className="flex gap-4 border-b border-zinc-200 mb-4">
         <button
