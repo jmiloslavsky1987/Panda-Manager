@@ -1,5 +1,5 @@
 import { getTeamsTabData, getProjectById } from '@/lib/queries'
-import { TeamEngagementMap } from '@/components/teams/TeamEngagementMap'
+import { TeamsPageTabs } from '@/components/teams/TeamsPageTabs'
 import { EmptyState } from '@/components/EmptyState'
 
 export default async function TeamsPage({
@@ -33,7 +33,7 @@ export default async function TeamsPage({
 
   return (
     <div data-testid="teams-tab" className="space-y-8">
-      <TeamEngagementMap
+      <TeamsPageTabs
         projectId={projectId}
         customer={project.customer}
         data={data}
