@@ -54,54 +54,42 @@ describe('PATCH /api/projects/[projectId]/arch-nodes/reorder — column drag reo
   });
 
   it('PATCH with valid reorder payload returns 200 {ok:true}', async () => {
-    // RED: Route doesn't exist yet
-    try {
-      const { PATCH } = await import('@/app/api/projects/[projectId]/arch-nodes/reorder/route');
+    const { PATCH } = await import('@/app/api/projects/[projectId]/arch-nodes/reorder/route');
 
-      const req = new NextRequest('http://localhost:3000/api/projects/1/arch-nodes/reorder', {
-        method: 'PATCH',
-        body: JSON.stringify({
-          nodeId: 5,
-          trackId: 1,
-          newDisplayOrder: 3
-        })
-      });
+    const req = new NextRequest('http://localhost:3000/api/projects/1/arch-nodes/reorder', {
+      method: 'PATCH',
+      body: JSON.stringify({
+        nodeId: 5,
+        trackId: 1,
+        newDisplayOrder: 3
+      })
+    });
 
-      const response = await PATCH(req, {
-        params: Promise.resolve({ projectId: '1' })
-      });
-      const json = await response.json();
+    const response = await PATCH(req, {
+      params: Promise.resolve({ projectId: '1' })
+    });
+    const json = await response.json();
 
-      expect(response.status).toBe(200);
-      expect(json).toEqual({ ok: true });
-    } catch (error) {
-      // Expected to fail (RED) until Task 3 creates the route
-      expect(true).toBe(false);
-    }
+    expect(response.status).toBe(200);
+    expect(json).toEqual({ ok: true });
   });
 
   it('PATCH with missing nodeId returns 400', async () => {
-    // RED: Route doesn't exist yet
-    try {
-      const { PATCH } = await import('@/app/api/projects/[projectId]/arch-nodes/reorder/route');
+    const { PATCH } = await import('@/app/api/projects/[projectId]/arch-nodes/reorder/route');
 
-      const req = new NextRequest('http://localhost:3000/api/projects/1/arch-nodes/reorder', {
-        method: 'PATCH',
-        body: JSON.stringify({
-          trackId: 1,
-          newDisplayOrder: 3
-        })
-      });
+    const req = new NextRequest('http://localhost:3000/api/projects/1/arch-nodes/reorder', {
+      method: 'PATCH',
+      body: JSON.stringify({
+        trackId: 1,
+        newDisplayOrder: 3
+      })
+    });
 
-      const response = await PATCH(req, {
-        params: Promise.resolve({ projectId: '1' })
-      });
+    const response = await PATCH(req, {
+      params: Promise.resolve({ projectId: '1' })
+    });
 
-      expect(response.status).toBe(400);
-    } catch (error) {
-      // Expected to fail (RED) until Task 3 creates the route
-      expect(true).toBe(false);
-    }
+    expect(response.status).toBe(400);
   });
 
   it('PATCH with non-existent node returns 404', async () => {
@@ -113,27 +101,21 @@ describe('PATCH /api/projects/[projectId]/arch-nodes/reorder — column drag reo
       })
     });
 
-    // RED: Route doesn't exist yet
-    try {
-      const { PATCH } = await import('@/app/api/projects/[projectId]/arch-nodes/reorder/route');
+    const { PATCH } = await import('@/app/api/projects/[projectId]/arch-nodes/reorder/route');
 
-      const req = new NextRequest('http://localhost:3000/api/projects/1/arch-nodes/reorder', {
-        method: 'PATCH',
-        body: JSON.stringify({
-          nodeId: 999,
-          trackId: 1,
-          newDisplayOrder: 3
-        })
-      });
+    const req = new NextRequest('http://localhost:3000/api/projects/1/arch-nodes/reorder', {
+      method: 'PATCH',
+      body: JSON.stringify({
+        nodeId: 999,
+        trackId: 1,
+        newDisplayOrder: 3
+      })
+    });
 
-      const response = await PATCH(req, {
-        params: Promise.resolve({ projectId: '1' })
-      });
+    const response = await PATCH(req, {
+      params: Promise.resolve({ projectId: '1' })
+    });
 
-      expect(response.status).toBe(404);
-    } catch (error) {
-      // Expected to fail (RED) until Task 3 creates the route
-      expect(true).toBe(false);
-    }
+    expect(response.status).toBe(404);
   });
 });
