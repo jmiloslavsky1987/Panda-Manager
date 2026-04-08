@@ -148,15 +148,16 @@ Plans:
 **Depends on**: Phase 44
 **Requirements**: WBS-01, WBS-02
 **Success Criteria** (what must be TRUE):
-  1. Database contains wbs_templates, wbs_items, wbs_task_assignments, team_engagement_sections, arch_tracks, and arch_nodes tables
-  2. Projects table has exec_action_required and dependency_projects columns
-  3. New project creation automatically seeds both ADR and Biggy WBS template structures
-  4. Query functions (getWbsItems, getTeamEngagementSections, getArchNodes) return correct data
+  1. Database contains wbs_items, wbs_task_assignments, team_engagement_sections, arch_tracks, arch_nodes, arch_team_status, and project_dependencies tables
+  2. Projects table has exec_action_required boolean column
+  3. New project creation automatically seeds both ADR (10+25 rows) and Biggy (5+9 rows) WBS template structures
+  4. Query functions (getWbsItems, getTeamEngagementSections, getArchNodes, getArchTeamStatus) return correct data
   5. Drizzle schema migrations run without errors in dev and test environments
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 45-01: [TBD]
+- [ ] 45-01-PLAN.md — Wave 0 RED test scaffolds + Drizzle schema additions + migration 0028_wbs_team_arch_schema.sql
+- [ ] 45-02-PLAN.md — Project creation seeding (WBS templates, team engagement sections, arch tracks/nodes) + query functions
 
 ### Phase 46: Context Upload Extraction Expansion
 **Goal**: Document uploads auto-populate WBS tasks, Team Engagement sections, and Architecture nodes
@@ -245,7 +246,7 @@ Phases execute in numeric order: 43 → 44 → 45 → 46 → 47 → 48 → 49
 | 42. Ingestion Field Coverage | v5.0 | 5/5 | Complete | 2026-04-07 |
 | 43. Skills Portability | 1/1 | Complete    | 2026-04-08 | - |
 | 44. Navigation & Parity | 3/3 | Complete   | 2026-04-08 | - |
-| 45. Database Schema Foundation | v6.0 | 0/1 | Not started | - |
+| 45. Database Schema Foundation | v6.0 | 0/2 | Not started | - |
 | 46. Context Upload Extraction Expansion | v6.0 | 0/1 | Not started | - |
 | 47. Work Breakdown Structure | v6.0 | 0/2 | Not started | - |
 | 48. Architecture & Team Engagement | v6.0 | 0/2 | Not started | - |
