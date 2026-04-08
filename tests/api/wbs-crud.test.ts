@@ -5,6 +5,10 @@ import { NextRequest } from 'next/server';
 
 // Mock dependencies before importing
 const mockRequireSession = vi.fn();
+const mockSelect = vi.fn();
+const mockInsert = vi.fn();
+const mockUpdate = vi.fn();
+const mockDelete = vi.fn();
 
 vi.mock('@/lib/auth-server', () => ({
   requireSession: mockRequireSession
@@ -12,22 +16,10 @@ vi.mock('@/lib/auth-server', () => ({
 
 vi.mock('@/db', () => ({
   default: {
-    insert: vi.fn().mockReturnValue({
-      values: vi.fn().mockResolvedValue([{ id: 1, name: 'Test Item', level: 2, track: 'ADR', display_order: 1 }])
-    }),
-    update: vi.fn().mockReturnValue({
-      set: vi.fn().mockReturnValue({
-        where: vi.fn().mockResolvedValue([{ id: 1, name: 'Updated Item', status: 'in_progress' }])
-      })
-    }),
-    delete: vi.fn().mockReturnValue({
-      where: vi.fn().mockResolvedValue(undefined)
-    }),
-    select: vi.fn().mockReturnValue({
-      from: vi.fn().mockReturnValue({
-        where: vi.fn().mockResolvedValue([{ id: 1, level: 2 }])
-      })
-    })
+    insert: mockInsert,
+    update: mockUpdate,
+    delete: mockDelete,
+    select: mockSelect
   }
 }));
 
@@ -41,12 +33,29 @@ vi.mock('drizzle-orm', () => ({
 
 vi.mock('server-only', () => ({}));
 
+vi.mock('@/lib/queries', () => ({
+  deleteWbsSubtree: vi.fn().mockResolvedValue(undefined)
+}));
+
 describe('POST /api/projects/[projectId]/wbs — add WBS node', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockRequireSession.mockResolvedValue({
       session: { user: { id: '1' } },
       redirectResponse: null
+    });
+
+    // Setup mocks for POST route
+    mockSelect.mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockResolvedValue([{ max: 0 }])
+      })
+    });
+
+    mockInsert.mockReturnValue({
+      values: vi.fn().mockReturnValue({
+        returning: vi.fn().mockResolvedValue([{ id: 1, name: 'Test Item', level: 2, track: 'ADR', display_order: 1 }])
+      })
     });
   });
 
@@ -63,7 +72,7 @@ describe('POST /api/projects/[projectId]/wbs — add WBS node', () => {
       })
     });
 
-    const response = await POST(req, { params: { projectId: '1' } });
+    const response = await POST(req, { params: Promise.resolve({ projectId: '1' }) });
     const json = await response.json();
 
     expect(response.status).toBe(201);
@@ -83,7 +92,7 @@ describe('POST /api/projects/[projectId]/wbs — add WBS node', () => {
       })
     });
 
-    const response = await POST(req, { params: { projectId: '1' } });
+    const response = await POST(req, { params: Promise.resolve({ projectId: '1' }) });
 
     expect(response.status).toBe(400);
   });
@@ -111,7 +120,7 @@ describe('POST /api/projects/[projectId]/wbs — add WBS node', () => {
       })
     });
 
-    const response = await POST(req, { params: { projectId: '1' } });
+    const response = await POST(req, { params: Promise.resolve({ projectId: '1' }) });
 
     expect(response).toBe(mockRedirect);
   });
@@ -123,6 +132,23 @@ describe('PATCH /api/projects/[projectId]/wbs/[itemId] — edit WBS node', () =>
     mockRequireSession.mockResolvedValue({
       session: { user: { id: '1' } },
       redirectResponse: null
+    });
+
+    // Setup mocks for PATCH route - default to level 2
+    mockSelect.mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([{ id: 2, level: 2 }])
+        })
+      })
+    });
+
+    mockUpdate.mockReturnValue({
+      set: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([{ id: 2, name: 'Updated Item', status: 'in_progress' }])
+        })
+      })
     });
   });
 
@@ -137,7 +163,7 @@ describe('PATCH /api/projects/[projectId]/wbs/[itemId] — edit WBS node', () =>
       })
     });
 
-    const response = await PATCH(req, { params: { projectId: '1', itemId: '2' } });
+    const response = await PATCH(req, { params: Promise.resolve({ projectId: '1', itemId: '2' }) });
     const json = await response.json();
 
     expect(response.status).toBe(200);
@@ -145,6 +171,15 @@ describe('PATCH /api/projects/[projectId]/wbs/[itemId] — edit WBS node', () =>
   });
 
   it('PATCH Level 1 name change returns 403', async () => {
+    // Override mock to return level 1 for this test
+    mockSelect.mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([{ id: 1, level: 1 }])
+        })
+      })
+    });
+
     const { PATCH } = await import('@/app/api/projects/[projectId]/wbs/[itemId]/route');
 
     const req = new NextRequest('http://localhost:3000/api/projects/1/wbs/1', {
@@ -154,7 +189,7 @@ describe('PATCH /api/projects/[projectId]/wbs/[itemId] — edit WBS node', () =>
       })
     });
 
-    const response = await PATCH(req, { params: { projectId: '1', itemId: '1' } });
+    const response = await PATCH(req, { params: Promise.resolve({ projectId: '1', itemId: '1' }) });
 
     expect(response.status).toBe(403);
   });
@@ -179,7 +214,7 @@ describe('PATCH /api/projects/[projectId]/wbs/[itemId] — edit WBS node', () =>
       })
     });
 
-    const response = await PATCH(req, { params: { projectId: '1', itemId: '2' } });
+    const response = await PATCH(req, { params: Promise.resolve({ projectId: '1', itemId: '2' }) });
 
     expect(response).toBe(mockRedirect);
   });
@@ -192,6 +227,15 @@ describe('DELETE /api/projects/[projectId]/wbs/[itemId] — delete WBS node', ()
       session: { user: { id: '1' } },
       redirectResponse: null
     });
+
+    // Setup mocks for DELETE route - default to level 2
+    mockSelect.mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([{ id: 2, level: 2 }])
+        })
+      })
+    });
   });
 
   it('DELETE Level 2/3 node returns 204', async () => {
@@ -201,19 +245,28 @@ describe('DELETE /api/projects/[projectId]/wbs/[itemId] — delete WBS node', ()
       method: 'DELETE'
     });
 
-    const response = await DELETE(req, { params: { projectId: '1', itemId: '2' } });
+    const response = await DELETE(req, { params: Promise.resolve({ projectId: '1', itemId: '2' }) });
 
     expect(response.status).toBe(204);
   });
 
   it('DELETE Level 1 node returns 403', async () => {
+    // Override mock to return level 1 for this test
+    mockSelect.mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([{ id: 1, level: 1 }])
+        })
+      })
+    });
+
     const { DELETE } = await import('@/app/api/projects/[projectId]/wbs/[itemId]/route');
 
     const req = new NextRequest('http://localhost:3000/api/projects/1/wbs/1', {
       method: 'DELETE'
     });
 
-    const response = await DELETE(req, { params: { projectId: '1', itemId: '1' } });
+    const response = await DELETE(req, { params: Promise.resolve({ projectId: '1', itemId: '1' }) });
 
     expect(response.status).toBe(403);
   });
@@ -235,7 +288,7 @@ describe('DELETE /api/projects/[projectId]/wbs/[itemId] — delete WBS node', ()
       method: 'DELETE'
     });
 
-    const response = await DELETE(req, { params: { projectId: '1', itemId: '2' } });
+    const response = await DELETE(req, { params: Promise.resolve({ projectId: '1', itemId: '2' }) });
 
     expect(response).toBe(mockRedirect);
   });
@@ -247,6 +300,21 @@ describe('POST /api/projects/[projectId]/wbs/reorder — reorder WBS node', () =
     mockRequireSession.mockResolvedValue({
       session: { user: { id: '1' } },
       redirectResponse: null
+    });
+
+    // Setup mocks for reorder route - default to level 2
+    mockSelect.mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([{ id: 2, level: 2 }])
+        })
+      })
+    });
+
+    mockUpdate.mockReturnValue({
+      set: vi.fn().mockReturnValue({
+        where: vi.fn().mockResolvedValue(undefined)
+      })
     });
   });
 
@@ -262,7 +330,7 @@ describe('POST /api/projects/[projectId]/wbs/reorder — reorder WBS node', () =
       })
     });
 
-    const response = await POST(req, { params: { projectId: '1' } });
+    const response = await POST(req, { params: Promise.resolve({ projectId: '1' }) });
     const json = await response.json();
 
     expect(response.status).toBe(200);
@@ -280,7 +348,7 @@ describe('POST /api/projects/[projectId]/wbs/reorder — reorder WBS node', () =
       })
     });
 
-    const response = await POST(req, { params: { projectId: '1' } });
+    const response = await POST(req, { params: Promise.resolve({ projectId: '1' }) });
 
     expect(response.status).toBe(400);
   });
@@ -307,7 +375,7 @@ describe('POST /api/projects/[projectId]/wbs/reorder — reorder WBS node', () =
       })
     });
 
-    const response = await POST(req, { params: { projectId: '1' } });
+    const response = await POST(req, { params: Promise.resolve({ projectId: '1' }) });
 
     expect(response).toBe(mockRedirect);
   });

@@ -14,7 +14,9 @@ const mockUpdate = vi.fn().mockReturnValue({
 
 const mockSelect = vi.fn().mockReturnValue({
   from: vi.fn().mockReturnValue({
-    where: vi.fn().mockResolvedValue([{ id: 2, level: 2, parent_id: 1, display_order: 1 }])
+    where: vi.fn().mockReturnValue({
+      limit: vi.fn().mockResolvedValue([{ id: 2, level: 2, parent_id: 1, display_order: 1 }])
+    })
   })
 });
 
@@ -59,7 +61,7 @@ describe('POST /wbs/reorder — display_order recalculation', () => {
       })
     });
 
-    await POST(req, { params: { projectId: '1' } });
+    await POST(req, { params: Promise.resolve({ projectId: '1' }) });
 
     // Should have called update twice:
     // 1. Shift siblings at target position
@@ -79,7 +81,7 @@ describe('POST /wbs/reorder — display_order recalculation', () => {
       })
     });
 
-    await POST(req, { params: { projectId: '1' } });
+    await POST(req, { params: Promise.resolve({ projectId: '1' }) });
 
     // First update should shift siblings
     // Second update should set the moved item's new position
@@ -90,7 +92,9 @@ describe('POST /wbs/reorder — display_order recalculation', () => {
     // Mock item with level 1
     mockSelect.mockReturnValue({
       from: vi.fn().mockReturnValue({
-        where: vi.fn().mockResolvedValue([{ id: 1, level: 1, parent_id: null, display_order: 1 }])
+        where: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([{ id: 1, level: 1, parent_id: null, display_order: 1 }])
+        })
       })
     });
 
@@ -105,7 +109,7 @@ describe('POST /wbs/reorder — display_order recalculation', () => {
       })
     });
 
-    const response = await POST(req, { params: { projectId: '1' } });
+    const response = await POST(req, { params: Promise.resolve({ projectId: '1' }) });
 
     expect(response.status).toBe(403);
   });
