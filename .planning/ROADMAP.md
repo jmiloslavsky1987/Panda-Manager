@@ -103,7 +103,7 @@ Full details: `.planning/milestones/v5.0-ROADMAP.md` (archived)
 - [x] **Phase 44: Navigation & Parity** - Tab restructure, Risks/Milestones filtering and bulk actions (completed 2026-04-08)
 - [x] **Phase 45: Database Schema Foundation** - New tables for WBS, Team Engagement, Architecture; query functions (completed 2026-04-08)
 - [x] **Phase 46: Context Upload Extraction Expansion** - Extend extraction to WBS/Team/Architecture entity types (completed 2026-04-08)
-- [ ] **Phase 47: Work Breakdown Structure** - Collapsible WBS tree with AI Generate Plan and manual CRUD
+- [x] **Phase 47: Work Breakdown Structure** - Collapsible WBS tree with AI Generate Plan and manual CRUD (completed 2026-04-08)
 - [ ] **Phase 48: Architecture & Team Engagement** - Two-tab Architecture diagrams + 5-section Team report
 - [ ] **Phase 49: Portfolio Dashboard** - Multi-project table with health summary and exceptions panel
 
@@ -250,7 +250,7 @@ Phases execute in numeric order: 43 → 44 → 45 → 46 → 47 → 48 → 49
 | 44. Navigation & Parity | 3/3 | Complete   | 2026-04-08 | - |
 | 45. Database Schema Foundation | 2/2 | Complete    | 2026-04-08 | - |
 | 46. Context Upload Extraction Expansion | 2/2 | Complete    | 2026-04-08 | - |
-| 47. Work Breakdown Structure | 2/3 | In Progress|  | - |
+| 47. Work Breakdown Structure | 3/3 | Complete   | 2026-04-08 | - |
 | 48. Architecture & Team Engagement | v6.0 | 0/2 | Not started | - |
 | 49. Portfolio Dashboard | v6.0 | 0/1 | Not started | - |
 
@@ -259,7 +259,7 @@ Phases execute in numeric order: 43 → 44 → 45 → 46 → 47 → 48 → 49
 **Goal:** [To be planned]
 **Requirements**: TBD
 **Depends on:** Phase 49
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] TBD (run /gsd:plan-phase 50 to break down)
