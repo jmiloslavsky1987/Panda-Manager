@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import {
   Table,
   TableBody,
@@ -16,6 +16,7 @@ import { InlineSelectCell } from '@/components/InlineSelectCell'
 import { OwnerCell } from '@/components/OwnerCell'
 import { EmptyState } from '@/components/EmptyState'
 import { AddRiskModal } from '@/components/AddRiskModal'
+import { Checkbox } from '@/components/ui/checkbox'
 import type { Risk, Artifact } from '@/lib/queries'
 
 const RISK_STATUS_OPTIONS: { value: 'open' | 'mitigated' | 'resolved' | 'accepted'; label: string }[] = [
@@ -68,8 +69,27 @@ interface RisksTableClientProps {
 export function RisksTableClient({ risks, artifacts, projectId }: RisksTableClientProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
+
+  // URL param filters
+  const statusFilter = searchParams.get('status') ?? ''
   const severityFilter = searchParams.get('severity') ?? ''
+  const ownerFilter = searchParams.get('owner') ?? ''
+  const fromDate = searchParams.get('from') ?? ''
+  const toDate = searchParams.get('to') ?? ''
+
   const [addModalOpen, setAddModalOpen] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+
+  // Update URL param callback
+  const updateParam = useCallback((key: string, value: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (value) {
+      params.set(key, value)
+    } else {
+      params.delete(key)
+    }
+    router.push(`?${params.toString()}`, { scroll: false })
+  }, [router, searchParams])
 
   async function patchRisk(id: number, patch: Record<string, unknown>) {
     const res = await fetch(`/api/risks/${id}`, {
@@ -87,15 +107,71 @@ export function RisksTableClient({ risks, artifacts, projectId }: RisksTableClie
 
   const artifactMap = new Map(artifacts.map((a) => [a.id, a.name]))
 
-  const sortedRisks = [...risks].sort((a, b) => {
-    const aOrder = SEVERITY_ORDER[a.severity ?? 'low'] ?? 4
-    const bOrder = SEVERITY_ORDER[b.severity ?? 'low'] ?? 4
-    return aOrder - bOrder
-  })
+  // Compute unique owners for filter dropdown (from full list, not filtered)
+  const uniqueOwners = useMemo(
+    () => [...new Set(risks.map(r => r.owner).filter(Boolean) as string[])].sort(),
+    [risks]
+  )
 
-  const displayedRisks = severityFilter
-    ? sortedRisks.filter(r => normaliseSeverity(r.severity) === severityFilter.toLowerCase())
-    : sortedRisks
+  // Apply all filters
+  const filteredRisks = useMemo(() => {
+    let result = [...risks].sort((a, b) => {
+      const aOrder = SEVERITY_ORDER[a.severity ?? 'low'] ?? 4
+      const bOrder = SEVERITY_ORDER[b.severity ?? 'low'] ?? 4
+      return aOrder - bOrder
+    })
+
+    if (statusFilter) {
+      result = result.filter(r => normaliseRiskStatus(r.status) === statusFilter)
+    }
+    if (severityFilter) {
+      result = result.filter(r => normaliseSeverity(r.severity) === severityFilter)
+    }
+    if (ownerFilter) {
+      result = result.filter(r => r.owner === ownerFilter)
+    }
+    if (fromDate) {
+      result = result.filter(r => r.created_at.toISOString().split('T')[0] >= fromDate)
+    }
+    if (toDate) {
+      result = result.filter(r => r.created_at.toISOString().split('T')[0] <= toDate)
+    }
+
+    return result
+  }, [risks, statusFilter, severityFilter, ownerFilter, fromDate, toDate])
+
+  // Multi-select functions
+  function toggleSelection(id: number) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
+
+  function toggleSelectAll() {
+    if (selectedIds.size === filteredRisks.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(filteredRisks.map(r => r.id)))
+    }
+  }
+
+  // Bulk update function
+  async function bulkUpdateStatus(status: string) {
+    await fetch('/api/risks/bulk-update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ risk_ids: Array.from(selectedIds), patch: { status } }),
+    })
+    setSelectedIds(new Set())
+    router.refresh()
+    window.dispatchEvent(new CustomEvent('metrics:invalidate'))
+  }
 
   // Show empty state when no risks exist
   if (risks.length === 0) {
@@ -124,10 +200,113 @@ export function RisksTableClient({ risks, artifacts, projectId }: RisksTableClie
         <h2 className="text-xl font-semibold text-zinc-900">Risks</h2>
         <AddRiskModal projectId={projectId} open={addModalOpen} onOpenChange={setAddModalOpen} />
       </div>
+
+      {/* Floating bulk bar */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-3 bg-zinc-50 border rounded px-4 py-2">
+          <span className="text-sm font-medium">{selectedIds.size} selected</span>
+          <select
+            onChange={e => {
+              if (e.target.value) {
+                bulkUpdateStatus(e.target.value)
+                e.target.value = ''
+              }
+            }}
+            className="border rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-400"
+          >
+            <option value="">Change status...</option>
+            <option value="open">Open</option>
+            <option value="mitigated">Mitigated</option>
+            <option value="resolved">Resolved</option>
+            <option value="accepted">Accepted</option>
+          </select>
+          <button
+            onClick={() => setSelectedIds(new Set())}
+            className="text-sm text-zinc-600 hover:text-zinc-800"
+          >
+            Clear
+          </button>
+        </div>
+      )}
+
+      {/* Filter bar */}
+      <div className="flex flex-wrap gap-2">
+        <select
+          value={statusFilter}
+          onChange={e => updateParam('status', e.target.value)}
+          className="border rounded px-2 py-1 text-sm"
+        >
+          <option value="">All statuses</option>
+          <option value="open">Open</option>
+          <option value="mitigated">Mitigated</option>
+          <option value="resolved">Resolved</option>
+          <option value="accepted">Accepted</option>
+        </select>
+        <select
+          value={severityFilter}
+          onChange={e => updateParam('severity', e.target.value)}
+          className="border rounded px-2 py-1 text-sm"
+        >
+          <option value="">All severities</option>
+          <option value="critical">Critical</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+        </select>
+        <select
+          value={ownerFilter}
+          onChange={e => updateParam('owner', e.target.value)}
+          className="border rounded px-2 py-1 text-sm"
+        >
+          <option value="">All owners</option>
+          {uniqueOwners.map(o => (
+            <option key={o} value={o}>{o}</option>
+          ))}
+        </select>
+        <label className="flex items-center gap-1 text-sm text-zinc-600">
+          From
+          <input
+            type="date"
+            value={fromDate}
+            onChange={e => updateParam('from', e.target.value)}
+            className="border rounded px-2 py-1 text-sm"
+          />
+        </label>
+        <label className="flex items-center gap-1 text-sm text-zinc-600">
+          To
+          <input
+            type="date"
+            value={toDate}
+            onChange={e => updateParam('to', e.target.value)}
+            className="border rounded px-2 py-1 text-sm"
+          />
+        </label>
+        {(statusFilter || severityFilter || ownerFilter || fromDate || toDate) && (
+          <button
+            onClick={() => {
+              updateParam('status', '')
+              updateParam('severity', '')
+              updateParam('owner', '')
+              updateParam('from', '')
+              updateParam('to', '')
+            }}
+            className="text-sm text-zinc-500 hover:text-zinc-800 border rounded px-2 py-1"
+          >
+            Clear filters
+          </button>
+        )}
+      </div>
+
       <div className="rounded-md border border-zinc-200 overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[50px]">
+                <Checkbox
+                  checked={selectedIds.size === filteredRisks.length && filteredRisks.length > 0}
+                  onCheckedChange={toggleSelectAll}
+                />
+              </TableHead>
               <TableHead className="w-[130px]">ID</TableHead>
               <TableHead>Description</TableHead>
               <TableHead className="w-[110px]">Severity</TableHead>
@@ -137,14 +316,14 @@ export function RisksTableClient({ risks, artifacts, projectId }: RisksTableClie
             </TableRow>
           </TableHeader>
           <TableBody>
-            {displayedRisks.length === 0 ? (
+            {filteredRisks.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-zinc-400 py-8">
+                <TableCell colSpan={7} className="text-center text-zinc-400 py-8">
                   No risks found.
                 </TableCell>
               </TableRow>
             ) : (
-              displayedRisks.map((risk) => {
+              filteredRisks.map((risk) => {
                 const sevKey = normaliseSeverity(risk.severity)
                 const badgeClass = severityBadgeColors[sevKey] ?? 'bg-zinc-100 text-zinc-700'
                 const highlight = (sevKey === 'critical' || sevKey === 'high') && isUnresolved(risk.status)
@@ -154,6 +333,12 @@ export function RisksTableClient({ risks, artifacts, projectId }: RisksTableClie
                   : mitigationText
                 return (
                   <TableRow key={risk.id} className={highlight ? 'bg-orange-50' : ''}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedIds.has(risk.id)}
+                        onCheckedChange={() => toggleSelection(risk.id)}
+                      />
+                    </TableCell>
                     <TableCell className="font-mono text-xs text-zinc-500">{risk.external_id}</TableCell>
                     <TableCell className="text-sm">
                       <div className="space-y-1">
