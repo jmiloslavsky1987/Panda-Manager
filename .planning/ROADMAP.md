@@ -101,7 +101,7 @@ Full details: `.planning/milestones/v5.0-ROADMAP.md` (archived)
 
 - [x] **Phase 43: Skills Portability** - Dynamic SKILL.md path resolution for deployment flexibility (completed 2026-04-07)
 - [x] **Phase 44: Navigation & Parity** - Tab restructure, Risks/Milestones filtering and bulk actions (completed 2026-04-08)
-- [ ] **Phase 45: Database Schema Foundation** - New tables for WBS, Team Engagement, Architecture; query functions
+- [x] **Phase 45: Database Schema Foundation** - New tables for WBS, Team Engagement, Architecture; query functions (completed 2026-04-08)
 - [ ] **Phase 46: Context Upload Extraction Expansion** - Extend extraction to WBS/Team/Architecture entity types
 - [ ] **Phase 47: Work Breakdown Structure** - Collapsible WBS tree with AI Generate Plan and manual CRUD
 - [ ] **Phase 48: Architecture & Team Engagement** - Two-tab Architecture diagrams + 5-section Team report
@@ -246,7 +246,7 @@ Phases execute in numeric order: 43 → 44 → 45 → 46 → 47 → 48 → 49
 | 42. Ingestion Field Coverage | v5.0 | 5/5 | Complete | 2026-04-07 |
 | 43. Skills Portability | 1/1 | Complete    | 2026-04-08 | - |
 | 44. Navigation & Parity | 3/3 | Complete   | 2026-04-08 | - |
-| 45. Database Schema Foundation | 1/2 | In Progress|  | - |
+| 45. Database Schema Foundation | 2/2 | Complete   | 2026-04-08 | - |
 | 46. Context Upload Extraction Expansion | v6.0 | 0/1 | Not started | - |
 | 47. Work Breakdown Structure | v6.0 | 0/2 | Not started | - |
 | 48. Architecture & Team Engagement | v6.0 | 0/2 | Not started | - |
