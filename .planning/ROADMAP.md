@@ -252,3 +252,13 @@ Phases execute in numeric order: 43 → 44 → 45 → 46 → 47 → 48 → 49
 | 47. Work Breakdown Structure | v6.0 | 0/2 | Not started | - |
 | 48. Architecture & Team Engagement | v6.0 | 0/2 | Not started | - |
 | 49. Portfolio Dashboard | v6.0 | 0/1 | Not started | - |
+
+### Phase 50: Extraction Intelligence — Full-spectrum prompt rewrite and semantic post-classifier to surface all entity types from any document across every project tab
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 49
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 50 to break down)

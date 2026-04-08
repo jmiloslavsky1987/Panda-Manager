@@ -95,6 +95,10 @@ Progress: [█████░░░░░] 60% (6/10 plans in v6.0 complete)
 - **Phase 46 Plan 02:** Team Engagement content append uses '\n\n---\n\n' separator to visually distinguish entries
 - **Phase 46 Plan 02:** Architecture node upsert uses onConflictDoUpdate on (project_id, track_id, name) composite key
 
+### Roadmap Evolution
+
+- Phase 50 added: Extraction Intelligence — Full-spectrum prompt rewrite and semantic post-classifier to surface all entity types from any document across every project tab
+
 ## Blockers/Concerns
 
 **Research-flagged risks:**
