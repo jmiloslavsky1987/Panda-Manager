@@ -30,9 +30,6 @@ describe('getArchNodes(projectId) integration — ARCH-01', () => {
     expect(result).toHaveProperty('nodes');
     expect(Array.isArray(result.tracks)).toBe(true);
     expect(Array.isArray(result.nodes)).toBe(true);
-
-    // RED: This will fail because getArchNodes doesn't exist yet in the actual code path
-    expect(true).toBe(false);
   });
 
   it('nodes have required arch_node schema fields', async () => {
@@ -60,8 +57,5 @@ describe('getArchNodes(projectId) integration — ARCH-01', () => {
     expect(result.nodes[0]).toHaveProperty('track_id');
     expect(result.nodes[0]).toHaveProperty('status');
     expect(result.nodes[0]).toHaveProperty('display_order');
-
-    // RED: This will fail until Plan 03 wires the data through
-    expect(true).toBe(false);
   });
 });
