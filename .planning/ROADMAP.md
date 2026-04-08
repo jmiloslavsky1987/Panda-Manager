@@ -169,10 +169,11 @@ Plans:
   3. User uploads architecture diagrams/docs and nodes appear in correct tracks
   4. Extraction maintains 80%+ classification accuracy on existing entity types (actions, risks, milestones)
   5. Extraction job completes and routes all new entity types without errors
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 46-01: [TBD]
+- [ ] 46-01-PLAN.md — Extraction prompt expansion: extend EXTRACTION_SYSTEM with wbs_task, team_engagement, arch_node entity types + Wave 0 RED tests
+- [ ] 46-02-PLAN.md — Entity routing: extend isAlreadyIngested() dedup logic + insertItem() with WBS parent matching, Team Engagement append, Architecture upsert
 
 ### Phase 47: Work Breakdown Structure
 **Goal**: Phase Board replaced with collapsible WBS tree supporting both ADR and Biggy templates with AI gap-fill
