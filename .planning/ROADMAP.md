@@ -136,11 +136,12 @@ Plans:
   7. User can multi-select risks and apply bulk status updates
   8. User can filter Milestones table by status, owner, and date range
   9. User can multi-select milestones and apply bulk field updates
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 44-01: [TBD]
-- [ ] 44-02: [TBD]
+- [ ] 44-01-PLAN.md — Wave 0 test stubs + Navigation restructure (TAB_GROUPS, route files, plan layout dissolution)
+- [ ] 44-02-PLAN.md — Risks parity: full filter bar + multi-select + /api/risks/bulk-update
+- [ ] 44-03-PLAN.md — Milestones parity: full filter bar + multi-select + /api/milestones/bulk-update
 
 ### Phase 45: Database Schema Foundation
 **Goal**: All new tables, columns, seed data, and query functions exist to support WBS, Team Engagement, and Architecture features
