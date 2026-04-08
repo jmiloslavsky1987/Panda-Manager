@@ -51,10 +51,10 @@ vi.mock('../../../lib/mcp-config', () => ({
 }));
 
 describe('lib/skill-path.ts resolveSkillsDir', () => {
-  it('returns __dirname-relative path when skillPath is empty', async () => {
+  it('returns process.cwd()-relative path when skillPath is empty', async () => {
     const { resolveSkillsDir } = await import('../../../lib/skill-path');
     const result = resolveSkillsDir('', '/fake/dir');
-    expect(result).toBe(path.join('/fake/dir', '../skills'));
+    expect(result).toBe(path.join('/fake/dir', 'skills'));
   });
 
   it('returns absolute path unchanged when skillPath is absolute', async () => {

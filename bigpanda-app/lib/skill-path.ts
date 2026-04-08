@@ -16,10 +16,10 @@ import os from 'os';
  * @param dirnameRef - Reference directory for fallback (defaults to this file's location)
  * @returns Absolute path to skills directory
  */
-export function resolveSkillsDir(skillPath: string, dirnameRef: string = __dirname): string {
+export function resolveSkillsDir(skillPath: string, dirnameRef: string = process.cwd()): string {
   const trimmed = skillPath.trim();
   if (!trimmed) {
-    return path.join(dirnameRef, '../skills');
+    return path.join(dirnameRef, 'skills');
   }
   if (trimmed.startsWith('/')) {
     return trimmed;
