@@ -47,8 +47,8 @@
 
 ### Architecture Diagrams
 
-- [ ] **ARCH-01**: Architecture tab displays two sub-tabs: Before State (legacy flow with customer pain points) and Current & Future State
-- [ ] **ARCH-02**: Current & Future State shows ADR Track (Event Ingest → Alert Intelligence → Incident Intelligence → Console → Workflow Automation) and AI Assistant Track (Knowledge Sources → Real-Time Query → AI Capabilities → Console → Outputs & Actions), each with per-node status indicators (Live / In Progress / Planned)
+- [x] **ARCH-01**: Architecture tab displays two sub-tabs: Before State (legacy flow with customer pain points) and Current & Future State
+- [x] **ARCH-02**: Current & Future State shows ADR Track (Event Ingest → Alert Intelligence → Incident Intelligence → Console → Workflow Automation) and AI Assistant Track (Knowledge Sources → Real-Time Query → AI Capabilities → Console → Outputs & Actions), each with per-node status indicators (Live / In Progress / Planned)
 - [ ] **ARCH-03**: A Team Onboarding Status table below both tracks shows per-team, per-capability-stage status with colored indicators
 - [x] **ARCH-04**: Context upload extracts and routes architecture data (tool names, integration statuses, team names, phase assignments) to populate both diagram tabs
 
@@ -103,8 +103,8 @@
 | ARCH-04 | Phase 46 | Complete |
 | WBS-04 | Phase 47 | Complete |
 | WBS-05 | Phase 47 | Complete |
-| ARCH-01 | Phase 48 | Pending |
-| ARCH-02 | Phase 48 | Pending |
+| ARCH-01 | Phase 48 | Complete |
+| ARCH-02 | Phase 48 | Complete |
 | ARCH-03 | Phase 48 | Pending |
 | TEAM-01 | Phase 48 | Pending |
 | TEAM-03 | Phase 48 | Pending |
