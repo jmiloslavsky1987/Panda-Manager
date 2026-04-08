@@ -40,10 +40,10 @@
 
 ### Team Engagement Overview
 
-- [ ] **TEAM-01**: Teams sub-tab (renamed "Team Engagement Overview") displays a 5-section engagement map: Business Outcomes, Architecture, E2E Workflows, Teams & Engagement, and Top Focus Areas
+- [ ] **TEAM-01**: Teams sub-tab (renamed "Team Engagement Overview") displays a 4-section engagement map: Business Outcomes, E2E Workflows, Teams & Engagement, and Top Focus Areas (Architecture section is covered by the dedicated Architecture tab — excluded from Overview per scope decision)
 - [x] **TEAM-02**: Context upload extracts and routes structured data to populate all Team Engagement Map sections automatically
 - [ ] **TEAM-03**: Sections with missing or incomplete data display a visible warning prompting the user to supply required content
-- [ ] **TEAM-04**: User can manually edit all fields in every section of the Team Engagement Map
+- [ ] **TEAM-04**: Team Engagement Overview sub-tab is read-only; users edit content in the source tabs (Actions, Teams Detail). TEAM-04 is satisfied by those existing edit flows — no add/edit/delete controls exist in the Overview sub-tab.
 
 ### Architecture Diagrams
 

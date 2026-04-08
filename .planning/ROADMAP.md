@@ -193,16 +193,16 @@ Plans:
 - [ ] 47-03-PLAN.md — Generate Plan: wbs/generate API route + wbs-generate-plan job + WbsGeneratePlanModal with preview + confirm
 
 ### Phase 48: Architecture & Team Engagement
-**Goal**: Architecture tab shows two-tab diagram with status tracking; Team Engagement displays 5-section map
+**Goal**: Architecture tab shows two-tab diagram with status tracking; Team Engagement displays 4-section overview
 **Depends on**: Phase 47
 **Requirements**: ARCH-01, ARCH-02, ARCH-03, TEAM-01, TEAM-03, TEAM-04
 **Success Criteria** (what must be TRUE):
   1. User sees Architecture tab with two sub-tabs: Before State and Current & Future State
   2. Current & Future State shows ADR Track and AI Assistant Track with per-node Live/In Progress/Planned status
   3. Team Onboarding Status table below diagrams shows per-team, per-capability colored indicators
-  4. User sees Team Engagement Overview with 5 sections: Business Outcomes, Architecture, E2E Workflows, Teams & Engagement, Top Focus Areas
+  4. User sees Team Engagement Overview with 4 sections: Business Outcomes, E2E Workflows, Teams & Engagement, Top Focus Areas (Architecture section is covered by the Architecture tab)
   5. Sections with missing data display visible warnings prompting user to add content
-  6. User can manually edit all fields in every Team Engagement section
+  6. Team Engagement Overview is a read-only snapshot; users edit data in their respective source tabs (Actions, Teams Detail, etc.)
   7. Architecture diagram nodes are draggable and positions persist across sessions
 **Plans**: 3 plans
 

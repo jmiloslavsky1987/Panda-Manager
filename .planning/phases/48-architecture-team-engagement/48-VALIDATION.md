@@ -40,7 +40,6 @@ created: 2026-04-08
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
 | 48-01-01 | 01 | 0 | ARCH-01 | integration | `npm test tests/arch/arch-nodes-wiring.test.ts -- --run` | ❌ W0 | ⬜ pending |
 | 48-01-02 | 01 | 0 | ARCH-02 | integration | `npm test tests/arch/status-cycle.test.ts -- --run` | ❌ W0 | ⬜ pending |
-| 48-01-03 | 01 | 0 | ARCH-03 | unit | `npm test tests/arch/team-onboarding-table.test.ts -- --run` | ❌ W0 | ⬜ pending |
 | 48-02-01 | 02 | 0 | TEAM-01 | integration | `npm test tests/teams/engagement-overview.test.ts -- --run` | ❌ W0 | ⬜ pending |
 | 48-02-02 | 02 | 0 | TEAM-03 | unit | `npm test tests/teams/warn-banner-trigger.test.ts -- --run` | ❌ W0 | ⬜ pending |
 | 48-02-03 | 02 | 1 | TEAM-04 | manual-only | Visual inspection: no edit controls in Overview sub-tab | Manual | ⬜ pending |
@@ -54,7 +53,6 @@ created: 2026-04-08
 - [ ] `tests/arch/arch-nodes-wiring.test.ts` — stubs for ARCH-01 (getArchNodes query integration)
 - [ ] `tests/arch/status-cycle.test.ts` — stubs for ARCH-02 (PATCH /arch-nodes/[nodeId] status update)
 - [ ] `tests/arch/column-reorder.test.ts` — stubs for drag API (PATCH /arch-nodes/reorder)
-- [ ] `tests/arch/team-onboarding-table.test.ts` — stubs for ARCH-03 (team_onboarding_status render)
 - [ ] `tests/teams/engagement-overview.test.ts` — stubs for TEAM-01 (4-section render with getTeamsTabData)
 - [ ] `tests/teams/warn-banner-trigger.test.ts` — stubs for TEAM-03 (zero-length array detection)
 
