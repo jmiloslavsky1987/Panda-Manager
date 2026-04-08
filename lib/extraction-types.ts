@@ -23,6 +23,10 @@ import {
   workstreams,
   onboardingSteps,
   integrations,
+  wbsItems,
+  teamEngagementSections,
+  archNodes,
+  archTracks,
 } from '@/db/schema';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -42,7 +46,10 @@ export type EntityType =
   | 'team_pathway'
   | 'workstream'
   | 'onboarding_step'
-  | 'integration';
+  | 'integration'
+  | 'wbs_task'
+  | 'team_engagement'
+  | 'arch_node';
 
 export interface ExtractionItem {
   entityType: EntityType;
@@ -266,6 +273,67 @@ export async function isAlreadyIngested(
       if (!key) return false;
       const rows = await db.select({ id: integrations.id }).from(integrations)
         .where(and(eq(integrations.project_id, projectId), ilike(integrations.tool, `${key}%`)));
+      return rows.length > 0;
+    }
+
+    case 'wbs_task': {
+      const key = normalize(f.title);
+      if (!key) return false;
+      const rows = await db
+        .select({ id: wbsItems.id })
+        .from(wbsItems)
+        .where(
+          and(
+            eq(wbsItems.project_id, projectId),
+            eq(wbsItems.track, f.track ?? 'ADR'),
+            ilike(wbsItems.name, `${key}%`),
+          ),
+        );
+      return rows.length > 0;
+    }
+
+    case 'team_engagement': {
+      const key = normalize(f.content);
+      if (!key) return false;
+      const rows = await db
+        .select({ id: teamEngagementSections.id })
+        .from(teamEngagementSections)
+        .where(
+          and(
+            eq(teamEngagementSections.project_id, projectId),
+            eq(teamEngagementSections.name, f.section_name ?? ''),
+            ilike(teamEngagementSections.content, `${key}%`),
+          ),
+        );
+      return rows.length > 0;
+    }
+
+    case 'arch_node': {
+      const key = normalize(f.node_name);
+      if (!key) return false;
+      // First resolve track_id from track name
+      const trackRows = await db
+        .select({ id: archTracks.id })
+        .from(archTracks)
+        .where(
+          and(
+            eq(archTracks.project_id, projectId),
+            ilike(archTracks.name, `%${f.track ?? ''}%`),
+          ),
+        );
+      if (trackRows.length === 0) return false;
+      const trackId = trackRows[0].id;
+
+      const rows = await db
+        .select({ id: archNodes.id })
+        .from(archNodes)
+        .where(
+          and(
+            eq(archNodes.project_id, projectId),
+            eq(archNodes.track_id, trackId),
+            ilike(archNodes.name, `${key}%`),
+          ),
+        );
       return rows.length > 0;
     }
 
