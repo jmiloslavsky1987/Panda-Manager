@@ -19,7 +19,7 @@ import os from 'os';
 export function resolveSkillsDir(skillPath: string, dirnameRef: string = __dirname): string {
   const trimmed = skillPath.trim();
   if (!trimmed) {
-    return path.join(dirnameRef, '../../skills');
+    return path.join(dirnameRef, '../skills');
   }
   if (trimmed.startsWith('/')) {
     return trimmed;
