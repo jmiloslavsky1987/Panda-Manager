@@ -32,8 +32,8 @@
 
 ### Work Breakdown Structure
 
-- [ ] **WBS-01**: Phase Board is replaced with a WBS view that displays both ADR and Biggy WBS templates as a collapsible 3-level hierarchy within a single project workspace
-- [ ] **WBS-02**: Both ADR and Biggy WBS template structures seed automatically on project creation
+- [x] **WBS-01**: Phase Board is replaced with a WBS view that displays both ADR and Biggy WBS templates as a collapsible 3-level hierarchy within a single project workspace
+- [x] **WBS-02**: Both ADR and Biggy WBS template structures seed automatically on project creation
 - [ ] **WBS-03**: When context is uploaded, extracted tasks are auto-classified to the nearest WBS node via AI (with fallback to manual assignment)
 - [ ] **WBS-04**: "Generate Plan" button analyzes available project context, identifies missing WBS tasks, and fills gaps; re-runnable to catch tasks not covered in earlier runs
 - [ ] **WBS-05**: User can manually add, edit, reorder, and delete tasks within any WBS node
@@ -96,8 +96,8 @@
 | RISK-02 | Phase 44 | Complete |
 | MILE-01 | Phase 44 | Complete |
 | MILE-02 | Phase 44 | Complete |
-| WBS-01 | Phase 45 | Pending |
-| WBS-02 | Phase 45 | Pending |
+| WBS-01 | Phase 45 | Complete |
+| WBS-02 | Phase 45 | Complete |
 | WBS-03 | Phase 46 | Pending |
 | TEAM-02 | Phase 46 | Pending |
 | ARCH-04 | Phase 46 | Pending |

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v6.0
 milestone_name: — Dashboard, Navigation & Intelligence
 status: executing
-stopped_at: Phase 45 context gathered
-last_updated: "2026-04-08T07:33:09.729Z"
+stopped_at: Completed 45-01-PLAN.md
+last_updated: "2026-04-08T08:02:59.547Z"
 last_activity: 2026-04-08 — Phase 44 Plan 02 complete (Risks Bulk Actions)
 progress:
   total_phases: 7
   completed_phases: 2
-  total_plans: 4
-  completed_plans: 4
+  total_plans: 6
+  completed_plans: 5
   percent: 30
 ---
 
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 
 ## Current Position
 
-Phase: 44 of 49 (Navigation & Parity - In Progress)
-Plan: 3 of 3 in current phase
+Phase: 45 of 49 (Database Schema Foundation - In Progress)
+Plan: 2 of 2 in current phase
 Status: In progress
-Last activity: 2026-04-08 — Phase 44 Plan 02 complete (Risks Bulk Actions)
+Last activity: 2026-04-08 — Phase 45 Plan 01 complete (Database Schema Foundation)
 
-Progress: [███░░░░░░░] 30% (3/10 plans in v6.0 complete)
+Progress: [████░░░░░░] 40% (4/10 plans in v6.0 complete)
 
 ## Milestone History
 
@@ -85,6 +85,9 @@ Progress: [███░░░░░░░] 30% (3/10 plans in v6.0 complete)
 - **Phase 44 Plan 02:** Filter bar inline (not collapsible) for Risks table — matches Actions UX pattern
 - **Phase 44 Plan 02:** Bulk update API pattern established for risks (Zod validation + inArray)
 - **Phase 44 Plan 02:** Date filtering uses created_at.toISOString().split('T')[0] for string comparison
+- **Phase 45 Plan 01:** Self-referencing wbs_items.parent_id uses AnyPgColumn cast for Drizzle type compatibility
+- **Phase 45 Plan 01:** WBS track stored as text ('ADR'|'Biggy') rather than pgEnum for flexibility
+- **Phase 45 Plan 01:** Architecture node status uses dedicated arch_node_status enum separate from WBS status
 
 ## Blockers/Concerns
 
@@ -101,7 +104,7 @@ Progress: [███░░░░░░░] 30% (3/10 plans in v6.0 complete)
 
 ## Session Continuity
 
-Last session: 2026-04-08T07:33:09.726Z
-Stopped at: Phase 45 context gathered
-Resume file: .planning/phases/45-database-schema-foundation/45-CONTEXT.md
+Last session: 2026-04-08T08:02:59.545Z
+Stopped at: Completed 45-01-PLAN.md
+Resume file: None
 Next action: Execute 44-03-PLAN.md (Milestones Bulk Actions)
