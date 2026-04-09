@@ -74,6 +74,11 @@ export function IngestionModal({
   const [extractionMessage, setExtractionMessage] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
   const [unresolvedRefs, setUnresolvedRefs] = useState<string | null>(null)
+  const [approvalResult, setApprovalResult] = useState<{
+    written: Record<string, number>
+    skipped: Record<string, number>
+    errors: Array<{ entityType: string; error: string }>
+  } | null>(null)
   // Ref prevents double-firing in React StrictMode
   const autoStartedRef = useRef(false)
   // Store jobIds for polling
@@ -139,6 +144,10 @@ export function IngestionModal({
           isPollingRef.current = false
 
           if (allCompleted) {
+            // Capture the artifact ID for the approve payload
+            const firstFileId = statuses.find(s => s.fileId)?.fileId
+            if (firstFileId) setLastExtractedArtifactId(Number(firstFileId))
+
             // Fetch completed jobs to get staged_items_json
             const completedJobsRes = await fetch(
               `/api/projects/${projectId}/extraction-status`
@@ -152,11 +161,15 @@ export function IngestionModal({
             for (const job of completedData.jobs) {
               if (jobIdsToCheck.includes(job.id) && job.status === 'completed') {
                 const items = Array.isArray(job.staged_items_json) ? job.staged_items_json : []
-                allItems.push(...items.map((item: ExtractionItem) => ({
-                  ...item,
-                  approved: true,
-                  edited: false,
-                })))
+                allItems.push(...items
+                  .filter((item: unknown): item is ExtractionItem =>
+                    item != null && typeof (item as ExtractionItem).entityType === 'string'
+                  )
+                  .map((item: ExtractionItem) => ({
+                    ...item,
+                    approved: true,
+                    edited: false,
+                  })))
 
                 // Track filtered count if available
                 if (job.filtered_count) {
@@ -230,6 +243,7 @@ export function IngestionModal({
     setFilteredCount(0)
     setError(null)
     setUnresolvedRefs(null)
+    setApprovalResult(null)
 
     const formData = new FormData()
     formData.append('project_id', String(projectId))
@@ -346,8 +360,13 @@ export function IngestionModal({
       }
       if (!res.ok) throw new Error(data.error as string ?? 'Approve failed')
 
-      // Extract unresolvedRefs from response and store it
-      setUnresolvedRefs(data.unresolvedRefs as string ?? null)
+      // Extract unresolvedRefs and approval result from response
+      setUnresolvedRefs((data.unresolvedRefs as string) ?? null)
+      setApprovalResult({
+        written: (data.written as Record<string, number>) ?? {},
+        skipped: (data.skipped as Record<string, number>) ?? {},
+        errors: (data.errors as Array<{ entityType: string; error: string }>) ?? [],
+      })
       setStage('done')
       window.dispatchEvent(new CustomEvent('metrics:invalidate'))
       router.refresh()
@@ -479,7 +498,38 @@ export function IngestionModal({
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center space-y-2">
                     <p className="text-green-600 font-medium">Ingestion complete!</p>
-                    <p className="text-sm text-zinc-500">Items saved to your project.</p>
+
+                    {approvalResult && (() => {
+                      const writtenEntries = Object.entries(approvalResult.written)
+                      const skippedEntries = Object.entries(approvalResult.skipped)
+                      const totalWritten = writtenEntries.reduce((s, [, n]) => s + n, 0)
+
+                      return (
+                        <div className="text-sm text-zinc-600 space-y-1">
+                          {totalWritten > 0 ? (
+                            <p>
+                              <span className="font-medium text-zinc-800">Written:</span>{' '}
+                              {writtenEntries.map(([type, count]) => `${count} ${type}`).join(', ')}
+                            </p>
+                          ) : (
+                            <p className="text-zinc-500">No items were written.</p>
+                          )}
+                          {skippedEntries.length > 0 && (
+                            <p className="text-yellow-700 bg-yellow-50 border border-yellow-200 rounded px-2 py-1">
+                              <span className="font-medium">Skipped:</span>{' '}
+                              {skippedEntries.map(([type, count]) => `${count} ${type}`).join(', ')}
+                            </p>
+                          )}
+                          {approvalResult.errors.length > 0 && (
+                            <p className="text-red-700 bg-red-50 border border-red-200 rounded px-2 py-1">
+                              <span className="font-medium">Errors:</span>{' '}
+                              {approvalResult.errors.map(e => `${e.entityType}: ${e.error}`).join('; ')}
+                            </p>
+                          )}
+                        </div>
+                      )
+                    })()}
+
                     {unresolvedRefs && (
                       <p className="mt-2 text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded px-3 py-2">
                         {unresolvedRefs}
