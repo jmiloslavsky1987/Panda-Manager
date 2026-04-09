@@ -50,10 +50,11 @@ export type EntityType =
   | 'onboarding_step'
   | 'integration'
   | 'wbs_task'
-  | 'team_engagement'
   | 'arch_node'
   | 'focus_area'     // Gap 3 — added Phase 50
-  | 'e2e_workflow';  // Gap 4 — added Phase 50
+  | 'e2e_workflow'   // Gap 4 — added Phase 50
+  | 'before_state'   // Gap A — added Phase 51
+  | 'weekly_focus';  // Gap G — added Phase 51
 
 export interface ExtractionItem {
   entityType: EntityType;
