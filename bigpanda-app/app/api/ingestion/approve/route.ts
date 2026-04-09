@@ -626,6 +626,7 @@ async function insertItem(
 
     case 'onboarding_step': {
       // onboarding_steps table has NO source/attribution columns; phase_id default to 1
+      // Gap 6 fix: track field added (completed_date not in schema — cannot persist)
       await db.transaction(async (tx) => {
         const [inserted] = await tx.insert(onboardingSteps).values({
           project_id: projectId,
@@ -634,6 +635,7 @@ async function insertItem(
           description: f.description ?? null,
           owner: f.team_name ?? null,
           status: (f.status as 'not-started' | 'in-progress' | 'complete' | 'blocked' | undefined) ?? 'not-started',
+          track: f.track ?? null,
           display_order: 0,
         }).returning();
         await tx.insert(auditLog).values({
@@ -672,6 +674,8 @@ async function insertItem(
     }
 
     case 'wbs_task': {
+      // Gap 6 note: wbs_task prompt includes `description` field, but wbs_items schema does NOT have
+      // a description column. The field is used by Claude for extraction context but cannot be persisted.
       // Step 1: Fuzzy match parent section by name
       const parentRows = await db
         .select({ id: wbsItems.id, name: wbsItems.name })
