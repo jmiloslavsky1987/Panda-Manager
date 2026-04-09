@@ -28,6 +28,7 @@ import {
   archNodes,
   archTracks,
   teamOnboardingStatus,
+  e2eWorkflows,
 } from '@/db/schema';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -50,7 +51,9 @@ export type EntityType =
   | 'integration'
   | 'wbs_task'
   | 'team_engagement'
-  | 'arch_node';
+  | 'arch_node'
+  | 'focus_area'     // Gap 3 — added Phase 50
+  | 'e2e_workflow';  // Gap 4 — added Phase 50
 
 export interface ExtractionItem {
   entityType: EntityType;
@@ -333,6 +336,38 @@ export async function isAlreadyIngested(
             eq(archNodes.project_id, projectId),
             eq(archNodes.track_id, trackId),
             ilike(archNodes.name, `${key}%`),
+          ),
+        );
+      return rows.length > 0;
+    }
+
+    case 'focus_area': {
+      const key = normalize(f.title);
+      if (!key) return false;
+      const rows = await db
+        .select({ id: focusAreas.id })
+        .from(focusAreas)
+        .where(
+          and(
+            eq(focusAreas.project_id, projectId),
+            ilike(focusAreas.title, `${key}%`),
+          ),
+        );
+      return rows.length > 0;
+    }
+
+    case 'e2e_workflow': {
+      const workflowKey = normalize(f.workflow_name);
+      const teamKey = normalize(f.team_name);
+      if (!workflowKey || !teamKey) return false;
+      const rows = await db
+        .select({ id: e2eWorkflows.id })
+        .from(e2eWorkflows)
+        .where(
+          and(
+            eq(e2eWorkflows.project_id, projectId),
+            ilike(e2eWorkflows.workflow_name, `${workflowKey}%`),
+            ilike(e2eWorkflows.team_name, `${teamKey}%`),
           ),
         );
       return rows.length > 0;
