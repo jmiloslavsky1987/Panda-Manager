@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v6.0
 milestone_name: — Dashboard, Navigation & Intelligence
-status: completed
-stopped_at: Phase 50 context gathered
-last_updated: "2026-04-09T03:54:36.292Z"
-last_activity: 2026-04-09 — Phase 49 Plan 04 complete (Fixed duplicate exception rows for blocked projects)
+status: in_progress
+stopped_at: Phase 50 Plan 01 complete
+last_updated: "2026-04-09T04:40:00.000Z"
+last_activity: 2026-04-09 — Phase 50 Plan 01 complete (Wave 0 test scaffolds + Gap 1/2 fixes)
 progress:
-  total_phases: 9
+  total_phases: 10
   completed_phases: 8
-  total_plans: 19
-  completed_plans: 19
-  percent: 100
+  total_plans: 22
+  completed_plans: 20
+  percent: 91
 ---
 
 # Project State
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 
 ## Current Position
 
-Phase: 49 (Portfolio Dashboard) — Phase complete
-Status: Phase 49 complete
-Last activity: 2026-04-09 — Phase 49 Plan 04 complete (Fixed duplicate exception rows for blocked projects)
+Phase: 50 (Extraction Intelligence) — Plan 01/03 complete
+Status: Phase 50 in progress
+Last activity: 2026-04-09 — Phase 50 Plan 01 complete (Wave 0 test scaffolds + Gap 1/2 fixes)
 
-Progress: [██████████] 100% (223/223 plans in project complete)
+Progress: [█████████░] 91% (20/22 plans in current milestone complete)
 
 ## Milestone History
 
@@ -131,6 +131,11 @@ Progress: [██████████] 100% (223/223 plans in project comple
 - **Phase 49 Plan 02:** Full dashboard replacement — removed all old widgets (Morning Briefing, Risk Heat Map, Watch List, HealthCards, Quick Actions, Activity Feed, Drafts Inbox)
 - **Phase 49 Plan 02:** Exception panel defaults to expanded if exceptions exist, collapsed if empty
 - **Phase 49 Plan 02:** Overdue milestone detection uses nextMilestoneDate < today comparison with date normalization
+
+- **Phase 50 Plan 01:** Wave 0 TDD approach: Create RED test stubs before implementation to document gaps (Gaps 1-5)
+- **Phase 50 Plan 01:** Mock infrastructure limitation: Can't verify specific table names in Vitest mocks — verified via code inspection
+- **Phase 50 Plan 01:** Source-only attribution for teamOnboardingStatus: Uses source='ingestion' field only (no source_artifact_id/ingested_at per schema)
+- **Phase 50 Plan 01:** coerceTrackStatus maps 4 status values (live/in_progress/pilot/planned) with flexible input synonyms
 
 ### Roadmap Evolution
 
