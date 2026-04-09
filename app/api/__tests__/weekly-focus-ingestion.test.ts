@@ -77,8 +77,8 @@ describe('POST /api/ingestion/approve — Gap G: weekly_focus', () => {
     expect(res.status).toBe(200)
 
     const body = await res.json()
-    // This will FAIL because 'weekly_focus' is not in the Zod enum → filtered out → written=0
-    expect(body.written).toBe(1)
+    // Gap G now implemented: weekly_focus is in Zod enum → written = { weekly_focus: 1 }
+    expect(Object.values(body.written as Record<string, number>).reduce((a, b) => a + b, 0)).toBe(1)
   })
 
   it('weekly_focus handler writes bullets to Redis with correct key', async () => {

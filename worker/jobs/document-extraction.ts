@@ -143,6 +143,7 @@ async function isAlreadyIngested(
   projectId: number,
 ): Promise<boolean> {
   const f = item.fields;
+  if (!f || typeof f !== 'object') return false;
 
   switch (item.entityType) {
     case 'action': {
@@ -521,9 +522,9 @@ export default async function documentExtractionJob(job: Job): Promise<{ status:
       .filter(r => !r.alreadyIngested)
       .map(r => {
         const item = r.item;
-        const cleanedFields = Object.fromEntries(
-          Object.entries(item.fields).filter(([, v]) => v != null)
-        ) as Record<string, string>;
+        const cleanedFields = item.fields && typeof item.fields === 'object'
+          ? Object.fromEntries(Object.entries(item.fields).filter(([, v]) => v != null)) as Record<string, string>
+          : {};
         return { ...item, fields: cleanedFields };
       });
     const filteredCount = allRawItems.length - newItems.length;
