@@ -140,69 +140,80 @@ export function E2eWorkflowsSection({ projectId, workflows, onUpdate }: Props) {
       {workflows.length === 0 ? (
         <WarnBanner message="No E2E workflows recorded." />
       ) : (
-        <div className="space-y-6">
-          {workflows.map((wf) => (
-            <div key={wf.id} className="border border-zinc-200 rounded-xl bg-white p-4 space-y-3">
-              {/* Header row: E2E pill + workflow name + team name */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full px-3 py-1 text-xs font-bold">
-                    E2E
-                  </span>
-                  <div>
-                    <p className="font-bold text-zinc-900 text-sm">{wf.workflow_name || 'Unnamed Workflow'}</p>
-                    <p className="text-xs text-zinc-500 mt-0.5">{wf.team_name}</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setStepModal({ workflowId: wf.id, open: true })}
-                  className="text-xs px-2 py-1 rounded border border-zinc-300 hover:bg-zinc-50"
-                >
-                  + Add Step
-                </button>
+        <div className="space-y-4">
+          {/* Group workflows by team name */}
+          {Array.from(
+            workflows.reduce((map, wf) => {
+              const key = wf.team_name ?? '(no team)'
+              if (!map.has(key)) map.set(key, [])
+              map.get(key)!.push(wf)
+              return map
+            }, new Map<string, E2eWorkflowWithSteps[]>())
+          ).map(([teamName, teamWorkflows]) => (
+            <div key={teamName} className="border border-zinc-200 rounded-xl bg-white overflow-hidden">
+              {/* Team name header */}
+              <div className="px-4 py-3 border-b border-zinc-100 bg-zinc-50">
+                <p className="font-bold text-zinc-900 text-base">{teamName}</p>
               </div>
 
-              {/* Steps flow - horizontal scrollable */}
-              {wf.steps.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <div className="flex items-stretch gap-2">
-                    {wf.steps.map((step, idx) => {
-                      const trackStyle = stepTrackStyle(step.track ?? 'ADR')
-                      const pill = stepStatusPill(step.status ?? 'planned')
-                      return (
-                        <div key={step.id} className="flex items-center gap-2">
-                          {idx > 0 && (
-                            <span className="text-zinc-400 text-lg select-none">→</span>
-                          )}
-                          <div
-                            className="rounded-lg border p-3 min-w-[140px] flex flex-col gap-1"
-                            style={{ borderColor: trackStyle.border, background: trackStyle.bg }}
-                          >
-                            {/* Track label */}
-                            <span
-                              className="text-[10px] font-bold uppercase tracking-wider"
-                              style={{ color: trackStyle.text }}
-                            >
-                              {trackStyle.label}
-                            </span>
-                            {/* Step name */}
-                            <span className="font-semibold text-sm text-zinc-900">{step.label}</span>
-                            {/* Status pill at bottom */}
-                            <span
-                              className="mt-auto px-2 py-0.5 rounded-full text-xs font-medium text-center"
-                              style={{ background: pill.bg, color: pill.text }}
-                            >
-                              {pill.label}
-                            </span>
+              {/* Workflows side by side */}
+              <div className="flex divide-x divide-zinc-100">
+                {teamWorkflows.map((wf) => {
+                  const trackStyle = stepTrackStyle(wf.steps[0]?.track ?? 'ADR')
+                  return (
+                    <div key={wf.id} className="flex-1 p-4 space-y-3 min-w-0">
+                      {/* Workflow name + add step */}
+                      <div className="flex items-center justify-between gap-2">
+                        <span
+                          className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border"
+                          style={{ background: trackStyle.bg, color: trackStyle.text, borderColor: trackStyle.border }}
+                        >
+                          {wf.workflow_name || 'Unnamed'}
+                        </span>
+                        <button
+                          onClick={() => setStepModal({ workflowId: wf.id, open: true })}
+                          className="text-xs px-2 py-0.5 rounded border border-zinc-300 hover:bg-zinc-50 flex-shrink-0"
+                        >
+                          + Step
+                        </button>
+                      </div>
+
+                      {/* Steps flow */}
+                      {wf.steps.length > 0 ? (
+                        <div className="overflow-x-auto">
+                          <div className="flex items-stretch gap-1.5">
+                            {wf.steps.map((step, idx) => {
+                              const sTrack = stepTrackStyle(step.track ?? 'ADR')
+                              const pill = stepStatusPill(step.status ?? 'planned')
+                              return (
+                                <div key={step.id} className="flex items-center gap-1.5">
+                                  {idx > 0 && (
+                                    <span className="text-zinc-300 text-base select-none">→</span>
+                                  )}
+                                  <div
+                                    className="rounded-lg border p-2.5 min-w-[120px] flex flex-col gap-1"
+                                    style={{ borderColor: sTrack.border, background: sTrack.bg }}
+                                  >
+                                    <span className="font-semibold text-xs text-zinc-900">{step.label}</span>
+                                    <span
+                                      className="mt-auto px-1.5 py-0.5 rounded-full text-[10px] font-medium text-center"
+                                      style={{ background: pill.bg, color: pill.text }}
+                                    >
+                                      {pill.label}
+                                    </span>
+                                  </div>
+                                </div>
+                              )
+                            })}
                           </div>
                         </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              ) : (
-                <p className="text-xs text-zinc-400">No steps yet — click "+ Add Step" to begin.</p>
-              )}
+                      ) : (
+                        <p className="text-xs text-zinc-400">No steps yet.</p>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           ))}
         </div>
