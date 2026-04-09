@@ -24,6 +24,8 @@ import {
   archNodes,
   archTracks,
   teamOnboardingStatus,
+  e2eWorkflows,
+  workflowSteps,
 } from '@/db/schema';
 import type { EntityType, ExtractionItem } from '@/lib/extraction-types';
 import { requireSession } from "@/lib/auth-server";
@@ -38,6 +40,7 @@ const ApprovalItemSchema = z.object({
     'task', 'architecture', 'history', 'businessOutcome', 'team', 'note', 'team_pathway',
     'workstream', 'onboarding_step', 'integration',
     'wbs_task', 'team_engagement', 'arch_node',
+    'focus_area', 'e2e_workflow',   // Gap 3+4 — added Phase 50
   ]),
   fields: z.record(z.string(), z.union([z.string(), z.null()])).transform(
     f => Object.fromEntries(Object.entries(f).filter(([, v]) => v != null)) as Record<string, string>
@@ -269,6 +272,24 @@ async function findConflict(
         .select({ id: integrations.id })
         .from(integrations)
         .where(and(eq(integrations.project_id, projectId), ilike(integrations.tool, `${key}%`)));
+      return rows[0] ?? null;
+    }
+    case 'focus_area': {
+      const key = normalize(f.title);
+      if (!key) return null;
+      const rows = await db
+        .select({ id: focusAreas.id })
+        .from(focusAreas)
+        .where(and(eq(focusAreas.project_id, projectId), ilike(focusAreas.title, `${key}%`)));
+      return rows[0] ?? null;
+    }
+    case 'e2e_workflow': {
+      const key = normalize(f.workflow_name);
+      if (!key) return null;
+      const rows = await db
+        .select({ id: e2eWorkflows.id })
+        .from(e2eWorkflows)
+        .where(and(eq(e2eWorkflows.project_id, projectId), ilike(e2eWorkflows.workflow_name, `${key}%`)));
       return rows[0] ?? null;
     }
     default:
@@ -799,6 +820,76 @@ async function insertItem(
           entity_type: 'arch_node',
           entity_id: inserted.id,
           action: 'create_or_update',
+          actor_id: 'default',
+          before_json: null,
+          after_json: inserted as Record<string, unknown>,
+        });
+      });
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
+    }
+
+    case 'focus_area':
+      await db.transaction(async (tx) => {
+        const [inserted] = await tx.insert(focusAreas).values({
+          project_id: projectId,
+          title: f.title ?? '',
+          tracks: f.tracks ?? null,
+          why_it_matters: f.why_it_matters ?? null,
+          current_status: f.current_status ?? null,
+          next_step: f.next_step ?? null,
+          bp_owner: f.bp_owner ?? null,
+          customer_owner: f.customer_owner ?? null,
+          ...attribution,
+        }).returning();
+        await tx.insert(auditLog).values({
+          entity_type: item.entityType,
+          entity_id: inserted.id,
+          action: 'create',
+          actor_id: 'default',
+          before_json: null,
+          after_json: inserted as Record<string, unknown>,
+        });
+      });
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
+
+    case 'e2e_workflow': {
+      // Parse steps JSON with fallback to empty array (LLM may return malformed JSON)
+      let stepsArray: Array<{ label: string; track?: string; status?: string; position?: number }> = [];
+      try {
+        if (f.steps) {
+          const parsed = JSON.parse(f.steps);
+          stepsArray = Array.isArray(parsed) ? parsed : [];
+        }
+      } catch {
+        stepsArray = []; // fallback — never let parse failure block the parent insert
+      }
+
+      await db.transaction(async (tx) => {
+        // Insert parent workflow row
+        const [inserted] = await tx.insert(e2eWorkflows).values({
+          project_id: projectId,
+          team_name: f.team_name ?? '',
+          workflow_name: f.workflow_name ?? '',
+          ...attribution,
+        }).returning();
+
+        // Insert child step rows (workflowSteps has no attribution columns)
+        if (stepsArray.length > 0) {
+          await tx.insert(workflowSteps).values(
+            stepsArray.map((step, idx) => ({
+              workflow_id: inserted.id,
+              label: step.label ?? '',
+              track: step.track ?? null,
+              status: step.status ?? null,
+              position: step.position ?? idx,
+            }))
+          );
+        }
+
+        await tx.insert(auditLog).values({
+          entity_type: item.entityType,
+          entity_id: inserted.id,
+          action: 'create',
           actor_id: 'default',
           before_json: null,
           after_json: inserted as Record<string, unknown>,
