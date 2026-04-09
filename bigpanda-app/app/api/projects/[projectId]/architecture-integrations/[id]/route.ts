@@ -10,6 +10,7 @@ const patchSchema = z.object({
   tool_name: z.string().min(1).optional(),
   track: z.string().min(1).optional(),
   phase: z.string().nullable().optional(),
+  integration_group: z.string().nullable().optional(),
   status: z.enum(['live', 'in_progress', 'pilot', 'planned']).optional(),
   integration_method: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
@@ -46,10 +47,11 @@ export async function PATCH(
   }
 
   const updateData: Partial<typeof architectureIntegrations.$inferInsert> = {}
-  const { tool_name, track, phase, status, integration_method, notes } = parsed.data
+  const { tool_name, track, phase, integration_group, status, integration_method, notes } = parsed.data
   if (tool_name !== undefined) updateData.tool_name = tool_name
   if (track !== undefined) updateData.track = track
   if (phase !== undefined) updateData.phase = phase
+  if (integration_group !== undefined) updateData.integration_group = integration_group
   if (status !== undefined) updateData.status = status
   if (integration_method !== undefined) updateData.integration_method = integration_method
   if (notes !== undefined) updateData.notes = notes

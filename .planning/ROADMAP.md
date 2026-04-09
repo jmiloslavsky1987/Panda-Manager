@@ -211,6 +211,16 @@ Plans:
 - [ ] 48-02-PLAN.md — TeamEngagementOverview component (4 sections + WarnBanners) + Teams page Overview/Detail sub-tab wiring
 - [ ] 48-03-PLAN.md — InteractiveArchGraph rewiring: DB-driven columns from arch_nodes, status badge click-to-cycle, @dnd-kit column drag-reorder
 
+### Phase 48.1: Architecture diagram group rendering TeamOnboardingTable relocation and extraction prompt coverage (INSERTED)
+
+**Goal:** [Urgent work - to be planned]
+**Requirements**: TBD
+**Depends on:** Phase 48
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 48.1 to break down)
+
 ### Phase 49: Portfolio Dashboard
 **Goal**: Multi-project portfolio view with health summary, filterable table, exceptions panel, and drill-down
 **Depends on**: Phase 48
@@ -257,10 +267,18 @@ Phases execute in numeric order: 43 → 44 → 45 → 46 → 47 → 48 → 49
 
 ### Phase 50: Extraction Intelligence — Full-spectrum prompt rewrite and semantic post-classifier to surface all entity types from any document across every project tab
 
-**Goal:** [To be planned]
+**Goal:** Every entity type extractable from documents has a working end-to-end path: prompt guidance → staged item → approved commit → correct DB table. All gaps introduced by phases 45–48.1 are closed.
 **Requirements**: TBD
 **Depends on:** Phase 49
-**Plans:** 3/3 plans complete
+**Plans:** 0/0 plans complete
+
+Known gaps to close (from phases 45–48.1):
+1. **`team` commit handler broken** — currently writes to `focus_areas` (wrong). Must write to `team_onboarding_status` with all 5 fields: `ingest_status`, `correlation_status`, `incident_intelligence_status`, `sn_automation_status`, `biggy_ai_status`. Fix: `app/api/ingestion/approve/route.ts` case `'team'`.
+2. **`architecture` commit handler missing `integration_group`** — field is in schema + prompt but not written on approve. Fix: add `integration_group: f.integration_group ?? null` to the insert in `approve/route.ts` case `'architecture'`.
+3. **`focus_area` has no commit handler** — entity type added in 48.1 with prompt + EntityType but no case in `approve/route.ts`. Must insert to `focus_areas` table with: `title`, `tracks`, `why_it_matters`, `current_status`, `next_step`, `bp_owner`, `customer_owner`.
+4. **`e2e_workflow` has no commit handler** — entity type added in 48.1 with prompt + EntityType but no case in `approve/route.ts`. Must insert to `e2e_workflows` + `workflow_steps` tables using: `team_name`, `workflow_name`, `steps[]`.
+5. **`isAlreadyIngested` dedup missing** for `focus_area`, `e2e_workflow` — both fall to `default: return false` (always surfaces as new). Add dedup checks against `focus_areas.title` and `e2e_workflows.workflow_name + team_name`.
+6. **Prompt coverage review** — verify `wbs_task`, `team_engagement`, `arch_node`, `onboarding_step` commit paths are end-to-end correct (added in Phase 46 but not re-verified after schema changes in 45/48).
 
 Plans:
 - [ ] TBD (run /gsd:plan-phase 50 to break down)

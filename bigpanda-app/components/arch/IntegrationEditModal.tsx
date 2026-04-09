@@ -39,6 +39,7 @@ export function IntegrationEditModal({ projectId, integration, defaultTrack, onS
     (integration?.track as 'ADR' | 'Biggy') ?? defaultTrack ?? 'ADR'
   )
   const [phase, setPhase] = useState(integration?.phase ?? ADR_PHASES[0])
+  const [group, setGroup] = useState(integration?.integration_group ?? '')
   const [status, setStatus] = useState<string>(integration?.status ?? 'planned')
   const [integrationMethod, setIntegrationMethod] = useState(integration?.integration_method ?? '')
   const [notes, setNotes] = useState(integration?.notes ?? '')
@@ -73,6 +74,7 @@ export function IntegrationEditModal({ projectId, integration, defaultTrack, onS
           tool_name: toolName.trim(),
           track,
           phase,
+          integration_group: group || null,
           status,
           integration_method: integrationMethod || null,
           notes: notes || null,
@@ -152,6 +154,17 @@ export function IntegrationEditModal({ projectId, integration, defaultTrack, onS
               ))}
             </select>
           </div>
+        </div>
+
+        <div style={{ marginBottom: 12 }}>
+          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: 4 }}>Group <span style={{ fontWeight: 400, color: '#9ca3af' }}>(optional)</span></label>
+          <input
+            type="text"
+            value={group}
+            onChange={(e) => setGroup(e.target.value)}
+            placeholder="e.g. ALERT NORMALIZATION"
+            style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 4, padding: '6px 10px', fontSize: '0.875rem', boxSizing: 'border-box' }}
+          />
         </div>
 
         <div style={{ marginBottom: 12 }}>

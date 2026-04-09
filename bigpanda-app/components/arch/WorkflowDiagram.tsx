@@ -59,7 +59,6 @@ export function WorkflowDiagram({ projectId, customer, data, tracks, nodes }: Pr
           tracks={tracks}
           nodes={nodes}
           onIntegrationsUpdate={setIntegrations}
-          onOnboardingUpdate={setOnboardingRows}
           onPathwaysUpdate={setPathways}
         />
       )}

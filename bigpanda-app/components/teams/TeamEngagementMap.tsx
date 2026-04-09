@@ -1,11 +1,12 @@
 'use client'
 import { useState } from 'react'
-import type { TeamsTabData, BusinessOutcome, E2eWorkflowWithSteps, FocusArea } from '@/lib/queries'
+import type { TeamsTabData, BusinessOutcome, E2eWorkflowWithSteps, FocusArea, TeamOnboardingStatus } from '@/lib/queries'
 import { BusinessOutcomesSection } from './BusinessOutcomesSection'
 import { ArchOverviewSection } from './ArchOverviewSection'
 import { E2eWorkflowsSection } from './E2eWorkflowsSection'
 import { TeamsEngagementSection } from './TeamsEngagementSection'
 import { FocusAreasSection } from './FocusAreasSection'
+import { TeamOnboardingTable } from '@/components/arch/TeamOnboardingTable'
 
 function SectionHeader({ n, title }: { n: number; title: string }) {
   return (
@@ -31,6 +32,7 @@ export function TeamEngagementMap({ projectId, customer, data }: Props) {
   const [outcomes, setOutcomes] = useState<BusinessOutcome[]>(data.businessOutcomes)
   const [workflows, setWorkflows] = useState<E2eWorkflowWithSteps[]>(data.e2eWorkflows)
   const [focusAreas, setFocusAreas] = useState<FocusArea[]>(data.focusAreas)
+  const [onboardingRows, setOnboardingRows] = useState<TeamOnboardingStatus[]>(data.teamOnboardingStatus)
 
   return (
     <div className="space-y-10">
@@ -56,8 +58,13 @@ export function TeamEngagementMap({ projectId, customer, data }: Props) {
         customer={customer}
         workflows={workflows}
         openActions={data.openActions}
-        teamOnboardingStatus={data.teamOnboardingStatus}
+        teamOnboardingStatus={onboardingRows}
         stakeholders={data.stakeholders}
+      />
+      <TeamOnboardingTable
+        projectId={projectId}
+        rows={onboardingRows}
+        onUpdate={setOnboardingRows}
       />
 
       <SectionHeader n={5} title="Top Focus Areas" />

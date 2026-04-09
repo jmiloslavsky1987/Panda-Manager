@@ -185,6 +185,24 @@ function SortablePhaseColumn({
   )
 }
 
+function phaseHeaderStyle(phase: string): { wrapper: string; text: string } {
+  if (phase === 'Event Ingest' || phase === 'Alert Intelligence') {
+    return { wrapper: 'bg-blue-50 border-blue-200', text: 'text-blue-700' }
+  }
+  if (
+    phase === 'Incident Intelligence' ||
+    phase === 'Knowledge Sources (Ingested)' ||
+    phase === 'Real-Time Query Sources' ||
+    phase === 'Biggy Capabilities'
+  ) {
+    return { wrapper: 'bg-amber-50 border-amber-200', text: 'text-amber-700' }
+  }
+  if (phase === 'Workflow Automation' || phase === 'Outputs & Actions') {
+    return { wrapper: 'bg-green-50 border-green-200', text: 'text-green-700' }
+  }
+  return { wrapper: 'bg-zinc-50 border-zinc-200', text: 'text-zinc-500' }
+}
+
 function PhaseColumn({
   phase,
   integrations,
@@ -201,15 +219,29 @@ function PhaseColumn({
   onStatusClick?: (node: ArchNode) => void
 }) {
   const isConsole = phase === 'Console'
+  const { wrapper: headerWrapperClass, text: headerTextClass } = phaseHeaderStyle(phase)
+
+  // Partition integrations by group
+  const groupMap = new Map<string, ArchitectureIntegration[]>()
+  const ungrouped: ArchitectureIntegration[] = []
+  for (const int of integrations) {
+    if (int.integration_group) {
+      const existing = groupMap.get(int.integration_group) ?? []
+      existing.push(int)
+      groupMap.set(int.integration_group, existing)
+    } else {
+      ungrouped.push(int)
+    }
+  }
 
   return (
-    <div className="flex flex-col w-[180px] flex-shrink-0">
-      {/* Header */}
-      <div className="text-center mb-3 min-h-[40px] flex flex-col items-center justify-end px-1">
+    <div className="flex flex-col w-[220px] flex-shrink-0">
+      {/* Header with phase-aware color strip */}
+      <div className={`text-center mb-3 min-h-[40px] flex flex-col items-center justify-end px-1 rounded-t border ${headerWrapperClass} py-1`}>
         <Tooltip.Provider>
           <Tooltip.Root>
             <Tooltip.Trigger asChild>
-              <div className="text-xs font-bold uppercase tracking-wider text-zinc-500 leading-tight mb-2">
+              <div className={`text-xs font-bold uppercase tracking-wider leading-tight mb-1 ${headerTextClass}`}>
                 {phase}
               </div>
             </Tooltip.Trigger>
@@ -244,8 +276,25 @@ function PhaseColumn({
         <div className="text-zinc-300 text-sm text-center pt-6">—</div>
       ) : (
         <div className="flex flex-col gap-2">
-          {integrations.map((int) => (
+          {/* Ungrouped integrations first */}
+          {ungrouped.map((int) => (
             <IntegrationCard key={int.id} integration={int} onClick={() => onCardClick(int)} />
+          ))}
+          {/* Grouped integrations in dashed boxes */}
+          {Array.from(groupMap.entries()).map(([groupName, items]) => (
+            <div
+              key={groupName}
+              className="border border-dashed border-zinc-300 rounded-md p-2 mt-1"
+            >
+              <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-2">
+                {groupName}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                {items.map((int) => (
+                  <IntegrationCard key={int.id} integration={int} onClick={() => onCardClick(int)} />
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       )}
