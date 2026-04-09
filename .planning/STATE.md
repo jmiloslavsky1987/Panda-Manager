@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v6.0
 milestone_name: — Dashboard, Navigation & Intelligence
-status: executing
-stopped_at: Completed 48-03-PLAN.md
-last_updated: "2026-04-08T21:20:22.958Z"
-last_activity: 2026-04-08 — Phase 48 Plan 02 complete (Team Engagement Overview)
+status: planning
+stopped_at: Phase 49 context gathered
+last_updated: "2026-04-09T02:13:46.785Z"
+last_activity: 2026-04-08 — Phase 48.1 complete (Architecture group rendering, TeamOnboardingTable relocation, E2E workflow layout, extraction prompt coverage)
 progress:
-  total_phases: 8
-  completed_phases: 6
-  total_plans: 14
-  completed_plans: 14
+  total_phases: 9
+  completed_phases: 7
+  total_plans: 15
+  completed_plans: 15
   percent: 99
 ---
 
@@ -25,10 +25,9 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 
 ## Current Position
 
-Phase: 48 of 49 (Architecture & Team Engagement - In Progress)
-Plan: 2 of 3 in current phase
-Status: In Progress
-Last activity: 2026-04-08 — Phase 48 Plan 02 complete (Team Engagement Overview)
+Phase: 48.1 complete — Moving to Phase 49 (Portfolio Dashboard)
+Status: Ready to plan Phase 49
+Last activity: 2026-04-08 — Phase 48.1 complete (Architecture group rendering, TeamOnboardingTable relocation, E2E workflow layout, extraction prompt coverage)
 
 Progress: [██████████] 99% (217/218 plans in project complete)
 
@@ -111,9 +110,16 @@ Progress: [██████████] 99% (217/218 plans in project complet
 - **Phase 48 Plan 02:** Source inspection tests pattern for components (pre-existing test environment limitations)
 - **Phase 48 Plan 02:** Client island pattern: server RSC fetches data → TeamsPageTabs client manages sub-tab state
 
+- **Phase 48.1:** `group` is a PostgreSQL reserved keyword — renamed to `integration_group` to avoid query failures
+- **Phase 48.1:** Map reduce pattern for E2E workflow team grouping (team_name → [workflows]) with side-by-side rendering
+- **Phase 48.1:** TeamOnboardingTable owns its own state in TeamEngagementMap (optimistic updates)
+- **Phase 48.1:** Dashed-border group boxes: ungrouped integrations above, grouped integrations inside box with bold uppercase label
+- **Phase 48.1:** Phase-aware column header colors via phaseHeaderStyle() — Blue/Amber/Green by phase semantic group
+
 ### Roadmap Evolution
 
 - Phase 50 added: Extraction Intelligence — Full-spectrum prompt rewrite and semantic post-classifier to surface all entity types from any document across every project tab
+- Phase 48.1 inserted after Phase 48: Architecture diagram group rendering, TeamOnboardingTable relocation, and extraction prompt coverage (URGENT)
 
 ## Blockers/Concerns
 
@@ -130,7 +136,7 @@ Progress: [██████████] 99% (217/218 plans in project complet
 
 ## Session Continuity
 
-Last session: 2026-04-08T21:16:09.578Z
-Stopped at: Completed 48-03-PLAN.md
-Resume file: None
-Next action: Phase 47 complete — proceed to Phase 48 (Architecture & Team Engagement)
+Last session: 2026-04-09T02:13:46.780Z
+Stopped at: Phase 49 context gathered
+Resume file: .planning/phases/49-portfolio-dashboard/49-CONTEXT.md
+Next action: Phase 48.1 complete — proceed to Phase 49 (Portfolio Dashboard)
