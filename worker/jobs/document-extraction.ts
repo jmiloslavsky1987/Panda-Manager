@@ -25,7 +25,7 @@ export const EXTRACTION_SYSTEM = `You are a project data extractor. Given a docu
 Output ONLY a JSON array of extraction items — no prose before or after, no markdown code fences.
 Each item follows this exact shape:
 {
-  "entityType": "action" | "risk" | "decision" | "milestone" | "stakeholder" | "task" | "architecture" | "history" | "businessOutcome" | "team" | "note" | "workstream" | "onboarding_step" | "integration" | "wbs_task" | "team_engagement" | "arch_node" | "focus_area" | "e2e_workflow",
+  "entityType": "action" | "risk" | "decision" | "milestone" | "stakeholder" | "task" | "architecture" | "history" | "businessOutcome" | "team" | "note" | "team_pathway" | "workstream" | "onboarding_step" | "integration" | "wbs_task" | "arch_node" | "focus_area" | "e2e_workflow" | "before_state" | "weekly_focus",
   "fields": { /* entity-specific key-value pairs as strings */ },
   "confidence": 0.85,
   "sourceExcerpt": "verbatim text this was extracted from (max 200 chars)"
@@ -44,17 +44,32 @@ Entity type guidance:
 - workstream: { name, track, phase, status, percent_complete } — delivery workstream or project phase name; use for named delivery tracks with status and completion percentage
 - onboarding_step: { team_name, step_name, track, status, completed_date } — specific onboarding step for a team (e.g. ADR track steps); NOT the same as a generic task
 - integration: { tool_name, category, connection_status, notes } — connection status of a tool (live/pilot/planned/not-connected); focus on operational readiness and connection state, NOT architecture workflow phase
-- wbs_task: { title, track ("ADR" or "Biggy"), parent_section_name (exact match from WBS template — e.g., "Solution Design", "Platform Configuration", "Integrations"), level (1, 2, or 3 — 1 for top-level sections, 2 for sub-items, 3 for leaf tasks), status ("not_started", "in_progress", or "complete"), description (task details or null) } — task that belongs in WBS structure; extract track and parent section verbatim as they appear in document; use level to indicate hierarchy depth
-- team_engagement: { section_name ("Business Outcomes" | "Architecture" | "E2E Workflows" | "Teams & Engagement" | "Top Focus Areas"), content (markdown text for this section) } — content for Team Engagement Map sections; extract verbatim section names; use for engagement data, team details, business outcomes, workflow descriptions
-- arch_node: { track ("ADR Track" | "AI Assistant Track"), node_name (tool or capability name — e.g., "Event Ingest", "Alert Intelligence", "Knowledge Sources"), status ("planned" | "in_progress" | "live"), notes (integration details, status notes, or null) } — architecture capability or tool node; extract track verbatim; use for system components, tools, integrations mentioned in architecture context
+- wbs_task: { title, track ("ADR" or "Biggy"), parent_section_name (exact match from WBS template — e.g., "Solution Design", "Platform Configuration", "Integrations"), level (1, 2, or 3 — 1 for top-level sections, 2 for sub-items, 3 for leaf tasks), status ("not_started" | "in_progress" | "complete" — normalize variants: "done"/"finished" → "complete", "in progress"/"ongoing" → "in_progress", "not started"/"todo" → "not_started"), description (task details or null) } — task that belongs in WBS structure; extract track and parent section verbatim as they appear in document; use level to indicate hierarchy depth
+- arch_node: { track ("ADR Track" | "AI Assistant Track" — ONLY these two values are valid; if track name is different, skip this entity), node_name (tool or capability name — e.g., "Event Ingest", "Alert Intelligence", "Knowledge Sources"), status ("planned" | "in_progress" | "live"), notes (integration details, status notes, or null) } — architecture capability or tool node; extract track verbatim; use for system components, tools, integrations mentioned in architecture context
 - focus_area: { title, tracks, why_it_matters, current_status, next_step, bp_owner, customer_owner } — a named focus area or strategic priority with ownership and status; use for named workstreams, priorities, or initiatives with a clear owner and next step
 - e2e_workflow: { team_name, workflow_name, steps } — an end-to-end workflow for a team; steps is an array of { label, track, status, position } objects; use when document describes a multi-step team workflow or process
 - note: { content, context } — use for any valuable content that does not fit the above types: observations, meeting highlights, open questions, context, or anything that would be useful to preserve but has no specific schema.
+- team_pathway: { team_name, route_description (the delivery route steps joined by ' → ' e.g. "Alert Ingest → Correlation → Incident Creation → SNow Ticket"), status ("live" | "in_progress" | "pilot" | "planned"), notes } — named delivery pathway for a team through the BigPanda platform; use when document describes team-specific routes or journeys through the system
+- before_state: { aggregation_hub_name (name of the primary alert aggregation hub or SIEM being replaced or supplemented), alert_to_ticket_problem (description of the pain point in the current alert-to-ticket workflow), pain_points (comma-separated list of customer pain points with the current state) } — customer's current state before BigPanda adoption; extract from sections titled "Current State", "Before State", "Pain Points", "Challenges", or similar; one entity per project
+- weekly_focus: { bullets (JSON array of strings — the current week's focus items; each bullet is a short action or priority statement) } — this week's focus priorities extracted from a status update, meeting notes, or project status document; use when document contains a "This Week" or "Weekly Focus" section
 
-IMPORTANT disambiguation:
-- architecture vs integration: architecture = workflow phase and integration method (how it fits in delivery process); integration = connection status and operational notes (is it connected and working?)
-- wbs_task vs task: wbs_task = hierarchical WBS template items with track + parent section; task = generic project tasks. If document mentions WBS structure, ADR/Biggy tracks, or explicit template sections → wbs_task. Otherwise → task.
-- team_engagement vs team: team_engagement = section content for Team Engagement Map (5 specific sections); team = team metadata (name, track, ingest_status). Use team_engagement for prose/paragraph content about engagement, outcomes, workflows.
+IMPORTANT disambiguation rules — read carefully before assigning entityType:
+- architecture vs arch_node vs integration:
+  • architecture = tool's ROLE in BigPanda delivery workflow (which phase it belongs to, how it integrates into the delivery process) — use for workflow integration context
+  • arch_node = capability NODE within an "ADR Track" or "AI Assistant Track" architecture diagram (e.g., "Event Ingest", "Alert Intelligence", "Knowledge Sources") — use ONLY when document explicitly references these tracks
+  • integration = operational CONNECTION STATUS of a tool (is it live, pilot, planned, not-connected?) — use for tool readiness/status data
+- task vs wbs_task:
+  • task = generic project action item with owner, status, phase (not tied to a WBS template)
+  • wbs_task = item that belongs in a WBS hierarchy — must have a track ("ADR" or "Biggy"), a parent section (e.g. "Solution Design", "Platform Configuration"), and a level (1/2/3)
+  • Rule: If document mentions WBS structure, ADR/Biggy tracks, or explicit template section names → wbs_task. Otherwise → task.
+- team vs stakeholder:
+  • team = a TEAM (group of people) with onboarding status across BigPanda capability tracks (ingest_status, correlation_status, etc.)
+  • stakeholder = a NAMED INDIVIDUAL with role, email, account
+- workstream vs task vs wbs_task:
+  • workstream = named DELIVERY TRACK or work stream (e.g. "ADR Workstream", "Integration Workstream") with owner and percent_complete — not individual tasks
+  • Do NOT extract individual tasks as workstreams. Workstreams are high-level tracks spanning multiple tasks.
+- arch_node track names: ONLY valid values are "ADR Track" and "AI Assistant Track". If the document mentions a different track name, do NOT extract an arch_node entity — skip it entirely.
+- team_engagement: DO NOT use this entity type. It is deprecated. Use the appropriate specific types instead: businessOutcome, e2e_workflow, team, focus_area for team engagement content.
 
 IMPORTANT: Do NOT discard content just because it doesn't fit a structured type. Capture it as a "note".
 
@@ -82,10 +97,11 @@ export type EntityType =
   | 'onboarding_step'
   | 'integration'
   | 'wbs_task'
-  | 'team_engagement'
   | 'arch_node'
   | 'focus_area'
-  | 'e2e_workflow';
+  | 'e2e_workflow'
+  | 'before_state'
+  | 'weekly_focus';
 
 export interface ExtractionItem {
   entityType: EntityType;
