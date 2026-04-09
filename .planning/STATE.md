@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v6.0
 milestone_name: — Dashboard, Navigation & Intelligence
 status: completed
-stopped_at: Completed 51-04-PLAN.md
-last_updated: "2026-04-09T22:39:45.679Z"
+stopped_at: Phase 52 context gathered
+last_updated: "2026-04-09T23:07:38.330Z"
 last_activity: 2026-04-09 — Phase 51 Plan 04 complete (Per-entity approval feedback with UI display)
 progress:
-  total_phases: 10
+  total_phases: 11
   completed_phases: 10
   total_plans: 26
   completed_plans: 26
@@ -167,6 +167,7 @@ Progress: [██████████] 100% (26/26 plans in current mileston
 - Phase 50 added: Extraction Intelligence — Full-spectrum prompt rewrite and semantic post-classifier to surface all entity types from any document across every project tab
 - Phase 48.1 inserted after Phase 48: Architecture diagram group rendering, TeamOnboardingTable relocation, and extraction prompt coverage (URGENT)
 - Phase 51 added: Extraction Intelligence Overhaul — Full Tab Coverage (Gaps A–J: before_state entity, wbs orphan fallback, arch_node graceful degradation, team_engagement dead-end fix, prompt disambiguation + status coercers, per-entity write feedback, weekly_focus extraction, team_pathway verification, workstream disambiguation, arch_node track guidance)
+- Phase 52 added: Multi-pass targeted extraction for full tab coverage (real doc test showed 0 onboarding_step/wbs_task/arch_node/e2e_workflow extracted — single-pass prompt insufficient; see .planning/extraction-intelligence-gap.md)
 
 ## Blockers/Concerns
 
@@ -183,7 +184,7 @@ Progress: [██████████] 100% (26/26 plans in current mileston
 
 ## Session Continuity
 
-Last session: 2026-04-09T22:14:35.195Z
-Stopped at: Completed 51-04-PLAN.md
-Resume file: None
+Last session: 2026-04-09T23:07:38.325Z
+Stopped at: Phase 52 context gathered
+Resume file: .planning/phases/52-multi-pass-targeted-extraction-for-full-tab-coverage/52-CONTEXT.md
 Next action: v6.0 milestone complete — all 10 phases and 26 plans executed successfully
