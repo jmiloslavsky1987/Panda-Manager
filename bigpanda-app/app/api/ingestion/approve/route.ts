@@ -101,6 +101,16 @@ function coerceTrackStatus(raw: string | undefined | null): TrackStatus | null {
   return null;
 }
 
+type OnboardingStepStatus = 'not-started' | 'in-progress' | 'complete' | 'blocked';
+function coerceOnboardingStatus(raw: string | undefined | null): OnboardingStepStatus {
+  if (!raw) return 'not-started';
+  const v = raw.toLowerCase().trim();
+  if (['complete', 'completed', 'done', 'finished'].includes(v)) return 'complete';
+  if (['in-progress', 'in_progress', 'in progress', 'ongoing', 'running'].includes(v)) return 'in-progress';
+  if (['blocked', 'stuck', 'on-hold', 'on hold'].includes(v)) return 'blocked';
+  return 'not-started';
+}
+
 async function resolveEntityRef(
   tableName: 'milestones' | 'workstreams',
   nameField: string,
@@ -630,7 +640,7 @@ async function insertItem(
           current_status: f.status ?? null,
           lead: f.owner ?? null,
           state: f.state ?? null,
-          percent_complete: f.percent_complete ? parseInt(f.percent_complete, 10) : null,
+          percent_complete: (() => { const n = parseInt(f.percent_complete, 10); return Number.isFinite(n) ? n : null; })(),
           source: 'ingestion',
         }).returning();
         await tx.insert(auditLog).values({
@@ -655,7 +665,7 @@ async function insertItem(
           name: f.step_name ?? '',
           description: f.description ?? null,
           owner: f.team_name ?? null,
-          status: (f.status as 'not-started' | 'in-progress' | 'complete' | 'blocked' | undefined) ?? 'not-started',
+          status: coerceOnboardingStatus(f.status),
           track: f.track ?? null,
           display_order: 0,
         }).returning();
@@ -1062,10 +1072,17 @@ async function mergeItem(
     }
 
     case 'team': {
-      const [beforeRecord] = await db.select().from(focusAreas).where(eq(focusAreas.id, existingId));
-      const patch = { tracks: f.track ?? undefined, ...attribution };
+      const [beforeRecord] = await db.select().from(teamOnboardingStatus).where(eq(teamOnboardingStatus.id, existingId));
+      const patch = {
+        track: f.track ?? undefined,
+        ingest_status: coerceTrackStatus(f.ingest_status),
+        correlation_status: coerceTrackStatus(f.correlation_status),
+        incident_intelligence_status: coerceTrackStatus(f.incident_intelligence_status),
+        sn_automation_status: coerceTrackStatus(f.sn_automation_status),
+        biggy_ai_status: coerceTrackStatus(f.biggy_ai_status),
+      };
       await db.transaction(async (tx) => {
-        await tx.update(focusAreas).set(patch).where(eq(focusAreas.id, existingId));
+        await tx.update(teamOnboardingStatus).set(patch).where(eq(teamOnboardingStatus.id, existingId));
         await tx.insert(auditLog).values({
           entity_type: item.entityType,
           entity_id: existingId,
@@ -1130,7 +1147,7 @@ async function mergeItem(
         current_status: f.status ?? undefined,
         lead: f.owner ?? undefined,
         state: f.state ?? undefined,
-        percent_complete: f.percent_complete ? parseInt(f.percent_complete, 10) : undefined,
+        percent_complete: (() => { const n = parseInt(f.percent_complete, 10); return Number.isFinite(n) ? n : undefined; })(),
       };
       await db.transaction(async (tx) => {
         await tx.update(workstreams).set(patch).where(eq(workstreams.id, existingId));
@@ -1289,9 +1306,9 @@ async function deleteItem(entityType: EntityType, existingId: number): Promise<{
       return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
     }
     case 'team': {
-      const [before] = await db.select().from(focusAreas).where(eq(focusAreas.id, existingId));
+      const [before] = await db.select().from(teamOnboardingStatus).where(eq(teamOnboardingStatus.id, existingId));
       await db.transaction(async (tx) => {
-        await tx.delete(focusAreas).where(eq(focusAreas.id, existingId));
+        await tx.delete(teamOnboardingStatus).where(eq(teamOnboardingStatus.id, existingId));
         await tx.insert(auditLog).values({
           entity_type: entityType,
           entity_id: existingId,
