@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v6.0
 milestone_name: — Dashboard, Navigation & Intelligence
-status: in_progress
-stopped_at: Completed Phase 51 Plan 01 (Wave 0 RED Test Stubs)
-last_updated: "2026-04-09T18:12:30Z"
-last_activity: 2026-04-09 — Phase 51 Plan 01 complete (Wave 0 RED test stubs for Gaps E and G)
+status: executing
+stopped_at: Completed 51-03-PLAN.md
+last_updated: "2026-04-09T18:15:53.453Z"
+last_activity: 2026-04-09 — Phase 51 Plan 02 complete (EXTRACTION_SYSTEM prompt overhaul with Gap D/E/H/I/J fixes)
 progress:
   total_phases: 10
   completed_phases: 9
   total_plans: 26
-  completed_plans: 23
-  percent: 88
+  completed_plans: 25
+  percent: 92
 ---
 
 # Project State
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 
 ## Current Position
 
-Phase: 51 (Extraction Intelligence Overhaul) — Plan 01/04 complete
+Phase: 51 (Extraction Intelligence Overhaul) — Plan 02/04 complete
 Status: Phase 51 in progress
-Last activity: 2026-04-09 — Phase 51 Plan 01 complete (Wave 0 RED test stubs for Gaps E and G)
+Last activity: 2026-04-09 — Phase 51 Plan 02 complete (EXTRACTION_SYSTEM prompt overhaul with Gap D/E/H/I/J fixes)
 
-Progress: [█████████░] 88% (23/26 plans in current milestone complete)
+Progress: [█████████░] 92% (24/26 plans in current milestone complete)
 
 ## Milestone History
 
@@ -150,6 +150,11 @@ Progress: [█████████░] 88% (23/26 plans in current milestone
 - **Phase 51 Plan 01:** Coercer testing strategy: Direct import of coercers module functions for unit testing (coercers.ts created in Plan 51-03 as blocking dependency)
 - **Phase 51 Plan 01:** Redis mock pattern: Mock @/worker/connection.createApiRedisConnection() with set/quit/connect methods
 - **Phase 51 Plan 01:** weekly_focus TTL: 7 days (604800 seconds) for Redis keys storing focus bullets
+- **Phase 51 Plan 02:** team_engagement removed from EXTRACTION_SYSTEM entityType union (Gap D: dead-end table with no viable handler)
+- **Phase 51 Plan 02:** team_pathway, before_state, weekly_focus added to EXTRACTION_SYSTEM entityType union (Gaps H/A/G)
+- **Phase 51 Plan 02:** Expanded disambiguation section with 5 new rules: architecture vs arch_node vs integration (three-way), task vs wbs_task (explicit examples), team vs stakeholder (explicit rule), workstream disambiguation (Gap I), arch_node track name constraint (Gap J)
+- **Phase 51 Plan 02:** Status coercion guidance added to wbs_task and arch_node entity type descriptions in EXTRACTION_SYSTEM prompt
+- **Phase 51 Plan 02:** coercers.ts module verified GREEN (pre-existing from Plan 51-03 blocking dependency pattern) with 13/13 tests passing
 
 ### Roadmap Evolution
 
@@ -172,7 +177,8 @@ Progress: [█████████░] 88% (23/26 plans in current milestone
 
 ## Session Continuity
 
-Last session: 2026-04-09T18:12:30Z
-Stopped at: Completed Phase 51 Plan 01 (Wave 0 RED Test Stubs)
+Last session: 2026-04-09T18:15:53.451Z
+Stopped at: Completed 51-03-PLAN.md
 Resume file: None
+Next action: Proceed to Phase 51 Plan 03 (Approve Route Handler Fixes)
 Next action: Proceed to Phase 51 Plan 02 (Gap E & G implementations)

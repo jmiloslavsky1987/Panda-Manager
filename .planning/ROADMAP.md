@@ -283,10 +283,10 @@ Plans:
 **Goal:** All extraction pipeline gaps (A-J) closed: every renderable tab area populatable via document extraction, per-entity approval feedback, graceful error handling
 **Requirements**: GAP-A through GAP-J (scope fully captured in 51-CONTEXT.md)
 **Depends on:** Phase 50
-**Plans:** 1/4 plans executed
+**Plans:** 3/4 plans executed
 
 Plans:
-- [ ] 51-01-PLAN.md — Wave 0 RED test stubs: status-coercers.test.ts (Gap E) + weekly-focus-ingestion.test.ts (Gap G)
-- [ ] 51-02-PLAN.md — Extraction prompt overhaul: remove team_engagement (D), add team_pathway/before_state/weekly_focus (H/A/G), expanded disambiguation (E/I/J), coercers.ts module
+- [x] 51-01-PLAN.md — Wave 0 RED test stubs: status-coercers.test.ts (Gap E) + weekly-focus-ingestion.test.ts (Gap G) ✓
+- [x] 51-02-PLAN.md — Extraction prompt overhaul: remove team_engagement (D), add team_pathway/before_state/weekly_focus (H/A/G), expanded disambiguation (E/I/J), coercers.ts module ✓
 - [ ] 51-03-PLAN.md — Approve route handler fixes: wbs_task orphan fallback (B), arch_node graceful skip (C), before_state upsert handler (A), weekly_focus Redis handler (G)
 - [ ] 51-04-PLAN.md — Per-entity feedback: restructure approve response (F), IngestionModal breakdown display, human verification
