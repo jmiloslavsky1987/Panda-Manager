@@ -2,7 +2,6 @@
 import { useState } from 'react'
 import { ArchitectureIntegration, TeamOnboardingStatus, TeamPathway, ArchTrack, ArchNode } from '@/lib/queries'
 import { IntegrationEditModal } from './IntegrationEditModal'
-import { TeamOnboardingTable } from './TeamOnboardingTable'
 import { InteractiveArchGraph } from './InteractiveArchGraph'
 
 
@@ -15,7 +14,6 @@ interface Props {
   tracks: ArchTrack[]
   nodes: ArchNode[]
   onIntegrationsUpdate: (integrations: ArchitectureIntegration[]) => void
-  onOnboardingUpdate: (rows: TeamOnboardingStatus[]) => void
   onPathwaysUpdate: (p: TeamPathway[]) => void
 }
 
@@ -33,7 +31,6 @@ export function CurrentFutureStateTab({
   tracks,
   nodes,
   onIntegrationsUpdate,
-  onOnboardingUpdate,
   onPathwaysUpdate,
 }: Props) {
   const [editModal, setEditModal] = useState<EditModalState | null>(null)
@@ -83,14 +80,7 @@ export function CurrentFutureStateTab({
         />
       </div>
 
-      {/* Team Onboarding Status table remains below the graph */}
-      <TeamOnboardingTable
-        projectId={projectId}
-        rows={onboardingRows}
-        onUpdate={onOnboardingUpdate}
-      />
-
-      {/* Integration Edit Modal (unchanged) */}
+      {/* Integration Edit Modal */}
       {editModal !== null && (
         <IntegrationEditModal
           projectId={projectId}

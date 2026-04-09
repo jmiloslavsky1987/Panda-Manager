@@ -595,6 +595,7 @@ export const architectureIntegrations = pgTable('architecture_integrations', {
   tool_name:          text('tool_name').notNull(),
   track:              text('track').notNull(),
   phase:              text('phase'),
+  integration_group:  text('integration_group'),
   status:             integrationTrackStatusEnum('status').default('planned').notNull(),
   integration_method: text('integration_method'),
   notes:              text('notes'),

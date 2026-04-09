@@ -25,7 +25,7 @@ export const EXTRACTION_SYSTEM = `You are a project data extractor. Given a docu
 Output ONLY a JSON array of extraction items — no prose before or after, no markdown code fences.
 Each item follows this exact shape:
 {
-  "entityType": "action" | "risk" | "decision" | "milestone" | "stakeholder" | "task" | "architecture" | "history" | "businessOutcome" | "team" | "note" | "workstream" | "onboarding_step" | "integration" | "wbs_task" | "team_engagement" | "arch_node",
+  "entityType": "action" | "risk" | "decision" | "milestone" | "stakeholder" | "task" | "architecture" | "history" | "businessOutcome" | "team" | "note" | "workstream" | "onboarding_step" | "integration" | "wbs_task" | "team_engagement" | "arch_node" | "focus_area" | "e2e_workflow",
   "fields": { /* entity-specific key-value pairs as strings */ },
   "confidence": 0.85,
   "sourceExcerpt": "verbatim text this was extracted from (max 200 chars)"
@@ -37,16 +37,18 @@ Entity type guidance:
 - milestone: { name, target_date, status, owner (verbatim name or null) }
 - stakeholder: { name, role, email, account }
 - task: { title, status, owner, phase, description, start_date (ISO date string or null), due_date (ISO date string or null), priority ("high", "medium", or "low" or null), milestone_name (verbatim name as it appears in the document or null), workstream_name (verbatim name as it appears in the document or null) }
-- architecture: { tool_name, track, phase, status, integration_method } — workflow phase and integration method; focus on how the tool integrates into delivery workflow
+- architecture: { tool_name, track, phase, integration_group, status, integration_method } — workflow phase and integration method; integration_group = logical grouping within a phase (e.g. "ALERT NORMALIZATION", "ON-DEMAND DURING INVESTIGATION") or null; focus on how the tool integrates into delivery workflow
 - history: { date, content, author }
 - businessOutcome: { title, track, description, delivery_status }
-- team: { team_name, track, ingest_status }
+- team: { team_name, track, ingest_status, correlation_status, incident_intelligence_status, sn_automation_status, biggy_ai_status } — team onboarding status across all capability tracks; use null for any status field not explicitly mentioned
 - workstream: { name, track, phase, status, percent_complete } — delivery workstream or project phase name; use for named delivery tracks with status and completion percentage
 - onboarding_step: { team_name, step_name, track, status, completed_date } — specific onboarding step for a team (e.g. ADR track steps); NOT the same as a generic task
 - integration: { tool_name, category, connection_status, notes } — connection status of a tool (live/pilot/planned/not-connected); focus on operational readiness and connection state, NOT architecture workflow phase
 - wbs_task: { title, track ("ADR" or "Biggy"), parent_section_name (exact match from WBS template — e.g., "Solution Design", "Platform Configuration", "Integrations"), level (1, 2, or 3 — 1 for top-level sections, 2 for sub-items, 3 for leaf tasks), status ("not_started", "in_progress", or "complete"), description (task details or null) } — task that belongs in WBS structure; extract track and parent section verbatim as they appear in document; use level to indicate hierarchy depth
 - team_engagement: { section_name ("Business Outcomes" | "Architecture" | "E2E Workflows" | "Teams & Engagement" | "Top Focus Areas"), content (markdown text for this section) } — content for Team Engagement Map sections; extract verbatim section names; use for engagement data, team details, business outcomes, workflow descriptions
 - arch_node: { track ("ADR Track" | "AI Assistant Track"), node_name (tool or capability name — e.g., "Event Ingest", "Alert Intelligence", "Knowledge Sources"), status ("planned" | "in_progress" | "live"), notes (integration details, status notes, or null) } — architecture capability or tool node; extract track verbatim; use for system components, tools, integrations mentioned in architecture context
+- focus_area: { title, tracks, why_it_matters, current_status, next_step, bp_owner, customer_owner } — a named focus area or strategic priority with ownership and status; use for named workstreams, priorities, or initiatives with a clear owner and next step
+- e2e_workflow: { team_name, workflow_name, steps } — an end-to-end workflow for a team; steps is an array of { label, track, status, position } objects; use when document describes a multi-step team workflow or process
 - note: { content, context } — use for any valuable content that does not fit the above types: observations, meeting highlights, open questions, context, or anything that would be useful to preserve but has no specific schema.
 
 IMPORTANT disambiguation:
@@ -81,7 +83,9 @@ export type EntityType =
   | 'integration'
   | 'wbs_task'
   | 'team_engagement'
-  | 'arch_node';
+  | 'arch_node'
+  | 'focus_area'
+  | 'e2e_workflow';
 
 export interface ExtractionItem {
   entityType: EntityType;

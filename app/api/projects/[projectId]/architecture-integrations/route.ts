@@ -10,9 +10,10 @@ const postSchema = z.object({
   tool_name: z.string().min(1),
   track: z.string().min(1),
   phase: z.string().optional(),
+  integration_group: z.string().nullish(),
   status: z.enum(['live', 'in_progress', 'pilot', 'planned']).optional(),
-  integration_method: z.string().optional(),
-  notes: z.string().optional(),
+  integration_method: z.string().nullish(),
+  notes: z.string().nullish(),
 })
 
 export async function GET(
@@ -71,7 +72,7 @@ export async function POST(
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
   }
 
-  const { tool_name, track, phase, status, integration_method, notes } = parsed.data
+  const { tool_name, track, phase, integration_group, status, integration_method, notes } = parsed.data
 
   try {
     const result = await db.transaction(async (tx) => {
@@ -84,6 +85,7 @@ export async function POST(
           tool_name,
           track,
           phase: phase ?? null,
+          integration_group: integration_group ?? null,
           status: status ?? 'planned',
           integration_method: integration_method ?? null,
           notes: notes ?? null,
