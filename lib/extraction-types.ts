@@ -297,22 +297,6 @@ export async function isAlreadyIngested(
       return rows.length > 0;
     }
 
-    case 'team_engagement': {
-      const key = normalize(f.content);
-      if (!key) return false;
-      const rows = await db
-        .select({ id: teamEngagementSections.id })
-        .from(teamEngagementSections)
-        .where(
-          and(
-            eq(teamEngagementSections.project_id, projectId),
-            eq(teamEngagementSections.name, f.section_name ?? ''),
-            ilike(teamEngagementSections.content, `${key}%`),
-          ),
-        );
-      return rows.length > 0;
-    }
-
     case 'arch_node': {
       const key = normalize(f.node_name);
       if (!key) return false;
@@ -373,6 +357,15 @@ export async function isAlreadyIngested(
         );
       return rows.length > 0;
     }
+
+    case 'before_state':
+      // before_state is a singleton per project — always new on first extraction
+      // Could query a beforeState table if one existed, but for now treat as always-new
+      return false;
+
+    case 'weekly_focus':
+      // weekly_focus is ephemeral (7-day TTL in Redis) — always new in DB terms
+      return false;
 
     default:
       return false;
