@@ -65,7 +65,7 @@ describe('POST /api/ingestion/approve — Gap G: weekly_focus', () => {
           {
             entityType: 'weekly_focus',
             fields: {
-              bullets: ['Focus item 1', 'Focus item 2', 'Focus item 3'],
+              bullets: JSON.stringify(['Focus item 1', 'Focus item 2', 'Focus item 3']),
             },
             approved: true,
           },
@@ -93,7 +93,7 @@ describe('POST /api/ingestion/approve — Gap G: weekly_focus', () => {
           {
             entityType: 'weekly_focus',
             fields: {
-              bullets: ['Focus item 1', 'Focus item 2'],
+              bullets: JSON.stringify(['Focus item 1', 'Focus item 2']),
             },
             approved: true,
           },

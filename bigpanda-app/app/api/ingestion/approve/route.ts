@@ -864,7 +864,10 @@ async function insertItem(
         );
 
       if (trackRows.length === 0) {
-        throw new Error(`Architecture track not found: ${f.track}`);
+        // Gap C: Don't throw — use tagged error so POST loop can skip gracefully
+        const skipErr = new Error(`arch_node:track_not_found:${f.track ?? 'unknown'}`);
+        (skipErr as any).skipEntity = true;
+        throw skipErr;
       }
 
       const trackId = trackRows[0].id;
@@ -877,7 +880,7 @@ async function insertItem(
             project_id: projectId,
             track_id: trackId,
             name: f.node_name ?? '',
-            status: f.status as 'planned' | 'in_progress' | 'live' | undefined ?? 'planned',
+            status: coerceArchNodeStatus(f.status) ?? 'planned',
             notes: f.notes ?? null,
             source_trace: 'extraction',
             display_order: 999,
@@ -885,7 +888,7 @@ async function insertItem(
           .onConflictDoUpdate({
             target: [archNodes.project_id, archNodes.track_id, archNodes.name],
             set: {
-              status: f.status as 'planned' | 'in_progress' | 'live' | undefined ?? 'planned',
+              status: coerceArchNodeStatus(f.status) ?? 'planned',
               notes: f.notes ?? null,
             },
           })
@@ -970,6 +973,34 @@ async function insertItem(
           after_json: inserted as Record<string, unknown>,
         });
       });
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
+    }
+
+    case 'weekly_focus': {
+      // Parse bullets: try JSON array first, fall back to comma-separated string
+      let bullets: string[] = [];
+      try {
+        const parsed = JSON.parse(f.bullets ?? '[]');
+        bullets = Array.isArray(parsed) ? parsed : [];
+      } catch {
+        bullets = (f.bullets ?? '').split(',').map(s => s.trim()).filter(Boolean);
+      }
+
+      // Write to Redis cache (not DB) — same key format as weekly-focus/route.ts
+      const redis = createApiRedisConnection();
+      await redis.connect(); // lazyConnect: true — must connect manually
+      try {
+        await redis.set(
+          `weekly_focus:${projectId}`,
+          JSON.stringify(bullets),
+          'EX',
+          7 * 24 * 60 * 60  // 7-day TTL
+        );
+      } finally {
+        await redis.quit();
+      }
+
+      // No DB audit log for Redis cache writes
       return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
     }
   }
@@ -1536,30 +1567,60 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           break;
 
         case 'replace': {
-          const idToDelete = item.existingId ?? existing.id;
-          await deleteItem(item.entityType as EntityType, idToDelete);
-          const counts = await insertItem(item, projectId, artifactId);
-          unresolvedMilestoneCount += counts.unresolvedMilestones;
-          unresolvedWorkstreamCount += counts.unresolvedWorkstreams;
-          written++;
+          try {
+            const idToDelete = item.existingId ?? existing.id;
+            await deleteItem(item.entityType as EntityType, idToDelete);
+            const counts = await insertItem(item, projectId, artifactId);
+            unresolvedMilestoneCount += counts.unresolvedMilestones;
+            unresolvedWorkstreamCount += counts.unresolvedWorkstreams;
+            written++;
+          } catch (err) {
+            // Gap C: arch_node track-not-found → skip gracefully
+            if ((err as any).skipEntity === true) {
+              console.warn(`[approve] Skipping ${item.entityType}: ${(err as Error).message}`);
+              skipped++;
+            } else {
+              throw err; // re-throw all other errors
+            }
+          }
           break;
         }
 
         case 'merge': {
-          const idToMerge = item.existingId ?? existing.id;
-          const counts = await mergeItem(item, idToMerge, artifactId, projectId);
-          unresolvedMilestoneCount += counts.unresolvedMilestones;
-          unresolvedWorkstreamCount += counts.unresolvedWorkstreams;
-          written++;
+          try {
+            const idToMerge = item.existingId ?? existing.id;
+            const counts = await mergeItem(item, idToMerge, artifactId, projectId);
+            unresolvedMilestoneCount += counts.unresolvedMilestones;
+            unresolvedWorkstreamCount += counts.unresolvedWorkstreams;
+            written++;
+          } catch (err) {
+            // Gap C: arch_node track-not-found → skip gracefully
+            if ((err as any).skipEntity === true) {
+              console.warn(`[approve] Skipping ${item.entityType}: ${(err as Error).message}`);
+              skipped++;
+            } else {
+              throw err; // re-throw all other errors
+            }
+          }
           break;
         }
       }
     } else {
       // No conflict — direct insert
-      const counts = await insertItem(item, projectId, artifactId);
-      unresolvedMilestoneCount += counts.unresolvedMilestones;
-      unresolvedWorkstreamCount += counts.unresolvedWorkstreams;
-      written++;
+      try {
+        const counts = await insertItem(item, projectId, artifactId);
+        unresolvedMilestoneCount += counts.unresolvedMilestones;
+        unresolvedWorkstreamCount += counts.unresolvedWorkstreams;
+        written++;
+      } catch (err) {
+        // Gap C: arch_node track-not-found → skip gracefully
+        if ((err as any).skipEntity === true) {
+          console.warn(`[approve] Skipping ${item.entityType}: ${(err as Error).message}`);
+          skipped++;
+        } else {
+          throw err; // re-throw all other errors
+        }
+      }
     }
   }
 
