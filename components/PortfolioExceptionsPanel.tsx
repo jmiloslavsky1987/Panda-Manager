@@ -54,7 +54,8 @@ function computeExceptions(projects: PortfolioProject[]): ExceptionRow[] {
     }
 
     // 3. Open blockers (severity 1 - highest priority)
-    if (project.dependencyStatus === 'Blocked') {
+    const alreadyHasBlockerException = project.dependencyStatus === 'Blocked'
+    if (alreadyHasBlockerException) {
       exceptions.push({
         projectId: project.id,
         projectName: project.customer,
@@ -77,7 +78,7 @@ function computeExceptions(projects: PortfolioProject[]): ExceptionRow[] {
 
     // 5. Unresolved dependencies (severity 5 - same signal as blockers, different labeling)
     // Skip if already flagged as blocker to avoid duplicates
-    if (project.dependencyStatus === 'Blocked') {
+    if (project.dependencyStatus === 'Blocked' && !alreadyHasBlockerException) {
       exceptions.push({
         projectId: project.id,
         projectName: project.customer,
