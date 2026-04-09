@@ -234,11 +234,12 @@ Plans:
   6. User sees exceptions panel surfacing projects with overdue milestones, stale updates, open blockers, missing ownership, or unresolved dependencies
   7. User clicks a portfolio table row and navigates to that project's workspace
   8. Portfolio dashboard queries complete in <500ms with 20+ projects
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
 - [ ] 49-01-PLAN.md — Query function (getPortfolioData with parallel Promise.all) + PortfolioTableClient with 12-column table and client-side filtering
 - [ ] 49-02-PLAN.md — Page replacement (app/page.tsx) + PortfolioSummaryChips (6 stat chips) + PortfolioExceptionsPanel (5 exception types) + human verification
+- [ ] 49-04-PLAN.md — Gap closure: fix duplicate exception rows for blocked projects in PortfolioExceptionsPanel
 ## Progress
 
 **Execution Order:**
