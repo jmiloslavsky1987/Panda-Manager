@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v6.0
 milestone_name: — Dashboard, Navigation & Intelligence
-status: completed
-stopped_at: Phase 52 Plan 01 complete (Wave 0 RED test stubs for multi-pass extraction)
-last_updated: "2026-04-09T23:36:46Z"
+status: executing
+stopped_at: Completed 52-02-PLAN.md
+last_updated: "2026-04-09T23:48:19.755Z"
 last_activity: 2026-04-09 — Phase 52 Plan 01 complete (Wave 0 RED test stubs for multi-pass extraction)
 progress:
-  total_phases: 12
+  total_phases: 11
   completed_phases: 10
-  total_plans: 27
-  completed_plans: 27
+  total_plans: 29
+  completed_plans: 28
   percent: 100
 ---
 
@@ -167,6 +167,10 @@ Progress: [██████████] 100% (27/27 plans in current mileston
 - **Phase 52 Plan 01:** Dynamic import with try/catch pattern for tests importing functions that don't exist yet
 - **Phase 52 Plan 01:** Source inspection testing for IngestionModal pass-aware progress (consistent with Phase 48/51 patterns)
 - **Phase 52 Plan 01:** Composite key dedup tests cover wbs_task (title+track), e2e_workflow (workflow_name+team_name), arch_node (node_name+track)
+- **Phase 52 Plan 02:** EXTRACTION_BASE contains shared output format rules, JSON shape, and ALL disambiguation rules; PASS_PROMPTS[1|2|3] add only pass-specific entity type guidance
+- **Phase 52 Plan 02:** deduplicateWithinBatch uses entityType::primaryKey composite keys to prevent cross-type over-filtering; weekly_focus has no dedup key (singletons)
+- **Phase 52 Plan 02:** Global progress scale formula: globalPct = (passIdx / 3) * 100 + (passProgressPct / 3) for smooth 0-33-66-100 progression
+- **Phase 52 Plan 02:** isAlreadyIngested imported from lib/extraction-types.ts (local worker copy removed — was stale and missing wbs_task, arch_node, focus_area, e2e_workflow cases)
 
 ### Roadmap Evolution
 
@@ -175,6 +179,7 @@ Progress: [██████████] 100% (27/27 plans in current mileston
 - Phase 51 added: Extraction Intelligence Overhaul — Full Tab Coverage (Gaps A–J: before_state entity, wbs orphan fallback, arch_node graceful degradation, team_engagement dead-end fix, prompt disambiguation + status coercers, per-entity write feedback, weekly_focus extraction, team_pathway verification, workstream disambiguation, arch_node track guidance)
 - Phase 52 added: Multi-pass targeted extraction for full tab coverage (real doc test showed 0 onboarding_step/wbs_task/arch_node/e2e_workflow extracted — single-pass prompt insufficient; see .planning/extraction-intelligence-gap.md)
 - Phase 52 Plan 01 complete: Wave 0 RED stubs (21 tests) establish behavioral contract for 3-pass extraction, intra-batch dedup, and pass-aware progress UI
+- Phase 52 Plan 02 complete: 3-pass extraction loop implemented (pass 1: actions/risks/tasks, pass 2: architecture, pass 3: teams/delivery), intra-batch dedup with composite keys, global progress scale (0-33-66-100), isAlreadyIngested imported from lib
 
 ## Blockers/Concerns
 
@@ -191,7 +196,7 @@ Progress: [██████████] 100% (27/27 plans in current mileston
 
 ## Session Continuity
 
-Last session: 2026-04-09T23:36:46Z
-Stopped at: Phase 52 Plan 01 complete (Wave 0 RED test stubs for multi-pass extraction)
-Resume file: .planning/phases/52-multi-pass-targeted-extraction-for-full-tab-coverage/52-01-SUMMARY.md
+Last session: 2026-04-09T23:48:19.753Z
+Stopped at: Completed 52-02-PLAN.md
+Resume file: None
 Next action: Execute Phase 52 Plan 02 (Wave 1 implementation: 3-pass worker, PASS_PROMPTS, deduplicateWithinBatch)

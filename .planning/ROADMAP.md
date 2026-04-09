@@ -296,7 +296,7 @@ Plans:
 **Goal:** Extraction recall improved by replacing single-pass Claude call with 3 focused entity-group passes per document; all passes merged and deduped before review queue; IngestionModal shows pass-aware progress labels
 **Requirements**: MULTI-PASS-01, MULTI-PASS-02, MULTI-PASS-03
 **Depends on:** Phase 51
-**Plans:** 3 plans
+**Plans:** 2/3 plans executed
 
 Plans:
 - [ ] 52-01-PLAN.md — Wave 0 TDD stubs: document-extraction-passes.test.ts + document-extraction-dedup.test.ts + ingestion-modal-pass-progress.test.ts (all RED)
