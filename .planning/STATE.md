@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v6.0
 milestone_name: — Dashboard, Navigation & Intelligence
 status: executing
-stopped_at: Completed 49-01-PLAN.md
-last_updated: "2026-04-09T02:45:56.770Z"
-last_activity: "2026-04-09 — Phase 49 Plan 00 complete (Portfolio RED test scaffolds: 35 tests across 4 files)"
+stopped_at: Completed 49-02-PLAN.md
+last_updated: "2026-04-09T02:57:01.529Z"
+last_activity: 2026-04-09 — Phase 49 Plan 01 complete (Portfolio data query and table component)
 progress:
   total_phases: 9
-  completed_phases: 7
+  completed_phases: 8
   total_plans: 18
-  completed_plans: 17
-  percent: 99
+  completed_plans: 18
+  percent: 100
 ---
 
 # Project State
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 
 ## Current Position
 
-Phase: 49 (Portfolio Dashboard) — Plan 49-01 complete
-Status: Executing Phase 49
-Last activity: 2026-04-09 — Phase 49 Plan 01 complete (Portfolio data query and table component)
+Phase: 49 (Portfolio Dashboard) — Phase complete
+Status: Phase 49 complete
+Last activity: 2026-04-09 — Phase 49 Plan 02 complete (Portfolio dashboard UI with health summary chips and exceptions panel)
 
-Progress: [██████████] 100% (221/222 plans in project complete)
+Progress: [██████████] 100% (222/222 plans in project complete)
 
 ## Milestone History
 
@@ -126,6 +126,12 @@ Progress: [██████████] 100% (221/222 plans in project comple
 - **Phase 49 Plan 01:** Dependency status from blocked tasks: any non-completed task with blocked_by FK = Blocked
 - **Phase 49 Plan 01:** Collapsible filter panel (not inline) with active filter count badge for cleaner table header
 
+- **Phase 49 Plan 02:** Health summary uses stat chips only (no Recharts) for fast render and zero extra dependencies
+- **Phase 49 Plan 02:** Exceptions panel positioned below table — keeps critical table data above fold, exceptions are secondary anomaly surface
+- **Phase 49 Plan 02:** Full dashboard replacement — removed all old widgets (Morning Briefing, Risk Heat Map, Watch List, HealthCards, Quick Actions, Activity Feed, Drafts Inbox)
+- **Phase 49 Plan 02:** Exception panel defaults to expanded if exceptions exist, collapsed if empty
+- **Phase 49 Plan 02:** Overdue milestone detection uses nextMilestoneDate < today comparison with date normalization
+
 ### Roadmap Evolution
 
 - Phase 50 added: Extraction Intelligence — Full-spectrum prompt rewrite and semantic post-classifier to surface all entity types from any document across every project tab
@@ -146,7 +152,7 @@ Progress: [██████████] 100% (221/222 plans in project comple
 
 ## Session Continuity
 
-Last session: 2026-04-09T02:45:56.768Z
-Stopped at: Completed 49-01-PLAN.md
+Last session: 2026-04-09T02:57:01.527Z
+Stopped at: Completed 49-02-PLAN.md
 Resume file: None
 Next action: Phase 48.1 complete — proceed to Phase 49 (Portfolio Dashboard)
