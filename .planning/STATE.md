@@ -148,6 +148,7 @@ Progress: [██████████] 100% (22/22 plans in current mileston
 
 - Phase 50 added: Extraction Intelligence — Full-spectrum prompt rewrite and semantic post-classifier to surface all entity types from any document across every project tab
 - Phase 48.1 inserted after Phase 48: Architecture diagram group rendering, TeamOnboardingTable relocation, and extraction prompt coverage (URGENT)
+- Phase 51 added: Extraction Intelligence Overhaul — Full Tab Coverage (Gaps A–J: before_state entity, wbs orphan fallback, arch_node graceful degradation, team_engagement dead-end fix, prompt disambiguation + status coercers, per-entity write feedback, weekly_focus extraction, team_pathway verification, workstream disambiguation, arch_node track guidance)
 
 ## Blockers/Concerns
 
