@@ -29,6 +29,7 @@ import {
   archTracks,
   archNodes,
   archTeamStatus,
+  onboardingPhases,
 } from '../db/schema';
 import { eq, and, inArray, lt, ne, gt, or, desc, asc } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
@@ -1246,4 +1247,136 @@ export async function getArchTeamStatus(projectId: number): Promise<ArchTeamStat
     .select()
     .from(archTeamStatus)
     .where(eq(archTeamStatus.project_id, projectId));
+}
+
+// ─── Phase 49: Portfolio Dashboard ───────────────────────────────────────────
+
+export interface PortfolioProject extends ProjectWithHealth {
+  owner: string | null;
+  tracks: string;
+  currentPhase: string | null;
+  percentComplete: number | null;
+  nextMilestone: string | null;
+  nextMilestoneDate: string | null;
+  riskLevel: 'None' | 'Medium' | 'High';
+  dependencyStatus: 'Clear' | 'Blocked';
+}
+
+/**
+ * Returns enriched portfolio data for all active projects.
+ * Used by Phase 49 Portfolio Dashboard.
+ *
+ * Fetches all active projects with health data, then enriches with:
+ * - Owner (from ADR workstream lead)
+ * - Tracks (distinct workstream tracks)
+ * - Current onboarding phase
+ * - Percent complete (average of workstreams)
+ * - Next milestone and date
+ * - Risk level (derived from highRisks count)
+ * - Dependency status (from blocked tasks)
+ */
+export async function getPortfolioData(): Promise<PortfolioProject[]> {
+  // Fetch all active projects with health data first
+  const projectsWithHealth = await getActiveProjects();
+
+  // Enrich each project in parallel
+  const portfolioProjects = await Promise.all(
+    projectsWithHealth.map(async (project) => {
+      const [
+        workstreamData,
+        onboardingData,
+        milestoneData,
+        blockedTaskData,
+      ] = await Promise.all([
+        // Query 1: Workstreams for owner and tracks
+        db
+          .select()
+          .from(workstreams)
+          .where(eq(workstreams.project_id, project.id)),
+
+        // Query 2: Onboarding phases for current phase
+        db
+          .select()
+          .from(onboardingPhases)
+          .where(eq(onboardingPhases.project_id, project.id))
+          .orderBy(asc(onboardingPhases.display_order)),
+
+        // Query 3: Milestones for next upcoming milestone
+        db
+          .select()
+          .from(milestones)
+          .where(eq(milestones.project_id, project.id)),
+
+        // Query 4: Tasks with blocked_by for dependency status
+        db
+          .select({ count: sql<number>`count(*)::int` })
+          .from(tasks)
+          .where(
+            and(
+              eq(tasks.project_id, project.id),
+              sql`${tasks.blocked_by} IS NOT NULL`,
+              ne(tasks.status, 'completed')
+            )
+          ),
+      ]);
+
+      // Derive owner: first ADR workstream with non-null lead
+      const adrWorkstream = workstreamData.find(w => w.track === 'ADR' && w.lead);
+      const owner = adrWorkstream?.lead ?? null;
+
+      // Derive tracks: distinct track values joined
+      const uniqueTracks = [...new Set(workstreamData.map(w => w.track).filter(Boolean))];
+      const tracks = uniqueTracks.join(' + ');
+
+      // Derive current phase: first phase that's not completed, or last phase if all complete
+      // For now, we'll use the first phase (Phase 49 hasn't implemented onboarding_phases.status yet)
+      const currentPhase = onboardingData[0]?.name ?? null;
+
+      // Derive percent complete: average of workstreams.percent_complete
+      const workstreamsWithProgress = workstreamData.filter(w => w.percent_complete !== null);
+      const percentComplete = workstreamsWithProgress.length > 0
+        ? Math.round(
+            workstreamsWithProgress.reduce((sum, w) => sum + (w.percent_complete ?? 0), 0) /
+            workstreamsWithProgress.length
+          )
+        : null;
+
+      // Derive next milestone: nearest upcoming milestone (date >= today, status !== 'completed')
+      const today = new Date().toISOString().split('T')[0];
+      const upcomingMilestones = milestoneData.filter(m => {
+        if (m.status === 'completed') return false;
+        if (!m.date) return false;
+        // Only consider ISO-ish dates (YYYY-MM-DD format)
+        if (!/^\d{4}-\d{2}-\d{2}/.test(m.date)) return false;
+        return m.date >= today;
+      }).sort((a, b) => (a.date ?? '').localeCompare(b.date ?? ''));
+
+      const nextMilestone = upcomingMilestones[0]?.name ?? null;
+      const nextMilestoneDate = upcomingMilestones[0]?.date ?? null;
+
+      // Derive risk level: highRisks === 0 → 'None', 1-2 → 'Medium', 3+ → 'High'
+      const riskLevel: 'None' | 'Medium' | 'High' =
+        project.highRisks === 0 ? 'None' :
+        project.highRisks <= 2 ? 'Medium' :
+        'High';
+
+      // Derive dependency status: any blocked task → 'Blocked', else 'Clear'
+      const blockedCount = blockedTaskData[0]?.count ?? 0;
+      const dependencyStatus: 'Clear' | 'Blocked' = blockedCount > 0 ? 'Blocked' : 'Clear';
+
+      return {
+        ...project,
+        owner,
+        tracks,
+        currentPhase,
+        percentComplete,
+        nextMilestone,
+        nextMilestoneDate,
+        riskLevel,
+        dependencyStatus,
+      };
+    })
+  );
+
+  return portfolioProjects;
 }
