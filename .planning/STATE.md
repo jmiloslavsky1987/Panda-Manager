@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v6.0
 milestone_name: — Dashboard, Navigation & Intelligence
 status: in_progress
-stopped_at: Phase 50 Plan 01 complete
-last_updated: "2026-04-09T04:40:00.000Z"
-last_activity: 2026-04-09 — Phase 50 Plan 01 complete (Wave 0 test scaffolds + Gap 1/2 fixes)
+stopped_at: Phase 50 Plan 02 complete
+last_updated: "2026-04-09T04:55:00.000Z"
+last_activity: 2026-04-09 — Phase 50 Plan 02 complete (focus_area and e2e_workflow full pipeline)
 progress:
   total_phases: 10
   completed_phases: 8
   total_plans: 22
-  completed_plans: 20
-  percent: 91
+  completed_plans: 21
+  percent: 95
 ---
 
 # Project State
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 
 ## Current Position
 
-Phase: 50 (Extraction Intelligence) — Plan 01/03 complete
+Phase: 50 (Extraction Intelligence) — Plan 02/03 complete
 Status: Phase 50 in progress
-Last activity: 2026-04-09 — Phase 50 Plan 01 complete (Wave 0 test scaffolds + Gap 1/2 fixes)
+Last activity: 2026-04-09 — Phase 50 Plan 02 complete (focus_area and e2e_workflow full pipeline)
 
-Progress: [█████████░] 91% (20/22 plans in current milestone complete)
+Progress: [█████████░] 95% (21/22 plans in current milestone complete)
 
 ## Milestone History
 
@@ -136,6 +136,10 @@ Progress: [█████████░] 91% (20/22 plans in current milestone
 - **Phase 50 Plan 01:** Mock infrastructure limitation: Can't verify specific table names in Vitest mocks — verified via code inspection
 - **Phase 50 Plan 01:** Source-only attribution for teamOnboardingStatus: Uses source='ingestion' field only (no source_artifact_id/ingested_at per schema)
 - **Phase 50 Plan 01:** coerceTrackStatus maps 4 status values (live/in_progress/pilot/planned) with flexible input synonyms
+- **Phase 50 Plan 02:** Composite key dedup for e2e_workflow: both workflow_name AND team_name with ilike prefix match
+- **Phase 50 Plan 02:** JSON parse fallback for e2e_workflow steps: malformed JSON defaults to empty array (never blocks parent insert)
+- **Phase 50 Plan 02:** Full attribution for focusAreas and e2eWorkflows: source='ingestion' + source_artifact_id + ingested_at
+- **Phase 50 Plan 02:** workflowSteps has no attribution columns — inherits lineage via workflow_id FK to parent e2eWorkflows row
 
 ### Roadmap Evolution
 

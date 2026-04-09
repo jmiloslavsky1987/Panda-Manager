@@ -271,7 +271,7 @@ Phases execute in numeric order: 43 → 44 → 45 → 46 → 47 → 48 → 49
 **Goal:** Every entity type extractable from documents has a working end-to-end path: prompt guidance → staged item → approved commit → correct DB table. All gaps introduced by phases 45–48.1 are closed.
 **Requirements**: TBD
 **Depends on:** Phase 49
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 
 Plans:
 - [ ] 50-01-PLAN.md — Wave 0 RED test stubs (Gaps 1-5) + Fix Gap 1 (team → teamOnboardingStatus) + Gap 2 (architecture integration_group)
