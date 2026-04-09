@@ -12,6 +12,10 @@ import { IngestionStepper } from './IngestionStepper'
 import { ExtractionPreview } from './ExtractionPreview'
 import type { ExtractionItem } from '@/lib/extraction-types'
 
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const PASS_LABELS = ['Project data', 'Architecture', 'Teams & delivery']
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface ReviewItem extends ExtractionItem {
@@ -109,16 +113,14 @@ export function IngestionModal({
 
           if (data.status === 'running' || data.status === 'pending') {
             const progress_pct = data.progress_pct || 0
-            const current_chunk = data.current_chunk || 0
-            const total_chunks = data.total_chunks || 0
-
-            if (total_chunks > 0) {
-              setExtractionMessage(
-                `${progress_pct}% — Processing chunk ${current_chunk} of ${total_chunks}`
-              )
-            } else {
-              setExtractionMessage(`Extracting ${file.name}...`)
-            }
+            // Pass-aware message using global progress scale (0-33: pass 1, 34-66: pass 2, 67-100: pass 3)
+            const passIdx = progress_pct <= 33 ? 0 : progress_pct <= 66 ? 1 : 2
+            const passLabel = PASS_LABELS[passIdx]
+            const passNum = passIdx + 1
+            const passStartPct = passIdx * 34  // 0, 34, 68 for passes 1, 2, 3
+            const withinPassRaw = Math.round(Math.max(0, progress_pct - passStartPct) * 3)
+            const withinPassPct = Math.min(100, withinPassRaw)
+            setExtractionMessage(`Pass ${passNum} of 3 — ${passLabel} (${withinPassPct}%)`)
           } else if (data.status === 'failed') {
             setFileStatuses(prev => prev.map((f, i) =>
               i === idx ? { ...f, status: 'error' } : f
