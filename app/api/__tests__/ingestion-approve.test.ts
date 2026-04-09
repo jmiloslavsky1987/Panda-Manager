@@ -88,13 +88,16 @@ describe('POST /api/ingestion/approve — Gaps 1-4', () => {
     expect(res.status).toBe(200)
 
     const body = await res.json()
-    expect(body.written).toBe(1)
+
+    // Gap F: written is now a Record, not an integer
+    const totalWritten = Object.values(body.written as Record<string, number>).reduce((sum, n) => sum + n, 0)
+    expect(totalWritten).toBe(1)
 
     // Gap 1 verification: team entity successfully inserts
     // Code-level fix confirmed: approve/route.ts now uses teamOnboardingStatus (not focusAreas)
     // Mock limitation: can't easily verify specific table in test — verified via code inspection
     // The important assertion is that the handler completes successfully (written=1)
-    expect(body.written).toBe(1)
+    expect(totalWritten).toBe(1)
   })
 
   it('Gap 2: architecture entity includes integration_group field', async () => {
@@ -126,7 +129,10 @@ describe('POST /api/ingestion/approve — Gaps 1-4', () => {
     expect(res.status).toBe(200)
 
     const body = await res.json()
-    expect(body.written).toBe(1)
+
+    // Gap F: written is now a Record, not an integer
+    const totalWritten = Object.values(body.written as Record<string, number>).reduce((sum, n) => sum + n, 0)
+    expect(totalWritten).toBe(1)
 
     // Gap 2 assertion: integration_group should be included in the insert
     // This will FAIL because current code doesn't include integration_group
@@ -161,9 +167,12 @@ describe('POST /api/ingestion/approve — Gaps 1-4', () => {
 
     const body = await res.json()
 
+    // Gap F: written is now a Record, not an integer
+    const totalWritten = Object.values(body.written as Record<string, number>).reduce((sum, n) => sum + n, 0)
+
     // Gap 3 assertion: focus_area should be processed (count === 1)
     // This will FAIL because 'focus_area' is not in the Zod enum → filtered out → count === 0
-    expect(body.written).toBe(1)
+    expect(totalWritten).toBe(1)
   })
 
   it('Gap 4: e2e_workflow entity returns 200 with processed count 1', async () => {
@@ -193,8 +202,11 @@ describe('POST /api/ingestion/approve — Gaps 1-4', () => {
 
     const body = await res.json()
 
+    // Gap F: written is now a Record, not an integer
+    const totalWritten = Object.values(body.written as Record<string, number>).reduce((sum, n) => sum + n, 0)
+
     // Gap 4 assertion: e2e_workflow should be processed (count === 1)
     // This will FAIL because 'e2e_workflow' is not in the Zod enum → filtered out → count === 0
-    expect(body.written).toBe(1)
+    expect(totalWritten).toBe(1)
   })
 })

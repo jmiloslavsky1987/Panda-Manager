@@ -1533,8 +1533,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   // 3. Process approved items
   const conflicts: Array<{ itemIndex: number; existingId: number; existingRecord: { id: number } }> = [];
-  let written = 0;
-  let skipped = 0;
+  const written: Record<string, number> = {};
+  const skipped: Record<string, number> = {};
+  const errors: Array<{ entityType: string; error: string }> = [];
   const rejected = items.filter(i => !i.approved).length;
   let unresolvedMilestoneCount = 0;
   let unresolvedWorkstreamCount = 0;
@@ -1551,7 +1552,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     if (existing) {
       // Append-only types: auto-skip on conflict (no merge/replace allowed)
       if (APPEND_ONLY_TYPES.has(item.entityType as EntityType)) {
-        skipped++;
+        skipped[item.entityType] = (skipped[item.entityType] ?? 0) + 1;
         continue;
       }
 
@@ -1563,7 +1564,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
       switch (item.conflictResolution) {
         case 'skip':
-          skipped++;
+          skipped[item.entityType] = (skipped[item.entityType] ?? 0) + 1;
           break;
 
         case 'replace': {
@@ -1573,14 +1574,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             const counts = await insertItem(item, projectId, artifactId);
             unresolvedMilestoneCount += counts.unresolvedMilestones;
             unresolvedWorkstreamCount += counts.unresolvedWorkstreams;
-            written++;
+            written[item.entityType] = (written[item.entityType] ?? 0) + 1;
           } catch (err) {
             // Gap C: arch_node track-not-found → skip gracefully
             if ((err as any).skipEntity === true) {
               console.warn(`[approve] Skipping ${item.entityType}: ${(err as Error).message}`);
-              skipped++;
+              skipped[item.entityType] = (skipped[item.entityType] ?? 0) + 1;
             } else {
-              throw err; // re-throw all other errors
+              // Gap F: accumulate silently surfaced errors instead of re-throwing
+              console.error(`[approve] Failed to insert ${item.entityType}:`, err);
+              errors.push({ entityType: item.entityType, error: (err as Error).message });
             }
           }
           break;
@@ -1592,14 +1595,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             const counts = await mergeItem(item, idToMerge, artifactId, projectId);
             unresolvedMilestoneCount += counts.unresolvedMilestones;
             unresolvedWorkstreamCount += counts.unresolvedWorkstreams;
-            written++;
+            written[item.entityType] = (written[item.entityType] ?? 0) + 1;
           } catch (err) {
             // Gap C: arch_node track-not-found → skip gracefully
             if ((err as any).skipEntity === true) {
               console.warn(`[approve] Skipping ${item.entityType}: ${(err as Error).message}`);
-              skipped++;
+              skipped[item.entityType] = (skipped[item.entityType] ?? 0) + 1;
             } else {
-              throw err; // re-throw all other errors
+              // Gap F: accumulate silently surfaced errors instead of re-throwing
+              console.error(`[approve] Failed to insert ${item.entityType}:`, err);
+              errors.push({ entityType: item.entityType, error: (err as Error).message });
             }
           }
           break;
@@ -1611,14 +1616,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         const counts = await insertItem(item, projectId, artifactId);
         unresolvedMilestoneCount += counts.unresolvedMilestones;
         unresolvedWorkstreamCount += counts.unresolvedWorkstreams;
-        written++;
+        written[item.entityType] = (written[item.entityType] ?? 0) + 1;
       } catch (err) {
         // Gap C: arch_node track-not-found → skip gracefully
         if ((err as any).skipEntity === true) {
           console.warn(`[approve] Skipping ${item.entityType}: ${(err as Error).message}`);
-          skipped++;
+          skipped[item.entityType] = (skipped[item.entityType] ?? 0) + 1;
         } else {
-          throw err; // re-throw all other errors
+          // Gap F: accumulate silently surfaced errors instead of re-throwing
+          console.error(`[approve] Failed to insert ${item.entityType}:`, err);
+          errors.push({ entityType: item.entityType, error: (err as Error).message });
         }
       }
     }
@@ -1630,12 +1637,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   // 5. Update artifact ingestion_log_json and status
-  const approvedCount = items.filter(i => i.approved).length;
+  const totalWritten = Object.values(written).reduce((sum, n) => sum + n, 0);
+  const totalSkipped = Object.values(skipped).reduce((sum, n) => sum + n, 0);
   const log = {
     ...existingLog,
     items_extracted: totalExtracted,
-    items_approved: approvedCount - skipped,
+    items_approved: totalWritten,
     items_rejected: rejected,
+    items_skipped: totalSkipped,
     completed_at: new Date().toISOString(),
   };
 
@@ -1659,7 +1668,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     ? `${parts.join(', ')} — link them manually via the Plan tab`
     : null;
 
-  return NextResponse.json({ written, skipped, rejected, unresolvedRefs }, { status: 200 });
+  return NextResponse.json({ written, skipped, errors, rejected, unresolvedRefs }, { status: 200 });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error('[approve] unhandled error:', err);
