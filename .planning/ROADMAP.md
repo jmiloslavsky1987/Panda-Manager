@@ -283,7 +283,7 @@ Plans:
 **Goal:** All extraction pipeline gaps (A-J) closed: every renderable tab area populatable via document extraction, per-entity approval feedback, graceful error handling
 **Requirements**: GAP-A through GAP-J (scope fully captured in 51-CONTEXT.md)
 **Depends on:** Phase 50
-**Plans:** 4 plans
+**Plans:** 1/4 plans executed
 
 Plans:
 - [ ] 51-01-PLAN.md — Wave 0 RED test stubs: status-coercers.test.ts (Gap E) + weekly-focus-ingestion.test.ts (Gap G)

@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v6.0
 milestone_name: — Dashboard, Navigation & Intelligence
-status: completed
-stopped_at: Completed Phase 50 Plan 03 (Field Coverage Verification)
-last_updated: "2026-04-09T17:07:43.480Z"
-last_activity: 2026-04-09 — Phase 50 Plan 03 complete (field coverage verification and Gap 6 closure)
+status: in_progress
+stopped_at: Completed Phase 51 Plan 01 (Wave 0 RED Test Stubs)
+last_updated: "2026-04-09T18:12:30Z"
+last_activity: 2026-04-09 — Phase 51 Plan 01 complete (Wave 0 RED test stubs for Gaps E and G)
 progress:
-  total_phases: 9
+  total_phases: 10
   completed_phases: 9
-  total_plans: 22
-  completed_plans: 22
-  percent: 100
+  total_plans: 26
+  completed_plans: 23
+  percent: 88
 ---
 
 # Project State
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 
 ## Current Position
 
-Phase: 50 (Extraction Intelligence) — Plan 03/03 complete
-Status: Phase 50 complete
-Last activity: 2026-04-09 — Phase 50 Plan 03 complete (field coverage verification and Gap 6 closure)
+Phase: 51 (Extraction Intelligence Overhaul) — Plan 01/04 complete
+Status: Phase 51 in progress
+Last activity: 2026-04-09 — Phase 51 Plan 01 complete (Wave 0 RED test stubs for Gaps E and G)
 
-Progress: [██████████] 100% (22/22 plans in current milestone complete)
+Progress: [█████████░] 88% (23/26 plans in current milestone complete)
 
 ## Milestone History
 
@@ -51,6 +51,8 @@ Progress: [██████████] 100% (22/22 plans in current mileston
 | 47 | Work Breakdown Structure | WBS-04–05 | 2 |
 | 48 | Architecture & Team Engagement | ARCH-01–03, TEAM-01, TEAM-03–04 | 2 |
 | 49 | Portfolio Dashboard | DASH-01–06 | 1 |
+| 50 | Extraction Intelligence | GAP-1 through GAP-6 | 3 |
+| 51 | Extraction Intelligence Overhaul | GAP-A through GAP-J | 4 |
 
 **Coverage:** 25/25 requirements mapped ✓
 
@@ -144,6 +146,11 @@ Progress: [██████████] 100% (22/22 plans in current mileston
 - **Phase 50 Plan 03:** onboarding_step schema limitation documented: track and completed_date in prompt but not in DB schema (prompt-only hints for extraction)
 - **Phase 50 Plan 03:** Field coverage verification methodology established (prompt → insertItem → schema trace)
 
+- **Phase 51 Plan 01:** Wave 0 TDD approach: Created RED test stubs for Gaps E and G before Wave 1 implementation
+- **Phase 51 Plan 01:** Coercer testing strategy: Direct import of coercers module functions for unit testing (coercers.ts created in Plan 51-03 as blocking dependency)
+- **Phase 51 Plan 01:** Redis mock pattern: Mock @/worker/connection.createApiRedisConnection() with set/quit/connect methods
+- **Phase 51 Plan 01:** weekly_focus TTL: 7 days (604800 seconds) for Redis keys storing focus bullets
+
 ### Roadmap Evolution
 
 - Phase 50 added: Extraction Intelligence — Full-spectrum prompt rewrite and semantic post-classifier to surface all entity types from any document across every project tab
@@ -165,7 +172,7 @@ Progress: [██████████] 100% (22/22 plans in current mileston
 
 ## Session Continuity
 
-Last session: 2026-04-09T16:09:56.654Z
-Stopped at: Completed Phase 50 Plan 03 (Field Coverage Verification)
+Last session: 2026-04-09T18:12:30Z
+Stopped at: Completed Phase 51 Plan 01 (Wave 0 RED Test Stubs)
 Resume file: None
-Next action: Phase 48.1 complete — proceed to Phase 49 (Portfolio Dashboard)
+Next action: Proceed to Phase 51 Plan 02 (Gap E & G implementations)
