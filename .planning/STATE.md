@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v6.0
 milestone_name: — Dashboard, Navigation & Intelligence
 status: completed
-stopped_at: Phase 52 context gathered
-last_updated: "2026-04-09T23:07:38.330Z"
-last_activity: 2026-04-09 — Phase 51 Plan 04 complete (Per-entity approval feedback with UI display)
+stopped_at: Phase 52 Plan 01 complete (Wave 0 RED test stubs for multi-pass extraction)
+last_updated: "2026-04-09T23:36:46Z"
+last_activity: 2026-04-09 — Phase 52 Plan 01 complete (Wave 0 RED test stubs for multi-pass extraction)
 progress:
-  total_phases: 11
+  total_phases: 12
   completed_phases: 10
-  total_plans: 26
-  completed_plans: 26
+  total_plans: 27
+  completed_plans: 27
   percent: 100
 ---
 
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 
 ## Current Position
 
-Phase: 51 (Extraction Intelligence Overhaul) — Plan 04/04 complete
-Status: Phase 51 complete
-Last activity: 2026-04-09 — Phase 51 Plan 04 complete (Per-entity approval feedback with UI display)
+Phase: 52 (Multi-pass Targeted Extraction for Full Tab Coverage) — Plan 01 complete
+Status: Phase 52 in progress
+Last activity: 2026-04-09 — Phase 52 Plan 01 complete (Wave 0 RED test stubs for multi-pass extraction)
 
-Progress: [██████████] 100% (26/26 plans in current milestone complete)
+Progress: [██████████] 100% (27/27 plans in current milestone complete)
 
 ## Milestone History
 
@@ -53,8 +53,9 @@ Progress: [██████████] 100% (26/26 plans in current mileston
 | 49 | Portfolio Dashboard | DASH-01–06 | 1 |
 | 50 | Extraction Intelligence | GAP-1 through GAP-6 | 3 |
 | 51 | Extraction Intelligence Overhaul | GAP-A through GAP-J | 4 |
+| 52 | Multi-pass Targeted Extraction | MULTI-PASS-01–03 | 3 |
 
-**Coverage:** 25/25 requirements mapped ✓
+**Coverage:** 28/28 requirements mapped ✓
 
 ## Accumulated Context
 
@@ -162,12 +163,18 @@ Progress: [██████████] 100% (26/26 plans in current mileston
 - **Phase 51 Plan 04:** Errors array accumulates instead of throwing to preserve batch resilience
 - **Phase 51 Plan 04:** IngestionModal 'done' stage displays entity-type breakdown with color-coded sections (written/skipped/errors)
 
+- **Phase 52 Plan 01:** Wave 0 TDD approach: Created 21 RED test stubs (6 pass structure + 9 dedup + 6 UI progress) before Wave 1 implementation
+- **Phase 52 Plan 01:** Dynamic import with try/catch pattern for tests importing functions that don't exist yet
+- **Phase 52 Plan 01:** Source inspection testing for IngestionModal pass-aware progress (consistent with Phase 48/51 patterns)
+- **Phase 52 Plan 01:** Composite key dedup tests cover wbs_task (title+track), e2e_workflow (workflow_name+team_name), arch_node (node_name+track)
+
 ### Roadmap Evolution
 
 - Phase 50 added: Extraction Intelligence — Full-spectrum prompt rewrite and semantic post-classifier to surface all entity types from any document across every project tab
 - Phase 48.1 inserted after Phase 48: Architecture diagram group rendering, TeamOnboardingTable relocation, and extraction prompt coverage (URGENT)
 - Phase 51 added: Extraction Intelligence Overhaul — Full Tab Coverage (Gaps A–J: before_state entity, wbs orphan fallback, arch_node graceful degradation, team_engagement dead-end fix, prompt disambiguation + status coercers, per-entity write feedback, weekly_focus extraction, team_pathway verification, workstream disambiguation, arch_node track guidance)
 - Phase 52 added: Multi-pass targeted extraction for full tab coverage (real doc test showed 0 onboarding_step/wbs_task/arch_node/e2e_workflow extracted — single-pass prompt insufficient; see .planning/extraction-intelligence-gap.md)
+- Phase 52 Plan 01 complete: Wave 0 RED stubs (21 tests) establish behavioral contract for 3-pass extraction, intra-batch dedup, and pass-aware progress UI
 
 ## Blockers/Concerns
 
@@ -184,7 +191,7 @@ Progress: [██████████] 100% (26/26 plans in current mileston
 
 ## Session Continuity
 
-Last session: 2026-04-09T23:07:38.325Z
-Stopped at: Phase 52 context gathered
-Resume file: .planning/phases/52-multi-pass-targeted-extraction-for-full-tab-coverage/52-CONTEXT.md
-Next action: v6.0 milestone complete — all 10 phases and 26 plans executed successfully
+Last session: 2026-04-09T23:36:46Z
+Stopped at: Phase 52 Plan 01 complete (Wave 0 RED test stubs for multi-pass extraction)
+Resume file: .planning/phases/52-multi-pass-targeted-extraction-for-full-tab-coverage/52-01-SUMMARY.md
+Next action: Execute Phase 52 Plan 02 (Wave 1 implementation: 3-pass worker, PASS_PROMPTS, deduplicateWithinBatch)
