@@ -193,9 +193,9 @@ describe('Dedup and conflict detection (ING-08, ING-11, ING-12)', () => {
 
     const res = await POST(req);
     expect(res.status).toBe(200);
-    const body = await res.json() as { written: number; skipped: number; rejected: number };
-    expect(body.skipped).toBe(1);
-    expect(body.written).toBe(0);
+    const body = await res.json() as { written: Record<string, number>; skipped: Record<string, number>; rejected: number };
+    expect(Object.values(body.skipped).reduce((a, b) => a + b, 0)).toBe(1);
+    expect(Object.values(body.written).reduce((a, b) => a + b, 0)).toBe(0);
     // insert should NOT have been called
     expect(vi.mocked(db.insert)).not.toHaveBeenCalled();
   });
@@ -240,8 +240,8 @@ describe('Dedup and conflict detection (ING-08, ING-11, ING-12)', () => {
 
     const res = await POST(req);
     expect(res.status).toBe(200);
-    const body = await res.json() as { written: number; skipped: number; rejected: number };
-    expect(body.written).toBe(1);
+    const body = await res.json() as { written: Record<string, number>; skipped: Record<string, number>; rejected: number };
+    expect(Object.values(body.written).reduce((a, b) => a + b, 0)).toBe(1);
     // delete was called
     expect(vi.mocked(db.delete)).toHaveBeenCalled();
     // insert was called
