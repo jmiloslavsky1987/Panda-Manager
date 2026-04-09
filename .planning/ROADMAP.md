@@ -271,15 +271,9 @@ Phases execute in numeric order: 43 → 44 → 45 → 46 → 47 → 48 → 49
 **Goal:** Every entity type extractable from documents has a working end-to-end path: prompt guidance → staged item → approved commit → correct DB table. All gaps introduced by phases 45–48.1 are closed.
 **Requirements**: TBD
 **Depends on:** Phase 49
-**Plans:** 4/4 plans complete
-
-Known gaps to close (from phases 45–48.1):
-1. **`team` commit handler broken** — currently writes to `focus_areas` (wrong). Must write to `team_onboarding_status` with all 5 fields: `ingest_status`, `correlation_status`, `incident_intelligence_status`, `sn_automation_status`, `biggy_ai_status`. Fix: `app/api/ingestion/approve/route.ts` case `'team'`.
-2. **`architecture` commit handler missing `integration_group`** — field is in schema + prompt but not written on approve. Fix: add `integration_group: f.integration_group ?? null` to the insert in `approve/route.ts` case `'architecture'`.
-3. **`focus_area` has no commit handler** — entity type added in 48.1 with prompt + EntityType but no case in `approve/route.ts`. Must insert to `focus_areas` table with: `title`, `tracks`, `why_it_matters`, `current_status`, `next_step`, `bp_owner`, `customer_owner`.
-4. **`e2e_workflow` has no commit handler** — entity type added in 48.1 with prompt + EntityType but no case in `approve/route.ts`. Must insert to `e2e_workflows` + `workflow_steps` tables using: `team_name`, `workflow_name`, `steps[]`.
-5. **`isAlreadyIngested` dedup missing** for `focus_area`, `e2e_workflow` — both fall to `default: return false` (always surfaces as new). Add dedup checks against `focus_areas.title` and `e2e_workflows.workflow_name + team_name`.
-6. **Prompt coverage review** — verify `wbs_task`, `team_engagement`, `arch_node`, `onboarding_step` commit paths are end-to-end correct (added in Phase 46 but not re-verified after schema changes in 45/48).
+**Plans:** 3 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 50 to break down)
+- [ ] 50-01-PLAN.md — Wave 0 RED test stubs (Gaps 1-5) + Fix Gap 1 (team → teamOnboardingStatus) + Gap 2 (architecture integration_group)
+- [ ] 50-02-PLAN.md — New entity handlers: focus_area + e2e_workflow (Zod enum, findConflict, insertItem, dedup in lib/extraction-types.ts)
+- [ ] 50-03-PLAN.md — Gap 6 prompt coverage review: wbs_task/team_engagement/arch_node/onboarding_step field trace + fixes + human verification
