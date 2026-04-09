@@ -23,6 +23,7 @@ import {
   teamEngagementSections,
   archNodes,
   archTracks,
+  teamOnboardingStatus,
 } from '@/db/schema';
 import type { EntityType, ExtractionItem } from '@/lib/extraction-types';
 import { requireSession } from "@/lib/auth-server";
@@ -49,7 +50,12 @@ const ApprovalItemSchema = z.object({
 const ApproveRequestSchema = z.object({
   artifactId: z.number(),
   projectId: z.number(),
-  items: z.array(ApprovalItemSchema),
+  items: z.array(z.unknown()).transform(arr =>
+    arr.filter((item): item is z.infer<typeof ApprovalItemSchema> => {
+      const r = ApprovalItemSchema.safeParse(item);
+      return r.success;
+    })
+  ),
   totalExtracted: z.number(),
 });
 
@@ -79,6 +85,17 @@ function coerceRiskSeverity(raw: string | undefined | null): RiskSeverity {
   if (['medium', 'med', 'moderate'].includes(v)) return 'medium';
   if (['low', 'minor'].includes(v)) return 'low';
   return 'medium';
+}
+
+type TrackStatus = 'live' | 'in_progress' | 'pilot' | 'planned';
+function coerceTrackStatus(raw: string | undefined | null): TrackStatus | null {
+  if (!raw) return null;
+  const v = raw.toLowerCase().trim();
+  if (['live', 'production', 'active', 'enabled'].includes(v)) return 'live';
+  if (['in_progress', 'in progress', 'ongoing', 'running'].includes(v)) return 'in_progress';
+  if (['pilot', 'testing', 'trial'].includes(v)) return 'pilot';
+  if (['planned', 'scheduled', 'upcoming', 'not started', 'not_started'].includes(v)) return 'planned';
+  return null;
 }
 
 async function resolveEntityRef(
@@ -204,9 +221,9 @@ async function findConflict(
       const key = normalize(f.team_name);
       if (!key) return null;
       const rows = await db
-        .select({ id: focusAreas.id })
-        .from(focusAreas)
-        .where(and(eq(focusAreas.project_id, projectId), ilike(focusAreas.title, `${key}%`)));
+        .select({ id: teamOnboardingStatus.id })
+        .from(teamOnboardingStatus)
+        .where(and(eq(teamOnboardingStatus.project_id, projectId), ilike(teamOnboardingStatus.team_name, `${key}%`)));
       return rows[0] ?? null;
     }
     case 'architecture': {
@@ -485,13 +502,19 @@ async function insertItem(
       return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
 
     case 'team':
-      // team maps to focus_areas table (consistent with extract route)
+      // team maps to teamOnboardingStatus (NOT focusAreas — corrected in Phase 50 Gap 1)
+      // teamOnboardingStatus has source-only attribution (no source_artifact_id / ingested_at)
       await db.transaction(async (tx) => {
-        const [inserted] = await tx.insert(focusAreas).values({
+        const [inserted] = await tx.insert(teamOnboardingStatus).values({
           project_id: projectId,
-          title: f.team_name ?? '',
-          tracks: f.track ?? null,
-          ...attribution,
+          team_name: f.team_name ?? '',
+          track: f.track ?? null,
+          ingest_status: coerceTrackStatus(f.ingest_status),
+          correlation_status: coerceTrackStatus(f.correlation_status),
+          incident_intelligence_status: coerceTrackStatus(f.incident_intelligence_status),
+          sn_automation_status: coerceTrackStatus(f.sn_automation_status),
+          biggy_ai_status: coerceTrackStatus(f.biggy_ai_status),
+          source: 'ingestion',
         }).returning();
         await tx.insert(auditLog).values({
           entity_type: item.entityType,
@@ -511,6 +534,7 @@ async function insertItem(
           tool_name: f.tool_name ?? '',
           track: f.track ?? '',
           phase: f.phase ?? null,
+          integration_group: f.integration_group ?? null,  // Gap 2 fix
           integration_method: f.integration_method ?? null,
           notes: f.notes ?? null,
           ...attribution,

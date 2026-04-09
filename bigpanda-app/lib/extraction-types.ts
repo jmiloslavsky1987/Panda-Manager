@@ -27,6 +27,7 @@ import {
   teamEngagementSections,
   archNodes,
   archTracks,
+  teamOnboardingStatus,
 } from '@/db/schema';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -215,16 +216,16 @@ export async function isAlreadyIngested(
     }
 
     case 'team': {
-      // team maps to focus_areas (track-level grouping)
+      // team maps to teamOnboardingStatus (NOT focusAreas — corrected in Phase 50 Gap 1)
       const key = normalize(f.team_name);
       if (!key) return false;
       const rows = await db
-        .select({ id: focusAreas.id })
-        .from(focusAreas)
+        .select({ id: teamOnboardingStatus.id })
+        .from(teamOnboardingStatus)
         .where(
           and(
-            eq(focusAreas.project_id, projectId),
-            ilike(focusAreas.title, `${key}%`),
+            eq(teamOnboardingStatus.project_id, projectId),
+            ilike(teamOnboardingStatus.team_name, `${key}%`),
           ),
         );
       return rows.length > 0;

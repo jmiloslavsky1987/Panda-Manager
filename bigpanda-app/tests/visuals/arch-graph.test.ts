@@ -30,8 +30,8 @@ function buildArchGraph(integrations: ArchitectureIntegration[]) {
 }
 
 const sampleIntegrations: ArchitectureIntegration[] = [
-  { id: 1, project_id: 1, tool_name: 'ServiceNow', track: 'ADR', phase: 'Incident Intelligence', status: 'live', integration_method: 'API', notes: null, source: 'manual', source_artifact_id: null, discovery_source: null, ingested_at: null, created_at: new Date() },
-  { id: 2, project_id: 1, tool_name: 'PagerDuty', track: 'ADR', phase: 'Event Ingest', status: 'in_progress', integration_method: null, notes: 'In progress', source: 'manual', source_artifact_id: null, discovery_source: null, ingested_at: null, created_at: new Date() },
+  { id: 1, project_id: 1, tool_name: 'ServiceNow', track: 'ADR', phase: 'Incident Intelligence', status: 'live', integration_group: null, integration_method: 'API', notes: null, source: 'manual', source_artifact_id: null, discovery_source: null, ingested_at: null, created_at: new Date() },
+  { id: 2, project_id: 1, tool_name: 'PagerDuty', track: 'ADR', phase: 'Event Ingest', status: 'in_progress', integration_group: null, integration_method: null, notes: 'In progress', source: 'manual', source_artifact_id: null, discovery_source: null, ingested_at: null, created_at: new Date() },
 ]
 
 describe('InteractiveArchGraph — data transformation (VIS-02)', () => {
