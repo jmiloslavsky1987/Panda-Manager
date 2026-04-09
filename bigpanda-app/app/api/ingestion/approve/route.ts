@@ -26,9 +26,12 @@ import {
   teamOnboardingStatus,
   e2eWorkflows,
   workflowSteps,
+  beforeState,
 } from '@/db/schema';
 import type { EntityType, ExtractionItem } from '@/lib/extraction-types';
 import { requireSession } from "@/lib/auth-server";
+import { createApiRedisConnection } from '@/worker/connection';
+import { coerceWbsItemStatus, coerceArchNodeStatus } from './coercers';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,6 +44,7 @@ const ApprovalItemSchema = z.object({
     'workstream', 'onboarding_step', 'integration',
     'wbs_task', 'team_engagement', 'arch_node',
     'focus_area', 'e2e_workflow',   // Gap 3+4 — added Phase 50
+    'before_state', 'weekly_focus',  // Gap A+G — added Phase 51
   ]),
   fields: z.record(z.string(), z.union([z.string(), z.null()])).transform(
     f => Object.fromEntries(Object.entries(f).filter(([, v]) => v != null)) as Record<string, string>
@@ -720,6 +724,9 @@ async function insertItem(
         );
 
       const parentId = parentRows.length > 0 ? parentRows[0].id : null;
+      // Gap B fix: if parent not found but parent_section_name was provided, treat as Level 1
+      // (fallback prevents null-parent orphan from floating in UI with no tree position)
+      const fallbackToLevel1 = parentId === null && !!f.parent_section_name?.trim();
 
       // Step 2: Insert wbs_item
       await db.transaction(async (tx) => {
@@ -727,9 +734,9 @@ async function insertItem(
           project_id: projectId,
           name: f.title ?? '',
           track: f.track ?? 'ADR',
-          level: parseInt(f.level ?? '3', 10),
-          parent_id: parentId,
-          status: f.status as 'not_started' | 'in_progress' | 'complete' | undefined ?? 'not_started',
+          level: fallbackToLevel1 ? 1 : parseInt(f.level ?? '3', 10),
+          parent_id: fallbackToLevel1 ? null : parentId,
+          status: coerceWbsItemStatus(f.status) ?? 'not_started',
           source_trace: 'extraction',
           display_order: 999, // append to end; user can reorder
         }).returning();
@@ -742,6 +749,64 @@ async function insertItem(
           before_json: null,
           after_json: inserted as Record<string, unknown>,
         });
+      });
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
+    }
+
+    case 'before_state': {
+      // Parse pain_points: try JSON array, fall back to comma-separated string
+      let painPoints: string[] = [];
+      try {
+        painPoints = JSON.parse(f.pain_points ?? '[]');
+        if (!Array.isArray(painPoints)) painPoints = [];
+      } catch {
+        painPoints = (f.pain_points ?? '').split(',').map(s => s.trim()).filter(Boolean);
+      }
+
+      // Upsert: one row per project (before_state/route.ts pattern)
+      await db.transaction(async (tx) => {
+        const existing = await tx
+          .select({ id: beforeState.id })
+          .from(beforeState)
+          .where(eq(beforeState.project_id, projectId))
+          .limit(1);
+
+        if (existing.length > 0) {
+          // UPDATE existing row
+          await tx.update(beforeState).set({
+            aggregation_hub_name: f.aggregation_hub_name ?? null,
+            alert_to_ticket_problem: f.alert_to_ticket_problem ?? null,
+            pain_points_json: painPoints,
+            source: 'ingestion',
+          }).where(eq(beforeState.project_id, projectId));
+
+          await tx.insert(auditLog).values({
+            entity_type: 'before_state',
+            entity_id: existing[0].id,
+            action: 'update',
+            actor_id: 'default',
+            before_json: null,
+            after_json: { aggregation_hub_name: f.aggregation_hub_name, alert_to_ticket_problem: f.alert_to_ticket_problem, pain_points_json: painPoints } as Record<string, unknown>,
+          });
+        } else {
+          // INSERT new row
+          const [inserted] = await tx.insert(beforeState).values({
+            project_id: projectId,
+            aggregation_hub_name: f.aggregation_hub_name ?? null,
+            alert_to_ticket_problem: f.alert_to_ticket_problem ?? null,
+            pain_points_json: painPoints,
+            source: 'ingestion',
+          }).returning();
+
+          await tx.insert(auditLog).values({
+            entity_type: 'before_state',
+            entity_id: inserted.id,
+            action: 'create',
+            actor_id: 'default',
+            before_json: null,
+            after_json: inserted as Record<string, unknown>,
+          });
+        }
       });
       return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
     }
