@@ -227,18 +227,18 @@ Plans:
 **Requirements**: DASH-01, DASH-02, DASH-03, DASH-04, DASH-05, DASH-06
 **Success Criteria** (what must be TRUE):
   1. User sees portfolio dashboard showing active project count, on track/at risk/off track counts, overdue milestones, and blocked projects
-  2. User sees visual status distribution chart summarizing portfolio health
+  2. User sees visual status distribution (stat chips) summarizing portfolio health
   3. User sees multi-project table with name, owner, team, phase, health, % complete, next milestone, risk level, dependency status, last updated, and exec flag
-  4. User can filter portfolio table by status, owner, team, phase, priority, date, risk level, and dependency state
+  4. User can filter portfolio table by status, owner, team, phase, risk level, and dependency state
   5. User can sort and search the portfolio table
   6. User sees exceptions panel surfacing projects with overdue milestones, stale updates, open blockers, missing ownership, or unresolved dependencies
   7. User clicks a portfolio table row and navigates to that project's workspace
   8. Portfolio dashboard queries complete in <500ms with 20+ projects
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 49-01: [TBD]
-
+- [ ] 49-01-PLAN.md — Query function (getPortfolioData with parallel Promise.all) + PortfolioTableClient with 12-column table and client-side filtering
+- [ ] 49-02-PLAN.md — Page replacement (app/page.tsx) + PortfolioSummaryChips (6 stat chips) + PortfolioExceptionsPanel (5 exception types) + human verification
 ## Progress
 
 **Execution Order:**
@@ -263,7 +263,7 @@ Phases execute in numeric order: 43 → 44 → 45 → 46 → 47 → 48 → 49
 | 46. Context Upload Extraction Expansion | 2/2 | Complete    | 2026-04-08 | - |
 | 47. Work Breakdown Structure | 3/3 | Complete    | 2026-04-08 | - |
 | 48. Architecture & Team Engagement | 3/3 | Complete    | 2026-04-08 | - |
-| 49. Portfolio Dashboard | v6.0 | 0/1 | Not started | - |
+| 49. Portfolio Dashboard | v6.0 | 0/2 | Not started | - |
 
 ### Phase 50: Extraction Intelligence — Full-spectrum prompt rewrite and semantic post-classifier to surface all entity types from any document across every project tab
 
