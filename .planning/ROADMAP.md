@@ -263,14 +263,14 @@ Phases execute in numeric order: 43 → 44 → 45 → 46 → 47 → 48 → 49
 | 46. Context Upload Extraction Expansion | 2/2 | Complete    | 2026-04-08 | - |
 | 47. Work Breakdown Structure | 3/3 | Complete    | 2026-04-08 | - |
 | 48. Architecture & Team Engagement | 3/3 | Complete    | 2026-04-08 | - |
-| 49. Portfolio Dashboard | v6.0 | 0/2 | Not started | - |
+| 49. Portfolio Dashboard | 1/3 | In Progress|  | - |
 
 ### Phase 50: Extraction Intelligence — Full-spectrum prompt rewrite and semantic post-classifier to surface all entity types from any document across every project tab
 
 **Goal:** Every entity type extractable from documents has a working end-to-end path: prompt guidance → staged item → approved commit → correct DB table. All gaps introduced by phases 45–48.1 are closed.
 **Requirements**: TBD
 **Depends on:** Phase 49
-**Plans:** 0/0 plans complete
+**Plans:** 1/3 plans executed
 
 Known gaps to close (from phases 45–48.1):
 1. **`team` commit handler broken** — currently writes to `focus_areas` (wrong). Must write to `team_onboarding_status` with all 5 fields: `ingest_status`, `correlation_status`, `incident_intelligence_status`, `sn_automation_status`, `biggy_ai_status`. Fix: `app/api/ingestion/approve/route.ts` case `'team'`.
