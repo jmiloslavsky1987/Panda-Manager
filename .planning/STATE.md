@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v6.0
 milestone_name: — Dashboard, Navigation & Intelligence
-status: planning
-stopped_at: Completed 49-00-PLAN.md
-last_updated: "2026-04-09T02:39:06.947Z"
-last_activity: 2026-04-08 — Phase 48.1 complete (Architecture group rendering, TeamOnboardingTable relocation, E2E workflow layout, extraction prompt coverage)
+status: executing
+stopped_at: Completed 49-01-PLAN.md
+last_updated: "2026-04-09T02:45:56.770Z"
+last_activity: "2026-04-09 — Phase 49 Plan 00 complete (Portfolio RED test scaffolds: 35 tests across 4 files)"
 progress:
   total_phases: 9
   completed_phases: 7
   total_plans: 18
-  completed_plans: 16
+  completed_plans: 17
   percent: 99
 ---
 
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 
 ## Current Position
 
-Phase: 49 (Portfolio Dashboard) — Plan 49-00 complete
+Phase: 49 (Portfolio Dashboard) — Plan 49-01 complete
 Status: Executing Phase 49
-Last activity: 2026-04-09 — Phase 49 Plan 00 complete (Portfolio RED test scaffolds: 35 tests across 4 files)
+Last activity: 2026-04-09 — Phase 49 Plan 01 complete (Portfolio data query and table component)
 
-Progress: [██████████] 99% (220/222 plans in project complete)
+Progress: [██████████] 100% (221/222 plans in project complete)
 
 ## Milestone History
 
@@ -120,6 +120,12 @@ Progress: [██████████] 99% (220/222 plans in project complet
 - **Phase 49 Plan 00:** Vitest framework confirmed from package.json — using Vitest syntax for all portfolio tests
 - **Phase 49 Plan 00:** Portfolio test directory created at __tests__/portfolio/ for Phase 49 isolation
 
+- **Phase 49 Plan 01:** Promise.all() pattern for parallel per-project enrichment queries (Phase 34 pattern)
+- **Phase 49 Plan 01:** Owner from first ADR workstream with non-null lead, tracks displayed as joined string
+- **Phase 49 Plan 01:** Risk level thresholds: 0 highRisks = None, 1-2 = Medium, 3+ = High
+- **Phase 49 Plan 01:** Dependency status from blocked tasks: any non-completed task with blocked_by FK = Blocked
+- **Phase 49 Plan 01:** Collapsible filter panel (not inline) with active filter count badge for cleaner table header
+
 ### Roadmap Evolution
 
 - Phase 50 added: Extraction Intelligence — Full-spectrum prompt rewrite and semantic post-classifier to surface all entity types from any document across every project tab
@@ -140,7 +146,7 @@ Progress: [██████████] 99% (220/222 plans in project complet
 
 ## Session Continuity
 
-Last session: 2026-04-09T02:39:06.945Z
-Stopped at: Completed 49-00-PLAN.md
+Last session: 2026-04-09T02:45:56.768Z
+Stopped at: Completed 49-01-PLAN.md
 Resume file: None
 Next action: Phase 48.1 complete — proceed to Phase 49 (Portfolio Dashboard)

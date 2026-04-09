@@ -10,8 +10,8 @@
 
 - [ ] **DASH-01**: User can view portfolio-level health summary showing total active projects, on track / at risk / off track counts, overdue milestones, and blocked project count
 - [ ] **DASH-02**: User can view a visual status distribution rollup (chart or heatmap) on the portfolio dashboard
-- [ ] **DASH-03**: User can view a multi-project portfolio table with standardized columns: name, owner, team, phase, health status, % complete, next milestone, next milestone date, risk level, dependency status, last updated, and exec action flag
-- [ ] **DASH-04**: User can filter, sort, and search the portfolio table by status, owner, team, phase, priority, milestone date, risk level, and dependency state
+- [x] **DASH-03**: User can view a multi-project portfolio table with standardized columns: name, owner, team, phase, health status, % complete, next milestone, next milestone date, risk level, dependency status, last updated, and exec action flag
+- [x] **DASH-04**: User can filter, sort, and search the portfolio table by status, owner, team, phase, priority, milestone date, risk level, and dependency state
 - [ ] **DASH-05**: User can view an exceptions panel that surfaces projects with overdue milestones, stale updates, open blockers, missing ownership, or unresolved dependencies
 - [ ] **DASH-06**: User can drill down from a portfolio table row into the individual project workspace
 
@@ -111,8 +111,8 @@
 | TEAM-04 | Phase 48 | Complete |
 | DASH-01 | Phase 49 | Pending |
 | DASH-02 | Phase 49 | Pending |
-| DASH-03 | Phase 49 | Pending |
-| DASH-04 | Phase 49 | Pending |
+| DASH-03 | Phase 49 | Complete |
+| DASH-04 | Phase 49 | Complete |
 | DASH-05 | Phase 49 | Pending |
 | DASH-06 | Phase 49 | Pending |
 
