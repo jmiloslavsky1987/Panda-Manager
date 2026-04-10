@@ -17,6 +17,17 @@ export const ENTITY_FIELDS: Record<string, string[]> = {
   history: ['date', 'content', 'author'],
   businessOutcome: ['title', 'track', 'description', 'delivery_status'],
   team: ['team_name', 'track', 'ingest_status'],
+  focus_area: ['title', 'tracks', 'why_it_matters', 'current_status', 'next_step', 'bp_owner', 'customer_owner'],
+  e2e_workflow: ['workflow_name', 'team_name', 'steps'],
+  wbs_task: ['title', 'track', 'level', 'parent_section_name', 'description', 'status', 'owner'],
+  note: ['content', 'author', 'date'],
+  team_pathway: ['team_name', 'pathway_description', 'key_milestones'],
+  workstream: ['name', 'track', 'lead', 'status'],
+  onboarding_step: ['step_name', 'description', 'status', 'assigned_to'],
+  integration: ['tool_name', 'status', 'integration_group', 'integration_method'],
+  arch_node: ['node_name', 'track', 'status', 'description'],
+  before_state: ['alert_to_ticket_problem', 'bp_value_prop', 'deployment_status'],
+  weekly_focus: ['bullets'],
 }
 
 function fieldLabel(key: string): string {
