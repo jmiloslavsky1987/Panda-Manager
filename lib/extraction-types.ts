@@ -24,7 +24,6 @@ import {
   onboardingSteps,
   integrations,
   wbsItems,
-  teamEngagementSections,
   archNodes,
   archTracks,
   teamOnboardingStatus,
