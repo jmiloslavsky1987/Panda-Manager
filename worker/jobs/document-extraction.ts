@@ -303,12 +303,33 @@ Extract all names exactly as they appear in the document. Use null for any field
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface ExtractionPass {
-  passNumber: 1 | 2 | 3;
+  passNumber: 0 | 1 | 2 | 3;
   label: string;
   entityTypes: EntityType[];
 }
 
+// Pass 0 pre-analysis prompt (EXTR-11)
+export const PASS_0_PROMPT = `You are a document pre-analyzer. Your task is to read the entire document and quote the 5-10 most information-dense sections relevant to: project status, tasks and deliverables, architecture components, and team engagement.
+
+For each relevant section, output:
+<relevant_section>
+[Quote the section verbatim or near-verbatim — do not paraphrase]
+</relevant_section>
+
+Focus on sections that contain:
+- Action items, tasks, or deliverables with owners or dates
+- Architecture component names, statuses, or integration descriptions
+- Team names, engagement stages, or onboarding status
+- Business outcomes, goals, or success metrics
+
+Do NOT extract entities yet. Do NOT output JSON. Quote sections only.`;
+
 export const PASSES: ExtractionPass[] = [
+  {
+    passNumber: 0,
+    label: 'Pre-analysis',
+    entityTypes: [],
+  },
   {
     passNumber: 1,
     label: 'Project data',
@@ -463,6 +484,38 @@ export function deduplicateWithinBatch(items: ExtractionItem[]): ExtractionItem[
   });
 }
 
+// ─── Helper: Tool Use Call ────────────────────────────────────────────────────
+
+async function runClaudeToolUseCall(
+  client: Anthropic,
+  content: Anthropic.MessageParam['content'],
+  systemPrompt: string,
+): Promise<{ items: ExtractionItem[]; coverage: string }> {
+  const response = await client.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 16384,
+    system: systemPrompt,
+    messages: [{ role: 'user', content }],
+    tools: [RECORD_ENTITIES_TOOL],
+    tool_choice: { type: 'tool', name: 'record_entities' },
+  });
+
+  // Extract tool use block
+  const toolBlock = response.content.find(
+    (block): block is Anthropic.ToolUseBlock => block.type === 'tool_use'
+  );
+
+  if (!toolBlock || toolBlock.name !== 'record_entities') {
+    return { items: [], coverage: '' };
+  }
+
+  const input = toolBlock.input as { entities?: ExtractionItem[]; coverage?: string };
+  return {
+    items: input.entities ?? [],
+    coverage: input.coverage ?? '',
+  };
+}
+
 // ─── Job Handler ──────────────────────────────────────────────────────────────
 
 export default async function documentExtractionJob(job: Job): Promise<{ status: string }> {
@@ -514,39 +567,79 @@ export default async function documentExtractionJob(job: Job): Promise<{ status:
     // 4. Build Claude client
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-    // Helper: run one Claude streaming call with explicit system prompt
-    const runClaudeCall = async (
-      content: Anthropic.MessageParam['content'],
-      systemPrompt: string,
-    ): Promise<string> => {
-      let fullText = '';
-      const claudeStream = client.messages.stream({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 16384,
-        system: systemPrompt,
-        messages: [{ role: 'user', content }],
-      });
-      claudeStream.on('text', (text: string) => { fullText += text; });
-      await claudeStream.finalMessage();
-      return fullText;
-    };
+    // ─── Pass 0: Pre-analysis (runs once per document) ────────────────────────
+    let preAnalysisContext = '';
 
-    // 5. Extract — 3-pass extraction (Phase 52)
+    try {
+      // For PDF path: use the PDF document content block
+      // For text path: use first chunk (or full text if under limit)
+      const isPdf = extractResult.kind === 'pdf';
+      const pass0Content = isPdf
+        ? [
+            {
+              type: 'document' as const,
+              source: {
+                type: 'base64' as const,
+                media_type: 'application/pdf' as const,
+                data: extractResult.base64,
+              },
+            } as Anthropic.DocumentBlockParam,
+            { type: 'text' as const, text: PASS_0_PROMPT },
+          ]
+        : [
+            {
+              type: 'text' as const,
+              text: `<document>\n${extractResult.content.slice(0, CHUNK_CHAR_LIMIT)}\n</document>\n\n${PASS_0_PROMPT}`,
+            },
+          ];
+
+      const pass0Response = await client.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 4096, // Pre-analysis is concise — 4k sufficient
+        system: 'You are a document pre-analyzer. Extract key sections only.',
+        messages: [{ role: 'user', content: pass0Content }],
+      });
+
+      const pass0Text = pass0Response.content
+        .filter((b): b is Anthropic.TextBlock => b.type === 'text')
+        .map(b => b.text)
+        .join('\n');
+
+      if (pass0Text.trim()) {
+        preAnalysisContext = `<pre_analysis>\n${pass0Text}\n</pre_analysis>`;
+      }
+
+      // Update progress: Pass 0 complete = 10%
+      await db.update(extractionJobs)
+        .set({ progress_pct: 10, updated_at: new Date() })
+        .where(eq(extractionJobs.id, jobId));
+
+    } catch (err) {
+      // Pass 0 failure is non-fatal — log and continue without pre-analysis
+      console.warn('[Pass 0] pre-analysis failed, continuing without context:', err);
+      preAnalysisContext = '';
+    }
+
+    // 5. Extract — 3-pass extraction (Phase 52, now with Pass 0 pre-analysis context)
     let allRawItems: ExtractionItem[] = [];
+    const coverageByPass: Record<number, string> = {};
 
     if (extractResult.kind === 'pdf') {
       // PDF: 3 sequential calls (one per pass), Claude handles PDF natively
+      // Pass 0 already complete at 10%, now run Passes 1-3
       await db.update(extractionJobs)
         .set({
-          total_chunks: 3,
+          total_chunks: 3, // Passes 1-3 only (Pass 0 is not a chunk-processing pass)
           current_chunk: 0,
-          progress_pct: 0,
           updated_at: new Date()
         })
         .where(eq(extractionJobs.id, jobId));
 
-      for (let passIdx = 0; passIdx < PASSES.length; passIdx++) {
-        const pass = PASSES[passIdx];
+      // Skip Pass 0 in the loop (already done above)
+      const contentPasses = PASSES.filter(p => p.passNumber !== 0);
+
+      for (let passIdx = 0; passIdx < contentPasses.length; passIdx++) {
+        const pass = contentPasses[passIdx];
         const passSystemPrompt = PASS_PROMPTS[pass.passNumber];
         const passUserText = `Extract ONLY the following entity types: ${pass.entityTypes.join(', ')}.\nExtract all structured project data from the document above. Output only the JSON array.`;
 
@@ -559,6 +652,8 @@ export default async function documentExtractionJob(job: Job): Promise<{ status:
               data: extractResult.base64,
             },
           } as Anthropic.DocumentBlockParam,
+          // Prepend pre-analysis context if available
+          ...(preAnalysisContext ? [{ type: 'text' as const, text: preAnalysisContext }] : []),
           {
             type: 'text',
             text: passUserText,
@@ -566,13 +661,13 @@ export default async function documentExtractionJob(job: Job): Promise<{ status:
         ];
 
         // EXTR-08: use tool use instead of streaming
-        const { items: passItems, coverage: passCoverage } = await runClaudeToolUseCall(userContent, passSystemPrompt);
+        const { items: passItems, coverage: passCoverage } = await runClaudeToolUseCall(client, userContent, passSystemPrompt);
         allRawItems.push(...passItems);
         coverageByPass[pass.passNumber] = passCoverage; // EXTR-10: store per-pass coverage
 
-        // Global progress: pass 1 → 33%, pass 2 → 66%, pass 3 → 100%
-        // Progress: per-pass only (tool use is non-streaming — EXTR-08)
-        const globalPct = Math.round(((passIdx + 1) / 3) * 100);
+        // Global progress with Pass 0: Pass 0 = 10%, Pass 1 = 40%, Pass 2 = 70%, Pass 3 = 100%
+        const progressMap = { 1: 40, 2: 70, 3: 100 };
+        const globalPct = progressMap[pass.passNumber as 1 | 2 | 3] ?? 100;
         await db.update(extractionJobs)
           .set({
             progress_pct: Math.min(100, globalPct),
@@ -583,24 +678,30 @@ export default async function documentExtractionJob(job: Job): Promise<{ status:
       }
     } else {
       // Text: outer pass loop, inner chunk loop
+      // Pass 0 already complete at 10%, now run Passes 1-3
       const chunks = splitIntoChunks(extractResult.content, CHUNK_CHAR_LIMIT);
       const totalChunks = chunks.length;
 
       await db.update(extractionJobs)
         .set({
-          total_chunks: totalChunks,
+          total_chunks: totalChunks, // Passes 1-3 only (Pass 0 is not a chunk-processing pass)
           current_chunk: 0,
-          progress_pct: 0,
           updated_at: new Date()
         })
         .where(eq(extractionJobs.id, jobId));
 
-      for (let passIdx = 0; passIdx < PASSES.length; passIdx++) {
-        const pass = PASSES[passIdx];
+      // Skip Pass 0 in the loop (already done above)
+      const contentPasses = PASSES.filter(p => p.passNumber !== 0);
+
+      for (let passIdx = 0; passIdx < contentPasses.length; passIdx++) {
+        const pass = contentPasses[passIdx];
         const passSystemPrompt = PASS_PROMPTS[pass.passNumber];
 
         for (let i = 0; i < chunks.length; i++) {
-          const passUserText = `Extract ONLY the following entity types: ${pass.entityTypes.join(', ')}.\n\nDocument content:\n\n${chunks[i]}\n\nOutput only the JSON array.`;
+          // Prepend pre-analysis context to user message
+          const passUserText = preAnalysisContext
+            ? `${preAnalysisContext}\n\n<document>\n${chunks[i]}\n</document>\n\nExtract ONLY the following entity types: ${pass.entityTypes.join(', ')}. Call record_entities with your findings.\n\n${passSystemPrompt}`
+            : `<document>\n${chunks[i]}\n</document>\n\nExtract ONLY the following entity types: ${pass.entityTypes.join(', ')}. Call record_entities with your findings.\n\n${passSystemPrompt}`;
 
           const userContent: Anthropic.MessageParam['content'] = [
             {
@@ -610,7 +711,7 @@ export default async function documentExtractionJob(job: Job): Promise<{ status:
           ];
 
           // EXTR-08: use tool use instead of streaming
-          const { items: chunkItems, coverage: chunkCoverage } = await runClaudeToolUseCall(userContent, passSystemPrompt);
+          const { items: chunkItems, coverage: chunkCoverage } = await runClaudeToolUseCall(client, userContent, passSystemPrompt);
           allRawItems.push(...chunkItems);
 
           // EXTR-10: accumulate coverage (last chunk of pass overwrites — this is OK for text chunks)
@@ -618,10 +719,11 @@ export default async function documentExtractionJob(job: Job): Promise<{ status:
             coverageByPass[pass.passNumber] = chunkCoverage;
           }
 
-          // Global progress: (passIdx * totalChunks + i + 1) / (3 * totalChunks)
-          // Progress: per-pass only (tool use is non-streaming — EXTR-08)
-          const passProgressPct = Math.round((i + 1) / totalChunks * 100);
-          const globalPct = Math.round((passIdx / 3) * 100 + (passProgressPct / 3));
+          // Global progress with Pass 0: Pass 0 = 10%, Passes 1-3 split remaining 90%
+          // Pass 1: 10 + (30 * progress), Pass 2: 40 + (30 * progress), Pass 3: 70 + (30 * progress)
+          const passProgressPct = (i + 1) / totalChunks;
+          const baseProgress = { 1: 10, 2: 40, 3: 70 };
+          const globalPct = Math.round(baseProgress[pass.passNumber as 1 | 2 | 3] + (passProgressPct * 30));
           await db.update(extractionJobs)
             .set({
               progress_pct: Math.max(0, Math.min(100, globalPct)),
