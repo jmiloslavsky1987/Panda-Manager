@@ -79,7 +79,7 @@ Each item follows this exact shape:
 {
   "entityType": "action" | "risk" | "decision" | "milestone" | "stakeholder" | "task" | "architecture" | "history" | "businessOutcome" | "team" | "note" | "team_pathway" | "workstream" | "onboarding_step" | "integration" | "wbs_task" | "arch_node" | "focus_area" | "e2e_workflow" | "before_state" | "weekly_focus",
   "fields": { /* entity-specific key-value pairs as strings */ },
-  "confidence": 0.85,
+  "confidence": 0.85, // Your certainty 0.0-1.0 that this is a real entity (not a hypothetical or example). Use <0.5 for ambiguous items, >0.8 for explicit clear entities.
   "sourceExcerpt": "verbatim text this was extracted from (max 200 chars)"
 }
 Entity type guidance:
@@ -96,8 +96,8 @@ Entity type guidance:
 - workstream: { name, track, phase, status, percent_complete } — delivery workstream or project phase name; use for named delivery tracks with status and completion percentage
 - onboarding_step: { team_name, step_name, track, status, completed_date } — specific onboarding step for a team (e.g. ADR track steps); NOT the same as a generic task
 - integration: { tool_name, category, connection_status, notes } — connection status of a tool (live/pilot/planned/not-connected); focus on operational readiness and connection state, NOT architecture workflow phase
-- wbs_task: { title, track ("ADR" or "Biggy"), parent_section_name (exact match from WBS template — e.g., "Solution Design", "Platform Configuration", "Integrations"), level (1, 2, or 3 — 1 for top-level sections, 2 for sub-items, 3 for leaf tasks), status ("not_started" | "in_progress" | "complete" — normalize variants: "done"/"finished" → "complete", "in progress"/"ongoing" → "in_progress", "not started"/"todo" → "not_started"), description (task details or null) } — task that belongs in WBS structure; extract track and parent section verbatim as they appear in document; use level to indicate hierarchy depth
-- arch_node: { track ("ADR Track" | "AI Assistant Track" — ONLY these two values are valid; if track name is different, skip this entity), node_name (tool or capability name — e.g., "Event Ingest", "Alert Intelligence", "Knowledge Sources"), status ("planned" | "in_progress" | "live"), notes (integration details, status notes, or null) } — architecture capability or tool node; extract track verbatim; use for system components, tools, integrations mentioned in architecture context
+- wbs_task: { title, track (WBS template track — INFER from document context: "ADR" if BigPanda/enterprise deployment, "Biggy" if startup/SMB. Default to "ADR" if unclear), parent_section_name (section heading this task falls under — INFER from heading hierarchy; if item appears under "Solution Design", use "Solution Design". Match to seeded template names: Solution Design, Technical Architecture, Implementation, Go-Live), level (1, 2, or 3 — 1 for top-level sections, 2 for sub-items, 3 for leaf tasks), status ("not_started" | "in_progress" | "complete" — normalize variants: "done"/"finished" → "complete", "in progress"/"ongoing" → "in_progress", "not started"/"todo" → "not_started"), description (task details or null) } — task that belongs in WBS structure; extract track and parent section verbatim as they appear in document; use level to indicate hierarchy depth
+- arch_node: { track ("ADR Track" | "AI Assistant Track" — ONLY these two values are valid; if track name is different, skip this entity), node_name (tool or capability name — e.g., "Event Ingest", "Alert Intelligence", "Knowledge Sources"), status (Node deployment status — See STATUS NORMALIZATION table above. Common signals: "configured" → live, "in testing" → pilot, "on roadmap" → planned), notes (integration details, status notes, or null) } — architecture capability or tool node; extract track verbatim; use for system components, tools, integrations mentioned in architecture context
 - focus_area: { title, tracks, why_it_matters, current_status, next_step, bp_owner, customer_owner } — a named focus area or strategic priority with ownership and status; use for named workstreams, priorities, or initiatives with a clear owner and next step
 - e2e_workflow: { team_name, workflow_name, steps } — an end-to-end workflow for a team; steps is an array of { label, track, status, position } objects; use when document describes a multi-step team workflow or process
 - note: { content, context } — use for any valuable content that does not fit the above types: observations, meeting highlights, open questions, context, or anything that would be useful to preserve but has no specific schema.
@@ -126,7 +126,7 @@ IMPORTANT disambiguation rules — read carefully before assigning entityType:
   • integration = operational CONNECTION STATUS of a tool (is it live, pilot, planned, not-connected?) — use for tool readiness/status data
 - task vs wbs_task:
   • task = generic project action item with owner, status, phase (not tied to a WBS template)
-  • wbs_task = item that belongs in a WBS hierarchy — must have a track ("ADR" or "Biggy"), a parent section (e.g. "Solution Design", "Platform Configuration"), and a level (1/2/3)
+  • wbs_task = item that belongs in a WBS hierarchy — must have a track (WBS template track — INFER from document context: "ADR" if BigPanda/enterprise deployment, "Biggy" if startup/SMB. Default to "ADR" if unclear), a parent section (e.g. "Solution Design", "Platform Configuration"), and a level (1/2/3)
   • Rule: If document mentions WBS structure, ADR/Biggy tracks, or explicit template section names → wbs_task. Otherwise → task.
 - team vs stakeholder:
   • team = a TEAM (group of people) with onboarding status across BigPanda capability tracks (ingest_status, correlation_status, etc.)
@@ -159,6 +159,23 @@ export const PASS_PROMPTS: Record<1 | 2 | 3, string> = {
   1: `${EXTRACTION_BASE}
 
 FOCUS ON THESE ENTITY TYPES ONLY FOR THIS PASS:
+<example>
+Input: "John to configure alert routing rules in BigPanda before Go-Live"
+Output: [{"entityType": "action", "fields": {"description": "Configure alert routing rules in BigPanda", "owner": "John", "due_date": null}, "confidence": 0.9, "sourceExcerpt": "John to configure alert routing rules"}]
+</example>
+
+<example>
+Input: "Risk: Integration with legacy ticketing system may cause delays — owner: Sarah"
+Output: [{"entityType": "risk", "fields": {"description": "Integration with legacy ticketing system may cause delays", "owner": "Sarah", "severity": "medium"}, "confidence": 0.85, "sourceExcerpt": "Risk: Integration with legacy..."}]
+</example>
+
+<example>
+Input: "Phase 1 tasks: 1. Solution Design - Complete solution architecture (due Q2)"
+NOT an action (no owner/assignee) — this is a wbs_task. Do NOT extract as task.
+Output: [] (no task/action entities — wbs_task is handled in Pass 3)
+</example>
+
+
 - action: { description, owner, due_date, status, notes (additional notes or null), type (category or null) }
 - risk: { description, severity, mitigation, owner }
 - task: { title, status, owner, phase, description, start_date (ISO date string or null), due_date (ISO date string or null), priority ("high", "medium", or "low" or null), milestone_name (verbatim name as it appears in the document or null), workstream_name (verbatim name as it appears in the document or null) }
@@ -171,13 +188,41 @@ Key disambiguation for this pass:
 - task vs wbs_task: task = generic project action item with owner, status, phase (not tied to a WBS template). If document mentions WBS structure, ADR/Biggy tracks, or explicit template section names → skip it (will be extracted in pass 3 as wbs_task).
 - Do NOT discard content just because it doesn't fit a structured type. Capture it as a "note".
 
+## SCANNING INSTRUCTION
+Before extracting, scan the document section-by-section (introduction, main body, tables, bullet lists,
+appendices). Do not skip any section — entities often appear in tables or footnotes.
+
+## SELF-CHECK
+Before calling record_entities, verify:
+1. Have I extracted all entities of the allowed types from every section?
+2. Have I applied the STATUS NORMALIZATION table to all status fields?
+3. Have I attempted date inference for all date fields (and justified any null)?
+4. Have I used the examples above to resolve ambiguous entity types?
+
 Extract all names exactly as they appear in the document. Do not abbreviate, normalize, or infer names. Use null for any field not explicitly present.`,
 
   2: `${EXTRACTION_BASE}
 
 FOCUS ON THESE ENTITY TYPES ONLY FOR THIS PASS:
+<example>
+Input: "BigPanda Alert Intelligence module is currently in pilot with the NOC team"
+Output: [{"entityType": "arch_node", "fields": {"track": "ADR Track", "node_name": "Alert Intelligence", "status": "pilot", "notes": "Currently in pilot with NOC team"}, "confidence": 0.9, "sourceExcerpt": "Alert Intelligence module is currently in pilot"}]
+NOT an "architecture" (diagram text) — this is a specific named arch_node with a status.
+</example>
+
+<example>
+Input: "ServiceNow integration is planned for Q3 to handle ticket creation"
+Output: [{"entityType": "integration", "fields": {"tool_name": "ServiceNow", "category": "ITSM", "connection_status": "planned"}, "confidence": 0.85, "sourceExcerpt": "ServiceNow integration is planned for Q3"}]
+</example>
+
+<example>
+Input: "Before BigPanda: 90% of alerts were noise, avg MTTR 4 hours, manual triage required"
+Output: [{"entityType": "before_state", "fields": {"aggregation_hub_name": null, "alert_to_ticket_problem": "90% of alerts were noise, avg MTTR 4 hours, manual triage required", "pain_points": "Alert noise at 90%, MTTR 4 hours, Manual triage"}, "confidence": 0.9, "sourceExcerpt": "Before BigPanda: 90% of alerts were noise..."}]
+</example>
+
+
 - architecture: { tool_name, track, phase, integration_group, status, integration_method } — workflow phase and integration method; integration_group = logical grouping within a phase (e.g. "ALERT NORMALIZATION", "ON-DEMAND DURING INVESTIGATION") or null; focus on how the tool integrates into delivery workflow
-- arch_node: { track ("ADR Track" | "AI Assistant Track" — ONLY these two values are valid; if track name is different, skip this entity), node_name (tool or capability name — e.g., "Event Ingest", "Alert Intelligence", "Knowledge Sources"), status ("planned" | "in_progress" | "live"), notes (integration details, status notes, or null) } — architecture capability or tool node; extract track verbatim; use for system components, tools, integrations mentioned in architecture context
+- arch_node: { track ("ADR Track" | "AI Assistant Track" — ONLY these two values are valid; if track name is different, skip this entity), node_name (tool or capability name — e.g., "Event Ingest", "Alert Intelligence", "Knowledge Sources"), status (Node deployment status — See STATUS NORMALIZATION table above. Common signals: "configured" → live, "in testing" → pilot, "on roadmap" → planned), notes (integration details, status notes, or null) } — architecture capability or tool node; extract track verbatim; use for system components, tools, integrations mentioned in architecture context
 - integration: { tool_name, category, connection_status, notes } — connection status of a tool (live/pilot/planned/not-connected); focus on operational readiness and connection state, NOT architecture workflow phase
 - before_state: { aggregation_hub_name (name of the primary alert aggregation hub or SIEM being replaced or supplemented), alert_to_ticket_problem (description of the pain point in the current alert-to-ticket workflow), pain_points (comma-separated list of customer pain points with the current state) } — customer's current state before BigPanda adoption; extract from sections titled "Current State", "Before State", "Pain Points", "Challenges", or similar; one entity per project
 
@@ -188,13 +233,44 @@ Key disambiguation for this pass:
   • integration = operational CONNECTION STATUS of a tool (is it live, pilot, planned, not-connected?) — use for tool readiness/status data
 - arch_node track names: ONLY valid values are "ADR Track" and "AI Assistant Track". If the document mentions a different track name, do NOT extract an arch_node entity — skip it entirely.
 
+## SCANNING INSTRUCTION
+Before extracting, scan the document section-by-section (introduction, main body, tables, bullet lists,
+appendices). Do not skip any section — entities often appear in tables or footnotes.
+
+## SELF-CHECK
+Before calling record_entities, verify:
+1. Have I extracted all entities of the allowed types from every section?
+2. Have I applied the STATUS NORMALIZATION table to all status fields?
+3. Have I attempted date inference for all date fields (and justified any null)?
+4. Have I used the examples above to resolve ambiguous entity types?
+
 Extract all names exactly as they appear in the document. Use null for any field not explicitly present.`,
 
   3: `${EXTRACTION_BASE}
 
 FOCUS ON THESE ENTITY TYPES ONLY FOR THIS PASS:
+<example>
+Input: "Solution Design\n  - Complete solution architecture (in progress)\n  - Define alert routing rules (not started)"
+Output: [
+  {"entityType": "wbs_task", "fields": {"title": "Complete solution architecture", "parent_section_name": "Solution Design", "track": "ADR", "level": "3", "status": "in_progress"}, "confidence": 0.9, "sourceExcerpt": "Complete solution architecture (in progress)"},
+  {"entityType": "wbs_task", "fields": {"title": "Define alert routing rules", "parent_section_name": "Solution Design", "track": "ADR", "level": "3", "status": "not_started"}, "confidence": 0.9, "sourceExcerpt": "Define alert routing rules (not started)"}
+]
+NOT generic "task" entities — these belong in the WBS hierarchy.
+</example>
+
+<example>
+Input: "NOC Team: currently doing manual alert triage, expected to move to BigPanda by Q3"
+Output: [{"entityType": "team", "fields": {"team_name": "NOC Team", "track": "ADR", "ingest_status": null, "correlation_status": null}, "confidence": 0.85, "sourceExcerpt": "NOC Team: currently doing manual alert triage"}]
+</example>
+
+<example>
+Input: "This week's focus: finalize integration testing with ServiceNow, prepare for pilot launch"
+Output: [{"entityType": "weekly_focus", "fields": {"bullets": ["Finalize integration testing with ServiceNow", "Prepare for pilot launch"]}, "confidence": 0.8, "sourceExcerpt": "This week's focus: finalize integration testing"}]
+</example>
+
+
 - team: { team_name, track, ingest_status, correlation_status, incident_intelligence_status, sn_automation_status, biggy_ai_status } — team onboarding status across all capability tracks; use null for any status field not explicitly mentioned
-- wbs_task: { title, track ("ADR" or "Biggy"), parent_section_name (exact match from WBS template — e.g., "Solution Design", "Platform Configuration", "Integrations"), level (1, 2, or 3 — 1 for top-level sections, 2 for sub-items, 3 for leaf tasks), status ("not_started" | "in_progress" | "complete" — normalize variants: "done"/"finished" → "complete", "in progress"/"ongoing" → "in_progress", "not started"/"todo" → "not_started"), description (task details or null) } — task that belongs in WBS structure; extract track and parent section verbatim as they appear in document; use level to indicate hierarchy depth
+- wbs_task: { title, track (WBS template track — INFER from document context: "ADR" if BigPanda/enterprise deployment, "Biggy" if startup/SMB. Default to "ADR" if unclear), parent_section_name (section heading this task falls under — INFER from heading hierarchy; if item appears under "Solution Design", use "Solution Design". Match to seeded template names: Solution Design, Technical Architecture, Implementation, Go-Live), level (1, 2, or 3 — 1 for top-level sections, 2 for sub-items, 3 for leaf tasks), status ("not_started" | "in_progress" | "complete" — normalize variants: "done"/"finished" → "complete", "in progress"/"ongoing" → "in_progress", "not started"/"todo" → "not_started"), description (task details or null) } — task that belongs in WBS structure; extract track and parent section verbatim as they appear in document; use level to indicate hierarchy depth
 - workstream: { name, track, phase, status, percent_complete } — delivery workstream or project phase name; use for named delivery tracks with status and completion percentage
 - focus_area: { title, tracks, why_it_matters, current_status, next_step, bp_owner, customer_owner } — a named focus area or strategic priority with ownership and status; use for named workstreams, priorities, or initiatives with a clear owner and next step
 - e2e_workflow: { team_name, workflow_name, steps } — an end-to-end workflow for a team; steps is an array of { label, track, status, position } objects; use when document describes a multi-step team workflow or process
@@ -205,10 +281,21 @@ FOCUS ON THESE ENTITY TYPES ONLY FOR THIS PASS:
 - onboarding_step: { team_name, step_name, track, status, completed_date } — specific onboarding step for a team (e.g. ADR track steps); NOT the same as a generic task
 
 Key disambiguation for this pass:
-- task vs wbs_task: wbs_task = item that belongs in a WBS hierarchy with a track ("ADR" or "Biggy"), a parent section (e.g. "Solution Design", "Platform Configuration"), and a level (1/2/3). Rule: If document mentions WBS structure, ADR/Biggy tracks, or explicit template section names → wbs_task.
+- task vs wbs_task: wbs_task = item that belongs in a WBS hierarchy with a track (WBS template track — INFER from document context: "ADR" if BigPanda/enterprise deployment, "Biggy" if startup/SMB. Default to "ADR" if unclear), a parent section (e.g. "Solution Design", "Platform Configuration"), and a level (1/2/3). Rule: If document mentions WBS structure, ADR/Biggy tracks, or explicit template section names → wbs_task.
 - team vs stakeholder: team = a TEAM (group of people) with onboarding status across BigPanda capability tracks; stakeholder = a NAMED INDIVIDUAL with role, email, account.
 - workstream vs task vs wbs_task: workstream = named DELIVERY TRACK or work stream (e.g. "ADR Workstream", "Integration Workstream") with owner and percent_complete — not individual tasks. Do NOT extract individual tasks as workstreams. Workstreams are high-level tracks spanning multiple tasks.
 - arch_node track names (reference only): track names "ADR Track" and "AI Assistant Track" were covered in pass 2.
+
+## SCANNING INSTRUCTION
+Before extracting, scan the document section-by-section (introduction, main body, tables, bullet lists,
+appendices). Do not skip any section — entities often appear in tables or footnotes.
+
+## SELF-CHECK
+Before calling record_entities, verify:
+1. Have I extracted all entities of the allowed types from every section?
+2. Have I applied the STATUS NORMALIZATION table to all status fields?
+3. Have I attempted date inference for all date fields (and justified any null)?
+4. Have I used the examples above to resolve ambiguous entity types?
 
 Extract all names exactly as they appear in the document. Use null for any field not explicitly present.`,
 };
