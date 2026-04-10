@@ -40,7 +40,7 @@
 
 ### Team Engagement Overview
 
-- [ ] **TEAM-01**: Teams sub-tab (renamed "Team Engagement Overview") displays a 4-section engagement map: Business Outcomes, E2E Workflows, Teams & Engagement, and Top Focus Areas (Architecture section is covered by the dedicated Architecture tab — excluded from Overview per scope decision)
+- [x] **TEAM-01**: Teams tab displays a 4-section editable in-place map: Business Value & Expected Outcomes, End-to-End Workflows, Teams & Engagement Status, and Top Focus Areas. Architecture section is excluded (covered by dedicated Architecture tab). Section headers use plain text styling without numbered badges.
 - [x] **TEAM-02**: Context upload extracts and routes structured data to populate all Team Engagement Map sections automatically
 - [x] **TEAM-03**: Sections with missing or incomplete data display a visible warning prompting the user to supply required content
 - [x] **TEAM-04**: Team Engagement Overview sub-tab is read-only; users edit content in the source tabs (Actions, Teams Detail). TEAM-04 is satisfied by those existing edit flows — no add/edit/delete controls exist in the Overview sub-tab.
@@ -133,7 +133,7 @@
 | ARCH-01 | Phase 48 | Complete |
 | ARCH-02 | Phase 48 | Complete |
 | ARCH-03 | Phase 48 | Complete |
-| TEAM-01 | Phase 56 | Pending |
+| TEAM-01 | Phase 56 | Complete |
 | TEAM-03 | Phase 48 | Complete |
 | TEAM-04 | Phase 48 | Complete |
 | DASH-01 | Phase 49 | Complete |
@@ -163,7 +163,7 @@
 | MULTI-PASS-02 | Phase 52 | Complete |
 | MULTI-PASS-03 | Phase 52/55 | Complete |
 
-| TEAM-01 | Phase 56 | Pending |
+| TEAM-01 | Phase 56 | Complete |
 | TEAM-02 | Phase 56 | Complete |
 
 **Coverage:**
