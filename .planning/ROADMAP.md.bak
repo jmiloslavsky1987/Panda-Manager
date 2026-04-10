@@ -5,7 +5,9 @@
 - ✅ **v1.0** — Foundation + Read/Write Surface + Skills + MCP + Cross-Project — Phases 1–16 (shipped 2026-03-26)
 - ✅ **v2.0** — AI Ingestion & Enhanced Operations — Phases 17–25 (shipped 2026-03-30)
 - ✅ **v3.0** — Collaboration & Intelligence — Phases 26–30 (shipped 2026-04-01)
-- 📋 **v4.0** — Infrastructure & UX Foundations (Phases 31–36)
+- ✅ **v4.0** — Infrastructure & UX Foundations — Phases 31–35 (shipped 2026-04-03)
+- ✅ **v5.0** — Workspace UX Overhaul — Phases 37–42 (shipped 2026-04-07)
+- 🚧 **v6.0** — Dashboard, Navigation & Intelligence — Phases 43–49 (in progress)
 
 ## Phases
 
@@ -65,114 +67,218 @@ Full details: `.planning/milestones/v3.0-ROADMAP.md` (archived)
 
 </details>
 
-### 📋 v4.0 — Infrastructure & UX Foundations (Phases 31–36)
+<details>
+<summary>✅ v4.0 — Infrastructure &amp; UX Foundations (Phases 31–35) — SHIPPED 2026-04-03</summary>
 
-**Milestone Goal:** Resolve accumulated technical debt and deliver two significant UX redesigns: time tracking as a standalone top-level section and a fully overhauled Overview tab with ADR/Biggy workstream structure.
+Full details: `.planning/milestones/v4.0-ROADMAP.md` (archived)
 
-- [x] **Phase 31: BullMQ Document Extraction Migration** - Move extraction to background job with browser-refresh resilience (completed 2026-04-01)
-- [x] **Phase 32: Time Tracking Global View** - Standalone top-level section with cross-project timesheet (completed 2026-04-02)
-- [ ] **Phase 33: Overview Tab Schema Migration + Workstream Structure** - Add track column for ADR/Biggy separation
-- [ ] **Phase 34: Overview Tab — Metrics & Health Dashboard** - Read-only aggregation sections with visualizations
-- [ ] **Phase 35: Overview Tab — Weekly Focus & Integration Tracker** - AI-generated weekly summary and redesigned integration tracker
-- [ ] **Phase 36: Test Failure Fixes** - Resolve 13 pre-existing test failures with root-cause fixes
+- [x] Phase 31: BullMQ Document Extraction Migration — browser-refresh resilient (completed 2026-04-01)
+- [x] Phase 32: Time Tracking Global View — standalone /time-tracking section (completed 2026-04-02)
+- [x] Phase 33: Overview Tab Schema Migration + Workstream Structure (completed 2026-04-03)
+- [x] Phase 34: Overview Tab — Metrics & Health Dashboard (completed 2026-04-03)
+- [x] Phase 35: Overview Tab — Weekly Focus & Integration Tracker (completed 2026-04-03)
+- ~~Phase 36: Test Failure Fixes~~ — deferred to v6.0
+
+</details>
+
+<details>
+<summary>✅ v5.0 — Workspace UX Overhaul (Phases 37–42) — SHIPPED 2026-04-07</summary>
+
+Full details: `.planning/milestones/v5.0-ROADMAP.md` (archived)
+
+- [x] Phase 37: Actions & Inline Editing Foundation (6/6 plans) — completed 2026-04-06
+- [x] Phase 38: Gantt Overhaul (4/4 plans) — completed 2026-04-06
+- [x] Phase 39: Cross-Tab Sync & Plan Tab (4/4 plans) — completed 2026-04-07
+- [x] Phase 40: Search, Traceability & Skills UX (6/6 plans) — completed 2026-04-07
+- [x] Phase 41: UX Polish & Consistency (4/4 plans) — completed 2026-04-07
+- [x] Phase 42: Ingestion Field Coverage (5/5 plans) — completed 2026-04-07
+
+</details>
+
+### 🚧 v6.0 — Dashboard, Navigation & Intelligence (In Progress)
+
+**Milestone Goal:** Upgrade the portfolio dashboard, restructure navigation, achieve parity across Risks/Milestones, replace Phase Board with AI-driven WBS, and enhance Team Engagement and Architecture views with context-upload extraction.
+
+- [x] **Phase 43: Skills Portability** - Dynamic SKILL.md path resolution for deployment flexibility (completed 2026-04-07)
+- [x] **Phase 44: Navigation & Parity** - Tab restructure, Risks/Milestones filtering and bulk actions (completed 2026-04-08)
+- [x] **Phase 45: Database Schema Foundation** - New tables for WBS, Team Engagement, Architecture; query functions (completed 2026-04-08)
+- [x] **Phase 46: Context Upload Extraction Expansion** - Extend extraction to WBS/Team/Architecture entity types (completed 2026-04-08)
+- [x] **Phase 47: Work Breakdown Structure** - Collapsible WBS tree with AI Generate Plan and manual CRUD (completed 2026-04-08)
+- [x] **Phase 48: Architecture & Team Engagement** - Two-tab Architecture diagrams + 5-section Team report (completed 2026-04-08)
+- [ ] **Phase 49: Portfolio Dashboard** - Multi-project table with health summary and exceptions panel
 
 ## Phase Details
 
-### Phase 31: BullMQ Document Extraction Migration
-**Goal**: Document extraction runs reliably in background without losing progress on browser refresh or navigation
-**Depends on**: Nothing (infrastructure improvement)
-**Requirements**: EXTR-01, EXTR-02, EXTR-03
+### Phase 43: Skills Portability
+**Goal**: Skill runner resolves SKILL.md paths dynamically at runtime without hardcoded absolute paths
+**Depends on**: Nothing (standalone infrastructure improvement)
+**Requirements**: SKILL-01
 **Success Criteria** (what must be TRUE):
-  1. User can navigate away from Context Hub during document extraction and return to see progress
-  2. Extraction progress displays percentage complete and current chunk being processed
-  3. Failed extraction does not leave partial data in workspace tabs (atomic commit only when complete)
-  4. Long-running extraction (4-6 minutes) completes successfully even if browser refreshes mid-extraction
-**Plans**: 5 plans
+  1. User can run any skill from any deployment environment without path configuration
+  2. Skill runner automatically discovers SKILL.md files relative to project root
+  3. Skills execute correctly in both development and production deployments
+**Plans**: 1 plan
 
 Plans:
-- [x] 31-01-PLAN.md — extraction_jobs schema + migration + Wave 0 test scaffolds
-- [x] 31-02-PLAN.md — Worker job handler (document-extraction.ts + worker/index.ts registration)
-- [x] 31-03-PLAN.md — API routes: enqueue endpoint + polling endpoint + batch status endpoint
-- [x] 31-04-PLAN.md — UI: IngestionModal SSE→polling + ContextTab inline progress + review card
-- [x] 31-05-PLAN.md — Full test suite + build check + human UAT verification (6 tests passed, 11 bugs fixed)
+- [x] 43-01-PLAN.md — Extract resolveSkillsDir to lib/skill-path.ts, migrate 3 worker jobs and 3 API routes, write migration tests (completed 2026-04-07)
 
-### Phase 32: Time Tracking Global View
-**Goal**: Users can view and manage all time entries across projects from a single top-level location
-**Depends on**: Nothing (independent feature)
-**Requirements**: TIME-01, TIME-02, TIME-03
+### Phase 44: Navigation & Parity
+**Goal**: Navigation restructure complete, Risks and Milestones match Actions table capabilities
+**Depends on**: Phase 43
+**Requirements**: NAV-01, NAV-02, NAV-03, NAV-04, NAV-05, RISK-01, RISK-02, MILE-01, MILE-02
 **Success Criteria** (what must be TRUE):
-  1. User can access /time-tracking route from main navigation showing all time entries across all projects
-  2. Each time entry displays project attribution and user can filter by project
-  3. Time entries are grouped by week with date range headers
-  4. Per-project Time Tracking tab no longer appears in customer workspace tabs
-  5. Old /customer/[id]/time route redirects to /time-tracking with project filter preserved
-**Plans**: 5 plans
+  1. User sees Plan as first sub-tab under Delivery
+  2. User accesses WBS, Task Board, and Gantt as direct Delivery sub-tabs at same level as Plan
+  3. User finds Decisions under Delivery tab; Intel tab no longer exists
+  4. User finds Engagement History under Admin tab
+  5. Old URLs (/intel, /phase-board) redirect to new locations without 404 errors
+  6. User can filter Risks table by status, severity, owner, and date range
+  7. User can multi-select risks and apply bulk status updates
+  8. User can filter Milestones table by status, owner, and date range
+  9. User can multi-select milestones and apply bulk field updates
+**Plans**: 3 plans
 
 Plans:
-- [ ] 32-01-PLAN.md — Wave 0 test scaffolds (3 failing stubs for TIME-01, TIME-02, TIME-03)
-- [ ] 32-02-PLAN.md — API endpoints: GET /api/time-entries (cross-project), GET /api/projects, global export + calendar import
-- [ ] 32-03-PLAN.md — Navigation surgery: Sidebar link, WorkspaceTabs Time tab removal, /customer/[id]/time redirect
-- [ ] 32-04-PLAN.md — GlobalTimeView component + TimeEntryModal global adaptation + /time-tracking page shell
-- [ ] 32-05-PLAN.md — Full test suite + build check + human UAT verification
+- [x] 44-01-PLAN.md — Wave 0 test stubs + Navigation restructure (TAB_GROUPS, route files, plan layout dissolution) (completed 2026-04-08)
+- [x] 44-02-PLAN.md — Risks parity: full filter bar + multi-select + /api/risks/bulk-update (completed 2026-04-08)
+- [x] 44-03-PLAN.md — Milestones parity: full filter bar + multi-select + /api/milestones/bulk-update (completed 2026-04-08)
 
-### Phase 33: Overview Tab Schema Migration + Workstream Structure
-**Goal**: Database schema supports ADR and Biggy as separate parallel workstreams with standardized phase models
-**Depends on**: Nothing (schema-only change)
-**Requirements**: WORK-01, WORK-02
+### Phase 45: Database Schema Foundation
+**Goal**: All new tables, columns, seed data, and query functions exist to support WBS, Team Engagement, and Architecture features
+**Depends on**: Phase 44
+**Requirements**: WBS-01, WBS-02
 **Success Criteria** (what must be TRUE):
-  1. Database tables onboarding_phases and onboarding_steps have track column populated with 'ADR' or 'Biggy'
-  2. Existing projects have track column backfilled based on phase names (no NULL values for active projects)
-  3. Overview tab renders ADR and Biggy onboarding sections separately with standardized phase models
-  4. Project Completeness indicator is removed from Overview tab UI
-  5. Migration includes index on track column for query performance
-**Plans**: TBD
+  1. Database contains wbs_items, wbs_task_assignments, team_engagement_sections, arch_tracks, arch_nodes, arch_team_status, and project_dependencies tables
+  2. Projects table has exec_action_required boolean column
+  3. New project creation automatically seeds both ADR (10+25 rows) and Biggy (5+9 rows) WBS template structures
+  4. Query functions (getWbsItems, getTeamEngagementSections, getArchNodes, getArchTeamStatus) return correct data
+  5. Drizzle schema migrations run without errors in dev and test environments
+**Plans**: 2 plans
 
-### Phase 34: Overview Tab — Metrics & Health Dashboard
-**Goal**: Overview tab displays actionable metrics and health indicators with visual charts
-**Depends on**: Phase 33 (requires track column for workstream-separated metrics)
-**Requirements**: METR-01, HLTH-01, TMLN-01
+Plans:
+- [ ] 45-01-PLAN.md — Wave 0 RED test scaffolds + Drizzle schema additions + migration 0028_wbs_team_arch_schema.sql
+- [ ] 45-02-PLAN.md — Project creation seeding (WBS templates, team engagement sections, arch tracks/nodes) + query functions
+
+### Phase 46: Context Upload Extraction Expansion
+**Goal**: Document uploads auto-populate WBS tasks, Team Engagement sections, and Architecture nodes
+**Depends on**: Phase 45
+**Requirements**: WBS-03, TEAM-02, ARCH-04
 **Success Criteria** (what must be TRUE):
-  1. Metrics section shows onboarding completion percentage, integration counts by status, and validation progress
-  2. Health Dashboard displays overall health indicator, risk count by severity, phase health by workstream (ADR vs Biggy), and active blocker count
-  3. Milestone timeline renders as visual timeline component (not text list) near top of Overview tab
-  4. All metrics are read-only aggregations computed from live database data (no manual entry)
-  5. Charts render using Recharts library with responsive design
-**Plans**: TBD
+  1. User uploads a document containing WBS tasks and they appear in correct WBS nodes
+  2. User uploads a document with team engagement details and they populate the 5-section report
+  3. User uploads architecture diagrams/docs and nodes appear in correct tracks
+  4. Extraction maintains 80%+ classification accuracy on existing entity types (actions, risks, milestones)
+  5. Extraction job completes and routes all new entity types without errors
+**Plans**: 2 plans
 
-### Phase 35: Overview Tab — Weekly Focus & Integration Tracker
-**Goal**: Overview tab shows AI-generated weekly priorities and redesigned integration tracker split by workstream
-**Depends on**: Phase 33 (requires track column for workstream separation)
-**Requirements**: WKFO-01, WKFO-02, OINT-01
+Plans:
+- [ ] 46-01-PLAN.md — Extraction prompt expansion: extend EXTRACTION_SYSTEM with wbs_task, team_engagement, arch_node entity types + Wave 0 RED tests
+- [ ] 46-02-PLAN.md — Entity routing: extend isAlreadyIngested() dedup logic + insertItem() with WBS parent matching, Team Engagement append, Architecture upsert
+
+### Phase 47: Work Breakdown Structure
+**Goal**: Phase Board replaced with collapsible WBS tree supporting both ADR and Biggy templates with AI gap-fill
+**Depends on**: Phase 46
+**Requirements**: WBS-04, WBS-05
 **Success Criteria** (what must be TRUE):
-  1. Weekly focus section displays 3-5 auto-generated priority bullets refreshed weekly via scheduled BullMQ job
-  2. Circular progress bar appears in weekly focus section tied to meaningful progress data
-  3. Integration tracker splits into ADR and Biggy sections
-  4. ADR integrations categorized by type: Inbound, Outbound, Enrichment
-  5. Biggy integrations categorized by type: Real-time, Context/Knowledge/UDC
-**Plans**: TBD
+  1. User sees 3-level collapsible WBS hierarchy displaying both ADR and Biggy structures
+  2. User can expand/collapse any WBS node to see child tasks
+  3. User clicks "Generate Plan" and AI fills gaps in WBS based on project context
+  4. User can manually add, edit, reorder, and delete tasks within any WBS node
+  5. WBS tree renders without lag with 100+ nodes
+**Plans**: 3 plans
 
-### Phase 36: Test Failure Fixes
-**Goal**: Test suite passes completely with all 13 pre-existing failures resolved
-**Depends on**: Phases 31-35 (implementation patterns finalized)
-**Requirements**: TEST-01
+Plans:
+- [ ] 47-01-PLAN.md — Wave 0 RED test scaffolds (5 files) + WBS CRUD API routes (add/edit/delete/reorder) + deleteWbsSubtree helper
+- [ ] 47-02-PLAN.md — WBS tree UI: WbsTree.tsx (tabs, expand/collapse, DndContext) + WbsNode.tsx (inline edit, status, add child, delete confirm)
+- [ ] 47-03-PLAN.md — Generate Plan: wbs/generate API route + wbs-generate-plan job + WbsGeneratePlanModal with preview + confirm
+
+### Phase 48: Architecture & Team Engagement
+**Goal**: Architecture tab shows two-tab diagram with status tracking; Team Engagement displays 4-section overview
+**Depends on**: Phase 47
+**Requirements**: ARCH-01, ARCH-02, ARCH-03, TEAM-01, TEAM-03, TEAM-04
 **Success Criteria** (what must be TRUE):
-  1. All 13 failing tests in tests/teams-arch/ directory pass with root-cause fixes (not assertion workarounds)
-  2. No previously passing tests break during fix process
-  3. Each fix documents the root cause and resolution approach
-  4. Production build remains clean with no new warnings or errors
-  5. Test fixes validate actual production behavior (not just making tests pass)
-**Plans**: TBD
+  1. User sees Architecture tab with two sub-tabs: Before State and Current & Future State
+  2. Current & Future State shows ADR Track and AI Assistant Track with per-node Live/In Progress/Planned status
+  3. Team Onboarding Status table below diagrams shows per-team, per-capability colored indicators
+  4. User sees Team Engagement Overview with 4 sections: Business Outcomes, E2E Workflows, Teams & Engagement, Top Focus Areas (Architecture section is covered by the Architecture tab)
+  5. Sections with missing data display visible warnings prompting user to add content
+  6. Team Engagement Overview is a read-only snapshot; users edit data in their respective source tabs (Actions, Teams Detail, etc.)
+  7. Architecture diagram nodes are draggable and positions persist across sessions
+**Plans**: 3 plans
 
+Plans:
+- [ ] 48-01-PLAN.md — Wave 0 RED test stubs + PATCH /arch-nodes/[nodeId] status cycling API + PATCH /arch-nodes/reorder display_order API
+- [ ] 48-02-PLAN.md — TeamEngagementOverview component (4 sections + WarnBanners) + Teams page Overview/Detail sub-tab wiring
+- [ ] 48-03-PLAN.md — InteractiveArchGraph rewiring: DB-driven columns from arch_nodes, status badge click-to-cycle, @dnd-kit column drag-reorder
+
+### Phase 48.1: Architecture diagram group rendering TeamOnboardingTable relocation and extraction prompt coverage (INSERTED)
+
+**Goal:** [Urgent work - to be planned]
+**Requirements**: TBD
+**Depends on:** Phase 48
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 48.1 to break down)
+
+### Phase 49: Portfolio Dashboard
+**Goal**: Multi-project portfolio view with health summary, filterable table, exceptions panel, and drill-down
+**Depends on**: Phase 48
+**Requirements**: DASH-01, DASH-02, DASH-03, DASH-04, DASH-05, DASH-06
+**Success Criteria** (what must be TRUE):
+  1. User sees portfolio dashboard showing active project count, on track/at risk/off track counts, overdue milestones, and blocked projects
+  2. User sees visual status distribution (stat chips) summarizing portfolio health
+  3. User sees multi-project table with name, owner, team, phase, health, % complete, next milestone, risk level, dependency status, last updated, and exec flag
+  4. User can filter portfolio table by status, owner, team, phase, risk level, and dependency state
+  5. User can sort and search the portfolio table
+  6. User sees exceptions panel surfacing projects with overdue milestones, stale updates, open blockers, missing ownership, or unresolved dependencies
+  7. User clicks a portfolio table row and navigates to that project's workspace
+  8. Portfolio dashboard queries complete in <500ms with 20+ projects
+**Plans**: 2 plans
+
+Plans:
+- [ ] 49-01-PLAN.md — Query function (getPortfolioData with parallel Promise.all) + PortfolioTableClient with 12-column table and client-side filtering
+- [ ] 49-02-PLAN.md — Page replacement (app/page.tsx) + PortfolioSummaryChips (6 stat chips) + PortfolioExceptionsPanel (5 exception types) + human verification
 ## Progress
 
-| Phase | Milestone | Plans | Status | Completed |
-|-------|-----------|-------|--------|-----------|
+**Execution Order:**
+Phases execute in numeric order: 43 → 44 → 45 → 46 → 47 → 48 → 49
+
+| Phase | Milestone | Plans Complete | Status | Completed |
+|-------|-----------|----------------|--------|-----------|
 | 1–16 | v1.0 | 63/63 | Complete | 2026-03-26 |
 | 17–25 | v2.0 | 63/63 | Complete | 2026-03-30 |
 | 26–30 | v3.0 | 26/26 | Complete | 2026-04-01 |
-| 31. BullMQ Extraction | v4.0 | 5/5 | Complete | 2026-04-02 |
-| 32. Time Tracking Global | 5/5 | Complete    | 2026-04-02 | — |
-| 33. Schema Migration | v4.0 | 0/TBD | Not started | — |
-| 34. Metrics & Health | v4.0 | 0/TBD | Not started | — |
-| 35. Weekly Focus | v4.0 | 0/TBD | Not started | — |
-| 36. Test Fixes | v4.0 | 0/TBD | Not started | — |
+| 31–35 | v4.0 | 26/26 | Complete | 2026-04-03 |
+| 36. Test Fixes | v6.0 | 0/TBD | Deferred | — |
+| 37. Actions & Inline Editing | v5.0 | 6/6 | Complete | 2026-04-06 |
+| 38. Gantt Overhaul | v5.0 | 4/4 | Complete | 2026-04-06 |
+| 39. Cross-Tab Sync & Plan Tab | v5.0 | 4/4 | Complete | 2026-04-07 |
+| 40. Search, Traceability & Skills UX | v5.0 | 6/6 | Complete | 2026-04-07 |
+| 41. UX Polish & Consistency | v5.0 | 4/4 | Complete | 2026-04-07 |
+| 42. Ingestion Field Coverage | v5.0 | 5/5 | Complete | 2026-04-07 |
+| 43. Skills Portability | 1/1 | Complete    | 2026-04-08 | - |
+| 44. Navigation & Parity | 3/3 | Complete   | 2026-04-08 | - |
+| 45. Database Schema Foundation | 2/2 | Complete    | 2026-04-08 | - |
+| 46. Context Upload Extraction Expansion | 2/2 | Complete    | 2026-04-08 | - |
+| 47. Work Breakdown Structure | 3/3 | Complete    | 2026-04-08 | - |
+| 48. Architecture & Team Engagement | 3/3 | Complete    | 2026-04-08 | - |
+| 49. Portfolio Dashboard | v6.0 | 0/1 | Not started | - |
+
+### Phase 50: Extraction Intelligence — Full-spectrum prompt rewrite and semantic post-classifier to surface all entity types from any document across every project tab
+
+**Goal:** Every entity type extractable from documents has a working end-to-end path: prompt guidance → staged item → approved commit → correct DB table. All gaps introduced by phases 45–48.1 are closed.
+**Requirements**: TBD
+**Depends on:** Phase 49
+**Plans:** 0/0 plans complete
+
+Known gaps to close (from phases 45–48.1):
+1. **`team` commit handler broken** — currently writes to `focus_areas` (wrong). Must write to `team_onboarding_status` with all 5 fields: `ingest_status`, `correlation_status`, `incident_intelligence_status`, `sn_automation_status`, `biggy_ai_status`. Fix: `app/api/ingestion/approve/route.ts` case `'team'`.
+2. **`architecture` commit handler missing `integration_group`** — field is in schema + prompt but not written on approve. Fix: add `integration_group: f.integration_group ?? null` to the insert in `approve/route.ts` case `'architecture'`.
+3. **`focus_area` has no commit handler** — entity type added in 48.1 with prompt + EntityType but no case in `approve/route.ts`. Must insert to `focus_areas` table with: `title`, `tracks`, `why_it_matters`, `current_status`, `next_step`, `bp_owner`, `customer_owner`.
+4. **`e2e_workflow` has no commit handler** — entity type added in 48.1 with prompt + EntityType but no case in `approve/route.ts`. Must insert to `e2e_workflows` + `workflow_steps` tables using: `team_name`, `workflow_name`, `steps[]`.
+5. **`isAlreadyIngested` dedup missing** for `focus_area`, `e2e_workflow` — both fall to `default: return false` (always surfaces as new). Add dedup checks against `focus_areas.title` and `e2e_workflows.workflow_name + team_name`.
+6. **Prompt coverage review** — verify `wbs_task`, `team_engagement`, `arch_node`, `onboarding_step` commit paths are end-to-end correct (added in Phase 46 but not re-verified after schema changes in 45/48).
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 50 to break down)

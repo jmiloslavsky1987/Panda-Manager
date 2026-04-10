@@ -266,8 +266,8 @@ Phases execute in numeric order: 43 → 44 → 45 → 46 → 47 → 48 → 49
 | 48. Architecture & Team Engagement | 3/3 | Complete    | 2026-04-08 | - |
 | 49. Portfolio Dashboard | 4/4 | Complete    | 2026-04-09 | - |
 | 50. Extraction Intelligence | 3/3 | Complete | 2026-04-09 | - |
-| 51. Extraction Intelligence Overhaul | 2/4 | Partial | 2026-04-09 | - |
-| 52. Multi-pass Targeted Extraction | 2/3 | Partial | 2026-04-09 | - |
+| 51. Extraction Intelligence Overhaul | 4/4 | Complete | 2026-04-09 | - |
+| 52. Multi-pass Targeted Extraction | 3/3 | Complete | 2026-04-10 | - |
 | 53. Extraction Prompt Intelligence & Pipeline Completion | 0/5 | Planned | — | - |
 
 ### Phase 50: Extraction Intelligence — Full-spectrum prompt rewrite and semantic post-classifier to surface all entity types from any document across every project tab
@@ -292,20 +292,20 @@ Plans:
 Plans:
 - [x] 51-01-PLAN.md — Wave 0 RED test stubs: status-coercers.test.ts (Gap E) + weekly-focus-ingestion.test.ts (Gap G) ✓
 - [x] 51-02-PLAN.md — Extraction prompt overhaul: remove team_engagement (D), add team_pathway/before_state/weekly_focus (H/A/G), expanded disambiguation (E/I/J), coercers.ts module ✓
-- [ ] 51-03-PLAN.md — Approve route handler fixes: wbs_task orphan fallback (B), arch_node graceful skip (C), before_state upsert handler (A), weekly_focus Redis handler (G)
-- [ ] 51-04-PLAN.md — Per-entity feedback: restructure approve response (F), IngestionModal breakdown display, human verification
+- [x] 51-03-PLAN.md — Approve route handler fixes: wbs_task orphan fallback (B), arch_node graceful skip (C), before_state upsert handler (A), weekly_focus Redis handler (G) ✓
+- [x] 51-04-PLAN.md — Per-entity feedback: restructure approve response (F), IngestionModal breakdown display, human verification ✓
 
 ### Phase 52: Multi-pass targeted extraction for full tab coverage
 
 **Goal:** Extraction recall improved by replacing single-pass Claude call with 3 focused entity-group passes per document; all passes merged and deduped before review queue; IngestionModal shows pass-aware progress labels
 **Requirements**: MULTI-PASS-01, MULTI-PASS-02, MULTI-PASS-03
 **Depends on:** Phase 51
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
-- [ ] 52-01-PLAN.md — Wave 0 TDD stubs: document-extraction-passes.test.ts + document-extraction-dedup.test.ts + ingestion-modal-pass-progress.test.ts (all RED)
-- [ ] 52-02-PLAN.md — Worker restructure: EXTRACTION_BASE + PASS_PROMPTS[1|2|3], 3-pass loop (PDF + text), deduplicateWithinBatch, isAlreadyIngested import from lib, EntityType union sync
-- [ ] 52-03-PLAN.md — IngestionModal pass-aware progress message (PASS_LABELS + global pct math) + human verification
+- [x] 52-01-PLAN.md — Wave 0 TDD stubs: document-extraction-passes.test.ts + document-extraction-dedup.test.ts + ingestion-modal-pass-progress.test.ts (all RED) ✓
+- [x] 52-02-PLAN.md — Worker restructure: EXTRACTION_BASE + PASS_PROMPTS[1|2|3], 3-pass loop (PDF + text), deduplicateWithinBatch, isAlreadyIngested import from lib, EntityType union sync ✓
+- [x] 52-03-PLAN.md — IngestionModal pass-aware progress message (PASS_LABELS + global pct math) + human verification ✓ (merged into Phase 53 scope)
 
 ### Phase 53: Extraction Prompt Intelligence & Pipeline Completion
 
