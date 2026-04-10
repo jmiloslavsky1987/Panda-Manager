@@ -41,7 +41,7 @@
 ### Team Engagement Overview
 
 - [ ] **TEAM-01**: Teams sub-tab (renamed "Team Engagement Overview") displays a 4-section engagement map: Business Outcomes, E2E Workflows, Teams & Engagement, and Top Focus Areas (Architecture section is covered by the dedicated Architecture tab — excluded from Overview per scope decision)
-- [ ] **TEAM-02**: Context upload extracts and routes structured data to populate all Team Engagement Map sections automatically
+- [x] **TEAM-02**: Context upload extracts and routes structured data to populate all Team Engagement Map sections automatically
 - [x] **TEAM-03**: Sections with missing or incomplete data display a visible warning prompting the user to supply required content
 - [x] **TEAM-04**: Team Engagement Overview sub-tab is read-only; users edit content in the source tabs (Actions, Teams Detail). TEAM-04 is satisfied by those existing edit flows — no add/edit/delete controls exist in the Overview sub-tab.
 
@@ -76,6 +76,12 @@
 - [x] **EXTR-14**: `arch_node` handler uses fuzzy/partial match on track name; unknown track names log a warning and skip gracefully rather than throwing and aborting the entire approval request
 - [x] **EXTR-15**: `team_engagement` entity routing investigated and fixed — extracted data surfaces in the Teams tab UI
 - [x] **EXTR-16**: Approve response includes per-entity-type write counts; IngestionModal displays breakdown; silent failures surfaced as visible warnings
+
+### Multi-Pass Extraction (Phase 52/55)
+
+- [x] **MULTI-PASS-01**: 3-pass extraction loop implemented — document-extraction.ts runs 3 sequential Claude calls per PDF (Passes 1, 2, 3) and 3 * chunkCount calls for text documents; PASS_PROMPTS[1|2|3] exported with EXTRACTION_BASE shared base + pass-specific entity type guidance; Pass 1 targets action/risk/task/milestone/decision/note/history, Pass 2 targets architecture/arch_node/integration/before_state, Pass 3 targets team/wbs_task/workstream/focus_area/e2e_workflow/team_pathway/weekly_focus/stakeholder/businessOutcome/onboarding_step
+- [x] **MULTI-PASS-02**: Intra-batch deduplication with composite keys — `deduplicateWithinBatch` uses `entityType::primaryKey` composite keys to prevent cross-type over-filtering while removing same-type duplicates; `weekly_focus` singletons pass through without dedup key; 10/10 dedup tests GREEN
+- [x] **MULTI-PASS-03**: Pass-aware progress display — IngestionModal shows pass-specific progress labels and global progress scale (pass 1 max 33%, pass 2 max 66%, pass 3 max 100%); global formula `globalPct = (passIdx / 3) * 100 + (passProgressPct / 3)`; 4 RED runtime integration tests (PDF 3-pass loop, text 3-pass loop, pass merge, progress scale) resolved in Phase 55
 
 ## Future Requirements
 
@@ -120,7 +126,7 @@
 | WBS-01 | Phase 45 | Complete |
 | WBS-02 | Phase 45 | Complete |
 | WBS-03 | Phase 46 | Complete |
-| TEAM-02 | Phase 56 | Pending |
+| TEAM-02 | Phase 56 | Complete |
 | ARCH-04 | Phase 46 | Complete |
 | WBS-04 | Phase 47 | Complete |
 | WBS-05 | Phase 47 | Complete |
@@ -153,15 +159,19 @@
 | EXTR-15 | Phase 53 | Complete |
 | EXTR-16 | Phase 53 | Complete |
 
+| MULTI-PASS-01 | Phase 52 | Complete |
+| MULTI-PASS-02 | Phase 52 | Complete |
+| MULTI-PASS-03 | Phase 52/55 | Complete |
+
 | TEAM-01 | Phase 56 | Pending |
-| TEAM-02 | Phase 56 | Pending |
+| TEAM-02 | Phase 56 | Complete |
 
 **Coverage:**
-- v6.0 requirements: 40 total (25 original + 15 Phase 53)
-- Mapped to phases: 40
-- Pending (gap closure): 2 (TEAM-01, TEAM-02 → Phase 56)
+- v6.0 requirements: 43 total (25 original + 15 Phase 53 + 3 Phase 52/55)
+- Mapped to phases: 43
+- Pending (gap closure): 1 (TEAM-01 → Phase 56)
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-04-07*
-*Last updated: 2026-04-10 after Phase 54 audit — EXTR-08/09/10 checkboxes, traceability, and coverage count confirmed current; no changes required*
+*Last updated: 2026-04-10 — added MULTI-PASS-01/02/03 formal definitions (Phase 52/55); coverage count updated 40 → 43*
