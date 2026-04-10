@@ -91,6 +91,17 @@ export function ExtractionItemRow({
     history: 'content',
     businessOutcome: 'title',
     team: 'team_name',
+    focus_area: 'title',
+    e2e_workflow: 'workflow_name',
+    wbs_task: 'title',
+    note: 'content',
+    team_pathway: 'team_name',
+    workstream: 'name',
+    onboarding_step: 'step_name',
+    integration: 'tool_name',
+    arch_node: 'node_name',
+    before_state: 'alert_to_ticket_problem',
+    weekly_focus: 'bullets',
   }
   const primaryKey = primaryFieldKeys[item.entityType] ?? Object.keys(item.fields)[0] ?? ''
   const summary = (item.fields[primaryKey] ?? '').slice(0, 80)
