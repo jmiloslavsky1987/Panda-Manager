@@ -3,7 +3,7 @@ phase: 52-multi-pass-targeted-extraction-for-full-tab-coverage
 verified: 2026-04-10T16:00:00Z
 status: passed
 score: 13/13 must-haves verified
-re_verification: false
+re_verification: true
 ---
 
 # Phase 52: Multi-Pass Targeted Extraction for Full Tab Coverage Verification Report
@@ -61,7 +61,7 @@ re_verification: false
 |-------------|-------------|--------|----------|
 | MULTI-PASS-01 | 3-pass extraction loop implemented | ✓ SATISFIED | Plans 01-02 complete; 3-pass loop for PDF and text documents; PASS_PROMPTS[1|2|3] exported; tests GREEN |
 | MULTI-PASS-02 | Intra-batch deduplication with composite keys | ✓ SATISFIED | Plans 01-02 complete; deduplicateWithinBatch implemented with entityType::primaryKey composite keys; 10/10 dedup tests GREEN |
-| MULTI-PASS-03 | Pass-aware progress display | ⚠️ PARTIAL | IngestionModal UI implemented in Phase 53; global progress scale formula implemented in Plans 01-02; 4 RED integration tests (PDF 3-pass loop runtime, text 3-pass loop runtime, pass merge, progress scale) deferred to Phase 55 for completion |
+| MULTI-PASS-03 | Pass-aware progress display | ✓ SATISFIED | IngestionModal PASS_LABELS + pass-aware message implemented in Phase 53 Plan 04; 4 integration tests (PDF 3-pass loop, text 3-pass loop, pass merge, progress scale 10/40/70/100) completed GREEN in Phase 55 Plan 01; document-extraction-passes.test.ts 6/6 GREEN |
 
 ### Anti-Patterns Found
 
@@ -94,7 +94,9 @@ re_verification: false
 - isAlreadyIngested lib import (local copy removed)
 - EntityType union synchronized
 
-Plan 03 UI and integration tests are documented as split/deferred (not gaps — intentional sequencing).
+Plan 03 scope complete: IngestionModal UI delivered in Phase 53 Plan 04; 4 integration tests delivered GREEN in Phase 55 Plan 01. No outstanding gaps.
+
+**Phase 52 Plan 03 scope complete (2026-04-10):** IngestionModal pass-aware progress delivered in Phase 53 Plan 04. 4 integration tests delivered GREEN in Phase 55 Plan 01. MULTI-PASS-03 now fully SATISFIED. See 52-03-SUMMARY.md and 55-01-SUMMARY.md.
 
 ---
 
