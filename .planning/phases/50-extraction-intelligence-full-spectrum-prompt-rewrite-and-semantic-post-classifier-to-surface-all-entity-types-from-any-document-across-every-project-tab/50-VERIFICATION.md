@@ -1,8 +1,10 @@
 ---
 phase: 50-extraction-intelligence-full-spectrum-prompt-rewrite-and-semantic-post-classifier-to-surface-all-entity-types-from-any-document-across-every-project-tab
 verified: 2026-04-09T10:03:00Z
+re_verified: 2026-04-10T16:00:00Z
 status: gaps_found
 score: 5/6 must-haves verified
+re_verification: true
 gaps:
   - truth: "Approving a team entity does not fail with wrong-table FK or constraint errors"
     status: partial
@@ -23,7 +25,7 @@ gaps:
 
 **Verified:** 2026-04-09T10:03:00Z
 **Status:** gaps_found
-**Re-verification:** No — initial verification
+**Re-verification:** Yes — 2026-04-10 (adding cross-references for gaps closed in Phases 51 and 53)
 
 ## Goal Achievement
 
@@ -84,7 +86,29 @@ Plan 03 includes a human verification checkpoint (Task 2). According to SUMMARY 
 **Expected:** Update and delete operations should succeed without FK constraint errors
 **Why human:** The insertItem path works (automated tests pass), but updateItem/deleteItem paths are broken (wrong table reference) — this requires manual testing of the full approval workflow
 
+## Gap Closures by Subsequent Phases
+
+### Gaps Addressed in Phase 51
+
+- **team_engagement entity routing:** The team_engagement entity type was deprecated entirely in Phase 51 Plan 02 — removed from EXTRACTION_SYSTEM prompt and EntityType union. The updateItem/deleteItem 'team' handler bug documented in this verification became moot for team_engagement extraction. However, the 'team' handler bug itself was not fixed (team → teamOnboardingStatus update/delete paths remain broken).
+- **WBS orphan fallback (Truth 3 related):** Implemented in Phase 51 Plan 03 — wbs_task parent_section_name match failure now falls back to Level 1 instead of orphaning. Verified in 51-VERIFICATION.md Truth 9.
+- **arch_node graceful skip (Truth 3 related):** Implemented in Phase 51 Plan 03 — unknown track names log a warning and skip gracefully via skipEntity. Verified in 51-VERIFICATION.md Truth 10.
+- **before_state upsert handler:** Implemented in Phase 51 Plan 03 — before_state entity type has a working end-to-end path. Verified in 51-VERIFICATION.md Truth 11.
+
+### Gaps Addressed in Phase 53
+
+- **EXTR-12 (before_state end-to-end):** Phase 53 Plan 05 added verification tests for before_state upsert handler. Verified in 53-VERIFICATION.md Truth 11.
+- **EXTR-13 (WBS orphan fallback):** Phase 53 Plan 05 added verification tests for wbs_task orphan fallback. Verified in 53-VERIFICATION.md Truth 12.
+- **EXTR-14 (arch_node graceful skip):** Phase 53 Plan 05 added verification tests for arch_node skipEntity routing. Verified in 53-VERIFICATION.md Truth 13.
+- **EXTR-16 (per-entity feedback):** Per-entity written/skipped/errors in approve response implemented in Phase 53. Verified in 53-VERIFICATION.md Truth 15.
+
+### Remaining Open Gap
+
+- The **updateItem case 'team'** (line 1075) and **deleteItem case 'team'** (line 1302) wrong-table references documented in this verification remain unfixed as of Phase 53. These handlers reference focusAreas instead of teamOnboardingStatus. Since team_engagement was deprecated from extraction, this gap has reduced impact (new team extractions don't exist) but the handler bug persists for any existing staged team items.
+
 ### Gaps Summary
+
+**Note (2026-04-10 re-verification):** Several gaps documented in this report were closed in Phases 51 and 53. See 'Gap Closures by Subsequent Phases' section above for details. The remaining open gap (updateItem/deleteItem 'team' handler) is tracked — its impact is reduced since team_engagement extraction was deprecated in Phase 51.
 
 **Primary gap:** The team entity routing fix (Gap 1) is incomplete. While the insertItem case correctly routes to teamOnboardingStatus, the updateItem and deleteItem cases still reference the wrong table (focusAreas). This means:
 
