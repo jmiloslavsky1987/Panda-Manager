@@ -71,6 +71,9 @@ export const RECORD_ENTITIES_TOOL: Anthropic.Tool = {
 // ─── Multi-Pass Extraction Prompts (Phase 52) ────────────────────────────────
 
 export const EXTRACTION_BASE = `You are a project data extractor. Given a document, extract all structured project data.
+
+The document to extract from is provided in <document> tags in the user message.
+
 Output ONLY a JSON array of extraction items — no prose before or after, no markdown code fences.
 Each item follows this exact shape:
 {
@@ -102,6 +105,20 @@ Entity type guidance:
 - before_state: { aggregation_hub_name (name of the primary alert aggregation hub or SIEM being replaced or supplemented), alert_to_ticket_problem (description of the pain point in the current alert-to-ticket workflow), pain_points (comma-separated list of customer pain points with the current state) } — customer's current state before BigPanda adoption; extract from sections titled "Current State", "Before State", "Pain Points", "Challenges", or similar; one entity per project
 - weekly_focus: { bullets (JSON array of strings — the current week's focus items; each bullet is a short action or priority statement) } — this week's focus priorities extracted from a status update, meeting notes, or project status document; use when document contains a "This Week" or "Weekly Focus" section
 
+## STATUS NORMALIZATION
+
+Always map extracted status values to canonical enum values using this table:
+
+| Canonical Value   | Accept These Variants                                      |
+|-------------------|------------------------------------------------------------|
+| not_started       | not started, todo, planned, pending, open, new, not_yet   |
+| in_progress       | in progress, in-progress, active, ongoing, started, wip   |
+| completed         | complete, completed, done, finished, closed, resolved      |
+| blocked           | blocked, on hold, waiting, stalled, paused, deferred       |
+| live              | live, deployed, production, in production, released        |
+| pilot             | pilot, trial, testing, poc, proof of concept               |
+| planned           | planned, roadmap, future, upcoming, scheduled              |
+
 IMPORTANT disambiguation rules — read carefully before assigning entityType:
 - architecture vs arch_node vs integration:
   • architecture = tool's ROLE in BigPanda delivery workflow (which phase it belongs to, how it integrates into the delivery process) — use for workflow integration context
@@ -121,6 +138,16 @@ IMPORTANT disambiguation rules — read carefully before assigning entityType:
 - team_engagement: DO NOT use this entity type. It is deprecated. Use the appropriate specific types instead: businessOutcome, e2e_workflow, team, focus_area for team engagement content.
 
 IMPORTANT: Do NOT discard content just because it doesn't fit a structured type. Capture it as a "note".
+
+## DATE INFERENCE RULES
+
+You MUST attempt to infer dates from ANY temporal signal near the entity:
+- Explicit dates ("Q2 2025", "March 15", "by end of month")
+- Relative references ("next sprint", "in two weeks", "before launch")
+- Milestone proximity ("before the MVP milestone")
+
+If you set a date field to null, you MUST include a brief justification in sourceExcerpt explaining
+why no temporal signal exists for this entity. Do NOT default to null without attempting inference.
 
 Extract all names (owners, milestone names, workstream names) exactly as they appear in the document. Do not abbreviate, normalize, or infer names. Use null for any field not explicitly present in the document.
 
