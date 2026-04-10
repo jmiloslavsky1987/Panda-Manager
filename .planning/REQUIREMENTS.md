@@ -71,11 +71,11 @@
 
 ### Extraction Pipeline Completeness (Phase 53)
 
-- [ ] **EXTR-12**: `before_state` entity type handled end-to-end in approve route with upsert to `before_state` table — Architecture "Before BigPanda" tab populatable via document ingestion
-- [ ] **EXTR-13**: WBS orphan fallback implemented — when `wbs_task` `parent_section_name` doesn't match seeded rows, handler auto-creates missing parent section OR inserts as top-level L1 (no invisible orphaned items)
-- [ ] **EXTR-14**: `arch_node` handler uses fuzzy/partial match on track name; unknown track names log a warning and skip gracefully rather than throwing and aborting the entire approval request
-- [ ] **EXTR-15**: `team_engagement` entity routing investigated and fixed — extracted data surfaces in the Teams tab UI
-- [ ] **EXTR-16**: Approve response includes per-entity-type write counts; IngestionModal displays breakdown; silent failures surfaced as visible warnings
+- [x] **EXTR-12**: `before_state` entity type handled end-to-end in approve route with upsert to `before_state` table — Architecture "Before BigPanda" tab populatable via document ingestion
+- [x] **EXTR-13**: WBS orphan fallback implemented — when `wbs_task` `parent_section_name` doesn't match seeded rows, handler auto-creates missing parent section OR inserts as top-level L1 (no invisible orphaned items)
+- [x] **EXTR-14**: `arch_node` handler uses fuzzy/partial match on track name; unknown track names log a warning and skip gracefully rather than throwing and aborting the entire approval request
+- [x] **EXTR-15**: `team_engagement` entity routing investigated and fixed — extracted data surfaces in the Teams tab UI
+- [x] **EXTR-16**: Approve response includes per-entity-type write counts; IngestionModal displays breakdown; silent failures surfaced as visible warnings
 
 ## Future Requirements
 
