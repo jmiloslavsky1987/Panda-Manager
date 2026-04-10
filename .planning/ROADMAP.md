@@ -106,6 +106,9 @@ Full details: `.planning/milestones/v5.0-ROADMAP.md` (archived)
 - [x] **Phase 47: Work Breakdown Structure** - Collapsible WBS tree with AI Generate Plan and manual CRUD (completed 2026-04-08)
 - [x] **Phase 48: Architecture & Team Engagement** - Two-tab Architecture diagrams + 5-section Team report (completed 2026-04-08)
 - [x] **Phase 49: Portfolio Dashboard** - Multi-project table with health summary and exceptions panel (completed 2026-04-09)
+- [ ] **Phase 54: Verification & Documentation Catch-Up** [GAP CLOSURE] - Write missing VERIFICATION.md files for 48.1 and 52, update stale Phase 50 VERIFICATION.md, fix REQUIREMENTS.md documentation debt
+- [ ] **Phase 55: Phase 52 Integration Test Completion** [GAP CLOSURE] - Implement 4 RED integration tests from Phase 52 Plan 03, write SUMMARY and VERIFICATION.md
+- [ ] **Phase 56: Teams Tab Alignment & Orphan Cleanup** [GAP CLOSURE] - Resolve TEAM-01/TEAM-02 spec discrepancies, wire or remove orphaned components, fix broken Context Upload → Teams tab flow
 
 ## Phase Details
 
@@ -243,7 +246,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 43 → 44 → 45 → 46 → 47 → 48 → 49
+Phases execute in numeric order: 43 → 44 → 45 → 46 → 47 → 48 → 49 → 50 → 51 → 52 → 53 → 54 → 55 → 56
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -269,6 +272,9 @@ Phases execute in numeric order: 43 → 44 → 45 → 46 → 47 → 48 → 49
 | 51. Extraction Intelligence Overhaul | 4/4 | Complete | 2026-04-09 | - |
 | 52. Multi-pass Targeted Extraction | 3/3 | Complete | 2026-04-10 | - |
 | 53. Extraction Prompt Intelligence & Pipeline Completion | 5/5 | Complete    | 2026-04-10 | - |
+| 54. Verification & Documentation Catch-Up [GAP CLOSURE] | v6.0 | 0/2 | Pending | — |
+| 55. Phase 52 Integration Test Completion [GAP CLOSURE] | v6.0 | 0/2 | Pending | — |
+| 56. Teams Tab Alignment & Orphan Cleanup [GAP CLOSURE] | v6.0 | 0/3 | Pending | — |
 
 ### Phase 50: Extraction Intelligence — Full-spectrum prompt rewrite and semantic post-classifier to surface all entity types from any document across every project tab
 
@@ -320,3 +326,34 @@ Plans:
 - [ ] 53-03-PLAN.md — Tool use migration + chunk overlap + coverage self-reporting (EXTR-08, EXTR-09, EXTR-10)
 - [ ] 53-04-PLAN.md — Pass 0 pre-analysis: one-time pre-pass quotes relevant document sections, prepended to Passes 1-3 (EXTR-11)
 - [ ] 53-05-PLAN.md — Pipeline gap verification: before_state, WBS orphan, arch_node skip, team_engagement investigation, per-entity response (EXTR-12 to EXTR-16)
+
+### Phase 54: Verification & Documentation Catch-Up
+**Goal:** All process documentation gaps closed — VERIFICATION.md files written for phases 48.1 and 52, stale Phase 50 VERIFICATION.md corrected, and REQUIREMENTS.md documentation debt resolved
+**Requirements:** (documentation only — closes audit gaps)
+**Gap Closure:** Closes gaps from v6.0 audit
+**Depends on:** Phase 53
+
+Plans:
+- [ ] 54-01-PLAN.md — Write Phase 48.1 VERIFICATION.md (UAT 7/8 passed, integration wiring confirmed); write Phase 52 VERIFICATION.md (Plans 01-02 complete, Plan 03 status noted); update Phase 50 VERIFICATION.md to reflect gaps closed in Phase 53
+- [ ] 54-02-PLAN.md — Fix REQUIREMENTS.md documentation debt: mark EXTR-08/EXTR-09/EXTR-10 checkboxes [x]; update traceability table EXTR-XX entries from "Planned" → "Complete"; update coverage count
+
+### Phase 55: Phase 52 Integration Test Completion
+**Goal:** Phase 52 Plan 03 fully executed — 4 RED integration tests implemented, passing, and documented
+**Requirements:** MULTI-PASS-01, MULTI-PASS-02, MULTI-PASS-03
+**Gap Closure:** Closes gaps from v6.0 audit
+**Depends on:** Phase 54
+
+Plans:
+- [ ] 55-01-PLAN.md — Implement 4 RED integration test stubs from Phase 52: PDF 3-pass extraction loop, text 3-pass extraction loop, pass merge/dedup logic, global progress scale formula; drive to GREEN
+- [ ] 55-02-PLAN.md — Write Phase 52 Plan 03 SUMMARY; update Phase 52 VERIFICATION.md to reflect full completion
+
+### Phase 56: Teams Tab Alignment & Orphan Cleanup
+**Goal:** TEAM-01 and TEAM-02 requirements fully satisfied or REQUIREMENTS.md updated to reflect final intended behavior; orphaned infrastructure resolved
+**Requirements:** TEAM-01, TEAM-02
+**Gap Closure:** Closes gaps from v6.0 audit
+**Depends on:** Phase 55
+
+Plans:
+- [ ] 56-01-PLAN.md — Decide and implement TEAM-01 resolution: wire TeamEngagementOverview.tsx (correct 4-section impl) into Teams page via TeamsPageTabs, OR update REQUIREMENTS.md to formally adopt 5-section design; remove dead code accordingly
+- [ ] 56-02-PLAN.md — Resolve TEAM-02: wire getTeamEngagementSections() into getTeamsTabData() to surface teamEngagementSections data in Teams tab, OR formally document deprecation and remove dead code
+- [ ] 56-03-PLAN.md — Clean up orphaned infrastructure: investigate archTeamStatus table (remove or wire getArchTeamStatus() to Architecture tab); remove TeamsPageTabs/TeamEngagementOverview if not wired in 56-01; update Phase 56 VERIFICATION.md

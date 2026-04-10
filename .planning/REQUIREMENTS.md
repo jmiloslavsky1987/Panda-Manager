@@ -40,8 +40,8 @@
 
 ### Team Engagement Overview
 
-- [x] **TEAM-01**: Teams sub-tab (renamed "Team Engagement Overview") displays a 4-section engagement map: Business Outcomes, E2E Workflows, Teams & Engagement, and Top Focus Areas (Architecture section is covered by the dedicated Architecture tab — excluded from Overview per scope decision)
-- [x] **TEAM-02**: Context upload extracts and routes structured data to populate all Team Engagement Map sections automatically
+- [ ] **TEAM-01**: Teams sub-tab (renamed "Team Engagement Overview") displays a 4-section engagement map: Business Outcomes, E2E Workflows, Teams & Engagement, and Top Focus Areas (Architecture section is covered by the dedicated Architecture tab — excluded from Overview per scope decision)
+- [ ] **TEAM-02**: Context upload extracts and routes structured data to populate all Team Engagement Map sections automatically
 - [x] **TEAM-03**: Sections with missing or incomplete data display a visible warning prompting the user to supply required content
 - [x] **TEAM-04**: Team Engagement Overview sub-tab is read-only; users edit content in the source tabs (Actions, Teams Detail). TEAM-04 is satisfied by those existing edit flows — no add/edit/delete controls exist in the Overview sub-tab.
 
@@ -64,9 +64,9 @@
 - [x] **EXTR-05**: Status normalization implemented as an explicit lookup table in EXTRACTION_BASE mapping all common variants to canonical enum values
 - [x] **EXTR-06**: Date inference requires active justification for null — prompts instruct Claude to attempt inference from any temporal signal; null only when no signal exists near the entity
 - [x] **EXTR-07**: Each pass prompt includes a section-by-section scanning instruction and an end-of-prompt self-check verification step
-- [ ] **EXTR-08**: Raw JSON prompting replaced with a `record_entities` tool call (`strict: true`), eliminating `jsonrepair` dependency and improving schema adherence
-- [ ] **EXTR-09**: `splitIntoChunks` adds 2,000-character overlap to prevent entities spanning chunk boundaries from being missed
-- [ ] **EXTR-10**: Each pass appends a `COVERAGE: entity_type: N | GAPS: ...` summary; parser captures and stores per-pass coverage for debugging
+- [x] **EXTR-08**: Raw JSON prompting replaced with a `record_entities` tool call (`strict: true`), eliminating `jsonrepair` dependency and improving schema adherence
+- [x] **EXTR-09**: `splitIntoChunks` adds 2,000-character overlap to prevent entities spanning chunk boundaries from being missed
+- [x] **EXTR-10**: Each pass appends a `COVERAGE: entity_type: N | GAPS: ...` summary; parser captures and stores per-pass coverage for debugging
 - [x] **EXTR-11**: New Pass 0 pre-analysis step where Claude quotes relevant document sections before extraction passes begin, improving recall on dense/complex documents
 
 ### Extraction Pipeline Completeness (Phase 53)
@@ -120,14 +120,14 @@
 | WBS-01 | Phase 45 | Complete |
 | WBS-02 | Phase 45 | Complete |
 | WBS-03 | Phase 46 | Complete |
-| TEAM-02 | Phase 46 | Complete |
+| TEAM-02 | Phase 56 | Pending |
 | ARCH-04 | Phase 46 | Complete |
 | WBS-04 | Phase 47 | Complete |
 | WBS-05 | Phase 47 | Complete |
 | ARCH-01 | Phase 48 | Complete |
 | ARCH-02 | Phase 48 | Complete |
 | ARCH-03 | Phase 48 | Complete |
-| TEAM-01 | Phase 48 | Complete |
+| TEAM-01 | Phase 56 | Pending |
 | TEAM-03 | Phase 48 | Complete |
 | TEAM-04 | Phase 48 | Complete |
 | DASH-01 | Phase 49 | Complete |
@@ -137,27 +137,31 @@
 | DASH-05 | Phase 49 | Complete |
 | DASH-06 | Phase 49 | Complete |
 
-| EXTR-02 | Phase 53 | Planned |
-| EXTR-03 | Phase 53 | Planned |
-| EXTR-04 | Phase 53 | Planned |
-| EXTR-05 | Phase 53 | Planned |
-| EXTR-06 | Phase 53 | Planned |
-| EXTR-07 | Phase 53 | Planned |
-| EXTR-08 | Phase 53 | Planned |
-| EXTR-09 | Phase 53 | Planned |
-| EXTR-10 | Phase 53 | Planned |
-| EXTR-11 | Phase 53 | Planned |
-| EXTR-12 | Phase 53 | Planned |
-| EXTR-13 | Phase 53 | Planned |
-| EXTR-14 | Phase 53 | Planned |
-| EXTR-15 | Phase 53 | Planned |
-| EXTR-16 | Phase 53 | Planned |
+| EXTR-02 | Phase 53 | Complete |
+| EXTR-03 | Phase 53 | Complete |
+| EXTR-04 | Phase 53 | Complete |
+| EXTR-05 | Phase 53 | Complete |
+| EXTR-06 | Phase 53 | Complete |
+| EXTR-07 | Phase 53 | Complete |
+| EXTR-08 | Phase 53 | Complete |
+| EXTR-09 | Phase 53 | Complete |
+| EXTR-10 | Phase 53 | Complete |
+| EXTR-11 | Phase 53 | Complete |
+| EXTR-12 | Phase 53 | Complete |
+| EXTR-13 | Phase 53 | Complete |
+| EXTR-14 | Phase 53 | Complete |
+| EXTR-15 | Phase 53 | Complete |
+| EXTR-16 | Phase 53 | Complete |
+
+| TEAM-01 | Phase 56 | Pending |
+| TEAM-02 | Phase 56 | Pending |
 
 **Coverage:**
 - v6.0 requirements: 40 total (25 original + 15 Phase 53)
 - Mapped to phases: 40
+- Pending (gap closure): 2 (TEAM-01, TEAM-02 → Phase 56)
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-04-07*
-*Last updated: 2026-04-07 after roadmap creation*
+*Last updated: 2026-04-10 after v6.0 audit gap closure phases added (TEAM-01, TEAM-02 reset to Pending for Phase 56; EXTR-08/09/10 checkboxes fixed; EXTR-XX traceability updated to Complete)*
