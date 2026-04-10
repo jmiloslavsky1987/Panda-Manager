@@ -19,12 +19,26 @@ export const TAB_LABELS: Record<string, string> = {
   history: 'History',
   businessOutcome: 'Business Outcomes',
   team: 'Teams',
+  focus_area: 'Focus Areas',
+  e2e_workflow: 'E2E Workflows',
+  team_pathway: 'Team Pathways',
+  wbs_task: 'WBS Tasks',
+  note: 'Notes',
+  workstream: 'Workstreams',
+  onboarding_step: 'Onboarding Steps',
+  integration: 'Integrations',
+  arch_node: 'Arch Nodes',
+  before_state: 'Before State',
+  weekly_focus: 'Weekly Focus',
 }
 
 // Entity type order for consistent tab ordering
 const ENTITY_ORDER: string[] = [
   'action', 'risk', 'decision', 'milestone', 'stakeholder',
   'task', 'architecture', 'history', 'businessOutcome', 'team',
+  'focus_area', 'e2e_workflow', 'team_pathway',  // Team-adjacent group
+  'wbs_task', 'note', 'workstream', 'onboarding_step',  // Delivery group
+  'integration', 'arch_node', 'before_state', 'weekly_focus',  // Architecture group
 ]
 
 interface ExtractionPreviewProps {
