@@ -25,7 +25,6 @@ import {
   teamPathways,
   auditLog,
   wbsItems,
-  teamEngagementSections,
   archTracks,
   archNodes,
   archTeamStatus,
@@ -50,7 +49,6 @@ export type Output = typeof outputs.$inferSelect;
 export type Task = typeof tasks.$inferSelect;
 export type PlanTemplate = typeof planTemplates.$inferSelect;
 export type WbsItem = typeof wbsItems.$inferSelect;
-export type TeamEngagementSection = typeof teamEngagementSections.$inferSelect;
 export type ArchTrack = typeof archTracks.$inferSelect;
 export type ArchNode = typeof archNodes.$inferSelect;
 export type ArchTeamStatus = typeof archTeamStatus.$inferSelect;
@@ -1208,17 +1206,6 @@ export async function deleteWbsSubtree(itemId: number): Promise<void> {
   }
 }
 
-/**
- * Returns team engagement sections for a project, ordered by display_order.
- * Used by Phase 48 Team Engagement UI.
- */
-export async function getTeamEngagementSections(projectId: number): Promise<TeamEngagementSection[]> {
-  return db
-    .select()
-    .from(teamEngagementSections)
-    .where(eq(teamEngagementSections.project_id, projectId))
-    .orderBy(asc(teamEngagementSections.display_order));
-}
 
 /**
  * Returns architecture tracks and nodes for a project.
