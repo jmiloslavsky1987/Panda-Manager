@@ -21,10 +21,56 @@ import { isAlreadyIngested } from '../../lib/extraction-types';
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const CHUNK_CHAR_LIMIT = 80_000; // ~20k tokens; leaves headroom for system prompt + JSON output
+export const CHUNK_OVERLAP = 2_000; // 2000-char overlap between consecutive chunks (EXTR-09)
+
+// ─── Tool Use Definition (EXTR-08, EXTR-10) ──────────────────────────────────
+
+export const RECORD_ENTITIES_TOOL: Anthropic.Tool = {
+  name: 'record_entities',
+  description: 'Record all extracted project entities found in the document. After extracting all entities, provide a coverage summary.',
+  input_schema: {
+    type: 'object' as const,
+    properties: {
+      entities: {
+        type: 'array',
+        description: 'All extracted entities from this pass.',
+        items: {
+          type: 'object',
+          properties: {
+            entityType: {
+              type: 'string',
+              description: 'Entity type string matching the allowed types for this pass.',
+            },
+            fields: {
+              type: 'object',
+              description: 'Entity field values as key-value pairs.',
+            },
+            confidence: {
+              type: 'number',
+              description: 'Confidence score 0.0-1.0.',
+            },
+            sourceExcerpt: {
+              type: 'string',
+              description: 'Verbatim text from document that led to this entity.',
+            },
+          },
+          required: ['entityType', 'fields', 'confidence', 'sourceExcerpt'],
+          additionalProperties: false,
+        },
+      },
+      coverage: {
+        type: 'string',
+        description: 'Summary of extraction coverage. Format: "action: N, risk: N, wbs_task: N | GAPS: <describe any sections where extraction was uncertain or incomplete>". Required — do not omit.',
+      },
+    },
+    required: ['entities', 'coverage'],
+    additionalProperties: false,
+  },
+};
 
 // ─── Multi-Pass Extraction Prompts (Phase 52) ────────────────────────────────
 
-const EXTRACTION_BASE = `You are a project data extractor. Given a document, extract all structured project data.
+export const EXTRACTION_BASE = `You are a project data extractor. Given a document, extract all structured project data.
 Output ONLY a JSON array of extraction items — no prose before or after, no markdown code fences.
 Each item follows this exact shape:
 {
