@@ -247,7 +247,7 @@ export interface ExtractionItem {
 
 // ─── Helper Functions ─────────────────────────────────────────────────────────
 
-function splitIntoChunks(text: string, limit: number): string[] {
+export function splitIntoChunks(text: string, limit: number): string[] {
   if (text.length <= limit) return [text];
   const chunks: string[] = [];
   let start = 0;
@@ -259,7 +259,8 @@ function splitIntoChunks(text: string, limit: number): string[] {
       if (boundary > start) end = boundary;
     }
     chunks.push(text.slice(start, end).trim());
-    start = end;
+    // EXTR-09: Add overlap — next chunk starts CHUNK_OVERLAP chars before the end of this chunk
+    start = Math.max(start + 1, end - CHUNK_OVERLAP);
   }
   return chunks.filter(c => c.length > 0);
 }
