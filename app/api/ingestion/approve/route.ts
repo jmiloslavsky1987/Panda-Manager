@@ -46,8 +46,12 @@ const ApprovalItemSchema = z.object({
     'focus_area', 'e2e_workflow',   // Gap 3+4 — added Phase 50
     'before_state', 'weekly_focus',  // Gap A+G — added Phase 51
   ]),
-  fields: z.record(z.string(), z.union([z.string(), z.null()])).transform(
-    f => Object.fromEntries(Object.entries(f).filter(([, v]) => v != null)) as Record<string, string>
+  fields: z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()])).transform(
+    f => Object.fromEntries(
+      Object.entries(f)
+        .filter(([, v]) => v != null)
+        .map(([k, v]) => [k, String(v)])
+    ) as Record<string, string>
   ),
   approved: z.boolean(),
   conflictResolution: z.enum(['merge', 'replace', 'skip']).optional(),
@@ -812,6 +816,11 @@ async function insertItem(
     }
 
     case 'team_engagement': {
+      // DEAD CODE (EXTR-15): team_engagement removed from extraction prompt in Phase 51 Plan 02.
+      // teamEngagementSections table is not surfaced in the Teams tab UI (getTeamsTabData does not query it).
+      // Handler retained for backward compatibility with any items already in the review queue.
+      // If teamEngagementSections data needs to surface, wire getTeamEngagementSections into getTeamsTabData.
+
       // Append content to existing section (not overwrite)
       const sectionRows = await db
         .select({ id: teamEngagementSections.id, content: teamEngagementSections.content })
