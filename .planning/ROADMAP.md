@@ -106,7 +106,7 @@ Full details: `.planning/milestones/v5.0-ROADMAP.md` (archived)
 - [x] **Phase 47: Work Breakdown Structure** - Collapsible WBS tree with AI Generate Plan and manual CRUD (completed 2026-04-08)
 - [x] **Phase 48: Architecture & Team Engagement** - Two-tab Architecture diagrams + 5-section Team report (completed 2026-04-08)
 - [x] **Phase 49: Portfolio Dashboard** - Multi-project table with health summary and exceptions panel (completed 2026-04-09)
-- [ ] **Phase 54: Verification & Documentation Catch-Up** [GAP CLOSURE] - Write missing VERIFICATION.md files for 48.1 and 52, update stale Phase 50 VERIFICATION.md, fix REQUIREMENTS.md documentation debt
+- [x] **Phase 54: Verification & Documentation Catch-Up** [GAP CLOSURE] - Write missing VERIFICATION.md files for 48.1 and 52, update stale Phase 50 VERIFICATION.md, fix REQUIREMENTS.md documentation debt (completed 2026-04-10)
 - [ ] **Phase 55: Phase 52 Integration Test Completion** [GAP CLOSURE] - Implement 4 RED integration tests from Phase 52 Plan 03, write SUMMARY and VERIFICATION.md
 - [ ] **Phase 56: Teams Tab Alignment & Orphan Cleanup** [GAP CLOSURE] - Resolve TEAM-01/TEAM-02 spec discrepancies, wire or remove orphaned components, fix broken Context Upload → Teams tab flow
 
@@ -272,7 +272,7 @@ Phases execute in numeric order: 43 → 44 → 45 → 46 → 47 → 48 → 49 �
 | 51. Extraction Intelligence Overhaul | 4/4 | Complete | 2026-04-09 | - |
 | 52. Multi-pass Targeted Extraction | 3/3 | Complete | 2026-04-10 | - |
 | 53. Extraction Prompt Intelligence & Pipeline Completion | 5/5 | Complete    | 2026-04-10 | - |
-| 54. Verification & Documentation Catch-Up [GAP CLOSURE] | 1/2 | In Progress|  | — |
+| 54. Verification & Documentation Catch-Up [GAP CLOSURE] | 2/2 | Complete   | 2026-04-10 | — |
 | 55. Phase 52 Integration Test Completion [GAP CLOSURE] | v6.0 | 0/2 | Pending | — |
 | 56. Teams Tab Alignment & Orphan Cleanup [GAP CLOSURE] | v6.0 | 0/3 | Pending | — |
 
@@ -332,7 +332,7 @@ Plans:
 **Requirements:** (documentation only — closes audit gaps)
 **Gap Closure:** Closes gaps from v6.0 audit
 **Depends on:** Phase 53
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] 54-01-PLAN.md — Write Phase 48.1 VERIFICATION.md (UAT 7/8 passed, integration wiring confirmed); write Phase 52 VERIFICATION.md (Plans 01-02 complete, Plan 03 status noted); update Phase 50 VERIFICATION.md to reflect gaps closed in Phase 53
