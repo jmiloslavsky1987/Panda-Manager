@@ -939,3 +939,191 @@ describe('Phase 46 — insertItem routing for wbs_task, team_engagement, arch_no
     });
   });
 });
+
+describe('Phase 53 — Pipeline gap verification (EXTR-12, EXTR-13, EXTR-14, EXTR-16)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('EXTR-12: before_state entity approved → db.insert or db.update called for before_state', async () => {
+    // Mock artifact lookup
+    const mockArtifactWhere = vi.fn().mockResolvedValue([{
+      id: 10,
+      ingestion_log_json: { filename: 'test.docx', uploaded_at: '2026-01-01T00:00:00Z' },
+    }]);
+    const mockArtifactFrom = vi.fn().mockReturnValue({ where: mockArtifactWhere });
+
+    // isAlreadyIngested for before_state always returns false (no conflict check needed)
+    const mockConflictWhere = vi.fn().mockResolvedValue([]);
+    const mockConflictFrom = vi.fn().mockReturnValue({ where: mockConflictWhere });
+
+    vi.mocked(db.select)
+      .mockReturnValueOnce({ from: mockArtifactFrom } as any)
+      .mockReturnValue({ from: mockConflictFrom } as any);
+
+    const mockOnConflictDoUpdate = vi.fn().mockReturnValue({
+      returning: vi.fn().mockResolvedValue([{ id: 1 }]),
+    });
+    const mockValues = vi.fn().mockReturnValue({ onConflictDoUpdate: mockOnConflictDoUpdate });
+    vi.mocked(db.insert).mockReturnValue({ values: mockValues } as any);
+
+    const mockSet = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) });
+    vi.mocked(db.update).mockReturnValue({ set: mockSet } as any);
+
+    const req = buildRequest({
+      artifactId: 10,
+      projectId: 1,
+      totalExtracted: 1,
+      items: [{
+        entityType: 'before_state',
+        fields: {
+          aggregation_hub_name: 'Splunk',
+          alert_to_ticket_problem: '90% alert noise',
+          pain_points_json: '["Alert noise at 90%"]',
+        },
+        approved: true,
+      }],
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    // before_state upsert: either insert (with onConflictDoUpdate) or update called
+    const wasInserted = vi.mocked(db.insert).mock.calls.length > 0;
+    const wasUpdated = vi.mocked(db.update).mock.calls.length > 0;
+    expect(wasInserted || wasUpdated).toBe(true);
+  });
+
+  it('EXTR-13: wbs_task with unmatched parent_section_name → fallback insert (no crash)', async () => {
+    const mockArtifactWhere = vi.fn().mockResolvedValue([{
+      id: 10,
+      ingestion_log_json: { filename: 'test.docx', uploaded_at: '2026-01-01T00:00:00Z' },
+    }]);
+    const mockArtifactFrom = vi.fn().mockReturnValue({ where: mockArtifactWhere });
+
+    // Parent lookup returns NO match → orphan fallback should fire
+    const mockParentWhere = vi.fn().mockResolvedValue([]);
+    const mockParentFrom = vi.fn().mockReturnValue({ where: mockParentWhere });
+
+    const mockConflictWhere = vi.fn().mockResolvedValue([]);
+    const mockConflictFrom = vi.fn().mockReturnValue({ where: mockConflictWhere });
+
+    vi.mocked(db.select)
+      .mockReturnValueOnce({ from: mockArtifactFrom } as any)
+      .mockReturnValueOnce({ from: mockParentFrom } as any)  // parent lookup — empty
+      .mockReturnValue({ from: mockConflictFrom } as any);
+
+    const mockValues = vi.fn().mockReturnValue({ returning: vi.fn().mockResolvedValue([{ id: 1 }]) });
+    vi.mocked(db.insert).mockReturnValue({ values: mockValues } as any);
+    const mockSet = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) });
+    vi.mocked(db.update).mockReturnValue({ set: mockSet } as any);
+
+    const req = buildRequest({
+      artifactId: 10,
+      projectId: 1,
+      totalExtracted: 1,
+      items: [{
+        entityType: 'wbs_task',
+        fields: {
+          title: 'Configure something unknown',
+          track: 'ADR',
+          parent_section_name: 'NonExistentSection',
+          level: '2',
+          status: 'not_started',
+        },
+        approved: true,
+      }],
+    });
+
+    const res = await POST(req);
+    // Should NOT be 500 — orphan fallback handles missing parent gracefully
+    expect(res.status).toBe(200);
+    // db.insert should still be called (item inserted at fallback level)
+    expect(vi.mocked(db.insert)).toHaveBeenCalled();
+  });
+
+  it('EXTR-14: arch_node with unknown track → skipped count incremented, NOT error count', async () => {
+    const mockArtifactWhere = vi.fn().mockResolvedValue([{
+      id: 10,
+      ingestion_log_json: { filename: 'test.docx', uploaded_at: '2026-01-01T00:00:00Z' },
+    }]);
+    const mockArtifactFrom = vi.fn().mockReturnValue({ where: mockArtifactWhere });
+
+    // Track lookup returns NO match → skipEntity should fire
+    const mockTrackWhere = vi.fn().mockResolvedValue([]);
+    const mockTrackFrom = vi.fn().mockReturnValue({ where: mockTrackWhere });
+
+    const mockConflictWhere = vi.fn().mockResolvedValue([]);
+    const mockConflictFrom = vi.fn().mockReturnValue({ where: mockConflictWhere });
+
+    vi.mocked(db.select)
+      .mockReturnValueOnce({ from: mockArtifactFrom } as any)
+      .mockReturnValueOnce({ from: mockTrackFrom } as any)  // track lookup — empty
+      .mockReturnValue({ from: mockConflictFrom } as any);
+
+    const mockSet = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) });
+    vi.mocked(db.update).mockReturnValue({ set: mockSet } as any);
+
+    const req = buildRequest({
+      artifactId: 10,
+      projectId: 1,
+      totalExtracted: 1,
+      items: [{
+        entityType: 'arch_node',
+        fields: {
+          track: 'UnknownTrack',
+          node_name: 'Mystery Node',
+          status: 'planned',
+        },
+        approved: true,
+      }],
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+
+    const body = await res.json();
+    // EXTR-14: skipEntity errors go to skipped, not errors
+    expect(body.skipped?.arch_node ?? 0).toBe(1);
+    expect((body.errors ?? []).length).toBe(0);
+  });
+
+  it('EXTR-16: approve response has written/skipped/errors shape; written.action === 1 for 1 approved action', async () => {
+    const mockArtifactWhere = vi.fn().mockResolvedValue([{
+      id: 10,
+      ingestion_log_json: { filename: 'test.docx', uploaded_at: '2026-01-01T00:00:00Z' },
+    }]);
+    const mockArtifactFrom = vi.fn().mockReturnValue({ where: mockArtifactWhere });
+
+    const mockConflictWhere = vi.fn().mockResolvedValue([]);
+    const mockConflictFrom = vi.fn().mockReturnValue({ where: mockConflictWhere });
+
+    vi.mocked(db.select)
+      .mockReturnValueOnce({ from: mockArtifactFrom } as any)
+      .mockReturnValue({ from: mockConflictFrom } as any);
+
+    const mockValues = vi.fn().mockReturnValue({ returning: vi.fn().mockResolvedValue([{ id: 1 }]) });
+    vi.mocked(db.insert).mockReturnValue({ values: mockValues } as any);
+    const mockSet = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) });
+    vi.mocked(db.update).mockReturnValue({ set: mockSet } as any);
+
+    const req = buildRequest({
+      artifactId: 10,
+      projectId: 1,
+      totalExtracted: 1,
+      items: [{
+        entityType: 'action',
+        fields: { description: 'Test action', owner: 'Alice' },
+        approved: true,
+      }],
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+
+    const body = await res.json();
+    expect(body).toHaveProperty('written');
+    expect(body).toHaveProperty('skipped');
+    expect(body).toHaveProperty('errors');
+    expect(body.written.action).toBe(1);
+  });
+});
