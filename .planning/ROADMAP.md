@@ -265,6 +265,10 @@ Phases execute in numeric order: 43 → 44 → 45 → 46 → 47 → 48 → 49
 | 47. Work Breakdown Structure | 3/3 | Complete    | 2026-04-08 | - |
 | 48. Architecture & Team Engagement | 3/3 | Complete    | 2026-04-08 | - |
 | 49. Portfolio Dashboard | 4/4 | Complete    | 2026-04-09 | - |
+| 50. Extraction Intelligence | 3/3 | Complete | 2026-04-09 | - |
+| 51. Extraction Intelligence Overhaul | 2/4 | Partial | 2026-04-09 | - |
+| 52. Multi-pass Targeted Extraction | 2/3 | Partial | 2026-04-09 | - |
+| 53. Extraction Prompt Intelligence & Pipeline Completion | 0/TBD | Planned | — | - |
 
 ### Phase 50: Extraction Intelligence — Full-spectrum prompt rewrite and semantic post-classifier to surface all entity types from any document across every project tab
 
@@ -302,3 +306,12 @@ Plans:
 - [ ] 52-01-PLAN.md — Wave 0 TDD stubs: document-extraction-passes.test.ts + document-extraction-dedup.test.ts + ingestion-modal-pass-progress.test.ts (all RED)
 - [ ] 52-02-PLAN.md — Worker restructure: EXTRACTION_BASE + PASS_PROMPTS[1|2|3], 3-pass loop (PDF + text), deduplicateWithinBatch, isAlreadyIngested import from lib, EntityType union sync
 - [ ] 52-03-PLAN.md — IngestionModal pass-aware progress message (PASS_LABELS + global pct math) + human verification
+
+### Phase 53: Extraction Prompt Intelligence & Pipeline Completion
+
+**Goal:** Maximize extraction recall and pipeline completeness: implement 10 Anthropic-recommended prompt engineering improvements to document-extraction.ts (document-first layout, few-shot examples, field-level inference rules, status normalization table, date null flip, section scan + self-check, tool use migration, chunk overlap, coverage self-reporting, Pass 0 pre-analysis) AND close remaining approval route pipeline gaps (before_state upsert handler, WBS orphan fallback, arch_node graceful skip, team_engagement routing fix, per-entity feedback UI) so every workspace tab populates reliably from ingested documents.
+**Requirements**: EXTR-02, EXTR-03, EXTR-04, EXTR-05, EXTR-06, EXTR-07, EXTR-08, EXTR-09, EXTR-10, EXTR-11, EXTR-12, EXTR-13, EXTR-14, EXTR-15, EXTR-16
+**Depends on:** Phase 52
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 53 to break down)

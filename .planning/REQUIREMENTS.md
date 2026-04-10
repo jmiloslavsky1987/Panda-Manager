@@ -56,6 +56,27 @@
 
 - [x] **SKILL-01**: Skill runner resolves SKILL.md file paths dynamically at runtime (no hardcoded absolute paths)
 
+### Extraction Prompt Intelligence (Phase 53)
+
+- [ ] **EXTR-02**: Extraction prompts use document-first layout — document content wrapped in `<document>` tags placed before instructions in all pass prompts
+- [ ] **EXTR-03**: Each extraction pass includes 3 few-shot examples in `<example>` tags targeting hardest disambiguation cases (task vs wbs_task, architecture vs arch_node vs integration)
+- [ ] **EXTR-04**: Field-level inference rules embedded in field description strings co-located with the fields they apply to (not only in a distant global block)
+- [ ] **EXTR-05**: Status normalization implemented as an explicit lookup table in EXTRACTION_BASE mapping all common variants to canonical enum values
+- [ ] **EXTR-06**: Date inference requires active justification for null — prompts instruct Claude to attempt inference from any temporal signal; null only when no signal exists near the entity
+- [ ] **EXTR-07**: Each pass prompt includes a section-by-section scanning instruction and an end-of-prompt self-check verification step
+- [ ] **EXTR-08**: Raw JSON prompting replaced with a `record_entities` tool call (`strict: true`), eliminating `jsonrepair` dependency and improving schema adherence
+- [ ] **EXTR-09**: `splitIntoChunks` adds 2,000-character overlap to prevent entities spanning chunk boundaries from being missed
+- [ ] **EXTR-10**: Each pass appends a `COVERAGE: entity_type: N | GAPS: ...` summary; parser captures and stores per-pass coverage for debugging
+- [ ] **EXTR-11**: New Pass 0 pre-analysis step where Claude quotes relevant document sections before extraction passes begin, improving recall on dense/complex documents
+
+### Extraction Pipeline Completeness (Phase 53)
+
+- [ ] **EXTR-12**: `before_state` entity type handled end-to-end in approve route with upsert to `before_state` table — Architecture "Before BigPanda" tab populatable via document ingestion
+- [ ] **EXTR-13**: WBS orphan fallback implemented — when `wbs_task` `parent_section_name` doesn't match seeded rows, handler auto-creates missing parent section OR inserts as top-level L1 (no invisible orphaned items)
+- [ ] **EXTR-14**: `arch_node` handler uses fuzzy/partial match on track name; unknown track names log a warning and skip gracefully rather than throwing and aborting the entire approval request
+- [ ] **EXTR-15**: `team_engagement` entity routing investigated and fixed — extracted data surfaces in the Teams tab UI
+- [ ] **EXTR-16**: Approve response includes per-entity-type write counts; IngestionModal displays breakdown; silent failures surfaced as visible warnings
+
 ## Future Requirements
 
 ### Performance & Observability
@@ -116,9 +137,25 @@
 | DASH-05 | Phase 49 | Complete |
 | DASH-06 | Phase 49 | Complete |
 
+| EXTR-02 | Phase 53 | Planned |
+| EXTR-03 | Phase 53 | Planned |
+| EXTR-04 | Phase 53 | Planned |
+| EXTR-05 | Phase 53 | Planned |
+| EXTR-06 | Phase 53 | Planned |
+| EXTR-07 | Phase 53 | Planned |
+| EXTR-08 | Phase 53 | Planned |
+| EXTR-09 | Phase 53 | Planned |
+| EXTR-10 | Phase 53 | Planned |
+| EXTR-11 | Phase 53 | Planned |
+| EXTR-12 | Phase 53 | Planned |
+| EXTR-13 | Phase 53 | Planned |
+| EXTR-14 | Phase 53 | Planned |
+| EXTR-15 | Phase 53 | Planned |
+| EXTR-16 | Phase 53 | Planned |
+
 **Coverage:**
-- v6.0 requirements: 25 total
-- Mapped to phases: 25
+- v6.0 requirements: 40 total (25 original + 15 Phase 53)
+- Mapped to phases: 40
 - Unmapped: 0 ✓
 
 ---
