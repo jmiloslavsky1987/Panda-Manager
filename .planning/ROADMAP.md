@@ -332,10 +332,11 @@ Plans:
 **Requirements:** (documentation only — closes audit gaps)
 **Gap Closure:** Closes gaps from v6.0 audit
 **Depends on:** Phase 53
+**Plans:** 2 plans
 
 Plans:
 - [ ] 54-01-PLAN.md — Write Phase 48.1 VERIFICATION.md (UAT 7/8 passed, integration wiring confirmed); write Phase 52 VERIFICATION.md (Plans 01-02 complete, Plan 03 status noted); update Phase 50 VERIFICATION.md to reflect gaps closed in Phase 53
-- [ ] 54-02-PLAN.md — Fix REQUIREMENTS.md documentation debt: mark EXTR-08/EXTR-09/EXTR-10 checkboxes [x]; update traceability table EXTR-XX entries from "Planned" → "Complete"; update coverage count
+- [ ] 54-02-PLAN.md — Verify REQUIREMENTS.md state: confirm EXTR-08/09/10 checkboxes [x], traceability Complete, coverage count correct (research confirms already up-to-date as of 2026-04-10); update last_updated note
 
 ### Phase 55: Phase 52 Integration Test Completion
 **Goal:** Phase 52 Plan 03 fully executed — 4 RED integration tests implemented, passing, and documented
