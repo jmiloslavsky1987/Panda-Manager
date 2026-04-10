@@ -350,12 +350,14 @@ Plans:
 - [ ] 55-02-PLAN.md — Write Phase 52 Plan 03 SUMMARY; update Phase 52 VERIFICATION.md to reflect full completion
 
 ### Phase 56: Teams Tab Alignment & Orphan Cleanup
-**Goal:** TEAM-01 and TEAM-02 requirements fully satisfied or REQUIREMENTS.md updated to reflect final intended behavior; orphaned infrastructure resolved
+### Phase 56: Teams Tab Alignment & Orphan Cleanup
+**Goal:** Align Teams tab to final 4-section design; extend Drafts modal to show all 21 entity types; remove orphaned read-only Overview components and dead team_engagement code
 **Requirements:** TEAM-01, TEAM-02
 **Gap Closure:** Closes gaps from v6.0 audit
 **Depends on:** Phase 55
+**Plans:** 3 plans
 
 Plans:
-- [ ] 56-01-PLAN.md — Decide and implement TEAM-01 resolution: wire TeamEngagementOverview.tsx (correct 4-section impl) into Teams page via TeamsPageTabs, OR update REQUIREMENTS.md to formally adopt 5-section design; remove dead code accordingly
-- [ ] 56-02-PLAN.md — Resolve TEAM-02: wire getTeamEngagementSections() into getTeamsTabData() to surface teamEngagementSections data in Teams tab, OR formally document deprecation and remove dead code
-- [ ] 56-03-PLAN.md — Clean up orphaned infrastructure: investigate archTeamStatus table (remove or wire getArchTeamStatus() to Architecture tab); remove TeamsPageTabs/TeamEngagementOverview if not wired in 56-01; update Phase 56 VERIFICATION.md
+- [ ] 56-01-PLAN.md — Remove Architecture section from TeamEngagementMap (4-section design), delete orphaned TeamsPageTabs/TeamEngagementOverview/ArchOverviewSection, update REQUIREMENTS.md TEAM-01
+- [ ] 56-02-PLAN.md — Extend ExtractionPreview, ExtractionItemRow, ExtractionItemEditForm with 11 missing entity types (focus_area, e2e_workflow, wbs_task, note, team_pathway, workstream, onboarding_step, integration, arch_node, before_state, weekly_focus), update REQUIREMENTS.md TEAM-02
+- [ ] 56-03-PLAN.md — Remove dead team_engagement handler from approve route, remove getTeamEngagementSections from lib/queries.ts, clean extraction-types.ts, human verification checkpoint
