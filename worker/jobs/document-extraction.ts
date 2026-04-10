@@ -11,7 +11,7 @@ import { eq, and, ilike } from 'drizzle-orm';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import Anthropic from '@anthropic-ai/sdk';
-import { jsonrepair } from 'jsonrepair';
+// import { jsonrepair } from 'jsonrepair'; // REMOVED in EXTR-08 — tool use replaces jsonrepair
 import db from '../../db';
 import { extractionJobs, artifacts, actions, risks, milestones, keyDecisions, engagementHistory, stakeholders, tasks, businessOutcomes, focusAreas, architectureIntegrations, workstreams, onboardingSteps, integrations } from '../../db/schema';
 import { extractDocumentText } from '../../lib/document-extractor';
@@ -272,15 +272,16 @@ function normalize(value: string | undefined | null): string {
 
 // Local isAlreadyIngested removed — imported from lib/extraction-types.ts (Phase 52 Plan 02)
 
-function parseClaudeResponse(text: string): ExtractionItem[] {
-  const stripped = text.trim()
-    .replace(/^```(?:json)?\s*/i, '')
-    .replace(/\s*```\s*$/, '')
-    .trim();
-  const repaired = jsonrepair(stripped);
-  const parsed = JSON.parse(repaired);
-  return Array.isArray(parsed) ? (parsed as ExtractionItem[]) : [];
-}
+// DEPRECATED — replaced by tool use in EXTR-08. Kept as dead code for reference.
+// function parseClaudeResponse(text: string): ExtractionItem[] {
+//   const stripped = text.trim()
+//     .replace(/^```(?:json)?\s*/i, '')
+//     .replace(/\s*```\s*$/, '')
+//     .trim();
+//   const repaired = jsonrepair(stripped);
+//   const parsed = JSON.parse(repaired);
+//   return Array.isArray(parsed) ? (parsed as ExtractionItem[]) : [];
+// }
 
 // ─── Deduplication ────────────────────────────────────────────────────────────
 
@@ -450,16 +451,13 @@ export default async function documentExtractionJob(job: Job): Promise<{ status:
           },
         ];
 
-        const fullText = await runClaudeCall(userContent, passSystemPrompt);
-
-        try {
-          const passItems = parseClaudeResponse(fullText);
-          allRawItems.push(...passItems);
-        } catch (e) {
-          console.error(`[document-extraction] JSON parse failed for PDF pass ${pass.passNumber}`, fullText.slice(0, 500));
-        }
+        // EXTR-08: use tool use instead of streaming
+        const { items: passItems, coverage: passCoverage } = await runClaudeToolUseCall(userContent, passSystemPrompt);
+        allRawItems.push(...passItems);
+        coverageByPass[pass.passNumber] = passCoverage; // EXTR-10: store per-pass coverage
 
         // Global progress: pass 1 → 33%, pass 2 → 66%, pass 3 → 100%
+        // Progress: per-pass only (tool use is non-streaming — EXTR-08)
         const globalPct = Math.round(((passIdx + 1) / 3) * 100);
         await db.update(extractionJobs)
           .set({
@@ -497,16 +495,17 @@ export default async function documentExtractionJob(job: Job): Promise<{ status:
             },
           ];
 
-          const fullText = await runClaudeCall(userContent, passSystemPrompt);
+          // EXTR-08: use tool use instead of streaming
+          const { items: chunkItems, coverage: chunkCoverage } = await runClaudeToolUseCall(userContent, passSystemPrompt);
+          allRawItems.push(...chunkItems);
 
-          try {
-            const chunkItems = parseClaudeResponse(fullText);
-            allRawItems.push(...chunkItems);
-          } catch (e) {
-            console.error(`[document-extraction] JSON parse failed pass ${pass.passNumber} chunk ${i + 1}`, fullText.slice(0, 500));
+          // EXTR-10: accumulate coverage (last chunk of pass overwrites — this is OK for text chunks)
+          if (i === chunks.length - 1) {
+            coverageByPass[pass.passNumber] = chunkCoverage;
           }
 
           // Global progress: (passIdx * totalChunks + i + 1) / (3 * totalChunks)
+          // Progress: per-pass only (tool use is non-streaming — EXTR-08)
           const passProgressPct = Math.round((i + 1) / totalChunks * 100);
           const globalPct = Math.round((passIdx / 3) * 100 + (passProgressPct / 3));
           await db.update(extractionJobs)
@@ -549,6 +548,7 @@ export default async function documentExtractionJob(job: Job): Promise<{ status:
         progress_pct: 100,
         staged_items_json: newItems,
         filtered_count: filteredCount,
+        coverage_json: coverageByPass, // EXTR-10: store per-pass coverage summary
         updated_at: new Date()
       })
       .where(eq(extractionJobs.id, jobId));
