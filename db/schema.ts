@@ -21,6 +21,7 @@ import {
   boolean,
   pgEnum,
   jsonb,
+  uniqueIndex,
   type AnyPgColumn,
 } from 'drizzle-orm/pg-core';
 
@@ -758,6 +759,7 @@ export const extractionJobs = pgTable('extraction_jobs', {
   total_chunks:      integer('total_chunks').default(0).notNull(),
   staged_items_json: jsonb('staged_items_json'),
   filtered_count:    integer('filtered_count').default(0).notNull(),
+  coverage_json:     jsonb('coverage_json'),
   error_message:     text('error_message'),
   created_at:        timestamp('created_at').defaultNow().notNull(),
   updated_at:        timestamp('updated_at').defaultNow().notNull(),
@@ -833,7 +835,9 @@ export const archNodes = pgTable('arch_nodes', {
   notes: text('notes'),
   source_trace: text('source_trace'),
   created_at: timestamp('created_at').defaultNow().notNull(),
-});
+}, (t) => [
+  uniqueIndex('arch_nodes_project_track_name_idx').on(t.project_id, t.track_id, t.name),
+]);
 
 export type ArchNode = typeof archNodes.$inferSelect;
 
