@@ -20,7 +20,6 @@ import {
   onboardingSteps,
   integrations,
   wbsItems,
-  teamEngagementSections,
   archNodes,
   archTracks,
   teamOnboardingStatus,
@@ -815,50 +814,6 @@ async function insertItem(
       return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
     }
 
-    case 'team_engagement': {
-      // DEAD CODE (EXTR-15): team_engagement removed from extraction prompt in Phase 51 Plan 02.
-      // teamEngagementSections table is not surfaced in the Teams tab UI (getTeamsTabData does not query it).
-      // Handler retained for backward compatibility with any items already in the review queue.
-      // If teamEngagementSections data needs to surface, wire getTeamEngagementSections into getTeamsTabData.
-
-      // Append content to existing section (not overwrite)
-      const sectionRows = await db
-        .select({ id: teamEngagementSections.id, content: teamEngagementSections.content })
-        .from(teamEngagementSections)
-        .where(
-          and(
-            eq(teamEngagementSections.project_id, projectId),
-            eq(teamEngagementSections.name, f.section_name ?? ''),
-          ),
-        );
-
-      if (sectionRows.length === 0) {
-        throw new Error(`Team Engagement section not found: ${f.section_name}`);
-      }
-
-      const section = sectionRows[0];
-      const existingContent = section.content || '';
-      const newContent = f.content ?? '';
-      const separator = existingContent.length > 0 ? '\n\n---\n\n' : '';
-      const mergedContent = existingContent + separator + newContent;
-
-      await db.transaction(async (tx) => {
-        await tx
-          .update(teamEngagementSections)
-          .set({ content: mergedContent })
-          .where(eq(teamEngagementSections.id, section.id));
-
-        await tx.insert(auditLog).values({
-          entity_type: 'team_engagement',
-          entity_id: section.id,
-          action: 'update',
-          actor_id: 'default',
-          before_json: { content: existingContent } as Record<string, unknown>,
-          after_json: { content: mergedContent } as Record<string, unknown>,
-        });
-      });
-      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
-    }
 
     case 'arch_node': {
       // Step 1: Resolve track_id from track name
