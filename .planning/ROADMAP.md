@@ -268,7 +268,7 @@ Phases execute in numeric order: 43 → 44 → 45 → 46 → 47 → 48 → 49
 | 50. Extraction Intelligence | 3/3 | Complete | 2026-04-09 | - |
 | 51. Extraction Intelligence Overhaul | 2/4 | Partial | 2026-04-09 | - |
 | 52. Multi-pass Targeted Extraction | 2/3 | Partial | 2026-04-09 | - |
-| 53. Extraction Prompt Intelligence & Pipeline Completion | 0/TBD | Planned | — | - |
+| 53. Extraction Prompt Intelligence & Pipeline Completion | 0/5 | Planned | — | - |
 
 ### Phase 50: Extraction Intelligence — Full-spectrum prompt rewrite and semantic post-classifier to surface all entity types from any document across every project tab
 
@@ -312,6 +312,11 @@ Plans:
 **Goal:** Maximize extraction recall and pipeline completeness: implement 10 Anthropic-recommended prompt engineering improvements to document-extraction.ts (document-first layout, few-shot examples, field-level inference rules, status normalization table, date null flip, section scan + self-check, tool use migration, chunk overlap, coverage self-reporting, Pass 0 pre-analysis) AND close remaining approval route pipeline gaps (before_state upsert handler, WBS orphan fallback, arch_node graceful skip, team_engagement routing fix, per-entity feedback UI) so every workspace tab populates reliably from ingested documents.
 **Requirements**: EXTR-02, EXTR-03, EXTR-04, EXTR-05, EXTR-06, EXTR-07, EXTR-08, EXTR-09, EXTR-10, EXTR-11, EXTR-12, EXTR-13, EXTR-14, EXTR-15, EXTR-16
 **Depends on:** Phase 52
+**Plans:** 5 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 53 to break down)
+- [ ] 53-01-PLAN.md — Wave 0 RED test stubs (extraction-prompts.test.ts + extraction-job.test.ts stubs) + coverage_json DB migration
+- [ ] 53-02-PLAN.md — Prompt improvements: document-first layout, few-shot examples, field-level inference rules, status table, date null flip, section scan + self-check (EXTR-02 to EXTR-07)
+- [ ] 53-03-PLAN.md — Tool use migration + chunk overlap + coverage self-reporting (EXTR-08, EXTR-09, EXTR-10)
+- [ ] 53-04-PLAN.md — Pass 0 pre-analysis: one-time pre-pass quotes relevant document sections, prepended to Passes 1-3 (EXTR-11)
+- [ ] 53-05-PLAN.md — Pipeline gap verification: before_state, WBS orphan, arch_node skip, team_engagement investigation, per-entity response (EXTR-12 to EXTR-16)
