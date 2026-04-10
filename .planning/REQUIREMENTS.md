@@ -67,7 +67,7 @@
 - [ ] **EXTR-08**: Raw JSON prompting replaced with a `record_entities` tool call (`strict: true`), eliminating `jsonrepair` dependency and improving schema adherence
 - [ ] **EXTR-09**: `splitIntoChunks` adds 2,000-character overlap to prevent entities spanning chunk boundaries from being missed
 - [ ] **EXTR-10**: Each pass appends a `COVERAGE: entity_type: N | GAPS: ...` summary; parser captures and stores per-pass coverage for debugging
-- [ ] **EXTR-11**: New Pass 0 pre-analysis step where Claude quotes relevant document sections before extraction passes begin, improving recall on dense/complex documents
+- [x] **EXTR-11**: New Pass 0 pre-analysis step where Claude quotes relevant document sections before extraction passes begin, improving recall on dense/complex documents
 
 ### Extraction Pipeline Completeness (Phase 53)
 

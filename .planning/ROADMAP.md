@@ -268,7 +268,7 @@ Phases execute in numeric order: 43 → 44 → 45 → 46 → 47 → 48 → 49
 | 50. Extraction Intelligence | 3/3 | Complete | 2026-04-09 | - |
 | 51. Extraction Intelligence Overhaul | 4/4 | Complete | 2026-04-09 | - |
 | 52. Multi-pass Targeted Extraction | 3/3 | Complete | 2026-04-10 | - |
-| 53. Extraction Prompt Intelligence & Pipeline Completion | 3/5 | In Progress|  | - |
+| 53. Extraction Prompt Intelligence & Pipeline Completion | 4/5 | In Progress|  | - |
 
 ### Phase 50: Extraction Intelligence — Full-spectrum prompt rewrite and semantic post-classifier to surface all entity types from any document across every project tab
 
@@ -312,7 +312,7 @@ Plans:
 **Goal:** Maximize extraction recall and pipeline completeness: implement 10 Anthropic-recommended prompt engineering improvements to document-extraction.ts (document-first layout, few-shot examples, field-level inference rules, status normalization table, date null flip, section scan + self-check, tool use migration, chunk overlap, coverage self-reporting, Pass 0 pre-analysis) AND close remaining approval route pipeline gaps (before_state upsert handler, WBS orphan fallback, arch_node graceful skip, team_engagement routing fix, per-entity feedback UI) so every workspace tab populates reliably from ingested documents.
 **Requirements**: EXTR-02, EXTR-03, EXTR-04, EXTR-05, EXTR-06, EXTR-07, EXTR-08, EXTR-09, EXTR-10, EXTR-11, EXTR-12, EXTR-13, EXTR-14, EXTR-15, EXTR-16
 **Depends on:** Phase 52
-**Plans:** 3/5 plans executed
+**Plans:** 4/5 plans executed
 
 Plans:
 - [ ] 53-01-PLAN.md — Wave 0 RED test stubs (extraction-prompts.test.ts + extraction-job.test.ts stubs) + coverage_json DB migration
