@@ -58,12 +58,12 @@
 
 ### Extraction Prompt Intelligence (Phase 53)
 
-- [ ] **EXTR-02**: Extraction prompts use document-first layout — document content wrapped in `<document>` tags placed before instructions in all pass prompts
-- [ ] **EXTR-03**: Each extraction pass includes 3 few-shot examples in `<example>` tags targeting hardest disambiguation cases (task vs wbs_task, architecture vs arch_node vs integration)
-- [ ] **EXTR-04**: Field-level inference rules embedded in field description strings co-located with the fields they apply to (not only in a distant global block)
-- [ ] **EXTR-05**: Status normalization implemented as an explicit lookup table in EXTRACTION_BASE mapping all common variants to canonical enum values
-- [ ] **EXTR-06**: Date inference requires active justification for null — prompts instruct Claude to attempt inference from any temporal signal; null only when no signal exists near the entity
-- [ ] **EXTR-07**: Each pass prompt includes a section-by-section scanning instruction and an end-of-prompt self-check verification step
+- [x] **EXTR-02**: Extraction prompts use document-first layout — document content wrapped in `<document>` tags placed before instructions in all pass prompts
+- [x] **EXTR-03**: Each extraction pass includes 3 few-shot examples in `<example>` tags targeting hardest disambiguation cases (task vs wbs_task, architecture vs arch_node vs integration)
+- [x] **EXTR-04**: Field-level inference rules embedded in field description strings co-located with the fields they apply to (not only in a distant global block)
+- [x] **EXTR-05**: Status normalization implemented as an explicit lookup table in EXTRACTION_BASE mapping all common variants to canonical enum values
+- [x] **EXTR-06**: Date inference requires active justification for null — prompts instruct Claude to attempt inference from any temporal signal; null only when no signal exists near the entity
+- [x] **EXTR-07**: Each pass prompt includes a section-by-section scanning instruction and an end-of-prompt self-check verification step
 - [ ] **EXTR-08**: Raw JSON prompting replaced with a `record_entities` tool call (`strict: true`), eliminating `jsonrepair` dependency and improving schema adherence
 - [ ] **EXTR-09**: `splitIntoChunks` adds 2,000-character overlap to prevent entities spanning chunk boundaries from being missed
 - [ ] **EXTR-10**: Each pass appends a `COVERAGE: entity_type: N | GAPS: ...` summary; parser captures and stores per-pass coverage for debugging
