@@ -273,7 +273,7 @@ Phases execute in numeric order: 43 → 44 → 45 → 46 → 47 → 48 → 49 �
 | 52. Multi-pass Targeted Extraction | 3/3 | Complete | 2026-04-10 | - |
 | 53. Extraction Prompt Intelligence & Pipeline Completion | 5/5 | Complete    | 2026-04-10 | - |
 | 54. Verification & Documentation Catch-Up [GAP CLOSURE] | 2/2 | Complete    | 2026-04-10 | — |
-| 55. Phase 52 Integration Test Completion [GAP CLOSURE] | v6.0 | 0/2 | Pending | — |
+| 55. Phase 52 Integration Test Completion [GAP CLOSURE] | 1/2 | In Progress|  | — |
 | 56. Teams Tab Alignment & Orphan Cleanup [GAP CLOSURE] | v6.0 | 0/3 | Pending | — |
 
 ### Phase 50: Extraction Intelligence — Full-spectrum prompt rewrite and semantic post-classifier to surface all entity types from any document across every project tab
@@ -343,7 +343,7 @@ Plans:
 **Requirements:** MULTI-PASS-01, MULTI-PASS-02, MULTI-PASS-03
 **Gap Closure:** Closes gaps from v6.0 audit
 **Depends on:** Phase 54
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
 - [ ] 55-01-PLAN.md — Implement 4 RED integration test stubs from Phase 52: PDF 3-pass extraction loop, text 3-pass extraction loop, pass merge/dedup logic, global progress scale formula; drive to GREEN

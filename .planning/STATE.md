@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v6.0
 milestone_name: — Dashboard, Navigation & Intelligence
-status: completed
-stopped_at: Completed 54-01-PLAN.md
-last_updated: "2026-04-10T16:44:32.751Z"
-last_activity: 2026-04-10 — Phase 53 Plan 05 complete (Pipeline gap verification + EXTR-15 team_engagement dead code investigation)
+status: executing
+stopped_at: Completed 55-01-PLAN.md
+last_updated: "2026-04-10T17:21:27.974Z"
+last_activity: 2026-04-10 — Phase 55 Plan 01 complete (Upgraded 4 RED stubs to GREEN integration tests for multi-pass extraction)
 progress:
   total_phases: 15
   completed_phases: 12
-  total_plans: 36
-  completed_plans: 35
-  percent: 100
+  total_plans: 38
+  completed_plans: 36
+  percent: 99
 ---
 
 # Project State
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 
 ## Current Position
 
-Phase: 53 (Extraction Prompt Intelligence & Pipeline Completion) — Plans 01-05 complete
-Status: Phase 53 complete — all 5 plans complete
-Last activity: 2026-04-10 — Phase 53 Plan 05 complete (Pipeline gap verification + EXTR-15 team_engagement dead code investigation)
+Phase: 55 (Phase 52 Integration Test Completion) — Plan 01 of 02 complete
+Status: In progress
+Last activity: 2026-04-10 — Phase 55 Plan 01 complete (Upgraded 4 RED stubs to GREEN integration tests for multi-pass extraction)
 
-Progress: [██████████] 100% (237/238 plans complete — 1 remaining in Phase 54)
+Progress: [██████████] 99% (236/238 plans complete — 2 remaining in Phase 55)
 
 ## Milestone History
 
@@ -193,6 +193,9 @@ Progress: [██████████] 100% (237/238 plans complete — 1 re
 - **Phase 53 Plan 05 complete:** Verification tests for EXTR-12 (before_state upsert), EXTR-13 (WBS orphan fallback), EXTR-14 (arch_node skipEntity routing), EXTR-16 (per-entity response shape)
 - **Phase 53 Plan 05:** EXTR-15 team_engagement confirmed as intentional dead code — entity type removed from extraction prompt in Phase 51 Plan 02, teamEngagementSections table not surfaced in Teams tab UI, handler retained for backward compatibility only
 - **Phase 53 complete:** All 15 extraction improvements implemented and verified (EXTR-02 through EXTR-16)
+- **Phase 55 Plan 01:** Vitest constructor mocks must use function declarations (not arrow functions) to support 'new' keyword instantiation
+- **Phase 55 Plan 01:** Mock module paths must be relative from test file location, not source file location (document-extraction-passes.test.ts uses ../../../db, ../../../lib/*)
+- **Phase 55 Plan 01:** Anthropic mock reset in beforeEach prevents test contamination; individual tests can override with mockResolvedValueOnce chain
 
 ## Blockers/Concerns
 
@@ -209,7 +212,7 @@ Progress: [██████████] 100% (237/238 plans complete — 1 re
 
 ## Session Continuity
 
-Last session: 2026-04-10T16:41:05.141Z
-Stopped at: Completed 54-01-PLAN.md
+Last session: 2026-04-10T17:21:27.970Z
+Stopped at: Completed 55-01-PLAN.md
 Resume file: None
 Next action: Execute 53-02-PLAN.md (Wave 1: prompt intelligence improvements)
