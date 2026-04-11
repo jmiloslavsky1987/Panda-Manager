@@ -3,7 +3,7 @@
 // These tests document behavioral expectations for prompt enhancements in Wave 1.
 
 import { describe, it, expect } from 'vitest';
-import { EXTRACTION_BASE, PASS_PROMPTS } from '../../worker/jobs/document-extraction';
+import { EXTRACTION_BASE, PASS_PROMPTS, PASS_0_PROMPT } from '../../worker/jobs/document-extraction';
 
 describe('EXTR-02: XML tag structure for document content', () => {
   it('EXTRACTION_BASE includes <document> tag', () => {
@@ -90,5 +90,71 @@ describe('EXTR-07: section scanning and self-check instructions in pass prompts'
       const hasSelfCheck = /self.check|verify your output|double.check/i.test(passPrompt);
       expect(hasSelfCheck).toBe(true);
     }
+  });
+});
+
+// ── Phase 57: Synthesis-first extraction for unstructured notes ──────────────
+
+describe('SYNTH-01: Global inference posture in EXTRACTION_BASE', () => {
+  it('EXTRACTION_BASE contains inference-first posture instruction for unstructured documents', () => {
+    // RED: fails until Plan 01 rewrites EXTRACTION_BASE global posture
+    const hasInferencePosture = /unstructured/i.test(EXTRACTION_BASE) &&
+      /infer/i.test(EXTRACTION_BASE);
+    expect(hasInferencePosture).toBe(true);
+  });
+});
+
+describe('SYNTH-02: Pass 0 document type classification', () => {
+  it('PASS_0_PROMPT outputs document_type XML tag', () => {
+    // RED: fails until Plan 01 rewrites PASS_0_PROMPT with classification step
+    expect(PASS_0_PROMPT).toContain('document_type');
+  });
+});
+
+describe('SYNTH-03: Pass 0 entity type prediction', () => {
+  it('PASS_0_PROMPT outputs likely_entity_types XML tag', () => {
+    // RED: fails until Plan 01 rewrites PASS_0_PROMPT with entity prediction step
+    expect(PASS_0_PROMPT).toContain('likely_entity_types');
+  });
+});
+
+describe('SYNTH-04: Transcript-mode conditional instructions in all pass prompts', () => {
+  it('PASS_PROMPTS[1] contains transcript-mode conditional extraction instruction', () => {
+    // RED: fails until Plan 01 adds conditional behavior to Pass 1
+    expect(PASS_PROMPTS[1].toLowerCase()).toContain('transcript');
+  });
+  it('PASS_PROMPTS[2] contains transcript-mode conditional extraction instruction', () => {
+    // RED: fails until Plan 01 adds conditional behavior to Pass 2
+    expect(PASS_PROMPTS[2].toLowerCase()).toContain('transcript');
+  });
+  it('PASS_PROMPTS[3] contains transcript-mode conditional extraction instruction', () => {
+    // RED: fails until Plan 01 adds conditional behavior to Pass 3
+    expect(PASS_PROMPTS[3].toLowerCase()).toContain('transcript');
+  });
+});
+
+describe('SYNTH-05: Confidence calibration and singleton enforcement', () => {
+  it('EXTRACTION_BASE includes confidence rubric with 0.5-0.7 range for inferred entities', () => {
+    // RED: fails until Plan 01 adds confidence calibration rubric
+    const hasCalibrationRange = EXTRACTION_BASE.includes('0.5') && EXTRACTION_BASE.includes('0.7');
+    expect(hasCalibrationRange).toBe(true);
+  });
+
+  it('PASS_PROMPTS[3] weekly_focus description includes SINGLETON marker', () => {
+    // RED: fails until Plan 01 adds SINGLETON enforcement to weekly_focus
+    const weeklyFocusIdx = PASS_PROMPTS[3].indexOf('weekly_focus');
+    const singletonIdx = PASS_PROMPTS[3].indexOf('SINGLETON');
+    expect(weeklyFocusIdx).toBeGreaterThan(-1);
+    expect(singletonIdx).toBeGreaterThan(-1);
+  });
+
+  it('PASS_PROMPTS[2] before_state description includes SINGLETON marker', () => {
+    // RED: fails until Plan 01 adds SINGLETON enforcement to before_state
+    expect(PASS_PROMPTS[2].indexOf('SINGLETON')).toBeGreaterThan(-1);
+  });
+
+  it('PASS_PROMPTS[3] e2e_workflow description includes assembly-from-scattered-mentions guidance', () => {
+    // RED: fails until Plan 01 adds assembly guidance to e2e_workflow description
+    expect(PASS_PROMPTS[3].toLowerCase()).toContain('scattered');
   });
 });
