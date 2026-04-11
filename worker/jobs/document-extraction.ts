@@ -318,20 +318,34 @@ export interface ExtractionPass {
 }
 
 // Pass 0 pre-analysis prompt (EXTR-11)
-export const PASS_0_PROMPT = `You are a document pre-analyzer. Your task is to read the entire document and quote the 5-10 most information-dense sections relevant to: project status, tasks and deliverables, architecture components, and team engagement.
+export const PASS_0_PROMPT = `You are a document pre-analyzer. Your task is to (1) classify the document type, (2) predict likely entity types, and (3) quote 5-10 high-value sections.
 
-For each relevant section, output:
+STEP 1: Classify document type
+Determine which ONE of these best describes the document:
+- transcript: meeting or call notes with dialogue, conversation, or first-person statements
+- status-update: periodic written update (email format, weekly status doc, progress report)
+- formal-doc: structured report or specification with explicit section headings
+
+STEP 2: Predict likely entity types
+Based on a quick scan, list the entity types most likely present in this document. Choose from:
+action, risk, decision, milestone, stakeholder, task, architecture, history, businessOutcome, team, note, team_pathway, workstream, onboarding_step, integration, wbs_task, arch_node, focus_area, e2e_workflow, before_state, weekly_focus
+
+STEP 3: Quote relevant sections
+Quote the 5-10 most information-dense sections relevant to: project status, tasks, architecture, and team engagement. Include pain-point language, comparative language ("before BigPanda", "we used to"), and any "this week" or focus content — these may yield before_state and weekly_focus entities.
+
+OUTPUT FORMAT (required — output exactly these XML tags):
+<document_type>transcript | status-update | formal-doc</document_type>
+<likely_entity_types>comma, separated, list</likely_entity_types>
+
 <relevant_section>
-[Quote the section verbatim or near-verbatim — do not paraphrase]
+[Quote verbatim or near-verbatim — do not paraphrase]
 </relevant_section>
 
-Focus on sections that contain:
-- Action items, tasks, or deliverables with owners or dates
-- Architecture component names, statuses, or integration descriptions
-- Team names, engagement stages, or onboarding status
-- Business outcomes, goals, or success metrics
+<relevant_section>
+[Quote verbatim or near-verbatim — do not paraphrase]
+</relevant_section>
 
-Do NOT extract entities yet. Do NOT output JSON. Quote sections only.`;
+Do NOT extract entities yet. Do NOT output JSON. Classify, predict, and quote only.`;
 
 export const PASSES: ExtractionPass[] = [
   {
