@@ -110,7 +110,7 @@ const TERMINAL_STATES = new Set(['completed', 'failed', 'cancelled']);
 
 export function SkillsTabClient({ projectId, recentRuns }: SkillsTabClientProps) {
   const router = useRouter();
-  const [isInitialLoading, setIsInitialLoading] = useState(recentRuns.length === 0);
+  const [isInitialLoading, setIsInitialLoading] = useState(false);
   const [runningJobs, setRunningJobs] = useState<Map<string, RunningJob>>(new Map());
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [missingBadge, setMissingBadge] = useState<Set<string>>(new Set());
