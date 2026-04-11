@@ -275,7 +275,7 @@ Phases execute in numeric order: 43 → 44 → 45 → 46 → 47 → 48 → 49 �
 | 54. Verification & Documentation Catch-Up [GAP CLOSURE] | 2/2 | Complete    | 2026-04-10 | — |
 | 55. Phase 52 Integration Test Completion [GAP CLOSURE] | 2/2 | Complete    | 2026-04-10 | — |
 | 56. Teams Tab Alignment & Orphan Cleanup [GAP CLOSURE] | 4/4 | Complete    | 2026-04-10 | — |
-| 57. Extraction Intelligence for Unstructured Notes | 0/2 | In Progress | — | — |
+| 57. Extraction Intelligence for Unstructured Notes | 1/2 | In Progress|  | — |
 
 ### Phase 50: Extraction Intelligence — Full-spectrum prompt rewrite and semantic post-classifier to surface all entity types from any document across every project tab
 
@@ -367,7 +367,7 @@ Plans:
 **Goal:** Operational review transcripts and meeting notes produce the same extraction quality as structured documents — synthesis-first prompts infer, assemble, and synthesize all 21 entity types from conversational and scattered content
 **Requirements**: SYNTH-01, SYNTH-02, SYNTH-03, SYNTH-04, SYNTH-05
 **Depends on:** Phase 56
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
 - [ ] 57-00-PLAN.md — Wave 0 RED test stubs: 8 new tests in extraction-prompts.test.ts documenting SYNTH-01 through SYNTH-05 behavioral contracts
