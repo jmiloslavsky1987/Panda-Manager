@@ -207,6 +207,21 @@ Before calling record_entities, verify:
 3. Have I attempted date inference for all date fields (and justified any null)?
 4. Have I used the examples above to resolve ambiguous entity types?
 
+## DOCUMENT-TYPE-AWARE EXTRACTION
+
+If document type is \`transcript\` or \`status-update\` (from Pass 0 pre_analysis above):
+- Infer more aggressively from scattered mentions and conversational language
+- Assemble entities from partial information spread across multiple sections
+- Synthesize fields where explicit content is absent but signals exist
+- Use lower confidence scores (0.5–0.7) to reflect inference vs direct extraction
+- Recognize implicit action items (e.g., "John mentioned he'll look into the configuration")
+- Extract meeting follow-ups, commitments, and decisions from dialogue patterns
+
+If document type is \`formal-doc\`:
+- Prefer explicit extraction from labeled sections when available
+- Use higher confidence scores (0.8–0.95) for content from labeled sections
+- Still apply inference for content that spans multiple sections
+
 Extract all names exactly as they appear in the document. Do not abbreviate, normalize, or infer names. Use null for any field not explicitly present.`,
 
   2: `${EXTRACTION_BASE}
@@ -251,6 +266,21 @@ Before calling record_entities, verify:
 2. Have I applied the STATUS NORMALIZATION table to all status fields?
 3. Have I attempted date inference for all date fields (and justified any null)?
 4. Have I used the examples above to resolve ambiguous entity types?
+
+## DOCUMENT-TYPE-AWARE EXTRACTION
+
+If document type is \`transcript\` or \`status-update\` (from Pass 0 pre_analysis above):
+- Infer more aggressively from scattered mentions and conversational language
+- Assemble entities from partial information spread across multiple sections
+- Synthesize fields where explicit content is absent but signals exist
+- Use lower confidence scores (0.5–0.7) to reflect inference vs direct extraction
+- Recognize implicit action items (e.g., "John mentioned he'll look into the configuration")
+- Extract meeting follow-ups, commitments, and decisions from dialogue patterns
+
+If document type is \`formal-doc\`:
+- Prefer explicit extraction from labeled sections when available
+- Use higher confidence scores (0.8–0.95) for content from labeled sections
+- Still apply inference for content that spans multiple sections
 
 Extract all names exactly as they appear in the document. Use null for any field not explicitly present.`,
 
@@ -305,6 +335,21 @@ Before calling record_entities, verify:
 2. Have I applied the STATUS NORMALIZATION table to all status fields?
 3. Have I attempted date inference for all date fields (and justified any null)?
 4. Have I used the examples above to resolve ambiguous entity types?
+
+## DOCUMENT-TYPE-AWARE EXTRACTION
+
+If document type is \`transcript\` or \`status-update\` (from Pass 0 pre_analysis above):
+- Infer more aggressively from scattered mentions and conversational language
+- Assemble entities from partial information spread across multiple sections
+- Synthesize fields where explicit content is absent but signals exist
+- Use lower confidence scores (0.5–0.7) to reflect inference vs direct extraction
+- Recognize implicit action items (e.g., "John mentioned he'll look into the configuration")
+- Extract meeting follow-ups, commitments, and decisions from dialogue patterns
+
+If document type is \`formal-doc\`:
+- Prefer explicit extraction from labeled sections when available
+- Use higher confidence scores (0.8–0.95) for content from labeled sections
+- Still apply inference for content that spans multiple sections
 
 Extract all names exactly as they appear in the document. Use null for any field not explicitly present.`,
 };
