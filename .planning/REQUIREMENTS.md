@@ -83,6 +83,14 @@
 - [x] **MULTI-PASS-02**: Intra-batch deduplication with composite keys — `deduplicateWithinBatch` uses `entityType::primaryKey` composite keys to prevent cross-type over-filtering while removing same-type duplicates; `weekly_focus` singletons pass through without dedup key; 10/10 dedup tests GREEN
 - [x] **MULTI-PASS-03**: Pass-aware progress display — IngestionModal shows pass-specific progress labels and global progress scale (pass 1 max 33%, pass 2 max 66%, pass 3 max 100%); global formula `globalPct = (passIdx / 3) * 100 + (passProgressPct / 3)`; 4 RED runtime integration tests (PDF 3-pass loop, text 3-pass loop, pass merge, progress scale) resolved in Phase 55
 
+### Synthesis-First Extraction for Unstructured Notes (Phase 57)
+
+- [x] **SYNTH-01**: EXTRACTION_BASE includes a global synthesis-first posture instruction — documents are often unstructured meeting notes or transcripts; Claude must infer entity types from any relevant content without requiring labeled sections
+- [x] **SYNTH-02**: PASS_0_PROMPT classifies document type (`transcript` | `status-update` | `formal-doc`) and outputs it in a required `<document_type>` XML tag
+- [x] **SYNTH-03**: PASS_0_PROMPT predicts likely entity types from a document scan and outputs them in a `<likely_entity_types>` XML tag — both signals flow to Passes 1–3 via `preAnalysisContext`
+- [x] **SYNTH-04**: All three pass prompts (PASS_PROMPTS[1], [2], [3]) include document-type-aware conditional instructions: `transcript`/`status-update` mode enables aggressive inference from scattered mentions; `formal-doc` mode prefers explicit section extraction
+- [x] **SYNTH-05**: Confidence calibration rubric in EXTRACTION_BASE defines 0.5–0.7 for synthesized/inferred entities and 0.8–0.95 for explicitly stated entities; `weekly_focus` and `before_state` marked SINGLETON; `e2e_workflow` includes assembly-from-scattered-mentions guidance with inline example
+
 ## Future Requirements
 
 ### Performance & Observability
@@ -166,12 +174,18 @@
 | TEAM-01 | Phase 56 | Complete |
 | TEAM-02 | Phase 56 | Complete |
 
+| SYNTH-01 | Phase 57 | Complete |
+| SYNTH-02 | Phase 57 | Complete |
+| SYNTH-03 | Phase 57 | Complete |
+| SYNTH-04 | Phase 57 | Complete |
+| SYNTH-05 | Phase 57 | Complete |
+
 **Coverage:**
-- v6.0 requirements: 43 total (25 original + 15 Phase 53 + 3 Phase 52/55)
-- Mapped to phases: 43
+- v6.0 requirements: 48 total (25 original + 15 Phase 53 + 3 Phase 52/55 + 5 Phase 57)
+- Mapped to phases: 48
 - Pending (gap closure): 0
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-04-07*
-*Last updated: 2026-04-10 — added MULTI-PASS-01/02/03 formal definitions (Phase 52/55); coverage count updated 40 → 43*
+*Last updated: 2026-04-11 — added SYNTH-01 through SYNTH-05 (Phase 57 synthesis-first extraction); coverage count updated 43 → 48*
