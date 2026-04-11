@@ -31,6 +31,11 @@ Last activity: 2026-04-10 — Phase 56 complete (4-section Teams tab design, ext
 
 Progress: [██████████] 100% (42/42 plans complete)
 
+## Accumulated Context
+
+### Roadmap Evolution
+- Phase 57 added: Extraction intelligence for unstructured notes
+
 ## Milestone History
 
 - **v1.0** — Foundation + Read/Write Surface + Skills + MCP + Cross-Project (Phases 1–16, 63 plans, complete 2026-03-26)

@@ -361,3 +361,13 @@ Plans:
 - [ ] 56-01-PLAN.md — Remove Architecture section from TeamEngagementMap (4-section design), delete orphaned TeamsPageTabs/TeamEngagementOverview/ArchOverviewSection, update REQUIREMENTS.md TEAM-01
 - [ ] 56-02-PLAN.md — Extend ExtractionPreview, ExtractionItemRow, ExtractionItemEditForm with 11 missing entity types (focus_area, e2e_workflow, wbs_task, note, team_pathway, workstream, onboarding_step, integration, arch_node, before_state, weekly_focus), update REQUIREMENTS.md TEAM-02
 - [ ] 56-03-PLAN.md — Remove dead team_engagement handler from approve route, remove getTeamEngagementSections from lib/queries.ts, clean extraction-types.ts, human verification checkpoint
+
+### Phase 57: Extraction intelligence for unstructured notes
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 56
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 57 to break down)
