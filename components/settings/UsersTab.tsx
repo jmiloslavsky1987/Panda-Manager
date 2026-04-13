@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Fragment } from "react";
 import { useSession } from "@/lib/auth-client";
 import { fetchWithAuth } from "@/lib/fetch-with-auth";
 import {
@@ -209,8 +209,8 @@ export function UsersTab() {
             </TableHeader>
             <TableBody>
               {users.map((user) => (
-                <>
-                  <TableRow key={user.id}>
+                <Fragment key={user.id}>
+                  <TableRow>
                     <TableCell>{user.email}</TableCell>
                     <TableCell>
                       <Badge variant={user.role === "admin" ? "default" : "secondary"}>
@@ -248,7 +248,7 @@ export function UsersTab() {
                     </TableCell>
                   </TableRow>
                   {expandedRow === user.id && (
-                    <TableRow key={`${user.id}-edit`}>
+                    <TableRow>
                       <TableCell colSpan={4}>
                         <EditForm
                           form={editForm}
@@ -260,7 +260,7 @@ export function UsersTab() {
                       </TableCell>
                     </TableRow>
                   )}
-                </>
+                </Fragment>
               ))}
             </TableBody>
           </Table>
