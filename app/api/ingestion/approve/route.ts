@@ -81,7 +81,7 @@ type IntegrationStatus = 'not-connected' | 'configured' | 'validated' | 'product
 function coerceIntegrationStatus(raw: string | undefined | null): IntegrationStatus {
   const v = (raw ?? '').toLowerCase().trim();
   if (['production', 'prod', 'live', 'active', 'enabled', 'running'].includes(v)) return 'production';
-  if (['configured', 'setup', 'installed', 'connected'].includes(v)) return 'configured';
+  if (['configured', 'setup', 'installed', 'connected', 'pilot', 'in pilot', 'in-pilot', 'in testing', 'in-testing', 'poc', 'proof of concept', 'trial'].includes(v)) return 'configured';
   if (['validated', 'tested', 'verified', 'working'].includes(v)) return 'validated';
   if (['blocked', 'failed', 'error', 'broken', 'disabled'].includes(v)) return 'blocked';
   return 'not-connected';

@@ -102,7 +102,7 @@ Entity type guidance:
 - team: { team_name, track, ingest_status, correlation_status, incident_intelligence_status, sn_automation_status, biggy_ai_status } — team onboarding status across all capability tracks; use null for any status field not explicitly mentioned
 - workstream: { name, track, phase, status, percent_complete } — delivery workstream or project phase name; use for named delivery tracks with status and completion percentage
 - onboarding_step: { team_name, step_name, track, status, completed_date } — specific onboarding step for a team (e.g. ADR track steps); NOT the same as a generic task
-- integration: { tool_name, category, connection_status, notes } — connection status of a tool (live/pilot/planned/not-connected); focus on operational readiness and connection state, NOT architecture workflow phase
+- integration: { tool_name, category, connection_status, notes } — connection status of a tool (not-connected | configured | validated | production | blocked); focus on operational readiness and connection state, NOT architecture workflow phase. Status guide: configured = basic connection active OR currently in pilot/testing; validated = tested end-to-end and verified; production = fully live at scale; blocked = connection failed or on hold; not-connected = no active connection or only planned
 - wbs_task: { title, track (WBS template track — INFER from document context: "ADR" if BigPanda/enterprise deployment, "Biggy" if startup/SMB. Default to "ADR" if unclear), parent_section_name (section heading this task falls under — INFER from heading hierarchy; if item appears under "Solution Design", use "Solution Design". Match to seeded template names: Solution Design, Technical Architecture, Implementation, Go-Live), level (1, 2, or 3 — 1 for top-level sections, 2 for sub-items, 3 for leaf tasks), status ("not_started" | "in_progress" | "complete" — normalize variants: "done"/"finished" → "complete", "in progress"/"ongoing" → "in_progress", "not started"/"todo" → "not_started"), description (task details or null) } — task that belongs in WBS structure; extract track and parent section verbatim as they appear in document; use level to indicate hierarchy depth
 - arch_node: { track ("ADR Track" | "AI Assistant Track" — ONLY these two values are valid; if track name is different, skip this entity), node_name (tool or capability name — e.g., "Event Ingest", "Alert Intelligence", "Knowledge Sources"), status (Node deployment status — See STATUS NORMALIZATION table above. Common signals: "configured" → live, "in testing" → pilot, "on roadmap" → planned), notes (integration details, status notes, or null) } — architecture capability or tool node; extract track verbatim; use for system components, tools, integrations mentioned in architecture context
 - focus_area: { title, tracks, why_it_matters, current_status, next_step, bp_owner, customer_owner } — a named focus area or strategic priority with ownership and status; use for named workstreams, priorities, or initiatives with a clear owner and next step
@@ -131,7 +131,7 @@ IMPORTANT disambiguation rules — read carefully before assigning entityType:
 - architecture vs arch_node vs integration:
   • architecture = tool's ROLE in BigPanda delivery workflow (which phase it belongs to, how it integrates into the delivery process) — use for workflow integration context
   • arch_node = capability NODE within an "ADR Track" or "AI Assistant Track" architecture diagram (e.g., "Event Ingest", "Alert Intelligence", "Knowledge Sources") — use ONLY when document explicitly references these tracks
-  • integration = operational CONNECTION STATUS of a tool (is it live, pilot, planned, not-connected?) — use for tool readiness/status data
+  • integration = operational CONNECTION STATUS of a tool (not-connected | configured | validated | production | blocked) — use for tool readiness/status data
 - task vs wbs_task:
   • task = generic project action item with owner, status, phase (not tied to a WBS template)
   • wbs_task = item that belongs in a WBS hierarchy — must have a track (WBS template track — INFER from document context: "ADR" if BigPanda/enterprise deployment, "Biggy" if startup/SMB. Default to "ADR" if unclear), a parent section (e.g. "Solution Design", "Platform Configuration"), and a level (1/2/3)
@@ -234,8 +234,8 @@ NOT an "architecture" (diagram text) — this is a specific named arch_node with
 </example>
 
 <example>
-Input: "ServiceNow integration is planned for Q3 to handle ticket creation"
-Output: [{"entityType": "integration", "fields": {"tool_name": "ServiceNow", "category": "ITSM", "connection_status": "planned"}, "confidence": 0.85, "sourceExcerpt": "ServiceNow integration is planned for Q3"}]
+Input: "The ServiceNow integration is currently in pilot — basic connection is working but custom field mapping isn't done yet"
+Output: [{"entityType": "integration", "fields": {"tool_name": "ServiceNow", "category": "ITSM", "connection_status": "configured", "notes": "Basic connection working; custom field mapping incomplete"}, "confidence": 0.85, "sourceExcerpt": "ServiceNow integration is currently in pilot"}]
 </example>
 
 <example>
@@ -246,14 +246,14 @@ Output: [{"entityType": "before_state", "fields": {"aggregation_hub_name": null,
 
 - architecture: { tool_name, track, phase, integration_group, status, integration_method } — workflow phase and integration method; integration_group = logical grouping within a phase (e.g. "ALERT NORMALIZATION", "ON-DEMAND DURING INVESTIGATION") or null; focus on how the tool integrates into delivery workflow
 - arch_node: { track ("ADR Track" | "AI Assistant Track" — ONLY these two values are valid; if track name is different, skip this entity), node_name (tool or capability name — e.g., "Event Ingest", "Alert Intelligence", "Knowledge Sources"), status (Node deployment status — See STATUS NORMALIZATION table above. Common signals: "configured" → live, "in testing" → pilot, "on roadmap" → planned), notes (integration details, status notes, or null) } — architecture capability or tool node; extract track verbatim; use for system components, tools, integrations mentioned in architecture context
-- integration: { tool_name, category, connection_status, notes } — connection status of a tool (live/pilot/planned/not-connected); focus on operational readiness and connection state, NOT architecture workflow phase
+- integration: { tool_name, category, connection_status, notes } — connection status of a tool (not-connected | configured | validated | production | blocked); focus on operational readiness and connection state, NOT architecture workflow phase. Status guide: configured = basic connection active OR currently in pilot/testing; validated = tested end-to-end and verified; production = fully live at scale; blocked = connection failed or on hold; not-connected = no active connection or only planned
 - before_state: { aggregation_hub_name (INFER the primary tool being replaced or supplemented — reason from context even if not explicitly named; e.g., if ServiceNow is described as the current ticketing system being supplemented, use "ServiceNow"), alert_to_ticket_problem (ASSEMBLE from scattered pain-point mentions throughout the document — describe the alert workflow pain), pain_points (SYNTHESIZE all pain points found anywhere — comma-separate comparative phrases like "before BigPanda", "we used to", "currently struggling with", problem descriptions) } — customer's current state before BigPanda adoption. TRIGGER: Attempt extraction if ANY pain-point signal exists anywhere (comparative language, "struggling with", "manual triage", "alert noise", "previously", broken-state descriptions). THRESHOLD: A thin entity is more useful than a missing one — users can edit or dismiss. SINGLETON: Extract at most ONE before_state per document.
 
 Key disambiguation for this pass:
 - architecture vs arch_node vs integration:
   • architecture = tool's ROLE in BigPanda delivery workflow (which phase it belongs to, how it integrates into the delivery process) — use for workflow integration context
   • arch_node = capability NODE within an "ADR Track" or "AI Assistant Track" architecture diagram (e.g., "Event Ingest", "Alert Intelligence", "Knowledge Sources") — use ONLY when document explicitly references these tracks
-  • integration = operational CONNECTION STATUS of a tool (is it live, pilot, planned, not-connected?) — use for tool readiness/status data
+  • integration = operational CONNECTION STATUS of a tool (not-connected | configured | validated | production | blocked) — use for tool readiness/status data
 - arch_node track names: ONLY valid values are "ADR Track" and "AI Assistant Track". If the document mentions a different track name, do NOT extract an arch_node entity — skip it entirely.
 
 ## SCANNING INSTRUCTION
@@ -276,6 +276,8 @@ If document type is \`transcript\` or \`status-update\` (from Pass 0 pre_analysi
 - Use lower confidence scores (0.5–0.7) to reflect inference vs direct extraction
 - Recognize implicit action items (e.g., "John mentioned he'll look into the configuration")
 - Extract meeting follow-ups, commitments, and decisions from dialogue patterns
+- PRIORITY — \`before_state\`: If ANY pain-point language exists in the document — even in conversational phrasing — you MUST attempt extraction. Triggers include: "before BigPanda", "before we had", "our situation was", "previously we", "we used to", "struggling with", "alert noise", "manual triage", descriptions of broken or painful pre-BigPanda processes. Conversational dialogue ("Before we had BigPanda, our situation was pretty rough...") is a valid trigger. A thin entity is better than a missing one.
+- PRIORITY — \`integration\`: "in pilot", "in testing", "currently piloting", "basic connection working" → connection_status = "configured". Do NOT default to "not-connected" when an explicit status is stated.
 
 If document type is \`formal-doc\`:
 - Prefer explicit extraction from labeled sections when available
@@ -345,6 +347,8 @@ If document type is \`transcript\` or \`status-update\` (from Pass 0 pre_analysi
 - Use lower confidence scores (0.5–0.7) to reflect inference vs direct extraction
 - Recognize implicit action items (e.g., "John mentioned he'll look into the configuration")
 - Extract meeting follow-ups, commitments, and decisions from dialogue patterns
+- PRIORITY — \`e2e_workflow\`: Any described sequence of steps a team follows — even in a single conversational sentence — MUST be extracted as an e2e_workflow. Do NOT absorb team process descriptions into \`workstream\` or \`task\`. If the document mentions a team and a sequence of steps (even implicitly: "first we do X, then Y, then Z" or "NOC team workflow: A → B → C"), extract it as e2e_workflow with steps. A brief description is sufficient; do not require a formal list.
+- PRIORITY — \`weekly_focus\`: ALWAYS synthesize from open action items, risks, and upcoming milestones in the transcript. Do not require an explicit "This Week" section.
 
 If document type is \`formal-doc\`:
 - Prefer explicit extraction from labeled sections when available
