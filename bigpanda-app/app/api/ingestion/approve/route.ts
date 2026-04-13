@@ -70,9 +70,9 @@ const ApproveRequestSchema = z.object({
   artifactId: z.number(),
   projectId: z.number(),
   items: z.array(z.unknown()).transform(arr =>
-    arr.filter((item): item is z.infer<typeof ApprovalItemSchema> => {
+    arr.flatMap((item) => {
       const r = ApprovalItemSchema.safeParse(item);
-      return r.success;
+      return r.success ? [r.data] : []; // use transformed r.data so fields arrays become JSON strings
     })
   ),
   totalExtracted: z.number(),
