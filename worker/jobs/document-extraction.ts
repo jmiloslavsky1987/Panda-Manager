@@ -748,9 +748,7 @@ export default async function documentExtractionJob(job: Job): Promise<{ status:
 
         // EXTR-08: use tool use instead of streaming
         const { items: passItems, coverage: passCoverage } = await runClaudeToolUseCall(client, userContent, passSystemPrompt);
-        // Hard-enforce per-pass entity type constraint (PDF path)
-        const allowedTypesPdf = new Set<string>(pass.entityTypes);
-        allRawItems.push(...passItems.filter(item => allowedTypesPdf.has(item.entityType)));
+        allRawItems.push(...passItems);
         coverageByPass[pass.passNumber] = passCoverage; // EXTR-10: store per-pass coverage
 
         // Global progress with Pass 0: Pass 0 = 10%, Pass 1 = 40%, Pass 2 = 70%, Pass 3 = 100%
@@ -800,11 +798,7 @@ export default async function documentExtractionJob(job: Job): Promise<{ status:
 
           // EXTR-08: use tool use instead of streaming
           const { items: chunkItems, coverage: chunkCoverage } = await runClaudeToolUseCall(client, userContent, passSystemPrompt);
-          // Hard-enforce per-pass entity type constraint — model sometimes ignores "Extract ONLY"
-          // and falls back to note/history/workstream for content that belongs in before_state/e2e_workflow
-          const allowedTypes = new Set<string>(pass.entityTypes);
-          const filteredChunkItems = chunkItems.filter(item => allowedTypes.has(item.entityType));
-          allRawItems.push(...filteredChunkItems);
+          allRawItems.push(...chunkItems);
 
           // EXTR-10: accumulate coverage (last chunk of pass overwrites — this is OK for text chunks)
           if (i === chunks.length - 1) {
