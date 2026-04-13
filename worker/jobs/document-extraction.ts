@@ -108,7 +108,7 @@ Entity type guidance:
 - focus_area: { title, tracks, why_it_matters, current_status, next_step, bp_owner, customer_owner } — a named focus area or strategic priority with ownership and status; use for named workstreams, priorities, or initiatives with a clear owner and next step
 - e2e_workflow: { team_name, workflow_name, steps } — an end-to-end workflow for a team. ASSEMBLE from scattered mentions: stitch together a team's end-to-end journey even when steps appear across multiple sections of the transcript. steps is an array of { label, track, status, position } objects; assign sequential positions starting at 1.
   Example: Document mentions "NOC team starts with alert ingestion, then correlation, then creates incidents in ServiceNow" → extract as steps: [{"label": "Alert Ingestion", "track": "ADR", "status": "live", "position": 1}, {"label": "Correlation", "track": "ADR", "status": "live", "position": 2}, {"label": "Incident Creation in ServiceNow", "track": "ADR", "status": "live", "position": 3}]. Use null for any step field not determinable from context.
-- note: { content, context } — use for any valuable content that does not fit the above types: observations, meeting highlights, open questions, context, or anything that would be useful to preserve but has no specific schema.
+- note: { content, context } — use for any valuable content that does not fit the above types: observations, meeting highlights, open questions, context, or anything that would be useful to preserve but has no specific schema. NEVER use note for: pre-BigPanda pain-point descriptions or alert-noise/manual-triage content (use before_state instead), team workflow step sequences (use e2e_workflow instead), or tool connection statuses (use integration instead).
 - team_pathway: { team_name, route_description (the delivery route steps joined by ' → ' e.g. "Alert Ingest → Correlation → Incident Creation → SNow Ticket"), status ("live" | "in_progress" | "pilot" | "planned"), notes } — named delivery pathway for a team through the BigPanda platform; use when document describes team-specific routes or journeys through the system
 - before_state: { aggregation_hub_name (INFER the primary tool being replaced or supplemented — reason from context even if not explicitly named; e.g., if ServiceNow is described as the current ticketing system being supplemented, use "ServiceNow"), alert_to_ticket_problem (ASSEMBLE from scattered pain-point mentions throughout the document — describe the alert workflow pain), pain_points (SYNTHESIZE all pain points found anywhere — comma-separate comparative phrases like "before BigPanda", "we used to", "currently struggling with", problem descriptions) } — customer's current state before BigPanda adoption. TRIGGER: Attempt extraction if ANY pain-point signal exists anywhere (comparative language, "struggling with", "manual triage", "alert noise", "previously", broken-state descriptions). THRESHOLD: A thin entity is more useful than a missing one — users can edit or dismiss. SINGLETON: Extract at most ONE before_state per document.
 - weekly_focus: { bullets (JSON array of 3–5 strings — SYNTHESIZE from actual project signals; each bullet is an action-oriented imperative phrase, e.g. "Resolve ServiceNow integration blocker before pilot launch") } — ALWAYS synthesize weekly_focus even if no "This Week" section exists. SOURCE SIGNALS in priority order: (1) open action items and overdue tasks, (2) unresolved risks, (3) upcoming milestones. Do NOT extract verbatim; generate focused, prioritized items from the document's actual project state. Hard limit: 3–5 bullets maximum — prioritize rather than enumerate everything. SINGLETON: Extract at most ONE weekly_focus entity per document.
@@ -189,7 +189,7 @@ Output: [] (no task/action entities — wbs_task is handled in Pass 3)
 - task: { title, status, owner, phase, description, start_date (ISO date string or null), due_date (ISO date string or null), priority ("high", "medium", or "low" or null), milestone_name (verbatim name as it appears in the document or null), workstream_name (verbatim name as it appears in the document or null) }
 - milestone: { name, target_date, status, owner (verbatim name or null) }
 - decision: { decision, rationale, made_by, date }
-- note: { content, context } — use for any valuable content that does not fit the above types: observations, meeting highlights, open questions, context, or anything that would be useful to preserve but has no specific schema.
+- note: { content, context } — use for any valuable content that does not fit the above types: observations, meeting highlights, open questions, context, or anything that would be useful to preserve but has no specific schema. NEVER use note for: pre-BigPanda pain-point descriptions or alert-noise/manual-triage content (use before_state instead), team workflow step sequences (use e2e_workflow instead), or tool connection statuses (use integration instead).
 - history: { date, content, author }
 
 Key disambiguation for this pass:
@@ -748,7 +748,9 @@ export default async function documentExtractionJob(job: Job): Promise<{ status:
 
         // EXTR-08: use tool use instead of streaming
         const { items: passItems, coverage: passCoverage } = await runClaudeToolUseCall(client, userContent, passSystemPrompt);
-        allRawItems.push(...passItems);
+        // Hard-enforce per-pass entity type constraint (PDF path)
+        const allowedTypesPdf = new Set<string>(pass.entityTypes);
+        allRawItems.push(...passItems.filter(item => allowedTypesPdf.has(item.entityType)));
         coverageByPass[pass.passNumber] = passCoverage; // EXTR-10: store per-pass coverage
 
         // Global progress with Pass 0: Pass 0 = 10%, Pass 1 = 40%, Pass 2 = 70%, Pass 3 = 100%
@@ -798,7 +800,11 @@ export default async function documentExtractionJob(job: Job): Promise<{ status:
 
           // EXTR-08: use tool use instead of streaming
           const { items: chunkItems, coverage: chunkCoverage } = await runClaudeToolUseCall(client, userContent, passSystemPrompt);
-          allRawItems.push(...chunkItems);
+          // Hard-enforce per-pass entity type constraint — model sometimes ignores "Extract ONLY"
+          // and falls back to note/history/workstream for content that belongs in before_state/e2e_workflow
+          const allowedTypes = new Set<string>(pass.entityTypes);
+          const filteredChunkItems = chunkItems.filter(item => allowedTypes.has(item.entityType));
+          allRawItems.push(...filteredChunkItems);
 
           // EXTR-10: accumulate coverage (last chunk of pass overwrites — this is OK for text chunks)
           if (i === chunks.length - 1) {
