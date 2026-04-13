@@ -45,11 +45,20 @@ const ApprovalItemSchema = z.object({
     'focus_area', 'e2e_workflow',   // Gap 3+4 — added Phase 50
     'before_state', 'weekly_focus',  // Gap A+G — added Phase 51
   ]),
-  fields: z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()])).transform(
+  fields: z.record(z.string(), z.union([
+    z.string(), z.number(), z.boolean(), z.null(),
+    z.array(z.unknown()),           // e.g. steps, pain_points
+    z.record(z.string(), z.unknown()), // nested objects
+  ])).transform(
     f => Object.fromEntries(
       Object.entries(f)
         .filter(([, v]) => v != null)
-        .map(([k, v]) => [k, String(v)])
+        .map(([k, v]) => [
+          k,
+          Array.isArray(v) || (typeof v === 'object' && v !== null)
+            ? JSON.stringify(v)
+            : String(v),
+        ])
     ) as Record<string, string>
   ),
   approved: z.boolean(),
