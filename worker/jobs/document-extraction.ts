@@ -785,9 +785,12 @@ export default async function documentExtractionJob(job: Job): Promise<{ status:
 
         for (let i = 0; i < chunks.length; i++) {
           // Prepend pre-analysis context to user message
+          // NOTE: do NOT append passSystemPrompt here — it is already the system param.
+          // Appending it after the "Extract ONLY" constraint causes the model to ignore
+          // the constraint and fall back to the full entity list at the end of the message.
           const passUserText = preAnalysisContext
-            ? `${preAnalysisContext}\n\n<document>\n${chunks[i]}\n</document>\n\nExtract ONLY the following entity types: ${pass.entityTypes.join(', ')}. Call record_entities with your findings.\n\n${passSystemPrompt}`
-            : `<document>\n${chunks[i]}\n</document>\n\nExtract ONLY the following entity types: ${pass.entityTypes.join(', ')}. Call record_entities with your findings.\n\n${passSystemPrompt}`;
+            ? `${preAnalysisContext}\n\n<document>\n${chunks[i]}\n</document>\n\nExtract ONLY the following entity types: ${pass.entityTypes.join(', ')}. Call record_entities with your findings.`
+            : `<document>\n${chunks[i]}\n</document>\n\nExtract ONLY the following entity types: ${pass.entityTypes.join(', ')}. Call record_entities with your findings.`;
 
           const userContent: Anthropic.MessageParam['content'] = [
             {
