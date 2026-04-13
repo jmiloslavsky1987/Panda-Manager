@@ -594,6 +594,40 @@ async function insertItem(
           before_json: null,
           after_json: inserted as Record<string, unknown>,
         });
+
+        // Bridge: also upsert the matching arch_node so the visual diagram reflects extraction status
+        const archNodeName = f.tool_name ?? '';
+        const archTrackName = f.track ?? '';
+        if (archNodeName && archTrackName) {
+          const archTrackRows = await tx
+            .select({ id: archTracks.id })
+            .from(archTracks)
+            .where(and(eq(archTracks.project_id, projectId), ilike(archTracks.name, `%${archTrackName}%`)));
+
+          if (archTrackRows.length > 0) {
+            const archTrackId = archTrackRows[0].id;
+            const archNodeStatus = coerceArchNodeStatus(f.phase ?? null) ?? coerceArchNodeStatus(String(inserted.status)) ?? 'planned';
+            await tx
+              .insert(archNodes)
+              .values({
+                project_id: projectId,
+                track_id: archTrackId,
+                name: archNodeName,
+                status: archNodeStatus,
+                notes: f.notes ?? null,
+                source_trace: 'extraction',
+                display_order: 999,
+              })
+              .onConflictDoUpdate({
+                target: [archNodes.project_id, archNodes.track_id, archNodes.name],
+                set: {
+                  status: archNodeStatus,
+                  notes: f.notes ?? null,
+                },
+              });
+          }
+          // If no matching arch_track found: silently skip — architecture_integrations row is still committed
+        }
       });
       return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
 

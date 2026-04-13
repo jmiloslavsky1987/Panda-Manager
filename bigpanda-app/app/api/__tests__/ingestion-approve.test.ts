@@ -24,6 +24,11 @@ vi.mock('@/db', () => {
             where: vi.fn().mockResolvedValue([]),
           }),
         }),
+        select: vi.fn().mockReturnValue({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue([]),
+          }),
+        }),
       })),
       select: vi.fn(() => {
         selectCallCount++
