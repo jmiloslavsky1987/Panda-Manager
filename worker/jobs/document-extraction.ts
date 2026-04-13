@@ -243,6 +243,12 @@ Input: "Before BigPanda: 90% of alerts were noise, avg MTTR 4 hours, manual tria
 Output: [{"entityType": "before_state", "fields": {"aggregation_hub_name": null, "alert_to_ticket_problem": "90% of alerts were noise, avg MTTR 4 hours, manual triage required", "pain_points": "Alert noise at 90%, MTTR 4 hours, Manual triage"}, "confidence": 0.9, "sourceExcerpt": "Before BigPanda: 90% of alerts were noise..."}]
 </example>
 
+<example>
+Input: "John: Before we had BigPanda, our situation was pretty rough. ServiceNow was basically acting as our aggregation hub — every alert was creating a ticket directly in ServiceNow, and our NOC team was drowning. We had about 85% noise on a good day, manual triage was taking 3 to 4 hours, and we had no way to correlate related alerts."
+Output: [{"entityType": "before_state", "fields": {"aggregation_hub_name": "ServiceNow", "alert_to_ticket_problem": "Every alert created a ticket directly in ServiceNow with no correlation. NOC team doing manual triage taking 3-4 hours.", "pain_points": "85% alert noise, manual triage 3-4 hours, no alert correlation, ServiceNow as aggregation hub"}, "confidence": 0.85, "sourceExcerpt": "Before we had BigPanda, our situation was pretty rough..."}]
+NOT a "note" or "history" — conversational pain-point language about pre-BigPanda state is always before_state.
+</example>
+
 
 - architecture: { tool_name, track, phase, integration_group, status, integration_method } — workflow phase and integration method; integration_group = logical grouping within a phase (e.g. "ALERT NORMALIZATION", "ON-DEMAND DURING INVESTIGATION") or null; focus on how the tool integrates into delivery workflow
 - arch_node: { track ("ADR Track" | "AI Assistant Track" — ONLY these two values are valid; if track name is different, skip this entity), node_name (tool or capability name — e.g., "Event Ingest", "Alert Intelligence", "Knowledge Sources"), status (Node deployment status — See STATUS NORMALIZATION table above. Common signals: "configured" → live, "in testing" → pilot, "on roadmap" → planned), notes (integration details, status notes, or null) } — architecture capability or tool node; extract track verbatim; use for system components, tools, integrations mentioned in architecture context
@@ -306,6 +312,12 @@ Output: [{"entityType": "team", "fields": {"team_name": "NOC Team", "track": "AD
 <example>
 Input: "This week's focus: finalize integration testing with ServiceNow, prepare for pilot launch"
 Output: [{"entityType": "weekly_focus", "fields": {"bullets": ["Finalize integration testing with ServiceNow", "Prepare for pilot launch"]}, "confidence": 0.8, "sourceExcerpt": "This week's focus: finalize integration testing"}]
+</example>
+
+<example>
+Input: "Mike: End-to-end for the NOC — alerts come in through Event Ingest, BigPanda runs correlation and enrichment, then anything that hits the severity threshold automatically creates a ticket in ServiceNow. The NOC engineer reviews it there, works the incident, closes it out. We're also routing high-severity incidents to PagerDuty for on-call escalation but that's still manual."
+Output: [{"entityType": "e2e_workflow", "fields": {"team_name": "NOC", "workflow_name": "NOC Alert-to-Resolution Workflow", "steps": [{"label": "Event Ingest", "track": "ADR", "status": "live", "position": 1}, {"label": "Correlation and Enrichment", "track": "ADR", "status": "live", "position": 2}, {"label": "ServiceNow Ticket Creation", "track": "ADR", "status": "pilot", "position": 3}, {"label": "NOC Engineer Review and Resolution", "track": "ADR", "status": "live", "position": 4}, {"label": "PagerDuty Escalation (manual)", "track": "ADR", "status": "planned", "position": 5}]}, "confidence": 0.85, "sourceExcerpt": "End-to-end for the NOC — alerts come in through Event Ingest..."}]
+NOT a "workstream" or "team_pathway" — a described sequence of steps for a named team is always e2e_workflow.
 </example>
 
 
