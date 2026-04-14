@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { eq, and, ilike } from 'drizzle-orm';
+import { eq, and, ilike, or, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import {
   actions,
@@ -602,7 +602,13 @@ async function insertItem(
           const archTrackRows = await tx
             .select({ id: archTracks.id })
             .from(archTracks)
-            .where(and(eq(archTracks.project_id, projectId), ilike(archTracks.name, `%${archTrackName}%`)));
+            .where(and(
+              eq(archTracks.project_id, projectId),
+              or(
+                ilike(archTracks.name, `%${archTrackName}%`),
+                sql`${archTrackName} ilike concat('%', ${archTracks.name}, '%')`
+              )
+            ));
 
           if (archTrackRows.length > 0) {
             const archTrackId = archTrackRows[0].id;
