@@ -13,7 +13,7 @@ import path from 'node:path';
 import Anthropic from '@anthropic-ai/sdk';
 // import { jsonrepair } from 'jsonrepair'; // REMOVED in EXTR-08 — tool use replaces jsonrepair
 import db from '../../db';
-import { extractionJobs, artifacts, actions, risks, milestones, keyDecisions, engagementHistory, stakeholders, tasks, businessOutcomes, focusAreas, architectureIntegrations, workstreams, onboardingSteps, integrations } from '../../db/schema';
+import { extractionJobs, artifacts, actions, risks, milestones, keyDecisions, engagementHistory, stakeholders, tasks, businessOutcomes, focusAreas, architectureIntegrations, workstreams, onboardingSteps, integrations, archTracks, archNodes } from '../../db/schema';
 import { extractDocumentText } from '../../lib/document-extractor';
 import { readSettings } from '../../lib/settings-core';
 import { isAlreadyIngested } from '../../lib/extraction-types';
@@ -602,6 +602,49 @@ async function runClaudeToolUseCall(
   };
 }
 
+// ─── Architecture Phase Context ───────────────────────────────────────────────
+// Builds a context string listing the project's pipeline stages by track.
+// Injected into Pass 2 so the extraction AI can infer the correct "phase" for
+// architecture entities even when documents don't name the stage explicitly.
+
+async function buildArchPhasesContext(projectId: number): Promise<string> {
+  const rows = await db
+    .select({ trackName: archTracks.name, nodeName: archNodes.name })
+    .from(archNodes)
+    .innerJoin(archTracks, eq(archNodes.track_id, archTracks.id))
+    .where(eq(archNodes.project_id, projectId))
+    .orderBy(archTracks.display_order, archNodes.display_order);
+
+  if (rows.length === 0) return '';
+
+  const byTrack = new Map<string, string[]>();
+  for (const { trackName, nodeName } of rows) {
+    const existing = byTrack.get(trackName) ?? [];
+    existing.push(nodeName);
+    byTrack.set(trackName, existing);
+  }
+
+  const stageLines = Array.from(byTrack.entries())
+    .map(([track, nodes]) => `  ${track}: ${nodes.join(' | ')}`)
+    .join('\n');
+
+  return `<project_pipeline_stages>
+When extracting "architecture" entities, set the "phase" field to the EXACT stage name from this project's pipeline that best describes where the tool or capability belongs. Do NOT use deployment status words (live, production, in progress) as the phase value — use a stage name. If you cannot determine the correct stage, omit phase.
+
+${stageLines}
+
+Stage assignment guide (infer from tool function, not from document wording):
+- Event Ingest stage: monitoring sources, data feeds, event adapters, ingestion connectors (e.g. Dynatrace, Splunk, Nagios, AppDynamics, Datadog, custom APIs)
+- Alert Intelligence stage: correlation, enrichment, normalization, suppression, filtering, deduplication, tagging, topology (e.g. Alert Correlation, Mapping & Enrichment, Alert Tags)
+- Incident Intelligence stage: RCA, incident classification, enrichment, change correlation, root cause (e.g. Incident Enrichment, Change Integration, Suggested Root Cause)
+- Workflow Automation stage: ticketing, notifications, runbooks, ITSM actions (e.g. ServiceNow, Slack, PagerDuty triggers, auto-share)
+- Knowledge Sources stage: knowledge bases, documentation feeds, wikis, Confluence, Jira
+- AI Capabilities stage: AI assistant features, query handling, intelligent response
+- Real-Time Query stage: live data lookups, real-time source integrations
+- Outputs & Actions stage: AI-triggered output actions, downstream notifications, integrations
+</project_pipeline_stages>`;
+}
+
 // ─── Job Handler ──────────────────────────────────────────────────────────────
 
 export default async function documentExtractionJob(job: Job): Promise<{ status: string }> {
@@ -649,6 +692,9 @@ export default async function documentExtractionJob(job: Job): Promise<{ status:
 
     // 3. Extract document text
     const extractResult = await extractDocumentText(fileBuffer, artifact.name);
+
+    // 3a. Fetch project pipeline stages for architecture phase inference (Pass 2)
+    const archPhasesContext = await buildArchPhasesContext(projectId);
 
     // 4. Build Claude client
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -727,7 +773,8 @@ export default async function documentExtractionJob(job: Job): Promise<{ status:
       for (let passIdx = 0; passIdx < contentPasses.length; passIdx++) {
         const pass = contentPasses[passIdx];
         const passSystemPrompt = PASS_PROMPTS[pass.passNumber];
-        const passUserText = `Extract ONLY the following entity types: ${pass.entityTypes.join(', ')}.\nExtract all structured project data from the document above. Output only the JSON array.`;
+        const archCtxPrefix = pass.passNumber === 2 && archPhasesContext ? `${archPhasesContext}\n\n` : '';
+        const passUserText = `${archCtxPrefix}Extract ONLY the following entity types: ${pass.entityTypes.join(', ')}.\nExtract all structured project data from the document above. Output only the JSON array.`;
 
         const userContent: Anthropic.MessageParam['content'] = [
           {
@@ -788,9 +835,10 @@ export default async function documentExtractionJob(job: Job): Promise<{ status:
           // NOTE: do NOT append passSystemPrompt here — it is already the system param.
           // Appending it after the "Extract ONLY" constraint causes the model to ignore
           // the constraint and fall back to the full entity list at the end of the message.
+          const archCtxPrefix = pass.passNumber === 2 && archPhasesContext ? `${archPhasesContext}\n\n` : '';
           const passUserText = preAnalysisContext
-            ? `${preAnalysisContext}\n\n<document>\n${chunks[i]}\n</document>\n\nExtract ONLY the following entity types: ${pass.entityTypes.join(', ')}. Call record_entities with your findings.`
-            : `<document>\n${chunks[i]}\n</document>\n\nExtract ONLY the following entity types: ${pass.entityTypes.join(', ')}. Call record_entities with your findings.`;
+            ? `${preAnalysisContext}\n\n${archCtxPrefix}<document>\n${chunks[i]}\n</document>\n\nExtract ONLY the following entity types: ${pass.entityTypes.join(', ')}. Call record_entities with your findings.`
+            : `${archCtxPrefix}<document>\n${chunks[i]}\n</document>\n\nExtract ONLY the following entity types: ${pass.entityTypes.join(', ')}. Call record_entities with your findings.`;
 
           const userContent: Anthropic.MessageParam['content'] = [
             {
