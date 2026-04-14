@@ -1,191 +1,176 @@
 # Requirements: BigPanda AI Project Management App
 
-**Defined:** 2026-04-07
-**Milestone:** v6.0 — Dashboard, Navigation & Intelligence
-**Core Value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
+**Defined:** 2026-04-13
+**Milestone:** v7.0 — Governance & Operational Maturity
+**Core Value:** Every PS delivery intelligence the team has built — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
 
-## v6.0 Requirements
+## v7.0 Requirements
 
-### Dashboard
+### Auth & Access
 
-- [x] **DASH-01**: User can view portfolio-level health summary showing total active projects, on track / at risk / off track counts, overdue milestones, and blocked project count
-- [x] **DASH-02**: User can view a visual status distribution rollup (chart or heatmap) on the portfolio dashboard
-- [x] **DASH-03**: User can view a multi-project portfolio table with standardized columns: name, owner, team, phase, health status, % complete, next milestone, next milestone date, risk level, dependency status, last updated, and exec action flag
-- [x] **DASH-04**: User can filter, sort, and search the portfolio table by status, owner, team, phase, priority, milestone date, risk level, and dependency state
-- [x] **DASH-05**: User can view an exceptions panel that surfaces projects with overdue milestones, stale updates, open blockers, missing ownership, or unresolved dependencies
-- [x] **DASH-06**: User can drill down from a portfolio table row into the individual project workspace
+- [ ] **AUTH-01**: User can log out of the application from the navigation or user menu
+- [ ] **AUTH-02**: Admin can manage project membership and role assignments (Admin/User role per project)
+- [ ] **AUTH-03**: User with Admin role on a project has full access: delete, archive, user management, and global scheduler actions on that project
+- [ ] **AUTH-04**: User with User role on a project is restricted from destructive actions (delete, archive) and admin functions
+- [ ] **AUTH-05**: Role-based access is enforced at the route handler level for all project actions
 
-### Navigation
+### Project Lifecycle
 
-- [x] **NAV-01**: Delivery tab shows Plan as first sub-tab; old Intel and Phase Board URLs redirect to new locations (no broken links)
-- [x] **NAV-02**: WBS, Task Board, and Gantt are promoted to direct sub-tabs of Delivery at the same level as Plan, Actions, Risks, and Milestones (no longer nested under Plan)
-- [x] **NAV-03**: Swimlane view is removed from the application
-- [x] **NAV-04**: Decisions sub-tab is moved from the Intel tab into the Delivery tab
-- [x] **NAV-05**: Intel tab is removed; Engagement History sub-tab is moved to the Admin tab
+- [ ] **PROJ-01**: Admin can archive a project (soft-delete: project becomes read-only, preserved in system)
+- [ ] **PROJ-02**: Admin can permanently delete a project
+- [ ] **PROJ-03**: User can view archived projects in a dedicated archived projects view (read-only)
+- [ ] **PROJ-04**: Admin can restore an archived project back to active status
 
-### Risks & Milestones Parity
+### Overview Tab
 
-- [x] **RISK-01**: User can filter the Risks table by multiple dimensions (status, severity, owner, date range)
-- [x] **RISK-02**: User can multi-select risks and apply bulk status or field updates
-- [x] **MILE-01**: User can filter the Milestones table by multiple dimensions (status, owner, date range)
-- [x] **MILE-02**: User can multi-select milestones and apply bulk status or field updates
+- [ ] **OVRVW-01**: Overview section displays static onboarding tracks (ADR: Discovery & Kickoff, Platform Config, UAT; Biggy: Discovery & Kickoff, Platform Config, Validation) from hardcoded config — no Claude call, no Generate button
+- [ ] **OVRVW-02**: Overview section displays dynamic onboarding tracks (ADR: Integrations, Teams; Biggy: IT Knowledge Graph, Teams) populated from context and integration data
+- [ ] **OVRVW-03**: Weekly Focus generates automatically every Monday morning via scheduled job (not on manual trigger by default)
+- [ ] **OVRVW-04**: Weekly Focus "Generate Now" button is labeled and presented as a manual override
+- [ ] **OVRVW-05**: User can delete integrations from the Integration Tracker
 
-### Work Breakdown Structure
+### Health Dashboard
 
-- [x] **WBS-01**: Phase Board is replaced with a WBS view that displays both ADR and Biggy WBS templates as a collapsible 3-level hierarchy within a single project workspace
-- [x] **WBS-02**: Both ADR and Biggy WBS template structures seed automatically on project creation
-- [x] **WBS-03**: When context is uploaded, extracted tasks are auto-classified to the nearest WBS node via AI (with fallback to manual assignment)
-- [x] **WBS-04**: "Generate Plan" button analyzes available project context, identifies missing WBS tasks, and fills gaps; re-runnable to catch tasks not covered in earlier runs
-- [x] **WBS-05**: User can manually add, edit, reorder, and delete tasks within any WBS node
+- [ ] **HLTH-01**: Redesigned Health Dashboard displays project health metrics derivable solely from existing system data (no manual input required)
+- [ ] **HLTH-02**: Health Dashboard is optimized for at-a-glance executive readability
 
-### Team Engagement Overview
+### Document Ingestion
 
-- [x] **TEAM-01**: Teams tab displays a 4-section editable in-place map: Business Value & Expected Outcomes, End-to-End Workflows, Teams & Engagement Status, and Top Focus Areas. Architecture section is excluded (covered by dedicated Architecture tab). Section headers use plain text styling without numbered badges.
-- [x] **TEAM-02**: Context upload extracts and routes structured data to populate all Team Engagement Map sections automatically
-- [x] **TEAM-03**: Sections with missing or incomplete data display a visible warning prompting the user to supply required content
-- [x] **TEAM-04**: Team Engagement Overview sub-tab is read-only; users edit content in the source tabs (Actions, Teams Detail). TEAM-04 is satisfied by those existing edit flows — no add/edit/delete controls exist in the Overview sub-tab.
+- [ ] **INGEST-01**: User can edit extracted field values on an ingested item before approving it
+- [ ] **INGEST-02**: User can move an approved ingested item to a different workspace section
+- [ ] **INGEST-03**: "Scan for Updates" functionality is consolidated into the Document Ingestion tab (removed from individual workspace tabs)
+- [ ] **INGEST-04**: "Analyze Completeness" compares existing project data against the expected data model and surfaces specific missing, sparse, or conflicting sections/fields (not binary pass/fail)
+- [ ] **INGEST-05**: User can reclassify a note entity to any valid entity type in the draft modal (fields transform to target schema; approved note routes to the correct table on approval)
 
-### Architecture Diagrams
+### Delivery Tab
 
-- [x] **ARCH-01**: Architecture tab displays two sub-tabs: Before State (legacy flow with customer pain points) and Current & Future State
-- [x] **ARCH-02**: Current & Future State shows ADR Track (Event Ingest → Alert Intelligence → Incident Intelligence → Console → Workflow Automation) and AI Assistant Track (Knowledge Sources → Real-Time Query → AI Capabilities → Console → Outputs & Actions), each with per-node status indicators (Live / In Progress / Planned)
-- [x] **ARCH-03**: A Team Onboarding Status table below both tracks shows per-team, per-capability-stage status with colored indicators
-- [x] **ARCH-04**: Context upload extracts and routes architecture data (tool names, integration statuses, team names, phase assignments) to populate both diagram tabs
+- [ ] **DLVRY-01**: Gantt chart displays a static structural skeleton (phases, milestone markers) on page load without user action
+- [ ] **DLVRY-02**: Gantt chart supports drag-edge date adjustment and manual date entry
+- [ ] **DLVRY-03**: Date changes in Gantt propagate to milestone and task records across the application
+- [ ] **DLVRY-04**: Date changes to milestones or tasks outside the Gantt propagate back to the Gantt display
+- [ ] **DLVRY-05**: Plan tab is removed; "Generate Plan" button and functionality are available in the Task Board tab
+- [ ] **DLVRY-06**: WBS structure is audited and aligned with Generate Plan output schema before reimplementation
+- [ ] **DLVRY-07**: Actions tab hides ID and Source columns by default
+- [ ] **DLVRY-08**: Risks tab hides ID column by default
+- [ ] **DLVRY-09**: Milestones tab hides ID column by default
+- [ ] **DLVRY-10**: Decisions entry form is scoped to operational impact documentation only (business transformation events, event intelligence improvements, automation and routing changes); existing records are preserved
+
+### Team Tab
+
+- [ ] **TEAM-01**: User can move a stakeholder to a different section
+- [ ] **TEAM-02**: User can delete a stakeholder
 
 ### Skills
 
-- [x] **SKILL-01**: Skill runner resolves SKILL.md file paths dynamically at runtime (no hardcoded absolute paths)
+- [ ] **SKILL-01**: A Skills Design Standard is defined and documented covering: input spec, output format, scheduling interface, and error/fallback behavior
+- [ ] **SKILL-02**: All previously grayed-out/disabled skills are audited and made functional
+- [ ] **SKILL-03a**: Admin can enable or disable prompt editing as a global setting (default: off; preserves "prompts must not be modified" constraint when off)
+- [ ] **SKILL-03b**: When prompt editing is globally enabled, user can view and edit the prompt for any skill from the Skills tab UI
+- [ ] **SKILL-04**: All skills produce output conforming to the Skills Design Standard
 
-### Extraction Prompt Intelligence (Phase 53)
+### Scheduler
 
-- [x] **EXTR-02**: Extraction prompts use document-first layout — document content wrapped in `<document>` tags placed before instructions in all pass prompts
-- [x] **EXTR-03**: Each extraction pass includes 3 few-shot examples in `<example>` tags targeting hardest disambiguation cases (task vs wbs_task, architecture vs arch_node vs integration)
-- [x] **EXTR-04**: Field-level inference rules embedded in field description strings co-located with the fields they apply to (not only in a distant global block)
-- [x] **EXTR-05**: Status normalization implemented as an explicit lookup table in EXTRACTION_BASE mapping all common variants to canonical enum values
-- [x] **EXTR-06**: Date inference requires active justification for null — prompts instruct Claude to attempt inference from any temporal signal; null only when no signal exists near the entity
-- [x] **EXTR-07**: Each pass prompt includes a section-by-section scanning instruction and an end-of-prompt self-check verification step
-- [x] **EXTR-08**: Raw JSON prompting replaced with a `record_entities` tool call (`strict: true`), eliminating `jsonrepair` dependency and improving schema adherence
-- [x] **EXTR-09**: `splitIntoChunks` adds 2,000-character overlap to prevent entities spanning chunk boundaries from being missed
-- [x] **EXTR-10**: Each pass appends a `COVERAGE: entity_type: N | GAPS: ...` summary; parser captures and stores per-pass coverage for debugging
-- [x] **EXTR-11**: New Pass 0 pre-analysis step where Claude quotes relevant document sections before extraction passes begin, improving recall on dense/complex documents
+- [ ] **SCHED-01**: Global Scheduler section is restricted to non-project-specific jobs
+- [ ] **SCHED-02**: User can schedule skills/jobs within an individual project (project-scoped scheduling)
+- [ ] **SCHED-03**: Scheduler job list persists when navigating away and returning to the Scheduler
+- [ ] **SCHED-04**: Manually triggered job results appear in a job history / "Last Run" view in the Scheduler
+- [ ] **SCHED-05**: Nav badge next to Scheduler label in navigation is removed
 
-### Extraction Pipeline Completeness (Phase 53)
+### Portfolio Dashboard
 
-- [x] **EXTR-12**: `before_state` entity type handled end-to-end in approve route with upsert to `before_state` table — Architecture "Before BigPanda" tab populatable via document ingestion
-- [x] **EXTR-13**: WBS orphan fallback implemented — when `wbs_task` `parent_section_name` doesn't match seeded rows, handler auto-creates missing parent section OR inserts as top-level L1 (no invisible orphaned items)
-- [x] **EXTR-14**: `arch_node` handler uses fuzzy/partial match on track name; unknown track names log a warning and skip gracefully rather than throwing and aborting the entire approval request
-- [x] **EXTR-15**: `team_engagement` entity routing investigated and fixed — extracted data surfaces in the Teams tab UI
-- [x] **EXTR-16**: Approve response includes per-entity-type write counts; IngestionModal displays breakdown; silent failures surfaced as visible warnings
+- [ ] **PORTF-01**: Portfolio dashboard displays archived projects in a separate view or filter, distinct from active projects
+- [ ] **PORTF-02**: Portfolio dashboard excludes permanently deleted projects from all views
 
-### Multi-Pass Extraction (Phase 52/55)
+### Knowledge Base
 
-- [x] **MULTI-PASS-01**: 3-pass extraction loop implemented — document-extraction.ts runs 3 sequential Claude calls per PDF (Passes 1, 2, 3) and 3 * chunkCount calls for text documents; PASS_PROMPTS[1|2|3] exported with EXTRACTION_BASE shared base + pass-specific entity type guidance; Pass 1 targets action/risk/task/milestone/decision/note/history, Pass 2 targets architecture/arch_node/integration/before_state, Pass 3 targets team/wbs_task/workstream/focus_area/e2e_workflow/team_pathway/weekly_focus/stakeholder/businessOutcome/onboarding_step
-- [x] **MULTI-PASS-02**: Intra-batch deduplication with composite keys — `deduplicateWithinBatch` uses `entityType::primaryKey` composite keys to prevent cross-type over-filtering while removing same-type duplicates; `weekly_focus` singletons pass through without dedup key; 10/10 dedup tests GREEN
-- [x] **MULTI-PASS-03**: Pass-aware progress display — IngestionModal shows pass-specific progress labels and global progress scale (pass 1 max 33%, pass 2 max 66%, pass 3 max 100%); global formula `globalPct = (passIdx / 3) * 100 + (passProgressPct / 3)`; 4 RED runtime integration tests (PDF 3-pass loop, text 3-pass loop, pass merge, progress scale) resolved in Phase 55
+- [ ] **KB-01**: Knowledge Base is updated with a defined use case or deprecated/removed
 
-### Synthesis-First Extraction for Unstructured Notes (Phase 57)
+### Outputs Section
 
-- [x] **SYNTH-01**: EXTRACTION_BASE includes a global synthesis-first posture instruction — documents are often unstructured meeting notes or transcripts; Claude must infer entity types from any relevant content without requiring labeled sections
-- [x] **SYNTH-02**: PASS_0_PROMPT classifies document type (`transcript` | `status-update` | `formal-doc`) and outputs it in a required `<document_type>` XML tag
-- [x] **SYNTH-03**: PASS_0_PROMPT predicts likely entity types from a document scan and outputs them in a `<likely_entity_types>` XML tag — both signals flow to Passes 1–3 via `preAnalysisContext`
-- [x] **SYNTH-04**: All three pass prompts (PASS_PROMPTS[1], [2], [3]) include document-type-aware conditional instructions: `transcript`/`status-update` mode enables aggressive inference from scattered mentions; `formal-doc` mode prefers explicit section extraction
-- [x] **SYNTH-05**: Confidence calibration rubric in EXTRACTION_BASE defines 0.5–0.7 for synthesized/inferred entities and 0.8–0.95 for explicitly stated entities; `weekly_focus` and `before_state` marked SINGLETON; `e2e_workflow` includes assembly-from-scattered-mentions guidance with inline example
+- [ ] **OUT-01**: Outputs section is removed if its content is redundant with individual project access
+
+### Testing
+
+- [ ] **TEST-01**: 4 RED portfolio TDD stubs in `__tests__/portfolio/` are driven to GREEN
 
 ## Future Requirements
 
-### Performance & Observability
+### v7.x Candidates (deferred from v7.0)
 
-- **PERF-01**: Portfolio dashboard query performance validated at 25+ projects (target <500ms)
-- **PERF-02**: WBS tree rendering validated at 120+ nodes without perceptible lag
-- **EXTR-01**: Extraction accuracy monitored — classification precision ≥80% after entity type expansion
-
-### Deferred Capabilities
-
-- **TEST-01**: 6 pre-existing test failures resolved (leftJoin/db.transaction/db.query mock setup)
-- **CTA-01**: Empty state onClick handlers wired to actual creation forms
-- **UIVIZ-01**: UI visual overhaul — color palette, typography, spacing
+- Scheduled completeness analysis (on-demand sufficient for v7.0)
+- Prompt version history / diff view (audit log captures runs; git is version control)
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Custom dashboard widget builder | Infinite configuration = support burden; standardized layout covers PS team needs |
-| Real-time collaboration cursors on WBS | WebSocket complexity not justified for single-user review surface |
-| Resource allocation/leveling | Finance system is source of truth; conflict with external data |
-| Video transcription in context upload | Digital docs (PDF/DOCX/PPTX) cover all PS delivery artifacts |
-| Microsoft Outlook Calendar integration | Permanently excluded (BRD explicit exclusion) |
-| Customer-facing read-only portal | Email updates sufficient; external access deferred |
-| pgvector/RAG knowledge base | Structured DB query sufficient at single-project scope |
+| Project Export | Archive covers the preservation need; export bundle not required |
+| Custom role builder | Two-tier Admin/User sufficient for v7.0 (PROJECT.md explicit exclusion) |
+| Per-skill RBAC permissions | Granular skill permissions add complexity without clear need; skills safe by design |
+| Scheduled completeness analysis | On-demand trigger is correct for v7.0; infrastructure exists if needed later |
+| Microsoft Outlook Calendar integration | Permanent exclusion (BRD explicit) |
+| pgvector/RAG knowledge base | Structured DB query context injection correct at single-project scope |
 
 ## Traceability
 
+Which phases cover which requirements. Updated during roadmap creation.
+
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SKILL-01 | Phase 43 | Complete |
-| NAV-01 | Phase 44 | Complete |
-| NAV-02 | Phase 44 | Complete |
-| NAV-03 | Phase 44 | Complete |
-| NAV-04 | Phase 44 | Complete |
-| NAV-05 | Phase 44 | Complete |
-| RISK-01 | Phase 44 | Complete |
-| RISK-02 | Phase 44 | Complete |
-| MILE-01 | Phase 44 | Complete |
-| MILE-02 | Phase 44 | Complete |
-| WBS-01 | Phase 45 | Complete |
-| WBS-02 | Phase 45 | Complete |
-| WBS-03 | Phase 46 | Complete |
-| TEAM-02 | Phase 56 | Complete |
-| ARCH-04 | Phase 46 | Complete |
-| WBS-04 | Phase 47 | Complete |
-| WBS-05 | Phase 47 | Complete |
-| ARCH-01 | Phase 48 | Complete |
-| ARCH-02 | Phase 48 | Complete |
-| ARCH-03 | Phase 48 | Complete |
-| TEAM-01 | Phase 56 | Complete |
-| TEAM-03 | Phase 48 | Complete |
-| TEAM-04 | Phase 48 | Complete |
-| DASH-01 | Phase 49 | Complete |
-| DASH-02 | Phase 49 | Complete |
-| DASH-03 | Phase 49 | Complete |
-| DASH-04 | Phase 49 | Complete |
-| DASH-05 | Phase 49 | Complete |
-| DASH-06 | Phase 49 | Complete |
-
-| EXTR-02 | Phase 53 | Complete |
-| EXTR-03 | Phase 53 | Complete |
-| EXTR-04 | Phase 53 | Complete |
-| EXTR-05 | Phase 53 | Complete |
-| EXTR-06 | Phase 53 | Complete |
-| EXTR-07 | Phase 53 | Complete |
-| EXTR-08 | Phase 53 | Complete |
-| EXTR-09 | Phase 53 | Complete |
-| EXTR-10 | Phase 53 | Complete |
-| EXTR-11 | Phase 53 | Complete |
-| EXTR-12 | Phase 53 | Complete |
-| EXTR-13 | Phase 53 | Complete |
-| EXTR-14 | Phase 53 | Complete |
-| EXTR-15 | Phase 53 | Complete |
-| EXTR-16 | Phase 53 | Complete |
-
-| MULTI-PASS-01 | Phase 52 | Complete |
-| MULTI-PASS-02 | Phase 52 | Complete |
-| MULTI-PASS-03 | Phase 52/55 | Complete |
-
-| TEAM-01 | Phase 56 | Complete |
-| TEAM-02 | Phase 56 | Complete |
-
-| SYNTH-01 | Phase 57 | Complete |
-| SYNTH-02 | Phase 57 | Complete |
-| SYNTH-03 | Phase 57 | Complete |
-| SYNTH-04 | Phase 57 | Complete |
-| SYNTH-05 | Phase 57 | Complete |
+| AUTH-01 | — | Pending |
+| AUTH-02 | — | Pending |
+| AUTH-03 | — | Pending |
+| AUTH-04 | — | Pending |
+| AUTH-05 | — | Pending |
+| PROJ-01 | — | Pending |
+| PROJ-02 | — | Pending |
+| PROJ-03 | — | Pending |
+| PROJ-04 | — | Pending |
+| OVRVW-01 | — | Pending |
+| OVRVW-02 | — | Pending |
+| OVRVW-03 | — | Pending |
+| OVRVW-04 | — | Pending |
+| OVRVW-05 | — | Pending |
+| HLTH-01 | — | Pending |
+| HLTH-02 | — | Pending |
+| INGEST-01 | — | Pending |
+| INGEST-02 | — | Pending |
+| INGEST-03 | — | Pending |
+| INGEST-04 | — | Pending |
+| INGEST-05 | — | Pending |
+| DLVRY-01 | — | Pending |
+| DLVRY-02 | — | Pending |
+| DLVRY-03 | — | Pending |
+| DLVRY-04 | — | Pending |
+| DLVRY-05 | — | Pending |
+| DLVRY-06 | — | Pending |
+| DLVRY-07 | — | Pending |
+| DLVRY-08 | — | Pending |
+| DLVRY-09 | — | Pending |
+| DLVRY-10 | — | Pending |
+| TEAM-01 | — | Pending |
+| TEAM-02 | — | Pending |
+| SKILL-01 | — | Pending |
+| SKILL-02 | — | Pending |
+| SKILL-03a | — | Pending |
+| SKILL-03b | — | Pending |
+| SKILL-04 | — | Pending |
+| SCHED-01 | — | Pending |
+| SCHED-02 | — | Pending |
+| SCHED-03 | — | Pending |
+| SCHED-04 | — | Pending |
+| SCHED-05 | — | Pending |
+| PORTF-01 | — | Pending |
+| PORTF-02 | — | Pending |
+| KB-01 | — | Pending |
+| OUT-01 | — | Pending |
+| TEST-01 | — | Pending |
 
 **Coverage:**
-- v6.0 requirements: 48 total (25 original + 15 Phase 53 + 3 Phase 52/55 + 5 Phase 57)
-- Mapped to phases: 48
-- Pending (gap closure): 0
-- Unmapped: 0 ✓
+- v7.0 requirements: 43 total
+- Mapped to phases: 0 (roadmap pending)
+- Unmapped: 43 ⚠️
 
 ---
-*Requirements defined: 2026-04-07*
-*Last updated: 2026-04-11 — added SYNTH-01 through SYNTH-05 (Phase 57 synthesis-first extraction); coverage count updated 43 → 48*
+*Requirements defined: 2026-04-13*
+*Last updated: 2026-04-13 after initial definition*
