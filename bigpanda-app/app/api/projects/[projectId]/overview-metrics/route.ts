@@ -196,6 +196,17 @@ export async function GET(
         .from(tasks)
         .where(and(eq(tasks.project_id, numericId), eq(tasks.status, 'blocked')))
 
+      // 7. overdueMilestones: count milestones with parseable ISO date < today and status != 'completed'
+      const overdueMilestonesRows = await tx.execute<{ count: string | number }>(sql`
+        SELECT COUNT(*) as count
+        FROM milestones
+        WHERE project_id = ${numericId}
+          AND (status IS NULL OR status != 'completed')
+          AND date ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+          AND date::date < CURRENT_DATE
+      `)
+      const overdueMilestones = Number(Array.from(overdueMilestonesRows)[0]?.count || 0)
+
       return {
         stepCounts,
         riskCounts,
@@ -205,6 +216,7 @@ export async function GET(
         weeklyTarget,
         totalHoursThisWeek,
         blockedTasks: blockedTasksRows,
+        overdueMilestones,
       }
     })
 
