@@ -8,6 +8,7 @@
 - ✅ **v4.0** — Infrastructure & UX Foundations — Phases 31–35 (shipped 2026-04-03)
 - ✅ **v5.0** — Workspace UX Overhaul — Phases 37–42 (shipped 2026-04-07)
 - ✅ **v6.0** — Dashboard, Navigation & Intelligence — Phases 43–57 (shipped 2026-04-14)
+- 🚧 **v7.0** — Governance & Operational Maturity — Phases 58–69 (in progress)
 
 ## Phases
 
@@ -119,9 +120,169 @@ Full details: `.planning/milestones/v6.0-ROADMAP.md` (archived)
 
 </details>
 
-### 📋 v7.0 — (Planning)
+### 🚧 v7.0 — Governance & Operational Maturity (Phases 58–69)
 
-*Run `/gsd:new-milestone` to scope and plan v7.0.*
+- [ ] **Phase 58: Per-Project RBAC** - Implement Admin/User roles per project with route handler enforcement
+- [ ] **Phase 59: Project Lifecycle Management** - Archive, delete, restore projects with admin controls and logout
+- [ ] **Phase 60: Health Dashboard Redesign** - Auto-derived executive metrics from system data
+- [ ] **Phase 61: Ingestion Edit & Move** - Edit before approve, move items, reclassify notes
+- [ ] **Phase 62: Ingestion Consolidation** - Scan for Updates consolidation and enhanced completeness analysis
+- [ ] **Phase 63: Skills Design Standard** - Define standard, audit skills, schema validation
+- [ ] **Phase 64: Editable Prompts UI** - Admin-controlled prompt editing with global toggle
+- [ ] **Phase 65: Project-Scoped Scheduling** - Per-project scheduler with RBAC and state persistence
+- [ ] **Phase 66: Overview Tracks Redesign** - Static/dynamic tracks with auto-scheduled weekly focus
+- [ ] **Phase 67: Delivery Tab Cleanup** - Column hiding, Plan tab removal, WBS alignment, stakeholder operations
+- [ ] **Phase 68: Gantt Bi-directional Sync** - Date propagation with skeleton display and drag adjustment
+- [ ] **Phase 69: Knowledge Base + Outputs + Testing** - Audit and cleanup with TDD stubs GREEN
+
+## Phase Details
+
+### Phase 58: Per-Project RBAC
+**Goal**: Users have role-based access enforced at route handler level for all project actions
+**Depends on**: Nothing (first phase)
+**Requirements**: AUTH-02, AUTH-03, AUTH-04, AUTH-05
+**Success Criteria** (what must be TRUE):
+  1. Admin can view and edit project membership with Admin/User role assignments
+  2. Admin role user can delete projects, archive projects, manage users, and perform global scheduler actions
+  3. User role cannot access destructive actions or admin functions (blocked at UI and API level)
+  4. All 40+ route handlers enforce role checks via requireProjectRole() wrapper
+  5. Unauthorized attempts return 403 with clear error messages
+**Plans**: TBD
+
+### Phase 59: Project Lifecycle Management
+**Goal**: Admins can manage full project lifecycle (archive, delete, restore) with portfolio visibility
+**Depends on**: Phase 58 (RBAC required for admin-only actions)
+**Requirements**: PROJ-01, PROJ-02, PROJ-03, PROJ-04, AUTH-01, PORTF-01, PORTF-02
+**Success Criteria** (what must be TRUE):
+  1. Admin can archive a project making it read-only and hidden from active list
+  2. Admin can permanently delete a project with pre-flight validation (no active jobs)
+  3. User can view archived projects in dedicated archived view (read-only)
+  4. Admin can restore archived project back to active status
+  5. User can log out from navigation or user menu
+  6. Portfolio dashboard separates archived projects in distinct view or filter
+  7. Portfolio dashboard excludes permanently deleted projects from all views
+**Plans**: TBD
+
+### Phase 60: Health Dashboard Redesign
+**Goal**: Executives see project health at-a-glance from auto-derived system metrics
+**Depends on**: Nothing (independent feature)
+**Requirements**: HLTH-01, HLTH-02
+**Success Criteria** (what must be TRUE):
+  1. Health Dashboard displays metrics derived solely from existing data (overdue tasks, at-risk milestones, stale updates)
+  2. Metrics update automatically when underlying data changes (no manual refresh)
+  3. Dashboard is readable at-a-glance without scrolling or drilling down
+  4. Portfolio-level rollup shows health across all active projects
+**Plans**: TBD
+
+### Phase 61: Ingestion Edit & Move
+**Goal**: Users can correct extraction errors before approval and reclassify misidentified entities
+**Depends on**: Nothing (independent feature)
+**Requirements**: INGEST-01, INGEST-02, INGEST-05
+**Success Criteria** (what must be TRUE):
+  1. User can edit any extracted field value in draft modal before approving
+  2. Edited values merge with extraction results and persist on approval
+  3. User can move an approved ingested item to different workspace section
+  4. User can reclassify a note entity to any valid type (action, task, milestone, decision) in draft modal
+  5. Reclassified note transforms fields to target schema and routes to correct table on approval
+**Plans**: TBD
+
+### Phase 62: Ingestion Consolidation
+**Goal**: Document scanning and completeness analysis are unified and enhanced
+**Depends on**: Nothing (independent feature)
+**Requirements**: INGEST-03, INGEST-04
+**Success Criteria** (what must be TRUE):
+  1. Scan for Updates button exists only in Document Ingestion tab (removed from workspace tabs)
+  2. Analyze Completeness displays per-field scoring (0-100%) with missing/sparse/conflicting detection
+  3. Completeness modal shows per-tab gap descriptions with specific missing sections/fields
+  4. Completeness analysis uses versioned schema to prevent retroactive scoring drift
+**Plans**: TBD
+
+### Phase 63: Skills Design Standard
+**Goal**: All skills conform to documented standard with runtime validation and audit visibility
+**Depends on**: Nothing (independent feature)
+**Requirements**: SKILL-01, SKILL-02, SKILL-04
+**Success Criteria** (what must be TRUE):
+  1. Skills Design Standard document exists covering input spec, output format, scheduling interface, error/fallback behavior
+  2. Runtime validation checks SKILL.md YAML front-matter against schema on load
+  3. Skills tab displays "Fix required" badges for non-compliant skills
+  4. Non-compliant skills are grayed out in UI with explanation tooltip
+  5. All previously grayed-out skills are audited and either made functional or marked permanently excluded
+**Plans**: TBD
+
+### Phase 64: Editable Prompts UI
+**Goal**: Admins can edit skill prompts from UI when global setting enabled
+**Depends on**: Phase 63 (Design Standard validation required before editing), Phase 58 (admin-only RBAC)
+**Requirements**: SKILL-03a, SKILL-03b
+**Success Criteria** (what must be TRUE):
+  1. Admin can toggle global setting to enable/disable prompt editing (default: off)
+  2. When prompt editing enabled, admin sees edit button on Skills tab for each skill
+  3. Edit modal displays SKILL.md content in CodeMirror editor with syntax highlighting
+  4. Edits write back to filesystem atomically with file locking and backup creation
+  5. Audit log captures all prompt edits with before/after diff and admin identity
+  6. Edited prompts validate against Design Standard schema before save
+**Plans**: TBD
+
+### Phase 65: Project-Scoped Scheduling
+**Goal**: Users schedule skills per-project with admin enforcement and persistent state
+**Depends on**: Phase 58 (RBAC required for admin enforcement)
+**Requirements**: SCHED-01, SCHED-02, SCHED-03, SCHED-04, SCHED-05
+**Success Criteria** (what must be TRUE):
+  1. Global Scheduler section shows only non-project-specific jobs
+  2. User can schedule skills/jobs within individual project from project workspace
+  3. Project-scoped jobs display in project scheduler view filtered by project_id
+  4. Scheduler job list persists state when navigating away and returning
+  5. Manually triggered job results appear in job history view in Scheduler
+  6. Nav badge next to Scheduler label is removed
+**Plans**: TBD
+
+### Phase 66: Overview Tracks Redesign
+**Goal**: Overview displays hybrid static/dynamic onboarding tracks with auto-scheduled weekly focus
+**Depends on**: Nothing (independent feature)
+**Requirements**: OVRVW-01, OVRVW-02, OVRVW-03, OVRVW-04, OVRVW-05
+**Success Criteria** (what must be TRUE):
+  1. Overview displays static tracks (Discovery & Kickoff, Platform Config, UAT/Validation) from hardcoded config
+  2. Overview displays dynamic tracks (Integrations, Teams, IT Knowledge Graph) populated from live data
+  3. Weekly Focus generates automatically every Monday morning via scheduled job
+  4. Weekly Focus "Generate Now" button is labeled as manual override (not default action)
+  5. User can delete individual integrations from Integration Tracker
+**Plans**: TBD
+
+### Phase 67: Delivery Tab Cleanup
+**Goal**: Delivery tabs are streamlined with hidden columns, Plan tab removal, WBS alignment, and stakeholder operations
+**Depends on**: Nothing (independent cleanup)
+**Requirements**: DLVRY-05, DLVRY-06, DLVRY-07, DLVRY-08, DLVRY-09, DLVRY-10, TEAM-01, TEAM-02
+**Success Criteria** (what must be TRUE):
+  1. Actions tab hides ID and Source columns by default (show via column toggle)
+  2. Risks tab hides ID column by default
+  3. Milestones tab hides ID column by default
+  4. Plan tab is removed; Generate Plan button and functionality exist in Task Board tab
+  5. WBS structure aligns with Generate Plan output schema (verified by audit)
+  6. Decisions entry form is scoped to operational impact documentation only
+  7. User can move a stakeholder to different section in Teams tab
+  8. User can delete a stakeholder from Teams tab
+**Plans**: TBD
+
+### Phase 68: Gantt Bi-directional Sync
+**Goal**: Gantt and workspace tabs stay in sync with drag-to-reschedule and date propagation
+**Depends on**: Nothing (independent feature, high complexity deferred)
+**Requirements**: DLVRY-01, DLVRY-02, DLVRY-03, DLVRY-04
+**Success Criteria** (what must be TRUE):
+  1. Gantt chart displays static structural skeleton (phases, milestone markers) on page load
+  2. User can drag task edges to adjust dates or manually enter dates in Gantt
+  3. Date changes in Gantt propagate to milestone and task records with transaction-based cascade
+  4. Date changes to milestones or tasks outside Gantt (workspace tabs) propagate back to Gantt display
+  5. Concurrent drag operations use advisory locks to prevent race conditions
+**Plans**: TBD
+
+### Phase 69: Knowledge Base + Outputs + Testing
+**Goal**: Knowledge Base and Outputs are audited for value, TDD stubs are GREEN
+**Depends on**: Nothing (cleanup phase)
+**Requirements**: KB-01, OUT-01, TEST-01
+**Success Criteria** (what must be TRUE):
+  1. Knowledge Base has defined use case documented or is deprecated/removed based on audit
+  2. Outputs section is audited and removed if content is redundant with project access
+  3. All 4 RED portfolio TDD stubs in `__tests__/portfolio/` pass GREEN
+**Plans**: TBD
 
 ## Progress
 
@@ -133,3 +294,19 @@ Full details: `.planning/milestones/v6.0-ROADMAP.md` (archived)
 | 31–35 | v4.0 | 26/26 | Complete | 2026-04-03 |
 | 37–42 | v5.0 | 29/29 | Complete | 2026-04-07 |
 | 43–57 | v6.0 | 45/45 | Complete | 2026-04-14 |
+| 58. Per-Project RBAC | v7.0 | 0/? | Not started | - |
+| 59. Project Lifecycle Management | v7.0 | 0/? | Not started | - |
+| 60. Health Dashboard Redesign | v7.0 | 0/? | Not started | - |
+| 61. Ingestion Edit & Move | v7.0 | 0/? | Not started | - |
+| 62. Ingestion Consolidation | v7.0 | 0/? | Not started | - |
+| 63. Skills Design Standard | v7.0 | 0/? | Not started | - |
+| 64. Editable Prompts UI | v7.0 | 0/? | Not started | - |
+| 65. Project-Scoped Scheduling | v7.0 | 0/? | Not started | - |
+| 66. Overview Tracks Redesign | v7.0 | 0/? | Not started | - |
+| 67. Delivery Tab Cleanup | v7.0 | 0/? | Not started | - |
+| 68. Gantt Bi-directional Sync | v7.0 | 0/? | Not started | - |
+| 69. Knowledge Base + Outputs + Testing | v7.0 | 0/? | Not started | - |
+
+---
+*Last updated: 2026-04-13*
+*Current milestone: v7.0 — Governance & Operational Maturity*

@@ -117,60 +117,62 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | — | Pending |
-| AUTH-02 | — | Pending |
-| AUTH-03 | — | Pending |
-| AUTH-04 | — | Pending |
-| AUTH-05 | — | Pending |
-| PROJ-01 | — | Pending |
-| PROJ-02 | — | Pending |
-| PROJ-03 | — | Pending |
-| PROJ-04 | — | Pending |
-| OVRVW-01 | — | Pending |
-| OVRVW-02 | — | Pending |
-| OVRVW-03 | — | Pending |
-| OVRVW-04 | — | Pending |
-| OVRVW-05 | — | Pending |
-| HLTH-01 | — | Pending |
-| HLTH-02 | — | Pending |
-| INGEST-01 | — | Pending |
-| INGEST-02 | — | Pending |
-| INGEST-03 | — | Pending |
-| INGEST-04 | — | Pending |
-| INGEST-05 | — | Pending |
-| DLVRY-01 | — | Pending |
-| DLVRY-02 | — | Pending |
-| DLVRY-03 | — | Pending |
-| DLVRY-04 | — | Pending |
-| DLVRY-05 | — | Pending |
-| DLVRY-06 | — | Pending |
-| DLVRY-07 | — | Pending |
-| DLVRY-08 | — | Pending |
-| DLVRY-09 | — | Pending |
-| DLVRY-10 | — | Pending |
-| TEAM-01 | — | Pending |
-| TEAM-02 | — | Pending |
-| SKILL-01 | — | Pending |
-| SKILL-02 | — | Pending |
-| SKILL-03a | — | Pending |
-| SKILL-03b | — | Pending |
-| SKILL-04 | — | Pending |
-| SCHED-01 | — | Pending |
-| SCHED-02 | — | Pending |
-| SCHED-03 | — | Pending |
-| SCHED-04 | — | Pending |
-| SCHED-05 | — | Pending |
-| PORTF-01 | — | Pending |
-| PORTF-02 | — | Pending |
-| KB-01 | — | Pending |
-| OUT-01 | — | Pending |
-| TEST-01 | — | Pending |
+| AUTH-01 | Phase 59 | Pending |
+| AUTH-02 | Phase 58 | Pending |
+| AUTH-03 | Phase 58 | Pending |
+| AUTH-04 | Phase 58 | Pending |
+| AUTH-05 | Phase 58 | Pending |
+| PROJ-01 | Phase 59 | Pending |
+| PROJ-02 | Phase 59 | Pending |
+| PROJ-03 | Phase 59 | Pending |
+| PROJ-04 | Phase 59 | Pending |
+| OVRVW-01 | Phase 66 | Pending |
+| OVRVW-02 | Phase 66 | Pending |
+| OVRVW-03 | Phase 66 | Pending |
+| OVRVW-04 | Phase 66 | Pending |
+| OVRVW-05 | Phase 66 | Pending |
+| HLTH-01 | Phase 60 | Pending |
+| HLTH-02 | Phase 60 | Pending |
+| INGEST-01 | Phase 61 | Pending |
+| INGEST-02 | Phase 61 | Pending |
+| INGEST-03 | Phase 62 | Pending |
+| INGEST-04 | Phase 62 | Pending |
+| INGEST-05 | Phase 61 | Pending |
+| DLVRY-01 | Phase 68 | Pending |
+| DLVRY-02 | Phase 68 | Pending |
+| DLVRY-03 | Phase 68 | Pending |
+| DLVRY-04 | Phase 68 | Pending |
+| DLVRY-05 | Phase 67 | Pending |
+| DLVRY-06 | Phase 67 | Pending |
+| DLVRY-07 | Phase 67 | Pending |
+| DLVRY-08 | Phase 67 | Pending |
+| DLVRY-09 | Phase 67 | Pending |
+| DLVRY-10 | Phase 67 | Pending |
+| TEAM-01 | Phase 67 | Pending |
+| TEAM-02 | Phase 67 | Pending |
+| SKILL-01 | Phase 63 | Pending |
+| SKILL-02 | Phase 63 | Pending |
+| SKILL-03a | Phase 64 | Pending |
+| SKILL-03b | Phase 64 | Pending |
+| SKILL-04 | Phase 63 | Pending |
+| SCHED-01 | Phase 65 | Pending |
+| SCHED-02 | Phase 65 | Pending |
+| SCHED-03 | Phase 65 | Pending |
+| SCHED-04 | Phase 65 | Pending |
+| SCHED-05 | Phase 65 | Pending |
+| PORTF-01 | Phase 59 | Pending |
+| PORTF-02 | Phase 59 | Pending |
+| KB-01 | Phase 69 | Pending |
+| OUT-01 | Phase 69 | Pending |
+| TEST-01 | Phase 69 | Pending |
 
 **Coverage:**
 - v7.0 requirements: 43 total
-- Mapped to phases: 0 (roadmap pending)
-- Unmapped: 43 ⚠️
+- Mapped to phases: 43
+- Unmapped: 0 ✓
+
+**Coverage validation:** 100% — all requirements mapped exactly once
 
 ---
 *Requirements defined: 2026-04-13*
-*Last updated: 2026-04-13 after initial definition*
+*Last updated: 2026-04-13 after v7.0 roadmap creation*
