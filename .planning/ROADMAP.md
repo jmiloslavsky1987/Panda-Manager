@@ -313,7 +313,7 @@ Plans:
 | 43–57 | v6.0 | 45/45 | Complete | 2026-04-14 |
 | 58. Per-Project RBAC | v7.0 | 4/4 | Complete | 2026-04-14 |
 | 59. Project Lifecycle Management | 5/5 | Complete    | 2026-04-14 | - |
-| 60. Health Dashboard Redesign | 2/2 | Complete   | 2026-04-14 | - |
+| 60. Health Dashboard Redesign | 2/2 | Complete    | 2026-04-14 | - |
 | 61. Ingestion Edit & Move | v7.0 | 0/? | Not started | - |
 | 62. Ingestion Consolidation | v7.0 | 0/? | Not started | - |
 | 63. Skills Design Standard | v7.0 | 0/? | Not started | - |
