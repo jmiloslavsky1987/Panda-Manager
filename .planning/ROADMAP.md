@@ -123,7 +123,7 @@ Full details: `.planning/milestones/v6.0-ROADMAP.md` (archived)
 ### 🚧 v7.0 — Governance & Operational Maturity (Phases 58–69)
 
 - [x] **Phase 58: Per-Project RBAC** - Implement Admin/User roles per project with route handler enforcement ✅ 2026-04-14
-- [ ] **Phase 59: Project Lifecycle Management** - Archive, delete, restore projects with admin controls and logout
+- [x] **Phase 59: Project Lifecycle Management** - Archive, delete, restore projects with admin controls and logout (completed 2026-04-14)
 - [ ] **Phase 60: Health Dashboard Redesign** - Auto-derived executive metrics from system data
 - [ ] **Phase 61: Ingestion Edit & Move** - Edit before approve, move items, reclassify notes
 - [ ] **Phase 62: Ingestion Consolidation** - Scan for Updates consolidation and enhanced completeness analysis
@@ -308,7 +308,7 @@ Plans:
 | 37–42 | v5.0 | 29/29 | Complete | 2026-04-07 |
 | 43–57 | v6.0 | 45/45 | Complete | 2026-04-14 |
 | 58. Per-Project RBAC | v7.0 | 4/4 | Complete | 2026-04-14 |
-| 59. Project Lifecycle Management | 4/5 | In Progress|  | - |
+| 59. Project Lifecycle Management | 5/5 | Complete   | 2026-04-14 | - |
 | 60. Health Dashboard Redesign | v7.0 | 0/? | Not started | - |
 | 61. Ingestion Edit & Move | v7.0 | 0/? | Not started | - |
 | 62. Ingestion Consolidation | v7.0 | 0/? | Not started | - |
