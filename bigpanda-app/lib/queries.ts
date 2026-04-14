@@ -315,6 +315,17 @@ export async function getActiveProjects(opts?: ProjectQueryOpts): Promise<Projec
 }
 
 /**
+ * Returns archived projects (no health computation needed — sidebar display only).
+ * No RBAC filter — archived view is admin/full-access only in UI layer.
+ */
+export async function getArchivedProjects(): Promise<Project[]> {
+  return db
+    .select()
+    .from(projects)
+    .where(eq(projects.status, 'archived'));
+}
+
+/**
  * Returns a single project by id. Throws if not found.
  */
 export async function getProjectById(projectId: number): Promise<Project> {
