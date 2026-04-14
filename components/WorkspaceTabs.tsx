@@ -54,6 +54,7 @@ export const TAB_GROUPS: TabGroup[] = [
       { id: 'queue',     label: 'Review Queue',       segment: 'queue' },
       { id: 'history',   label: 'Engagement History', segment: 'history' },
       { id: 'members',   label: 'Members',            segment: 'members' },
+      { id: 'settings',  label: 'Settings',           segment: 'settings' },
     ],
   },
 ]
