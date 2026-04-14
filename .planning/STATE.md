@@ -1,33 +1,34 @@
 ---
 gsd_state_version: 1.0
-milestone: v6.0
-milestone_name: Dashboard, Navigation & Intelligence
-status: archived
-stopped_at: Milestone v6.0 archived
-last_updated: "2026-04-14T00:00:00.000Z"
-last_activity: 2026-04-14 — v6.0 milestone archived (16 phases, 45 plans, shipped)
+milestone: v7.0
+milestone_name: Governance & Operational Maturity
+status: defining_requirements
+stopped_at: Defining requirements
+last_updated: "2026-04-13T00:00:00.000Z"
+last_activity: 2026-04-13 — Milestone v7.0 started
 progress:
-  total_phases: 16
-  completed_phases: 16
-  total_plans: 45
-  completed_plans: 45
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-14 after v6.0 milestone)
+See: .planning/PROJECT.md (updated 2026-04-13 after v7.0 milestone start)
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
-**Current focus:** Planning v7.0
+**Current focus:** Defining requirements for v7.0
 
 ## Current Position
 
-Milestone v6.0 archived. Ready to plan v7.0.
-
-Run `/gsd:new-milestone` to scope and plan v7.0.
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-13 — Milestone v7.0 started
 
 ## Milestone History
 
@@ -42,7 +43,7 @@ Run `/gsd:new-milestone` to scope and plan v7.0.
 
 - Next.js 16 (Turbopack), PostgreSQL, Redis/BullMQ, better-auth, Drizzle ORM, Vercel AI SDK, @xyflow/react, @anthropic-ai/sdk, Recharts
 - ~69,606 LOC TypeScript (v6.0 shipped)
-- 148 test files passing; 4 intentional RED portfolio stubs (deferred to v7.0)
+- 148 test files passing; 4 intentional RED portfolio stubs (to be resolved in v7.0)
 - Production build clean
 
 ## Established Patterns
@@ -60,7 +61,7 @@ Run `/gsd:new-milestone` to scope and plan v7.0.
 
 ## Known Tech Debt Entering v7.0
 
-- 4 portfolio RED TDD stubs never driven to GREEN (`__tests__/portfolio/`)
+- 4 portfolio RED TDD stubs never driven to GREEN (`__tests__/portfolio/`) — in scope for v7.0 (TEST-01)
 - WBS and Portfolio UX human verification pending (performance at 100+ nodes, filter panel, drag-drop)
 - Nyquist validation incomplete: 9/16 v6.0 phases at `nyquist_compliant: false` (draft status)
 - Empty state CTA onClick handlers are `() => {}` placeholders (wiring to creation modals deferred)

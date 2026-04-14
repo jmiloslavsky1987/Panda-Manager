@@ -84,9 +84,36 @@ Every PS delivery intelligence the team has built — 15 AI skills, all project 
 - ✓ Synthesis-first extraction: document type classification, entity prediction, transcript-mode inference, confidence calibration rubric, SINGLETON markers — v6.0 Phase 57 (SYNTH-01–05)
 - ✓ Architecture extraction → arch_node bridge: approved architecture entities upsert matching arch_node in same transaction, syncing visual diagram to extraction status — v6.0 Phase 57
 
+## Current Milestone: v7.0 Governance & Operational Maturity
+
+**Goal:** Introduce per-project RBAC with Admin/User roles, project lifecycle management (archive/delete/restore), Skills Design Standard with editable prompts and full audit, Health Dashboard redesign, Gantt date integrity with bi-directional propagation, project-scoped scheduling, and a broad operational polish pass across ingestion, delivery tabs, teams, scheduler, and cross-cutting UX.
+
+**Target features:**
+- Per-project Admin/User role assignments enforced at route handler level; logout
+- Project archive (soft-delete), permanent delete, archived project view and restore
+- Overview static/dynamic track redesign; Weekly Focus auto-schedule; Integration Tracker delete
+- Health Dashboard full redesign (metrics derivable from existing data, executive readability)
+- Ingestion: edit before approve, move between sections, note entity reclassification, Analyze Completeness fix, Scan for Updates consolidation
+- Delivery: Gantt always-visible skeleton + bi-directional date propagation, Plan tab removal → Task Board, WBS/Generate Plan schema alignment, column cleanup, Decisions repurpose
+- Team: stakeholder move and delete
+- Skills: Design Standard document, audit grayed-out skills, editable prompts UI, consistent output schema
+- Scheduler: project-scoped scheduling, bug fixes (state persistence, job history, nav badge)
+- Portfolio dashboard: archived/deleted project handling
+- Knowledge Base: define use case or deprecate; Outputs section: audit and potentially remove
+- 4 RED portfolio TDD stubs driven to GREEN
+
 ### Active
 
-(None — planning v7.0)
+- [ ] AUTH-01: User can log out from the navigation or user menu
+- [ ] AUTH-02: Admin can manage project membership and role assignments (Admin/User role per project)
+- [ ] AUTH-03: Admin role on a project grants full access: delete, archive, user management, and global scheduler actions
+- [ ] AUTH-04: User role on a project is restricted from destructive actions and admin functions
+- [ ] AUTH-05: Role-based access is enforced at the route handler level for all project actions
+- [ ] PROJ-01: Admin can archive a project (soft-delete: read-only, preserved in system)
+- [ ] PROJ-02: Admin can permanently delete a project
+- [ ] PROJ-03: User can view archived projects in a dedicated archived projects view (read-only)
+- [ ] PROJ-04: Admin can restore an archived project back to active status
+- [ ] OVRVW-01 through OVRVW-05, HLTH-01–02, INGEST-01–05, DLVRY-01–10, TEAM-01–02, SKILL-01–04, SCHED-01–05, PORTF-01–02, KB-01, OUT-01, TEST-01 (see REQUIREMENTS.md)
 
 ### Out of Scope
 
@@ -157,4 +184,4 @@ This is a full rewrite of a previous Claude Code project assistant build (8 phas
 | Architecture extraction → arch_node bridge in same transaction (v6.0) | Diagram node status must stay in sync with extraction approvals; same transaction prevents partial state | ✓ Correct — approved architecture entities now automatically update visual diagram |
 
 ---
-*Last updated: 2026-04-14 after v6.0 milestone*
+*Last updated: 2026-04-13 after v7.0 milestone start*
