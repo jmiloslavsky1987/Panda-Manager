@@ -56,9 +56,9 @@ function computeTrackHealth(
 // ─── RAG Badge Configuration ──────────────────────────────────────────────────
 
 const ragConfig = {
-  green: { label: 'Healthy', className: 'inline-flex px-2 py-0.5 text-xs rounded-full border bg-green-100 text-green-800 border-green-200' },
-  yellow: { label: 'At Risk', className: 'inline-flex px-2 py-0.5 text-xs rounded-full border bg-yellow-100 text-yellow-800 border-yellow-200' },
-  red: { label: 'Critical', className: 'inline-flex px-2 py-0.5 text-xs rounded-full border bg-red-100 text-red-800 border-red-200' },
+  green: { label: 'Healthy', className: 'bg-green-100 text-green-800 border-green-200' },
+  yellow: { label: 'At Risk', className: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+  red: { label: 'Critical', className: 'bg-red-100 text-red-800 border-red-200' },
 }
 
 // ─── Component ─────────────────────────────────────────────────────────────────
@@ -102,13 +102,20 @@ export function HealthDashboard({ projectId }: HealthDashboardProps) {
 
   if (loading) {
     return (
-      <section data-testid="health-dashboard" className="px-4 space-y-4">
-        <div className="h-6 w-40 bg-zinc-100 rounded animate-pulse" />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="h-32 bg-zinc-100 rounded-lg animate-pulse" />
-          <div className="h-32 bg-zinc-100 rounded-lg animate-pulse" />
+      <section data-testid="health-dashboard" className="px-4">
+        <div className="h-4 w-36 bg-zinc-100 rounded animate-pulse mb-3" />
+        <div className="bg-white border border-zinc-200 rounded-lg p-5 space-y-4">
+          <div className="flex justify-center">
+            <div className="h-10 w-48 bg-zinc-100 rounded-full animate-pulse" />
+          </div>
+          <div className="flex justify-center gap-2">
+            <div className="h-6 w-32 bg-zinc-100 rounded-full animate-pulse" />
+          </div>
+          <div className="flex justify-center gap-4 pt-1 border-t border-zinc-100">
+            <div className="h-5 w-24 bg-zinc-100 rounded-full animate-pulse" />
+            <div className="h-5 w-24 bg-zinc-100 rounded-full animate-pulse" />
+          </div>
         </div>
-        <div className="h-24 bg-zinc-100 rounded-lg animate-pulse" />
       </section>
     )
   }
@@ -125,88 +132,90 @@ export function HealthDashboard({ projectId }: HealthDashboardProps) {
 
   // ─── Calculate metrics ───────────────────────────────────────────────────────
 
-  // Track completion percentages
-  const adrSteps = data.stepCounts.filter(s => s.track.toLowerCase() === 'adr')
-  const biggySteps = data.stepCounts.filter(s => s.track.toLowerCase() === 'biggy')
-
-  const adrComplete = adrSteps.filter(s => s.status === 'complete').reduce((sum, s) => sum + s.count, 0)
-  const adrTotal = adrSteps.reduce((sum, s) => sum + s.count, 0)
-  const adrCompletion = adrTotal > 0 ? (adrComplete / adrTotal) * 100 : 0
-
-  const biggyComplete = biggySteps.filter(s => s.status === 'complete').reduce((sum, s) => sum + s.count, 0)
-  const biggyTotal = biggySteps.reduce((sum, s) => sum + s.count, 0)
-  const biggyCompletion = biggyTotal > 0 ? (biggyComplete / biggyTotal) * 100 : 0
-
   // Risk counts
   const criticalRisks = data.riskCounts.find(r => r.severity.toLowerCase() === 'critical')?.count ?? 0
   const highRisks = data.riskCounts.find(r => r.severity.toLowerCase() === 'high')?.count ?? 0
+  const overdueMilestones = data.overdueMilestones
 
   // Overall health
   const overallHealth = computeOverallHealth({
     openCriticalRisks: criticalRisks,
     openHighRisks: highRisks,
-    overdueMilestones: data.overdueMilestones,
+    overdueMilestones,
   })
 
   // Per-track health
   const adrHealth = computeTrackHealth(data.stepCounts, 'ADR', criticalRisks)
   const biggyHealth = computeTrackHealth(data.stepCounts, 'Biggy', criticalRisks)
 
-  // Active blockers (sum of blocked steps across all tracks)
-  const activeBlockers = data.stepCounts
-    .filter(s => s.status === 'blocked')
-    .reduce((sum, s) => sum + s.count, 0)
+  // ─── Verdict label with inline trigger ───────────────────────────────────────
+
+  let verdictLabel = ragConfig[overallHealth].label
+  if (criticalRisks > 0) {
+    verdictLabel = `Critical — ${criticalRisks} critical risk${criticalRisks !== 1 ? 's' : ''}`
+  } else if (overdueMilestones > 0 && highRisks > 0) {
+    verdictLabel = `At Risk — ${overdueMilestones} overdue milestone${overdueMilestones !== 1 ? 's' : ''}, ${highRisks} high risk${highRisks !== 1 ? 's' : ''}`
+  } else if (overdueMilestones > 0) {
+    verdictLabel = `At Risk — ${overdueMilestones} overdue milestone${overdueMilestones !== 1 ? 's' : ''}`
+  } else if (highRisks > 0) {
+    verdictLabel = `At Risk — ${highRisks} high risk${highRisks !== 1 ? 's' : ''}`
+  }
 
   // ─── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <section data-testid="health-dashboard" className="px-4 space-y-4">
-      <h2 className="text-sm font-semibold text-zinc-700 uppercase tracking-wide">Health Dashboard</h2>
+    <section data-testid="health-dashboard" className="px-4">
+      <h2 className="text-sm font-semibold text-zinc-700 uppercase tracking-wide mb-3">Health Dashboard</h2>
 
-      <div className="bg-white border border-zinc-200 rounded-lg p-4 space-y-4">
-        {/* Overall Health */}
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-medium text-zinc-600">Overall Health:</span>
-          <span data-testid="overall-health-badge" className={ragConfig[overallHealth].className}>
-            {ragConfig[overallHealth].label}
+      <div className="bg-white border border-zinc-200 rounded-lg p-5 space-y-4">
+
+        {/* Large verdict badge */}
+        <div className="flex items-center justify-center py-2">
+          <span
+            data-testid="overall-health-badge"
+            className={`inline-flex items-center px-5 py-2 text-base font-semibold rounded-full border ${ragConfig[overallHealth].className}`}
+          >
+            {verdictLabel}
           </span>
         </div>
 
-        {/* Per-track Health */}
-        <div className="flex items-center gap-4">
-          <span data-testid="adr-health-badge" className={ragConfig[adrHealth].className}>
+        {/* Reason chips (only non-zero signals) */}
+        <div className="flex flex-wrap items-center justify-center gap-2 text-sm">
+          {criticalRisks > 0 && (
+            <Link href={`/customer/${projectId}/delivery/risks`}
+              className="text-red-700 bg-red-50 border border-red-200 rounded-full px-3 py-0.5 hover:bg-red-100 transition-colors">
+              {criticalRisks} critical risk{criticalRisks !== 1 ? 's' : ''}
+            </Link>
+          )}
+          {highRisks > 0 && (
+            <Link href={`/customer/${projectId}/delivery/risks`}
+              className="text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-full px-3 py-0.5 hover:bg-yellow-100 transition-colors">
+              {highRisks} high risk{highRisks !== 1 ? 's' : ''}
+            </Link>
+          )}
+          {overdueMilestones > 0 && (
+            <Link href={`/customer/${projectId}/delivery/milestones`}
+              className="text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-full px-3 py-0.5 hover:bg-yellow-100 transition-colors">
+              {overdueMilestones} overdue milestone{overdueMilestones !== 1 ? 's' : ''}
+            </Link>
+          )}
+          {criticalRisks === 0 && highRisks === 0 && overdueMilestones === 0 && (
+            <span className="text-zinc-400 text-sm">No issues detected</span>
+          )}
+        </div>
+
+        {/* Per-track badges (unchanged formula) */}
+        <div className="flex items-center justify-center gap-4 pt-1 border-t border-zinc-100">
+          <span data-testid="adr-health-badge"
+            className={`inline-flex px-2 py-0.5 text-xs rounded-full border ${ragConfig[adrHealth].className}`}>
             ADR: {ragConfig[adrHealth].label}
           </span>
-          <span data-testid="biggy-health-badge" className={ragConfig[biggyHealth].className}>
+          <span data-testid="biggy-health-badge"
+            className={`inline-flex px-2 py-0.5 text-xs rounded-full border ${ragConfig[biggyHealth].className}`}>
             Biggy: {ragConfig[biggyHealth].label}
           </span>
         </div>
 
-        {/* Active Blockers */}
-        <div>
-          <p className="text-sm font-medium text-zinc-600 mb-2">Active Blockers</p>
-          {(data.blockedTasks ?? []).length === 0 ? (
-            <p className="text-sm text-zinc-400">No blocked tasks</p>
-          ) : (
-            <ul className="space-y-1">
-              {(data.blockedTasks ?? []).slice(0, 5).map(task => (
-                <li key={task.id}>
-                  <Link
-                    href={`/customer/${projectId}/plan/tasks`}
-                    className="text-sm text-blue-600 hover:underline truncate block"
-                  >
-                    {task.title}
-                  </Link>
-                </li>
-              ))}
-              {(data.blockedTasks ?? []).length > 5 && (
-                <li className="text-sm text-zinc-400">
-                  and {(data.blockedTasks ?? []).length - 5} more
-                </li>
-              )}
-            </ul>
-          )}
-        </div>
       </div>
     </section>
   )
