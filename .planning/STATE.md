@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: — Governance & Operational Maturity
-status: verifying
-last_updated: "2026-04-14T21:48:16.581Z"
-last_activity: "2026-04-14 — Completed Phase 59: Project Lifecycle Management (5/5 plans complete)"
+status: executing
+last_updated: "2026-04-14T22:03:00.710Z"
+last_activity: 2026-04-14 — Completed 60-01-PLAN.md (overdueMilestones API + computeOverallHealth formula update)
 progress:
   total_phases: 12
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 11
-  completed_plans: 10
+  completed_plans: 11
   percent: 17
 ---
 
@@ -24,12 +24,12 @@ See: .planning/PROJECT.md (updated 2026-04-13 after v7.0 milestone start)
 
 ## Current Position
 
-Phase: 60 of 69 (Health Dashboard Redesign) — IN PROGRESS
-Plan: 1 of 2 in current phase
-Status: In progress — completed plan 60-01 (API + Formula)
-Last activity: 2026-04-14 — Completed 60-01-PLAN.md (overdueMilestones API + computeOverallHealth formula update)
+Phase: 60 of 69 (Health Dashboard Redesign) — COMPLETE
+Plan: 2 of 2 in current phase (complete)
+Status: Complete — all plans in phase 60 complete
+Last activity: 2026-04-14 — Completed 60-02-PLAN.md (executive verdict-first Health Dashboard layout)
 
-Progress: [███░░░░░░░░░░░░░░░░░] 17% (2 of 12 phases complete)
+Progress: [███░░░░░░░░░░░░░░░░░] 25% (3 of 12 phases complete)
 
 ## Milestone History
 
@@ -95,7 +95,7 @@ Progress: [███░░░░░░░░░░░░░░░░░] 17% (2 
 - Soft-delete cascade blind spots: 57+ phases of FK evolution requires careful audit
 - Gantt bi-directional sync race conditions: Advisory locks required for Phase 68
 
-**Next action:** Phase 59 complete. Run `/gsd:plan-phase 60` to plan Health Dashboard Redesign
+**Next action:** Phase 60 complete. Run `/gsd:plan-phase 61` to plan Ingestion Edit & Move
 
 ---
 *Last updated: 2026-04-13*

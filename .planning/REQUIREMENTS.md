@@ -32,7 +32,7 @@
 ### Health Dashboard
 
 - [x] **HLTH-01**: Redesigned Health Dashboard displays project health metrics derivable solely from existing system data (no manual input required)
-- [ ] **HLTH-02**: Health Dashboard is optimized for at-a-glance executive readability
+- [x] **HLTH-02**: Health Dashboard is optimized for at-a-glance executive readability
 
 ### Document Ingestion
 
@@ -132,7 +132,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | OVRVW-04 | Phase 66 | Pending |
 | OVRVW-05 | Phase 66 | Pending |
 | HLTH-01 | Phase 60 | Complete |
-| HLTH-02 | Phase 60 | Pending |
+| HLTH-02 | Phase 60 | Complete |
 | INGEST-01 | Phase 61 | Pending |
 | INGEST-02 | Phase 61 | Pending |
 | INGEST-03 | Phase 62 | Pending |
