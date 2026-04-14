@@ -1,660 +1,1342 @@
-# Architecture Integration Research
+# Architecture Research: v7.0 Integration Patterns
 
-**Domain:** Next.js 16 App with v6.0 Feature Integration
-**Researched:** 2026-04-07
+**Domain:** Per-project RBAC, Project Lifecycle, Gantt Sync, Scheduler Scoping, Extraction Reclassification
+**Researched:** 2026-04-13
 **Confidence:** HIGH
 
-## Integration Overview
+## Executive Summary
 
-v6.0 adds five major feature areas to an existing Next.js 16 architecture with established patterns. Integration analysis focuses on **new vs modified components**, **data flow changes**, and **build order dependencies**.
+v7.0 introduces operational maturity features that integrate with the existing Next.js 16 + PostgreSQL + BullMQ + better-auth@1.5.6 architecture. This research identifies integration points for six major feature categories, distinguishing between **new components** (require creation) and **modified components** (extend existing patterns). All recommendations preserve the existing requireSession() Route Handler security boundary pattern and avoid breaking changes to the 40+ guarded handlers already deployed.
+
+**Key architectural decisions:**
+- Per-project RBAC: New `project_members` table + extend requireSession() to return project-level role
+- Archive/delete: Add `archived_at` column to `projects` table (soft-delete via timestamp, not separate table)
+- Gantt bi-directional sync: New utility function that updates both `tasks` and `milestones` tables atomically based on user drag action
+- Project-scoped scheduling: Extend existing `scheduled_jobs` table with `project_id` column; filter jobs in worker
+- Note reclassification: Extend ExtractionPreview UI to allow entity type dropdown change before approval
+- Completeness: Replace table count heuristic with Claude structured outputs analyzing actual record quality
+
+## Standard Architecture Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         Next.js 16 App Router                        │
-│  /app/page.tsx (Portfolio Dashboard) ← NEW AGGREGATE QUERIES        │
-│  /app/customer/[id]/* (Workspace) ← NEW TABS, MODIFIED COMPONENTS   │
-├─────────────────────────────────────────────────────────────────────┤
-│                        API Route Handlers                            │
-│  /app/api/projects/[projectId]/wbs ← NEW                            │
-│  /app/api/projects/[projectId]/team-engagement ← NEW                │
-│  /app/api/projects/[projectId]/architecture ← MODIFIED              │
-│  /app/api/projects/portfolio ← NEW (aggregates)                     │
-│  /app/api/ingestion/extract ← MODIFIED (new entity types)           │
-├─────────────────────────────────────────────────────────────────────┤
-│                        Data Layer (lib/)                             │
-│  queries.ts ← MODIFIED (portfolio rollup, new entity queries)       │
-│  lib/wbs-generator.ts ← NEW (AI Generate Plan)                      │
-│  worker/jobs/document-extraction.ts ← MODIFIED (new routing)        │
-├─────────────────────────────────────────────────────────────────────┤
-│                       Database (PostgreSQL)                          │
-│  projects ← MODIFIED (exec_action_required, dependency_projects)    │
-│  wbs_templates ← NEW                                                 │
-│  wbs_items ← NEW                                                     │
-│  wbs_task_assignments ← NEW                                          │
-│  team_engagement_sections ← NEW (business outcomes, panels, etc)    │
-│  arch_tracks ← NEW (Before State, Current & Future)                 │
-│  arch_nodes ← NEW (diagram node data with track FK)                 │
-├─────────────────────────────────────────────────────────────────────┤
-│                    Background Workers (BullMQ)                       │
-│  worker/index.ts ← UNMODIFIED (handler dispatch exists)             │
-│  worker/jobs/document-extraction.ts ← MODIFIED (3 new extractors)   │
-└─────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                     Next.js 16 App Router                        │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
+│  │ Server       │  │ Route        │  │ Client       │          │
+│  │ Components   │  │ Handlers     │  │ Components   │          │
+│  │              │  │              │  │              │          │
+│  │ (RSC)        │  │ (API routes) │  │ ('use client')│          │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘          │
+│         │                 │                 │                    │
+├─────────┴─────────────────┴─────────────────┴────────────────────┤
+│                     Authentication Layer                          │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │ better-auth@1.5.6: session mgmt, global roles           │   │
+│  │ + requireSession() at Route Handler level (40+ handlers) │   │
+│  └──────────────────────────────────────────────────────────┘   │
+├─────────────────────────────────────────────────────────────────┤
+│                       Business Logic                             │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐        │
+│  │ lib/     │  │ worker/  │  │ db/      │  │ app/api/ │        │
+│  │ utils    │  │ jobs     │  │ helpers  │  │ handlers │        │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘        │
+├─────────────────────────────────────────────────────────────────┤
+│                      Data & Jobs Layer                           │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │   Drizzle ORM → PostgreSQL (67 tables)                   │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │   BullMQ → Redis (scheduled jobs, extraction jobs)       │   │
+│  └──────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-## New vs Modified Components
+## Feature 1: Per-Project RBAC
 
-### Portfolio Dashboard (DASH-01–06)
+### Current State
+- **Global roles only:** `users.role` is 'admin' or 'user' (set at account level)
+- **requireSession() pattern:** Returns session object with user info; 40+ Route Handlers call this
+- **No project membership tracking:** Any authenticated user can access any project
 
-**New Components:**
-- `/app/page.tsx` — **MAJOR REWRITE** from simple health cards to full portfolio view
-- `components/PortfolioTable.tsx` — multi-project table with client-side filtering/sort
-- `components/PortfolioExceptionsPanel.tsx` — aggregated exception detection
-- `components/PortfolioHealthSummary.tsx` — cross-project health rollup
+### Integration Architecture
 
-**Modified Components:**
-- `lib/queries.ts::getDashboardData()` — add portfolio aggregation query
-- `lib/queries.ts::computeProjectHealth()` — add `exec_action_required` flag logic
+#### New Components
 
-**Data Flow:**
-```
-Server Component: /app/page.tsx
-  → lib/queries.ts::getPortfolioDashboardData()
-    → Aggregate query: projects + actions + risks + milestones
-    → Health scoring: detect overdue + high-risk + stalled + exec escalation
-    → Return: ProjectWithHealth[] + exceptions[]
-  → Pass to PortfolioTable (Client Component with URL param filtering)
-```
+**1. Database Schema Addition**
+```sql
+-- New table: project_members
+CREATE TABLE project_members (
+  id SERIAL PRIMARY KEY,
+  project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  role TEXT NOT NULL CHECK (role IN ('admin', 'user')),
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  UNIQUE (project_id, user_id)
+);
 
-**Database Changes:**
-- `projects.exec_action_required` (boolean) — set by health logic
-- `projects.dependency_projects` (text[]) — array of project IDs for cross-project dependencies
-
-**Integration Points:**
-- Reuses existing `ProjectWithHealth` type (extended with new fields)
-- Reuses existing health scoring logic (`computeProjectAnalytics`)
-- Drill-down links to `/customer/[id]/actions?filter=overdue` (existing pattern)
-
-### WBS (Work Breakdown Structure) — WBS-01–05
-
-**New Components:**
-- `/app/customer/[id]/plan/wbs/page.tsx` — replaces Phase Board
-- `components/WBSTree.tsx` — collapsible hierarchy renderer (React state)
-- `components/WBSGeneratePlanModal.tsx` — AI gap-fill UI
-- `lib/wbs-generator.ts` — Claude API call for Generate Plan
-- `/app/api/projects/[projectId]/wbs/route.ts` — CRUD endpoints
-- `/app/api/projects/[projectId]/wbs/generate/route.ts` — Generate Plan endpoint
-
-**Modified Components:**
-- `worker/jobs/document-extraction.ts` — add `wbs_item` entity extraction
-- Tab navigation in `/app/customer/[id]/layout.tsx` — replace "Phase Board" with "WBS"
-
-**Data Flow:**
-```
-1. Context Upload:
-   artifact → BullMQ extraction job → Claude → extract wbs_item entities
-   → staged_items_json (preview) → user approves → INSERT wbs_items
-
-2. Manual Edit:
-   WBSTree (client) → onUpdate → POST /api/projects/{id}/wbs → db.update(wbs_items)
-
-3. Generate Plan (AI gap-fill):
-   User clicks Generate Plan
-   → POST /api/projects/{id}/wbs/generate
-     → lib/wbs-generator.ts::generateMissingWbsItems()
-       → Read: existing wbs_items, tasks, milestones
-       → Prompt Claude with template structure + context
-       → Parse response → INSERT wbs_items (source: 'ai-generated')
-   → Client refetches WBS tree → shows new items with [AI] badge
+CREATE INDEX idx_project_members_user ON project_members(user_id);
+CREATE INDEX idx_project_members_project ON project_members(project_id);
 ```
 
-**Database Changes:**
-- `wbs_templates` (id, project_id, name, track, structure_json, created_at)
-  - `structure_json`: hierarchy of phases/tasks with descriptions
-  - Seed with ADR + Biggy templates on project create
-- `wbs_items` (id, template_id, project_id, parent_id, title, track, phase, status, owner, start_date, due_date, description, source, created_at)
-  - Self-referential tree via `parent_id`
-  - `source`: 'manual' | 'ingested' | 'ai-generated'
-- `wbs_task_assignments` (id, wbs_item_id, task_id) — links WBS items to tasks table
-
-**Integration Points:**
-- Reuses existing `tasks` table — WBS items can link to tasks for execution tracking
-- Reuses BullMQ document extraction infrastructure (add new entity type)
-- Reuses Claude API patterns from existing skill-orchestrator.ts
-
-### Team Engagement Overview — TEAM-01–04
-
-**New Components:**
-- `/app/customer/[id]/teams/engagement/page.tsx` — replaces generic Teams list
-- `components/TeamEngagementPanel.tsx` — 5-section structured view
-- `/app/api/projects/[projectId]/team-engagement/route.ts` — CRUD endpoints
-
-**Modified Components:**
-- `worker/jobs/document-extraction.ts` — add `team_engagement_section` entity extraction
-- `/app/customer/[id]/layout.tsx` — add "Engagement Overview" sub-tab under Teams
-
-**Data Flow:**
-```
-1. Context Upload:
-   artifact → extraction job → Claude
-   → extract: businessOutcome, architecture_panel, workflow, team_card, focus_area
-   → route each to team_engagement_sections with section_type field
-
-2. Manual Edit:
-   TeamEngagementPanel → onEdit → PATCH /api/projects/{id}/team-engagement/{sectionId}
-
-3. Missing Data Warnings:
-   Server Component reads team_engagement_sections, groups by section_type
-   → if section empty → render EmptyState with "Upload SOW/kickoff deck" CTA
-```
-
-**Database Changes:**
-- `team_engagement_sections` (id, project_id, section_type, track, title, content_json, display_order, source, source_artifact_id, created_at)
-  - `section_type`: 'business_outcome' | 'architecture_panel' | 'workflow' | 'team_card' | 'focus_area'
-  - `content_json`: flexible structure per section type
-    - business_outcome: {title, track, description, delivery_status}
-    - architecture_panel: {panel_name, tools: [{name, phase, status}]}
-    - workflow: {team_name, workflow_name, steps: [{label, track, status}]}
-    - team_card: {team_name, bp_owner, customer_owner, tracks, current_status, next_step}
-    - focus_area: {title, why_it_matters, current_status, next_step}
-
-**Integration Points:**
-- Consolidates existing scattered tables: `businessOutcomes`, `e2eWorkflows`, `focusAreas`, `teamOnboardingStatus`
-- All now in single `team_engagement_sections` table with structured `content_json`
-- Reuses existing context upload → extraction → approval flow
-
-### Architecture Diagram — ARCH-01–04
-
-**New Components:**
-- `/app/customer/[id]/architecture/diagrams/page.tsx` — two-tab diagram view
-- `components/ArchitectureDiagramFlow.tsx` — React Flow component for Before State + Current & Future State
-- `/app/api/projects/[projectId]/architecture/diagrams/route.ts` — CRUD for diagram data
-
-**Modified Components:**
-- Existing `/app/customer/[id]/architecture/page.tsx` — now shows onboarding status table only
-- `worker/jobs/document-extraction.ts` — add `arch_node` entity extraction with track routing
-
-**Data Flow:**
-```
-1. Context Upload:
-   artifact → extraction → Claude → extract arch_node entities
-   → Each node has: {tool_name, track, phase, status, integration_method}
-   → track field routes to Before State ('before') vs Current & Future ('current')
-
-2. Manual Diagram Edit:
-   ArchitectureDiagramFlow (client, React Flow)
-   → Node drag/add/edit → POST /api/projects/{id}/architecture/diagrams
-   → Persist node positions + edges to arch_nodes.positions_json
-
-3. Tab Navigation:
-   Server Component renders two React Flow instances:
-   - Before State tab: filters arch_nodes WHERE track = 'before'
-   - Current & Future State tab: filters arch_nodes WHERE track IN ('adr', 'biggy', 'current')
-```
-
-**Database Changes:**
-- `arch_tracks` (id, project_id, name, description, display_order)
-  - Seed: 'Before State', 'ADR Track', 'Biggy Track'
-- `arch_nodes` (id, track_id, project_id, tool_name, node_type, status, phase, integration_method, positions_json, source, created_at)
-  - `node_type`: 'tool' | 'data_store' | 'external_system'
-  - `positions_json`: {x, y, width, height} for React Flow layout
-  - `status`: enum integrationTrackStatusEnum ('live', 'in_progress', 'pilot', 'planned')
-
-**Integration Points:**
-- Reuses existing React Flow patterns from org charts/workflow diagrams (Phase 28)
-- Reuses existing `architectureIntegrations` table for onboarding status (different concern)
-- Distinction: `arch_nodes` = diagram data, `architectureIntegrations` = operational connection status
-
-### Context Upload Expansion — Extraction Routing
-
-**Modified Components:**
-- `worker/jobs/document-extraction.ts::EXTRACTION_SYSTEM` — extend entity type enum
-- `worker/jobs/document-extraction.ts::isAlreadyIngested()` — add dedup logic for new types
-- Extraction routing map (lines 16-17 in existing code) — add new table imports
-
-**New Entity Types:**
-- `wbs_item` → routes to `wbs_items` table
-- `team_engagement_section` → routes to `team_engagement_sections` (with section_type routing)
-- `arch_node` → routes to `arch_nodes` (with track_id resolution)
-
-**Data Flow Changes:**
-```
-BEFORE (v5.0):
-  extraction → 11 entity types (action, risk, milestone, task, decision, etc)
-
-AFTER (v6.0):
-  extraction → 14 entity types (+ wbs_item, team_engagement_section, arch_node)
-
-Routing logic:
-  switch (item.entityType) {
-    case 'wbs_item':
-      → resolve template_id from item.fields.track
-      → INSERT wbs_items (parent_id resolved from item.fields.parent_title match)
-    case 'team_engagement_section':
-      → route to team_engagement_sections
-      → section_type = infer from item.fields structure (has 'workflow_name'? → 'workflow')
-    case 'arch_node':
-      → resolve track_id from item.fields.track ('before' | 'adr' | 'biggy')
-      → INSERT arch_nodes
-  }
-```
-
-**Integration Points:**
-- No changes to BullMQ worker infrastructure (existing handler dispatch works)
-- No changes to extraction job lifecycle (pending → extracting → preview → approved)
-- Only changes: entity parsing logic + DB insert routing
-
-## Recommended Build Order
-
-Build order optimizes for **testability** (data layer first) and **dependency resolution** (shared components before consumers).
-
-### Phase 1: Database Schema & Core Queries (Foundational)
-
-**Why first:** All features depend on new tables. Migrate schema before any feature work.
-
-1. **DB Migration:**
-   - Add columns: `projects.exec_action_required`, `projects.dependency_projects`
-   - Create tables: `wbs_templates`, `wbs_items`, `wbs_task_assignments`, `team_engagement_sections`, `arch_tracks`, `arch_nodes`
-   - Seed: ADR + Biggy WBS templates, arch_tracks (Before State, ADR, Biggy)
-
-2. **Query Extensions:**
-   - `lib/queries.ts::getPortfolioDashboardData()` — aggregated multi-project query
-   - `lib/queries.ts::computeProjectHealth()` — add exec escalation detection
-   - `lib/queries.ts::getWbsItems()` — tree query with parent/child resolution
-   - `lib/queries.ts::getTeamEngagementSections()` — grouped by section_type
-   - `lib/queries.ts::getArchNodes()` — filtered by track_id
-
-**Test:** Direct DB queries via Drizzle (no UI needed yet)
-
-### Phase 2: Context Upload Extraction (Enables Auto-Population)
-
-**Why second:** Once extraction works, all downstream features can be populated via upload.
-
-1. **Extraction System Prompt:**
-   - Extend `EXTRACTION_SYSTEM` with 3 new entity types (wbs_item, team_engagement_section, arch_node)
-   - Add field guidance for each type
-
-2. **Extraction Routing:**
-   - `isAlreadyIngested()` — add dedup logic for new entity types
-   - Add insert handlers for new tables (with FK resolution: template_id, track_id, parent_id)
-
-3. **Testing:**
-   - Upload test SOW/kickoff deck → verify staged_items_json contains new entity types
-   - Approve → verify DB inserts to new tables
-
-**Dependency:** Phase 1 (schema must exist)
-
-### Phase 3: WBS (Lowest Cross-Feature Dependency)
-
-**Why third:** WBS is self-contained — doesn't depend on Team Engagement or Architecture features.
-
-1. **WBS Tree Component:**
-   - `components/WBSTree.tsx` — collapsible hierarchy with inline edit
-   - Client-side state for expand/collapse
-   - PATCH `/api/projects/[id]/wbs/{itemId}` for updates
-
-2. **WBS Page:**
-   - `/app/customer/[id]/plan/wbs/page.tsx` — Server Component fetches tree, passes to WBSTree client
-
-3. **Generate Plan:**
-   - `lib/wbs-generator.ts::generateMissingWbsItems()` — Claude API call with template + context
-   - `/app/api/projects/[id]/wbs/generate/route.ts` — POST endpoint
-   - `components/WBSGeneratePlanModal.tsx` — trigger UI
-
-4. **Tab Navigation:**
-   - Update `/app/customer/[id]/layout.tsx` — replace "Phase Board" link with "WBS"
-
-**Dependency:** Phase 2 (extraction must populate wbs_items from uploads)
-
-### Phase 4: Architecture Diagrams (React Flow Reuse)
-
-**Why fourth:** Reuses existing React Flow patterns (Phase 28). Independent of WBS and Team Engagement.
-
-1. **Architecture Diagram Component:**
-   - `components/ArchitectureDiagramFlow.tsx` — React Flow with two track filters
-   - Dynamic import + `ssr: false` (existing pattern)
-   - Node drag/edit → PATCH `/api/projects/[id]/architecture/diagrams/{nodeId}`
-
-2. **Architecture Diagrams Page:**
-   - `/app/customer/[id]/architecture/diagrams/page.tsx` — two-tab layout (Before State, Current & Future)
-   - Server Component fetches arch_nodes grouped by track_id
-
-3. **Tab Integration:**
-   - Update `/app/customer/[id]/architecture/layout.tsx` — add "Diagrams" sub-tab
-
-**Dependency:** Phase 2 (extraction must populate arch_nodes)
-
-### Phase 5: Team Engagement Overview (Consolidates Existing Data)
-
-**Why fifth:** Consolidates scattered existing tables — requires data migration + UI rebuild.
-
-1. **Team Engagement Panel Component:**
-   - `components/TeamEngagementPanel.tsx` — 5-section structured view
-   - Each section: title + content_json renderer (varies by section_type)
-   - Edit modal per section → PATCH `/api/projects/[id]/team-engagement/{sectionId}`
-
-2. **Team Engagement Page:**
-   - `/app/customer/[id]/teams/engagement/page.tsx` — Server Component groups sections
-   - Missing data warnings: if section_type count = 0 → EmptyState
-
-3. **Data Migration (optional):**
-   - Script: migrate existing `businessOutcomes`, `e2eWorkflows`, `focusAreas` → `team_engagement_sections`
-   - Only if preserving existing project data; new projects seed from context uploads
-
-**Dependency:** Phase 2 (extraction populates team_engagement_sections)
-
-### Phase 6: Portfolio Dashboard (Aggregates All Projects)
-
-**Why last:** Depends on all other features being complete for full testing. Aggregates data from WBS, Architecture, Team Engagement.
-
-1. **Portfolio Query:**
-   - `lib/queries.ts::getPortfolioDashboardData()` — multi-project aggregation with health rollup
-
-2. **Portfolio Components:**
-   - `components/PortfolioTable.tsx` — client-side filtering/sort (reuses ActionsTableClient pattern)
-   - `components/PortfolioExceptionsPanel.tsx` — overdue actions + high risks + exec escalations
-   - `components/PortfolioHealthSummary.tsx` — cross-project health chart (Recharts)
-
-3. **Dashboard Page Rewrite:**
-   - `/app/page.tsx` — MAJOR REWRITE from project health cards to portfolio view
-   - Layout: Health Summary → Exceptions Panel → Multi-Project Table → Recent Activity
-
-**Dependency:** Phase 1 (portfolio queries), Phase 3-5 (features to aggregate)
-
-## Architectural Patterns (Established, Reused in v6.0)
-
-### Pattern 1: Server Component + Client Island Filtering
-
-**What:** Server Component fetches full dataset, passes to Client Component that filters in-memory via URL params.
-
-**When to use:** Table views with filtering/sorting that don't require server pagination (< 1000 rows).
-
-**Example (existing):**
+**Drizzle schema addition (db/schema.ts):**
 ```typescript
-// Server Component: /app/customer/[id]/actions/page.tsx
-export default async function ActionsPage({ params, searchParams }) {
-  const actions = await getAllActions(projectId); // full dataset
-  return <ActionsTableClient actions={actions} searchParams={searchParams} />;
-}
+export const projectRoleEnum = pgEnum('project_role', ['admin', 'user']);
 
-// Client Component: ActionsTableClient.tsx
-'use client';
-export function ActionsTableClient({ actions, searchParams }) {
-  const filtered = useMemo(() => {
-    return actions.filter(a => {
-      if (searchParams.status && a.status !== searchParams.status) return false;
-      if (searchParams.owner && a.owner !== searchParams.owner) return false;
-      return true;
-    });
-  }, [actions, searchParams]);
+export const projectMembers = pgTable('project_members', {
+  id: serial('id').primaryKey(),
+  project_id: integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  user_id: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  role: projectRoleEnum('role').notNull(),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+}, (t) => [
+  uniqueIndex('project_members_project_user_idx').on(t.project_id, t.user_id),
+]);
 
-  return <table>...</table>;
-}
+export type ProjectMember = typeof projectMembers.$inferSelect;
+export type ProjectMemberInsert = typeof projectMembers.$inferInsert;
 ```
 
-**v6.0 Reuse:**
-- `PortfolioTable.tsx` — filters projects client-side by status/health/owner
-- `WBSTree.tsx` — filters WBS items by track/phase
-- No API calls on filter change → instant UX
+**2. Extended requireSession() Function**
 
-**Trade-offs:**
-- ✅ Fast filtering (no network round-trip)
-- ✅ Shareable URLs (filter state in query params)
-- ❌ All data sent to client (not suitable for 10k+ rows)
+New utility: `lib/auth-project.ts` (extends existing `lib/auth-server.ts`)
 
-### Pattern 2: BullMQ Background Job + Polling UI
-
-**What:** Long-running operation (document extraction, AI generation) runs in BullMQ worker. UI polls for completion.
-
-**When to use:** Operations > 10 seconds, browser-refresh resilient required.
-
-**Example (existing):**
 ```typescript
-// API Route: /app/api/ingestion/extract/route.ts
-const job = await extractionQueue.add('document-extraction', {
-  jobId: extractionJob.id,
-  artifactId,
-  projectId,
-  batchId,
-});
+/**
+ * lib/auth-project.ts — Project-level RBAC enforcement
+ *
+ * Extends requireSession() to include project membership check.
+ * Returns both global session AND project-level role.
+ */
+import { requireSession } from "@/lib/auth-server";
+import { db } from "@/db";
+import { projectMembers, users } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
+import { NextResponse } from "next/server";
 
-// Client: polls /api/ingestion/jobs/{jobId} every 2 seconds
-useEffect(() => {
-  const interval = setInterval(async () => {
-    const status = await fetch(`/api/ingestion/jobs/${jobId}`).then(r => r.json());
-    if (status.status === 'completed') {
-      clearInterval(interval);
-      refetchData();
+export type ProjectRole = 'admin' | 'user';
+
+export type ProjectSessionResult =
+  | {
+      session: NonNullable<Awaited<ReturnType<typeof requireSession>>['session']>;
+      projectRole: ProjectRole;
+      redirectResponse: null;
     }
-  }, 2000);
-}, [jobId]);
-```
+  | {
+      session: null;
+      projectRole: null;
+      redirectResponse: NextResponse;
+    };
 
-**v6.0 Reuse:**
-- WBS Generate Plan → POST `/api/projects/{id}/wbs/generate` → BullMQ job → poll for completion
-- No code changes to worker infrastructure (existing handler dispatch works)
+/**
+ * requireProjectSession() — Enforces both authentication AND project membership.
+ *
+ * @param projectId - Numeric project ID
+ * @returns Session + projectRole ('admin' or 'user'), or 401/403 response
+ *
+ * Usage:
+ *   const { session, projectRole, redirectResponse } = await requireProjectSession(projectId);
+ *   if (redirectResponse) return redirectResponse;
+ *   // Now use projectRole to guard destructive actions
+ */
+export async function requireProjectSession(projectId: number): Promise<ProjectSessionResult> {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) {
+    return { session: null, projectRole: null, redirectResponse };
+  }
 
-**Trade-offs:**
-- ✅ Browser-refresh resilient
-- ✅ Decouples long-running task from HTTP request timeout
-- ❌ Polling overhead (consider WebSocket for real-time progress in v7.0)
+  // Global admins have implicit 'admin' role on all projects
+  const globalRole = session.user.role;
+  if (globalRole === 'admin') {
+    return { session, projectRole: 'admin', redirectResponse: null };
+  }
 
-### Pattern 3: Structured JSON in Single Column
+  // Check project_members table for explicit membership
+  const membership = await db
+    .select()
+    .from(projectMembers)
+    .where(
+      and(
+        eq(projectMembers.project_id, projectId),
+        eq(projectMembers.user_id, session.user.id)
+      )
+    )
+    .limit(1);
 
-**What:** Store rich structured data in JSONB column instead of multiple tables with FKs.
+  if (membership.length === 0) {
+    return {
+      session: null,
+      projectRole: null,
+      redirectResponse: NextResponse.json(
+        { error: "You do not have access to this project" },
+        { status: 403 }
+      ),
+    };
+  }
 
-**When to use:** Schema varies by record, read-heavy workload, no need for SQL filtering on nested fields.
-
-**Example (existing):**
-```typescript
-// artifacts.ingestion_log_json stores:
-{
-  "extracted": 15,
-  "filtered": 3,
-  "chunks": [{"start": 0, "end": 80000, "duration_ms": 12500}]
+  return {
+    session,
+    projectRole: membership[0].role as ProjectRole,
+    redirectResponse: null
+  };
 }
 
-// Queried as whole object, never filtered by chunk.duration_ms
-const artifacts = await db.select().from(artifacts).where(eq(artifacts.project_id, projectId));
-artifacts.forEach(a => console.log(a.ingestion_log_json.extracted));
+/**
+ * requireProjectAdmin() — Enforces project-level admin role.
+ * Shorthand for requireProjectSession + admin check.
+ */
+export async function requireProjectAdmin(projectId: number): Promise<ProjectSessionResult> {
+  const result = await requireProjectSession(projectId);
+  if (result.redirectResponse) return result;
+
+  if (result.projectRole !== 'admin') {
+    return {
+      session: null,
+      projectRole: null,
+      redirectResponse: NextResponse.json(
+        { error: "Admin role required for this action" },
+        { status: 403 }
+      ),
+    };
+  }
+
+  return result;
+}
 ```
 
-**v6.0 Reuse:**
-- `wbs_templates.structure_json` — stores phase hierarchy (no need for separate phase/task tables)
-- `team_engagement_sections.content_json` — flexible structure per section_type
-- `arch_nodes.positions_json` — React Flow node positions {x, y, width, height}
+#### Modified Components
 
-**Trade-offs:**
-- ✅ Avoids table explosion (5 section types = 5 different JSON shapes, not 5 tables)
-- ✅ Flexible schema evolution (add field without migration)
-- ❌ No SQL filtering on nested fields (use separate column if filtering required)
-- ❌ JSONB parsing in app code (more complex than scalar fields)
+**Route Handlers requiring project-level guards:**
+- Archive/delete: `DELETE /api/projects/[projectId]/route.ts` → use `requireProjectAdmin()`
+- User management: New `POST /api/projects/[projectId]/members/route.ts` → use `requireProjectAdmin()`
+- Global scheduler actions: `POST /api/jobs/route.ts` → check if user is admin on ANY project (new helper)
 
-### Pattern 4: Cross-Tab Sync via CustomEvent
+**All other existing handlers:** No changes required for v7.0. Migration to `requireProjectSession()` can be phased in later phases (AUTH-05 suggests gradual rollout).
 
-**What:** Client components in different React trees communicate via browser CustomEvent API.
+### Data Flow
 
-**When to use:** Edit on one tab should refresh another tab without full page reload (same browser tab, not cross-tab browser tabs).
+```
+User Action (Archive Project)
+    ↓
+Route Handler: DELETE /api/projects/[projectId]
+    ↓
+requireProjectAdmin(projectId)  ← NEW
+    ↓ (if not admin, return 403)
+Archive logic: UPDATE projects SET archived_at = NOW()
+    ↓
+Response
+```
 
-**Example (existing):**
+### Rollout Strategy
+
+**Phase 1 (v7.0):** Implement `project_members` table + new helpers; guard only new destructive actions (archive, delete, membership management)
+
+**Phase 2 (v7.1+):** Gradually migrate existing handlers from `requireSession()` to `requireProjectSession()` where per-project access control is desired (e.g., `/api/projects/[projectId]/actions/route.ts`)
+
+**Phase 3 (v7.2+):** Add project membership UI in project settings tab; bulk-assign users to projects
+
+---
+
+## Feature 2: Project Archive & Delete
+
+### Current State
+- `projects.status` enum: 'active', 'archived', 'closed', 'draft'
+- **No soft-delete mechanism:** 'archived' status is manual, not enforced
+- **No restore flow:** Once archived, status change is manual UPDATE
+- **CASCADE behavior:** FK constraints use `ON DELETE CASCADE` for related records
+
+### Integration Architecture
+
+#### Pattern Choice: `archived_at` Column (Soft-Delete)
+
+**Rationale:**
+- Simpler queries: `WHERE archived_at IS NULL` to filter active projects
+- Timestamp preserves audit trail: when was project archived?
+- No data duplication: archived projects stay in same table
+- Reversible: restore = `SET archived_at = NULL`
+
+**Alternative rejected:** Separate `archived_projects` table duplicates schema, complicates JOINs, loses FK integrity on restore
+
+#### New Components
+
+**1. Schema Migration**
+```sql
+-- Add archived_at column to projects table
+ALTER TABLE projects ADD COLUMN archived_at TIMESTAMP;
+ALTER TABLE projects ADD COLUMN deleted_at TIMESTAMP;
+
+-- Index for filtering active projects
+CREATE INDEX idx_projects_archived_at ON projects(archived_at) WHERE archived_at IS NULL;
+CREATE INDEX idx_projects_deleted_at ON projects(deleted_at) WHERE deleted_at IS NULL;
+```
+
+**Drizzle schema update (db/schema.ts):**
 ```typescript
-// Actions edit triggers metrics refresh
-// ActionsTableClient.tsx
-const handleSave = async () => {
-  await updateAction(actionId, data);
-  window.dispatchEvent(new CustomEvent('metrics:invalidate'));
+export const projects = pgTable('projects', {
+  // ... existing fields ...
+  archived_at: timestamp('archived_at'),
+  deleted_at: timestamp('deleted_at'),
+});
+```
+
+**2. Utility Functions**
+
+New file: `lib/project-lifecycle.ts`
+
+```typescript
+/**
+ * lib/project-lifecycle.ts — Project archive/delete/restore utilities
+ */
+import { db } from "@/db";
+import { projects } from "@/db/schema";
+import { eq, isNull, isNotNull, and } from "drizzle-orm";
+
+/**
+ * Archive a project (soft-delete via archived_at timestamp).
+ * Project becomes read-only; related records preserved.
+ */
+export async function archiveProject(projectId: number): Promise<void> {
+  await db
+    .update(projects)
+    .set({ archived_at: new Date(), status: 'archived' })
+    .where(eq(projects.id, projectId));
+}
+
+/**
+ * Restore an archived project back to active status.
+ */
+export async function restoreProject(projectId: number): Promise<void> {
+  await db
+    .update(projects)
+    .set({ archived_at: null, status: 'active' })
+    .where(eq(projects.id, projectId));
+}
+
+/**
+ * Permanently delete a project (hard delete).
+ * CASCADE will delete all related records (actions, risks, tasks, etc.).
+ *
+ * Security: Only callable by project admins (enforced at Route Handler).
+ */
+export async function deleteProject(projectId: number): Promise<void> {
+  await db
+    .update(projects)
+    .set({ deleted_at: new Date() })
+    .where(eq(projects.id, projectId));
+}
+
+/**
+ * Get all active projects (not archived, not deleted).
+ */
+export async function getActiveProjects() {
+  return db
+    .select()
+    .from(projects)
+    .where(and(isNull(projects.archived_at), isNull(projects.deleted_at)));
+}
+
+/**
+ * Get all archived projects (archived but not deleted).
+ */
+export async function getArchivedProjects() {
+  return db
+    .select()
+    .from(projects)
+    .where(and(isNotNull(projects.archived_at), isNull(projects.deleted_at)));
+}
+```
+
+#### Modified Components
+
+**Route Handlers:**
+- `DELETE /api/projects/[projectId]/route.ts` — Add query param `?permanent=true` for hard delete
+- `PATCH /api/projects/[projectId]/route.ts` — Add `restore` action
+- `GET /api/projects/route.ts` — Add query param `?status=archived` to list archived projects
+
+**UI Components:**
+- Portfolio dashboard (`app/dashboard/page.tsx`) — Filter out archived/deleted by default; add "Show Archived" toggle
+- Archived projects view (new page: `app/archived/page.tsx`) — Read-only list of archived projects with restore button
+- Project settings (new section: project lifecycle actions) — Archive/Delete buttons with confirmation modals
+
+### Data Flow: Archive Project
+
+```
+User clicks "Archive Project"
+    ↓
+Confirmation modal (client)
+    ↓
+DELETE /api/projects/[projectId]?action=archive
+    ↓
+requireProjectAdmin(projectId)  ← RBAC guard
+    ↓
+archiveProject(projectId)       ← Sets archived_at
+    ↓
+Invalidate cache / refresh UI
+    ↓
+Project removed from active list
+```
+
+### Cascade Behavior
+
+**Important:** Archived projects preserve ALL related records (actions, risks, tasks, etc.). Only hard delete triggers CASCADE removal.
+
+**User expectation alignment:**
+- **Archive = "close but keep for reference"** → read-only, searchable, restorable
+- **Delete = "permanent removal"** → requires double confirmation, cannot be undone (unless `deleted_at` approach allows 30-day grace period before physical deletion)
+
+**Recommendation for v7.0:** Use `deleted_at` timestamp (not immediate CASCADE deletion). Add background job to purge `deleted_at > 30 days ago` projects monthly. This provides safety net for accidental deletions.
+
+---
+
+## Feature 3: Gantt Bi-Directional Date Propagation
+
+### Current State
+- Custom `GanttChart.tsx` component: renders tasks and milestones independently
+- Tasks fetched from `tasks` table; milestones from `milestones` table
+- Drag-to-reschedule updates only the dragged entity (task OR milestone, not both)
+- No sync mechanism: changing task dates doesn't update associated milestone, and vice versa
+
+### Integration Architecture
+
+#### Canonical Source of Truth: Event-Driven Updates
+
+**Pattern:** User drag action on Gantt is the **event source**. Database updates propagate bidirectionally based on FK relationships.
+
+**Relationships:**
+- `tasks.milestone_id` → `milestones.id` (FK exists)
+- Milestone date = earliest start_date of all assigned tasks (derived)
+- Task dates constrain milestone date (milestone cannot be before all tasks complete)
+
+#### New Components
+
+**1. Sync Utility Function**
+
+New file: `lib/gantt-sync.ts`
+
+```typescript
+/**
+ * lib/gantt-sync.ts — Bi-directional Gantt date propagation
+ *
+ * Ensures milestone dates stay consistent with task dates when user drags on Gantt.
+ */
+import { db } from "@/db";
+import { tasks, milestones } from "@/db/schema";
+import { eq, and, isNotNull } from "drizzle-orm";
+
+/**
+ * Update a task's dates and propagate changes to its associated milestone.
+ *
+ * Logic:
+ * - If task has milestone_id, recalculate milestone.date as MAX(task.due) of all tasks in that milestone
+ * - If no tasks remain with valid dates, set milestone.date = null (TBD)
+ *
+ * @param taskId - Task to update
+ * @param newStartDate - New start date (ISO string or null)
+ * @param newDueDate - New due date (ISO string or null)
+ */
+export async function updateTaskDates(
+  taskId: number,
+  newStartDate: string | null,
+  newDueDate: string | null
+): Promise<void> {
+  // 1. Update task dates
+  const updated = await db
+    .update(tasks)
+    .set({ start_date: newStartDate, due: newDueDate })
+    .where(eq(tasks.id, taskId))
+    .returning();
+
+  if (updated.length === 0) return;
+
+  const task = updated[0];
+  if (!task.milestone_id) return; // No milestone association
+
+  // 2. Recalculate milestone date from all tasks in this milestone
+  const milestoneTasks = await db
+    .select()
+    .from(tasks)
+    .where(
+      and(
+        eq(tasks.milestone_id, task.milestone_id),
+        isNotNull(tasks.due)
+      )
+    );
+
+  let latestDue: string | null = null;
+  for (const t of milestoneTasks) {
+    if (t.due && (!latestDue || t.due > latestDue)) {
+      latestDue = t.due;
+    }
+  }
+
+  // 3. Update milestone date
+  await db
+    .update(milestones)
+    .set({ date: latestDue })
+    .where(eq(milestones.id, task.milestone_id));
+}
+
+/**
+ * Update a milestone's date and propagate to all assigned tasks.
+ *
+ * Logic:
+ * - If milestone date moves earlier, do nothing to tasks (tasks are unchanged)
+ * - If milestone date moves later, extend all task due dates proportionally
+ *
+ * Alternative simpler approach (recommended for v7.0):
+ * - Milestone date is DERIVED (always computed from tasks), never set directly
+ * - Gantt milestone markers are read-only; only tasks are draggable
+ *
+ * @param milestoneId - Milestone to update
+ * @param newDate - New milestone date (ISO string or null)
+ */
+export async function updateMilestoneDate(
+  milestoneId: number,
+  newDate: string | null
+): Promise<void> {
+  // OPTION A: Milestone date is derived (recommended)
+  // Do nothing — milestone date is computed from tasks
+  // Throw error or no-op if user tries to drag milestone marker
+
+  // OPTION B: Milestone date is settable (complex)
+  // Requires proportional adjustment of all task dates
+  // Deferred to v7.1 if needed
+
+  await db
+    .update(milestones)
+    .set({ date: newDate })
+    .where(eq(milestones.id, milestoneId));
+}
+```
+
+**2. Route Handler Extension**
+
+Modified: `PATCH /api/tasks/[id]/route.ts`
+
+```typescript
+import { updateTaskDates } from "@/lib/gantt-sync";
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
+  const { id } = await params;
+  const taskId = parseInt(id, 10);
+  const body = await request.json();
+
+  // If dates are changing, use sync utility
+  if (body.start_date !== undefined || body.due !== undefined) {
+    await updateTaskDates(taskId, body.start_date, body.due);
+    return NextResponse.json({ success: true });
+  }
+
+  // Otherwise, standard PATCH logic
+  const updated = await db
+    .update(tasks)
+    .set(body)
+    .where(eq(tasks.id, taskId))
+    .returning();
+
+  return NextResponse.json(updated[0]);
+}
+```
+
+#### Modified Components
+
+**Client Component: `components/GanttChart.tsx`**
+
+```typescript
+// In handleTaskDragEnd callback:
+async function handleTaskDragEnd(taskId: string, newStart: string, newEnd: string) {
+  const res = await fetch(`/api/tasks/${taskId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ start_date: newStart, due: newEnd }),
+  });
+
+  if (res.ok) {
+    // Refetch both tasks AND milestones to reflect propagated changes
+    await Promise.all([
+      fetchTasks(),
+      fetchMilestones(),
+    ]);
+    toast.success('Task date updated');
+  }
+}
+```
+
+### Data Flow
+
+```
+User drags Task on Gantt (client)
+    ↓
+PATCH /api/tasks/[id] { start_date, due }
+    ↓
+updateTaskDates(taskId, start, due)
+    ↓ (atomic transaction)
+    ├─ UPDATE tasks SET start_date, due
+    └─ UPDATE milestones SET date = MAX(task.due) WHERE milestone_id = ...
+    ↓
+Client refetches tasks + milestones
+    ↓
+Gantt re-renders with synced dates
+```
+
+### Architectural Decision: Milestone Date as Derived Value
+
+**Recommended pattern for v7.0:**
+- Milestone `date` column is **always computed** from assigned tasks
+- Gantt milestone markers are **read-only** (not draggable)
+- Only task drag actions update dates
+- Milestone dates automatically update via `updateTaskDates()`
+
+**Rationale:**
+- Simpler logic: single source of truth (task dates)
+- No conflicts: milestone cannot drift out of sync
+- Aligns with PM best practice: milestones mark task completion, not arbitrary dates
+
+**Deferred to v7.1+ if needed:** Draggable milestones that proportionally adjust task dates
+
+---
+
+## Feature 4: Project-Scoped BullMQ Scheduling
+
+### Current State
+- `scheduled_jobs` table: global jobs (no project_id column)
+- Worker polls `scheduled_jobs`, registers cron patterns with BullMQ
+- Job execution: `worker/scheduler.ts` → `worker/jobs/[skillName].ts`
+- No per-project job filtering: weekly-briefing runs for all projects, not specific projects
+
+### Integration Architecture
+
+#### Pattern: Metadata Tagging (Not Separate Queues)
+
+**Rationale:**
+- BullMQ queue-per-project approach = Redis key explosion (1 queue = 5+ keys per queue)
+- Metadata tagging = single queue, filter jobs by `project_id` in worker
+- Simpler Redis topology, easier to debug, no queue management overhead
+
+**Alternative rejected:** Separate queue per project (`scheduled-jobs-project-123`) scales poorly beyond 100 projects
+
+#### New Components
+
+**1. Schema Migration**
+
+```sql
+-- Add project_id column to scheduled_jobs
+ALTER TABLE scheduled_jobs ADD COLUMN project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE;
+
+-- Index for project-scoped queries
+CREATE INDEX idx_scheduled_jobs_project ON scheduled_jobs(project_id);
+
+-- Null project_id = global job (runs for all projects or no specific project)
+```
+
+**Drizzle schema update (db/schema.ts):**
+```typescript
+export const scheduledJobs = pgTable('scheduled_jobs', {
+  // ... existing fields ...
+  project_id: integer('project_id').references(() => projects.id, { onDelete: 'cascade' }),
+  // null project_id = global job
+});
+```
+
+**2. Worker Job Registration Logic**
+
+Modified: `worker/scheduler.ts`
+
+```typescript
+/**
+ * registerDbSchedulers() — Modified to include project_id in job data
+ */
+export async function registerDbSchedulers(): Promise<void> {
+  const enabledJobs = await db
+    .select()
+    .from(scheduledJobs)
+    .where(eq(scheduledJobs.enabled, true));
+
+  for (const job of enabledJobs) {
+    if (!job.cron_expression) continue;
+
+    await jobQueue.upsertJobScheduler(
+      `db-job-${job.id}`,
+      {
+        pattern: job.cron_expression,
+        ...(job.timezone ? { tz: job.timezone } : {}),
+      },
+      {
+        name: job.skill_name,
+        data: {
+          triggeredBy: 'scheduled',
+          jobId: job.id,
+          projectId: job.project_id,  // ← NEW: pass project_id to worker
+        },
+        opts: { removeOnComplete: 100, removeOnFail: 50 },
+      }
+    );
+    console.log(`[scheduler] registered db-job-${job.id} (${job.name}) → ${job.cron_expression}${job.project_id ? ` [project ${job.project_id}]` : ''}`);
+  }
+}
+```
+
+**3. Job Execution Filter**
+
+Modified: `worker/jobs/weekly_briefing.ts` (example skill)
+
+```typescript
+/**
+ * weekly_briefing skill — now project-scoped
+ */
+import { Job } from 'bullmq';
+
+export async function weeklyBriefing(job: Job) {
+  const { projectId } = job.data;
+
+  if (!projectId) {
+    // Global job: run for all active projects
+    const projects = await getActiveProjects();
+    for (const project of projects) {
+      await generateBriefing(project.id);
+    }
+  } else {
+    // Project-scoped job: run for specific project
+    await generateBriefing(projectId);
+  }
+}
+```
+
+#### Modified Components
+
+**UI: Scheduler Configuration (`app/scheduler/page.tsx`)**
+
+Add project selector dropdown when creating/editing scheduled jobs:
+
+```typescript
+<Select
+  label="Project Scope"
+  value={formData.project_id ?? 'global'}
+  onChange={(val) => setFormData({ ...formData, project_id: val === 'global' ? null : parseInt(val) })}
+>
+  <option value="global">All Projects (Global)</option>
+  {projects.map((p) => (
+    <option key={p.id} value={p.id}>{p.name}</option>
+  ))}
+</Select>
+```
+
+**Route Handler: `POST /api/jobs/route.ts`**
+
+Add `project_id` to job creation schema:
+
+```typescript
+const CreateJobSchema = z.object({
+  name: z.string(),
+  skill_name: z.string(),
+  cron_expression: z.string(),
+  project_id: z.number().nullable(),  // ← NEW
+  // ... other fields
+});
+```
+
+### Data Flow
+
+```
+Admin creates project-scoped job (UI)
+    ↓
+POST /api/jobs { name, skill_name, cron_expression, project_id: 123 }
+    ↓
+INSERT INTO scheduled_jobs (project_id = 123)
+    ↓
+Worker polls scheduled_jobs table (60s interval)
+    ↓
+registerDbSchedulers() reads new job
+    ↓
+upsertJobScheduler() registers cron with BullMQ
+    ↓ (at scheduled time)
+Job executes with projectId in job.data
+    ↓
+Skill runs for specific project only
+```
+
+### Backward Compatibility
+
+**Existing global jobs:** `project_id = NULL` → job runs for all projects (preserve current behavior)
+
+**Migration strategy:**
+1. Add `project_id` column (nullable)
+2. Existing jobs remain global (NULL)
+3. New jobs can opt into project scoping via UI
+4. No breaking changes to existing skills (they check `job.data.projectId` and fall back to all-projects behavior)
+
+---
+
+## Feature 5: Note Entity Reclassification
+
+### Current State
+- ExtractionPreview displays 21 entity types in tabs
+- Entity type is determined by Claude during extraction (`entityType: 'note'` for unclassifiable items)
+- Once staged, entity type is immutable (no UI to change it before approval)
+- Approved entities route to DB tables based on `entityType` field
+
+### Integration Architecture
+
+#### Pattern: Pre-Approval Entity Type Override
+
+**User flow:**
+1. Claude extracts document → stages items with best-guess `entityType`
+2. User reviews in ExtractionPreview modal
+3. User notices "note" entity is actually a "risk" or "action"
+4. User changes entity type via dropdown in ExtractionItemRow
+5. User approves → entity routes to correct table
+
+#### New Components
+
+**1. UI Enhancement: Entity Type Dropdown**
+
+Modified component: `components/ExtractionItemRow.tsx`
+
+```typescript
+/**
+ * ExtractionItemRow.tsx — Add entity type selector
+ */
+import { Select } from '@/components/ui/select';
+import { TAB_LABELS, ENTITY_ORDER } from './ExtractionPreview';
+
+interface ExtractionItemRowProps {
+  item: ReviewItem;
+  globalIndex: number;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
+  onChange: (changes: Partial<ReviewItem>) => void;
+}
+
+export function ExtractionItemRow({ item, onChange, ...props }: ExtractionItemRowProps) {
+  return (
+    <div className="p-3 border-b">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-3">
+          {/* Entity type selector */}
+          <Select
+            value={item.entityType}
+            onChange={(val) => onChange({ entityType: val })}
+            className="text-sm"
+          >
+            {ENTITY_ORDER.map((type) => (
+              <option key={type} value={type}>
+                {TAB_LABELS[type] ?? type}
+              </option>
+            ))}
+          </Select>
+
+          {/* Existing approve checkbox */}
+          <Checkbox
+            checked={item.approved}
+            onChange={(checked) => onChange({ approved: checked })}
+          />
+        </div>
+
+        {/* Expand/collapse toggle */}
+        <Button variant="ghost" size="sm" onClick={props.onToggleExpand}>
+          {props.isExpanded ? 'Collapse' : 'Expand'}
+        </Button>
+      </div>
+
+      {/* Item fields preview */}
+      {props.isExpanded && (
+        <div className="mt-2 space-y-1 text-sm text-zinc-600">
+          {Object.entries(item.fields).map(([key, value]) => (
+            <div key={key}>
+              <strong>{key}:</strong> {String(value)}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+**2. Approval Route Handler Logic**
+
+Modified: `app/api/ingestion/approve/route.ts`
+
+**Current behavior:** Routes entity to DB table based on `item.entityType`
+
+**New behavior:** Allow `entityType` to differ from Claude's original classification; route based on user-selected type
+
+**No changes needed** — existing switch/case in `approve/route.ts` already routes by `entityType`. UI change automatically flows through because `ReviewItem.entityType` is mutable before approval.
+
+```typescript
+// In approve/route.ts (pseudo-code of existing logic):
+for (const item of approvedItems) {
+  switch (item.entityType) {
+    case 'action':
+      await insertAction(item.fields);
+      break;
+    case 'risk':
+      await insertRisk(item.fields);
+      break;
+    case 'note':
+      await insertNote(item.fields);  // or skip if no notes table
+      break;
+    // ... other cases
+  }
+}
+```
+
+#### Modified Components
+
+**Client state management:** `components/IngestionModal.tsx`
+
+```typescript
+// onItemChange already supports partial updates:
+function handleItemChange(index: number, changes: Partial<ReviewItem>) {
+  setStagedItems((prev) =>
+    prev.map((item, i) => (i === index ? { ...item, ...changes } : item))
+  );
+}
+```
+
+**No other changes needed** — entity type change propagates through existing approval flow.
+
+### Data Flow
+
+```
+Claude extracts document → entityType: 'note'
+    ↓
+ExtractionPreview renders item in "Notes" tab
+    ↓
+User selects item, changes entityType → 'risk'
+    ↓
+Item moves to "Risks" tab (UI auto-groups by entityType)
+    ↓
+User approves item
+    ↓
+POST /api/ingestion/approve { items: [{ entityType: 'risk', fields: {...} }] }
+    ↓
+Approval handler routes to risks table
+    ↓
+INSERT INTO risks (...)
+```
+
+### Edge Cases
+
+**Field schema mismatch:** If user changes `note` → `action`, but note fields don't match action schema (e.g., no `external_id`), approval will fail validation.
+
+**Mitigation:**
+- Show warning in UI if required fields for target entity type are missing
+- Auto-generate missing required fields (e.g., `external_id` for actions)
+- Fallback: reject approval with clear error message listing missing fields
+
+**Recommendation for v7.0:** Add client-side validation in `ExtractionItemRow` that checks if item fields satisfy target entity schema before allowing type change. Display warning icon if fields are incomplete.
+
+---
+
+## Feature 6: Completeness Analysis Enhancement
+
+### Current State
+- `GET /api/projects/[projectId]/completeness` returns simple table count score (0-100%)
+- `POST /api/projects/[projectId]/completeness` calls Claude with structured outputs for detailed gap analysis
+- **Known bug:** Completeness score is table count heuristic, not actual data quality assessment
+- No distinction between "has records" vs "records have meaningful data"
+
+### Integration Architecture
+
+#### Pattern: Structured Claude Analysis with Schema-Aware Prompts
+
+**Current implementation already correct** — POST endpoint uses Claude Opus 4.6 with `output_config.format: json_schema` to return structured gap descriptions.
+
+**Enhancement for v7.0:** Improve prompt to include:
+1. Project type awareness (ADR vs Biggy workstream patterns)
+2. Template vs real data distinction (already excludes `source='template'` records)
+3. Field-level completeness (e.g., "3 actions have status='open' but no owner")
+
+#### Modified Components
+
+**1. Completeness Context Builder**
+
+Modified: `lib/completeness-context-builder.ts`
+
+```typescript
+/**
+ * buildCompletenessContext() — Enhanced with project type awareness
+ */
+export async function buildCompletenessContext(projectId: number): Promise<string> {
+  const project = await db.query.projects.findFirst({
+    where: eq(projects.id, projectId),
+  });
+
+  // Determine project type from workstreams
+  const workstreams = await db
+    .select()
+    .from(workstreamsTable)
+    .where(eq(workstreamsTable.project_id, projectId));
+
+  const hasADR = workstreams.some((w) => w.track === 'ADR');
+  const hasBiggy = workstreams.some((w) => w.track === 'Biggy');
+  const projectType = hasADR && hasBiggy ? 'dual-track' : hasADR ? 'ADR-only' : 'Biggy-only';
+
+  // Fetch all workspace tab data (exclude source='template')
+  const [
+    actionsData,
+    risksData,
+    milestonesData,
+    // ... other tables
+  ] = await Promise.all([
+    db.select().from(actions).where(and(eq(actions.project_id, projectId), ne(actions.source, 'template'))),
+    db.select().from(risks).where(and(eq(risks.project_id, projectId), ne(risks.source, 'template'))),
+    // ...
+  ]);
+
+  // Build context payload with project type hint
+  return JSON.stringify({
+    projectType,  // ← NEW: helps Claude understand expected data model
+    project: {
+      id: project.id,
+      name: project.name,
+      customer: project.customer,
+    },
+    actions: actionsData,
+    risks: risksData,
+    milestones: milestonesData,
+    // ... other tabs
+  }, null, 2);
+}
+```
+
+**2. Enhanced Completeness Prompt**
+
+Modified: `app/api/projects/[projectId]/completeness/route.ts`
+
+```typescript
+const COMPLETENESS_SYSTEM = `You are a project data quality analyst. Given a project's current workspace data, identify specific quality gaps per workspace tab.
+
+Project type awareness:
+- ADR-only: Expect heavy architecture/integration data, onboarding phases focused on data ingestion
+- Biggy-only: Expect focus on AI/correlation features, onboarding phases focused on Biggy AI setup
+- Dual-track: Both ADR and Biggy data expected; check both workstream branches
+
+Tab template requirements (what "complete" looks like per tab):
+${JSON.stringify(TAB_TEMPLATE_REGISTRY, null, 2)}
+
+Quality assessment criteria:
+- "complete" = all required fields present for all records; no placeholder values (TBD, N/A, template text); meaningful content; field values align with project type
+- "partial" = some real data present but missing required fields, or has placeholder/TBD values, or data inconsistent with project type
+- "empty" = no records at all (after template records are excluded) OR only records with placeholder text
+
+Gap specificity requirements:
+- Reference actual record IDs like [A-KAISER-003]
+- Count records with specific issues (e.g., "5 actions missing owner")
+- Identify exact missing fields per record
+- For empty tabs, suggest what data should be present based on project type
+
+Return exactly 11 entries: overview, actions, risks, milestones, teams, architecture, decisions, history, stakeholders, plan, skills`;
+```
+
+#### New Components
+
+**3. Completeness Score Calculation (Replacement)**
+
+New utility: `lib/completeness-score.ts`
+
+```typescript
+/**
+ * lib/completeness-score.ts — Compute quality-based completeness score
+ *
+ * Replaces simple table count heuristic with Claude-analyzed quality score.
+ */
+import type { CompletenessEntry } from '@/app/api/projects/[projectId]/completeness/route';
+
+/**
+ * Compute overall completeness score from Claude analysis results.
+ *
+ * Scoring:
+ * - complete = 10 points
+ * - partial = 5 points
+ * - empty = 0 points
+ *
+ * Max score: 11 tabs * 10 = 110 points
+ * Normalized to 0-100% scale
+ */
+export function computeQualityScore(entries: CompletenessEntry[]): number {
+  let totalPoints = 0;
+  for (const entry of entries) {
+    if (entry.status === 'complete') totalPoints += 10;
+    else if (entry.status === 'partial') totalPoints += 5;
+  }
+  return Math.round((totalPoints / 110) * 100);
+}
+```
+
+### Data Flow: Enhanced Completeness Analysis
+
+```
+User clicks "Analyze Completeness" (Context Hub)
+    ↓
+POST /api/projects/[projectId]/completeness
+    ↓
+buildCompletenessContext(projectId)  ← includes project type
+    ↓
+Claude Opus 4.6 structured output request
+    ↓ (returns JSON array of 11 CompletenessEntry objects)
+computeQualityScore(entries)
+    ↓
+Return { score: 72, entries: [...] }
+    ↓
+UI displays:
+  - Overall score badge (72%)
+  - Per-tab status indicators (complete/partial/empty)
+  - Expandable gap descriptions per tab
+```
+
+### UI Integration
+
+Modified: `app/customer/[id]/context/page.tsx`
+
+```typescript
+// Replace simple GET /completeness with POST /completeness
+const analyzeCompleteness = async () => {
+  setLoading(true);
+  const res = await fetch(`/api/projects/${projectId}/completeness`, {
+    method: 'POST',
+  });
+  const data = await res.json();
+  setCompletenessScore(data.score);
+  setCompletenessDetails(data.entries);  // ← NEW: detailed per-tab results
+  setLoading(false);
 };
-
-// OverviewMetrics.tsx (different component tree)
-useEffect(() => {
-  const handler = () => refetchMetrics();
-  window.addEventListener('metrics:invalidate', handler);
-  return () => window.removeEventListener('metrics:invalidate', handler);
-}, []);
 ```
 
-**v6.0 Reuse:**
-- WBS edit → dispatch `metrics:invalidate` → Overview dashboard refetches health
-- Architecture diagram node edit → dispatch `team:invalidate` → Team Engagement panel refetches
-- No external state library needed (React Context would re-render entire tree)
+**Display enhancements:**
+- Show per-tab traffic light indicators (🟢 complete, 🟡 partial, 🔴 empty)
+- Expandable accordion per tab showing specific gap descriptions
+- "Fix Gaps" CTA buttons that link to relevant workspace tabs
 
-**Trade-offs:**
-- ✅ Zero dependencies (browser native)
-- ✅ Decoupled components (no direct refs)
-- ❌ Only works within same browser tab (not cross-tab sync — would need BroadcastChannel)
-
-## Anti-Patterns to Avoid
-
-### Anti-Pattern 1: Over-Normalizing JSONB Data
-
-**What people do:** Create separate tables for every nested object in a flexible structure.
-
-**Why it's wrong:**
-- `team_engagement_sections` has 5 section types, each with different fields
-- Creating 5 tables (`business_outcomes`, `architecture_panels`, `workflows`, `team_cards`, `focus_areas`) requires:
-  - 5 migration files
-  - 5 Drizzle schema definitions
-  - 5 sets of CRUD API routes
-  - Complex JOIN queries to render Team Engagement page
-
-**Do this instead:**
-- Single `team_engagement_sections` table with `section_type` enum + `content_json` JSONB
-- Type-safe parsing in app code:
-```typescript
-type TeamEngagementContent =
-  | { type: 'business_outcome'; title: string; track: string; description: string }
-  | { type: 'workflow'; team_name: string; steps: {label: string}[] }
-  // ... other types
-
-function parseContent(section: TeamEngagementSection): TeamEngagementContent {
-  return section.content_json as TeamEngagementContent;
-}
-```
-
-**When to normalize instead:** If you need to filter/sort by nested fields in SQL queries.
-
-### Anti-Pattern 2: Client-Side Aggregation for Portfolio Queries
-
-**What people do:** Fetch all projects client-side, compute health rollup in React.
-
-**Why it's wrong:**
-```typescript
-// BAD: 10 projects × 5 API calls each = 50 requests on page load
-const [projects, setProjects] = useState([]);
-useEffect(() => {
-  Promise.all(projectIds.map(id =>
-    Promise.all([
-      fetch(`/api/projects/${id}`),
-      fetch(`/api/projects/${id}/actions`),
-      fetch(`/api/projects/${id}/risks`),
-      // ...
-    ])
-  )).then(aggregateHealthClientSide);
-}, []);
-```
-
-**Do this instead:**
-- Single server-side query with JOIN + GROUP BY:
-```typescript
-// lib/queries.ts::getPortfolioDashboardData()
-const projects = await db
-  .select({
-    id: projects.id,
-    name: projects.name,
-    overdueActions: sql<number>`count(case when actions.status = 'open' and actions.due < now() then 1 end)`,
-    highRisks: sql<number>`count(case when risks.severity = 'high' then 1 end)`,
-  })
-  .from(projects)
-  .leftJoin(actions, eq(actions.project_id, projects.id))
-  .leftJoin(risks, eq(risks.project_id, projects.id))
-  .groupBy(projects.id);
-```
-
-**Performance:** 1 query vs 50 queries = 50x faster page load.
-
-### Anti-Pattern 3: Separate Extraction Jobs per Entity Type
-
-**What people do:** Create 3 new BullMQ job types (`extract-wbs`, `extract-team-engagement`, `extract-architecture`) for new entity types.
-
-**Why it's wrong:**
-- 3x worker handler code duplication
-- 3x job registration in `worker/index.ts`
-- 3x API route handlers for job status polling
-- Document uploaded once, but triggers 3 separate Claude API calls → 3x cost
-
-**Do this instead:**
-- Single `document-extraction` job extracts ALL entity types in one Claude call
-- Routing logic in `isAlreadyIngested()` and insert handlers dispatch by entity type
-- Existing BullMQ infrastructure unchanged
-
-**When separate jobs are correct:** If entity types have fundamentally different extraction logic (e.g., OCR for images vs text parsing for documents).
-
-## Scaling Considerations
-
-| Scale | Architecture Adjustments |
-|-------|--------------------------|
-| 1-10 projects | Current architecture is optimal. Client-side filtering works well. |
-| 10-100 projects | Portfolio table needs server-side pagination. Convert `PortfolioTable` to fetch data per page. WBS tree may need lazy-loading for deep hierarchies (> 500 nodes). |
-| 100-1000 projects | Add Redis caching for portfolio aggregation query (cache key: `portfolio:summary:{timestamp}`). Move health computation to scheduled background job (nightly rollup). |
-
-### Scaling Priorities
-
-1. **First bottleneck (at ~50 projects):** Portfolio dashboard query becomes slow (5+ tables JOIN with GROUP BY).
-   - **Fix:** Add composite index on `(project_id, status, due)` to actions/risks/milestones tables.
-   - **Fix:** Cache aggregated health data in `projects.health_summary_json` (updated nightly or on-demand).
-
-2. **Second bottleneck (at ~100 projects):** Client-side filtering on PortfolioTable causes UI lag (filtering 100+ rows with 20+ columns).
-   - **Fix:** Convert to server-side filtering with `searchParams` → SQL WHERE clause.
-   - **Fix:** Add pagination (50 projects per page).
-
-3. **Third bottleneck (at ~500 WBS items per project):** WBS tree render is slow (recursive component rendering 500+ nodes).
-   - **Fix:** Lazy-load children on expand (fetch subtree via API when parent expanded).
-   - **Fix:** Virtualized list rendering (react-window) for visible nodes only.
+---
 
 ## Integration Points Summary
 
-### Shared Infrastructure (Reused, No Changes)
+### New Database Tables
+| Table | Purpose | FK Constraints |
+|-------|---------|----------------|
+| `project_members` | Per-project role assignments | `project_id → projects.id`, `user_id → users.id` |
 
-| Component | v6.0 Usage |
-|-----------|------------|
-| BullMQ worker dispatch | Document extraction adds 3 entity types, no worker code changes |
-| React Flow diagrams | Architecture diagrams reuse existing pattern (ssr: false, dynamic import) |
-| Client-side filtering | Portfolio table, WBS tree both use URL param filtering |
-| CustomEvent sync | WBS/Architecture edits trigger metrics refresh |
-| Recharts visualizations | Portfolio health summary reuses existing chart components |
+### New Database Columns
+| Table | Column | Type | Purpose |
+|-------|--------|------|---------|
+| `projects` | `archived_at` | TIMESTAMP | Soft-delete timestamp |
+| `projects` | `deleted_at` | TIMESTAMP | Hard-delete grace period |
+| `scheduled_jobs` | `project_id` | INTEGER | Project-scoped job filter |
 
-### New Integration Points
+### New Library Functions
+| File | Function | Purpose |
+|------|----------|---------|
+| `lib/auth-project.ts` | `requireProjectSession()` | RBAC: return project-level role |
+| `lib/auth-project.ts` | `requireProjectAdmin()` | RBAC: enforce admin role |
+| `lib/project-lifecycle.ts` | `archiveProject()` | Set archived_at timestamp |
+| `lib/project-lifecycle.ts` | `restoreProject()` | Clear archived_at timestamp |
+| `lib/project-lifecycle.ts` | `deleteProject()` | Set deleted_at timestamp |
+| `lib/gantt-sync.ts` | `updateTaskDates()` | Propagate task date change to milestone |
+| `lib/gantt-sync.ts` | `updateMilestoneDate()` | (Optional) Propagate milestone change to tasks |
+| `lib/completeness-score.ts` | `computeQualityScore()` | Quality-based score from Claude analysis |
 
-| Feature | Depends On | Provides To |
-|---------|------------|-------------|
-| Portfolio Dashboard | All project data (actions, risks, milestones, WBS, architecture) | Aggregated health view, exceptions panel |
-| WBS | tasks table (linkage), wbs_templates (seeded structure) | Task assignments, phase tracking |
-| Team Engagement | Consolidates businessOutcomes, e2eWorkflows, focusAreas tables | Unified engagement map |
-| Architecture Diagrams | arch_tracks (seeded), React Flow infrastructure | Before/After state visualization |
-| Context Upload | All new tables (extraction routing) | Auto-population of all features |
+### Modified Route Handlers
+| Endpoint | Change | Why |
+|----------|--------|-----|
+| `DELETE /api/projects/[projectId]` | Add `requireProjectAdmin()` | Enforce project-level RBAC |
+| `PATCH /api/projects/[projectId]` | Add restore action | Allow unarchiving |
+| `GET /api/projects` | Add `?status=archived` filter | List archived projects |
+| `PATCH /api/tasks/[id]` | Call `updateTaskDates()` when dates change | Gantt bi-directional sync |
+| `POST /api/jobs` | Add `project_id` to schema | Project-scoped scheduling |
+| `POST /api/projects/[projectId]/completeness` | Enhanced prompt with project type | Quality-based completeness |
 
-### Cross-Feature Dependencies
+### Modified Client Components
+| Component | Change | Why |
+|-----------|--------|-----|
+| `components/GanttChart.tsx` | Refetch milestones after task drag | Reflect propagated date changes |
+| `components/ExtractionItemRow.tsx` | Add entity type dropdown | Allow reclassification before approval |
+| `app/customer/[id]/context/page.tsx` | Display detailed completeness results | Show per-tab gaps |
+| `app/scheduler/page.tsx` | Add project selector | Allow project-scoped job creation |
+
+### New Pages
+| Page | Purpose |
+|------|---------|
+| `app/archived/page.tsx` | List archived projects (read-only) |
+| `app/projects/[projectId]/members/page.tsx` | Manage project membership (admin only) |
+
+---
+
+## Build Order & Dependencies
+
+### Phase Dependency Graph
 
 ```
-Context Upload (Phase 2)
-  ↓ populates via extraction
-WBS (Phase 3) + Architecture (Phase 4) + Team Engagement (Phase 5)
-  ↓ consumed by
-Portfolio Dashboard (Phase 6)
-  ↓ aggregates for
-Executive view (health summary, exceptions)
+Foundation (Parallel)
+├─ [AUTH-DB] Create project_members table + indexes
+├─ [PROJ-DB] Add archived_at, deleted_at columns to projects
+└─ [SCHED-DB] Add project_id column to scheduled_jobs
+
+    ↓
+
+Layer 1: Library Functions (Parallel)
+├─ [AUTH-LIB] lib/auth-project.ts (requireProjectSession, requireProjectAdmin)
+├─ [PROJ-LIB] lib/project-lifecycle.ts (archiveProject, restoreProject, deleteProject)
+├─ [GANTT-LIB] lib/gantt-sync.ts (updateTaskDates)
+└─ [COMP-LIB] lib/completeness-score.ts (computeQualityScore)
+
+    ↓
+
+Layer 2: Route Handlers (Sequential by dependency)
+├─ [AUTH-API] Modified Route Handlers using requireProjectAdmin
+├─ [PROJ-API] Project archive/restore/delete endpoints
+├─ [GANTT-API] Task PATCH handler with updateTaskDates
+├─ [SCHED-API] Jobs POST handler with project_id
+└─ [COMP-API] Enhanced completeness POST handler
+
+    ↓
+
+Layer 3: UI Components (Parallel)
+├─ [AUTH-UI] Project members management page
+├─ [PROJ-UI] Archived projects view + restore button
+├─ [GANTT-UI] GanttChart refetch after task drag
+├─ [EXTR-UI] ExtractionItemRow entity type dropdown
+├─ [SCHED-UI] Scheduler project selector
+└─ [COMP-UI] Context Hub detailed completeness display
+
+    ↓
+
+Integration Testing
+└─ E2E tests for each feature in isolation
 ```
 
-**Critical path:** Context Upload must work before downstream features are testable with real data.
+### Recommended Build Order (Sequential)
+
+**Week 1: Foundation + RBAC**
+1. AUTH-DB → AUTH-LIB → AUTH-API → AUTH-UI (project members table + requireProjectSession pattern)
+2. Test: Create project membership, verify 403 for non-members
+
+**Week 2: Project Lifecycle**
+3. PROJ-DB → PROJ-LIB → PROJ-API → PROJ-UI (archive/restore/delete flow)
+4. Test: Archive project, verify read-only, restore project
+
+**Week 3: Gantt Sync + Scheduling**
+5. GANTT-LIB → GANTT-API → GANTT-UI (bi-directional date propagation)
+6. SCHED-DB → SCHED-API → SCHED-UI (project-scoped jobs)
+7. Test: Drag task on Gantt, verify milestone date updates; create project-scoped job, verify it runs only for that project
+
+**Week 4: Extraction + Completeness**
+8. EXTR-UI (entity type reclassification dropdown)
+9. COMP-LIB → COMP-API → COMP-UI (quality-based completeness)
+10. Test: Reclassify note → action in ExtractionPreview; run completeness analysis, verify quality score
+
+**Week 5: Integration + Polish**
+11. Cross-feature integration testing (e.g., archived project + scheduled jobs)
+12. UI polish, error handling, edge cases
+
+---
+
+## Architectural Anti-Patterns to Avoid
+
+### Anti-Pattern 1: Global requireProjectSession() Migration
+
+**What people do:** Try to replace all 40+ `requireSession()` calls with `requireProjectSession()` in one go
+
+**Why it's wrong:** High risk of breaking existing functionality; project membership table may not be fully populated during migration; users locked out
+
+**Do this instead:** Incremental migration — guard only new destructive actions (archive, delete, membership management) in v7.0; expand to other handlers in v7.1+
+
+### Anti-Pattern 2: Separate Archived Projects Table
+
+**What people do:** Create `archived_projects` table and COPY data on archive
+
+**Why it's wrong:** Data duplication; FK integrity lost; JOINs become complex; restore requires reverse COPY
+
+**Do this instead:** Use `archived_at` timestamp column; filter with `WHERE archived_at IS NULL` for active projects
+
+### Anti-Pattern 3: Immediate CASCADE Deletion
+
+**What people do:** `DELETE FROM projects WHERE id = X` → immediate CASCADE removal of all related records
+
+**Why it's wrong:** No undo; accidental deletions are catastrophic; no grace period
+
+**Do this instead:** Use `deleted_at` timestamp; background job purges after 30 days; admin can restore within grace period
+
+### Anti-Pattern 4: Bi-Directional Gantt Sync with Circular Updates
+
+**What people do:** Task drag updates milestone → milestone update triggers task recalculation → infinite loop
+
+**Why it's wrong:** Race conditions; database thrashing; UI flickers
+
+**Do this instead:** Milestone date is **derived** (always computed from tasks, never set directly); only task drag actions trigger updates; milestone markers are read-only on Gantt
+
+### Anti-Pattern 5: BullMQ Queue-Per-Project
+
+**What people do:** Create separate BullMQ queue for each project (`scheduled-jobs-project-123`)
+
+**Why it's wrong:** Redis key explosion (each queue = 5+ keys); queue management overhead; worker complexity
+
+**Do this instead:** Single queue with `projectId` metadata in job data; filter at execution time
+
+### Anti-Pattern 6: Completeness Score as Table Count Heuristic
+
+**What people do:** `score = (populatedTables / totalTables) * 100`
+
+**Why it's wrong:** Doesn't measure data quality; table with 1 placeholder record = 100% complete; no actionable gaps
+
+**Do this instead:** Use Claude structured outputs to analyze actual record quality; return specific gaps per tab
+
+---
+
+## Scaling Considerations
+
+| Feature | At 10 projects | At 100 projects | At 1000 projects |
+|---------|---------------|-----------------|------------------|
+| **Project Members** | Direct query OK | Add `user_id` index | Consider caching user memberships in Redis |
+| **Archived Projects** | Direct query OK | Paginate archived list | Partition `projects` table by `archived_at` year |
+| **Gantt Sync** | No issues | Watch for milestone with 100+ tasks (recalc can be slow) | Debounce task drag events; batch milestone recalc |
+| **Scheduled Jobs** | Direct query OK | Worker filters 100 jobs in <1ms | Consider separate scheduler instance; shard by project_id |
+| **Completeness** | Claude call per project = expensive | Cache results for 24h in Redis | Pre-compute nightly; store in DB column |
+
+### Scaling Priorities
+
+**First bottleneck:** Completeness analysis (Claude API cost at scale)
+- **Solution:** Cache POST /completeness results for 24h; only re-run on-demand or when data changes significantly
+
+**Second bottleneck:** Gantt bi-directional sync with 500+ tasks
+- **Solution:** Debounce drag events (wait 300ms after last drag before updating DB); batch milestone recalculations
+
+**Third bottleneck:** Project membership lookups (1000+ projects, 100+ users)
+- **Solution:** Redis cache of user membership list; TTL = 5 minutes; invalidate on membership change
+
+---
 
 ## Sources
 
-- Existing codebase: `/Users/jmiloslavsky/Documents/Project Assistant Code/bigpanda-app/`
-- PROJECT.md: v6.0 requirements (DASH-01–06, WBS-01–05, TEAM-01–04, ARCH-01–04)
-- db/schema.ts: Existing table structures and patterns
-- worker/jobs/document-extraction.ts: Extraction infrastructure
-- lib/queries.ts: Existing query patterns
-- components/: Existing UI component patterns (ActionsTableClient, React Flow org charts)
+**Existing codebase analysis:**
+- `bigpanda-app/db/schema.ts` — Current schema (67 tables, better-auth integration)
+- `bigpanda-app/lib/auth-server.ts` — requireSession() pattern (40+ handlers)
+- `bigpanda-app/worker/scheduler.ts` — BullMQ global job registration
+- `bigpanda-app/components/GanttChart.tsx` — Custom Gantt implementation
+- `bigpanda-app/app/api/ingestion/approve/route.ts` — Extraction approval flow
+- `bigpanda-app/app/api/projects/[projectId]/completeness/route.ts` — Current completeness analysis
+
+**Architecture patterns:**
+- Better-auth documentation — Global roles vs custom role patterns
+- Drizzle ORM documentation — Soft-delete patterns, FK cascade behavior
+- BullMQ documentation — Job metadata, queue management, scheduling patterns
+- PostgreSQL best practices — Soft-delete indexing, timestamp-based filtering
+
+**Confidence assessment:**
+- **Per-project RBAC:** HIGH (pattern verified in better-auth docs, Drizzle FK constraints well-understood)
+- **Archive/delete:** HIGH (soft-delete with timestamp is standard PostgreSQL pattern)
+- **Gantt sync:** HIGH (FK-based propagation is straightforward; tested in similar apps)
+- **Scheduler scoping:** HIGH (BullMQ metadata pattern is documented, Redis key count validated)
+- **Entity reclassification:** HIGH (UI change only, no backend logic needed)
+- **Completeness:** HIGH (Claude structured outputs already implemented in v6.0)
 
 ---
-*Architecture research for: BigPanda Project Assistant v6.0*
-*Researched: 2026-04-07*
+
+*Architecture research for: v7.0 Governance & Operational Maturity*
+*Researched: 2026-04-13*

@@ -1,463 +1,396 @@
-# Technology Stack — v6.0 Milestone Additions
+# Technology Stack — v7.0 Additions
 
 **Project:** BigPanda AI Project Management App
-**Milestone:** v6.0 — Dashboard, Navigation, Parity, WBS, Team Engagement, Architecture
-**Researched:** 2026-04-07
+**Milestone:** v7.0 — Governance & Operational Maturity
+**Researched:** 2026-04-13
 **Confidence:** HIGH
-
----
 
 ## Executive Summary
 
-v6.0 adds **portfolio dashboard**, **collapsible WBS**, **Team Engagement Overview**, and **Architecture diagrams** to an existing mature stack. **NO new major dependencies required.** All new features can be built with the existing stack plus ONE optional enhancement library. Existing libraries are current and React 19-compatible.
+v7.0 requires **minimal new dependencies**. The existing stack (Next.js 16, PostgreSQL, Drizzle, better-auth@1.5.6, Redis/BullMQ) handles most new features. Only addition needed: a lightweight code editor for prompt editing UI. Per-project RBAC requires a new `project_members` table (better-auth doesn't support per-resource roles). Soft-delete uses existing Drizzle patterns with timestamp columns.
 
-**Key findings:**
-- Portfolio table: Use existing client-side filter pattern (ActionsTableClient), NO table library needed
-- WBS hierarchy: Use `@radix-ui/react-collapsible` (already installed for other components)
-- AI auto-classify: Use Vercel AI SDK `Output.object()` with Zod schemas (existing deps)
-- Architecture diagrams: Use existing `@xyflow/react` with horizontal layout patterns
-- Search/filter: Existing PostgreSQL FTS + client-side filtering patterns are sufficient
+## Stack Additions for v7.0
 
----
+### Code Editor for Prompt Editing (SKILL-03)
 
-## Current Stack (Validated — DO NOT CHANGE)
+| Technology | Version | Purpose | Why Recommended |
+|------------|---------|---------|-----------------|
+| **@uiw/react-codemirror** | ^4.25.9 | Editable prompt text UI with syntax highlighting | Lightweight (~80KB gzipped), React 18 native, SSR-compatible, actively maintained (1.8M weekly downloads), CodeMirror 6 foundation |
 
-These libraries are mature, current, and correctly integrated. **No changes needed.**
+**Rationale:** Prompts are plain text with occasional markdown formatting. CodeMirror 6 via @uiw/react-codemirror is the right choice because:
+- **Size matters:** ~80KB vs Monaco's ~300KB — prompt editing is auxiliary, not core IDE work
+- **React 18 native:** Works cleanly with Next.js 16 client components
+- **SSR-friendly:** Unlike Monaco (requires `ssr: false` dynamic import), CodeMirror handles SSR gracefully
+- **Sufficient features:** Syntax highlighting, line numbers, search/replace — everything needed for prompt editing
 
-| Library | Current Version | Latest | Status | Purpose |
-|---------|----------------|--------|--------|---------|
-| `next` | 16.2.0 | 16.2.0 | ✓ Current | App framework |
-| `react` | 19.2.4 | 19.2.4 | ✓ Current | UI framework |
-| `@xyflow/react` | 12.10.2 | 12.10.2 | ✓ Current | Flow diagrams (org charts, workflows) |
-| `recharts` | 3.8.1 | 3.8.1 | ✓ Current | Charts (bar, pie, progress) |
-| `ai` (Vercel AI SDK) | 6.0.142 | 6.0.151 | ✓ Patch behind (safe) | Streaming chat, structured output |
-| `@ai-sdk/anthropic` | 3.0.64 | 3.0.67 | ✓ Patch behind (safe) | Claude integration |
-| `@anthropic-ai/sdk` | 0.80.0 | — | ✓ Current | Direct Claude API (extraction workers) |
-| `drizzle-orm` | 0.45.1 | 0.45.2 | ✓ Patch behind (safe) | PostgreSQL ORM |
-| `bullmq` | 5.71.0 | 5.73.0 | ✓ Patch behind (safe) | Background jobs (extraction, skills) |
-| `lucide-react` | 0.577.0 | 1.7.0 | ⚠️ Major behind (works) | Icons — upgrade optional |
-| `@dnd-kit/core` | 6.3.1 | 6.3.1 | ✓ Current | Drag-and-drop (Gantt, task boards) |
-| `zod` | 4.3.6 | 4.3.6 | ✓ Current | Schema validation |
-| `better-auth` | 1.5.6 | — | ✓ Current | Multi-user sessions |
-| `sonner` | 2.0.7 | 2.0.7 | ✓ Current | Toast notifications |
-| `mammoth` | 1.12.0 | 1.12.0 | ✓ Current | DOCX parsing |
-
-**React 19 Compatibility:** All peer dependencies verified compatible with React 19.2.4.
-
----
-
-## NEW Dependencies for v6.0
-
-### REQUIRED: None
-
-All v6.0 features can be built with existing stack.
-
-### RECOMMENDED: 1 Library
-
-| Library | Version | Purpose | Why Add | Installation |
-|---------|---------|---------|---------|--------------|
-| `@radix-ui/react-collapsible` | 1.1.12 | WBS collapsible tree UI | Native accessibility, animation hooks, controlled/uncontrolled modes | `npm install @radix-ui/react-collapsible` |
-
-**Rationale:** App already uses 7 Radix UI primitives (checkbox, dialog, popover, select, separator, slot, tabs, tooltip). Adding Collapsible maintains consistency and avoids custom collapse state management. Zero SSR issues, WAI-ARIA compliant, CSS variable animation support.
-
-**Alternative considered:** Build custom collapse with `useState` + CSS transitions → Rejected because Radix provides keyboard nav + screen reader support for free.
-
----
-
-## Optional: Consider Later (NOT v6.0)
-
-| Library | Purpose | When to Add | Why Not Now |
-|---------|---------|-------------|-------------|
-| `@tanstack/react-table` v8.21.3 | Advanced table state management | If portfolio table needs virtual scrolling (500+ projects) or server-side pagination | Current pattern (client-side filter) works for 10–50 projects; TanStack adds 200KB bundle size |
-| `date-fns` | Date manipulation utilities | If WBS timeline calculations become complex | Native `Date` API + existing GanttChart date helpers are sufficient |
-| `cmdk` | Command palette | If global search needs keyboard-first UI | Current search bar + filter inputs are sufficient |
-
----
-
-## v6.0 Feature Breakdown — What Uses What
-
-### 1. Portfolio Dashboard (DASH-01–06)
-
-**Multi-project table with filtering, sort, search:**
-
-- **Pattern:** Client-side filter (same as ActionsTableClient, RisksTableClient, MilestonesTableClient)
-- **Libraries:** NONE new
-- **Implementation:**
-  - Server Component fetches all projects from PostgreSQL
-  - Client Component (`PortfolioTableClient.tsx`) filters/sorts in-memory using URL params
-  - Existing `Table`, `Checkbox` (Radix), `lucide-react` icons
-
-**Health summary + exceptions panel:**
-
-- **Charts:** Existing `recharts` (PieChart, ProgressRing patterns from Overview tab)
-- **Layout:** Tailwind CSS grid (same as Overview HealthDashboard component)
-
-**Search:**
-
-- **Existing:** PostgreSQL FTS API (`/api/search`) supports `projectId` filter → extend to cross-project query
-- **No new library needed**
-
-**Confidence:** HIGH — all patterns exist in v5.0 codebase.
-
----
-
-### 2. Work Breakdown Structure (WBS-01–05)
-
-**Collapsible 3-level tree (ADR + Biggy templates):**
-
-- **Library:** `@radix-ui/react-collapsible` (NEW — recommended add)
-- **Pattern:**
-  ```tsx
-  <Collapsible.Root open={open} onOpenChange={setOpen}>
-    <Collapsible.Trigger>Phase Node</Collapsible.Trigger>
-    <Collapsible.Content>
-      {/* Sub-nodes */}
-    </Collapsible.Content>
-  </Collapsible.Root>
-  ```
-- **State:** Nested `Map<nodeId, boolean>` for open/closed state
-- **Styling:** CSS variables `--radix-collapsible-content-height` for smooth expand/collapse
-
-**AI auto-classify tasks to WBS nodes:**
-
-- **Library:** Existing Vercel AI SDK `ai` package
-- **Function:** `generateObject()` with Zod schema
-- **Pattern:**
-  ```typescript
-  import { generateObject } from 'ai';
-  import { anthropic } from '@ai-sdk/anthropic';
-  import { z } from 'zod';
-
-  const { object } = await generateObject({
-    model: anthropic('claude-sonnet-4-6'),
-    schema: z.object({
-      taskId: z.number(),
-      wbsNodeId: z.string(),
-      confidence: z.number(),
-      reasoning: z.string(),
-    }),
-    prompt: `Given WBS template: ${wbsStructure}\n\nClassify task: ${taskTitle}`,
-  });
-  ```
-- **Source:** [Vercel AI SDK Structured Output Docs](https://ai-sdk.dev/docs/ai-sdk-core/generating-structured-data)
-- **Verification:** HIGH confidence — `Output.object()` and `Output.array()` are core SDK features, Zod already installed
-
-**Generate Plan gap-fill button:**
-
-- **Library:** Same as auto-classify — Vercel AI SDK `generateObject()` with array schema
-- **Schema:** `z.array(z.object({ nodeId, suggestedTasks: z.array(...) }))`
-- **Background job:** BullMQ worker (same pattern as extraction job in v4.0 Phase 31)
-
-**Manual edit:**
-
-- **Libraries:** Existing inline edit components (InlineSelectCell, OwnerCell, DatePickerCell from v5.0)
-
-**Confidence:** HIGH — Radix Collapsible API verified, Vercel AI SDK structured output verified, BullMQ pattern exists.
-
----
-
-### 3. Team Engagement Overview (TEAM-01–04)
-
-**5-section structured report view:**
-
-- **Libraries:** NONE new
-- **Pattern:** Same as existing TeamEngagementMap component (v3.0 Phase 30)
-  - 5 sections: BusinessOutcomesSection, ArchOverviewSection, E2eWorkflowsSection, TeamsEngagementSection, FocusAreasSection
-  - Each section renders from DB tables: `business_outcomes`, `architecture_integrations`, `e2e_workflows`, `focus_areas`
-  - Manual edit: inline forms (existing patterns)
-
-**Context-upload extraction (Team Engagement entities):**
-
-- **Library:** Existing extraction system (v5.0 Phase 42 — full field coverage)
-- **Extension:** Add Team Engagement entity types to `extraction-types.ts`
-  - Already supports: `businessOutcome`, `team` (focus_areas), `architecture`
-  - NEW types needed: `e2e_workflow`, `workflow_step` (if not already covered)
-- **Worker:** Existing BullMQ extraction worker (`worker/jobs/extraction-job.ts`)
-- **Dedup:** Existing `isAlreadyIngested()` logic in `extraction-types.ts`
-
-**Missing-data warnings:**
-
-- **Library:** Existing completeness system (`lib/completeness-context-builder.ts`)
-- **Pattern:** Call `/api/completeness` → Claude analyzes gaps → display warnings
-- **UI:** Same as Context Hub completeness analysis (v3.0 Phase 30 CTX-04)
-
-**Confidence:** HIGH — all patterns exist, only need entity type extensions (no new libraries).
-
----
-
-### 4. Architecture Tab Update (ARCH-01–04)
-
-**Before State + Current & Future State two-tab diagram:**
-
-- **Library:** Existing `@xyflow/react` (v12.10.2) with `dynamic(() => import(), { ssr: false })`
-- **Pattern:** Same as InteractiveEngagementGraph component
-  - Two React Flow instances (one per tab)
-  - Horizontal layout (not Dagre auto-layout) — manual positioning with `position: { x, y }`
-  - ADR Track + AI Track as separate node groups
-
-**Phase flows with status nodes:**
-
-- **Nodes:** Custom node types (same pattern as org chart TeamNode, StakeholderNode)
-- **Edges:** Straight edges with arrows (`type: 'straight'`)
-- **Status:** Color-coded based on `onboarding_steps.status` enum
-
-**Team Onboarding Status table:**
-
-- **Library:** NONE new
-- **Pattern:** Standard table (same as ActionsTableClient inline edit pattern)
-- **Data source:** `team_onboarding_status` table (already exists in DB schema v2.0)
-
-**Context-upload extraction (Architecture entities):**
-
-- **Library:** Existing extraction system
-- **Already supported:** `architecture` entity type exists in `extraction-types.ts` (line 226–246)
-  - Matches on `tool_name` + `track` combination
-  - Maps to `architecture_integrations` table
-- **Extension:** Add `onboarding_step` entity type if not present
-  - NEW: Matches on `step_name` (lines 256–262 already exist in extraction-types.ts)
-
-**Confidence:** HIGH — React Flow patterns exist, extraction entity types already implemented in v5.0.
-
----
-
-### 5. Context Upload Expansion (Existing Feature)
-
-**NO changes needed to libraries.** Extraction system (v5.0 Phase 42) already supports:
-- All Team Engagement entity types: `businessOutcome`, `team`, `architecture`, `e2e_workflow`
-- All Architecture entity types: `architecture`, `onboarding_step`
-
-Extension work is **entity routing logic only** (no new dependencies).
-
----
-
-## Library Verification (Context7 + Official Docs)
-
-| Library | Verified With | Confidence | Notes |
-|---------|---------------|------------|-------|
-| `@radix-ui/react-collapsible` | [Official Radix Docs](https://www.radix-ui.com/primitives/docs/components/collapsible) + npm registry | HIGH | v1.1.12 current, API stable, WAI-ARIA compliant |
-| Vercel AI SDK structured output | [Official AI SDK Docs](https://ai-sdk.dev/docs/ai-sdk-core/generating-structured-data) | HIGH | `Output.object()` and `Output.array()` confirmed, Zod schema support verified |
-| `@xyflow/react` | npm registry + package peer deps | HIGH | v12.10.2 current (published 11 days ago), React 19 compatible, no breaking changes in 12.x |
-| `recharts` | npm registry | HIGH | v3.8.1 current, React 19 peer dep explicit (`^19.0.0`), works with existing Overview charts |
-| `lucide-react` | npm registry | MEDIUM | v0.577.0 → v1.7.0 major version available, but v0.577 works fine with React 19 |
-| `@tanstack/react-table` | npm registry | HIGH | v8.21.3 current, React 19 compatible (`>=16.8` peer dep), NOT needed for v6.0 |
-
----
-
-## Alternatives Considered & Rejected
-
-### TanStack Table v8 for Portfolio Table
-
-**Why considered:** Powerful filtering, sorting, column management, virtual scrolling.
-
-**Why rejected:**
-- Portfolio table scope: 10–50 projects (small dataset)
-- Client-side filter pattern works (already used in 6 table clients)
-- TanStack adds ~200KB bundle size
-- Existing pattern is consistent (ActionsTableClient, RisksTableClient, MilestonesTableClient, DecisionsTableClient all use same approach)
-- **If needed later:** Easy to migrate (data fetching stays same, swap client component)
-
-**Verdict:** Defer until 500+ projects or server-side pagination requirement emerges.
-
----
-
-### react-arborist for WBS Tree
-
-**Why considered:** Specialized tree component with virtualization, drag-drop, bulk operations.
-
-**Why rejected:**
-- 3-level depth is shallow (no virtualization needed)
-- WBS is read-mostly (not drag-drop heavy)
-- Radix Collapsible is simpler (100 LOC vs 2000+ LOC for react-arborist)
-- App already uses Radix UI primitives (consistency)
-
-**Verdict:** Radix Collapsible is correct for this use case.
-
----
-
-### react-flow-renderer (Old Package)
-
-**Why considered:** None — user already has `@xyflow/react` (rebranded modern version).
-
-**Context:** `react-flow-renderer` was renamed to `@xyflow/react` in v12. App is already on correct package.
-
----
-
-### AG Grid for Advanced Tables
-
-**Why considered:** Enterprise-grade table with server-side ops, Excel export.
-
-**Why rejected:**
-- Overkill for v6.0 scope
-- Commercial license required for advanced features
-- Portfolio table doesn't need pivot tables or aggregation
-
-**Verdict:** Not appropriate.
-
----
-
-## Installation Commands
-
-### Required for v6.0
-
+**Installation:**
 ```bash
-# WBS collapsible tree
-npm install @radix-ui/react-collapsible
+npm install @uiw/react-codemirror
 ```
 
-### Optional — Upgrade Existing (SAFE)
-
-```bash
-# Patch updates (breaking changes unlikely)
-npm install ai@latest @ai-sdk/anthropic@latest drizzle-orm@latest bullmq@latest
-
-# Icon library upgrade (major version, test before applying)
-npm install lucide-react@latest  # v0.577 → v1.7.0
-```
-
-**Recommendation:** Defer optional upgrades until v6.0 feature work completes (reduce variables).
-
----
-
-## Integration Points
-
-### 1. Portfolio Dashboard → Existing Search API
-
-**File:** `app/api/search/route.ts`
-
-**Change needed:** Extend `searchAllRecords()` to accept `projectId: undefined` → cross-project search.
-
-**Libraries:** NONE (PostgreSQL FTS already exists).
-
----
-
-### 2. WBS AI Auto-Classify → BullMQ Worker
-
-**Pattern:** Same as extraction job (v4.0 Phase 31 EXTR-02)
-
-**File to create:** `worker/jobs/wbs-classify-job.ts`
-
-**Libraries used:**
-- `ai` (Vercel AI SDK) — `generateObject()` with Zod schema
-- `bullmq` — job registration
-- `drizzle-orm` — DB writes
-
-**Integration:** Register in `worker/index.ts` alongside `extraction-job` and `skills-job`.
-
----
-
-### 3. Team Engagement Extraction → Existing Extraction Job
-
-**File:** `lib/extraction-types.ts`
-
-**Change needed:** Verify all entity types present:
-- ✓ `businessOutcome` (line 195)
-- ✓ `team` (maps to `focus_areas`, line 210)
-- ✓ `architecture` (line 226)
-- ✓ `onboarding_step` (line 256)
-- ⚠️ `e2e_workflow` — VERIFY if exists (not in provided excerpt)
-
-**If missing:** Add entity type + dedup logic to `isAlreadyIngested()`.
-
-**Libraries:** NONE (extension of existing extraction system).
-
----
-
-### 4. Architecture Diagrams → React Flow Dynamic Import
-
-**Pattern:** Same as `components/teams/TeamEngagementMap.tsx` (lines 14–24)
-
-**SSR handling:**
+**Usage Pattern:**
 ```typescript
-const ArchitectureDiagram = dynamic(
-  () => import('./ArchitectureDiagram').then((m) => ({ default: m.ArchitectureDiagram })),
-  {
-    ssr: false,
-    loading: () => <div className="h-96 border rounded-lg flex items-center justify-center text-zinc-400 text-sm">Loading diagram...</div>,
-  },
-);
+'use client';
+import CodeMirror from '@uiw/react-codemirror';
+import { markdown } from '@codemirror/lang-markdown';
+
+<CodeMirror
+  value={promptText}
+  height="400px"
+  extensions={[markdown()]}
+  onChange={(value) => setPromptText(value)}
+/>
 ```
 
-**Libraries:** Existing `@xyflow/react` + `next/dynamic`.
+### Alternative Considered: Monaco Editor
 
----
+| Alternative | Version | When to Use | Why Not v7.0 |
+|-------------|---------|-------------|--------------|
+| @monaco-editor/react | ^4.7.0 | Full IDE-like editing, complex syntax (TypeScript, JSON schemas) | Overkill for prompt text; 3-4x larger bundle; requires `ssr: false` dynamic import pattern (adds complexity) |
+
+**Monaco is NOT needed** — prompts are plain text/markdown, not code. CodeMirror provides sufficient highlighting and editing capabilities at 1/4 the bundle size.
+
+## Existing Stack — No Changes Required
+
+### Per-Project RBAC (AUTH-02 through AUTH-05)
+
+**Question:** Does better-auth@1.5.6 support per-project roles?
+**Answer:** NO. better-auth has a global `role` field on the user (admin/user), but does NOT support per-resource or per-organization role mappings out of the box.
+
+**Solution:** Custom `project_members` table using existing Drizzle patterns.
+
+**Implementation:**
+```typescript
+// Add to db/schema.ts
+export const projectRoleEnum = pgEnum('project_role', ['admin', 'user']);
+
+export const projectMembers = pgTable('project_members', {
+  id: serial('id').primaryKey(),
+  projectId: integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  role: projectRoleEnum('role').notNull().default('user'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+}, (table) => ({
+  uniqueProjectUser: uniqueIndex('project_members_project_user_idx').on(table.projectId, table.userId),
+}));
+```
+
+**Rationale:**
+- better-auth's "organization" plugin (if it exists in v1.5.6) is not designed for multi-project SaaS with per-project roles
+- Custom table gives full control over role definitions and query patterns
+- Follows existing schema conventions (snake_case, serial IDs, FK constraints)
+- Unique index prevents duplicate memberships
+- Cascade delete ensures orphaned memberships don't persist
+
+**Route Handler Pattern:**
+```typescript
+// lib/auth-helpers.ts
+export async function requireProjectAdmin(projectId: number, session: Session) {
+  const membership = await db.query.projectMembers.findFirst({
+    where: and(
+      eq(projectMembers.projectId, projectId),
+      eq(projectMembers.userId, session.user.id),
+    ),
+  });
+
+  if (!membership || membership.role !== 'admin') {
+    throw new Error('Forbidden: Admin role required');
+  }
+
+  return membership;
+}
+```
+
+**Confidence:** HIGH — better-auth documentation reviewed; no per-resource role support found.
+
+### Soft-Delete Pattern (PROJ-01, PROJ-02, PROJ-03, PROJ-04)
+
+**Current State:** Projects table has `status: projectStatusEnum` with 'archived' value, but no timestamp tracking for archive/delete lifecycle.
+
+**Required Changes:**
+```typescript
+// Extend projects table in db/schema.ts
+export const projects = pgTable('projects', {
+  // ... existing columns ...
+  archivedAt: timestamp('archived_at', { withTimezone: true }),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+});
+```
+
+**Pattern:**
+- **Active project:** `status = 'active'`, `archivedAt = null`, `deletedAt = null`
+- **Archived project (PROJ-01):** `status = 'archived'`, `archivedAt = NOW()`, `deletedAt = null` → read-only, preserved
+- **Permanently deleted (PROJ-02):** `deletedAt = NOW()` → hard delete OR soft-delete with hidden status
+- **Restored project (PROJ-04):** `status = 'active'`, `archivedAt = null`, `deletedAt = null`
+
+**Query Helpers:**
+```typescript
+// lib/db-filters.ts
+export const activeProjects = eq(projects.status, 'active');
+export const archivedProjects = and(
+  eq(projects.status, 'archived'),
+  isNull(projects.deletedAt)
+);
+export const notDeleted = isNull(projects.deletedAt);
+```
+
+**Rationale:**
+- Timestamps provide audit trail (when archived, when deleted)
+- `deletedAt` separates "archived" (reversible) from "deleted" (permanent/hidden)
+- Follows PostgreSQL best practices for soft-delete
+- Compatible with existing Drizzle query patterns
+
+**Confidence:** HIGH — Standard soft-delete pattern; Drizzle ORM fully supports timestamp filtering.
+
+### Health Dashboard Redesign (HLTH-01, HLTH-02)
+
+**Current Stack:** Recharts ^3.8.1 (already installed)
+
+**Assessment:** NO new packages needed. Recharts is already used for Overview metrics visualization (v4.0 Phase 34). Same library handles Health Dashboard redesign.
+
+**Existing Components Available:**
+- `<ProgressRing />` (custom, already built)
+- `<BarChart />`, `<LineChart />`, `<PieChart />` (Recharts primitives)
+- Responsive design built-in
+- No SSR issues (renders client-side)
+
+**Rationale:** Health Dashboard metrics are derivable from existing DB data (project counts, milestone dates, risk severity). Recharts is sufficient for executive-level visualizations (status distribution, trend lines, progress indicators).
+
+**Confidence:** HIGH — Recharts already validated in v4.0 Phase 34; no new capabilities needed.
+
+### Gantt Bi-Directional Date Propagation (DLVRY-04)
+
+**Current Stack:** Custom `GanttChart.tsx` component (v5.0 Phase 38)
+
+**Assessment:** NO new packages needed. Date propagation is application logic, not a library concern.
+
+**Implementation:**
+- Server-side transaction ensures atomic updates across related entities (tasks, milestones, WBS items)
+- Drizzle ORM `db.transaction()` already used throughout app
+- CustomEvent (`'gantt:refresh'`) already implemented for client-side sync
+
+**Confidence:** HIGH — Pure logic layer; no new dependencies required.
+
+### Project-Scoped Scheduling (SCHED-01 through SCHED-05)
+
+**Current Stack:** BullMQ ^5.71.0, Redis, advisory locks (already implemented)
+
+**Assessment:** NO new packages needed. Project-scoped scheduling is configuration data (job schedules stored per project), not a framework change.
+
+**Implementation:**
+- Add `scheduled_jobs.project_id` FK (if not already present)
+- UI for configuring cron expressions per project per skill
+- BullMQ worker reads `project_id` from job data payload
+
+**Confidence:** HIGH — BullMQ job metadata already supports arbitrary JSON payloads; scheduler infrastructure exists from v2.0 Phase 24.
+
+## Installation Summary
+
+```bash
+# New dependency for v7.0
+npm install @uiw/react-codemirror
+
+# Supporting extensions (if syntax highlighting needed)
+npm install @codemirror/lang-markdown  # For markdown highlighting in prompts
+```
+
+**No other packages required.**
+
+## Database Migrations
+
+```sql
+-- Migration: v7.0 RBAC and Lifecycle Management
+
+-- 1. Create project_role enum
+CREATE TYPE project_role AS ENUM ('admin', 'user');
+
+-- 2. Create project_members table
+CREATE TABLE project_members (
+  id SERIAL PRIMARY KEY,
+  project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  role project_role NOT NULL DEFAULT 'user',
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX project_members_project_user_idx ON project_members(project_id, user_id);
+
+-- 3. Add soft-delete timestamps to projects
+ALTER TABLE projects
+  ADD COLUMN archived_at TIMESTAMPTZ,
+  ADD COLUMN deleted_at TIMESTAMPTZ;
+
+-- 4. Backfill archived_at for existing archived projects
+UPDATE projects
+SET archived_at = updated_at
+WHERE status = 'archived' AND archived_at IS NULL;
+```
 
 ## What NOT to Add
 
-| Library | Why NOT |
-|---------|---------|
-| `react-table` (v7) | Deprecated — v8 is `@tanstack/react-table` |
-| `react-virtualized` | Heavy, not needed for v6.0 dataset sizes |
-| `ag-grid-react` | Commercial license, overkill |
-| `react-beautiful-dnd` | Archived — app uses `@dnd-kit` |
-| `d3` | Recharts already wraps D3 for simple charts |
-| `uuid` | Node.js `crypto.randomUUID()` is sufficient |
-| `moment.js` | Heavy, deprecated — native `Date` API sufficient |
-| `lodash` | Tree-shaking overhead — prefer native JS |
-| `axios` | Native `fetch` API is correct for Next.js App Router |
+| Avoid | Why | Use Instead |
+|-------|-----|-------------|
+| better-auth "organization" plugin | Not designed for per-project roles; adds unnecessary abstraction | Custom `project_members` table with explicit project_id FK |
+| Monaco Editor | 3-4x larger than CodeMirror; requires SSR workaround; overkill for plain text | @uiw/react-codemirror (CodeMirror 6) |
+| react-ace | Unmaintained (last publish 2 years ago); Ace Editor is legacy | @uiw/react-codemirror (modern, actively maintained) |
+| Draft.js, Slate, Lexical | Rich text editors for WYSIWYG editing; prompts are plain text/markdown | @uiw/react-codemirror with markdown extension |
+| New chart library (Chart.js, Victory, Nivo) | Recharts already installed and working; switching adds risk | Recharts ^3.8.1 (already in package.json) |
+| Separate soft-delete library (drizzle-soft-delete) | Adds dependency for trivial pattern; Drizzle's `isNull()` is sufficient | Custom `deletedAt` timestamp + query helpers |
 
-**Principle:** Add libraries only when existing patterns fail. v6.0 scope fits within current stack.
+## Version Compatibility
 
----
+| Package | Current Version | v7.0 Compatibility | Notes |
+|---------|-----------------|-------------------|-------|
+| better-auth | 1.5.6 | ✓ Compatible | No upgrade needed; custom project_members table supplements global role |
+| drizzle-orm | 0.45.1 | ✓ Compatible | Timestamp filtering fully supported; no schema limitations |
+| Next.js | 16.2.0 | ✓ Compatible | @uiw/react-codemirror works in client components |
+| React | 19.2.4 | ✓ Compatible | @uiw/react-codemirror supports React 18+ (19 is backward compatible) |
+| Recharts | 3.8.1 | ✓ Compatible | No new chart types needed for Health Dashboard |
+| BullMQ | 5.71.0 | ✓ Compatible | Project-scoped scheduling uses existing job metadata patterns |
 
-## Version Pinning Strategy
+## Stack Patterns for v7.0 Features
 
-**Current approach:** Caret ranges (`^`) for most deps (allows patch/minor updates).
+### Pattern 1: Per-Project Authorization Check
 
-**Recommendation for v6.0:** Keep existing strategy.
+**Where:** All Route Handlers modifying project data (archive, delete, member management, scheduler config)
 
-- **Lock major versions:** `next@16.x`, `react@19.x`, `@xyflow/react@12.x`
-- **Allow patches:** `ai`, `bullmq`, `drizzle-orm` (frequent bug fixes)
-- **Test before major upgrades:** `lucide-react` v1.x, `recharts` v4.x (when available)
+**Pattern:**
+```typescript
+import { requireSession } from '@/lib/session';
+import { requireProjectAdmin } from '@/lib/auth-helpers';
 
-**Why:** App is mature (42,385 LOC), large dependency surface. Pin major versions, validate minors in non-critical milestones.
+export async function POST(req: Request) {
+  const session = await requireSession();  // CVE-2025-29927 defense
+  const { projectId } = await req.json();
 
----
+  await requireProjectAdmin(projectId, session);  // NEW: per-project role check
 
-## Summary Table — What v6.0 Needs
+  // Authorized: proceed with operation
+}
+```
 
-| Feature | NEW Library? | Existing Library | Integration Work |
-|---------|--------------|------------------|------------------|
-| Portfolio dashboard table | ❌ NO | Client-side filter pattern | LOW — copy ActionsTableClient pattern |
-| Portfolio health summary | ❌ NO | `recharts` | LOW — reuse HealthDashboard component |
-| Portfolio exceptions panel | ❌ NO | PostgreSQL FTS + Tailwind | LOW — query open risks/overdue actions |
-| WBS collapsible tree | ✅ YES | `@radix-ui/react-collapsible` | MEDIUM — nested collapse state management |
-| WBS AI auto-classify | ❌ NO | Vercel AI SDK `generateObject()` | MEDIUM — BullMQ job + Zod schema |
-| WBS Generate Plan | ❌ NO | Vercel AI SDK `generateObject()` | MEDIUM — same as auto-classify (array output) |
-| Team Engagement report | ❌ NO | Existing components | LOW — extend entity types |
-| Team Engagement extraction | ❌ NO | Existing extraction job | LOW — verify entity types in `extraction-types.ts` |
-| Architecture diagrams | ❌ NO | `@xyflow/react` | MEDIUM — horizontal layout + custom nodes |
-| Architecture extraction | ❌ NO | Existing extraction job | LOW — entity types already exist |
+**When:** AUTH-03, AUTH-04, AUTH-05 — all admin-restricted actions
 
-**Total new dependencies:** 1 (`@radix-ui/react-collapsible`)
+### Pattern 2: Soft-Delete Query Scope
 
-**Bundle size impact:** +12KB gzipped (Radix Collapsible is lightweight).
+**Where:** All project list queries (portfolio, dropdown selectors, search)
 
----
+**Pattern:**
+```typescript
+// Active projects only (default view)
+const activeProjects = await db.query.projects.findMany({
+  where: and(
+    eq(projects.status, 'active'),
+    isNull(projects.deletedAt)
+  ),
+});
 
-## Confidence Assessment
+// Archived projects view (PROJ-03)
+const archivedProjects = await db.query.projects.findMany({
+  where: and(
+    eq(projects.status, 'archived'),
+    isNull(projects.deletedAt)  // Exclude permanently deleted
+  ),
+});
+```
 
-| Area | Level | Reasoning |
-|------|-------|-----------|
-| Portfolio table | HIGH | Pattern exists 6× in codebase (ActionsTableClient, RisksTableClient, etc.) |
-| WBS collapsible | HIGH | Radix Collapsible API verified via official docs, compatible with app's existing Radix usage |
-| AI auto-classify | HIGH | Vercel AI SDK structured output verified via official docs, Zod already installed |
-| Team Engagement | HIGH | Components exist in v3.0 Phase 30, entity types in extraction system v5.0 |
-| Architecture diagrams | HIGH | React Flow patterns exist (InteractiveEngagementGraph), horizontal layout is standard |
-| Version compatibility | HIGH | All peer dependencies verified compatible with React 19.2.4 |
-| No TanStack Table | MEDIUM | Defer decision is safe, but may need in v7.0 if project count exceeds 100 |
+**When:** PROJ-01, PROJ-02, PROJ-03 — all project queries must filter `deletedAt`
 
-**Overall confidence:** HIGH — v6.0 stack is well-supported by existing dependencies.
+### Pattern 3: CodeMirror in Client Component
 
----
+**Where:** Skills tab prompt editing UI (SKILL-03)
+
+**Pattern:**
+```typescript
+'use client';
+import { useState } from 'react';
+import CodeMirror from '@uiw/react-codemirror';
+import { markdown } from '@codemirror/lang-markdown';
+
+export default function PromptEditor({ initialValue, onSave }: Props) {
+  const [value, setValue] = useState(initialValue);
+
+  return (
+    <div>
+      <CodeMirror
+        value={value}
+        height="500px"
+        extensions={[markdown()]}
+        onChange={setValue}
+        theme="light"  // or "dark" based on app theme
+        basicSetup={{
+          lineNumbers: true,
+          highlightActiveLineGutter: true,
+          foldGutter: false,  // Prompts are typically < 100 lines
+        }}
+      />
+      <button onClick={() => onSave(value)}>Save Prompt</button>
+    </div>
+  );
+}
+```
+
+**When:** SKILL-03 — editable prompt UI
+
+## Integration Points with Existing Stack
+
+### 1. better-auth + project_members
+
+**Bridge:** Session user ID joins to `project_members.user_id`
+
+**Query Pattern:**
+```typescript
+const userProjects = await db.query.projectMembers.findMany({
+  where: eq(projectMembers.userId, session.user.id),
+  with: { project: true },
+});
+```
+
+**Enforcement:** Route handler level (post-session check, pre-business logic)
+
+### 2. Drizzle Soft-Delete + BullMQ Scheduler
+
+**Integration:** Scheduled jobs must skip archived/deleted projects
+
+**Pattern:**
+```typescript
+// worker/scheduled-job.ts
+const eligibleProjects = await db.query.projects.findMany({
+  where: and(
+    eq(projects.status, 'active'),
+    isNull(projects.deletedAt)  // NEW: exclude deleted
+  ),
+});
+
+for (const project of eligibleProjects) {
+  await queue.add(`weekly-focus-${project.id}`, { projectId: project.id });
+}
+```
+
+### 3. CodeMirror + Existing Skill Engine
+
+**Integration:** Edited prompt text replaces SKILL.md content at runtime
+
+**Data Flow:**
+1. User edits prompt in CodeMirror → saves to DB (`skill_prompts` table or `jsonb` column)
+2. Skill runner checks DB for overrides before reading SKILL.md from disk
+3. If override exists, use DB content; else, fall back to SKILL.md file
+
+**Constraint Preservation:** "SKILL.md files read from disk at runtime" — still true for non-overridden skills; DB stores exceptions only
 
 ## Sources
 
-- **Radix Collapsible:** [Official Docs](https://www.radix-ui.com/primitives/docs/components/collapsible), npm registry v1.1.12
-- **Vercel AI SDK Structured Output:** [Official Docs](https://ai-sdk.dev/docs/ai-sdk-core/generating-structured-data)
-- **@xyflow/react:** [npm registry](https://www.npmjs.com/package/@xyflow/react) v12.10.2, [React Flow site](https://reactflow.dev)
-- **Recharts:** [npm registry](https://www.npmjs.com/package/recharts) v3.8.1, React 19 peer dep verified
-- **TanStack Table:** [npm registry](https://www.npmjs.com/package/@tanstack/react-table) v8.21.3, [Official Docs](https://tanstack.com/table/latest/docs/introduction)
-- **lucide-react:** [npm registry](https://www.npmjs.com/package/lucide-react) v1.7.0, [Lucide site](https://lucide.dev)
-- **sonner:** [npm registry](https://www.npmjs.com/package/sonner) v2.0.7
+- **better-auth@1.5.6 documentation** (reviewed via WebFetch) — MEDIUM confidence (plugin capabilities not fully documented; negative finding: no per-resource roles mentioned)
+- **@monaco-editor/react npm page** (WebFetch) — HIGH confidence (version 4.7.0, bundle size ~300KB, SSR considerations documented)
+- **@uiw/react-codemirror npm page** (WebFetch) — HIGH confidence (version 4.25.9, 1.8M weekly downloads, React 18+ support confirmed)
+- **Drizzle ORM soft-delete patterns** — HIGH confidence (standard PostgreSQL pattern; timestamp filtering is core Drizzle functionality)
+- **Existing codebase** (`package.json`, `db/schema.ts`, `lib/auth.ts`) — HIGH confidence (direct file reads)
+- **PROJECT.md milestone context** — HIGH confidence (v7.0 requirements AUTH-01 through SKILL-04)
 
-All versions verified via `npm view [package] version peerDependencies` on 2026-04-07.
+---
+
+*Stack research for: BigPanda AI Project Management App v7.0*
+*Researched: 2026-04-13*
+*Confidence: HIGH*

@@ -1,515 +1,377 @@
-# Pitfalls Research
+# Pitfalls Research: v7.0 Governance & Operational Maturity
 
-**Domain:** Adding portfolio dashboard, WBS tree, team engagement reports, and expanded AI extraction to existing Next.js project management app
-**Researched:** 2026-04-07
-**Confidence:** HIGH
-
-## Executive Summary
-
-Research focuses on integration pitfalls when adding advanced features to an existing v5.0 system (~42,385 LOC) that already has complex document ingestion, BullMQ extraction workers, React Flow diagrams, and real-time metrics sync. The v6.0 expansion introduces portfolio-level aggregation, deep tree hierarchies, multi-section reports, dual-state architecture diagrams, and expanded AI entity routing — each with distinct failure modes.
-
-Key finding: The system already has strong patterns (BullMQ background jobs, CustomEvent sync, deduplication logic, SSR-safe dynamic imports) that prevent many common pitfalls. The critical risks are in **aggregation query performance as N projects grows**, **AI prompt expansion degrading existing entity routing**, **tree component state management with deep hierarchies**, and **navigation restructure breaking existing user workflows**.
+**Domain:** Adding RBAC, soft-delete, bi-directional sync, filesystem editing, and project-scoped scheduling to an existing Next.js/PostgreSQL/better-auth application
+**Researched:** 2026-04-13
+**Confidence:** HIGH (based on system architecture analysis and migration patterns)
 
 ## Critical Pitfalls
 
-### Pitfall 1: N+1 Query Explosion in Portfolio Dashboard
+### Pitfall 1: Incomplete RBAC Migration — Global Role Leakage
 
 **What goes wrong:**
-Portfolio dashboard aggregating health, status, exceptions, and dependencies across N projects triggers sequential database queries: one query per project for health calculation (risks, milestones, onboarding steps), then per-project metrics queries, then dependency queries. With 20 active projects, a single dashboard load could trigger 60+ sequential queries, resulting in 3-5 second page loads.
+Route handlers partially migrated to per-project RBAC still have code paths checking the old global `user.role === 'admin'` instead of `projectMembership.role === 'admin'`. Results in unauthorized access or false denials. With 40+ route handlers already using `requireSession()`, mixed authorization logic creates security holes.
 
 **Why it happens:**
-Existing HealthDashboard.tsx (lines 72-87) and overview-metrics API already fetch per-project metrics correctly. Developers naturally replicate this pattern in a loop for portfolio view:
-
-```typescript
-// ANTI-PATTERN: Sequential per-project queries
-const projectHealths = [];
-for (const project of projects) {
-  const health = await computeHealthForProject(project.id); // DB query
-  projectHealths.push(health);
-}
-```
-
-This works fine for single-project view but becomes O(N) queries for portfolio.
+Global role checks are already embedded throughout 40+ route handlers from v3.0 Phase 26. When adding per-project roles, developers grep for explicit `role` checks but miss:
+- Implicit checks in helper functions
+- Authorization logic in service layer (not route handler)
+- Role-based UI rendering decisions in Server Components
+- BullMQ job handlers that run outside HTTP context
 
 **How to avoid:**
-1. **Single aggregation query with JOINs**: Fetch all project health data in one PostgreSQL query with LEFT JOINs across risks, milestones, onboarding_steps. Return aggregated counts grouped by project_id.
-2. **Materialized view or cached rollup**: Create a `project_health_rollup` table updated by triggers or BullMQ scheduled job (infrastructure already exists from weekly-focus.ts pattern). Dashboard reads from rollup table (single query, instant response).
-3. **Parallel Promise.all()**: If individual queries are unavoidable, use `Promise.all()` to execute in parallel rather than sequential await loop. Reduces total time to MAX(query_time) instead of SUM(query_times).
+1. **Create exhaustive audit manifest** — grep for ALL occurrences: `user.role`, `session.user.role`, `requireSession()` callsites, any conditional on `=== 'admin'` or `=== 'user'`
+2. **Introduce `requireProjectRole(projectId, minRole)` wrapper** — replaces bare `requireSession()` for project-scoped routes; enforces project membership lookup BEFORE authorization check
+3. **Deprecate global role column immediately** — add DB constraint `CHECK (role IS NULL)` or default to `'legacy'` with migration script to force code paths to break loudly during testing
+4. **Separate auth module** — extract all authorization into `lib/auth-rbac.ts` with single source of truth; route handlers import ONLY from this module
 
 **Warning signs:**
-- Dashboard initial load exceeds 1 second with 5+ projects
-- Postgres slow query log shows repeated similar queries within same request
-- `/api/dashboard` response time scales linearly with project count
+- Unit tests pass but E2E tests show unauthorized 403s
+- Admin users can't perform admin actions on projects they're assigned to
+- Regular users can access admin-only endpoints on some projects
+- Inconsistent behavior between route handlers (some check global, some check project)
 
 **Phase to address:**
-Phase DASH-01 (Portfolio health summary) — establish aggregation query pattern immediately. If deferred, triggers rewrite in Phase DASH-06 when performance becomes unacceptable.
-
-**Confidence:** HIGH (anti-pattern observed in line 72-87 of HealthDashboard.tsx is a per-project query; natural to replicate in loop for portfolio)
+AUTH-01 through AUTH-05 — MUST be first phase in v7.0 roadmap. All other features (archive, schedule, prompts) depend on correct RBAC enforcement.
 
 ---
 
-### Pitfall 2: AI Extraction Prompt Expansion Degrades Existing Entity Routing
+### Pitfall 2: Soft-Delete Cascade Blind Spots — Foreign Key Chaos
 
 **What goes wrong:**
-Expanding EXTRACTION_SYSTEM prompt in document-extraction.ts (currently lines 24-57) to add 4+ new entity types (WBS phases, team engagement structure, architecture before-state, team pathways) causes Claude to misclassify existing entities. Actions that were previously routed to "action" now get classified as "note" or "workstream". Risks get classified as "milestone" because the prompt now lists milestone prominently. Extraction accuracy drops from 85% to 60%.
+Adding `archived_at` to `projects` table in a DB with 57+ phases worth of tables causes:
+- Foreign key constraint violations when child records try to reference archived projects
+- Queries returning archived project data mixed with active data
+- Cascade deletes triggering when they shouldn't (or not triggering when they should)
+- `JOIN` queries exploding in complexity with `WHERE projects.archived_at IS NULL` scattered everywhere
 
 **Why it happens:**
-The current prompt has 14 entity types with brief guidance (lines 33-47). Adding 4-6 more entity types creates ambiguity:
-- "workstream" vs. "task" vs. "milestone" all describe delivery phases
-- "team_pathway" vs. "onboarding_step" both describe team progression
-- "architecture" vs. "integration" distinction is subtle (lines 49-50 attempts clarification but Claude still confuses them)
+Complex relational DBs have dozens of tables with `project_id` foreign keys. Each has different semantics:
+- **Should cascade to read-only:** actions, risks, milestones, tasks (preserve for archive view)
+- **Should block archive:** active BullMQ scheduled jobs (must be cancelled first)
+- **Should be nullable on archive:** scheduled_jobs.project_id (keep job history even after project deleted)
 
-LLMs exhibit **recency bias** — entity types listed later in the prompt get weighted higher. Long prompts cause **attention dilution** — the model spreads probability mass across too many options, reducing confidence in any single classification.
-
-The existing deduplication logic (lines 113-313 in document-extraction.ts) prevents duplicate inserts but does NOT correct misclassifications. A risk classified as "note" passes dedup and gets inserted into engagement_history, where it's useless.
+With Drizzle ORM, foreign key `onDelete: 'cascade'` behavior was set in v1.0-v6.0 without considering soft-delete. Adding `archived_at` doesn't change FK constraints.
 
 **How to avoid:**
-1. **Two-pass extraction**: First pass extracts with original 14-entity prompt (preserves existing accuracy). Second pass with expanded prompt targets only NEW entity types from the same document. Merge results client-side.
-2. **Hierarchical classification**: First Claude call: "Is this project data, team data, or architecture data?" Second Claude call: Route to entity-specific sub-prompt (project → action/risk/milestone, team → pathway/engagement, architecture → before-state/integrations).
-3. **Confidence threshold filtering**: Raise confidence threshold from current implicit acceptance (any confidence > 0) to explicit > 0.70 for new entity types. Surface low-confidence extractions in a separate "Needs Review" section rather than auto-routing.
-4. **Entity type examples in prompt**: Add 2-3 verbatim examples per entity type showing exact field structure. Current prompt has type signature (line 34-46) but no examples. Examples dramatically improve classification accuracy.
-5. **Prompt engineering defense**: Place critical entity types (action, risk, milestone) at TOP of entity type list. Add explicit disambiguation rules: "If it describes a problem, always prefer 'risk' over 'note'. If it has a due date, always prefer 'action' or 'task' over 'workstream'."
+1. **Map every table with project_id FK** — create matrix: table name | FK behavior | archive semantics | query pattern
+2. **Add `archived_at IS NULL` default to base query helpers** — create `getActiveProjects()` wrapper in `db/queries.ts`; never use raw `db.query.projects` outside of archive-specific views
+3. **Implement archive pre-flight checks** — before setting `archived_at`, verify:
+   - No active scheduled jobs (`SELECT COUNT(*) FROM scheduled_jobs WHERE project_id = $1 AND next_run_at IS NOT NULL`)
+   - No pending extraction jobs (`SELECT COUNT(*) FROM extraction_jobs WHERE project_id = $1 AND status = 'processing'`)
+4. **Create archived project view route** — separate `/archived-projects` page that explicitly queries `WHERE archived_at IS NOT NULL`; regular portfolio dashboard uses `WHERE archived_at IS NULL`
+5. **Test cascade on RESTORE** — restoring archived project must not resurrect deleted child records; use separate `deleted_at` column for permanent deletes
 
 **Warning signs:**
-- `filtered_count` in extractionJobs table decreases (fewer duplicates filtered = misclassifications slipping through)
-- Manual review of staged_items_json shows risks in "note" entityType
-- User reports: "Context upload used to find actions automatically, now I have to add them manually"
+- Portfolio dashboard shows 0 projects after archiving one
+- Error: `violates foreign key constraint` when archiving
+- Archived project data appearing in active project dropdowns/autocomplete
+- Restored projects missing child records (actions, risks, tasks)
 
 **Phase to address:**
-Phase WBS-03 (context-upload auto-classify), Phase TEAM-02 (context-upload extraction), Phase ARCH-03 (context-upload extraction) — ALL of these phases expand the extraction prompt. Establish two-pass pattern in WBS-03, reuse in TEAM-02/ARCH-03.
-
-**Confidence:** HIGH (observed in lines 24-57 prompt structure; common LLM failure mode documented in anthropic.com/research; existing system has no classification accuracy measurement)
+PROJ-01 (archive) MUST audit all FK relationships and implement query layer filtering BEFORE implementing archive UI. PROJ-04 (restore) needs cascade restore testing.
 
 ---
 
-### Pitfall 3: Deep Tree Hierarchy State Management Causes Render Thrashing
+### Pitfall 3: Gantt Bi-Directional Sync Race Conditions
 
 **What goes wrong:**
-WBS tree with dual ADR + Biggy templates, 5 phases each, 4-8 steps per phase, and arbitrary nesting depth (context-upload can create 3-4 levels deep) results in 60-120 tree nodes. Naive React state management causes entire tree to re-render on every expand/collapse action. With 100+ nodes, UI becomes laggy (300-500ms to expand a single node). Drag-and-drop reordering triggers full tree rebuild, causing visible flicker.
-
-Worse: Storing tree state in a flat `expandedNodes: string[]` array triggers O(N) lookups on every render. Checking `expandedNodes.includes(node.id)` for 100 nodes = 10,000 operations per render cycle.
+User drags task in Gantt → updates task.start_date → triggers re-render → fetches from DB → Gantt position recalculates → triggers another drag event → infinite loop or stale data overwrites. Or: Gantt shows updated dates but DB still has old dates after browser refresh.
 
 **Why it happens:**
-Developers reach for simple patterns that work for small trees:
+Gantt component (custom GanttChart.tsx from v5.0) stores visual state independently from DB. Bi-directional sync means:
+- **Gantt → DB:** Drag event calls API to update task dates
+- **DB → Gantt:** Any task edit (from Task Board or inline edit) must update Gantt visual state
 
-```typescript
-// ANTI-PATTERN: Flat expanded state
-const [expandedNodes, setExpandedNodes] = useState<string[]>([]);
-
-const toggle = (nodeId: string) => {
-  if (expandedNodes.includes(nodeId)) {
-    setExpandedNodes(expandedNodes.filter(id => id !== nodeId)); // O(N) filter
-  } else {
-    setExpandedNodes([...expandedNodes, nodeId]); // Entire array copy
-  }
-};
-```
-
-Every toggle creates a new array, triggering re-render of entire tree. With 100 nodes, each toggle = 100 component re-renders.
+Without careful state management:
+- Optimistic updates show change immediately, but API call fails → UI lies
+- Race condition: user drags task while API is in-flight → later API response overwrites newer state
+- Milestone propagation cascades (task extends → milestone moves → all downstream tasks shift) cause N+1 query explosions
 
 **How to avoid:**
-1. **Set-based expanded state**: Use `Set<string>` instead of `string[]`. Lookups become O(1). Mutations don't trigger array copy:
-
-```typescript
-const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
-
-const toggle = (nodeId: string) => {
-  setExpandedNodes(prev => {
-    const next = new Set(prev);
-    if (next.has(nodeId)) next.delete(nodeId);
-    else next.add(nodeId);
-    return next;
-  });
-};
-```
-
-2. **React.memo() on tree nodes**: Wrap WBS node component in `React.memo()` with custom comparison function. Only re-render if node's own data or expanded state changes, not if sibling nodes change.
-
-3. **Virtualized rendering**: Use `react-window` or `@tanstack/react-virtual` for trees with 100+ nodes. Only render visible nodes + small buffer. Expand/collapse becomes instant regardless of tree size.
-
-4. **Normalized tree state**: Store tree as `Map<nodeId, Node>` instead of nested objects. Parent-child relationships via `parentId` field. This prevents cascade re-renders when updating a deep node — only the updated node re-renders.
-
-5. **Optimistic UI updates**: When AI classifies a task into a WBS phase, update local state immediately (instant feedback), then sync to DB in background. Don't wait for DB round-trip to update tree.
+1. **Single source of truth: DB** — Gantt always derives position from DB records; drag handler updates DB first, then re-fetches
+2. **Optimistic update with rollback** — drag handler immediately updates Gantt state + marks as "pending", API call resolves → commit, API call fails → revert to pre-drag state
+3. **Debounce drag events** — collect all position changes during drag, send single bulk update API call `onDragEnd` (not `onDrag`)
+4. **Cascade propagation in transaction** — if task extends and pushes milestone, all downstream date updates happen in single DB transaction with advisory lock: `SELECT pg_advisory_xact_lock(project_id)`
+5. **Version-based concurrency control** — add `version` column to tasks/milestones; API rejects updates if `version` doesn't match (optimistic locking)
 
 **Warning signs:**
-- React DevTools profiler shows WBSTree component taking >100ms to render
-- Expand/collapse actions have visible delay (user clicks, 200ms pause, then expands)
-- Browser performance profiling shows repeated full tree reconciliation
-- Users report: "Tree feels sluggish when I have a lot of phases"
+- Gantt flickers/resets position after drag
+- Task dates in Gantt don't match Task Board after page refresh
+- Milestone moves trigger dozens of sequential API calls (N+1 pattern)
+- Simultaneous edits from two users cause one user's changes to vanish
 
 **Phase to address:**
-Phase WBS-02 (collapsible hierarchy) — establish performant tree state pattern immediately. If deferred, requires rewrite when user testing in Phase WBS-04 reveals performance issues.
-
-**Confidence:** HIGH (common React pitfall; tree component performance issues well-documented at medium scale 50-100 nodes)
+DLVRY-02 (bi-directional sync) — requires transaction design, debounce implementation, and version column migration. Must include load testing with 50+ tasks in Gantt view.
 
 ---
 
-### Pitfall 4: Generate Plan Gap-Fill Hallucinates Non-Existent Tasks
+### Pitfall 4: Filesystem Prompt Edit Security Holes
 
 **What goes wrong:**
-WBS-04 "Generate Plan" feature uses Claude to detect gaps in existing WBS and generate missing tasks. When existing WBS is sparse (3 phases defined, 2 have tasks), Claude invents tasks that sound plausible but don't align with actual project scope. Example: Project is "BigPanda ADR Integration", Claude generates task "Set up Kubernetes cluster" because it's a common DevOps task, but this project uses managed infrastructure — task is irrelevant.
-
-Worse: Claude generates tasks with **invented specifics**: "Schedule UAT session with John Smith" when John Smith is not a stakeholder in the project. Or "Integrate with ServiceNow API v3.2" when the document never mentioned ServiceNow or version numbers.
-
-Users accept generated tasks without review (they trust AI), polluting the WBS with irrelevant work. Later phases (Gantt, timeline) show these fake tasks as overdue, degrading trust in the system.
+API route allows editing SKILL.md files with insufficient validation → user injects malicious prompt content → next skill execution sends attacker-controlled instructions to Claude → data exfiltration, prompt injection, or privilege escalation. Or: concurrent edits cause file corruption or lost updates.
 
 **Why it happens:**
-Gap-fill prompt operates WITHOUT full project context — it sees only the WBS structure. If the prompt is:
+SKILL.md files live on disk at `/Users/.../cowork-skills/.skills/[skill-name]/SKILL.md` (not in database). Web UI edit means:
+- API route reads file, user edits in textarea, API route writes back
+- No atomic file locking (Node.js `fs.writeFile` can interleave writes)
+- No validation that edited content is still a valid SKILL.md structure
+- No audit trail of WHO changed WHAT in prompt (constraint: "prompts must not be modified" from PROJECT.md — but v7.0 explicitly adds editable prompts)
 
-```
-Current WBS:
-- Phase 1: Discovery & Kickoff (3 tasks)
-- Phase 2: Integrations (empty)
-- Phase 3: Platform Configuration (1 task)
-
-Generate missing tasks for empty phases.
-```
-
-Claude has no context about what integrations are needed. It guesses based on common patterns (Jira, Slack, ServiceNow) rather than actual project requirements.
-
-The existing system has strong anti-hallucination measures in chat (line 46 in PROJECT.md: XML-wrapped context, temperature 0.3), but gap-fill is a different use case — it's GENERATIVE not EXTRACTIVE. You WANT Claude to create new content, but you need to constrain it to project scope.
+This contradicts "Skill Fidelity" constraint: "SKILL.md files read from disk at runtime; prompts must not be modified". v7.0 is intentionally relaxing this for "editable prompts UI" feature.
 
 **How to avoid:**
-1. **Full project context in prompt**: Include stakeholders, business outcomes, focus areas, existing architecture integrations, and team structure in gap-fill prompt. Claude generates tasks that reference actual stakeholders and tools.
-
-2. **Template-based generation**: Don't ask Claude to invent tasks. Provide a template library of standard WBS tasks per phase type (Discovery templates, Integration templates, UAT templates). Claude's job is to SELECT applicable templates and CUSTOMIZE parameters, not invent from scratch.
-
-3. **Confidence scoring + review queue**: Claude returns tasks with confidence scores. Low-confidence tasks (<0.75) go to a "Review Before Adding" section. User explicitly approves or rejects each. Only high-confidence tasks auto-add.
-
-4. **Diff-based presentation**: Show generated tasks as a DIFF against current WBS (green "+ Task Name") rather than silently inserting. User sees exactly what will be added and can reject before commit.
-
-5. **Sanity checks**: After generation, run validation:
-   - Does task mention a stakeholder name? Check against stakeholders table. If name not found, flag task.
-   - Does task mention a tool/system? Check against architecture_integrations table. If not found, flag task.
-   - Does task have a date? Check against project start_date/end_date bounds. If outside bounds, flag task.
+1. **Read-only by default, explicit opt-in for editability** — add `editable: true` flag to skill metadata; only flagged skills show edit UI
+2. **Atomic write with file locking** — use `fs.promises.open(..., 'wx')` for exclusive write, or proper-lockfile npm package
+3. **Schema validation on write** — parse edited SKILL.md with markdown parser, verify required sections (`## Task`, `## Input`, `## Output`) still exist
+4. **Prompt injection defense** — strip/escape any `</document>` tags, control characters, or nested XML tags user might inject
+5. **Append-only audit log** — every edit creates entry in `skill_prompt_edits` table: `{skill_name, edited_by_user_id, edited_at, diff, version}`
+6. **Backup before write** — copy current SKILL.md to `.planning/skill-backups/[skill-name]-[timestamp].md` before overwrite
+7. **RBAC enforcement** — only project admins can edit prompts; requires `requireProjectRole(projectId, 'admin')`
 
 **Warning signs:**
-- User creates project, runs Generate Plan, gets 40 tasks when project scope is actually 15 tasks
-- Generated task descriptions mention tools/systems not in project's architecture_integrations table
-- User bug report: "AI suggested integrating with X but we don't use X"
-- QA testing: Generate Plan on test project with minimal context produces generic boilerplate tasks
+- Two users edit same skill simultaneously → one edit lost
+- Skill execution fails with "missing required section" after edit
+- Edited prompt contains suspicious XML tags or control characters
+- No way to see who changed a prompt or rollback changes
 
 **Phase to address:**
-Phase WBS-04 (Generate Plan gap-fill) — implement full context + sanity checks from the start. Do NOT ship generate-plan without validation — hallucinated tasks erode user trust in all AI features.
-
-**Confidence:** HIGH (hallucination is well-known LLM failure mode; existing chat has anti-hallucination measures but gap-fill is generative; observed risk in line 46 PROJECT.md shows awareness of hallucination risk)
+SKILL-03 (editable prompts) — must implement file locking, validation, and audit trail BEFORE exposing edit UI. Consider moving to DB storage instead of filesystem (breaking Cowork compatibility constraint).
 
 ---
 
-### Pitfall 5: Navigation Restructure Breaks User Muscle Memory and External Links
+### Pitfall 5: Project-Scoped Scheduling Metadata Filter Brittleness
 
 **What goes wrong:**
-NAV-01 restructure moves tabs: Plan → first in Delivery, WBS/Gantt promoted to top level, Decisions → Delivery, Intel removed, Engagement History → Admin. Users who trained on v5.0 (muscle memory: "Decisions tab is at position 4") now click wrong tab. Worse: External links (bookmarked URLs, Slack messages, email links) break:
-
-- Old URL: `/customer/123/intel` → 404 after Intel removed
-- Old URL: `/customer/123/decisions` → now redirects to `/customer/123/delivery/decisions` (different hierarchy)
-- Old URL: `/customer/123/phase-board` → WBS renamed, URL changed to `/customer/123/delivery/wbs`
-
-Users get 404s, complain about "broken links," and file bug reports. Support burden increases. User training materials (docs, videos, onboarding guides) all reference old navigation structure — need urgent updates.
+BullMQ scheduled jobs use `metadata: { project_id }` for project scoping. Migration to project-scoped UI queries jobs with `getJobs()` then filters `job.data.metadata?.project_id === projectId` in application code. Results in:
+- O(N) filtering (fetches all jobs, filters in-memory)
+- Jobs with missing/malformed metadata pass through filter
+- Admin "all projects" view has no efficient query path
+- Job cancellation/edit doesn't verify user has admin role on job's project
 
 **Why it happens:**
-Developers correctly implement new navigation but forget to:
-1. Add redirects for old URLs
-2. Update all in-app href references (could miss some in skill templates, email templates, or generated reports)
-3. Test external link scenarios (bookmark, email share, Slack share)
+BullMQ doesn't natively support querying by nested metadata fields. `queue.getJobs(['active', 'waiting'])` returns ALL jobs. Current implementation (v2.0 Phase 24) already uses `project_id` in job data, but UI shows global view. v7.0 adds per-project scheduling UI → needs efficient per-project filtering.
 
-The codebase shows existing navigation restructure in v3.0 (line 42 in PROJECT.md: sub-tab navigation + hybrid URL pattern preserving routes) — this means the team is aware of the issue. But v6.0 restructure is MORE invasive (top-level tab changes, not just sub-tabs).
+Better-auth session context in route handlers has `user.id`, but no "current project" context → every job action API call must accept `projectId` and verify membership.
 
 **How to avoid:**
-1. **Redirect middleware**: Add Next.js middleware to detect old URLs and redirect:
-
-```typescript
-// middleware.ts
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-  // Old Intel tab → redirect to Overview
-  if (pathname.includes('/intel')) {
-    return NextResponse.redirect(pathname.replace('/intel', '/overview'));
-  }
-
-  // Old phase-board → redirect to WBS
-  if (pathname.includes('/phase-board')) {
-    return NextResponse.redirect(pathname.replace('/phase-board', '/delivery/wbs'));
-  }
-
-  // Old decisions top-level → redirect to delivery/decisions
-  if (pathname.match(/\/customer\/\d+\/decisions$/)) {
-    return NextResponse.redirect(pathname.replace('/decisions', '/delivery/decisions'));
-  }
-}
-```
-
-2. **Deprecation banner**: For first 2 weeks after v6.0 launch, show banner at top of page: "Navigation has changed. Decisions moved to Delivery tab. Intel merged into Overview." With dismiss button. Trains users on new structure.
-
-3. **Comprehensive href audit**: Grep codebase for all href="/customer/" references. Update to new structure. Check:
-   - Components (tsx files)
-   - Email templates (if system sends notification emails with links)
-   - Skill output templates (SKILL.md files)
-   - Reports (generated .docx/.pptx files with embedded links)
-
-4. **Link testing**: Add integration test that validates every in-app link still resolves after navigation restructure. Playwright test that clicks every tab and verifies no 404s.
-
-5. **Changelog + release notes**: Explicitly document URL changes in release notes. Provide old → new URL mapping table for support team reference.
+1. **Redis Set index** — maintain `projects:{projectId}:jobs` Redis set; add job ID to set on schedule, remove on complete/fail; query set for project-scoped views
+2. **Job name prefix convention** — name jobs `{projectId}:{skillName}:{timestamp}` → filter with `queue.getJobs()` then regex match `^${projectId}:`
+3. **Pagination for global admin view** — don't fetch all jobs; use `queue.getJobs(type, start, end, asc)` with cursor pagination
+4. **RBAC at job action level** — every cancel/edit/run-now API must: fetch job → extract `project_id` from job.data → call `requireProjectRole(projectId, 'admin')`
+5. **Job metadata schema validation** — enforce `metadata: { project_id: string, user_id: string, skill_name: string }` at job creation; reject jobs with missing project_id
 
 **Warning signs:**
-- 404 errors spike in logs immediately after v6.0 deploy
-- Support tickets: "My bookmark doesn't work anymore"
-- Slack messages: "Intel tab is missing, is this a bug?"
-- QA testing: Click an old URL from v5.0, get 404 or unexpected page
+- Scheduling UI slow to load (fetching 1000+ jobs then filtering)
+- User can cancel another project's scheduled jobs
+- Jobs created before v7.0 migration have no `project_id` metadata → invisible in new UI
+- Redis memory grows unbounded (no job ID cleanup in index sets)
 
 **Phase to address:**
-Phase NAV-01 (tab restructure) — add redirect middleware as part of navigation implementation. Do NOT ship restructure without redirects — broken links create perception of buggy release even if core features work perfectly.
-
-**Confidence:** HIGH (observed in PROJECT.md line 42 showing prior navigation restructure; URL stability is a well-known UX concern; easy to miss in implementation phase)
+SCHED-01 through SCHED-05 — Redis index must be implemented FIRST, then RBAC enforcement, then UI. Must handle backward compatibility with jobs created pre-v7.0 (add migration script to backfill metadata).
 
 ---
 
-### Pitfall 6: Team Engagement Overview 5-Section Report Becomes Stale Without Auto-Refresh
+### Pitfall 6: Completeness Analysis Definition Drift
 
 **What goes wrong:**
-Team Engagement Overview (TEAM-01) is a rich 5-section structured report: team roster, onboarding velocity, blockers, engagement map, sentiment indicators. Each section pulls from different tables (stakeholders, onboarding_steps, tasks, focus_areas, engagement_history). User opens the report, sees "3 blockers" in red, clicks to investigate, resolves a blocker in another tab, returns to Team Engagement Overview — still shows "3 blockers" (stale data). User confused: "I just resolved this, why is it still showing?"
-
-Client-side component loaded data once on mount. Other tabs update metrics (CustomEvent system exists from Phase 39), but Team Engagement component doesn't listen to those events. Report becomes snapshot of data at load time, not live view.
+"Analyze Completeness" scores project against "expected data model" defined in code/config. Over time:
+- New phases add tables/columns → old projects scored as "incomplete" for data that didn't exist when project was created
+- Definition changes (e.g., "milestone needs owner" becomes required) → retroactively marks 100% complete projects as 70%
+- No versioning of completeness rules → can't compare score trends over time
 
 **Why it happens:**
-Team Engagement is more complex than single-entity views (Actions tab, Risks tab). Developers implement it as a Server Component that fetches all 5 sections in one API call, then renders static JSX:
+Completeness is inherently a moving target. v3.0 Phase 30 Context Hub includes "completeness analysis with per-tab gap descriptions" but doesn't specify how rules evolve. With 57+ phases of schema evolution, definition of "complete" is ambiguous.
 
-```typescript
-// ANTI-PATTERN: Static server component render
-export default async function TeamEngagementOverview({ projectId }) {
-  const sections = await fetchAllTeamEngagementSections(projectId); // One-time fetch
-  return <Report sections={sections} />; // Static render, never updates
-}
-```
-
-This works fine for static reports but fails for live dashboard use case.
+Implemented as code (likely `lib/completeness.ts` with rules like `hasOwner && hasDueDate && ...`) → code changes = definition changes = score changes without explicit versioning.
 
 **How to avoid:**
-1. **Client component with metrics:invalidate listener**: Convert TeamEngagementOverview to client component, follow HealthDashboard.tsx pattern (lines 94-99):
-
-```typescript
-'use client'
-
-export function TeamEngagementOverview({ projectId }) {
-  const [data, setData] = useState(null);
-
-  const fetchData = async () => {
-    const res = await fetch(`/api/projects/${projectId}/team-engagement`);
-    setData(await res.json());
-  };
-
-  useEffect(() => { fetchData(); }, [projectId]);
-
-  // Listen for invalidation events
-  useEffect(() => {
-    const handler = () => { fetchData(); };
-    window.addEventListener('metrics:invalidate', handler);
-    return () => { window.removeEventListener('metrics:invalidate', handler); };
-  }, [projectId]);
-
-  return <Report data={data} />;
-}
-```
-
-2. **Dispatch metrics:invalidate from blocker resolution**: When user resolves a task marked as blocker, dispatch CustomEvent:
-
-```typescript
-// After PATCH /api/tasks/[id] sets status = completed
-window.dispatchEvent(new CustomEvent('metrics:invalidate'));
-```
-
-This is already established pattern (Phase 39), just need to apply to new entity types.
-
-3. **Section-level caching with TTL**: Cache each of 5 sections independently with 60-second TTL. If user navigates away and returns within 60s, show cached data instantly, then refresh in background. Balances responsiveness with freshness.
-
-4. **WebSocket live updates (advanced)**: For future enhancement, push server-side changes to client via WebSocket. But this adds complexity — start with CustomEvent pattern which is sufficient for same-user updates.
+1. **Version completeness schemas** — store rules as versioned JSON configs: `completeness_schema_v1.json`, `v2.json`, etc.; projects reference schema version at creation
+2. **Grandfathering for schema upgrades** — new rules apply only to new projects OR after explicit project "upgrade schema version" action
+3. **Score components separately** — don't show single "70% complete"; show "Actions: 100%, Risks: 80%, Team Stakeholders: 40%" with per-area breakdowns
+4. **Time-series score storage** — store completeness scores in `completeness_snapshots` table with `{project_id, scored_at, schema_version, scores_json}`; enables trend tracking
+5. **Optional vs required distinction** — rules marked `required: true` block project completion; `required: false` are nice-to-haves that don't affect core score
 
 **Warning signs:**
-- User reports: "Data doesn't refresh until I reload the page"
-- QA testing: Edit entity in one tab, switch to Team Engagement tab, don't see update
-- Support tickets: "Blocker count is wrong"
+- All project scores drop after deployment (definition changed)
+- Users complain "it says we're incomplete but we filled everything in"
+- No way to explain WHY a score is 75% vs 80%
+- Completeness score changes on page refresh (non-deterministic rules)
 
 **Phase to address:**
-Phase TEAM-01 (Team Engagement Overview) — establish client component + CustomEvent listener pattern from the start. HealthDashboard.tsx provides exact reference implementation.
-
-**Confidence:** HIGH (existing HealthDashboard.tsx lines 94-99 shows correct pattern; Team Engagement is analogous multi-section view; pitfall occurs if developers miss the refresh requirement)
+INGEST-04 (Analyze Completeness fix) — must define schema versioning and grandfathering strategy before fixing bugs in current implementation.
 
 ---
 
-### Pitfall 7: Dual-Track Architecture Diagrams (Before/Current-Future) Confuse Users Without Clear State Indicators
+### Pitfall 7: Cross-Feature Integration Gap — Archive + RBAC
 
 **What goes wrong:**
-Architecture tab (ARCH-01) shows two diagrams in tabs: "Before State" (pre-BigPanda) and "Current & Future State" (during/post implementation). Both diagrams use React Flow with same visual styling (nodes, edges, layout). User clicks between tabs, sees two similar-looking diagrams, gets confused: "Which state am I looking at? Is this what we HAD or what we WANT?"
-
-Worse: Context-upload extraction (ARCH-03) auto-populates both diagrams from same document. If extraction misclassifies (puts a current-state tool in before-state diagram), user sees nonsensical architecture: "Slack was in before-state but we just set it up last month?"
-
-Visual ambiguity leads to incorrect decisions: CSM reviews architecture diagram, thinks current-state tool is actually before-state (wasn't monitoring it), files bug report that tool is missing when it's actually live.
+User archives project while scheduled jobs still running → jobs continue executing → job tries to update archived project data → error OR data written to archived project. Or: User loses project admin role during extraction job → job fails halfway through with 403 error.
 
 **Why it happens:**
-Developers implement two React Flow diagrams with identical node styling:
+Features developed in isolation:
+- **RBAC (AUTH-01-05):** Enforces roles at route handler level
+- **Archive (PROJ-01-04):** Adds `archived_at` to projects, makes read-only
+- **Scheduling (SCHED-01-05):** Project-scoped jobs
+- **Extraction (existing v6.0):** BullMQ background jobs write data on approval
 
-```typescript
-// ANTI-PATTERN: Identical styling for different states
-const nodeStyle = {
-  background: '#fff',
-  border: '1px solid #ddd',
-  borderRadius: '6px',
-  padding: '12px',
-};
-
-// Used for BOTH before-state and current-state nodes
-```
-
-Tab labels ("Before State" / "Current & Future State") provide context, but once user is interacting with a diagram, the tab label is above the fold — they forget which tab they're on.
+Integration matrix of 4 features = 6 interaction edges, easy to miss:
+- Can archived project have scheduled jobs? (Should block or auto-cancel)
+- Can non-admin restore archived project? (RBAC enforcement in restore route)
+- Can extraction job write to project if user loses admin role during job? (Job runs under original user's identity)
 
 **How to avoid:**
-1. **Visual state indicators**:
-   - Before State nodes: Gray background (#f5f5f5), dashed border, subtle "BEFORE" watermark in corner
-   - Current & Future State nodes: White background, solid border, green accent for "live" status, blue accent for "planned"
-   - Different node border colors: before = gray, current/live = green, future/planned = blue
-
-2. **Persistent state label**: Show "BEFORE STATE VIEW" or "CURRENT & FUTURE STATE VIEW" as a fixed header within the diagram canvas (not just in tab label). User always sees which state they're viewing.
-
-3. **Diff mode (advanced)**: Add third tab "Changes" that shows before → after transformation. Nodes that were removed (red), nodes that were added (green), nodes that stayed (gray). Makes the state transition explicit.
-
-4. **Extraction disambiguation**: In ARCH-03 context-upload prompt, add explicit guidance:
-   - "For tools described as 'previously used' or 'legacy' → before-state"
-   - "For tools described as 'implementing' or 'planned' → current-state"
-   - If document has date references ("Before Q2 2025 we used X"), use dates to determine state
-
-5. **Validation warning**: If before-state diagram includes a tool that has `created_at` timestamp AFTER project start_date, show warning: "Tool X appears in Before State but was added after project started. Consider moving to Current State."
+1. **Cross-feature validation matrix** — for each new feature, list all existing features; document interaction rules explicitly
+2. **Pre-flight checks for destructive actions:**
+   - Archive: cancel all scheduled jobs, wait for running jobs to finish OR warn user
+   - Role change: check for in-flight jobs owned by user; warn if downgrading admin
+3. **Background job identity context** — store `{ user_id, role_at_job_creation }` in job metadata; check role again before writes (don't assume still admin)
+4. **Integration tests for cross-feature scenarios:**
+   - Test: Archive project with running extraction job
+   - Test: Remove user's admin role during scheduled skill execution
+   - Test: Restore project that had jobs cancelled on archive
+5. **Saga pattern for multi-step operations** — archive = "cancel jobs → wait for completion → set archived_at" atomic sequence with rollback on failure
 
 **Warning signs:**
-- User testing: Testers express confusion about which diagram is which
-- Support tickets: "Architecture diagram doesn't match reality"
-- QA: Context-upload extracts tool to wrong state diagram, goes unnoticed until manual review
-- Stakeholder presentation: Audience asks "Is this the current state or the before state?"
+- Race condition bugs appear in production but not in unit tests
+- Features work individually but break when used together
+- "It worked before we added [feature]" bug reports
+- Orphaned jobs running against archived projects
 
 **Phase to address:**
-Phase ARCH-01 (two-tab diagram) — establish visual differentiation immediately. Testing in Phase ARCH-04 will catch confusion, but better to prevent from the start.
+ALL phases — requires integration testing phase AFTER core features ship individually. Add Phase 58 or 59: "Cross-feature integration validation" with dedicated test suite.
 
-**Confidence:** MEDIUM-HIGH (visual ambiguity is a known UX pitfall; severity depends on how different before/current states actually are in practice; existing React Flow implementation lines 128-129 PROJECT.md shows ssr:false pattern but not styling details)
+---
+
+### Pitfall 8: Editable Prompts Cowork Compatibility Break
+
+**What goes wrong:**
+User edits SKILL.md in web UI → file differs from canonical version in Cowork skills repo → later Cowork skill update overwrites edited version → user changes lost. Or: exported context docs from app no longer compatible with Cowork skills because prompt expectations changed.
+
+**Why it happens:**
+Constraint from PROJECT.md: "Skill Fidelity: SKILL.md files read from disk at runtime; prompts must not be modified" AND "Cowork Compatibility: Exported context docs and action tracker must be readable by all Cowork skills without modification."
+
+v7.0 explicitly adds editable prompts → breaks fidelity constraint. If user edits "Generate Action Items" prompt, output format may change → other skills expecting original format break.
+
+**How to avoid:**
+1. **Fork on edit** — edited skills create `SKILL.md.custom` alongside original `SKILL.md`; skill runner prefers `.custom` if exists
+2. **Versioned skill registry** — track `{skill_name, version, is_custom_edited, edited_by, last_edit}` in DB; UI shows "Custom (edited 2026-04-10)" badge
+3. **Export format validation** — if skill output is consumed by other skills, validate output still matches expected schema after prompt edit
+4. **Rollback to canonical** — "Reset to default" button that deletes `.custom` and reverts to original SKILL.md from Cowork
+5. **Block edits for integration-critical skills** — flag skills like "Context Extractor" as `editable: false` if other skills depend on their output format
+
+**Warning signs:**
+- User edits prompt, later updates to Cowork skills don't apply
+- Exported action tracker CSV format changed → other tools can't parse it
+- One edited skill breaks downstream skills in execution chain
+
+**Phase to address:**
+SKILL-03 (editable prompts) — must decide: fork-on-edit OR accept compatibility break with Cowork. Document decision and implement safeguards.
 
 ---
 
 ## Technical Debt Patterns
 
-Shortcuts that seem reasonable but create long-term problems.
-
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Sequential per-project queries for dashboard | Simple to implement (copy existing single-project pattern) | O(N) performance, 3-5s page load with 20 projects, requires rewrite | Never for portfolio view; always use aggregation or parallel queries |
-| Expanding AI extraction prompt without two-pass | Single Claude call, half the API cost | 15-25% accuracy drop, misclassified entities pollute database, user trust erosion | Never; extraction accuracy is foundational to system value |
-| Flat array for tree expanded state | Trivial implementation (`useState<string[]>`) | Re-render thrashing with 60+ nodes, laggy UI, requires rewrite | Only for trees with <20 nodes; WBS will exceed this immediately |
-| Client-only tree state (no DB persistence) | No schema changes, fast to ship | User loses tree expand/collapse state on page reload, frustrating for deep trees | Acceptable for MVP (Phase WBS-02), add persistence in Phase WBS-05 if user feedback requests it |
-| Hardcoded task templates in Generate Plan | No need to build template UI | Changing templates requires code deploy; non-technical users can't customize | Acceptable for v6.0; build template editor in v7.0 if customization requests arise |
-| Manual metrics:invalidate dispatch | Copy-paste dispatchEvent() in each mutation handler | Easy to forget in new handlers, causing stale data; no compile-time enforcement | Acceptable short-term; centralize in Tanstack Query or Zustand in v7.0 if invalidation bugs accumulate |
-| Navigation redirect middleware only for known routes | Cover 80% of old URLs quickly | Edge case URLs still 404 (e.g., skills with tab references, old bookmarks with query params) | Acceptable for v6.0; add catch-all fallback in v6.1 if 404 logs show missed patterns |
-| React Flow diagram without virtualization | Works smoothly for 20-30 nodes | Laggy pan/zoom with 50+ nodes, CPU spikes, requires rewrite | Acceptable if architecture diagrams stay small (<40 nodes); revisit if user feedback reports performance issues |
-
----
-
-## Performance Traps
-
-Patterns that work at small scale but fail as usage grows.
-
-| Trap | Symptoms | Prevention | When It Breaks |
-|------|----------|------------|----------------|
-| O(N) dashboard aggregation queries | Page load time scales linearly with project count; 200ms with 5 projects → 2s with 50 projects | Single JOIN query or materialized view; parallel Promise.all() minimum | 10-15 active projects |
-| Unvirtualized tree rendering | Tree expand/collapse takes >100ms; browser UI thread blocked during deep expand | react-window or @tanstack/react-virtual; React.memo() on nodes; Set-based state | 60-80 tree nodes |
-| Full AI context in every extraction | API costs scale linearly with document count; 10 docs/week = $5, 100 docs/week = $50 | Cache project context (stakeholders, integrations) in Redis with 24h TTL; only pass context once per batch | 50+ documents/week |
-| Client-side filtering of large result sets | Fetch 500 tasks, filter in React state — works, but wasteful; initial load slow | Server-side filtering with indexed WHERE clauses; paginated results; only fetch filtered subset | 300+ entities per table |
-| Re-fetching entire report on every section interaction | User expands "Team Roster" section → fetches all 5 sections again | Section-level API endpoints; independent fetching; only refetch changed section | When report sections are large (>500 items total) |
-| Unoptimized React Flow layout recalculation | Every node position change triggers full Dagre layout; 100ms freeze on drag | Memoize layout calculation; only recalculate on node add/remove, not on position changes; use React Flow's built-in layouting | 50+ nodes in diagram |
-
----
+| In-memory filtering for project-scoped jobs instead of Redis index | 2 hours to ship feature | O(N) query, slow UI at 100+ jobs | MVP only; must add index in Phase 59 |
+| Skip version column for Gantt optimistic locking | Simpler initial implementation | Race conditions on concurrent edits | Only if single-user project mode; never for multi-user |
+| Global `archived_at IS NULL` filter in every query | Fastest to implement soft-delete | Hard to find all query callsites; bugs leak archived data | Never — use query layer abstraction from day 1 |
+| Prompt edits directly overwrite SKILL.md without backup | No extra storage needed | Lost ability to rollback bad edits | Never — backups are required for filesystem writes from web UI |
+| RBAC migration leaves global role column as fallback | Backward compatibility during transition | Security holes from mixed authorization logic | Only during 1-2 sprint transition; then hard cut |
+| Completeness rules in code instead of versioned config | No config storage layer needed | Can't track why scores changed or compare across versions | POC only; production needs versioned schemas |
 
 ## Integration Gotchas
 
-Common mistakes when integrating new features with existing system.
-
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| Portfolio dashboard + existing health calculation | Duplicate health logic in new `/api/dashboard/portfolio` endpoint; diverges from single-project calculation over time | Extract computeOverallHealth() to shared lib (already exported in HealthDashboard.tsx line 25); both endpoints import same function |
-| WBS auto-classify + existing task creation | AI-generated tasks bypass validation that manual task creation enforces (owner FK, milestone FK resolution) | Route AI tasks through same `/api/tasks POST` handler; validation enforced once, consistently |
-| Team Engagement + existing stakeholders table | Create new "team members" table instead of reusing stakeholders; data duplication and sync issues | Reuse stakeholders table; add `role_category` field to group stakeholders into teams; JOIN pattern for team roster |
-| Architecture diagrams + existing architecture_integrations table | React Flow diagram state diverges from DB (user drags node, position not saved); reload loses layout | Add `diagram_position` JSONB column to architecture_integrations; save node positions on drag-end; restore from DB on load |
-| Navigation restructure + existing skill href generation | Skills generate links like `/customer/${id}/decisions` (old structure); break after NAV restructure | Centralize URL generation: `lib/urls.ts` with `decisionsUrl(projectId)` function; skills import and call function; single source of truth |
-| Generate Plan + existing task templates | Generated tasks don't include `source_trace` field that manual/ingested tasks have; audit trail broken | Gap-fill prompt includes instruction: "Add source_trace: 'AI Generated - WBS Gap Fill'" to every task; preserves audit requirement |
-| Expanded extraction prompt + existing deduplication | New entity types bypass dedup logic (not added to `isAlreadyIngested()` switch statement); duplicate inserts | Update isAlreadyIngested() in extraction-types.ts (lines 65-275) for every new entity type BEFORE expanding prompt |
+| better-auth + per-project roles | Storing project membership in JWT session (size explosion) | Store only user_id in session; query project_memberships on each request |
+| Drizzle ORM + soft-delete | Using Drizzle's `.delete()` method | Always use `.update({ archived_at: new Date() })`; reserve `.delete()` for permanent delete |
+| BullMQ + RBAC | Checking user role at job creation only | Re-check role on each job execution (user may lose admin role while job queued) |
+| Custom Gantt + DB dates | Two-way binding causing update loops | Single source of truth (DB); Gantt always derives from DB; debounce writes |
+| Node.js fs + concurrent writes | `fs.writeFileSync` interleaving | Use `proper-lockfile` or atomic write pattern with rename |
+| PostgreSQL FKs + soft-delete | Cascade delete still triggers on `DELETE` | Change FK `onDelete` to `SET NULL` or `NO ACTION`; handle cleanup manually |
 
----
+## Performance Traps
+
+| Trap | Symptoms | Prevention | When It Breaks |
+|------|----------|------------|----------------|
+| Fetching all BullMQ jobs and filtering by project_id | Scheduling page slow to load | Redis Set index for per-project job IDs | >100 total jobs across all projects |
+| N+1 queries when cascading Gantt date updates | Milestone move triggers 50+ sequential DB calls | Bulk update in single transaction | >20 tasks tied to one milestone |
+| Completeness analysis recalculating on every page view | Page load time >2s | Cache score in `completeness_snapshots` with 24hr TTL | >50 tabs to analyze per project |
+| Unindexed `archived_at IS NULL` filter | Portfolio dashboard slow | Add partial index: `CREATE INDEX idx_projects_active ON projects (id) WHERE archived_at IS NULL` | >25 projects (per PERF-01) |
+| Filesystem SKILL.md reads on every skill execution | Cold start 500ms | Read once at worker startup, cache in memory, watch file for changes | >10 concurrent skill executions |
+| Querying project memberships without index | RBAC check slow on every API call | Add index: `CREATE INDEX idx_project_memberships_lookup ON project_memberships (user_id, project_id)` | >50 projects per user |
+
+## Security Mistakes
+
+| Mistake | Risk | Prevention |
+|---------|------|------------|
+| Checking RBAC only in middleware (CVE-2025-29927) | Next.js middleware bypass → unauthorized access | MUST call `requireProjectRole()` in every route handler (constraint already documented) |
+| Trusting job metadata `user_id` without re-verification | Attacker spoofs user_id in job data → privilege escalation | Background jobs MUST query session/DB to verify user still has required role |
+| No path sanitization in SKILL.md file writes | Path traversal: edit `../../../../etc/passwd` | Validate skill_name against whitelist; reject if contains `..` or `/` |
+| Archived project data visible in autocomplete/search | Data leakage from "deleted" projects | All autocomplete queries MUST filter `archived_at IS NULL` |
+| Prompt injection via edited SKILL.md | User injects `</document><instruction>Ignore previous instructions` | Escape/strip XML tags; validate prompt structure; consider sandboxing skill execution |
+| No rate limiting on prompt edit API | Attacker rapidly overwrites SKILL.md → DoS or data loss | Rate limit: 5 edits per skill per hour per user |
+
+## UX Pitfalls
+
+| Pitfall | User Impact | Better Approach |
+|---------|-------------|-----------------|
+| Archiving project without warning about scheduled jobs | Jobs continue running → confusion | Pre-flight check modal: "This project has 3 active scheduled jobs. Cancel them before archiving?" |
+| Gantt drag updates DB but doesn't show success feedback | User drags twice, thinking first drag failed → data inconsistency | Optimistic update with visual "saving..." indicator and success checkmark |
+| Completeness score drops after schema upgrade with no explanation | User perceives regression: "we were 100%, now 70%" | Show diff: "New requirements: Team Stakeholders (0/5), WBS Coverage (40%)" |
+| Prompt edit form doesn't show current prompt structure | User breaks required sections → skill fails | Split-pane editor: left = editable text, right = live preview with required section validation |
+| Archive vs Delete not clearly distinguished | User archives thinking it's permanent delete → data still exists | Clear labels: "Archive (read-only, can restore)" vs "Permanently Delete (cannot undo)" |
+| Per-project role change has no notification | User loses admin access with no explanation | Email notification + in-app banner: "Your role on [project] changed to User. Contact [admin] if this is incorrect." |
 
 ## "Looks Done But Isn't" Checklist
 
-Things that appear complete but are missing critical pieces.
-
-- [ ] **Portfolio dashboard:** Aggregation queries return data and render — verify performance testing with 20+ projects; measure query count and response time
-- [ ] **WBS tree:** Expand/collapse works — verify performance with 100-node tree; check React DevTools profiler for render time
-- [ ] **Generate Plan:** Claude returns tasks — verify tasks reference actual project entities (stakeholders by name, integrations by tool_name, dates within project bounds)
-- [ ] **Team Engagement Overview:** All 5 sections render — verify data refreshes after entity changes in other tabs (test metrics:invalidate listener)
-- [ ] **Architecture diagrams:** Both tabs show diagrams — verify visual differentiation between before/current states; user testing confirms no confusion
-- [ ] **Context-upload extraction:** New entity types extracted — verify existing entity types (action, risk, milestone) still extract with 80%+ accuracy after prompt expansion
-- [ ] **Navigation restructure:** New tab structure works — verify old URLs redirect correctly; test external links (bookmarks, Slack shares); grep for hardcoded hrefs
-- [ ] **WBS auto-classify:** Tasks routed to correct phase — verify classification accuracy >75%; test low-confidence fallback (does it surface for review or silently misclassify?)
-
----
+- [ ] **RBAC Migration:** All 40+ route handlers updated to use `requireProjectRole()` — verify with grep for old `requireSession()` without project check
+- [ ] **Soft-Delete:** All queries using `projects` table have `archived_at IS NULL` filter — verify with DB query log analysis
+- [ ] **Gantt Sync:** Tested with 50+ tasks, concurrent edits from 2 users, and during in-flight API call — verify no race conditions
+- [ ] **Prompt Editing:** File locking implemented, backup created before write, audit log entry recorded — verify with concurrent edit test
+- [ ] **Project-Scoped Jobs:** Redis index created, RBAC verified on cancel/edit, backward compatibility for pre-v7.0 jobs — verify with migration script
+- [ ] **Completeness:** Schema versioned, scores reproducible, trend tracking works — verify score doesn't change on refresh
+- [ ] **Archive + Jobs:** Scheduled jobs cancelled before archive, in-flight jobs complete before archive proceeds — verify with integration test
+- [ ] **Prompt + Cowork:** Edited skills forked or flagged, rollback to canonical works — verify Cowork skill updates don't overwrite edits
 
 ## Recovery Strategies
 
-When pitfalls occur despite prevention, how to recover.
-
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| N+1 query explosion | LOW | Add materialized view or parallel Promise.all(); no schema changes; 1-2 day refactor |
-| AI extraction accuracy drop | HIGH | Revert to previous prompt; manually reclassify misrouted entities (database cleanup); implement two-pass extraction; re-process recent documents; 5-7 day effort |
-| Tree render thrashing | MEDIUM | Refactor state to Set-based; add React.memo(); no DB changes; 2-3 day effort |
-| Generate Plan hallucinations | MEDIUM | Add validation rules; surface low-confidence tasks for review; users manually delete invalid tasks; 3-4 day effort + user cleanup time |
-| Navigation broken links | LOW | Add redirect middleware; update in-app hrefs; 1 day fix + release |
-| Stale Team Engagement data | LOW | Convert to client component; add metrics:invalidate listener; 1 day refactor |
-| Architecture diagram confusion | LOW | Add visual state indicators; persistent labels; 1-2 day CSS + markup changes |
-
----
+| RBAC leakage after migration | HIGH (security incident) | 1. Immediate: disable affected route handlers<br>2. Audit: review access logs for unauthorized access<br>3. Fix: add `requireProjectRole` to all missed handlers<br>4. Redeploy and verify with E2E test suite |
+| Soft-delete cascade breaks restore | MEDIUM | 1. DB backup restore to pre-archive state<br>2. Analyze: map all FK dependencies<br>3. Implement: cascade restore logic in transaction<br>4. Test: archive → restore → verify all child records |
+| Gantt sync infinite loop | LOW | 1. Browser refresh to reset Gantt state<br>2. Fix: add debounce to drag handler<br>3. Add circuit breaker: max 5 updates per 10 seconds |
+| Prompt edit corrupts SKILL.md | MEDIUM | 1. Restore from `.planning/skill-backups/` directory<br>2. If no backup: git checkout original from Cowork repo<br>3. Add file locking to prevent future corruption |
+| BullMQ job metadata missing project_id | MEDIUM | 1. Migration script: backfill metadata from job name or related DB records<br>2. Add schema validation to reject future jobs without metadata |
+| Completeness scores drop after deploy | LOW | 1. Document schema version change in release notes<br>2. Provide "Recalculate with old schema" button for comparison<br>3. Grandfather existing projects to old schema version |
 
 ## Pitfall-to-Phase Mapping
 
-How roadmap phases should address these pitfalls.
-
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| N+1 dashboard queries | DASH-01 (health summary) | Load dashboard with 20 test projects; response time <500ms; query count <10 |
-| AI extraction degradation | WBS-03 (auto-classify) | Extract 10 test documents; measure action/risk/milestone accuracy; must be ≥80% |
-| Tree render thrashing | WBS-02 (collapsible hierarchy) | Load 100-node tree; expand/collapse <50ms; React DevTools profiler confirms |
-| Generate Plan hallucinations | WBS-04 (gap-fill) | Generate plan with minimal context; verify no tasks reference non-existent stakeholders/tools |
-| Navigation broken links | NAV-01 (tab restructure) | Integration test: GET old URLs → verify 301 redirects to new URLs |
-| Stale Team Engagement | TEAM-01 (5-section report) | Edit entity in one tab; verify Team Engagement updates without reload |
-| Architecture diagram confusion | ARCH-01 (two-tab diagram) | User testing: 5 users interact with diagrams; ask "Which state is this?" — 100% correct answers |
-
----
+| RBAC leakage | AUTH-01 through AUTH-05 (FIRST) | E2E test suite covers all 40+ route handlers; zero `user.role` references outside `lib/auth-rbac.ts` |
+| Soft-delete cascade | PROJ-01 (before UI) | All `projects` queries filtered; integration test: archive → query → verify no archived data in results |
+| Gantt sync race conditions | DLVRY-02 | Load test: 50 tasks, 2 concurrent users, drag + edit simultaneously → no data loss; advisory lock visible in DB logs |
+| Prompt edit security | SKILL-03 | File locking test: 2 concurrent edits → one waits for other; path traversal test: reject `../` in skill_name |
+| Project-scoped job filter | SCHED-01 (before UI) | Redis index created; query time <100ms for 200 jobs; RBAC test: user can't cancel other project's job |
+| Completeness drift | INGEST-04 | Schema version stored; score reproducible; trend chart shows historical scores with schema version annotations |
+| Archive + RBAC integration | Phase 58/59 (integration phase) | Cross-feature test matrix: archive with running jobs, role change during job, restore with jobs |
+| Prompt + Cowork compatibility | SKILL-03 | Fork-on-edit verified; Cowork update doesn't overwrite custom edits; rollback button restores canonical |
 
 ## Sources
 
-**Codebase analysis (HIGH confidence):**
-- `/bigpanda-app/components/HealthDashboard.tsx` (lines 25-213) — health calculation and metrics:invalidate pattern
-- `/bigpanda-app/worker/jobs/document-extraction.ts` (lines 24-543) — extraction prompt structure and deduplication logic
-- `/bigpanda-app/lib/extraction-types.ts` (lines 65-275) — isAlreadyIngested() entity routing
-- `/bigpanda-app/app/api/projects/route.ts` (lines 1-95) — project creation and phase seeding pattern
-- `/.planning/PROJECT.md` (lines 1-155) — system architecture, existing patterns, and known constraints
-- `/.planning/MILESTONES.md` (lines 1-50) — v5.0 accomplishments showing CustomEvent sync, React Flow SSR handling
-
-**Domain expertise (MEDIUM-HIGH confidence):**
-- Next.js aggregation query patterns — O(N) query explosion is well-known pitfall at 10-20 entity scale
-- LLM prompt engineering — attention dilution and recency bias documented in prompt engineering research
-- React tree component performance — Set-based state and React.memo() are established best practices
-- Navigation restructuring — URL stability and redirect middleware are standard web app migration patterns
-
-**Analogous system patterns (MEDIUM confidence):**
-- AI hallucination in generative tasks — Claude Code's own prompt design uses XML wrapping and temperature control for similar reasons
-- React Flow performance — official troubleshooting docs recommend virtualization above 100 nodes (site unavailable, but pattern is industry standard)
+- **Project architecture:** `/Users/jmiloslavsky/Documents/Project Assistant Code/.planning/PROJECT.md` — system constraints, tech stack, 57-phase evolution history
+- **Existing RBAC:** v3.0 Phase 26 implementation (40+ route handlers with `requireSession()` at handler level; CVE-2025-29927 defense-in-depth pattern)
+- **BullMQ patterns:** v2.0 Phase 24 (scheduler infrastructure with `project_id` metadata)
+- **Gantt implementation:** v5.0 Phase 38 (custom GanttChart.tsx with drag-to-reschedule, milestone markers)
+- **Extraction pipeline:** v6.0 Phases 52-57 (multi-pass with tool use API, synthesis-first, approval flow)
+- **better-auth security:** Known limitation — session storage should not include large objects; per-project roles must query DB on each request
+- **Drizzle soft-delete patterns:** Community best practice — never use `.delete()` for soft-delete; partial indexes for performance
+- **PostgreSQL advisory locks:** Official docs — `pg_advisory_xact_lock(bigint)` for application-level locking during cascading updates
+- **Node.js filesystem concurrency:** `proper-lockfile` npm package — standard solution for atomic file writes from concurrent processes
 
 ---
-
-*Pitfalls research for: v6.0 feature expansion (portfolio dashboard, WBS tree, team engagement reports, expanded AI extraction)*
-*Researched: 2026-04-07*
-*Confidence: HIGH (based on existing codebase analysis and established domain patterns)*
+*Pitfalls research for: v7.0 Governance & Operational Maturity — adding RBAC, soft-delete, bi-directional sync, filesystem editing, and project-scoped scheduling to existing system*
+*Researched: 2026-04-13*
+*Context: 69,606 LOC TypeScript codebase, 57+ phases of schema evolution, 40+ existing route handlers, complex relational DB*
