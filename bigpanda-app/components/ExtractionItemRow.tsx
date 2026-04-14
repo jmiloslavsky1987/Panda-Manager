@@ -66,6 +66,8 @@ interface ExtractionItemRowProps {
   isExpanded: boolean
   onToggleExpand: () => void
   onChange: (changes: Partial<ReviewItem>) => void
+  onTypeChange?: (newType: string) => void
+  hasValidationError?: boolean
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -76,6 +78,8 @@ export function ExtractionItemRow({
   isExpanded,
   onToggleExpand,
   onChange,
+  onTypeChange,
+  hasValidationError,
 }: ExtractionItemRowProps) {
   const [showSource, setShowSource] = useState(false)
 
@@ -124,6 +128,10 @@ export function ExtractionItemRow({
     onToggleExpand()
   }
 
+  function handleTypeChange(newType: string) {
+    onTypeChange?.(newType)
+  }
+
   return (
     <div
       className={[
@@ -161,6 +169,9 @@ export function ExtractionItemRow({
             </p>
             {item.edited && (
               <span className="text-xs text-blue-600 font-medium shrink-0">edited</span>
+            )}
+            {hasValidationError && (
+              <span className="text-xs text-red-600 font-medium shrink-0">Required field empty</span>
             )}
           </div>
 
@@ -202,9 +213,11 @@ export function ExtractionItemRow({
       {/* Inline edit form */}
       {isExpanded && (
         <ExtractionItemEditForm
+          key={item.entityType}
           item={item}
           onSave={handleSave}
           onCancel={handleCancel}
+          onTypeChange={handleTypeChange}
         />
       )}
     </div>

@@ -11,6 +11,7 @@ import {
 import { IngestionStepper } from './IngestionStepper'
 import { ExtractionPreview } from './ExtractionPreview'
 import type { ExtractionItem } from '@/lib/extraction-types'
+import { NOTE_RECLASSIFY_PRIMARY_FIELD, type NoteReclassifyTarget } from './ExtractionItemEditForm'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -333,7 +334,22 @@ export function IngestionModal({
 
   // ── Item change handler from ExtractionPreview ────────────────────────────
   function handleItemChange(index: number, changes: Partial<ReviewItem>) {
-    setReviewItems(prev => prev.map((item, i) => i === index ? { ...item, ...changes } : item))
+    let resolvedChanges = changes
+
+    // Reclassification field remapping
+    if (changes.entityType && changes.entityType !== reviewItems[index]?.entityType) {
+      const contentValue = reviewItems[index]?.fields?.content ?? ''
+      const primaryField = NOTE_RECLASSIFY_PRIMARY_FIELD[changes.entityType as NoteReclassifyTarget]
+      if (primaryField) {
+        resolvedChanges = {
+          ...changes,
+          fields: { [primaryField]: contentValue },
+          edited: true,
+        }
+      }
+    }
+
+    setReviewItems(prev => prev.map((item, i) => i === index ? { ...item, ...resolvedChanges } : item))
   }
 
   // ── Final approve submission ───────────────────────────────────────────────
