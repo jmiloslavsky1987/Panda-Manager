@@ -18,6 +18,7 @@ interface OverviewMetricsData {
   weeklyTarget: number | null
   totalHoursThisWeek: number
   blockedTasks: { id: number; title: string }[]
+  overdueMilestones: number
 }
 
 // ─── Health Formula (exported for testing) ────────────────────────────────────
@@ -25,13 +26,12 @@ interface OverviewMetricsData {
 export function computeOverallHealth(metrics: {
   openCriticalRisks: number
   openHighRisks: number
-  adrCompletion: number
-  biggyCompletion: number
+  overdueMilestones: number
 }): 'red' | 'yellow' | 'green' {
   // Priority 1: Any critical risk → red (trumps all)
   if (metrics.openCriticalRisks > 0) return 'red'
-  // Priority 2: High risk OR low completion → yellow
-  if (metrics.openHighRisks > 0 || metrics.adrCompletion < 50 || metrics.biggyCompletion < 50) return 'yellow'
+  // Priority 2: High risk OR overdue milestone → yellow
+  if (metrics.openHighRisks > 0 || metrics.overdueMilestones > 0) return 'yellow'
   // Otherwise: green
   return 'green'
 }
@@ -145,8 +145,7 @@ export function HealthDashboard({ projectId }: HealthDashboardProps) {
   const overallHealth = computeOverallHealth({
     openCriticalRisks: criticalRisks,
     openHighRisks: highRisks,
-    adrCompletion,
-    biggyCompletion,
+    overdueMilestones: data.overdueMilestones,
   })
 
   // Per-track health
