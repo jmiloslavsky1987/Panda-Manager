@@ -1,11 +1,13 @@
 import { getWbsItems } from '@/lib/queries'
 import { WbsTree } from '@/components/WbsTree'
 import { WbsGeneratePlanModal } from '@/components/WbsGeneratePlanModal'
-import { requireSession } from '@/lib/auth-server'
+import { auth } from '@/lib/auth'
+import { headers } from 'next/headers'
+import { redirect } from 'next/navigation'
 
 export default async function WbsPage({ params }: { params: Promise<{ id: string }> }) {
-  const { session, redirectResponse } = await requireSession()
-  if (redirectResponse) return redirectResponse
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session) redirect('/sign-in')
 
   const { id } = await params
   const projectId = parseInt(id, 10)
