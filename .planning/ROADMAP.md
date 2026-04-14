@@ -122,7 +122,7 @@ Full details: `.planning/milestones/v6.0-ROADMAP.md` (archived)
 
 ### 🚧 v7.0 — Governance & Operational Maturity (Phases 58–69)
 
-- [ ] **Phase 58: Per-Project RBAC** - Implement Admin/User roles per project with route handler enforcement
+- [x] **Phase 58: Per-Project RBAC** - Implement Admin/User roles per project with route handler enforcement ✅ 2026-04-14
 - [ ] **Phase 59: Project Lifecycle Management** - Archive, delete, restore projects with admin controls and logout
 - [ ] **Phase 60: Health Dashboard Redesign** - Auto-derived executive metrics from system data
 - [ ] **Phase 61: Ingestion Edit & Move** - Edit before approve, move items, reclassify notes
@@ -147,13 +147,13 @@ Full details: `.planning/milestones/v6.0-ROADMAP.md` (archived)
   3. User role cannot access destructive actions or admin functions (blocked at UI and API level)
   4. All 40+ route handlers enforce role checks via requireProjectRole() wrapper
   5. Unauthorized attempts return 403 with clear error messages
-**Plans**: 4 plans
+**Plans**: 4 plans (4 complete) ✅
 
 Plans:
-- [ ] 58-01-PLAN.md — Schema + requireProjectRole() TDD foundation
-- [ ] 58-02-PLAN.md — Migrate all 46 [projectId] route handlers + jobs admin gate
-- [ ] 58-03-PLAN.md — Portfolio membership filter + session-threaded page
-- [ ] 58-04-PLAN.md — Members CRUD API + MembersTab UI + WorkspaceTabs wiring
+- [x] 58-01-PLAN.md — Schema + requireProjectRole() TDD foundation ✅
+- [x] 58-02-PLAN.md — Migrate all 46 [projectId] route handlers + jobs admin gate ✅
+- [x] 58-03-PLAN.md — Portfolio membership filter + session-threaded page ✅
+- [x] 58-04-PLAN.md — Members CRUD API + MembersTab UI + WorkspaceTabs wiring ✅
 
 ### Phase 59: Project Lifecycle Management
 **Goal**: Admins can manage full project lifecycle (archive, delete, restore) with portfolio visibility
