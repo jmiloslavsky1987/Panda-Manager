@@ -18,20 +18,20 @@ vi.mock('next/navigation', () => ({
 describe('UXPOL-01 — Empty States', () => {
   it('Actions table shows Add Action CTA when actions array is empty', () => {
     render(<ActionsTableClient actions={[]} projectId={123} />)
-    const button = screen.getByRole('button', { name: 'Add Action' })
-    expect(button).toBeDefined()
+    const buttons = screen.getAllByRole('button', { name: 'Add Action' })
+    expect(buttons.length).toBeGreaterThan(0)
   })
 
   it('Risks table shows Add Risk CTA when risks array is empty', () => {
     render(<RisksTableClient risks={[]} artifacts={[]} projectId={123} />)
-    const button = screen.getByRole('button', { name: 'Add Risk' })
-    expect(button).toBeDefined()
+    const buttons = screen.getAllByRole('button', { name: 'Add Risk' })
+    expect(buttons.length).toBeGreaterThan(0)
   })
 
   it('Milestones table shows Add Milestone CTA when milestones array is empty', () => {
     render(<MilestonesTableClient milestones={[]} artifacts={[]} projectId={123} />)
-    const button = screen.getByRole('button', { name: 'Add Milestone' })
-    expect(button).toBeDefined()
+    const buttons = screen.getAllByRole('button', { name: 'Add Milestone' })
+    expect(buttons.length).toBeGreaterThan(0)
   })
 
   it('Decisions table shows Log a Decision CTA when decisions array is empty', () => {

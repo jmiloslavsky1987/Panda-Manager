@@ -5,8 +5,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // ---------------------------------------------------------------------------
 
 // Mock DB so no real Postgres connection is required
-vi.mock('@/db', () => ({
-  db: {
+vi.mock('@/db', () => {
+  const dbMock = {
     select: vi.fn(),
     update: vi.fn(),
     // computeProjectAnalytics uses db.transaction — mock it to invoke the callback
@@ -17,8 +17,9 @@ vi.mock('@/db', () => ({
       };
       return fn(tx);
     }),
-  },
-}));
+  };
+  return { db: dbMock, default: dbMock };
+});
 
 import { db } from '@/db';
 import { getProjectWithHealth } from '@/lib/queries';

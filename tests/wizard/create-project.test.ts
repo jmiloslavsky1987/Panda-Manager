@@ -4,10 +4,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 vi.mock('server-only', () => ({}));
 vi.mock('../../db', () => ({
   db: {
-    insert: vi.fn().mockReturnValue({
-      values: vi.fn().mockReturnValue({
-        returning: vi.fn().mockResolvedValue([{ id: 42, name: 'Test Project', customer: 'ACME', status: 'draft' }]),
-      }),
+    transaction: vi.fn(async (fn: (tx: unknown) => unknown) => {
+      const mockTx = {
+        insert: vi.fn().mockReturnValue({
+          values: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([{ id: 42, name: 'Test Project', customer: 'ACME', status: 'draft' }]),
+          }),
+        }),
+      };
+      return fn(mockTx);
     }),
   },
 }));

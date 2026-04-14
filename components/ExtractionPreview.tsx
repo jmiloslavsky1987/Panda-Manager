@@ -33,7 +33,7 @@ export const TAB_LABELS: Record<string, string> = {
 }
 
 // Entity type order for consistent tab ordering
-const ENTITY_ORDER: string[] = [
+export const ENTITY_ORDER: string[] = [
   'action', 'risk', 'decision', 'milestone', 'stakeholder',
   'task', 'architecture', 'history', 'businessOutcome', 'team',
   'focus_area', 'e2e_workflow', 'team_pathway',  // Team-adjacent group

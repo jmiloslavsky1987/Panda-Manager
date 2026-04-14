@@ -36,7 +36,7 @@ describe('WorkspaceTabs — UI-01', () => {
     expect(screen.getByText('Overview')).toBeDefined()
     expect(screen.getByText('Delivery')).toBeDefined()
     expect(screen.getByText('Team')).toBeDefined()
-    expect(screen.getByText('Intel')).toBeDefined()
+    expect(screen.getByText('Context')).toBeDefined()
     expect(screen.getByText('Skills')).toBeDefined()
     expect(screen.getByText('Chat')).toBeDefined()
     expect(screen.getByText('Admin')).toBeDefined()
@@ -84,14 +84,14 @@ describe('WorkspaceTabs — UI-01', () => {
     expect(screen.queryByText('Risks')).toBeNull()
   })
 
-  it('clicking Delivery parent navigates to ?tab=delivery&subtab=actions', () => {
+  it('clicking Delivery parent navigates to ?tab=delivery&subtab=plan', () => {
     mockSearchParams.set('tab', 'overview')
 
     render(<WorkspaceTabs projectId="123" />)
 
     const deliveryLink = screen.getByText('Delivery').closest('a')
     expect(deliveryLink?.getAttribute('href')).toContain('tab=delivery')
-    expect(deliveryLink?.getAttribute('href')).toContain('subtab=actions')
+    expect(deliveryLink?.getAttribute('href')).toContain('subtab=plan')
   })
 })
 

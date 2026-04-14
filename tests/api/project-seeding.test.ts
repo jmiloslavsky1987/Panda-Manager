@@ -61,7 +61,7 @@ describe('POST /api/projects — Auto-seed phases (WORK-01)', () => {
 
     await POST(mockReq);
 
-    const seededAdrPhases = mockInsertedPhases.filter(p => p.track === 'ADR');
+    const seededAdrPhases = mockInsertedPhases.filter(p => p.track === 'ADR' && !p.source_trace);
     expect(seededAdrPhases).toBeDefined();
     expect(seededAdrPhases).toHaveLength(5);
   });
@@ -74,7 +74,7 @@ describe('POST /api/projects — Auto-seed phases (WORK-01)', () => {
 
     await POST(mockReq);
 
-    const seededBiggyPhases = mockInsertedPhases.filter(p => p.track === 'Biggy');
+    const seededBiggyPhases = mockInsertedPhases.filter(p => p.track === 'Biggy' && !p.source_trace);
     expect(seededBiggyPhases).toBeDefined();
     expect(seededBiggyPhases).toHaveLength(5);
   });
@@ -87,7 +87,7 @@ describe('POST /api/projects — Auto-seed phases (WORK-01)', () => {
 
     await POST(mockReq);
 
-    const adrPhases = mockInsertedPhases.filter(p => p.track === 'ADR');
+    const adrPhases = mockInsertedPhases.filter(p => p.track === 'ADR' && !p.source_trace);
     expect(adrPhases).toBeDefined();
     expect(adrPhases[0].display_order).toBe(1);
     expect(adrPhases[0].track).toBe('ADR');
@@ -102,7 +102,7 @@ describe('POST /api/projects — Auto-seed phases (WORK-01)', () => {
 
     await POST(mockReq);
 
-    const biggyPhases = mockInsertedPhases.filter(p => p.track === 'Biggy');
+    const biggyPhases = mockInsertedPhases.filter(p => p.track === 'Biggy' && !p.source_trace);
     expect(biggyPhases).toBeDefined();
     expect(biggyPhases[0].display_order).toBe(1);
     expect(biggyPhases[0].track).toBe('Biggy');
@@ -145,7 +145,7 @@ describe('POST /api/projects — Auto-seed phases (WORK-01)', () => {
 
     await POST(mockReq);
 
-    const adrPhases = mockInsertedPhases.filter(p => p.track === 'ADR');
+    const adrPhases = mockInsertedPhases.filter(p => p.track === 'ADR' && !p.source_trace);
     const adrPhaseNames = adrPhases.map(p => p.name);
     expect(adrPhaseNames).toEqual([
       'Discovery & Kickoff',
@@ -164,7 +164,7 @@ describe('POST /api/projects — Auto-seed phases (WORK-01)', () => {
 
     await POST(mockReq);
 
-    const biggyPhases = mockInsertedPhases.filter(p => p.track === 'Biggy');
+    const biggyPhases = mockInsertedPhases.filter(p => p.track === 'Biggy' && !p.source_trace);
     const biggyPhaseNames = biggyPhases.map(p => p.name);
     expect(biggyPhaseNames).toEqual([
       'Discovery & Kickoff',

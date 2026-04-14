@@ -45,6 +45,12 @@ vi.mock('../../../db', () => ({
           file_path: '/tmp/test.pdf',
           ingestion_status: 'pending',
         }])),
+        // Support buildArchPhasesContext chain: select().from().innerJoin().where().orderBy()
+        innerJoin: vi.fn(() => ({
+          where: vi.fn(() => ({
+            orderBy: vi.fn(() => Promise.resolve([])),
+          })),
+        })),
       })),
     })),
     update: vi.fn(() => ({
