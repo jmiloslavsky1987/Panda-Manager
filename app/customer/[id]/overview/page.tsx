@@ -13,8 +13,14 @@ export default async function OverviewPage({
 
   return (
     <div className="space-y-6 py-4">
-      <HealthDashboard projectId={projectId} />
-      <WeeklyFocus projectId={projectId} />
+      <div className="flex gap-4">
+        <div className="w-[30%]">
+          <HealthDashboard projectId={projectId} />
+        </div>
+        <div className="w-[70%]">
+          <WeeklyFocus projectId={projectId} />
+        </div>
+      </div>
       <OnboardingDashboard projectId={projectId} />
       <OverviewMetrics projectId={projectId} />
     </div>
