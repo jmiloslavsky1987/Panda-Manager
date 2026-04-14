@@ -8,7 +8,7 @@
 
 ### Auth & Access
 
-- [ ] **AUTH-01**: User can log out of the application from the navigation or user menu
+- [x] **AUTH-01**: User can log out of the application from the navigation or user menu
 - [x] **AUTH-02**: Admin can manage project membership and role assignments (Admin/User role per project)
 - [x] **AUTH-03**: User with Admin role on a project has full access: delete, archive, user management, and global scheduler actions on that project
 - [x] **AUTH-04**: User with User role on a project is restricted from destructive actions (delete, archive) and admin functions
@@ -18,7 +18,7 @@
 
 - [x] **PROJ-01**: Admin can archive a project (soft-delete: project becomes read-only, preserved in system)
 - [x] **PROJ-02**: Admin can permanently delete a project
-- [ ] **PROJ-03**: User can view archived projects in a dedicated archived projects view (read-only)
+- [x] **PROJ-03**: User can view archived projects in a dedicated archived projects view (read-only)
 - [x] **PROJ-04**: Admin can restore an archived project back to active status
 
 ### Overview Tab
@@ -117,14 +117,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | Phase 59 | Pending |
+| AUTH-01 | Phase 59 | Complete |
 | AUTH-02 | Phase 58 | Complete |
 | AUTH-03 | Phase 58 | Complete |
 | AUTH-04 | Phase 58 | Complete |
 | AUTH-05 | Phase 58 | Complete |
 | PROJ-01 | Phase 59 | Complete |
 | PROJ-02 | Phase 59 | Complete |
-| PROJ-03 | Phase 59 | Pending |
+| PROJ-03 | Phase 59 | Complete |
 | PROJ-04 | Phase 59 | Complete |
 | OVRVW-01 | Phase 66 | Pending |
 | OVRVW-02 | Phase 66 | Pending |
