@@ -3,15 +3,12 @@ import { db } from '@/db'
 import { workflowSteps, e2eWorkflows, auditLog } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { sql } from 'drizzle-orm'
-import { requireSession } from "@/lib/auth-server";
+import { requireProjectRole } from "@/lib/auth-server";
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string; workflowId: string; stepId: string }> }
 ) {
-  const { session, redirectResponse } = await requireSession();
-  if (redirectResponse) return redirectResponse;
-
   const { projectId, workflowId, stepId } = await params
   const numericProjectId = parseInt(projectId, 10)
   const numericWorkflowId = parseInt(workflowId, 10)
@@ -19,6 +16,9 @@ export async function PATCH(
   if (isNaN(numericProjectId) || isNaN(numericWorkflowId) || isNaN(numericStepId)) {
     return NextResponse.json({ error: 'Invalid projectId, workflowId, or stepId' }, { status: 400 })
   }
+
+  const { session, redirectResponse } = await requireProjectRole(numericProjectId, 'user');
+  if (redirectResponse) return redirectResponse;
 
   let body: { label?: string; track?: string; status?: string; position?: number }
   try {
@@ -87,9 +87,6 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ projectId: string; workflowId: string; stepId: string }> }
 ) {
-  const { session, redirectResponse } = await requireSession();
-  if (redirectResponse) return redirectResponse;
-
   const { projectId, workflowId, stepId } = await params
   const numericProjectId = parseInt(projectId, 10)
   const numericWorkflowId = parseInt(workflowId, 10)
@@ -97,6 +94,9 @@ export async function DELETE(
   if (isNaN(numericProjectId) || isNaN(numericWorkflowId) || isNaN(numericStepId)) {
     return NextResponse.json({ error: 'Invalid projectId, workflowId, or stepId' }, { status: 400 })
   }
+
+  const { session, redirectResponse } = await requireProjectRole(numericProjectId, 'user');
+  if (redirectResponse) return redirectResponse;
 
   // Read before-state for audit (outside transaction)
   const [beforeDelete] = await db.select().from(workflowSteps)

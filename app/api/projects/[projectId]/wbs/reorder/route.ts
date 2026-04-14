@@ -3,7 +3,7 @@ import { z } from 'zod'
 import db from '@/db'
 import { wbsItems } from '@/db/schema'
 import { eq, and, gte } from 'drizzle-orm'
-import { requireSession } from '@/lib/auth-server'
+import { requireProjectRole } from '@/lib/auth-server'
 import { sql } from 'drizzle-orm'
 
 // ─── Validation Schema ────────────────────────────────────────────────────────
@@ -20,14 +20,14 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
-  const { session, redirectResponse } = await requireSession()
-  if (redirectResponse) return redirectResponse
-
   const resolvedParams = await params
   const projectId = parseInt(resolvedParams.projectId, 10)
   if (isNaN(projectId)) {
     return Response.json({ error: 'Invalid project ID' }, { status: 400 })
   }
+
+  const { session, redirectResponse } = await requireProjectRole(projectId, 'user')
+  if (redirectResponse) return redirectResponse
 
   let body: unknown
   try {

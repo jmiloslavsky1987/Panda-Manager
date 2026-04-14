@@ -2,7 +2,7 @@
 // POST streaming chat handler with anti-hallucination system prompt
 // Uses Vercel AI SDK for streaming and Anthropic Claude for responses
 
-import { requireSession } from "@/lib/auth-server";
+import { requireProjectRole } from "@/lib/auth-server";
 import { buildChatContext } from "@/lib/chat-context-builder";
 import { streamText, convertToModelMessages } from 'ai';
 import { anthropic } from '@ai-sdk/anthropic';
@@ -27,16 +27,16 @@ export async function POST(
   req: NextRequest,
   context: { params: Promise<{ projectId: string }> }
 ) {
-  // Auth gate
-  const { session, redirectResponse } = await requireSession();
-  if (redirectResponse) return redirectResponse;
-
   // Validate projectId
   const { projectId } = await context.params;
   const numericId = parseInt(projectId, 10);
   if (isNaN(numericId)) {
     return Response.json({ error: 'Invalid project ID' }, { status: 400 });
   }
+
+  // Auth gate
+  const { session, redirectResponse } = await requireProjectRole(numericId, 'user');
+  if (redirectResponse) return redirectResponse;
 
   // Parse request body
   let body: { messages: UIMessage[] };

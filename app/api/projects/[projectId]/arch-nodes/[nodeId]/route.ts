@@ -4,7 +4,7 @@ import { z } from 'zod'
 import db from '@/db'
 import { archNodes } from '@/db/schema'
 import { eq } from 'drizzle-orm'
-import { requireSession } from '@/lib/auth-server'
+import { requireProjectRole } from '@/lib/auth-server'
 
 const UpdateArchNodeSchema = z.object({
   status: z.enum(['planned', 'in_progress', 'live']),
@@ -14,9 +14,6 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string; nodeId: string }> }
 ) {
-  const { session, redirectResponse } = await requireSession()
-  if (redirectResponse) return redirectResponse
-
   const resolvedParams = await params
   const projectId = parseInt(resolvedParams.projectId, 10)
   const nodeId = parseInt(resolvedParams.nodeId, 10)
@@ -24,6 +21,9 @@ export async function PATCH(
   if (isNaN(projectId)) {
     return Response.json({ error: 'Invalid project ID' }, { status: 400 })
   }
+
+  const { session, redirectResponse } = await requireProjectRole(projectId, 'user')
+  if (redirectResponse) return redirectResponse
 
   if (isNaN(nodeId)) {
     return Response.json({ error: 'Invalid node ID' }, { status: 400 })

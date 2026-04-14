@@ -3,21 +3,21 @@ import { db } from '@/db'
 import { focusAreas, auditLog } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { sql } from 'drizzle-orm'
-import { requireSession } from "@/lib/auth-server";
+import { requireProjectRole } from "@/lib/auth-server";
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string; id: string }> }
 ) {
-  const { session, redirectResponse } = await requireSession();
-  if (redirectResponse) return redirectResponse;
-
   const { projectId, id } = await params
   const numericProjectId = parseInt(projectId, 10)
   const numericId = parseInt(id, 10)
   if (isNaN(numericProjectId) || isNaN(numericId)) {
     return NextResponse.json({ error: 'Invalid projectId or id' }, { status: 400 })
   }
+
+  const { session, redirectResponse } = await requireProjectRole(numericProjectId, 'user');
+  if (redirectResponse) return redirectResponse;
 
   let body: {
     title?: string
@@ -85,15 +85,15 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ projectId: string; id: string }> }
 ) {
-  const { session, redirectResponse } = await requireSession();
-  if (redirectResponse) return redirectResponse;
-
   const { projectId, id } = await params
   const numericProjectId = parseInt(projectId, 10)
   const numericId = parseInt(id, 10)
   if (isNaN(numericProjectId) || isNaN(numericId)) {
     return NextResponse.json({ error: 'Invalid projectId or id' }, { status: 400 })
   }
+
+  const { session, redirectResponse } = await requireProjectRole(numericProjectId, 'user');
+  if (redirectResponse) return redirectResponse;
 
   // Read before-state for audit
   const [beforeDelete] = await db.select().from(focusAreas)

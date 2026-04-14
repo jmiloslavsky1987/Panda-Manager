@@ -4,7 +4,7 @@ import { eq, and, gte, lte, desc } from 'drizzle-orm'
 import { sql } from 'drizzle-orm'
 import db from '@/db'
 import { timeEntries, projects } from '@/db/schema'
-import { requireSession } from "@/lib/auth-server";
+import { requireProjectRole } from "@/lib/auth-server";
 
 const TimeEntryPostSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD'),
@@ -18,11 +18,14 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
-  const { session, redirectResponse } = await requireSession();
-  if (redirectResponse) return redirectResponse;
-
   const { projectId } = await params
   const numericId = parseInt(projectId, 10)
+  if (isNaN(numericId)) {
+    return NextResponse.json({ error: 'Invalid project ID' }, { status: 400 });
+  }
+
+  const { session, redirectResponse } = await requireProjectRole(numericId, 'user');
+  if (redirectResponse) return redirectResponse;
   const { searchParams } = new URL(req.url)
   const from = searchParams.get('from') ?? ''
   const to   = searchParams.get('to')   ?? ''
@@ -59,11 +62,14 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
-  const { session, redirectResponse } = await requireSession();
-  if (redirectResponse) return redirectResponse;
-
   const { projectId } = await params
   const numericId = parseInt(projectId, 10)
+  if (isNaN(numericId)) {
+    return NextResponse.json({ error: 'Invalid project ID' }, { status: 400 });
+  }
+
+  const { session, redirectResponse } = await requireProjectRole(numericId, 'user');
+  if (redirectResponse) return redirectResponse;
 
   const body = await req.json()
   const parsed = TimeEntryPostSchema.safeParse(body)

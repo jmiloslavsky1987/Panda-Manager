@@ -3,7 +3,7 @@ import { z } from 'zod'
 import db from '@/db'
 import { wbsItems } from '@/db/schema'
 import { eq } from 'drizzle-orm'
-import { requireSession } from '@/lib/auth-server'
+import { requireProjectRole } from '@/lib/auth-server'
 import { deleteWbsSubtree } from '@/lib/queries'
 
 // ─── Validation Schema ────────────────────────────────────────────────────────
@@ -23,9 +23,6 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string; itemId: string }> }
 ) {
-  const { session, redirectResponse } = await requireSession()
-  if (redirectResponse) return redirectResponse
-
   const resolvedParams = await params
   const projectId = parseInt(resolvedParams.projectId, 10)
   const itemId = parseInt(resolvedParams.itemId, 10)
@@ -33,6 +30,9 @@ export async function PATCH(
   if (isNaN(projectId) || isNaN(itemId)) {
     return Response.json({ error: 'Invalid project ID or item ID' }, { status: 400 })
   }
+
+  const { session, redirectResponse } = await requireProjectRole(projectId, 'user')
+  if (redirectResponse) return redirectResponse
 
   let body: unknown
   try {
@@ -90,9 +90,6 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string; itemId: string }> }
 ) {
-  const { session, redirectResponse } = await requireSession()
-  if (redirectResponse) return redirectResponse
-
   const resolvedParams = await params
   const projectId = parseInt(resolvedParams.projectId, 10)
   const itemId = parseInt(resolvedParams.itemId, 10)
@@ -100,6 +97,9 @@ export async function DELETE(
   if (isNaN(projectId) || isNaN(itemId)) {
     return Response.json({ error: 'Invalid project ID or item ID' }, { status: 400 })
   }
+
+  const { session, redirectResponse } = await requireProjectRole(projectId, 'user')
+  if (redirectResponse) return redirectResponse
 
   try {
     // Fetch the item to check its level
