@@ -147,7 +147,13 @@ Full details: `.planning/milestones/v6.0-ROADMAP.md` (archived)
   3. User role cannot access destructive actions or admin functions (blocked at UI and API level)
   4. All 40+ route handlers enforce role checks via requireProjectRole() wrapper
   5. Unauthorized attempts return 403 with clear error messages
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 58-01-PLAN.md — Schema + requireProjectRole() TDD foundation
+- [ ] 58-02-PLAN.md — Migrate all 46 [projectId] route handlers + jobs admin gate
+- [ ] 58-03-PLAN.md — Portfolio membership filter + session-threaded page
+- [ ] 58-04-PLAN.md — Members CRUD API + MembersTab UI + WorkspaceTabs wiring
 
 ### Phase 59: Project Lifecycle Management
 **Goal**: Admins can manage full project lifecycle (archive, delete, restore) with portfolio visibility
