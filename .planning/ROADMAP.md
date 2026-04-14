@@ -198,10 +198,15 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. User can edit any extracted field value in draft modal before approving
   2. Edited values merge with extraction results and persist on approval
-  3. User can move an approved ingested item to different workspace section
-  4. User can reclassify a note entity to any valid type (action, task, milestone, decision) in draft modal
+  3. User can move an approved ingested item to different workspace section (INGEST-02 deferred to future phase per user decision)
+  4. User can reclassify a note entity to any valid type (action, task, milestone, decision, risk) in draft modal
   5. Reclassified note transforms fields to target schema and routes to correct table on approval
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 61-01-PLAN.md — TDD Wave 0 RED stubs: edit propagation + note reclassification + approve route routing
+- [ ] 61-02-PLAN.md — Implementation: ExtractionItemEditForm Type dropdown + onTypeChange prop chain + IngestionModal field remap + ExtractionPreview validation gate
+- [ ] 61-03-PLAN.md — Human verification gate: Type dropdown, tab move on reclassify, inline error, error clearing
 
 ### Phase 62: Ingestion Consolidation
 **Goal**: Document scanning and completeness analysis are unified and enhanced
@@ -314,7 +319,7 @@ Plans:
 | 58. Per-Project RBAC | v7.0 | 4/4 | Complete | 2026-04-14 |
 | 59. Project Lifecycle Management | 5/5 | Complete    | 2026-04-14 | - |
 | 60. Health Dashboard Redesign | 2/2 | Complete    | 2026-04-14 | - |
-| 61. Ingestion Edit & Move | v7.0 | 0/? | Not started | - |
+| 61. Ingestion Edit & Move | v7.0 | 0/3 | Not started | - |
 | 62. Ingestion Consolidation | v7.0 | 0/? | Not started | - |
 | 63. Skills Design Standard | v7.0 | 0/? | Not started | - |
 | 64. Editable Prompts UI | v7.0 | 0/? | Not started | - |
