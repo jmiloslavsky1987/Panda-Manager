@@ -9,7 +9,7 @@
 ### Auth & Access
 
 - [ ] **AUTH-01**: User can log out of the application from the navigation or user menu
-- [ ] **AUTH-02**: Admin can manage project membership and role assignments (Admin/User role per project)
+- [x] **AUTH-02**: Admin can manage project membership and role assignments (Admin/User role per project)
 - [x] **AUTH-03**: User with Admin role on a project has full access: delete, archive, user management, and global scheduler actions on that project
 - [x] **AUTH-04**: User with User role on a project is restricted from destructive actions (delete, archive) and admin functions
 - [x] **AUTH-05**: Role-based access is enforced at the route handler level for all project actions
@@ -118,7 +118,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | AUTH-01 | Phase 59 | Pending |
-| AUTH-02 | Phase 58 | Pending |
+| AUTH-02 | Phase 58 | Complete |
 | AUTH-03 | Phase 58 | Complete |
 | AUTH-04 | Phase 58 | Complete |
 | AUTH-05 | Phase 58 | Complete |
