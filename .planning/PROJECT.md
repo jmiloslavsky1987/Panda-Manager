@@ -2,7 +2,7 @@
 
 ## What This Is
 
-An AI-native project management platform purpose-built for BigPanda's Professional Services delivery team. Replaces the manual workflow of running individual Cowork skills with a unified, persistent multi-user application where every customer project lives, every action is tracked, every communication is synthesized automatically, and every deliverable can be generated in one click from a live database. Supports n active customer accounts with full lifecycle management. Includes multi-user auth with role-based access, AI chat grounded in live project data, document ingestion routing to the right workspace tabs, completeness analysis, interactive org charts and workflow diagrams, and a fully templated tab structure.
+An AI-native project management platform purpose-built for BigPanda's Professional Services delivery team. Replaces the manual workflow of running individual Cowork skills with a unified, persistent multi-user application where every customer project lives, every action is tracked, every communication is synthesized automatically, and every deliverable can be generated in one click from a live database. Supports n active customer accounts with full lifecycle management. Features multi-user auth with role-based access, AI chat grounded in live project data, multi-pass document ingestion routing to all workspace tabs, synthesis-first extraction from unstructured transcripts and meeting notes, a portfolio-level dashboard with health summary and exceptions panel, a collapsible WBS tree with AI gap-fill, interactive Architecture diagrams auto-populated from context, and a Teams Engagement map auto-populated from extraction.
 
 ## Core Value
 
@@ -68,17 +68,25 @@ Every PS delivery intelligence the team has built — 15 AI skills, all project 
 - ✓ Consistent empty states with CTAs; overdue highlighting unified across Actions/Milestones/Tasks — v5.0 Phase 41
 - ✓ Full ingestion field coverage: task dates/FKs/priority, milestone owner, action notes/type, cross-entity ID resolution — v5.0 Phase 42
 
+<!-- v6.0 — Dashboard, Navigation & Intelligence (2026-04-14) -->
+- ✓ Skills portability: lib/skill-path.ts resolves SKILL.md dynamically at runtime — no hardcoded paths — v6.0 Phase 43 (SKILL-01)
+- ✓ Navigation restructure: Plan first in Delivery, WBS/Task Board/Gantt promoted to top level, Swimlane removed, Decisions → Delivery, Intel → Context tab, Engagement History → Admin — v6.0 Phase 44 (NAV-01–05)
+- ✓ Risks and Milestones parity with Actions: multi-dimension filtering, multi-select bulk actions — v6.0 Phase 44 (RISK-01–02, MILE-01–02)
+- ✓ Seven new PostgreSQL tables: wbs_items, wbs_task_assignments, team_engagement_sections, arch_tracks, arch_nodes, arch_team_status, project_dependencies — v6.0 Phase 45 (WBS-01, WBS-02)
+- ✓ Context upload extraction expanded to 21 entity types routed to all workspace tabs — v6.0 Phase 46 (WBS-03, ARCH-04)
+- ✓ WBS tab: 3-level collapsible ADR+Biggy tree, Generate Plan AI gap-fill, full CRUD with drag-reorder — v6.0 Phase 47 (WBS-04, WBS-05)
+- ✓ Architecture tab: Before State + Current & Future State two-sub-tab diagram, DB-driven nodes, status cycling, drag-reorder — v6.0 Phase 48 (ARCH-01–04)
+- ✓ Teams tab: 4-section engagement map (Business Outcomes, E2E Workflows, Teams & Engagement, Focus Areas), missing-data warnings, read-only with source-tab edit flow — v6.0 Phase 48 (TEAM-01, TEAM-03, TEAM-04)
+- ✓ Portfolio dashboard: health chips, filterable 12-column table, exceptions panel, project drill-down — v6.0 Phase 49 (DASH-01–06)
+- ✓ Extraction prompt intelligence: document-first layout, few-shot examples, field-level inference rules, status table, date null flip, section scan + self-check, tool use API (`record_entities`), 2000-char overlap, coverage reporting, Pass 0 pre-analysis — v6.0 Phase 53 (EXTR-02–16)
+- ✓ Multi-pass extraction: Pass 0 pre-analysis + 3 entity-group passes, intra-batch dedup, pass-aware IngestionModal progress — v6.0 Phases 52–55 (MULTI-PASS-01–03)
+- ✓ Teams tab aligned to 4-section spec; ExtractionPreview extended to all 21 entity types; dead team_engagement code removed — v6.0 Phase 56 (TEAM-01, TEAM-02)
+- ✓ Synthesis-first extraction: document type classification, entity prediction, transcript-mode inference, confidence calibration rubric, SINGLETON markers — v6.0 Phase 57 (SYNTH-01–05)
+- ✓ Architecture extraction → arch_node bridge: approved architecture entities upsert matching arch_node in same transaction, syncing visual diagram to extraction status — v6.0 Phase 57
+
 ### Active
 
-<!-- v6.0 — Dashboard, Navigation, Parity, WBS, Team Engagement, Architecture, Skills Portability -->
-- [ ] **DASH-01–06**: Portfolio dashboard — health summary, status chart, multi-project table with filtering/sort/search, exceptions panel, drill-down
-- [ ] **NAV-01–05**: Tab restructure — Plan first in Delivery, WBS/Task Board/Gantt promoted to top level, Swimlane removed, Decisions → Delivery, Intel removed, Engagement History → Admin
-- [ ] **RISK-01–02**: Risks parity with Actions — multi-dimension filtering, multi-select bulk actions
-- [ ] **MILE-01–02**: Milestones parity with Actions — multi-dimension filtering, multi-select bulk actions
-- [ ] **WBS-01–05**: Phase Board → WBS — both ADR + Biggy templates, collapsible hierarchy, context-upload auto-classify, Generate Plan gap-fill, manual edit
-- [ ] **TEAM-01–04**: Team Engagement Overview — 5-section engagement map, context-upload extraction, missing-data warnings, manual edit
-- [ ] **ARCH-01–04**: Architecture tab update — Before State + Current & Future State two-tab diagram, ADR + AI tracks, onboarding status table, context-upload extraction
-- [ ] **SKILL-01**: Skills portability — dynamic SKILL.md path resolution (no hardcoded paths)
+(None — planning v7.0)
 
 ### Out of Scope
 
@@ -92,9 +100,14 @@ Every PS delivery intelligence the team has built — 15 AI skills, all project 
 
 ## Context
 
-v5.0 shipped 2026-04-07. Full stack: Next.js 16 (Turbopack), PostgreSQL, Redis/BullMQ, better-auth, Drizzle ORM, Vercel AI SDK, @xyflow/react, @anthropic-ai/sdk, Recharts, frappe-gantt (replaced by custom GanttChart.tsx in v5.0). 42 phases, 233 plans completed across v1.0–v5.0. ~42,385 LOC TypeScript. Test suite: ~370 passing, 6 pre-existing failures remain (deferred to v6.0). Production build clean.
+v6.0 shipped 2026-04-14. Full stack: Next.js 16 (Turbopack), PostgreSQL, Redis/BullMQ, better-auth, Drizzle ORM, Vercel AI SDK, @xyflow/react, @anthropic-ai/sdk, Recharts. 57 phases (including 48.1), 278 plans completed across v1.0–v6.0. ~69,606 LOC TypeScript. Test suite: 148 files passing, 4 intentional RED stubs in `__tests__/portfolio/` (portfolio RED TDD stubs, never driven to GREEN — deferred to v7.0). Production build clean.
 
-v5.0 delivered: full inline editing across all entity types, custom split-panel Gantt with milestone markers and drag-reschedule, cross-tab metrics sync via CustomEvent, global search bar, artifact reverse lookup, audit-driven engagement history, Skills job progress/cancel, consistent empty states, loading skeletons, overdue highlighting, and complete ingestion field coverage with cross-entity ID resolution. Test fixes (Phase 36) and empty state CTA wiring remain as v6.0 work.
+v6.0 delivered: portfolio dashboard, WBS tree with AI gap-fill, Architecture diagram with status sync from extraction, Teams 4-section map, navigation restructure, Risks/Milestones parity, 4-pass extraction pipeline (Pass 0 + 3 entity-group passes) with tool use API, synthesis-first prompts for unstructured documents, and 15 pre-existing test failures resolved. Extraction pipeline now covers all 21 entity types end-to-end.
+
+Known tech debt entering v7.0:
+- WBS and Portfolio UX human verification pending (performance with 100+ nodes, filter panel, drag-drop)
+- 4 portfolio RED TDD stubs never driven to GREEN
+- Nyquist validation incomplete: 9/16 v6.0 phases at `nyquist_compliant: false` (draft status)
 
 This is a full rewrite of a previous Claude Code project assistant build (8 phases, React/Vite/Express/Google Drive architecture). SKILL.md files read from disk at runtime (not bundled). All data model patterns (archive-on-replace, dual-write atomicity, append-only history, source tracing, ID conventions) preserved from the original skill ecosystem.
 
@@ -131,24 +144,17 @@ This is a full rewrite of a previous Claude Code project assistant build (8 phas
 | Global /time-tracking section (v4.0) | Cross-project time visibility is more valuable than per-project tabs; consistent with how users review time | ✓ Correct — cleaner navigation, project attribution via filter |
 | Recharts for Overview visualizations | Built-in responsive design, direct React integration, no D3 complexity for simple bar/progress charts | ✓ Good — ProgressRing, PieChart, custom charts all rendered without SSR issues |
 | Advisory lock + Redis cache for weekly-focus job | Prevents duplicate LLM calls when multiple workers run; 7-day TTL balances freshness with cost | ✓ Correct — single Claude call per project per week; on-demand trigger works cleanly |
-| Phase 36 test fixes deferred to v6.0 | All 6 failures are mock setup issues (leftJoin, db.transaction, db.query mocks) — low production impact; v5.0 UX work is higher priority | — Pending |
 | frappe-gantt replaced with custom GanttChart.tsx (v5.0) | frappe-gantt SVG injection approach couldn't support milestone markers + swim lanes cleanly; custom split-panel React component gives full control | ✓ Correct — milestone markers, drag-reschedule, view modes all implemented natively |
 | CustomEvent (metrics:invalidate) for cross-tab sync (v5.0) | No external state library needed; browser-native event bus sufficient for same-tab communication between client islands | ✓ Correct — zero extra dependencies, clean dispatch/listen pattern |
-| Client-side filtering pattern for table clients (v5.0) | Server Component passes full data; client filters in-memory using URL params — consistent with ActionsTableClient, RisksTableClient, DecisionsTableClient | ✓ Correct — no extra API calls for filter changes |
-| Empty state CTA onClick handlers deferred as () => {} (v5.0) | Wiring to creation modals is low-risk and deferred; empty state component structure is correct | — Pending v6.0 |
-
-## Current Milestone: v6.0 — Dashboard, Navigation & Intelligence
-
-**Goal:** Upgrade the portfolio dashboard, restructure navigation, achieve parity across Risks/Milestones, replace Phase Board with AI-driven WBS, and enhance Team Engagement and Architecture views with context-upload extraction.
-
-**Target features:**
-- Portfolio-level dashboard with health summary, exceptions panel, and multi-project table
-- Delivery tab restructure: Plan first, WBS/Gantt/Task Board at top level, Swimlane removed, Decisions moved in
-- Risks and Milestones match Actions tab (filtering, multi-select, bulk actions)
-- Phase Board replaced with dual-template WBS (ADR + Biggy) with AI auto-classify and Generate Plan
-- Team Engagement Overview: 5-section map auto-populated from context uploads
-- Architecture tab: Before State + Current & Future State two-tab visual diagram auto-populated from context
-- Skills portability: dynamic SKILL.md path resolution
+| Client-side filtering pattern for table clients (v5.0) | Server Component passes full data; client filters in-memory using URL params — consistent across all table clients | ✓ Correct — no extra API calls for filter changes |
+| WBS custom WbsTree.tsx (v6.0) | 3-level collapsible tree with ADR/Biggy tabs, recursive delete, Set-based expand state — DnD kit for reorder | ✓ Correct — full control over WBS-specific behavior |
+| Portfolio dashboard: Server Component fetch + client filter (v6.0) | getPortfolioData() Server Component + PortfolioTableClient with URL params — same pattern as workspace tables | ✓ Correct — consistent with existing client-side filter pattern |
+| Multi-pass extraction: 3 separate Claude calls (v6.0) | Single-pass produced incomplete recall; entity groups have different extraction characteristics | ✓ Correct — recall improved significantly; Pass 0 pre-analysis further improves coverage |
+| Drizzle `record_entities` tool use replacing raw JSON (v6.0) | Strict mode tool use eliminates jsonrepair dependency; schema adherence improved | ✓ Correct — extraction errors from malformed JSON eliminated |
+| 4-section Teams tab — Architecture excluded (v6.0) | Architecture has dedicated tab; including it in Teams tab created duplicate and contradicted spec | ✓ Correct — Phase 56 alignment removes ArchOverviewSection |
+| team_engagement entity type removed from extraction (v6.0) | businessOutcome, e2e_workflow, focus_area populate Teams sections via their own tables — team_engagement was dead infrastructure | ✓ Correct — extraction now routes to correct tables; Teams tab populates cleanly |
+| Synthesis-first extraction posture + document type classification (v6.0) | Transcript/meeting note documents produced near-zero extractions under extraction-first prompts; Pass 0 classification enables adaptive behavior per doc type | ✓ Correct — SYNTH-01–05 contracts verified; confidence calibration rubric makes inferred vs explicit entities distinguishable |
+| Architecture extraction → arch_node bridge in same transaction (v6.0) | Diagram node status must stay in sync with extraction approvals; same transaction prevents partial state | ✓ Correct — approved architecture entities now automatically update visual diagram |
 
 ---
-*Last updated: 2026-04-07 after v6.0 milestone started*
+*Last updated: 2026-04-14 after v6.0 milestone*

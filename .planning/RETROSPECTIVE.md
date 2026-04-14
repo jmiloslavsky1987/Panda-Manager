@@ -155,6 +155,62 @@
 
 ---
 
+## Milestone: v6.0 — Dashboard, Navigation & Intelligence
+
+**Shipped:** 2026-04-14
+**Phases:** 16 (43–57, including 48.1) | **Plans:** 45 | **Duration:** 7 days (2026-04-07 → 2026-04-14)
+**Code delta:** +46,127 / -19,810 lines across 367 files | **Total LOC:** ~69,606 TypeScript
+
+### What Was Built
+
+- **Skills portability (Phase 43):** lib/skill-path.ts resolves SKILL.md at runtime — no hardcoded paths; shared across Next.js + BullMQ workers
+- **Navigation restructure (Phase 44):** Plan first in Delivery, WBS/Task Board/Gantt promoted to top level, Swimlane removed, Decisions → Delivery, Intel → Context tab, Engagement History → Admin; all old URLs redirect
+- **WBS tab (Phase 47):** 3-level collapsible ADR+Biggy tree with ADR/Biggy tab switch, Set-based expand state, React.memo() recursive tree, Generate Plan AI gap-fill modal, full CRUD with level-1 protection and subtree delete
+- **Architecture tab (Phase 48):** Before State + Current & Future State two-sub-tab diagram with DB-driven nodes, status cycling, drag-reorder, TeamOnboardingTable below both tracks
+- **Teams tab (Phase 48+56):** 4-section engagement map aligned to spec (Architecture excluded); ArchOverviewSection + TeamsPageTabs + TeamEngagementOverview orphans removed (~450 lines)
+- **Portfolio dashboard (Phase 49):** Health chips, filterable 12-column table with client-side filtering, exceptions panel, project drill-down
+- **3-pass extraction pipeline (Phase 52):** Pass 0 pre-analysis + 3 entity-group passes (actions/risks/tasks, architecture, teams/delivery), intra-batch dedup with composite keys, pass-aware IngestionModal progress
+- **Extraction prompt intelligence (Phase 53):** document-first layout, few-shot examples, field-level inference rules, status normalization table, `record_entities` tool use API (replaces jsonrepair), 2000-char overlap, coverage reporting
+- **Synthesis-first extraction (Phase 57):** Document type classification (transcript/status-update/formal-doc), entity type prediction in Pass 0, transcript-mode conditional instructions in all 3 passes, confidence calibration rubric (0.5–0.7 inferred, 0.8–0.95 explicit), SINGLETON markers, e2e_workflow assembly from scattered mentions
+- **15 pre-existing test failures fixed (post-v5.0):** leftJoin mock chains, db.transaction mocks, db default vs named exports, drizzle gt/ne operators, mockReturnValueOnce queue pollution, component import/jsdom issues
+
+### What Worked
+
+- **Gap-closure phase pattern:** Phases 54–57 systematically closed every audit gap from the v6.0 audit. Running the audit mid-milestone (before archiving) then generating explicit gap-closure phases is a clean pattern for quality assurance — much better than leaving gaps as indefinite tech debt
+- **Wave 0 + immediate RED→GREEN discipline:** With 45 plans across 16 phases, the TDD contract established by Wave 0 stubs made every phase's completion condition unambiguous
+- **REQUIREMENTS.md as living checklist:** 55/55 requirements ended up `[x]` and the traceability table was complete — the requirements doc actually served its purpose as a single-source completion check
+- **Per-entity approval feedback (Phase 51):** The `Record<entityType, { written, skipped }>` response pattern surfaced silent extraction failures as visible UI feedback — caught real ingestion bugs that would have been invisible
+- **Multi-pass extraction architecture:** 3 separate Claude calls with entity-group specialization materially improved recall for architecture and teams entities that a single-pass prompt missed entirely
+
+### What Was Inefficient
+
+- **Audit discovered 2 partial requirements after 16 phases:** TEAM-01 (5 sections instead of 4) and TEAM-02 (write path worked, read path was never connected) required 3 additional gap-closure phases. Earlier spec verification during Phase 48 planning would have caught the ArchOverviewSection discrepancy before it shipped.
+- **57-01-SUMMARY.md never created during execution:** Plan completed with 10 commits and all tests GREEN, but the summary document was forgotten and had to be written retrospectively. The VERIFICATION.md even noted this gap explicitly. Summary creation should be part of the plan's done criteria, not optional.
+- **Audit file status stale at milestone close:** v6.0 audit showed `status: gaps_found` (from 2026-04-10) even though all gaps were closed by Phase 57 (2026-04-13). The audit doc was never re-run or updated after gap closure. Stale audit status caused extra pre-flight work at milestone completion.
+- **team_engagement entity type lifecycle took 3 phases to fully resolve:** Phase 46 added it, Phase 51 removed it from prompts, Phase 53 investigated it again (EXTR-15), Phase 56 finally deleted the dead handler and orphaned infrastructure. A clearer decommission protocol would have resolved this in one phase.
+
+### Patterns Established
+
+- **Gap-closure phase chain after milestone audit:** Run `/gsd:audit-milestone` before archiving; any `gaps_found` items generate explicit gap-closure phases (54–57 pattern). Does NOT block milestone close if audit shows all gaps resolved.
+- **4-pass extraction pipeline:** Pass 0 (doc pre-analysis + entity prediction) → Pass 1 (actions/risks/tasks) → Pass 2 (architecture) → Pass 3 (teams/delivery) — progress scale: 10/40/70/100%. Apply to any multi-entity AI extraction that benefits from pass specialization.
+- **Document type classification + conditional instructions:** Pass 0 outputs `<document_type>` tag, which passes enable transcript-mode aggressive inference vs formal-doc explicit extraction. Generalizes to any prompt that needs input-adaptive behavior.
+- **Confidence calibration by source explicitness (not just certainty):** Four tiers (0.5–0.6 weak inference, 0.6–0.7 strong inference, 0.8–0.9 explicit informal, 0.9–0.95 explicit structured) make AI confidence scores meaningful to end users.
+
+### Key Lessons
+
+1. **Verify spec compliance during planning, not just during verification** — TEAM-01's Architecture section discrepancy existed in code for 2+ phases before the audit caught it; a 30-second spec read during Phase 48 planning would have prevented 3 gap-closure phases
+2. **Summary documents are part of "done"** — 57-01-SUMMARY.md was a documentation gap that required retroactive reconstruction; the plan's done criteria must include summary creation explicitly, not treat it as optional
+3. **Re-run audit after gap-closure phases complete** — or at minimum update the audit file's `status` field; a stale `gaps_found` status creates unnecessary friction at milestone close
+4. **Dead code needs a decommission plan, not just removal from prompts** — team_engagement entity type removal should have been one atomic change (remove from prompt, remove handler, remove infrastructure, update docs); doing it piecemeal across 3 phases created confusion about what was intentional vs. missed
+
+### Cost Observations
+
+- Model: Claude Sonnet 4.6 throughout
+- Sessions: ~15 sessions across 7 days
+- Notable: The extraction intelligence phases (50–57) were the most context-intensive — each required loading large prompt constants and test files. Parallel subagent execution (gsd:execute-phase) kept individual agent contexts manageable. Test repair session at milestone close (15 fixes in one session) demonstrated how accumulated test debt can be addressed efficiently in a single focused pass.
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -166,6 +222,7 @@
 | v3.0 | 5 | 3 days | Auth + AI features; wave pattern now automatic |
 | v4.0 | 5 | 3 days | Infrastructure migration + UI overhaul; parallel wave execution mature |
 | v5.0 | 6 | 5 days | Full UX overhaul; custom Gantt, cross-tab sync, global search, polish |
+| v6.0 | 16 | 7 days | Dashboard + WBS + Architecture + extraction pipeline maturity; gap-closure phase pattern introduced |
 
 ### Cumulative Quality
 
@@ -176,6 +233,7 @@
 | v3.0 | 363 | Auth, visuals, chat, context hub |
 | v4.0 | ~370 | BullMQ extraction, global time, Overview metrics/health/focus |
 | v5.0 | ~370 | Inline editing, custom Gantt, cross-tab sync, global search, empty states (6 pre-existing failures remain) |
+| v6.0 | 148 files passing | Portfolio, WBS, Architecture, extraction pipeline (21 entity types); 15 pre-existing failures fixed; 4 intentional RED portfolio stubs |
 
 ### Top Lessons (Verified Across Milestones)
 

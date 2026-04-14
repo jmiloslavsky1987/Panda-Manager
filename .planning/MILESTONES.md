@@ -1,5 +1,14 @@
 # Milestones
 
+## v6.0 Dashboard, Navigation & Intelligence (Shipped: 2026-04-14)
+
+**Phases completed:** 16 phases, 45 plans, 49 tasks
+
+**Key accomplishments:**
+- (none recorded)
+
+---
+
 ## v5.0 Workspace UX Overhaul (Shipped: 2026-04-07)
 
 **Phases completed:** 6 phases (37–42), 29 plans, 34 tasks
