@@ -158,3 +158,51 @@ describe('SYNTH-05: Confidence calibration and singleton enforcement', () => {
     expect(PASS_PROMPTS[3].toLowerCase()).toContain('scattered');
   });
 });
+
+// ── Phase 57 gap-closure: arch phase inference & bidirectional track matching ─
+
+describe('ARCH-PHASE-01: PASS_PROMPTS[2] architecture entity phase guidance', () => {
+  it('Pass 2 prompt defines architecture phase as a pipeline stage name, not a status word', () => {
+    // The architecture entity description must guide the AI to set phase = stage name.
+    // Without this, documents produce phase="production"/"in progress" and cards land in no column.
+    const pass2 = PASS_PROMPTS[2];
+    expect(pass2).toContain('architecture');
+    expect(pass2).toContain('phase');
+  });
+
+  it('Pass 2 prompt distinguishes architecture vs arch_node vs integration entity types', () => {
+    // Critical disambiguation — missing this causes tools to be extracted as the wrong type.
+    const pass2 = PASS_PROMPTS[2];
+    expect(pass2).toContain('arch_node');
+    expect(pass2).toContain('integration');
+  });
+});
+
+describe('ARCH-PHASE-02: approve route uses bidirectional ilike for arch_track lookup', () => {
+  it('approve/route.ts imports `or` and `sql` from drizzle-orm for bidirectional matching', async () => {
+    // The bridge must use OR(archTracks.name ilike %track%, track ilike %archTracks.name%)
+    // so that "ADR" matches "ADR Track" AND "ADR Track" matches "ADR".
+    const fs = await import('node:fs/promises');
+    const src = await fs.readFile(
+      new URL('../../app/api/ingestion/approve/route.ts', import.meta.url),
+      'utf-8'
+    );
+    // Both `or` and `sql` must be imported
+    expect(src).toMatch(/import\s*\{[^}]*\bor\b[^}]*\}\s*from\s*['"]drizzle-orm['"]/);
+    expect(src).toMatch(/import\s*\{[^}]*\bsql\b[^}]*\}\s*from\s*['"]drizzle-orm['"]/);
+  });
+
+  it('approve/route.ts uses concat in the bidirectional ilike for arch_track lookup', async () => {
+    // Verify the bidirectional pattern: sql`${archTrackName} ilike concat('%', ${archTracks.name}, '%')`
+    const fs = await import('node:fs/promises');
+    const src = await fs.readFile(
+      new URL('../../app/api/ingestion/approve/route.ts', import.meta.url),
+      'utf-8'
+    );
+    expect(src).toContain('concat');
+    // The or() wrapping both ilike directions
+    const bridgeSection = src.slice(src.indexOf('Bridge: also upsert'));
+    expect(bridgeSection).toContain('or(');
+    expect(bridgeSection).toContain('ilike(archTracks.name');
+  });
+});

@@ -205,3 +205,71 @@ describe('EXTR-11: Pass 0 pre-analysis exists in PASSES array', () => {
     expect(pass0?.label).toMatch(/pre.analy/i);
   });
 });
+
+// ─── buildArchPhasesContext ───────────────────────────────────────────────────
+
+import db from '../../db';
+
+describe('buildArchPhasesContext — pipeline stage injection for Pass 2', () => {
+  function mockSelectChain(resolvedRows: unknown[]) {
+    const chain = {
+      from: vi.fn().mockReturnThis(),
+      innerJoin: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      orderBy: vi.fn().mockResolvedValue(resolvedRows),
+    };
+    (db.select as ReturnType<typeof vi.fn>).mockReturnValue(chain);
+    return chain;
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns empty string when project has no arch_nodes', async () => {
+    mockSelectChain([]);
+    const { buildArchPhasesContext } = await import('../../worker/jobs/document-extraction');
+    const result = await buildArchPhasesContext(99);
+    expect(result).toBe('');
+  });
+
+  it('returns context string containing <project_pipeline_stages> tag', async () => {
+    mockSelectChain([
+      { trackName: 'ADR Track', nodeName: 'Event Ingest' },
+      { trackName: 'ADR Track', nodeName: 'Alert Intelligence' },
+      { trackName: 'AI Assistant Track', nodeName: 'Knowledge Sources' },
+    ]);
+    const { buildArchPhasesContext } = await import('../../worker/jobs/document-extraction');
+    const result = await buildArchPhasesContext(1);
+    expect(result).toContain('<project_pipeline_stages>');
+    expect(result).toContain('</project_pipeline_stages>');
+  });
+
+  it('lists stage names grouped by track with pipe separators', async () => {
+    mockSelectChain([
+      { trackName: 'ADR Track', nodeName: 'Event Ingest' },
+      { trackName: 'ADR Track', nodeName: 'Alert Intelligence' },
+      { trackName: 'ADR Track', nodeName: 'Incident Intelligence' },
+    ]);
+    const { buildArchPhasesContext } = await import('../../worker/jobs/document-extraction');
+    const result = await buildArchPhasesContext(1);
+    expect(result).toContain('ADR Track:');
+    expect(result).toContain('Event Ingest | Alert Intelligence | Incident Intelligence');
+  });
+
+  it('includes stage assignment guide with inference examples', async () => {
+    mockSelectChain([{ trackName: 'ADR Track', nodeName: 'Event Ingest' }]);
+    const { buildArchPhasesContext } = await import('../../worker/jobs/document-extraction');
+    const result = await buildArchPhasesContext(1);
+    expect(result).toContain('Stage assignment guide');
+    expect(result.toLowerCase()).toContain('event ingest');
+    expect(result.toLowerCase()).toContain('alert intelligence');
+  });
+
+  it('instructs AI not to use deployment status words as phase values', async () => {
+    mockSelectChain([{ trackName: 'ADR Track', nodeName: 'Event Ingest' }]);
+    const { buildArchPhasesContext } = await import('../../worker/jobs/document-extraction');
+    const result = await buildArchPhasesContext(1);
+    expect(result.toLowerCase()).toMatch(/do not use deployment status/);
+  });
+});

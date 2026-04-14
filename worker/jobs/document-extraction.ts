@@ -607,7 +607,7 @@ async function runClaudeToolUseCall(
 // Injected into Pass 2 so the extraction AI can infer the correct "phase" for
 // architecture entities even when documents don't name the stage explicitly.
 
-async function buildArchPhasesContext(projectId: number): Promise<string> {
+export async function buildArchPhasesContext(projectId: number): Promise<string> {
   const rows = await db
     .select({ trackName: archTracks.name, nodeName: archNodes.name })
     .from(archNodes)
