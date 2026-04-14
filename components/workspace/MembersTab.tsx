@@ -70,10 +70,18 @@ export function MembersTab({ projectId, isProjectAdmin }: MembersTabProps) {
         const data = await res.json();
         setMembers(data.members ?? []);
       } else {
-        const errData = await res.json();
-        setError(errData.error ?? 'Failed to load members');
+        let errMsg = 'Failed to load members';
+        try {
+          const errData = await res.json();
+          errMsg = errData.error ?? errMsg;
+        } catch {
+          // Response wasn't JSON, use status text
+          errMsg = `Error ${res.status}: ${res.statusText}`;
+        }
+        setError(errMsg);
       }
     } catch (err) {
+      console.error('Error loading members:', err);
       setError('Network error loading members');
     } finally {
       setLoading(false);
@@ -176,14 +184,15 @@ export function MembersTab({ projectId, isProjectAdmin }: MembersTabProps) {
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">Project Members</h2>
         {isProjectAdmin && (
-          <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+          <Dialog open={addDialogOpen} onOpenChange={(open) => {
+            setAddDialogOpen(open);
+            if (open) {
+              loadUsers();
+              setAddError(null);
+            }
+          }}>
             <DialogTrigger asChild>
-              <Button
-                onClick={() => {
-                  loadUsers();
-                  setAddError(null);
-                }}
-              >
+              <Button>
                 Add Member
               </Button>
             </DialogTrigger>
