@@ -3,7 +3,7 @@ import { eq, sql } from 'drizzle-orm';
 import db from '@/db';
 import { projects, skillRuns } from '@/db/schema';
 import { SkillOrchestrator } from '@/lib/skill-orchestrator';
-import { requireSession } from "@/lib/auth-server";
+import { requireProjectRole } from "@/lib/auth-server";
 import { readSettings } from '@/lib/settings';
 import { resolveSkillsDir } from '@/lib/skill-path';
 
@@ -12,12 +12,12 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
-  const { session, redirectResponse } = await requireSession();
-  if (redirectResponse) return redirectResponse;
-
   const { projectId: projectIdStr } = await params;
   const projectId = parseInt(projectIdStr, 10);
   if (isNaN(projectId)) return NextResponse.json({ error: 'Invalid project id' }, { status: 400 });
+
+  const { session, redirectResponse } = await requireProjectRole(projectId, 'user');
+  if (redirectResponse) return redirectResponse;
 
   const [project] = await db.select({
     sprint_summary: projects.sprint_summary,
@@ -35,12 +35,12 @@ export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
-  const { session, redirectResponse } = await requireSession();
-  if (redirectResponse) return redirectResponse;
-
   const { projectId: projectIdStr } = await params;
   const projectId = parseInt(projectIdStr, 10);
   if (isNaN(projectId)) return NextResponse.json({ error: 'Invalid project id' }, { status: 400 });
+
+  const { session, redirectResponse } = await requireProjectRole(projectId, 'user');
+  if (redirectResponse) return redirectResponse;
 
   try {
     // Create transient skill_run row

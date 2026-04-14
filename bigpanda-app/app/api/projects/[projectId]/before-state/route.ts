@@ -4,7 +4,7 @@ import { beforeState } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { sql } from 'drizzle-orm'
 import { z } from 'zod'
-import { requireSession } from "@/lib/auth-server";
+import { requireProjectRole } from "@/lib/auth-server";
 
 const putSchema = z.object({
   aggregation_hub_name: z.string().nullable().optional(),
@@ -16,14 +16,14 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
-  const { session, redirectResponse } = await requireSession();
-  if (redirectResponse) return redirectResponse;
-
   const { projectId } = await params
   const numericId = parseInt(projectId, 10)
   if (isNaN(numericId)) {
     return NextResponse.json({ error: 'Invalid projectId' }, { status: 400 })
   }
+
+  const { session, redirectResponse } = await requireProjectRole(numericId, 'user');
+  if (redirectResponse) return redirectResponse;
 
   try {
     const result = await db.transaction(async (tx) => {
@@ -47,14 +47,14 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
-  const { session, redirectResponse } = await requireSession();
-  if (redirectResponse) return redirectResponse;
-
   const { projectId } = await params
   const numericId = parseInt(projectId, 10)
   if (isNaN(numericId)) {
     return NextResponse.json({ error: 'Invalid projectId' }, { status: 400 })
   }
+
+  const { session, redirectResponse } = await requireProjectRole(numericId, 'user');
+  if (redirectResponse) return redirectResponse;
 
   let body: unknown
   try {

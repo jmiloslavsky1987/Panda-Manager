@@ -5,7 +5,7 @@ import { sql } from 'drizzle-orm'
 import db from '@/db'
 import { timeEntries } from '@/db/schema'
 import { writeAuditLog } from '@/lib/audit'
-import { requireSession } from "@/lib/auth-server";
+import { requireProjectRole } from "@/lib/auth-server";
 
 const SubmitSchema = z.object({
   week_start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'week_start must be YYYY-MM-DD'),
@@ -29,11 +29,14 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
-  const { session, redirectResponse } = await requireSession();
-  if (redirectResponse) return redirectResponse;
-
   const { projectId } = await params
   const numericId = parseInt(projectId, 10)
+  if (isNaN(numericId)) {
+    return NextResponse.json({ error: 'Invalid project ID' }, { status: 400 });
+  }
+
+  const { session, redirectResponse } = await requireProjectRole(numericId, 'user');
+  if (redirectResponse) return redirectResponse;
 
   if (isNaN(numericId)) {
     return NextResponse.json({ error: 'Invalid projectId' }, { status: 400 })

@@ -4,7 +4,7 @@ import { onboardingSteps } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { sql } from 'drizzle-orm'
 import { z } from 'zod'
-import { requireSession } from "@/lib/auth-server";
+import { requireProjectRole } from "@/lib/auth-server";
 
 const patchSchema = z.object({
   status: z.enum(['not-started', 'in-progress', 'complete', 'blocked']).optional(),
@@ -16,9 +16,6 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string; stepId: string }> }
 ) {
-  const { session, redirectResponse } = await requireSession();
-  if (redirectResponse) return redirectResponse;
-
   const { projectId, stepId } = await params
   const numericProjectId = parseInt(projectId, 10)
   const numericStepId = parseInt(stepId, 10)
@@ -26,6 +23,9 @@ export async function PATCH(
   if (isNaN(numericProjectId)) {
     return NextResponse.json({ error: 'Invalid projectId' }, { status: 400 })
   }
+
+  const { session, redirectResponse } = await requireProjectRole(numericProjectId, 'user');
+  if (redirectResponse) return redirectResponse;
   if (isNaN(numericStepId)) {
     return NextResponse.json({ error: 'Invalid stepId' }, { status: 400 })
   }

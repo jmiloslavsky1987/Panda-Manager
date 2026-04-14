@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { eq, and, desc } from 'drizzle-orm';
 import { db } from '@/db';
 import { artifacts } from '@/db/schema';
-import { requireSession } from '@/lib/auth-server';
+import { requireProjectRole } from '@/lib/auth-server';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,12 +10,14 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> },
 ): Promise<NextResponse> {
-  await requireSession();
   const { projectId } = await params;
   const projectIdNum = parseInt(projectId, 10);
   if (isNaN(projectIdNum)) {
     return NextResponse.json({ error: 'Invalid project ID' }, { status: 400 });
   }
+
+  const { session, redirectResponse } = await requireProjectRole(projectIdNum, 'user');
+  if (redirectResponse) return redirectResponse;
 
   const rows = await db
     .select({

@@ -3,20 +3,20 @@ import { db } from '@/db'
 import { e2eWorkflows, workflowSteps } from '@/db/schema'
 import { eq, asc } from 'drizzle-orm'
 import { sql } from 'drizzle-orm'
-import { requireSession } from "@/lib/auth-server";
+import { requireProjectRole } from "@/lib/auth-server";
 
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
-  const { session, redirectResponse } = await requireSession();
-  if (redirectResponse) return redirectResponse;
-
   const { projectId } = await params
   const numericId = parseInt(projectId, 10)
   if (isNaN(numericId)) {
     return NextResponse.json({ error: 'Invalid projectId' }, { status: 400 })
   }
+
+  const { session, redirectResponse } = await requireProjectRole(numericId, 'user');
+  if (redirectResponse) return redirectResponse;
 
   try {
     const result = await db.transaction(async (tx) => {
@@ -48,14 +48,14 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
-  const { session, redirectResponse } = await requireSession();
-  if (redirectResponse) return redirectResponse;
-
   const { projectId } = await params
   const numericId = parseInt(projectId, 10)
   if (isNaN(numericId)) {
     return NextResponse.json({ error: 'Invalid projectId' }, { status: 400 })
   }
+
+  const { session, redirectResponse } = await requireProjectRole(numericId, 'user');
+  if (redirectResponse) return redirectResponse;
 
   let body: { team_name?: string; workflow_name?: string }
   try {

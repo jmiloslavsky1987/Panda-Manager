@@ -3,22 +3,22 @@
 // POST: Trigger on-demand weekly focus generation for this project
 import { NextRequest, NextResponse } from 'next/server';
 import { Queue } from 'bullmq';
-import { requireSession } from '@/lib/auth-server';
+import { requireProjectRole } from '@/lib/auth-server';
 import { createApiRedisConnection } from '@/worker/connection';
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
-  const { redirectResponse } = await requireSession();
-  if (redirectResponse) return redirectResponse;
-
   const { projectId } = await params;
   const numericId = parseInt(projectId, 10);
 
   if (isNaN(numericId)) {
     return NextResponse.json({ error: 'Invalid project ID' }, { status: 400 });
   }
+
+  const { session, redirectResponse } = await requireProjectRole(numericId, 'user');
+  if (redirectResponse) return redirectResponse;
 
   const redis = createApiRedisConnection();
   try {
@@ -46,15 +46,15 @@ export async function POST(
   _req: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
-  const { redirectResponse } = await requireSession();
-  if (redirectResponse) return redirectResponse;
-
   const { projectId } = await params;
   const numericId = parseInt(projectId, 10);
 
   if (isNaN(numericId)) {
     return NextResponse.json({ error: 'Invalid project ID' }, { status: 400 });
   }
+
+  const { session, redirectResponse } = await requireProjectRole(numericId, 'user');
+  if (redirectResponse) return redirectResponse;
 
   const queue = new Queue('scheduled-jobs', {
     connection: createApiRedisConnection() as any,

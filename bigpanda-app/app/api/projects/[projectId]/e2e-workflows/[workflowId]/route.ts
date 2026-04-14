@@ -3,21 +3,21 @@ import { db } from '@/db'
 import { e2eWorkflows, auditLog } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { sql } from 'drizzle-orm'
-import { requireSession } from "@/lib/auth-server";
+import { requireProjectRole } from "@/lib/auth-server";
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string; workflowId: string }> }
 ) {
-  const { session, redirectResponse } = await requireSession();
-  if (redirectResponse) return redirectResponse;
-
   const { projectId, workflowId } = await params
   const numericProjectId = parseInt(projectId, 10)
   const numericWorkflowId = parseInt(workflowId, 10)
   if (isNaN(numericProjectId) || isNaN(numericWorkflowId)) {
     return NextResponse.json({ error: 'Invalid projectId or workflowId' }, { status: 400 })
   }
+
+  const { session, redirectResponse } = await requireProjectRole(numericProjectId, 'user');
+  if (redirectResponse) return redirectResponse;
 
   let body: { team_name?: string; workflow_name?: string }
   try {
@@ -72,15 +72,15 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ projectId: string; workflowId: string }> }
 ) {
-  const { session, redirectResponse } = await requireSession();
-  if (redirectResponse) return redirectResponse;
-
   const { projectId, workflowId } = await params
   const numericProjectId = parseInt(projectId, 10)
   const numericWorkflowId = parseInt(workflowId, 10)
   if (isNaN(numericProjectId) || isNaN(numericWorkflowId)) {
     return NextResponse.json({ error: 'Invalid projectId or workflowId' }, { status: 400 })
   }
+
+  const { session, redirectResponse } = await requireProjectRole(numericProjectId, 'user');
+  if (redirectResponse) return redirectResponse;
 
   // Read before-state for audit
   const [beforeDelete] = await db.select().from(e2eWorkflows)

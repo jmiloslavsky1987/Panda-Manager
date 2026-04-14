@@ -7,7 +7,7 @@ import { timeEntries } from '@/db/schema'
 import { getEntryStatus } from '@/lib/time-tracking'
 import { writeAuditLog } from '@/lib/audit'
 import { buildApprovalNotification } from '@/lib/time-tracking-notifications'
-import { requireSession } from "@/lib/auth-server";
+import { requireProjectRole } from "@/lib/auth-server";
 
 const ApproveSchema = z.object({
   approved_by: z.string().optional(),
@@ -26,12 +26,15 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ projectId: string; entryId: string }> }
 ) {
-  const { session, redirectResponse } = await requireSession();
-  if (redirectResponse) return redirectResponse;
-
   const { projectId, entryId } = await params
   const numericProjectId = parseInt(projectId, 10)
   const numericEntryId = parseInt(entryId, 10)
+  if (isNaN(numericProjectId)) {
+    return NextResponse.json({ error: 'Invalid project ID' }, { status: 400 });
+  }
+
+  const { session, redirectResponse } = await requireProjectRole(numericProjectId, 'user');
+  if (redirectResponse) return redirectResponse;
 
   if (isNaN(numericProjectId) || isNaN(numericEntryId)) {
     return NextResponse.json({ error: 'Invalid projectId or entryId' }, { status: 400 })

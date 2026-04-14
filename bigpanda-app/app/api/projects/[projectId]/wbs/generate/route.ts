@@ -3,7 +3,7 @@
 // Returns proposals for preview modal (synchronous, no BullMQ).
 
 import { NextRequest, NextResponse } from 'next/server';
-import { requireSession } from '@/lib/auth-server';
+import { requireProjectRole } from '@/lib/auth-server';
 import db from '@/db';
 import { wbsItems } from '@/db/schema';
 import { eq } from 'drizzle-orm';
@@ -13,14 +13,14 @@ export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
-  const { session, redirectResponse } = await requireSession();
-  if (redirectResponse) return redirectResponse;
-
   const { projectId: projectIdStr } = await params;
   const projectId = parseInt(projectIdStr, 10);
   if (isNaN(projectId)) {
     return NextResponse.json({ error: 'Invalid project id' }, { status: 400 });
   }
+
+  const { session, redirectResponse } = await requireProjectRole(projectId, 'user');
+  if (redirectResponse) return redirectResponse;
 
   try {
     // Fetch all existing WBS items (both tracks, all levels)

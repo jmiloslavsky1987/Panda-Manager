@@ -12,7 +12,7 @@ import {
   businessOutcomes,
 } from '@/db/schema'
 import { eq, count } from 'drizzle-orm'
-import { requireSession } from "@/lib/auth-server";
+import { requireProjectRole } from "@/lib/auth-server";
 import Anthropic from '@anthropic-ai/sdk';
 import { buildCompletenessContext } from '@/lib/completeness-context-builder';
 import { TAB_TEMPLATE_REGISTRY } from '@/lib/tab-template-registry';
@@ -95,14 +95,14 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
-  const { session, redirectResponse } = await requireSession();
-  if (redirectResponse) return redirectResponse;
-
   const { projectId } = await params
   const numericId = parseInt(projectId, 10)
   if (isNaN(numericId)) {
     return NextResponse.json({ error: 'Invalid projectId' }, { status: 400 })
   }
+
+  const { session, redirectResponse } = await requireProjectRole(numericId, 'user');
+  if (redirectResponse) return redirectResponse;
 
   const results = await Promise.all(
     SCORED_TABS.map(async (tab) => {
@@ -151,14 +151,14 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> },
 ): Promise<NextResponse> {
-  const { session, redirectResponse } = await requireSession();
-  if (redirectResponse) return redirectResponse;
-
   const { projectId } = await params;
   const projectIdNum = parseInt(projectId, 10);
   if (isNaN(projectIdNum)) {
     return NextResponse.json({ error: 'Invalid project ID' }, { status: 400 });
   }
+
+  const { session, redirectResponse } = await requireProjectRole(projectIdNum, 'user');
+  if (redirectResponse) return redirectResponse;
 
   const contextPayload = await buildCompletenessContext(projectIdNum);
 

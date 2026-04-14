@@ -12,7 +12,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { eq, asc } from 'drizzle-orm';
 import db from '@/db';
 import { extractionJobs, artifacts, type ExtractionJob } from '@/db/schema';
-import { requireSession } from '@/lib/auth-server';
+import { requireProjectRole } from '@/lib/auth-server';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,15 +20,20 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
-  const { redirectResponse } = await requireSession();
+  const { projectId } = await params;
+  const numericId = Number(projectId);
+  if (isNaN(numericId)) {
+    return NextResponse.json({ error: 'Invalid project ID' }, { status: 400 });
+  }
+
+  const { session, redirectResponse } = await requireProjectRole(numericId, 'user');
   if (redirectResponse) return redirectResponse;
 
-  const { projectId } = await params;
   const rows = await db
     .select({ job: extractionJobs, artifactStatus: artifacts.ingestion_status })
     .from(extractionJobs)
     .leftJoin(artifacts, eq(extractionJobs.artifact_id, artifacts.id))
-    .where(eq(extractionJobs.project_id, Number(projectId)))
+    .where(eq(extractionJobs.project_id, numericId))
     .orderBy(asc(extractionJobs.created_at));
 
   // Exclude failed jobs and jobs whose artifact has already been approved
