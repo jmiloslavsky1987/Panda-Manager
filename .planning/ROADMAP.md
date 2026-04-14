@@ -300,7 +300,7 @@ Plans:
 | 31–35 | v4.0 | 26/26 | Complete | 2026-04-03 |
 | 37–42 | v5.0 | 29/29 | Complete | 2026-04-07 |
 | 43–57 | v6.0 | 45/45 | Complete | 2026-04-14 |
-| 58. Per-Project RBAC | 2/4 | In Progress|  | - |
+| 58. Per-Project RBAC | 2/4 | Complete    | 2026-04-14 | - |
 | 59. Project Lifecycle Management | v7.0 | 0/? | Not started | - |
 | 60. Health Dashboard Redesign | v7.0 | 0/? | Not started | - |
 | 61. Ingestion Edit & Move | v7.0 | 0/? | Not started | - |
