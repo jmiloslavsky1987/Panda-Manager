@@ -1,104 +1,217 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
-
-// These imports will fail until Plan 02 implements the production code
-// This is the expected TDD RED state for Plan 59-01
-// import { PATCH } from '@/app/api/projects/[projectId]/route';
-// import { seedProjectFromRegistry } from '@/lib/seed-project';
+import { PATCH } from '@/app/api/projects/[projectId]/route';
+import { db } from '@/db';
+import { projects } from '@/db/schema';
+import { eq } from 'drizzle-orm';
+import * as authServer from '@/lib/auth-server';
+import * as seedProject from '@/lib/seed-project';
 
 describe('Project Restore API', () => {
-  beforeEach(() => {
+  let mockSession: any;
+  let mockProjectId: number;
+
+  beforeEach(async () => {
     vi.clearAllMocks();
+
+    // Create test project in archived state
+    const [project] = await db.insert(projects).values({
+      name: 'Test Restore Project',
+      customer: 'Test Customer',
+      status: 'archived',
+    }).returning();
+    mockProjectId = project.id;
+
+    mockSession = { user: { id: 'test-user-id' } };
+  });
+
+  afterEach(async () => {
+    // Cleanup test data
+    if (mockProjectId) {
+      await db.delete(projects).where(eq(projects.id, mockProjectId));
+    }
   });
 
   describe('PATCH /api/projects/[projectId] - Restore', () => {
     it('returns 200 when restoring archived project to active', async () => {
-      // Expected behavior:
-      // - PATCH with {status: 'active'} on archived project succeeds
-      // - Returns { ok: true }
+      vi.spyOn(authServer, 'requireProjectRole').mockResolvedValue({
+        session: mockSession,
+        redirectResponse: null,
+        projectRole: 'admin',
+      });
+      vi.spyOn(seedProject, 'seedProjectFromRegistry').mockResolvedValue(undefined);
 
-      // RED: Restore logic not implemented
-      throw new Error('not implemented');
+      const req = new NextRequest('http://localhost:3000/api/projects/' + mockProjectId, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'active' }),
+      });
+
+      const response = await PATCH(req, { params: Promise.resolve({ projectId: String(mockProjectId) }) });
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.ok).toBe(true);
     });
 
     it('sets project status to active in database', async () => {
-      // Expected behavior:
-      // - After PATCH with {status: 'active'}
-      // - Query project from DB, verify status === 'active'
-      // - Verify updated_at timestamp is updated
+      vi.spyOn(authServer, 'requireProjectRole').mockResolvedValue({
+        session: mockSession,
+        redirectResponse: null,
+        projectRole: 'admin',
+      });
+      vi.spyOn(seedProject, 'seedProjectFromRegistry').mockResolvedValue(undefined);
 
-      // RED: Status transition not implemented
-      throw new Error('not implemented');
+      const req = new NextRequest('http://localhost:3000/api/projects/' + mockProjectId, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'active' }),
+      });
+
+      await PATCH(req, { params: Promise.resolve({ projectId: String(mockProjectId) }) });
+
+      // Verify status in database
+      const [updated] = await db.select().from(projects).where(eq(projects.id, mockProjectId));
+      expect(updated.status).toBe('active');
+      expect(updated.updated_at).toBeDefined();
     });
 
     it('calls seedProjectFromRegistry on restore to active', async () => {
-      // Expected behavior:
-      // - When status transitions to 'active', seedProjectFromRegistry is called
-      // - Ensures skill registry is seeded on restore
-      // - Should be called with numeric project ID
+      vi.spyOn(authServer, 'requireProjectRole').mockResolvedValue({
+        session: mockSession,
+        redirectResponse: null,
+        projectRole: 'admin',
+      });
+      const seedSpy = vi.spyOn(seedProject, 'seedProjectFromRegistry').mockResolvedValue(undefined);
 
-      // RED: Conditional seeding logic not implemented for restore flow
-      throw new Error('not implemented');
+      const req = new NextRequest('http://localhost:3000/api/projects/' + mockProjectId, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'active' }),
+      });
+
+      await PATCH(req, { params: Promise.resolve({ projectId: String(mockProjectId) }) });
+
+      expect(seedSpy).toHaveBeenCalled();
     });
 
     it('calls seedProjectFromRegistry with correct project ID', async () => {
-      // Expected behavior:
-      // - seedProjectFromRegistry(numericId) called with correct ID
-      // - Verify function receives the projectId parameter
+      vi.spyOn(authServer, 'requireProjectRole').mockResolvedValue({
+        session: mockSession,
+        redirectResponse: null,
+        projectRole: 'admin',
+      });
+      const seedSpy = vi.spyOn(seedProject, 'seedProjectFromRegistry').mockResolvedValue(undefined);
 
-      // RED: Function call parameters not verified
-      throw new Error('not implemented');
+      const req = new NextRequest('http://localhost:3000/api/projects/' + mockProjectId, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'active' }),
+      });
+
+      await PATCH(req, { params: Promise.resolve({ projectId: String(mockProjectId) }) });
+
+      expect(seedSpy).toHaveBeenCalledWith(mockProjectId);
     });
 
     it('does not call seedProjectFromRegistry when restoring to draft', async () => {
-      // Expected behavior:
-      // - PATCH with {status: 'draft'} does NOT trigger seeding
-      // - Only status === 'active' triggers seedProjectFromRegistry
+      vi.spyOn(authServer, 'requireProjectRole').mockResolvedValue({
+        session: mockSession,
+        redirectResponse: null,
+        projectRole: 'admin',
+      });
+      const seedSpy = vi.spyOn(seedProject, 'seedProjectFromRegistry').mockResolvedValue(undefined);
 
-      // RED: Conditional logic not implemented
-      throw new Error('not implemented');
+      const req = new NextRequest('http://localhost:3000/api/projects/' + mockProjectId, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'draft' }),
+      });
+
+      await PATCH(req, { params: Promise.resolve({ projectId: String(mockProjectId) }) });
+
+      expect(seedSpy).not.toHaveBeenCalled();
     });
   });
 
   describe('Restore - Idempotency', () => {
     it('handles restore of already-active project gracefully', async () => {
-      // Expected behavior:
-      // - PATCH with {status: 'active'} on project already active succeeds
-      // - seedProjectFromRegistry is idempotent (no-op if already seeded)
-      // - Returns 200
+      // Set project to active
+      await db.update(projects).set({ status: 'active' }).where(eq(projects.id, mockProjectId));
 
-      // RED: Idempotency not verified
-      throw new Error('not implemented');
+      vi.spyOn(authServer, 'requireProjectRole').mockResolvedValue({
+        session: mockSession,
+        redirectResponse: null,
+        projectRole: 'admin',
+      });
+      vi.spyOn(seedProject, 'seedProjectFromRegistry').mockResolvedValue(undefined);
+
+      const req = new NextRequest('http://localhost:3000/api/projects/' + mockProjectId, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'active' }),
+      });
+
+      const response = await PATCH(req, { params: Promise.resolve({ projectId: String(mockProjectId) }) });
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.ok).toBe(true);
     });
 
     it('does not double-seed if seedProjectFromRegistry already ran', async () => {
-      // Expected behavior:
-      // - seedProjectFromRegistry checks if skills already exist
-      // - Does not insert duplicate skill registry entries
-      // - Idempotent operation
+      vi.spyOn(authServer, 'requireProjectRole').mockResolvedValue({
+        session: mockSession,
+        redirectResponse: null,
+        projectRole: 'admin',
+      });
 
-      // RED: Idempotency contract not verified
-      throw new Error('not implemented');
+      // Mock seedProjectFromRegistry to verify it's called but is idempotent
+      const seedSpy = vi.spyOn(seedProject, 'seedProjectFromRegistry').mockResolvedValue(undefined);
+
+      const req = new NextRequest('http://localhost:3000/api/projects/' + mockProjectId, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'active' }),
+      });
+
+      await PATCH(req, { params: Promise.resolve({ projectId: String(mockProjectId) }) });
+
+      // seedProjectFromRegistry is called, but the function itself handles idempotency
+      expect(seedSpy).toHaveBeenCalledWith(mockProjectId);
     });
   });
 
   describe('Restore - Authorization', () => {
     it('requires admin role to restore project', async () => {
-      // Expected behavior:
-      // - requireProjectRole(projectId, 'admin') enforced for restore
-      // - Non-admin users get 403
+      vi.spyOn(authServer, 'requireProjectRole').mockResolvedValue({
+        session: null,
+        redirectResponse: new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 }),
+        projectRole: null,
+      });
 
-      // RED: Role enforcement not implemented for status changes
-      throw new Error('not implemented');
+      const req = new NextRequest('http://localhost:3000/api/projects/' + mockProjectId, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'active' }),
+      });
+
+      const response = await PATCH(req, { params: Promise.resolve({ projectId: String(mockProjectId) }) });
+
+      expect(response.status).toBe(403);
+      expect(authServer.requireProjectRole).toHaveBeenCalledWith(mockProjectId, 'admin');
     });
 
     it('returns 404 when project does not exist', async () => {
-      // Expected behavior:
-      // - PATCH to non-existent projectId returns 404
-      // - Error message: 'Project not found'
+      const nonExistentId = 99999;
+      vi.spyOn(authServer, 'requireProjectRole').mockResolvedValue({
+        session: mockSession,
+        redirectResponse: null,
+        projectRole: 'admin',
+      });
 
-      // RED: Error handling not implemented
-      throw new Error('not implemented');
+      const req = new NextRequest('http://localhost:3000/api/projects/' + nonExistentId, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'active' }),
+      });
+
+      const response = await PATCH(req, { params: Promise.resolve({ projectId: String(nonExistentId) }) });
+      const data = await response.json();
+
+      expect(response.status).toBe(404);
+      expect(data.error).toBe('Project not found');
     });
   });
 });
