@@ -81,6 +81,10 @@ export const integrationTrackStatusEnum = pgEnum('integration_track_status', [
 export const wbsItemStatusEnum = pgEnum('wbs_item_status', ['not_started', 'in_progress', 'complete']);
 export const archNodeStatusEnum = pgEnum('arch_node_status', ['planned', 'in_progress', 'live']);
 
+// ─── v7.0 Enums ──────────────────────────────────────────────────────────────
+
+export const projectMemberRoleEnum = pgEnum('project_member_role', ['admin', 'user']);
+
 // ─── Table 1: projects ────────────────────────────────────────────────────────
 
 export const projects = pgTable('projects', {
@@ -104,6 +108,24 @@ export const projects = pgTable('projects', {
   seeded: boolean('seeded').default(false).notNull(),
   exec_action_required: boolean('exec_action_required').default(false).notNull(),
 });
+
+export type Project = typeof projects.$inferSelect;
+export type ProjectInsert = typeof projects.$inferInsert;
+
+// ─── Table 1b: project_members ────────────────────────────────────────────────
+
+export const projectMembers = pgTable('project_members', {
+  id: serial('id').primaryKey(),
+  project_id: integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  user_id: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  role: projectMemberRoleEnum('role').notNull().default('user'),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+}, (t) => [
+  uniqueIndex('project_members_project_user_idx').on(t.project_id, t.user_id),
+]);
+
+export type ProjectMember = typeof projectMembers.$inferSelect;
+export type ProjectMemberInsert = typeof projectMembers.$inferInsert;
 
 // ─── Table 2: workstreams ─────────────────────────────────────────────────────
 
