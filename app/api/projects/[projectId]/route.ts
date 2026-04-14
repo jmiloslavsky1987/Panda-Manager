@@ -2,21 +2,20 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/db'
 import { projects } from '@/db/schema'
 import { eq } from 'drizzle-orm'
-import { requireSession } from "@/lib/auth-server";
+import { requireProjectRole } from "@/lib/auth-server";
 import { seedProjectFromRegistry } from '@/lib/seed-project'
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
-  const { session, redirectResponse } = await requireSession();
-  if (redirectResponse) return redirectResponse;
-
   const { projectId } = await params
   const numericId = parseInt(projectId, 10)
   if (isNaN(numericId)) {
     return NextResponse.json({ error: 'Invalid projectId' }, { status: 400 })
   }
+  const { session, redirectResponse, projectRole } = await requireProjectRole(numericId, 'user');
+  if (redirectResponse) return redirectResponse;
 
   const rows = await db
     .select({
@@ -34,21 +33,20 @@ export async function GET(
     return NextResponse.json({ error: 'Project not found' }, { status: 404 })
   }
 
-  return NextResponse.json({ project: rows[0] })
+  return NextResponse.json({ project: { ...rows[0], projectRole } })
 }
 
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
-  const { session, redirectResponse } = await requireSession();
-  if (redirectResponse) return redirectResponse;
-
   const { projectId } = await params
   const numericId = parseInt(projectId, 10)
   if (isNaN(numericId)) {
     return NextResponse.json({ error: 'Invalid projectId' }, { status: 400 })
   }
+  const { session, redirectResponse } = await requireProjectRole(numericId, 'user');
+  if (redirectResponse) return redirectResponse;
 
   const body = await req.json()
   const { status } = body
