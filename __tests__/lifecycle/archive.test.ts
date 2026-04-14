@@ -1,81 +1,189 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
+import { PATCH } from '@/app/api/projects/[projectId]/route';
+import * as authServer from '@/lib/auth-server';
+import * as seedProject from '@/lib/seed-project';
+import * as db_module from '@/db';
 
-// These imports will fail until Plan 02 implements the production code
-// This is the expected TDD RED state for Plan 59-01
-// import { PATCH } from '@/app/api/projects/[projectId]/route';
+// Mock database
+vi.mock('@/db', () => ({
+  db: {
+    select: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+    insert: vi.fn(),
+  },
+}));
 
 describe('Project Archive API', () => {
+  let mockSession: any;
+  let mockProjectId: number;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    mockProjectId = 123;
+    mockSession = { user: { id: 'test-user-id' } };
   });
 
   describe('PATCH /api/projects/[projectId] - Archive', () => {
     it('returns 200 when caller is admin and archives project', async () => {
-      // Expected behavior:
-      // - requireProjectRole(projectId, 'admin') succeeds
-      // - PATCH handler sets project.status to 'archived'
-      // - Returns { ok: true }
+      // Mock admin authorization
+      vi.spyOn(authServer, 'requireProjectRole').mockResolvedValue({
+        session: mockSession,
+        redirectResponse: null,
+        projectRole: 'admin',
+      });
 
-      // RED: PATCH handler doesn't exist yet or doesn't enforce admin role
-      throw new Error('not implemented');
+      // Mock database update
+      const mockReturning = vi.fn().mockResolvedValue([{ id: mockProjectId }]);
+      const mockWhere = vi.fn().mockReturnValue({ returning: mockReturning });
+      const mockSet = vi.fn().mockReturnValue({ where: mockWhere });
+      (db_module.db.update as any) = vi.fn().mockReturnValue({ set: mockSet });
+
+      const req = new NextRequest('http://localhost:3000/api/projects/' + mockProjectId, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'archived' }),
+      });
+
+      const response = await PATCH(req, { params: Promise.resolve({ projectId: String(mockProjectId) }) });
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.ok).toBe(true);
     });
 
     it('returns 403 when caller is not admin', async () => {
-      // Expected behavior:
-      // - requireProjectRole(projectId, 'admin') fails with 403
-      // - PATCH handler returns 403 response
+      // Mock non-admin authorization failure
+      vi.spyOn(authServer, 'requireProjectRole').mockResolvedValue({
+        session: null,
+        redirectResponse: new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 }),
+        projectRole: null,
+      });
 
-      // RED: PATCH handler doesn't check for admin role yet
-      throw new Error('not implemented');
+      const req = new NextRequest('http://localhost:3000/api/projects/' + mockProjectId, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'archived' }),
+      });
+
+      const response = await PATCH(req, { params: Promise.resolve({ projectId: String(mockProjectId) }) });
+
+      expect(response.status).toBe(403);
     });
 
     it('sets project status to archived in database', async () => {
-      // Expected behavior:
-      // - After successful PATCH with {status: 'archived'}
-      // - Query project from DB, verify status === 'archived'
-      // - Verify updated_at timestamp is updated
+      vi.spyOn(authServer, 'requireProjectRole').mockResolvedValue({
+        session: mockSession,
+        redirectResponse: null,
+        projectRole: 'admin',
+      });
 
-      // RED: Status update logic not implemented
-      throw new Error('not implemented');
+      const mockReturning = vi.fn().mockResolvedValue([{ id: mockProjectId }]);
+      const mockWhere = vi.fn().mockReturnValue({ returning: mockWhere });
+      const mockSet = vi.fn().mockReturnValue({ where: mockWhere });
+      (db_module.db.update as any) = vi.fn().mockReturnValue({ set: mockSet });
+
+      const req = new NextRequest('http://localhost:3000/api/projects/' + mockProjectId, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'archived' }),
+      });
+
+      await PATCH(req, { params: Promise.resolve({ projectId: String(mockProjectId) }) });
+
+      // Verify update was called with correct params
+      expect(db_module.db.update).toHaveBeenCalled();
+      expect(mockSet).toHaveBeenCalledWith(expect.objectContaining({ status: 'archived' }));
     });
 
     it('returns 404 when project does not exist', async () => {
-      // Expected behavior:
-      // - PATCH to non-existent projectId returns 404
-      // - Error message: 'Project not found'
+      const nonExistentId = 99999;
+      vi.spyOn(authServer, 'requireProjectRole').mockResolvedValue({
+        session: mockSession,
+        redirectResponse: null,
+        projectRole: 'admin',
+      });
 
-      // RED: Error handling not implemented
-      throw new Error('not implemented');
+      // Mock empty result (project not found)
+      const mockReturning = vi.fn().mockResolvedValue([]);
+      const mockWhere = vi.fn().mockReturnValue({ returning: mockReturning });
+      const mockSet = vi.fn().mockReturnValue({ where: mockWhere });
+      (db_module.db.update as any) = vi.fn().mockReturnValue({ set: mockSet });
+
+      const req = new NextRequest('http://localhost:3000/api/projects/' + nonExistentId, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'archived' }),
+      });
+
+      const response = await PATCH(req, { params: Promise.resolve({ projectId: String(nonExistentId) }) });
+      const data = await response.json();
+
+      expect(response.status).toBe(404);
+      expect(data.error).toBe('Project not found');
     });
 
     it('does not call seedProjectFromRegistry on archive', async () => {
-      // Expected behavior:
-      // - Archive operation does NOT trigger seedProjectFromRegistry
-      // - Only restore (status: 'active') should trigger seeding
+      vi.spyOn(authServer, 'requireProjectRole').mockResolvedValue({
+        session: mockSession,
+        redirectResponse: null,
+        projectRole: 'admin',
+      });
 
-      // RED: Conditional logic not implemented
-      throw new Error('not implemented');
+      const mockReturning = vi.fn().mockResolvedValue([{ id: mockProjectId }]);
+      const mockWhere = vi.fn().mockReturnValue({ returning: mockWhere });
+      const mockSet = vi.fn().mockReturnValue({ where: mockWhere });
+      (db_module.db.update as any) = vi.fn().mockReturnValue({ set: mockSet });
+
+      const seedSpy = vi.spyOn(seedProject, 'seedProjectFromRegistry').mockResolvedValue(undefined);
+
+      const req = new NextRequest('http://localhost:3000/api/projects/' + mockProjectId, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'archived' }),
+      });
+
+      await PATCH(req, { params: Promise.resolve({ projectId: String(mockProjectId) }) });
+
+      expect(seedSpy).not.toHaveBeenCalled();
     });
   });
 
   describe('Authorization - Archive requires admin', () => {
     it('allows admin to archive active project', async () => {
-      // Expected behavior:
-      // - User with 'admin' role on project can archive
-      // - requireProjectRole enforces 'admin' minimum role
+      vi.spyOn(authServer, 'requireProjectRole').mockResolvedValue({
+        session: mockSession,
+        redirectResponse: null,
+        projectRole: 'admin',
+      });
 
-      // RED: Role enforcement not upgraded to 'admin'
-      throw new Error('not implemented');
+      const mockReturning = vi.fn().mockResolvedValue([{ id: mockProjectId }]);
+      const mockWhere = vi.fn().mockReturnValue({ returning: mockWhere });
+      const mockSet = vi.fn().mockReturnValue({ where: mockWhere });
+      (db_module.db.update as any) = vi.fn().mockReturnValue({ set: mockSet });
+
+      const req = new NextRequest('http://localhost:3000/api/projects/' + mockProjectId, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'archived' }),
+      });
+
+      const response = await PATCH(req, { params: Promise.resolve({ projectId: String(mockProjectId) }) });
+
+      expect(response.status).toBe(200);
+      expect(authServer.requireProjectRole).toHaveBeenCalledWith(mockProjectId, 'admin');
     });
 
     it('prevents user role from archiving project', async () => {
-      // Expected behavior:
-      // - User with 'user' role on project gets 403
-      // - Only admins can archive
+      vi.spyOn(authServer, 'requireProjectRole').mockResolvedValue({
+        session: null,
+        redirectResponse: new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 }),
+        projectRole: null,
+      });
 
-      // RED: Role check not implemented
-      throw new Error('not implemented');
+      const req = new NextRequest('http://localhost:3000/api/projects/' + mockProjectId, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'archived' }),
+      });
+
+      const response = await PATCH(req, { params: Promise.resolve({ projectId: String(mockProjectId) }) });
+
+      expect(response.status).toBe(403);
     });
   });
 });
