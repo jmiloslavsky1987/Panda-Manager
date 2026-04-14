@@ -5,6 +5,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { ExtractionItemRow } from './ExtractionItemRow'
 import type { ReviewItem } from './IngestionModal'
+import { ENTITY_FIELDS } from './ExtractionItemEditForm'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -51,6 +52,7 @@ interface ExtractionPreviewProps {
 
 export function ExtractionPreview({ items, onItemChange, onApprove }: ExtractionPreviewProps) {
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null)
+  const [validationErrors, setValidationErrors] = useState<Set<number>>(new Set())
 
   // Group items by entityType — only include types that have items
   const grouped = ENTITY_ORDER.reduce<Record<string, number[]>>((acc, type) => {
@@ -67,6 +69,10 @@ export function ExtractionPreview({ items, onItemChange, onApprove }: Extraction
 
   const approvedCount = items.filter(i => i.approved).length
 
+  function getPrimaryField(entityType: string): string | undefined {
+    return ENTITY_FIELDS[entityType]?.[0]
+  }
+
   function handleApproveAllOnTab(type: string) {
     const indices = grouped[type] ?? []
     indices.forEach(idx => onItemChange(idx, { approved: true }))
@@ -78,6 +84,23 @@ export function ExtractionPreview({ items, onItemChange, onApprove }: Extraction
 
   function handleSubmit() {
     const approvedItems = items.filter(i => i.approved)
+
+    // Validation gate: check for empty primary fields on approved items
+    const errorIndices = new Set<number>()
+    items.forEach((item, idx) => {
+      if (!item.approved) return
+      const primaryField = getPrimaryField(item.entityType)
+      if (primaryField && !item.fields[primaryField]?.trim()) {
+        errorIndices.add(idx)
+      }
+    })
+
+    if (errorIndices.size > 0) {
+      setValidationErrors(errorIndices)
+      return
+    }
+
+    setValidationErrors(new Set())
     onApprove(approvedItems)
   }
 
@@ -147,7 +170,15 @@ export function ExtractionPreview({ items, onItemChange, onApprove }: Extraction
                     onToggleExpand={() =>
                       setExpandedIndex(prev => (prev === globalIdx ? null : globalIdx))
                     }
-                    onChange={changes => onItemChange(globalIdx, changes)}
+                    onChange={changes => {
+                      setValidationErrors(new Set())
+                      onItemChange(globalIdx, changes)
+                    }}
+                    onTypeChange={newType => {
+                      setValidationErrors(new Set())
+                      onItemChange(globalIdx, { entityType: newType as ReviewItem['entityType'] })
+                    }}
+                    hasValidationError={validationErrors.has(globalIdx)}
                   />
                 ))}
               </div>
