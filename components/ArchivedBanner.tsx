@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Archive } from 'lucide-react';
 
 interface ArchivedBannerProps {
@@ -10,7 +9,6 @@ interface ArchivedBannerProps {
 }
 
 export function ArchivedBanner({ projectId, isAdmin }: ArchivedBannerProps) {
-  const router = useRouter();
   const [isRestoring, setIsRestoring] = useState(false);
 
   async function handleRestore() {
@@ -28,8 +26,8 @@ export function ArchivedBanner({ projectId, isAdmin }: ArchivedBannerProps) {
         return;
       }
 
-      // Navigate away — archived project is now active, sidebar will rerender
-      router.push('/');
+      // Hard navigation so the root layout (sidebar) re-fetches from the server
+      window.location.href = '/';
     } finally {
       setIsRestoring(false);
     }

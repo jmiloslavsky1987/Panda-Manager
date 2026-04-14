@@ -1,6 +1,5 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DeleteConfirmDialog } from '@/components/DeleteConfirmDialog';
@@ -10,9 +9,17 @@ interface DangerZoneSectionProps {
   isArchived: boolean;
 }
 
-export function DangerZoneSection({ projectId, isArchived }: DangerZoneSectionProps) {
-  const router = useRouter();
+async function parseError(res: Response): Promise<string> {
+  const text = await res.text();
+  try {
+    const json = JSON.parse(text);
+    return json.error ?? json.message ?? `Request failed (${res.status})`;
+  } catch {
+    return `Request failed (${res.status})`;
+  }
+}
 
+export function DangerZoneSection({ projectId, isArchived }: DangerZoneSectionProps) {
   async function handleArchive() {
     const res = await fetch(`/api/projects/${projectId}`, {
       method: 'PATCH',
@@ -21,11 +28,10 @@ export function DangerZoneSection({ projectId, isArchived }: DangerZoneSectionPr
     });
 
     if (!res.ok) {
-      const { error } = await res.json();
-      throw new Error(error);
+      throw new Error(await parseError(res));
     }
 
-    router.push('/');
+    window.location.href = '/';
   }
 
   async function handleDelete() {
@@ -34,11 +40,10 @@ export function DangerZoneSection({ projectId, isArchived }: DangerZoneSectionPr
     });
 
     if (!res.ok) {
-      const { error } = await res.json();
-      throw new Error(error);
+      throw new Error(await parseError(res));
     }
 
-    router.push('/');
+    window.location.href = '/';
   }
 
   return (
@@ -58,6 +63,9 @@ export function DangerZoneSection({ projectId, isArchived }: DangerZoneSectionPr
         {!isArchived && (
           <DeleteConfirmDialog
             entityLabel="this project"
+            title="Archive this project?"
+            description="The project becomes read-only. You can restore it later."
+            confirmLabel="Archive"
             onConfirm={handleArchive}
             trigger={
               <Button

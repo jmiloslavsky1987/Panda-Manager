@@ -86,6 +86,7 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
+  try {
   const { projectId } = await params
   const numericId = parseInt(projectId, 10)
   if (isNaN(numericId)) {
@@ -149,10 +150,15 @@ export async function DELETE(
     }, { status: 409 })
   }
 
-  // Execute deletion (FK cascade handles child tables)
+  // Execute deletion — FK CASCADE (migration 0033) handles all child tables
   await db
     .delete(projects)
     .where(eq(projects.id, numericId));
 
   return NextResponse.json({ ok: true })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('[DELETE /api/projects]', message);
+    return NextResponse.json({ error: `Delete failed: ${message}` }, { status: 500 });
+  }
 }
