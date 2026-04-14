@@ -28,6 +28,8 @@ vi.mock('drizzle-orm', () => ({
   and: vi.fn(),
   inArray: vi.fn(),
   gte: vi.fn(),
+  gt: vi.fn(),
+  ne: vi.fn(),
   sql: vi.fn()
 }));
 

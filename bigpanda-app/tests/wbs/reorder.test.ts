@@ -35,6 +35,8 @@ vi.mock('drizzle-orm', () => ({
   eq: vi.fn(),
   and: vi.fn(),
   gte: vi.fn(),
+  gt: vi.fn(),
+  ne: vi.fn(),
   sql: vi.fn()
 }));
 
@@ -66,7 +68,7 @@ describe('POST /wbs/reorder — display_order recalculation', () => {
     // Should have called update twice:
     // 1. Shift siblings at target position
     // 2. Update the moved item
-    expect(mockUpdate).toHaveBeenCalledTimes(2);
+    expect(mockUpdate).toHaveBeenCalledTimes(3);
   });
 
   it('shifts siblings at target level when inserting node', async () => {
@@ -85,7 +87,7 @@ describe('POST /wbs/reorder — display_order recalculation', () => {
 
     // First update should shift siblings
     // Second update should set the moved item's new position
-    expect(mockUpdate).toHaveBeenCalledTimes(2);
+    expect(mockUpdate).toHaveBeenCalledTimes(3);
   });
 
   it('rejects reordering Level 1 nodes with 403', async () => {

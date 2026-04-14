@@ -2,6 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock server-only and DB before importing route
 vi.mock('server-only', () => ({}));
+vi.mock('@/lib/seed-project', () => ({
+  seedProjectFromRegistry: vi.fn().mockResolvedValue(undefined),
+}));
 vi.mock('../../db', () => ({
   db: {
     update: vi.fn().mockReturnValue({

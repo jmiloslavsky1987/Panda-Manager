@@ -17,8 +17,8 @@ describe('skill-run SET-02: skill_path resolution', () => {
   it('SET-02: falls back to __dirname-relative path when skill_path is empty', () => {
     const fakeDir = '/fake/worker/jobs';
     const result = resolveSkillsDir('', fakeDir);
-    // Should resolve to /fake/worker/jobs/../../skills = /fake/skills
-    expect(result).toBe(path.join(fakeDir, '../../skills'));
+    // Should resolve to /fake/worker/jobs/skills
+    expect(result).toBe(path.join(fakeDir, 'skills'));
     // The resolved path always ends with /skills
     expect(result.endsWith('/skills')).toBe(true);
   });

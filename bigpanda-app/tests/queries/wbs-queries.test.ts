@@ -9,9 +9,8 @@ const mockWhere = vi.fn();
 const mockOrderBy = vi.fn();
 
 vi.mock('@/db', () => ({
-  db: {
-    select: mockSelect
-  }
+  db: { select: mockSelect },
+  default: { select: mockSelect },
 }));
 
 vi.mock('drizzle-orm', () => ({

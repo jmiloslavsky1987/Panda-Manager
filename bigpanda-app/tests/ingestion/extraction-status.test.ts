@@ -29,12 +29,13 @@ describe('app/api/projects/[projectId]/extraction-status/route.ts — batch stat
     // Default mock: return jobs with mixed status
     selectMock.mockReturnValue({
       from: vi.fn().mockReturnValue({
+        leftJoin: vi.fn().mockReturnThis(),
         where: vi.fn().mockReturnValue({
           orderBy: vi.fn().mockResolvedValue([
-            { id: 1, batch_id: 'batch-1', status: 'completed', progress_pct: 100, created_at: new Date() },
-            { id: 2, batch_id: 'batch-1', status: 'completed', progress_pct: 100, created_at: new Date() },
-            { id: 3, batch_id: 'batch-2', status: 'running', progress_pct: 60, created_at: new Date() },
-            { id: 4, batch_id: 'batch-2', status: 'pending', progress_pct: 0, created_at: new Date() },
+            { job: { id: 1, batch_id: 'batch-1', status: 'completed', progress_pct: 100, created_at: new Date() }, artifactStatus: null },
+            { job: { id: 2, batch_id: 'batch-1', status: 'completed', progress_pct: 100, created_at: new Date() }, artifactStatus: null },
+            { job: { id: 3, batch_id: 'batch-2', status: 'running', progress_pct: 60, created_at: new Date() }, artifactStatus: null },
+            { job: { id: 4, batch_id: 'batch-2', status: 'pending', progress_pct: 0, created_at: new Date() }, artifactStatus: null },
           ]),
         }),
       }),
@@ -95,6 +96,7 @@ describe('app/api/projects/[projectId]/extraction-status/route.ts — batch stat
     // Arrange: mock empty result
     selectMock.mockReturnValue({
       from: vi.fn().mockReturnValue({
+        leftJoin: vi.fn().mockReturnThis(),
         where: vi.fn().mockReturnValue({
           orderBy: vi.fn().mockResolvedValue([]),
         }),
