@@ -11,12 +11,17 @@ import { Queue } from 'bullmq';
 import { createApiRedisConnection } from '../../../../worker/connection';
 import { SKILL_LIST, type SkillDef } from '../../../../lib/scheduler-skills';
 import { requireSession } from "@/lib/auth-server";
+import { resolveRole } from "@/lib/auth-utils";
 
 const SKILL_IDS = SKILL_LIST.map((s: SkillDef) => s.id);
 
 export async function POST(request: Request) {
   const { session, redirectResponse } = await requireSession();
   if (redirectResponse) return redirectResponse;
+
+  if (resolveRole(session!) !== 'admin') {
+    return NextResponse.json({ error: 'Forbidden: Admin role required' }, { status: 403 });
+  }
 
   try {
     const body = await request.json() as {

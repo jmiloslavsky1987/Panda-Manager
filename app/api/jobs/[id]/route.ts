@@ -13,6 +13,7 @@ import { db } from '../../../../db';
 import { scheduledJobs } from '../../../../db/schema';
 import { frequencyToCron, type Frequency } from '../../../../lib/scheduler-utils';
 import { requireSession } from "@/lib/auth-server";
+import { resolveRole } from "@/lib/auth-utils";
 
 // ─── Validation Schema ────────────────────────────────────────────────────────
 
@@ -38,6 +39,10 @@ export async function PATCH(
 ): Promise<Response> {
   const { session, redirectResponse } = await requireSession();
   if (redirectResponse) return redirectResponse;
+
+  if (resolveRole(session!) !== 'admin') {
+    return NextResponse.json({ error: 'Forbidden: Admin role required' }, { status: 403 });
+  }
 
   try {
     const { id } = await context.params;
@@ -138,6 +143,10 @@ export async function DELETE(
 ): Promise<Response> {
   const { session, redirectResponse } = await requireSession();
   if (redirectResponse) return redirectResponse;
+
+  if (resolveRole(session!) !== 'admin') {
+    return NextResponse.json({ error: 'Forbidden: Admin role required' }, { status: 403 });
+  }
 
   try {
     const { id } = await context.params;
