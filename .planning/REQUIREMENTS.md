@@ -16,10 +16,10 @@
 
 ### Project Lifecycle
 
-- [ ] **PROJ-01**: Admin can archive a project (soft-delete: project becomes read-only, preserved in system)
-- [ ] **PROJ-02**: Admin can permanently delete a project
+- [x] **PROJ-01**: Admin can archive a project (soft-delete: project becomes read-only, preserved in system)
+- [x] **PROJ-02**: Admin can permanently delete a project
 - [ ] **PROJ-03**: User can view archived projects in a dedicated archived projects view (read-only)
-- [ ] **PROJ-04**: Admin can restore an archived project back to active status
+- [x] **PROJ-04**: Admin can restore an archived project back to active status
 
 ### Overview Tab
 
@@ -78,8 +78,8 @@
 
 ### Portfolio Dashboard
 
-- [ ] **PORTF-01**: Portfolio dashboard displays archived projects in a separate view or filter, distinct from active projects
-- [ ] **PORTF-02**: Portfolio dashboard excludes permanently deleted projects from all views
+- [x] **PORTF-01**: Portfolio dashboard displays archived projects in a separate view or filter, distinct from active projects
+- [x] **PORTF-02**: Portfolio dashboard excludes permanently deleted projects from all views
 
 ### Knowledge Base
 
@@ -122,10 +122,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUTH-03 | Phase 58 | Complete |
 | AUTH-04 | Phase 58 | Complete |
 | AUTH-05 | Phase 58 | Complete |
-| PROJ-01 | Phase 59 | Pending |
-| PROJ-02 | Phase 59 | Pending |
+| PROJ-01 | Phase 59 | Complete |
+| PROJ-02 | Phase 59 | Complete |
 | PROJ-03 | Phase 59 | Pending |
-| PROJ-04 | Phase 59 | Pending |
+| PROJ-04 | Phase 59 | Complete |
 | OVRVW-01 | Phase 66 | Pending |
 | OVRVW-02 | Phase 66 | Pending |
 | OVRVW-03 | Phase 66 | Pending |
@@ -160,8 +160,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SCHED-03 | Phase 65 | Pending |
 | SCHED-04 | Phase 65 | Pending |
 | SCHED-05 | Phase 65 | Pending |
-| PORTF-01 | Phase 59 | Pending |
-| PORTF-02 | Phase 59 | Pending |
+| PORTF-01 | Phase 59 | Complete |
+| PORTF-02 | Phase 59 | Complete |
 | KB-01 | Phase 69 | Pending |
 | OUT-01 | Phase 69 | Pending |
 | TEST-01 | Phase 69 | Pending |
