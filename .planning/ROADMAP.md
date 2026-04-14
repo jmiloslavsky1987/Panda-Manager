@@ -167,7 +167,14 @@ Plans:
   5. User can log out from navigation or user menu
   6. Portfolio dashboard separates archived projects in distinct view or filter
   7. Portfolio dashboard excludes permanently deleted projects from all views
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 59-01-PLAN.md — TDD stubs: lifecycle test contracts (RED)
+- [ ] 59-02-PLAN.md — API layer: PATCH upgrade + DELETE handler + getArchivedProjects()
+- [ ] 59-03-PLAN.md — Sidebar: archived section + SidebarUserIsland logout
+- [ ] 59-04-PLAN.md — Workspace UI: ArchivedBanner + DangerZoneSection + Settings sub-tab
+- [ ] 59-05-PLAN.md — Human verification gate: all lifecycle UX
 
 ### Phase 60: Health Dashboard Redesign
 **Goal**: Executives see project health at-a-glance from auto-derived system metrics
@@ -300,8 +307,8 @@ Plans:
 | 31–35 | v4.0 | 26/26 | Complete | 2026-04-03 |
 | 37–42 | v5.0 | 29/29 | Complete | 2026-04-07 |
 | 43–57 | v6.0 | 45/45 | Complete | 2026-04-14 |
-| 58. Per-Project RBAC | 2/4 | Complete    | 2026-04-14 | - |
-| 59. Project Lifecycle Management | v7.0 | 0/? | Not started | - |
+| 58. Per-Project RBAC | v7.0 | 4/4 | Complete | 2026-04-14 |
+| 59. Project Lifecycle Management | v7.0 | 0/5 | Not started | - |
 | 60. Health Dashboard Redesign | v7.0 | 0/? | Not started | - |
 | 61. Ingestion Edit & Move | v7.0 | 0/? | Not started | - |
 | 62. Ingestion Consolidation | v7.0 | 0/? | Not started | - |
@@ -314,5 +321,5 @@ Plans:
 | 69. Knowledge Base + Outputs + Testing | v7.0 | 0/? | Not started | - |
 
 ---
-*Last updated: 2026-04-13*
+*Last updated: 2026-04-14*
 *Current milestone: v7.0 — Governance & Operational Maturity*
