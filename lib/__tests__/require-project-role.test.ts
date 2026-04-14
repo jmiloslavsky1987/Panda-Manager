@@ -5,6 +5,11 @@ import { NextResponse } from 'next/server';
 // Mocks — must be declared before imports that load the modules
 // ---------------------------------------------------------------------------
 
+// Mock Next.js headers() to avoid "outside request scope" error
+vi.mock('next/headers', () => ({
+  headers: vi.fn(),
+}));
+
 // Mock DB so no real Postgres connection is required
 vi.mock('@/db', () => {
   const dbMock = {
@@ -13,23 +18,24 @@ vi.mock('@/db', () => {
   return { db: dbMock, default: dbMock };
 });
 
-// Mock auth-server requireSession
-vi.mock('@/lib/auth-server', async () => {
-  const actual = await vi.importActual('@/lib/auth-server');
-  return {
-    ...actual,
-    requireSession: vi.fn(),
-  };
-});
-
 // Mock auth-utils resolveRole
 vi.mock('@/lib/auth-utils', () => ({
   resolveRole: vi.fn(),
 }));
 
+// Mock the auth.api.getSession method
+vi.mock('@/lib/auth', () => ({
+  auth: {
+    api: {
+      getSession: vi.fn(),
+    },
+  },
+}));
+
 import { db } from '@/db';
-import { requireSession, requireProjectRole } from '@/lib/auth-server';
+import { requireProjectRole } from '@/lib/auth-server';
 import { resolveRole } from '@/lib/auth-utils';
+import { auth } from '@/lib/auth';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -47,8 +53,6 @@ const MOCK_SESSION = {
     expiresAt: new Date(Date.now() + 1000000),
   },
 };
-
-const UNAUTHORIZED_RESPONSE = NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
 /**
  * Build a select mock that returns membership rows
@@ -71,11 +75,8 @@ describe('requireProjectRole()', () => {
   });
 
   it('returns 401 for unauthenticated requests', async () => {
-    // Mock requireSession returning no session
-    vi.mocked(requireSession).mockResolvedValue({
-      session: null,
-      redirectResponse: UNAUTHORIZED_RESPONSE,
-    });
+    // Mock auth.api.getSession returning null (no session)
+    vi.mocked(auth.api.getSession).mockResolvedValue(null);
 
     const result = await requireProjectRole(1, 'user');
 
@@ -86,11 +87,8 @@ describe('requireProjectRole()', () => {
   });
 
   it('short-circuits for global admins without querying project_members', async () => {
-    // Mock requireSession returning authenticated session
-    vi.mocked(requireSession).mockResolvedValue({
-      session: MOCK_SESSION,
-      redirectResponse: null,
-    });
+    // Mock auth.api.getSession returning authenticated session
+    vi.mocked(auth.api.getSession).mockResolvedValue(MOCK_SESSION);
 
     // Mock resolveRole returning 'admin' (global admin)
     vi.mocked(resolveRole).mockReturnValue('admin');
@@ -106,11 +104,8 @@ describe('requireProjectRole()', () => {
   });
 
   it('returns admin projectRole for members with admin role when minRole is user', async () => {
-    // Mock requireSession returning authenticated session
-    vi.mocked(requireSession).mockResolvedValue({
-      session: MOCK_SESSION,
-      redirectResponse: null,
-    });
+    // Mock auth.api.getSession returning authenticated session
+    vi.mocked(auth.api.getSession).mockResolvedValue(MOCK_SESSION);
 
     // Mock resolveRole returning 'user' (not a global admin)
     vi.mocked(resolveRole).mockReturnValue('user');
@@ -126,11 +121,8 @@ describe('requireProjectRole()', () => {
   });
 
   it('returns user projectRole for members with user role when minRole is user', async () => {
-    // Mock requireSession returning authenticated session
-    vi.mocked(requireSession).mockResolvedValue({
-      session: MOCK_SESSION,
-      redirectResponse: null,
-    });
+    // Mock auth.api.getSession returning authenticated session
+    vi.mocked(auth.api.getSession).mockResolvedValue(MOCK_SESSION);
 
     // Mock resolveRole returning 'user' (not a global admin)
     vi.mocked(resolveRole).mockReturnValue('user');
@@ -146,11 +138,8 @@ describe('requireProjectRole()', () => {
   });
 
   it('returns 403 for user-role members when minRole is admin', async () => {
-    // Mock requireSession returning authenticated session
-    vi.mocked(requireSession).mockResolvedValue({
-      session: MOCK_SESSION,
-      redirectResponse: null,
-    });
+    // Mock auth.api.getSession returning authenticated session
+    vi.mocked(auth.api.getSession).mockResolvedValue(MOCK_SESSION);
 
     // Mock resolveRole returning 'user' (not a global admin)
     vi.mocked(resolveRole).mockReturnValue('user');
@@ -167,11 +156,8 @@ describe('requireProjectRole()', () => {
   });
 
   it('returns 403 for non-members', async () => {
-    // Mock requireSession returning authenticated session
-    vi.mocked(requireSession).mockResolvedValue({
-      session: MOCK_SESSION,
-      redirectResponse: null,
-    });
+    // Mock auth.api.getSession returning authenticated session
+    vi.mocked(auth.api.getSession).mockResolvedValue(MOCK_SESSION);
 
     // Mock resolveRole returning 'user' (not a global admin)
     vi.mocked(resolveRole).mockReturnValue('user');
@@ -188,11 +174,8 @@ describe('requireProjectRole()', () => {
   });
 
   it('defaults minRole to user when not specified', async () => {
-    // Mock requireSession returning authenticated session
-    vi.mocked(requireSession).mockResolvedValue({
-      session: MOCK_SESSION,
-      redirectResponse: null,
-    });
+    // Mock auth.api.getSession returning authenticated session
+    vi.mocked(auth.api.getSession).mockResolvedValue(MOCK_SESSION);
 
     // Mock resolveRole returning 'user' (not a global admin)
     vi.mocked(resolveRole).mockReturnValue('user');

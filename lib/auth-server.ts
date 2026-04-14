@@ -15,6 +15,10 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+import { db } from "@/db";
+import { projectMembers } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
+import { resolveRole } from "@/lib/auth-utils";
 
 export type SessionResult =
   | { session: Awaited<ReturnType<typeof auth.api.getSession>>; redirectResponse: null }
@@ -34,4 +38,60 @@ export async function requireSession(): Promise<SessionResult> {
     };
   }
   return { session, redirectResponse: null };
+}
+
+export type ProjectRoleResult =
+  | { session: NonNullable<SessionResult['session']>; redirectResponse: null; projectRole: 'admin' | 'user' }
+  | { session: null; redirectResponse: NextResponse; projectRole: null };
+
+/**
+ * requireProjectRole() — Per-project RBAC enforcement.
+ * Checks if user has required role for a specific project.
+ * Global admins (resolveRole returns 'admin') bypass project membership checks.
+ */
+export async function requireProjectRole(
+  projectId: number,
+  minRole: 'admin' | 'user' = 'user'
+): Promise<ProjectRoleResult> {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return { session: null, redirectResponse, projectRole: null };
+
+  // Global admin short-circuit — no need to check project_members
+  if (resolveRole(session!) === 'admin') {
+    return { session: session!, redirectResponse: null, projectRole: 'admin' };
+  }
+
+  // Check project membership
+  const [member] = await db
+    .select({ role: projectMembers.role })
+    .from(projectMembers)
+    .where(and(
+      eq(projectMembers.project_id, projectId),
+      eq(projectMembers.user_id, session!.user.id)
+    ))
+    .limit(1);
+
+  if (!member) {
+    return {
+      session: null,
+      redirectResponse: NextResponse.json(
+        { error: 'Forbidden: not a member of this project' },
+        { status: 403 }
+      ),
+      projectRole: null,
+    };
+  }
+
+  if (minRole === 'admin' && member.role !== 'admin') {
+    return {
+      session: null,
+      redirectResponse: NextResponse.json(
+        { error: 'Forbidden: Admin role required' },
+        { status: 403 }
+      ),
+      projectRole: null,
+    };
+  }
+
+  return { session: session!, redirectResponse: null, projectRole: member.role };
 }
