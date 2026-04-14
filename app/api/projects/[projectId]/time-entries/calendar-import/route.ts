@@ -4,7 +4,7 @@ import { google, calendar_v3 } from 'googleapis';
 import { and, eq } from 'drizzle-orm';
 import db from '@/db';
 import { userSourceTokens, timeEntries, projects, stakeholders } from '@/db/schema';
-import { requireSession } from "@/lib/auth-server";
+import { requireProjectRole } from "@/lib/auth-server";
 // ─── Token management ────────────────────────────────────────────────────────
 
 // Research Pattern 2: setCredentials() + 'tokens' event — NOT refreshAccessToken() (deprecated)
@@ -71,10 +71,11 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> },
 ): Promise<Response> {
-  const { session, redirectResponse } = await requireSession();
+  const { projectId } = await params;
+  const numericId = parseInt(projectId, 10);
+  if (isNaN(numericId)) return NextResponse.json({ error: 'Invalid project ID' }, { status: 400 });
+  const { redirectResponse } = await requireProjectRole(numericId, 'user');
   if (redirectResponse) return redirectResponse;
-
-  await params; // consume params (route is under [projectId] but GET lists all-project events)
 
   const { searchParams } = new URL(request.url);
   const weekStartParam = searchParams.get('week_start');
@@ -211,10 +212,11 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> },
 ): Promise<Response> {
-  const { session, redirectResponse } = await requireSession();
+  const { projectId } = await params;
+  const numericId = parseInt(projectId, 10);
+  if (isNaN(numericId)) return NextResponse.json({ error: 'Invalid project ID' }, { status: 400 });
+  const { redirectResponse } = await requireProjectRole(numericId, 'user');
   if (redirectResponse) return redirectResponse;
-
-  await params; // consume params
 
   let items: ImportItem[];
   try {
