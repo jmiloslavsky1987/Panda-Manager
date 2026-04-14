@@ -3,13 +3,15 @@ import { BookOpen, CalendarClock, Clock, Library, Settings } from 'lucide-react'
 import { eq, and } from 'drizzle-orm';
 import { db } from '../db';
 import { appNotifications } from '../db/schema';
-import { getActiveProjects } from '../lib/queries';
+import { getActiveProjects, getArchivedProjects } from '../lib/queries';
 import { SidebarProjectItem } from './SidebarProjectItem';
 import { NotificationBadge } from './NotificationBadge';
+import { SidebarUserIsland } from './SidebarUserIsland';
 
 export async function Sidebar() {
-  const [projects, schedulerFailureRows] = await Promise.all([
+  const [projects, archivedProjects, schedulerFailureRows] = await Promise.all([
     getActiveProjects(),
+    getArchivedProjects(),
     db
       .select({ id: appNotifications.id })
       .from(appNotifications)
@@ -46,6 +48,25 @@ export async function Sidebar() {
             <SidebarProjectItem key={p.id} project={p} />
           ))}
         </ul>
+        {archivedProjects.length > 0 && (
+          <details className="px-2 mt-2">
+            <summary className="px-2 py-1.5 text-xs uppercase tracking-wider text-zinc-500 cursor-pointer select-none hover:text-zinc-400 list-none flex items-center justify-between">
+              <span>Archived ({archivedProjects.length})</span>
+            </summary>
+            <ul className="space-y-0.5 mt-1">
+              {archivedProjects.map((p) => (
+                <li key={p.id}>
+                  <Link
+                    href={`/customer/${p.id}/overview`}
+                    className="flex items-center gap-2.5 px-2 py-2 rounded hover:bg-zinc-800 text-sm text-zinc-500 hover:text-zinc-400 transition-colors"
+                  >
+                    {p.customer}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
         <div className="px-4 mt-6 border-t border-zinc-700 pt-4 space-y-1">
           <Link
             href="/knowledge-base"
@@ -90,6 +111,7 @@ export async function Sidebar() {
           </Link>
         </div>
       </nav>
+      <SidebarUserIsland />
     </aside>
   );
 }
