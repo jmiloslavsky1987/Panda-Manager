@@ -3,9 +3,18 @@ import { PortfolioSummaryChips } from '@/components/PortfolioSummaryChips';
 import { PortfolioTableClient } from '@/components/PortfolioTableClient';
 import { PortfolioExceptionsPanel } from '@/components/PortfolioExceptionsPanel';
 import { NewProjectButton } from '@/components/NewProjectButton';
+import { auth } from '@/lib/auth';
+import { headers } from 'next/headers';
+import { resolveRole } from '@/lib/auth-utils';
 
 export default async function PortfolioDashboardPage() {
-  const projects = await getPortfolioData();
+  // Read session server-side (same pattern as requireSession() but without redirect)
+  const session = await auth.api.getSession({ headers: await headers() });
+
+  const userId = session?.user?.id;
+  const isGlobalAdmin = session ? resolveRole(session) === 'admin' : false;
+
+  const projects = await getPortfolioData({ userId, isGlobalAdmin });
 
   return (
     <div className="p-6 space-y-6">
