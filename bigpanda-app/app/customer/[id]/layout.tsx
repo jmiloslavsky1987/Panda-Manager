@@ -5,6 +5,13 @@ import { WorkspaceTabs } from '../../../components/WorkspaceTabs'
 import { AddNotesModal } from '../../../components/AddNotesModal'
 import { ScanForUpdatesButton } from '../../../components/ScanForUpdatesButton'
 import GlobalSearchBar from '../../../components/GlobalSearchBar'
+import { ArchivedBanner } from '../../../components/ArchivedBanner'
+import { auth } from '@/lib/auth'
+import { headers } from 'next/headers'
+import { db } from '@/db'
+import { projectMembers } from '@/db/schema'
+import { eq, and } from 'drizzle-orm'
+import { resolveRole } from '@/lib/auth-utils'
 
 export default async function WorkspaceLayout({
   children,
@@ -23,6 +30,28 @@ export default async function WorkspaceLayout({
     // DB not available — render layout with empty project so child routes can still render
   }
 
+  // Determine if user is a project admin
+  const session = await auth.api.getSession({ headers: await headers() })
+  let isProjectAdmin = false
+
+  if (session?.user) {
+    if (resolveRole(session) === 'admin') {
+      isProjectAdmin = true
+    } else {
+      // Check project membership
+      const [member] = await db
+        .select({ role: projectMembers.role })
+        .from(projectMembers)
+        .where(and(
+          eq(projectMembers.project_id, projectId),
+          eq(projectMembers.user_id, session.user.id)
+        ))
+        .limit(1)
+
+      isProjectAdmin = member?.role === 'admin'
+    }
+  }
+
   return (
     <div className="flex flex-col h-full">
       <div className="px-6 pt-6 pb-2 border-b border-zinc-200 bg-white flex items-center justify-between">
@@ -37,6 +66,11 @@ export default async function WorkspaceLayout({
         </div>
         {project && <GlobalSearchBar projectId={project.id} />}
       </div>
+      {project?.status === 'archived' && (
+        <Suspense fallback={null}>
+          <ArchivedBanner projectId={projectId} isAdmin={isProjectAdmin} />
+        </Suspense>
+      )}
       <Suspense fallback={null}>
         <WorkspaceTabs projectId={id} />
       </Suspense>
