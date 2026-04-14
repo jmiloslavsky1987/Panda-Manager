@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/db'
-import { projects, onboardingPhases, wbsItems, teamEngagementSections, archTracks, archNodes } from '@/db/schema'
+import { projects, onboardingPhases, wbsItems, teamEngagementSections, archTracks, archNodes, projectMembers } from '@/db/schema'
 import { requireSession } from "@/lib/auth-server";
 import { getActiveProjects } from '@/lib/queries'
 
@@ -206,6 +206,13 @@ export async function POST(req: NextRequest) {
       { track_id: aiTrack.id, project_id: inserted.id, name: 'Console', display_order: 4, status: 'planned' as const, source_trace: 'template' },
       { track_id: aiTrack.id, project_id: inserted.id, name: 'Outputs & Actions', display_order: 5, status: 'planned' as const, source_trace: 'template' },
     ]);
+
+    // Seed creator as Admin in project_members
+    await tx.insert(projectMembers).values({
+      project_id: inserted.id,
+      user_id: session!.user.id,
+      role: 'admin',
+    });
 
     return inserted
   })
