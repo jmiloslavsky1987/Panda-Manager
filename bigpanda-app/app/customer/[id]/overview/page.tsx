@@ -13,10 +13,10 @@ export default async function OverviewPage({
 
   return (
     <div className="space-y-6 py-4">
+      <HealthDashboard projectId={projectId} />
       <WeeklyFocus projectId={projectId} />
       <OnboardingDashboard projectId={projectId} />
       <OverviewMetrics projectId={projectId} />
-      <HealthDashboard projectId={projectId} />
     </div>
   )
 }
