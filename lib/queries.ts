@@ -29,6 +29,7 @@ import {
   archNodes,
   archTeamStatus,
   onboardingPhases,
+  projectMembers,
 } from '../db/schema';
 import { eq, and, inArray, lt, ne, gt, or, desc, asc } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
@@ -52,6 +53,11 @@ export type WbsItem = typeof wbsItems.$inferSelect;
 export type ArchTrack = typeof archTracks.$inferSelect;
 export type ArchNode = typeof archNodes.$inferSelect;
 export type ArchTeamStatus = typeof archTeamStatus.$inferSelect;
+
+export interface ProjectQueryOpts {
+  userId?: string;
+  isGlobalAdmin?: boolean;
+}
 
 export interface ProjectWithHealth extends Project {
   health: 'green' | 'yellow' | 'red';
@@ -270,11 +276,32 @@ async function computeHealth(projectId: number): Promise<{
  * Returns all active and draft projects with computed RAG health score.
  * Draft projects with no data return neutral health (green, all counts 0).
  */
-export async function getActiveProjects(): Promise<ProjectWithHealth[]> {
-  const activeProjects = await db
-    .select()
-    .from(projects)
-    .where(inArray(projects.status, ['active', 'draft']));
+export async function getActiveProjects(opts?: ProjectQueryOpts): Promise<ProjectWithHealth[]> {
+  let activeProjects;
+
+  if (!opts?.userId || opts.isGlobalAdmin) {
+    // Global admin or unauthenticated: return all active/draft projects
+    activeProjects = await db
+      .select()
+      .from(projects)
+      .where(inArray(projects.status, ['active', 'draft']));
+  } else {
+    // Membership filter: subquery approach (avoids row multiplication from M:N join)
+    activeProjects = await db
+      .select()
+      .from(projects)
+      .where(
+        and(
+          inArray(projects.status, ['active', 'draft']),
+          inArray(
+            projects.id,
+            db.select({ id: projectMembers.project_id })
+              .from(projectMembers)
+              .where(eq(projectMembers.user_id, opts.userId))
+          )
+        )
+      );
+  }
 
   const projectsWithHealth = await Promise.all(
     activeProjects.map(async (p) => {
@@ -1262,9 +1289,9 @@ export interface PortfolioProject extends ProjectWithHealth {
  * - Risk level (derived from highRisks count)
  * - Dependency status (from blocked tasks)
  */
-export async function getPortfolioData(): Promise<PortfolioProject[]> {
+export async function getPortfolioData(opts?: ProjectQueryOpts): Promise<PortfolioProject[]> {
   // Fetch all active projects with health data first
-  const projectsWithHealth = await getActiveProjects();
+  const projectsWithHealth = await getActiveProjects(opts);
 
   // Enrich each project in parallel
   const portfolioProjects = await Promise.all(
