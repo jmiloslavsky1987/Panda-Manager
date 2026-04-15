@@ -127,8 +127,8 @@ Full details: `.planning/milestones/v6.0-ROADMAP.md` (archived)
 - [x] **Phase 60: Health Dashboard Redesign** - Auto-derived executive metrics from system data (completed 2026-04-14)
 - [x] **Phase 61: Ingestion Edit & Move** - Edit before approve, move items, reclassify notes (completed 2026-04-15)
 - [x] **Phase 62: Ingestion Consolidation** - Scan for Updates consolidation and enhanced completeness analysis (completed 2026-04-15)
-- [x] **Phase 63: Skills Design Standard** - Define standard, audit skills, schema validation (1/4 plans complete) (completed 2026-04-15)
-- [x] **Phase 64: Editable Prompts UI** - Admin-controlled prompt editing with global toggle (4/5 plans complete) (completed 2026-04-15)
+- [x] **Phase 63: Skills Design Standard** - Define standard, audit skills, schema validation (completed 2026-04-15)
+- [x] **Phase 64: Editable Prompts UI** - Admin-controlled prompt editing with global toggle (completed 2026-04-15)
 - [ ] **Phase 65: Project-Scoped Scheduling** - Per-project scheduler with RBAC and state persistence
 - [ ] **Phase 66: Overview Tracks Redesign** - Static/dynamic tracks with auto-scheduled weekly focus
 - [ ] **Phase 67: Delivery Tab Cleanup** - Column hiding, Plan tab removal, WBS alignment, stakeholder operations
@@ -255,11 +255,11 @@ Plans:
 **Plans**: 5 plans
 
 Plans:
-- [ ] 64-01-PLAN.md — TDD RED stubs: SKILL-03a settings round-trip + admin guard; SKILL-03b GET/PATCH route behaviors
-- [ ] 64-02-PLAN.md — Backend: AppSettings extension + settings route admin guard + prompt API route (GET + PATCH atomic write + audit)
-- [ ] 64-03-PLAN.md — Frontend: CodeMirrorEditor.tsx (browser-only wrapper) + PromptEditModal.tsx (full-screen, toolbar, locked front-matter)
-- [ ] 64-04-PLAN.md — Wiring: skills/page.tsx admin resolution + SkillsTabClient edit button + settings page toggle
-- [ ] 64-05-PLAN.md — Build verification + human verification gate
+- [x] 64-01-PLAN.md — TDD RED stubs: SKILL-03a settings round-trip + admin guard; SKILL-03b GET/PATCH route behaviors ✅
+- [x] 64-02-PLAN.md — Backend: AppSettings extension + settings route admin guard + prompt API route (GET + PATCH atomic write + audit) ✅
+- [x] 64-03-PLAN.md — Frontend: CodeMirrorEditor.tsx (browser-only wrapper) + PromptEditModal.tsx (full-screen, toolbar, locked front-matter) ✅
+- [x] 64-04-PLAN.md — Wiring: skills/page.tsx admin resolution + SkillsTabClient edit button + settings page toggle ✅
+- [x] 64-05-PLAN.md — Build verification + human verification gate ✅
 
 ### Phase 65: Project-Scoped Scheduling
 **Goal**: Users schedule skills per-project with admin enforcement and persistent state
@@ -339,7 +339,7 @@ Plans:
 | 61. Ingestion Edit & Move | 3/3 | Complete    | 2026-04-15 | - |
 | 62. Ingestion Consolidation | 2/2 | Complete    | 2026-04-15 | - |
 | 63. Skills Design Standard | 4/4 | Complete    | 2026-04-15 | - |
-| 64. Editable Prompts UI | 3/5 | In Progress|  | - |
+| 64. Editable Prompts UI | 5/5 | Complete   | 2026-04-15 | - |
 | 65. Project-Scoped Scheduling | v7.0 | 0/? | Not started | - |
 | 66. Overview Tracks Redesign | v7.0 | 0/? | Not started | - |
 | 67. Delivery Tab Cleanup | v7.0 | 0/? | Not started | - |
