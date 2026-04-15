@@ -217,7 +217,11 @@ Plans:
   2. Analyze Completeness displays per-field scoring (0-100%) with missing/sparse/conflicting detection
   3. Completeness modal shows per-tab gap descriptions with specific missing sections/fields
   4. Completeness analysis uses versioned schema to prevent retroactive scoring drift
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 62-01-PLAN.md — Remove ScanForUpdatesButton from layout; add Scan section to ContextTab (INGEST-03)
+- [ ] 62-02-PLAN.md — Completeness scoring + conflicting detection + schema versioning + human verify (INGEST-04)
 
 ### Phase 63: Skills Design Standard
 **Goal**: All skills conform to documented standard with runtime validation and audit visibility
