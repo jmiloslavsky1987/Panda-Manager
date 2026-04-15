@@ -168,7 +168,6 @@ export async function POST(
   const message = await client.messages.create({
     model: 'claude-opus-4-6',
     max_tokens: 16384,
-    thinking: { type: 'adaptive' },
     system: COMPLETENESS_SYSTEM,
     messages: [
       {
@@ -176,33 +175,40 @@ export async function POST(
         content: `<project_data>\n${contextPayload}\n</project_data>\n\nAnalyze the project data above and return a completeness assessment for all 11 workspace tabs. Be specific — reference record IDs and exact missing fields in gap descriptions.`,
       },
     ],
-    output_config: {
-      format: {
-        type: 'json_schema',
-        schema: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              tabId: { type: 'string' },
-              status: { type: 'string', enum: ['complete', 'partial', 'empty', 'conflicting'] },
-              score: { type: 'integer', minimum: 0, maximum: 100 },
-              gaps: { type: 'array', items: { type: 'string' } },
+    tools: [
+      {
+        name: 'report_completeness',
+        description: 'Report completeness analysis for all 11 workspace tabs',
+        input_schema: {
+          type: 'object' as const,
+          properties: {
+            results: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  tabId: { type: 'string' },
+                  status: { type: 'string', enum: ['complete', 'partial', 'empty', 'conflicting'] },
+                  score: { type: 'integer', minimum: 0, maximum: 100 },
+                  gaps: { type: 'array', items: { type: 'string' } },
+                },
+                required: ['tabId', 'status', 'score', 'gaps'],
+                additionalProperties: false,
+              },
             },
-            required: ['tabId', 'status', 'score', 'gaps'],
-            additionalProperties: false,
           },
+          required: ['results'],
         },
       },
-    },
+    ],
+    tool_choice: { type: 'tool', name: 'report_completeness' },
   });
 
-  // Extract text content (adaptive thinking may include thinking blocks — skip them)
-  const textBlock = message.content.find(b => b.type === 'text');
-  if (!textBlock || textBlock.type !== 'text') {
-    return NextResponse.json({ error: 'No text response from Claude' }, { status: 500 });
+  const toolUse = message.content.find(b => b.type === 'tool_use');
+  if (!toolUse || toolUse.type !== 'tool_use') {
+    return NextResponse.json({ error: 'No structured response from Claude' }, { status: 500 });
   }
 
-  const results: CompletenessEntry[] = JSON.parse(textBlock.text);
+  const results: CompletenessEntry[] = (toolUse.input as { results: CompletenessEntry[] }).results;
   return NextResponse.json({ schemaVersion: COMPLETENESS_SCHEMA_VERSION, results });
 }
