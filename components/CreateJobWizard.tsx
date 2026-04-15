@@ -71,7 +71,7 @@ function buildInitialState(initialJob?: ScheduledJob, projectId?: number): Wizar
       dayOfMonth: 1,
       customCron: '',
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      params: {},
+      params: projectId ? { projectId: String(projectId) } : {},
     }
   }
 
