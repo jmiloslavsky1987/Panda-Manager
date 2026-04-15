@@ -36,6 +36,13 @@ import discoveryScanJob             from './jobs/discovery-scan';
 import timesheetReminderJob         from './jobs/timesheet-reminder';
 import documentExtraction           from './jobs/document-extraction';
 import weeklyFocus                  from './jobs/weekly-focus';
+import eltExternalStatusJob         from './jobs/elt-external-status';
+import eltInternalStatusJob         from './jobs/elt-internal-status';
+import teamEngagementMapJob         from './jobs/team-engagement-map';
+import workflowDiagramJob           from './jobs/workflow-diagram';
+import biggyWeeklyBriefingJob       from './jobs/biggy-weekly-briefing';
+import riskAssessmentJob            from './jobs/risk-assessment';
+import qbrPrepJob                   from './jobs/qbr-prep';
 
 const JOB_HANDLERS: Record<string, (job: Parameters<typeof actionSync>[0]) => Promise<{ status: string }>> = {
   'action-sync':            actionSync,
@@ -53,6 +60,13 @@ const JOB_HANDLERS: Record<string, (job: Parameters<typeof actionSync>[0]) => Pr
   'timesheet-reminder':           timesheetReminderJob,
   'document-extraction':          documentExtraction,
   'weekly-focus':                 weeklyFocus,
+  'elt-external-status':          eltExternalStatusJob,
+  'elt-internal-status':          eltInternalStatusJob,
+  'team-engagement-map':          teamEngagementMapJob,
+  'workflow-diagram':             workflowDiagramJob,
+  'biggy-weekly-briefing':        biggyWeeklyBriefingJob,
+  'risk-assessment':              riskAssessmentJob,
+  'qbr-prep':                     qbrPrepJob,
 };
 
 // Worker needs its own connection — NEVER share with Queue (BullMQ requirement)
