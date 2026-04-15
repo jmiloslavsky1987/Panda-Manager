@@ -1,28 +1,14 @@
 import Link from 'next/link';
 import { BookOpen, CalendarClock, Clock, Library, Settings } from 'lucide-react';
-import { eq, and } from 'drizzle-orm';
-import { db } from '../db';
-import { appNotifications } from '../db/schema';
 import { getActiveProjects, getArchivedProjects } from '../lib/queries';
 import { SidebarProjectItem } from './SidebarProjectItem';
-import { NotificationBadge } from './NotificationBadge';
 import { SidebarUserIsland } from './SidebarUserIsland';
 
 export async function Sidebar() {
-  const [projects, archivedProjects, schedulerFailureRows] = await Promise.all([
+  const [projects, archivedProjects] = await Promise.all([
     getActiveProjects(),
     getArchivedProjects(),
-    db
-      .select({ id: appNotifications.id })
-      .from(appNotifications)
-      .where(
-        and(
-          eq(appNotifications.type, 'scheduler_failure'),
-          eq(appNotifications.read, false),
-        ),
-      ),
   ]);
-  const schedulerFailureCount = schedulerFailureRows.length;
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-60 bg-zinc-900 text-zinc-100 flex flex-col z-40">
@@ -99,7 +85,6 @@ export async function Sidebar() {
           >
             <CalendarClock className="w-4 h-4" />
             Scheduler
-            <NotificationBadge count={schedulerFailureCount} />
           </Link>
           <Link
             href="/time-tracking"
