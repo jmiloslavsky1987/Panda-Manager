@@ -344,6 +344,7 @@ export function CreateJobWizard({
               params={state.params}
               projects={projects}
               onChange={(p) => setState((prev) => ({ ...prev, params: p }))}
+              lockedProjectId={projectId}
             />
           )}
         </div>

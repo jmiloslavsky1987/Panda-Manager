@@ -31,6 +31,42 @@ const PatchJobSchema = z.object({
   enabled:           z.boolean().optional(),
 });
 
+// ─── GET /api/jobs/[id] ───────────────────────────────────────────────────────
+
+export async function GET(
+  _request: Request,
+  context: { params: Promise<{ id: string }> | { id: string } },
+): Promise<Response> {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
+  if (resolveRole(session!) !== 'admin') {
+    return NextResponse.json({ error: 'Forbidden: Admin role required' }, { status: 403 });
+  }
+
+  try {
+    const { id } = await context.params;
+    const jobId = parseInt(id, 10);
+    if (isNaN(jobId)) {
+      return NextResponse.json({ error: 'Invalid job ID' }, { status: 400 });
+    }
+
+    const [job] = await db
+      .select()
+      .from(scheduledJobs)
+      .where(eq(scheduledJobs.id, jobId));
+
+    if (!job) {
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ job: { ...job, next_run: null } }, { status: 200 });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
 // ─── PATCH /api/jobs/[id] ─────────────────────────────────────────────────────
 
 export async function PATCH(
