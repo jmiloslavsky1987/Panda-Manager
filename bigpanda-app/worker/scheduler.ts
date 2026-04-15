@@ -71,7 +71,14 @@ export async function registerDbSchedulers(): Promise<void> {
       },
       {
         name: job.skill_name,
-        data: { triggeredBy: 'scheduled', jobId: job.id },
+        data: {
+          triggeredBy: 'scheduled',
+          jobId: job.id,
+          // Spread skill_params_json so handlers receive projectId directly in job.data
+          // (handlers check job.data.projectId to scope their run to the correct project)
+          ...(job.skill_params_json as Record<string, unknown> ?? {}),
+          ...(job.project_id != null ? { projectId: job.project_id } : {}),
+        },
         opts: { removeOnComplete: 100, removeOnFail: 50 },
       },
     );
