@@ -20,8 +20,8 @@ import {
   insertSchedulerFailureNotification,
 } from '../lib/scheduler-notifications';
 import { db } from '../db';
-import { scheduledJobs } from '../db/schema';
-import { eq } from 'drizzle-orm';
+import { scheduledJobs, skillRuns } from '../db/schema';
+import { eq, desc, and } from 'drizzle-orm';
 
 // Job handler dispatch map — avoids dynamic require which can fail with tsx
 import actionSync            from './jobs/action-sync';
@@ -106,7 +106,19 @@ worker.on('completed', async (job) => {
         .from(scheduledJobs)
         .where(eq(scheduledJobs.id, jobId));
       if (row?.project_id) {
-        artifact_link = `/customer/${row.project_id}/artifacts`;
+        // Link to the specific skill run result page (not the artifacts tab)
+        const [latestRun] = await db
+          .select({ run_id: skillRuns.run_id })
+          .from(skillRuns)
+          .where(and(
+            eq(skillRuns.project_id, row.project_id),
+            eq(skillRuns.skill_name, job.name),
+          ))
+          .orderBy(desc(skillRuns.created_at))
+          .limit(1);
+        if (latestRun?.run_id) {
+          artifact_link = `/customer/${row.project_id}/skills/${latestRun.run_id}`;
+        }
       }
     } catch { /* non-fatal — proceed without link */ }
 
