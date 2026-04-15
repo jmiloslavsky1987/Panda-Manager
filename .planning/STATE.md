@@ -4,13 +4,13 @@ milestone: v7.0
 milestone_name: — Governance & Operational Maturity
 status: executing
 last_updated: "2026-04-15T18:21:04.280Z"
-last_activity: 2026-04-15 — Completed 64-03-PLAN.md (CodeMirror editor & prompt modal)
+last_activity: 2026-04-15 — Completed 64-02-PLAN.md (Backend implementation for editable prompts)
 progress:
   total_phases: 12
   completed_phases: 6
   total_plans: 25
-  completed_plans: 23
-  percent: 60
+  completed_plans: 24
+  percent: 64
 ---
 
 # Project State
@@ -20,16 +20,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-13 after v7.0 milestone start)
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
-**Current focus:** Phase 64 (Editable Prompts UI) — Plan 3 of 5 complete (CodeMirror editor & prompt modal)
+**Current focus:** Phase 64 (Editable Prompts UI) — Plan 2 of 5 complete (Backend implementation for editable prompts)
 
 ## Current Position
 
 Phase: 64 of 69 (Editable Prompts UI) — IN PROGRESS
-Plan: 3 of 5 in current phase (complete)
-Status: In Progress — 64-03-PLAN.md complete (CodeMirror editor & prompt modal)
-Last activity: 2026-04-15 — Completed 64-03-PLAN.md (CodeMirror editor & prompt modal)
+Plan: 2 of 5 in current phase (complete)
+Status: In Progress — 64-02-PLAN.md complete (Backend implementation for editable prompts)
+Last activity: 2026-04-15 — Completed 64-02-PLAN.md (Backend implementation for editable prompts)
 
-Progress: [████████████░░░░░░░░] 60% (7 of 12 phases complete)
+Progress: [█████████████░░░░░░░] 64% (24 of 25 plans complete in milestone)
 
 ## Milestone History
 
@@ -95,7 +95,7 @@ Progress: [████████████░░░░░░░░] 60% (7 
 - Soft-delete cascade blind spots: 57+ phases of FK evolution requires careful audit
 - Gantt bi-directional sync race conditions: Advisory locks required for Phase 68
 
-**Next action:** Execute Phase 64-02 (GREEN phase - implement prompt editing API)
+**Next action:** Execute Phase 64-04 (Wire up save button to PATCH endpoint)
 
 ## Recent Decisions
 
@@ -118,6 +118,13 @@ Progress: [████████████░░░░░░░░] 60% (7 
 - **Settings round-trip tests use Partial<AppSettings> as any cast for RED phase** — Validates persistence layer before adding TypeScript types; writeSettings already handles unknown fields via object spread
 - **Admin guard tests left as .todo stubs** — RBAC admin enforcement depends on Phase 58 (Per-Project RBAC) implementation; stubs define contract for future wiring
 - **Body extraction regex pattern deferred to GREEN phase** — Todo stubs document edge cases without implementation; regex will be added when driving stubs to GREEN
+
+### Phase 64-02: Backend Implementation for Editable Prompts
+- **Inline validation in prompt route to avoid Server Component import** — parseSkillMeta lives in Server Component and cannot be imported into route handler; implemented inline validateSkillDesignStandard() with same validation logic
+- **Body trimStart() normalization in PATCH** — Always normalizes body with trimStart() before reconstruction to ensure consistent spacing after front-matter block
+- **Audit log not in DB transaction** — File write and audit log insert are separate operations; file system operations are not transactional with PostgreSQL
+- **Backup naming with .bak extension** — Uses ${filePath}.${Date.now()}.bak pattern; .bak files excluded from Skills tab (loader filters .md only)
+- **Next.js 15 async params pattern** — GET and PATCH handlers use params: Promise<{ skillName: string }> and await params for Next.js 15+ compatibility
 
 ### Phase 64-03: CodeMirror Editor & Prompt Modal
 - **Used @uiw/react-codemirror wrapper with uncontrolled mode (useRef buffering) to avoid cursor jump issues** — Wrapper provides cleaner React integration; useRef buffering prevents re-render cursor jumps from controlled mode
