@@ -99,12 +99,22 @@ export function PromptEditModal({ skill, trigger, onSaved }: PromptEditModalProp
     bodyRef.current = value;
   }
 
+  function handleOpenChange(nextOpen: boolean) {
+    if (!nextOpen) {
+      // Discard unsaved edits on any close (cancel, X, click-outside)
+      bodyRef.current = initialBody;
+      setEditorKey((k) => k + 1);
+      setError(null);
+    }
+    setOpen(nextOpen);
+  }
+
   const dialogClassName = isFullScreen
     ? 'max-w-[95vw] h-[90vh] flex flex-col'
     : 'max-w-2xl';
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <span className="cursor-pointer">
           {trigger}
