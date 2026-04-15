@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: — Governance & Operational Maturity
 status: executing
-last_updated: "2026-04-15T20:04:09.458Z"
-last_activity: 2026-04-15 — Completed 65-01-PLAN.md (Schema and API foundation)
+last_updated: "2026-04-15T20:11:42.000Z"
+last_activity: 2026-04-15 — Completed 65-03-PLAN.md (Project-scoped scheduler UI integration)
 progress:
   total_phases: 12
   completed_phases: 7
   total_plans: 29
-  completed_plans: 27
+  completed_plans: 29
   percent: 100
 ---
 
@@ -20,16 +20,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-13 after v7.0 milestone start)
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
-**Current focus:** Phase 65 (Project-Scoped Scheduling) — Plan 2 of 4 complete (Project-scoped jobs API & wizard integration)
+**Current focus:** Phase 65 (Project-Scoped Scheduling) — Plan 3 of 4 complete (Project-scoped scheduler UI integration)
 
 ## Current Position
 
 Phase: 65 of 69 (Project-Scoped Scheduling) — IN PROGRESS
-Plan: 3 of 4 in current phase
-Status: In Progress — 65-02-PLAN.md complete (Project-scoped jobs API & wizard integration)
-Last activity: 2026-04-15 — Completed 65-02-PLAN.md (Project-scoped jobs API & wizard integration)
+Plan: 4 of 4 in current phase
+Status: In Progress — 65-03-PLAN.md complete (Project-scoped scheduler UI integration)
+Last activity: 2026-04-15 — Completed 65-03-PLAN.md (Project-scoped scheduler UI integration)
 
-Progress: [██████████] 99% (231 of 233 plans complete in milestone)
+Progress: [██████████] 100% (232 of 233 plans complete in milestone)
 
 ## Milestone History
 
@@ -151,6 +151,11 @@ Progress: [██████████] 99% (231 of 233 plans complete in mil
 - **Project route forces project_id to route param** — Security boundary: caller cannot override project_id via request body; always set to numericId from URL param for RBAC enforcement
 - **Auto-inject projectId into skill_params_json at server side** — BullMQ worker receives project context without client-side knowledge; server-side injection pattern ensures workers have correct project scope
 - **hideScope prop pattern for JobSkillStep** — Cleaner than passing projectId down; encapsulates conditional UI rendering in child component
+
+### Phase 65-03: Project-Scoped Scheduler UI Integration
+- **ProjectSchedulerSection as local component in SkillsTabClient** — Scope encapsulation; not a separate file since it's tightly coupled to Skills tab context
+- **Controlled/uncontrolled expandedId pattern** — Allows URL state management in project context (controlled mode with useSearchParams) while preserving standalone table behavior (uncontrolled mode for global scheduler)
+- **readOnly mode hides all action controls** — Non-admin users see jobs and run history but cannot Create/Edit/Delete/Toggle/Trigger; cleaner than per-button conditionals
 
 ---
 *Last updated: 2026-04-15*
