@@ -56,6 +56,11 @@ export class SkillOrchestrator {
       throw err;
     }
 
+    // Strip YAML front-matter if present (SKILL-01: front-matter must not reach Claude)
+    if (systemPrompt.startsWith('---')) {
+      systemPrompt = systemPrompt.replace(/^---[\s\S]*?---\n?/, '').trim();
+    }
+
     // 2. Assemble context from DB
     // Per-skill context builders for team-engagement-map and workflow-diagram inject
     // only the relevant DB tables into Claude's user message (TEAMS-10, ARCH-10).
