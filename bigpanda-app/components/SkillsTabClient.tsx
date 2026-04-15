@@ -110,15 +110,30 @@ function ProjectSchedulerSection({
     return () => { cancelled = true; };
   }, [projectId]);
 
-  // Read expanded row ID from URL param
+  // Expanded row — read from URL param, fall back to sessionStorage so it
+  // survives navigation to other workspace tabs and back.
+  const ssKey = `sched_expanded_${projectId}`;
   const [expandedId, setExpandedId] = useState<number | null>(() => {
     const param = searchParams.get('sched_expanded');
-    return param ? parseInt(param, 10) : null;
+    if (param) return parseInt(param, 10);
+    try {
+      const stored = sessionStorage.getItem(ssKey);
+      return stored ? parseInt(stored, 10) : null;
+    } catch { return null; }
   });
 
   function handleToggleExpand(id: number) {
     const newExpandedId = expandedId === id ? null : id;
     setExpandedId(newExpandedId);
+
+    // Persist to sessionStorage so navigation away + back restores expanded row
+    try {
+      if (newExpandedId !== null) {
+        sessionStorage.setItem(ssKey, String(newExpandedId));
+      } else {
+        sessionStorage.removeItem(ssKey);
+      }
+    } catch { /* non-fatal */ }
 
     // Update URL param
     const params = new URLSearchParams(searchParams.toString());
