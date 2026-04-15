@@ -3,7 +3,6 @@ import { getProjectWithHealth } from '../../../lib/queries'
 import { ProjectHeader } from '../../../components/ProjectHeader'
 import { WorkspaceTabs } from '../../../components/WorkspaceTabs'
 import { AddNotesModal } from '../../../components/AddNotesModal'
-import { ScanForUpdatesButton } from '../../../components/ScanForUpdatesButton'
 import GlobalSearchBar from '../../../components/GlobalSearchBar'
 import { ArchivedBanner } from '../../../components/ArchivedBanner'
 import { auth } from '@/lib/auth'
@@ -74,9 +73,6 @@ export default async function WorkspaceLayout({
       <Suspense fallback={null}>
         <WorkspaceTabs projectId={id} />
       </Suspense>
-      <div className="px-6 py-2 border-b border-zinc-100 bg-zinc-50 flex items-center justify-end">
-        <ScanForUpdatesButton projectId={projectId} />
-      </div>
       <div className="flex-1 p-6 overflow-y-auto">
         {children}
       </div>
