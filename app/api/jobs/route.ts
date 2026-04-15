@@ -20,7 +20,7 @@ import { resolveRole } from "@/lib/auth-utils";
 
 const SKILL_IDS = SKILL_LIST.map((s: SkillDef) => s.id);
 
-const CreateJobSchema = z.object({
+export const CreateJobSchema = z.object({
   name:             z.string().min(1, 'name is required'),
   skill_name:       z.string().refine((v) => SKILL_IDS.includes(v), {
                       message: `skill_name must be one of: ${SKILL_IDS.join(', ')}`,
