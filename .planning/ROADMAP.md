@@ -252,7 +252,14 @@ Plans:
   4. Edits write back to filesystem atomically with file locking and backup creation
   5. Audit log captures all prompt edits with before/after diff and admin identity
   6. Edited prompts validate against Design Standard schema before save
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 64-01-PLAN.md — TDD RED stubs: SKILL-03a settings round-trip + admin guard; SKILL-03b GET/PATCH route behaviors
+- [ ] 64-02-PLAN.md — Backend: AppSettings extension + settings route admin guard + prompt API route (GET + PATCH atomic write + audit)
+- [ ] 64-03-PLAN.md — Frontend: CodeMirrorEditor.tsx (browser-only wrapper) + PromptEditModal.tsx (full-screen, toolbar, locked front-matter)
+- [ ] 64-04-PLAN.md — Wiring: skills/page.tsx admin resolution + SkillsTabClient edit button + settings page toggle
+- [ ] 64-05-PLAN.md — Build verification + human verification gate
 
 ### Phase 65: Project-Scoped Scheduling
 **Goal**: Users schedule skills per-project with admin enforcement and persistent state
@@ -332,7 +339,7 @@ Plans:
 | 61. Ingestion Edit & Move | 3/3 | Complete    | 2026-04-15 | - |
 | 62. Ingestion Consolidation | 2/2 | Complete    | 2026-04-15 | - |
 | 63. Skills Design Standard | 4/4 | Complete    | 2026-04-15 | - |
-| 64. Editable Prompts UI | v7.0 | 0/? | Not started | - |
+| 64. Editable Prompts UI | v7.0 | 0/5 | Not started | - |
 | 65. Project-Scoped Scheduling | v7.0 | 0/? | Not started | - |
 | 66. Overview Tracks Redesign | v7.0 | 0/? | Not started | - |
 | 67. Delivery Tab Cleanup | v7.0 | 0/? | Not started | - |
@@ -340,5 +347,5 @@ Plans:
 | 69. Knowledge Base + Outputs + Testing | v7.0 | 0/? | Not started | - |
 
 ---
-*Last updated: 2026-04-14*
+*Last updated: 2026-04-15*
 *Current milestone: v7.0 — Governance & Operational Maturity*
