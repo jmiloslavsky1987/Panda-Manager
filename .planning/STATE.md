@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: — Governance & Operational Maturity
 status: completed
-last_updated: "2026-04-15T16:52:07Z"
+last_updated: "2026-04-15T17:03:34.557Z"
 last_activity: 2026-04-15 — Completed 63-01-PLAN.md (Skills Design Standard with YAML front-matter migration)
 progress:
   total_phases: 12
-  completed_phases: 6
-  total_plans: 16
-  completed_plans: 17
+  completed_phases: 5
+  total_plans: 20
+  completed_plans: 18
   percent: 50
 ---
 
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-04-13 after v7.0 milestone start)
 ## Current Position
 
 Phase: 63 of 69 (Skills Design Standard) — IN PROGRESS
-Plan: 1 of 2 in current phase (complete)
-Status: Active — 63-01-PLAN.md complete (YAML front-matter schema and migration)
-Last activity: 2026-04-15 — Completed 63-01-PLAN.md (Skills Design Standard with YAML front-matter migration)
+Plan: 2 of 4 in current phase (complete)
+Status: Active — 63-02-PLAN.md complete (Skills tab server refactor with front-matter parsing)
+Last activity: 2026-04-15 — Completed 63-02-PLAN.md (Skills tab server refactor with front-matter parsing)
 
 Progress: [██████████░░░░░░░░░░] 50% (6 of 12 phases complete)
 
@@ -95,7 +95,7 @@ Progress: [██████████░░░░░░░░░░] 50% (6 
 - Soft-delete cascade blind spots: 57+ phases of FK evolution requires careful audit
 - Gantt bi-directional sync race conditions: Advisory locks required for Phase 68
 
-**Next action:** Execute Phase 63-02 (Skills tab server refactor)
+**Next action:** Execute Phase 63-03 (Wire non-functional skills)
 
 ## Recent Decisions
 
@@ -103,6 +103,12 @@ Progress: [██████████░░░░░░░░░░] 50% (6 
 - **YAML front-matter schema with 6 required fields** (label, description, input_required, input_label, schedulable, error_behavior) — Locked user decision from phase research; provides runtime metadata for Skills tab dynamic rendering
 - **Front-matter block must be first line of file** (opening --- at line 1) — Parser simplicity and consistency
 - **error_behavior enum with "retry" and "fail" values** — Gives skill authors control over retry semantics
+
+### Phase 63-02: Skills Tab Server Refactor
+- **SkillMeta type in types/skills.ts for shared import** — Both server and client components need the type definition
+- **Manual YAML parsing (no yaml library dependency)** — Simple key-value parsing sufficient for 6-field schema, avoids dependency bloat
+- **All skills runnable (Fix required badge informational only)** — Non-compliant skills remain functional during migration, admin can fix without breaking user workflows
+- **Exclude context-updater from Skills tab** — Backend processing skill per CONTEXT.md scope definition, not a documentation skill
 
 ---
 *Last updated: 2026-04-15*
