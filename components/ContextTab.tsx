@@ -19,7 +19,8 @@ interface UploadHistoryItem {
 
 interface CompletenessResult {
   tabId: string
-  status: 'complete' | 'partial' | 'empty'
+  status: 'complete' | 'partial' | 'empty' | 'conflicting'
+  score: number
   gaps: string[]
 }
 
@@ -48,6 +49,7 @@ export function ContextTab({ projectId }: ContextTabProps) {
   const [completeness, setCompleteness] = useState<CompletenessResult[] | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [expandedTabs, setExpandedTabs] = useState<Set<string>>(new Set())
+  const [schemaVersion, setSchemaVersion] = useState<string | null>(null)
   const [activeBatch, setActiveBatch] = useState<ActiveBatch | null>(null)
   const toastFiredRef = useRef<Set<string>>(new Set())
   const [initialStage, setInitialStage] = useState<'uploading' | 'reviewing'>('uploading')
@@ -140,7 +142,9 @@ export function ContextTab({ projectId }: ContextTabProps) {
       })
       if (!res.ok) throw new Error('Completeness analysis failed')
       const data = await res.json()
-      setCompleteness(data)
+      // data is now { schemaVersion: string, results: CompletenessResult[] }
+      setCompleteness(data.results)
+      setSchemaVersion(data.schemaVersion ?? null)
     } catch (err) {
       console.error(err)
     } finally {
@@ -279,7 +283,12 @@ export function ContextTab({ projectId }: ContextTabProps) {
       {/* Section 3: Completeness Panel */}
       <section className="rounded-lg border bg-card p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Workspace Completeness</h2>
+          <h2 className="text-lg font-semibold">
+            Workspace Completeness
+            {schemaVersion && (
+              <span className="text-xs text-muted-foreground font-normal ml-2">schema {schemaVersion}</span>
+            )}
+          </h2>
           <button
             onClick={handleAnalyze}
             disabled={isAnalyzing}
@@ -314,8 +323,11 @@ export function ContextTab({ projectId }: ContextTabProps) {
                   <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                     tab.status === 'complete' ? 'bg-green-100 text-green-800' :
                     tab.status === 'partial' ? 'bg-yellow-100 text-yellow-800' :
+                    tab.status === 'conflicting' ? 'bg-orange-100 text-orange-800' :
                     'bg-gray-100 text-gray-600'
-                  }`}>{tab.status}</span>
+                  }`}>
+                    {tab.status}{typeof tab.score === 'number' ? ` — ${tab.score}%` : ''}
+                  </span>
                 </button>
                 {expandedTabs.has(tab.tabId) && tab.gaps.length > 0 && (
                   <div className="border-t px-4 py-3">
