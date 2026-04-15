@@ -34,6 +34,8 @@ export interface TabTemplate {
   sections: SectionDef[]
 }
 
+export const COMPLETENESS_SCHEMA_VERSION = "v1"
+
 export const TAB_TEMPLATE_REGISTRY = {
   overview: {
     sections: [

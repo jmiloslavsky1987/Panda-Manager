@@ -15,7 +15,7 @@ import { eq, count } from 'drizzle-orm'
 import { requireProjectRole } from "@/lib/auth-server";
 import Anthropic from '@anthropic-ai/sdk';
 import { buildCompletenessContext } from '@/lib/completeness-context-builder';
-import { TAB_TEMPLATE_REGISTRY } from '@/lib/tab-template-registry';
+import { TAB_TEMPLATE_REGISTRY, COMPLETENESS_SCHEMA_VERSION } from '@/lib/tab-template-registry';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,11 +34,14 @@ Guidelines for assessment:
 - Gaps MUST be SPECIFIC: reference actual record IDs like [A-KAISER-003], counts, and exact missing fields
 - Do NOT return "tab is incomplete" — always explain what is missing and which records need attention
 - For tabs with no real data, status = "empty" and gaps = ["No real records — all data is template placeholder or missing"]
+- Use status='conflicting' when records contain semantic contradictions. Examples: milestone marked 'complete' with no completion date; risk rated 'critical' with no mitigation plan; action marked 'done' with a future due date. Gap descriptions for conflicting entries MUST name specific record IDs and fields in conflict.
+- Return a score (0-100 integer) per tab. 100 = all required fields populated with real content and no conflicts. 0 = completely empty. Partial = 1-79 based on proportion of required fields populated. Complete = 80-100. Conflicting = score data quality of the tab (e.g. 60 if most fields present but contradictions exist).
 - Return exactly 11 entries: overview, actions, risks, milestones, teams, architecture, decisions, history, stakeholders, plan, skills`;
 
 interface CompletenessEntry {
   tabId: string;
-  status: 'complete' | 'partial' | 'empty';
+  status: 'complete' | 'partial' | 'empty' | 'conflicting';
+  score: number;
   gaps: string[];
 }
 
@@ -182,10 +185,11 @@ export async function POST(
             type: 'object',
             properties: {
               tabId: { type: 'string' },
-              status: { type: 'string', enum: ['complete', 'partial', 'empty'] },
+              status: { type: 'string', enum: ['complete', 'partial', 'empty', 'conflicting'] },
+              score: { type: 'integer', minimum: 0, maximum: 100 },
               gaps: { type: 'array', items: { type: 'string' } },
             },
-            required: ['tabId', 'status', 'gaps'],
+            required: ['tabId', 'status', 'score', 'gaps'],
             additionalProperties: false,
           },
         },
@@ -200,5 +204,5 @@ export async function POST(
   }
 
   const results: CompletenessEntry[] = JSON.parse(textBlock.text);
-  return NextResponse.json(results);
+  return NextResponse.json({ schemaVersion: COMPLETENESS_SCHEMA_VERSION, results });
 }
