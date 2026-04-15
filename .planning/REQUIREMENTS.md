@@ -64,8 +64,8 @@
 
 - [x] **SKILL-01**: A Skills Design Standard is defined and documented covering: input spec, output format, scheduling interface, and error/fallback behavior
 - [x] **SKILL-02**: All previously grayed-out/disabled skills are audited and made functional
-- [ ] **SKILL-03a**: Admin can enable or disable prompt editing as a global setting (default: off; preserves "prompts must not be modified" constraint when off)
-- [ ] **SKILL-03b**: When prompt editing is globally enabled, user can view and edit the prompt for any skill from the Skills tab UI
+- [x] **SKILL-03a**: Admin can enable or disable prompt editing as a global setting (default: off; preserves "prompts must not be modified" constraint when off)
+- [x] **SKILL-03b**: When prompt editing is globally enabled, user can view and edit the prompt for any skill from the Skills tab UI
 - [x] **SKILL-04**: All skills produce output conforming to the Skills Design Standard
 
 ### Scheduler
@@ -152,8 +152,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TEAM-02 | Phase 67 | Pending |
 | SKILL-01 | Phase 63 | Complete |
 | SKILL-02 | Phase 63 | Complete |
-| SKILL-03a | Phase 64 | Pending |
-| SKILL-03b | Phase 64 | Pending |
+| SKILL-03a | Phase 64 | Complete |
+| SKILL-03b | Phase 64 | Complete |
 | SKILL-04 | Phase 63 | Complete |
 | SCHED-01 | Phase 65 | Pending |
 | SCHED-02 | Phase 65 | Pending |

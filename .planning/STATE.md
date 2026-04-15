@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: — Governance & Operational Maturity
 status: verifying
-last_updated: "2026-04-15T17:31:59.126Z"
+last_updated: "2026-04-15T18:19:44.007Z"
 last_activity: 2026-04-15 — Completed 63-04-PLAN.md (Human verification gate)
 progress:
   total_phases: 12
   completed_phases: 6
-  total_plans: 20
-  completed_plans: 20
+  total_plans: 25
+  completed_plans: 21
   percent: 58
 ---
 
@@ -20,14 +20,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-13 after v7.0 milestone start)
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
-**Current focus:** Phase 63 complete — Next: Phase 64 (Editable Prompts UI)
+**Current focus:** Phase 64 (Editable Prompts UI) — Plan 1 of 5 complete (TDD RED stubs)
 
 ## Current Position
 
-Phase: 63 of 69 (Skills Design Standard) — COMPLETE
-Plan: 4 of 4 in current phase (complete)
-Status: Complete — 63-04-PLAN.md complete (Human verification gate)
-Last activity: 2026-04-15 — Completed 63-04-PLAN.md (Human verification gate)
+Phase: 64 of 69 (Editable Prompts UI) — IN PROGRESS
+Plan: 1 of 5 in current phase (complete)
+Status: In Progress — 64-01-PLAN.md complete (TDD RED stubs)
+Last activity: 2026-04-15 — Completed 64-01-PLAN.md (TDD RED stubs for SKILL-03a/03b)
 
 Progress: [███████████░░░░░░░░░] 58% (7 of 12 phases complete)
 
@@ -95,7 +95,7 @@ Progress: [███████████░░░░░░░░░] 58% (7 
 - Soft-delete cascade blind spots: 57+ phases of FK evolution requires careful audit
 - Gantt bi-directional sync race conditions: Advisory locks required for Phase 68
 
-**Next action:** Execute Phase 63-03 (Wire non-functional skills)
+**Next action:** Execute Phase 64-02 (GREEN phase - implement prompt editing API)
 
 ## Recent Decisions
 
@@ -113,6 +113,11 @@ Progress: [███████████░░░░░░░░░] 58% (7 
 ### Phase 63-04: Human Verification Gate
 - **Handoff Doc Generator is valid and kept in catalog** — User confirmed it's a functional skill, not a mistake
 - **Table rendering gap is a follow-up item, not a blocker** — Skill execution works correctly; markdown table formatting in UI is a display enhancement for future phase
+
+### Phase 64-01: TDD RED Stubs for Editable Prompts
+- **Settings round-trip tests use Partial<AppSettings> as any cast for RED phase** — Validates persistence layer before adding TypeScript types; writeSettings already handles unknown fields via object spread
+- **Admin guard tests left as .todo stubs** — RBAC admin enforcement depends on Phase 58 (Per-Project RBAC) implementation; stubs define contract for future wiring
+- **Body extraction regex pattern deferred to GREEN phase** — Todo stubs document edge cases without implementation; regex will be added when driving stubs to GREEN
 
 ---
 *Last updated: 2026-04-15*
