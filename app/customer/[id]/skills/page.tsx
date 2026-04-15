@@ -7,6 +7,12 @@ import path from 'path';
 import { resolveSkillsDir } from '../../../../lib/skill-path';
 import { readSettings } from '../../../../lib/settings-core';
 import type { SkillMeta } from '../../../../types/skills';
+import { auth } from '../../../../lib/auth';
+import { headers } from 'next/headers';
+import { resolveRole } from '../../../../lib/auth-utils';
+import { db } from '../../../../db';
+import { projectMembers } from '../../../../db/schema';
+import { and, eq } from 'drizzle-orm';
 
 // Skills excluded from the Skills tab (backend processing skills, removed from catalog)
 const EXCLUDED_SKILLS = new Set([
@@ -138,5 +144,29 @@ export default async function SkillsPage({ params }: { params: Promise<{ id: str
 
   const skills = await loadSkills();
 
-  return <SkillsTabClient projectId={projectId} recentRuns={recentRuns} skills={skills} />;
+  // Resolve admin role for prompt editing feature
+  const settings = await readSettings();
+  const session = await auth.api.getSession({ headers: await headers() });
+  let isAdmin = false;
+  if (session?.user) {
+    if (resolveRole(session) === 'admin') {
+      isAdmin = true;
+    } else {
+      const [member] = await db.select({ role: projectMembers.role })
+        .from(projectMembers)
+        .where(and(eq(projectMembers.project_id, projectId), eq(projectMembers.user_id, session.user.id)))
+        .limit(1);
+      isAdmin = member?.role === 'admin';
+    }
+  }
+
+  return (
+    <SkillsTabClient
+      projectId={projectId}
+      recentRuns={recentRuns}
+      skills={skills}
+      promptEditingEnabled={settings.prompt_editing_enabled ?? false}
+      isAdmin={isAdmin}
+    />
+  );
 }
