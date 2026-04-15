@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 import { IngestionModal } from './IngestionModal'
+import { ScanForUpdatesButton } from './ScanForUpdatesButton'
 import type { ExtractionItem } from '@/lib/extraction-types'
 
 interface ContextTabProps {
@@ -166,6 +167,21 @@ export function ContextTab({ projectId }: ContextTabProps) {
 
   return (
     <div className="flex flex-col gap-6 p-6 max-w-4xl mx-auto">
+      {/* Section 0: Scan for Updates */}
+      <section className="rounded-lg border bg-card p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold">Scan for Updates</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Scan connected sources (Slack, Gmail, Glean, Gong) for new project-relevant content.
+            </p>
+          </div>
+          <ScanForUpdatesButton
+            projectId={typeof projectId === 'string' ? parseInt(projectId, 10) : projectId}
+          />
+        </div>
+      </section>
+
       {/* Section 1: Upload or Extraction Progress */}
       <section className="rounded-lg border bg-card p-6">
         <h2 className="text-lg font-semibold mb-2">Upload Documents</h2>
