@@ -233,7 +233,13 @@ Plans:
   3. Skills tab displays "Fix required" badges for non-compliant skills
   4. Non-compliant skills are grayed out in UI with explanation tooltip
   5. All previously grayed-out skills are audited and either made functional or marked permanently excluded
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 63-01-PLAN.md — SKILLS-DESIGN-STANDARD.md + YAML front-matter migration for all skill .md files
+- [ ] 63-02-PLAN.md — SkillOrchestrator front-matter strip + skills/page.tsx server refactor + SkillsTabClient prop-driven rendering with Fix required badge
+- [ ] 63-03-PLAN.md — 7 new BullMQ job handlers + worker/index.ts JOB_HANDLERS registration
+- [ ] 63-04-PLAN.md — Build verification + human verification gate
 
 ### Phase 64: Editable Prompts UI
 **Goal**: Admins can edit skill prompts from UI when global setting enabled
