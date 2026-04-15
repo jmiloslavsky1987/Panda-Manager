@@ -125,7 +125,7 @@ Full details: `.planning/milestones/v6.0-ROADMAP.md` (archived)
 - [x] **Phase 58: Per-Project RBAC** - Implement Admin/User roles per project with route handler enforcement ✅ 2026-04-14
 - [x] **Phase 59: Project Lifecycle Management** - Archive, delete, restore projects with admin controls and logout (completed 2026-04-14)
 - [x] **Phase 60: Health Dashboard Redesign** - Auto-derived executive metrics from system data (completed 2026-04-14)
-- [ ] **Phase 61: Ingestion Edit & Move** - Edit before approve, move items, reclassify notes
+- [x] **Phase 61: Ingestion Edit & Move** - Edit before approve, move items, reclassify notes (completed 2026-04-15)
 - [ ] **Phase 62: Ingestion Consolidation** - Scan for Updates consolidation and enhanced completeness analysis
 - [ ] **Phase 63: Skills Design Standard** - Define standard, audit skills, schema validation
 - [ ] **Phase 64: Editable Prompts UI** - Admin-controlled prompt editing with global toggle
@@ -319,7 +319,7 @@ Plans:
 | 58. Per-Project RBAC | v7.0 | 4/4 | Complete | 2026-04-14 |
 | 59. Project Lifecycle Management | 5/5 | Complete    | 2026-04-14 | - |
 | 60. Health Dashboard Redesign | 2/2 | Complete    | 2026-04-14 | - |
-| 61. Ingestion Edit & Move | 2/3 | In Progress|  | - |
+| 61. Ingestion Edit & Move | 3/3 | Complete   | 2026-04-15 | - |
 | 62. Ingestion Consolidation | v7.0 | 0/? | Not started | - |
 | 63. Skills Design Standard | v7.0 | 0/? | Not started | - |
 | 64. Editable Prompts UI | v7.0 | 0/? | Not started | - |
