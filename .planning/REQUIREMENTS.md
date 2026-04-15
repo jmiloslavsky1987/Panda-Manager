@@ -70,11 +70,11 @@
 
 ### Scheduler
 
-- [ ] **SCHED-01**: Global Scheduler section is restricted to non-project-specific jobs
+- [x] **SCHED-01**: Global Scheduler section is restricted to non-project-specific jobs
 - [ ] **SCHED-02**: User can schedule skills/jobs within an individual project (project-scoped scheduling)
 - [ ] **SCHED-03**: Scheduler job list persists when navigating away and returning to the Scheduler
 - [ ] **SCHED-04**: Manually triggered job results appear in a job history / "Last Run" view in the Scheduler
-- [ ] **SCHED-05**: Nav badge next to Scheduler label in navigation is removed
+- [x] **SCHED-05**: Nav badge next to Scheduler label in navigation is removed
 
 ### Portfolio Dashboard
 
@@ -155,11 +155,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SKILL-03a | Phase 64 | Complete |
 | SKILL-03b | Phase 64 | Complete |
 | SKILL-04 | Phase 63 | Complete |
-| SCHED-01 | Phase 65 | Pending |
+| SCHED-01 | Phase 65 | Complete |
 | SCHED-02 | Phase 65 | Pending |
 | SCHED-03 | Phase 65 | Pending |
 | SCHED-04 | Phase 65 | Pending |
-| SCHED-05 | Phase 65 | Pending |
+| SCHED-05 | Phase 65 | Complete |
 | PORTF-01 | Phase 59 | Complete |
 | PORTF-02 | Phase 59 | Complete |
 | KB-01 | Phase 69 | Pending |

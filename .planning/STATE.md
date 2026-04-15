@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: — Governance & Operational Maturity
-status: verifying
-last_updated: "2026-04-15T19:13:16.137Z"
-last_activity: 2026-04-15 — Completed 64-05-PLAN.md (Build verification + human verification gate)
+status: executing
+last_updated: "2026-04-15T19:56:14Z"
+last_activity: 2026-04-15 — Completed 65-01-PLAN.md (Schema and API foundation)
 progress:
   total_phases: 12
   completed_phases: 7
-  total_plans: 25
-  completed_plans: 25
+  total_plans: 27
+  completed_plans: 27
   percent: 100
 ---
 
@@ -20,16 +20,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-13 after v7.0 milestone start)
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
-**Current focus:** Phase 64 (Editable Prompts UI) — Plan 4 of 5 complete (Wire editable prompts UI)
+**Current focus:** Phase 65 (Project-Scoped Scheduling) — Plan 1 of 4 complete (Schema and API foundation)
 
 ## Current Position
 
-Phase: 64 of 69 (Editable Prompts UI) — COMPLETE
-Plan: 5 of 5 in current phase (complete)
-Status: Complete — 64-05-PLAN.md complete (Build verification + human verification gate)
-Last activity: 2026-04-15 — Completed 64-05-PLAN.md (Build verification + human verification gate)
+Phase: 65 of 69 (Project-Scoped Scheduling) — IN PROGRESS
+Plan: 2 of 4 in current phase
+Status: In Progress — 65-01-PLAN.md complete (Schema and API foundation)
+Last activity: 2026-04-15 — Completed 65-01-PLAN.md (Schema and API foundation)
 
-Progress: [████████████████████] 100% (26 of 26 plans complete in milestone)
+Progress: [████████████████████] 100% (27 of 27 plans complete in milestone)
 
 ## Milestone History
 
@@ -140,6 +140,11 @@ Progress: [████████████████████] 100% (2
 ### Phase 64-05: Build Verification + Human Verification Gate
 - **Human verification confirmed all 8 verification steps passing** — Settings toggle persistence, Edit button visibility (admin-only, toggle-gated), modal rendering with locked front-matter and CodeMirror editor, resize handle, full-screen toggle, successful save with persistence and backup, validation failure with inline error, and audit log entry all verified in browser
 - **Modal state reset pattern prevents unsaved edits from leaking across open/close cycles** — Bug discovered during verification: editor state (editorContent, editorHeight, isFullScreen) persisted across modal close/open; fixed by resetting state in onClose handler to discard unsaved edits on Cancel
+
+### Phase 65-01: Schema and API Foundation for Project-Scoped Scheduling
+- **ON DELETE SET NULL for project_id FK** — If a project is deleted, its jobs become global (project_id = NULL) rather than being cascade-deleted or blocking deletion; preserves work and allows jobs to continue running
+- **Global view filters to IS NULL, not all jobs** — GET /api/jobs with no projectId param returns only jobs with project_id IS NULL; separates global and project-scoped jobs cleanly; prevents project jobs from appearing in global scheduler
+- **NotificationBadge removed from Scheduler sidebar link** — Scheduler failure notifications will be per-project in future phases; global badge no longer fits the scoping model; removed badge and associated query to avoid UX confusion during transition
 
 ---
 *Last updated: 2026-04-15*

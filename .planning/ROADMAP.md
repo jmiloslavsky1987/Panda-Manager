@@ -346,7 +346,7 @@ Plans:
 | 62. Ingestion Consolidation | 2/2 | Complete    | 2026-04-15 | - |
 | 63. Skills Design Standard | 4/4 | Complete    | 2026-04-15 | - |
 | 64. Editable Prompts UI | 5/5 | Complete    | 2026-04-15 | - |
-| 65. Project-Scoped Scheduling | v7.0 | 0/4 | Not started | - |
+| 65. Project-Scoped Scheduling | 1/4 | In Progress|  | - |
 | 66. Overview Tracks Redesign | v7.0 | 0/? | Not started | - |
 | 67. Delivery Tab Cleanup | v7.0 | 0/? | Not started | - |
 | 68. Gantt Bi-directional Sync | v7.0 | 0/? | Not started | - |
