@@ -39,7 +39,7 @@
 - [x] **INGEST-01**: User can edit extracted field values on an ingested item before approving it
 - [ ] **INGEST-02**: User can move an approved ingested item to a different workspace section
 - [x] **INGEST-03**: "Scan for Updates" functionality is consolidated into the Document Ingestion tab (removed from individual workspace tabs)
-- [ ] **INGEST-04**: "Analyze Completeness" compares existing project data against the expected data model and surfaces specific missing, sparse, or conflicting sections/fields (not binary pass/fail)
+- [x] **INGEST-04**: "Analyze Completeness" compares existing project data against the expected data model and surfaces specific missing, sparse, or conflicting sections/fields (not binary pass/fail)
 - [x] **INGEST-05**: User can reclassify a note entity to any valid entity type in the draft modal (fields transform to target schema; approved note routes to the correct table on approval)
 
 ### Delivery Tab
@@ -136,7 +136,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INGEST-01 | Phase 61 | Complete |
 | INGEST-02 | Phase 61 | Pending |
 | INGEST-03 | Phase 62 | Complete |
-| INGEST-04 | Phase 62 | Pending |
+| INGEST-04 | Phase 62 | Complete |
 | INGEST-05 | Phase 61 | Complete |
 | DLVRY-01 | Phase 68 | Pending |
 | DLVRY-02 | Phase 68 | Pending |
