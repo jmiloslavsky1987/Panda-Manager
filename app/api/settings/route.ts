@@ -11,6 +11,7 @@ import * as fsPromises from 'node:fs/promises';
 import * as path from 'node:path';
 import { readSettings, writeSettings, AppSettings, MCPServerConfig } from '@/lib/settings';
 import { requireSession } from "@/lib/auth-server";
+import { resolveRole } from "@/lib/auth-utils";
 
 // Zod schema for a single MCP server entry
 const mcpServerSchema = z.object({
@@ -38,6 +39,7 @@ const settingsUpdateSchema = z.object({
     .optional(),
   mcp_servers: z.array(mcpServerSchema).optional(),
   api_key: z.string().optional(),
+  prompt_editing_enabled: z.boolean().optional(),
 });
 
 /**
@@ -83,7 +85,18 @@ export async function POST(request: Request) {
     );
   }
 
-  const { api_key, mcp_servers, ...settingsFields } = parsed.data;
+  const { api_key, mcp_servers, prompt_editing_enabled, ...settingsFields } = parsed.data;
+
+  // Admin guard: if prompt_editing_enabled is being changed, require admin role
+  if (prompt_editing_enabled !== undefined) {
+    const role = resolveRole(session!);
+    if (role !== 'admin') {
+      return NextResponse.json(
+        { ok: false, error: 'Admin required' },
+        { status: 403 }
+      );
+    }
+  }
 
   // Write api_key to .env.local only — never to settings.json
   if (api_key !== undefined) {
@@ -113,6 +126,9 @@ export async function POST(request: Request) {
   const mergedFields: Partial<AppSettings> = { ...settingsFields as Partial<AppSettings> };
   if (mcp_servers !== undefined) {
     mergedFields.mcp_servers = mcp_servers;
+  }
+  if (prompt_editing_enabled !== undefined) {
+    mergedFields.prompt_editing_enabled = prompt_editing_enabled;
   }
 
   // Write remaining non-sensitive fields to settings.json
