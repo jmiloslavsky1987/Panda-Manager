@@ -6,6 +6,9 @@ import Link from 'next/link';
 import { Badge } from './ui/badge';
 import type { SkillMeta } from '../types/skills';
 import { PromptEditModal } from './PromptEditModal';
+import type { ScheduledJob } from './SchedulerJobRow';
+import { SchedulerJobTable } from './SchedulerJobTable';
+import { useSearchParams, usePathname } from 'next/navigation';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -34,6 +37,7 @@ interface SkillsTabClientProps {
   skills: SkillMeta[];
   promptEditingEnabled: boolean;
   isAdmin: boolean;
+  initialJobs: ScheduledJob[];
 }
 
 // ── Status badge helpers ───────────────────────────────────────────────────────
@@ -72,11 +76,57 @@ function ElapsedTime({ startedAt }: { startedAt: Date }) {
   return <span className="text-xs text-zinc-500">{m}m {s}s</span>;
 }
 
+// ── ProjectSchedulerSection sub-component ─────────────────────────────────────
+
+function ProjectSchedulerSection({
+  initialJobs,
+  projectId,
+  isAdmin,
+}: {
+  initialJobs: ScheduledJob[];
+  projectId: number;
+  isAdmin: boolean;
+}) {
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
+
+  // Read expanded row ID from URL param
+  const [expandedId, setExpandedId] = useState<number | null>(() => {
+    const param = searchParams.get('sched_expanded');
+    return param ? parseInt(param, 10) : null;
+  });
+
+  function handleToggleExpand(id: number) {
+    const newExpandedId = expandedId === id ? null : id;
+    setExpandedId(newExpandedId);
+
+    // Update URL param
+    const params = new URLSearchParams(searchParams.toString());
+    if (newExpandedId !== null) {
+      params.set('sched_expanded', newExpandedId.toString());
+    } else {
+      params.delete('sched_expanded');
+    }
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }
+
+  return (
+    <SchedulerJobTable
+      initialJobs={initialJobs}
+      projectId={projectId}
+      readOnly={!isAdmin}
+      expandedId={expandedId}
+      onToggleExpand={handleToggleExpand}
+    />
+  );
+}
+
 // ── Main component ─────────────────────────────────────────────────────────────
 
 const TERMINAL_STATES = new Set(['completed', 'failed', 'cancelled']);
 
-export function SkillsTabClient({ projectId, recentRuns, skills, promptEditingEnabled, isAdmin }: SkillsTabClientProps) {
+export function SkillsTabClient({ projectId, recentRuns, skills, promptEditingEnabled, isAdmin, initialJobs }: SkillsTabClientProps) {
   const router = useRouter();
   const [isInitialLoading, setIsInitialLoading] = useState(false);
   const [runningJobs, setRunningJobs] = useState<Map<string, RunningJob>>(new Map());
@@ -335,6 +385,12 @@ export function SkillsTabClient({ projectId, recentRuns, skills, promptEditingEn
           ))}
         </div>
       )}
+
+      {/* ── Project Scheduler ───────────────────────────────────────────────── */}
+      <div className="mt-8 pt-6 border-t border-zinc-200">
+        <h2 className="text-base font-semibold text-zinc-800 mb-4">Project Scheduler</h2>
+        <ProjectSchedulerSection initialJobs={initialJobs} projectId={projectId} isAdmin={isAdmin} />
+      </div>
 
     </div>
   );

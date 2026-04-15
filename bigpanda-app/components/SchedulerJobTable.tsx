@@ -16,13 +16,26 @@ import { CreateJobWizard } from './CreateJobWizard';
 interface SchedulerJobTableProps {
   initialJobs: ScheduledJob[];
   onCreateJob?: () => void;
+  projectId?: number;
+  readOnly?: boolean;
+  expandedId?: number | null;
+  onToggleExpand?: (id: number) => void;
 }
 
-export function SchedulerJobTable({ initialJobs }: SchedulerJobTableProps) {
+export function SchedulerJobTable({
+  initialJobs,
+  projectId,
+  readOnly = false,
+  expandedId: controlledExpandedId,
+  onToggleExpand: controlledToggleExpand
+}: SchedulerJobTableProps) {
   const [jobs, setJobs] = useState<ScheduledJob[]>(initialJobs);
-  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [internalExpandedId, setInternalExpandedId] = useState<number | null>(null);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [editJob, setEditJob] = useState<ScheduledJob | undefined>(undefined);
+
+  // Use controlled or internal expanded state
+  const expandedId = controlledExpandedId !== undefined ? controlledExpandedId : internalExpandedId;
 
   // Enabled jobs first, then disabled; preserve insertion order within each group
   const sorted = [...jobs].sort((a, b) => {
@@ -31,7 +44,11 @@ export function SchedulerJobTable({ initialJobs }: SchedulerJobTableProps) {
   });
 
   function handleToggleExpand(id: number) {
-    setExpandedId((prev) => (prev === id ? null : id));
+    if (controlledToggleExpand) {
+      controlledToggleExpand(id);
+    } else {
+      setInternalExpandedId((prev) => (prev === id ? null : id));
+    }
   }
 
   function handleJobUpdate(updated: ScheduledJob) {
@@ -40,7 +57,14 @@ export function SchedulerJobTable({ initialJobs }: SchedulerJobTableProps) {
 
   function handleJobDelete(id: number) {
     setJobs((prev) => prev.filter((j) => j.id !== id));
-    setExpandedId((prev) => (prev === id ? null : prev));
+    if (controlledToggleExpand) {
+      // In controlled mode, parent manages expanded state
+      if (expandedId === id) {
+        controlledToggleExpand(id); // This will collapse it
+      }
+    } else {
+      setInternalExpandedId((prev) => (prev === id ? null : prev));
+    }
   }
 
   function handleEditJob(job: ScheduledJob) {
@@ -74,13 +98,15 @@ export function SchedulerJobTable({ initialJobs }: SchedulerJobTableProps) {
             ? 'No scheduled jobs yet.'
             : `${jobs.length} job${jobs.length === 1 ? '' : 's'}`}
         </h2>
-        <button
-          data-testid="create-job-button"
-          onClick={handleOpenCreate}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
-        >
-          + Create Job
-        </button>
+        {!readOnly && (
+          <button
+            data-testid="create-job-button"
+            onClick={handleOpenCreate}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
+          >
+            + Create Job
+          </button>
+        )}
       </div>
 
       {jobs.length === 0 ? (
@@ -109,6 +135,7 @@ export function SchedulerJobTable({ initialJobs }: SchedulerJobTableProps) {
                   onJobUpdate={handleJobUpdate}
                   onJobDelete={handleJobDelete}
                   onEdit={handleEditJob}
+                  readOnly={readOnly}
                 />
               ))}
             </tbody>
@@ -122,6 +149,7 @@ export function SchedulerJobTable({ initialJobs }: SchedulerJobTableProps) {
         onClose={() => setWizardOpen(false)}
         onJobCreated={handleJobCreated}
         initialJob={editJob}
+        projectId={projectId}
       />
     </div>
   );
