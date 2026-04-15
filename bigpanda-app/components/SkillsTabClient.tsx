@@ -110,17 +110,26 @@ function ProjectSchedulerSection({
     return () => { cancelled = true; };
   }, [projectId]);
 
-  // Expanded row — read from URL param, fall back to sessionStorage so it
-  // survives navigation to other workspace tabs and back.
+  // Expanded row — read from URL param first, then restore from sessionStorage
+  // via useEffect (sessionStorage is not available during SSR, so we can't use
+  // the useState initializer for it — React reuses the SSR null on hydration).
   const ssKey = `sched_expanded_${projectId}`;
   const [expandedId, setExpandedId] = useState<number | null>(() => {
     const param = searchParams.get('sched_expanded');
     if (param) return parseInt(param, 10);
-    try {
-      const stored = sessionStorage.getItem(ssKey);
-      return stored ? parseInt(stored, 10) : null;
-    } catch { return null; }
+    return null;
   });
+
+  // Restore expanded row from sessionStorage after hydration
+  useEffect(() => {
+    if (expandedId === null) {
+      try {
+        const stored = sessionStorage.getItem(ssKey);
+        if (stored) setExpandedId(parseInt(stored, 10));
+      } catch { /* non-fatal */ }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ssKey]);
 
   function handleToggleExpand(id: number) {
     const newExpandedId = expandedId === id ? null : id;
@@ -164,6 +173,19 @@ const TERMINAL_STATES = new Set(['completed', 'failed', 'cancelled']);
 export function SkillsTabClient({ projectId, recentRuns, skills, promptEditingEnabled, isAdmin, initialJobs }: SkillsTabClientProps) {
   const router = useRouter();
   const [isInitialLoading, setIsInitialLoading] = useState(false);
+  const [liveRecentRuns, setLiveRecentRuns] = useState<SkillRun[]>(recentRuns);
+
+  // Refresh recent runs on mount — bypasses Next.js Router Cache serving stale RSC
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/projects/${projectId}/runs`)
+      .then((r) => r.json())
+      .then((data: { runs?: SkillRun[] }) => {
+        if (!cancelled && data.runs) setLiveRecentRuns(data.runs);
+      })
+      .catch(() => { /* non-fatal */ });
+    return () => { cancelled = true; };
+  }, [projectId]);
   const [runningJobs, setRunningJobs] = useState<Map<string, RunningJob>>(new Map());
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [missingBadge, setMissingBadge] = useState<Set<string>>(new Set());
@@ -225,10 +247,10 @@ export function SkillsTabClient({ projectId, recentRuns, skills, promptEditingEn
 
   // Clear initial loading state after mount (for SSR scenarios where data is already available)
   useEffect(() => {
-    if (recentRuns.length > 0) {
+    if (liveRecentRuns.length > 0) {
       setIsInitialLoading(false);
     }
-  }, [recentRuns]);
+  }, [liveRecentRuns]);
 
   // Status polling effect
   useEffect(() => {
@@ -395,11 +417,11 @@ export function SkillsTabClient({ projectId, recentRuns, skills, promptEditingEn
 
       {/* ── Recent Runs ───────────────────────────────────────────────────── */}
       <h2 className="text-lg font-semibold mb-3">Recent Runs</h2>
-      {recentRuns.length === 0 ? (
+      {liveRecentRuns.length === 0 ? (
         <p className="text-sm text-zinc-500">No runs yet. Select a skill above to get started.</p>
       ) : (
         <div className="divide-y divide-zinc-100 border border-zinc-200 rounded-lg overflow-hidden">
-          {recentRuns.map((run) => (
+          {liveRecentRuns.map((run) => (
             <Link
               key={run.run_id}
               href={`/customer/${projectId}/skills/${run.run_id}`}
