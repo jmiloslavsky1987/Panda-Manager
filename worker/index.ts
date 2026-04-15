@@ -19,6 +19,9 @@ import {
   appendRunHistoryEntry,
   insertSchedulerFailureNotification,
 } from '../lib/scheduler-notifications';
+import { db } from '../db';
+import { scheduledJobs } from '../db/schema';
+import { eq } from 'drizzle-orm';
 
 // Job handler dispatch map — avoids dynamic require which can fail with tsx
 import actionSync            from './jobs/action-sync';
@@ -90,18 +93,28 @@ const worker = new Worker(
 // REQUIRED: missing error listener causes worker to stop processing silently
 worker.on('error', (err) => console.error('[worker] error', err));
 
-worker.on('completed', (job, result) => {
+worker.on('completed', async (job) => {
   console.log(`[worker] ${job.name} completed`);
 
   // Write run history for DB-scheduled jobs (job.data.jobId present)
   const jobId: number | undefined = job.data?.jobId;
   if (jobId) {
+    // Look up project_id to build an artifact link
+    let artifact_link: string | undefined;
+    try {
+      const [row] = await db.select({ project_id: scheduledJobs.project_id })
+        .from(scheduledJobs)
+        .where(eq(scheduledJobs.id, jobId));
+      if (row?.project_id) {
+        artifact_link = `/customer/${row.project_id}/artifacts`;
+      }
+    } catch { /* non-fatal — proceed without link */ }
+
     const entry = {
       timestamp: new Date().toISOString(),
       outcome: 'success' as const,
-      duration_ms: job.processedOn
-        ? Date.now() - job.processedOn
-        : undefined,
+      duration_ms: job.processedOn ? Date.now() - job.processedOn : undefined,
+      artifact_link,
     };
     appendRunHistoryEntry(jobId, entry).catch((err) =>
       console.error('[worker] appendRunHistoryEntry error', err),
