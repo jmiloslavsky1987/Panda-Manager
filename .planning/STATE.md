@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: — Governance & Operational Maturity
 status: executing
-last_updated: "2026-04-15T18:21:04.280Z"
-last_activity: 2026-04-15 — Completed 64-02-PLAN.md (Backend implementation for editable prompts)
+last_updated: "2026-04-15T18:36:16Z"
+last_activity: 2026-04-15 — Completed 64-04-PLAN.md (Wire editable prompts UI)
 progress:
   total_phases: 12
   completed_phases: 6
   total_plans: 25
-  completed_plans: 24
-  percent: 64
+  completed_plans: 25
+  percent: 100
 ---
 
 # Project State
@@ -20,16 +20,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-13 after v7.0 milestone start)
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
-**Current focus:** Phase 64 (Editable Prompts UI) — Plan 2 of 5 complete (Backend implementation for editable prompts)
+**Current focus:** Phase 64 (Editable Prompts UI) — Plan 4 of 5 complete (Wire editable prompts UI)
 
 ## Current Position
 
 Phase: 64 of 69 (Editable Prompts UI) — IN PROGRESS
-Plan: 2 of 5 in current phase (complete)
-Status: In Progress — 64-02-PLAN.md complete (Backend implementation for editable prompts)
-Last activity: 2026-04-15 — Completed 64-02-PLAN.md (Backend implementation for editable prompts)
+Plan: 4 of 5 in current phase (complete)
+Status: In Progress — 64-04-PLAN.md complete (Wire editable prompts UI)
+Last activity: 2026-04-15 — Completed 64-04-PLAN.md (Wire editable prompts UI)
 
-Progress: [█████████████░░░░░░░] 64% (24 of 25 plans complete in milestone)
+Progress: [████████████████████] 100% (25 of 25 plans complete in milestone)
 
 ## Milestone History
 
@@ -130,6 +130,12 @@ Progress: [█████████████░░░░░░░] 64% (24
 - **Used @uiw/react-codemirror wrapper with uncontrolled mode (useRef buffering) to avoid cursor jump issues** — Wrapper provides cleaner React integration; useRef buffering prevents re-render cursor jumps from controlled mode
 - **CSS resize:vertical on editor container for native browser resize handle** — Native browser resize UX, simpler than custom drag handlers
 - **Dynamic import with ssr:false for CodeMirrorEditor** — Prevents SSR issues with CodeMirror's browser-only APIs (document, DOM manipulation)
+
+### Phase 64-04: Wire Editable Prompts UI
+- **Server-side admin resolution in skills/page.tsx using same pattern as layout.tsx** — Ensures isAdmin prop is correctly resolved before rendering client island; reuses established resolveRole + projectMembers query pattern
+- **Edit button conditionally rendered when promptEditingEnabled && isAdmin && !isRunning** — Clean three-condition check prevents edit access during skill execution; UX concern to avoid confusion
+- **Settings page Skills tab rendered unconditionally (server-side 403 guard is security boundary)** — Client-side rendering of admin-only controls is UI convenience per plan guidance; /api/settings POST handler enforces admin-only access
+- **Test files updated with new required props (Rule 3 deviation)** — Extended SkillsTabClientProps interface broke 7 test render calls; added mockSkills array and updated all calls to fix blocking TypeScript errors
 
 ---
 *Last updated: 2026-04-15*
