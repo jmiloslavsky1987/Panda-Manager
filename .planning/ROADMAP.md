@@ -331,7 +331,7 @@ Plans:
 | 60. Health Dashboard Redesign | 2/2 | Complete    | 2026-04-14 | - |
 | 61. Ingestion Edit & Move | 3/3 | Complete    | 2026-04-15 | - |
 | 62. Ingestion Consolidation | 2/2 | Complete    | 2026-04-15 | - |
-| 63. Skills Design Standard | 2/4 | In Progress|  | - |
+| 63. Skills Design Standard | 3/4 | In Progress|  | - |
 | 64. Editable Prompts UI | v7.0 | 0/? | Not started | - |
 | 65. Project-Scoped Scheduling | v7.0 | 0/? | Not started | - |
 | 66. Overview Tracks Redesign | v7.0 | 0/? | Not started | - |

@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: — Governance & Operational Maturity
 status: completed
-last_updated: "2026-04-15T17:03:34.557Z"
-last_activity: 2026-04-15 — Completed 63-01-PLAN.md (Skills Design Standard with YAML front-matter migration)
+last_updated: "2026-04-15T17:09:14.817Z"
+last_activity: 2026-04-15 — Completed 63-03-PLAN.md (Wire non-functional skills)
 progress:
   total_phases: 12
   completed_phases: 5
   total_plans: 20
-  completed_plans: 18
+  completed_plans: 19
   percent: 50
 ---
 
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-04-13 after v7.0 milestone start)
 ## Current Position
 
 Phase: 63 of 69 (Skills Design Standard) — IN PROGRESS
-Plan: 2 of 4 in current phase (complete)
-Status: Active — 63-02-PLAN.md complete (Skills tab server refactor with front-matter parsing)
-Last activity: 2026-04-15 — Completed 63-02-PLAN.md (Skills tab server refactor with front-matter parsing)
+Plan: 3 of 4 in current phase (complete)
+Status: Active — 63-03-PLAN.md complete (Wire non-functional skills)
+Last activity: 2026-04-15 — Completed 63-03-PLAN.md (Wire non-functional skills)
 
 Progress: [██████████░░░░░░░░░░] 50% (6 of 12 phases complete)
 
