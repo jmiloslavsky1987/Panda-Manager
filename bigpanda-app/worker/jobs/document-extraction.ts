@@ -768,7 +768,7 @@ export default async function documentExtractionJob(job: Job): Promise<{ status:
         .where(eq(extractionJobs.id, jobId));
 
       // Skip Pass 0 in the loop (already done above)
-      const contentPasses = PASSES.filter(p => p.passNumber !== 0);
+      const contentPasses = PASSES.filter((p): p is ExtractionPass & { passNumber: 1 | 2 | 3 } => p.passNumber !== 0);
 
       for (let passIdx = 0; passIdx < contentPasses.length; passIdx++) {
         const pass = contentPasses[passIdx];
@@ -824,7 +824,7 @@ export default async function documentExtractionJob(job: Job): Promise<{ status:
         .where(eq(extractionJobs.id, jobId));
 
       // Skip Pass 0 in the loop (already done above)
-      const contentPasses = PASSES.filter(p => p.passNumber !== 0);
+      const contentPasses = PASSES.filter((p): p is ExtractionPass & { passNumber: 1 | 2 | 3 } => p.passNumber !== 0);
 
       for (let passIdx = 0; passIdx < contentPasses.length; passIdx++) {
         const pass = contentPasses[passIdx];
