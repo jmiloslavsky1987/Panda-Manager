@@ -1,3 +1,12 @@
+---
+label: Handoff Doc Generator
+description: Generate a structured handoff and coverage document
+input_required: false
+input_label: ""
+schedulable: false
+error_behavior: retry
+---
+
 # Handoff Doc Generator Skill
 
 You are an expert PS consultant creating a handoff document for coverage.

@@ -1,3 +1,12 @@
+---
+label: Meeting Summary
+description: Generate a meeting summary from notes or transcript
+input_required: true
+input_label: Transcript
+schedulable: false
+error_behavior: retry
+---
+
 # Meeting Summary Skill
 
 You are an expert note-taker and PS consultant.

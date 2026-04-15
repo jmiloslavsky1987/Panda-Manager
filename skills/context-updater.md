@@ -1,3 +1,12 @@
+---
+label: Context Updater
+description: Apply meeting notes to update all project context sections
+input_required: true
+input_label: Transcript
+schedulable: false
+error_behavior: retry
+---
+
 # Context Updater Skill
 
 You are an expert PS consultant updating a project context document.
