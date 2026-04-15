@@ -339,7 +339,7 @@ Plans:
 | 61. Ingestion Edit & Move | 3/3 | Complete    | 2026-04-15 | - |
 | 62. Ingestion Consolidation | 2/2 | Complete    | 2026-04-15 | - |
 | 63. Skills Design Standard | 4/4 | Complete    | 2026-04-15 | - |
-| 64. Editable Prompts UI | 1/5 | In Progress|  | - |
+| 64. Editable Prompts UI | 2/5 | In Progress|  | - |
 | 65. Project-Scoped Scheduling | v7.0 | 0/? | Not started | - |
 | 66. Overview Tracks Redesign | v7.0 | 0/? | Not started | - |
 | 67. Delivery Tab Cleanup | v7.0 | 0/? | Not started | - |

@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: — Governance & Operational Maturity
-status: verifying
-last_updated: "2026-04-15T18:19:44.007Z"
-last_activity: 2026-04-15 — Completed 63-04-PLAN.md (Human verification gate)
+status: executing
+last_updated: "2026-04-15T18:21:04.280Z"
+last_activity: 2026-04-15 — Completed 64-03-PLAN.md (CodeMirror editor & prompt modal)
 progress:
   total_phases: 12
   completed_phases: 6
   total_plans: 25
-  completed_plans: 21
-  percent: 58
+  completed_plans: 23
+  percent: 60
 ---
 
 # Project State
@@ -20,16 +20,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-13 after v7.0 milestone start)
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
-**Current focus:** Phase 64 (Editable Prompts UI) — Plan 1 of 5 complete (TDD RED stubs)
+**Current focus:** Phase 64 (Editable Prompts UI) — Plan 3 of 5 complete (CodeMirror editor & prompt modal)
 
 ## Current Position
 
 Phase: 64 of 69 (Editable Prompts UI) — IN PROGRESS
-Plan: 1 of 5 in current phase (complete)
-Status: In Progress — 64-01-PLAN.md complete (TDD RED stubs)
-Last activity: 2026-04-15 — Completed 64-01-PLAN.md (TDD RED stubs for SKILL-03a/03b)
+Plan: 3 of 5 in current phase (complete)
+Status: In Progress — 64-03-PLAN.md complete (CodeMirror editor & prompt modal)
+Last activity: 2026-04-15 — Completed 64-03-PLAN.md (CodeMirror editor & prompt modal)
 
-Progress: [███████████░░░░░░░░░] 58% (7 of 12 phases complete)
+Progress: [████████████░░░░░░░░] 60% (7 of 12 phases complete)
 
 ## Milestone History
 
@@ -118,6 +118,11 @@ Progress: [███████████░░░░░░░░░] 58% (7 
 - **Settings round-trip tests use Partial<AppSettings> as any cast for RED phase** — Validates persistence layer before adding TypeScript types; writeSettings already handles unknown fields via object spread
 - **Admin guard tests left as .todo stubs** — RBAC admin enforcement depends on Phase 58 (Per-Project RBAC) implementation; stubs define contract for future wiring
 - **Body extraction regex pattern deferred to GREEN phase** — Todo stubs document edge cases without implementation; regex will be added when driving stubs to GREEN
+
+### Phase 64-03: CodeMirror Editor & Prompt Modal
+- **Used @uiw/react-codemirror wrapper with uncontrolled mode (useRef buffering) to avoid cursor jump issues** — Wrapper provides cleaner React integration; useRef buffering prevents re-render cursor jumps from controlled mode
+- **CSS resize:vertical on editor container for native browser resize handle** — Native browser resize UX, simpler than custom drag handlers
+- **Dynamic import with ssr:false for CodeMirrorEditor** — Prevents SSR issues with CodeMirror's browser-only APIs (document, DOM manipulation)
 
 ---
 *Last updated: 2026-04-15*
