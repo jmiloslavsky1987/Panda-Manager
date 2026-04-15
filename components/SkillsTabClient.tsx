@@ -4,43 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Badge } from './ui/badge';
-
-// ── Skill catalog ──────────────────────────────────────────────────────────────
-
-const WIRED_SKILLS = new Set([
-  'weekly-customer-status',
-  'meeting-summary',
-  'morning-briefing',
-  'context-updater',
-  'handoff-doc-generator',
-  'customer-project-tracker',
-  'elt-external-status',       // Phase 7
-  'elt-internal-status',       // Phase 7
-  'team-engagement-map',       // Phase 7
-  'workflow-diagram',          // Phase 7
-  // DO NOT add 'biggy-weekly-briefing' — remains grayed out per locked decision
-]);
-
-// Skills requiring user-provided input before running
-const INPUT_REQUIRED_SKILLS = new Set(['meeting-summary', 'context-updater']);
-
-const ALL_SKILLS = [
-  { name: 'weekly-customer-status', label: 'Weekly Customer Status', description: 'Generate a customer-facing weekly status email from project context' },
-  { name: 'meeting-summary', label: 'Meeting Summary', description: 'Generate a meeting summary from notes or transcript', inputRequired: 'transcript' },
-  { name: 'morning-briefing', label: 'Morning Briefing', description: 'Daily briefing: priorities, overdue items, approaching deadlines' },
-  { name: 'context-updater', label: 'Context Updater', description: 'Apply meeting notes to update all 14 project context sections', inputRequired: 'transcript' },
-  { name: 'handoff-doc-generator', label: 'Handoff Doc Generator', description: 'Generate a structured handoff/coverage doc' },
-  { name: 'elt-external-status', label: 'ELT External Status', description: 'Generate 5-slide external ELT deck (coming soon)' },
-  { name: 'elt-internal-status', label: 'ELT Internal Status', description: 'Generate internal ELT status deck (coming soon)' },
-  { name: 'team-engagement-map', label: 'Team Engagement Map', description: 'Generate team engagement HTML map (coming soon)' },
-  { name: 'workflow-diagram', label: 'Workflow Diagram', description: 'Generate before/after workflow diagram (coming soon)' },
-  { name: 'biggy-weekly-briefing', label: 'Biggy Weekly Briefing', description: 'Generate weekly briefing with docx + drafts (coming soon)' },
-  { name: 'customer-project-tracker', label: 'Customer Project Tracker', description: 'Sweep Gmail/Slack for updates (requires MCP, coming soon)' },
-  { name: 'risk-assessment', label: 'Risk Assessment', description: 'Generate risk assessment report (coming soon)' },
-  { name: 'stakeholder-comms', label: 'Stakeholder Comms', description: 'Generate stakeholder communication plan (coming soon)' },
-  { name: 'qbr-prep', label: 'QBR Prep', description: 'Generate QBR preparation materials (coming soon)' },
-  { name: 'onboarding-checklist', label: 'Onboarding Checklist', description: 'Generate team onboarding checklist (coming soon)' },
-];
+import type { SkillMeta } from '../types/skills';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -66,6 +30,7 @@ interface RunningJob {
 interface SkillsTabClientProps {
   projectId: number;
   recentRuns: SkillRun[];
+  skills: SkillMeta[];
 }
 
 // ── Status badge helpers ───────────────────────────────────────────────────────
@@ -108,7 +73,7 @@ function ElapsedTime({ startedAt }: { startedAt: Date }) {
 
 const TERMINAL_STATES = new Set(['completed', 'failed', 'cancelled']);
 
-export function SkillsTabClient({ projectId, recentRuns }: SkillsTabClientProps) {
+export function SkillsTabClient({ projectId, recentRuns, skills }: SkillsTabClientProps) {
   const router = useRouter();
   const [isInitialLoading, setIsInitialLoading] = useState(false);
   const [runningJobs, setRunningJobs] = useState<Map<string, RunningJob>>(new Map());
@@ -127,7 +92,7 @@ export function SkillsTabClient({ projectId, recentRuns }: SkillsTabClientProps)
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           projectId,
-          input: INPUT_REQUIRED_SKILLS.has(skillName)
+          input: skills.find(s => s.name === skillName)?.inputRequired
             ? { transcript: inputs[skillName] ?? '' }
             : undefined,
         }),
@@ -206,7 +171,8 @@ export function SkillsTabClient({ projectId, recentRuns }: SkillsTabClientProps)
   }, [runningJobs, router]);
 
   function handleRunClick(skillName: string) {
-    if (INPUT_REQUIRED_SKILLS.has(skillName)) {
+    const skill = skills.find(s => s.name === skillName);
+    if (skill?.inputRequired) {
       if (expandedInput === skillName) {
         // Already expanded — trigger with current input
         triggerSkill(skillName);
@@ -234,8 +200,7 @@ export function SkillsTabClient({ projectId, recentRuns }: SkillsTabClientProps)
       {/* ── Skill list ────────────────────────────────────────────────────── */}
       <h2 className="text-lg font-semibold mb-4">Skills</h2>
       <div className="divide-y divide-zinc-100 border border-zinc-200 rounded-lg overflow-hidden mb-8">
-        {ALL_SKILLS.map((skill) => {
-          const isWired = WIRED_SKILLS.has(skill.name);
+        {skills.map((skill) => {
           const isRunning = runningJobs.has(skill.name);
           const hasError = !!errors[skill.name];
           const hasMissing = missingBadge.has(skill.name);
@@ -246,13 +211,23 @@ export function SkillsTabClient({ projectId, recentRuns }: SkillsTabClientProps)
               key={skill.name}
               data-testid="skill-card"
               data-skill={skill.name}
-              className={`flex flex-col gap-2 px-4 py-3 bg-white ${!isWired ? 'opacity-60' : ''}`}
+              className={`flex flex-col gap-2 px-4 py-3 bg-white ${!skill.compliant ? 'opacity-60' : ''}`}
             >
               <div className="flex items-center gap-3">
                 <div className="flex-1 min-w-0">
                   <span className="font-medium text-sm">{skill.label}</span>
                   <p className="text-zinc-500 text-xs mt-0.5">{skill.description}</p>
                 </div>
+
+                {/* Fix required badge for non-compliant skills */}
+                {!skill.compliant && (
+                  <span
+                    className="bg-red-100 text-red-800 text-xs font-medium px-2 py-0.5 rounded-full"
+                    title="Front-matter missing or invalid — see SKILLS-DESIGN-STANDARD.md"
+                  >
+                    Fix required
+                  </span>
+                )}
 
                 {/* Error badge for missing SKILL.md */}
                 {hasMissing && (
@@ -282,8 +257,8 @@ export function SkillsTabClient({ projectId, recentRuns }: SkillsTabClientProps)
                   </div>
                 )}
 
-                {/* Run button — wired skills only, shown when NOT running */}
-                {isWired && !isRunning && (
+                {/* Run button — always shown when NOT running (all skills from server are runnable) */}
+                {!isRunning && (
                   <button
                     data-run={skill.name}
                     onClick={() => handleRunClick(skill.name)}
@@ -292,23 +267,13 @@ export function SkillsTabClient({ projectId, recentRuns }: SkillsTabClientProps)
                     {isInputExpanded ? 'Run' : 'Run'}
                   </button>
                 )}
-
-                {/* Disabled Run button for unwired skills */}
-                {!isWired && (
-                  <span
-                    title="Coming in a future update"
-                    className="shrink-0 text-sm px-3 py-1.5 rounded-md bg-zinc-100 text-zinc-400 cursor-not-allowed"
-                  >
-                    Run
-                  </span>
-                )}
               </div>
 
               {/* Inline input textarea (expand on click for input-required skills) */}
-              {isWired && INPUT_REQUIRED_SKILLS.has(skill.name) && isInputExpanded && (
+              {skill.inputRequired && isInputExpanded && (
                 <textarea
                   autoFocus
-                  placeholder="Paste transcript or meeting notes here…"
+                  placeholder={skill.inputLabel ? `${skill.inputLabel}…` : "Paste input here…"}
                   value={inputs[skill.name] ?? ''}
                   onChange={(e) => setInputs(prev => ({ ...prev, [skill.name]: e.target.value }))}
                   className="w-full text-sm p-2 border border-zinc-200 rounded-md resize-y min-h-24 font-mono focus:outline-none focus:ring-1 focus:ring-zinc-400"
