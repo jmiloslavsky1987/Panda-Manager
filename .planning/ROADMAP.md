@@ -127,7 +127,7 @@ Full details: `.planning/milestones/v6.0-ROADMAP.md` (archived)
 - [x] **Phase 60: Health Dashboard Redesign** - Auto-derived executive metrics from system data (completed 2026-04-14)
 - [x] **Phase 61: Ingestion Edit & Move** - Edit before approve, move items, reclassify notes (completed 2026-04-15)
 - [x] **Phase 62: Ingestion Consolidation** - Scan for Updates consolidation and enhanced completeness analysis (completed 2026-04-15)
-- [ ] **Phase 63: Skills Design Standard** - Define standard, audit skills, schema validation
+- [ ] **Phase 63: Skills Design Standard** - Define standard, audit skills, schema validation (1/4 plans complete)
 - [ ] **Phase 64: Editable Prompts UI** - Admin-controlled prompt editing with global toggle
 - [ ] **Phase 65: Project-Scoped Scheduling** - Per-project scheduler with RBAC and state persistence
 - [ ] **Phase 66: Overview Tracks Redesign** - Static/dynamic tracks with auto-scheduled weekly focus

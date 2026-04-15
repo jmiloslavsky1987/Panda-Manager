@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: — Governance & Operational Maturity
 status: completed
-last_updated: "2026-04-15T06:32:44.388Z"
-last_activity: 2026-04-15 — Completed 62-02-PLAN.md (Enhanced completeness analysis with scores, conflicting status, and schema version)
+last_updated: "2026-04-15T16:52:07Z"
+last_activity: 2026-04-15 — Completed 63-01-PLAN.md (Skills Design Standard with YAML front-matter migration)
 progress:
   total_phases: 12
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 16
-  completed_plans: 16
-  percent: 42
+  completed_plans: 17
+  percent: 50
 ---
 
 # Project State
@@ -20,16 +20,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-13 after v7.0 milestone start)
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
-**Current focus:** Phase 62 — Ingestion Consolidation (in progress)
+**Current focus:** Phase 63 — Skills Design Standard (in progress)
 
 ## Current Position
 
-Phase: 62 of 69 (Ingestion Consolidation) — COMPLETE
-Plan: 2 of 2 in current phase (complete)
-Status: Active — 62-02-PLAN.md complete (Completeness enhancement with numeric scores and schema versioning)
-Last activity: 2026-04-15 — Completed 62-02-PLAN.md (Enhanced completeness analysis with scores, conflicting status, and schema version)
+Phase: 63 of 69 (Skills Design Standard) — IN PROGRESS
+Plan: 1 of 2 in current phase (complete)
+Status: Active — 63-01-PLAN.md complete (YAML front-matter schema and migration)
+Last activity: 2026-04-15 — Completed 63-01-PLAN.md (Skills Design Standard with YAML front-matter migration)
 
-Progress: [████████░░░░░░░░░░░░] 42% (5 of 12 phases complete)
+Progress: [██████████░░░░░░░░░░] 50% (6 of 12 phases complete)
 
 ## Milestone History
 
@@ -95,8 +95,15 @@ Progress: [████████░░░░░░░░░░░░] 42% (5 
 - Soft-delete cascade blind spots: 57+ phases of FK evolution requires careful audit
 - Gantt bi-directional sync race conditions: Advisory locks required for Phase 68
 
-**Next action:** Execute Phase 62 (Ingestion Consolidation) — scan duplicate entities + completeness checking
+**Next action:** Execute Phase 63-02 (Skills tab server refactor)
+
+## Recent Decisions
+
+### Phase 63-01: Skills Design Standard
+- **YAML front-matter schema with 6 required fields** (label, description, input_required, input_label, schedulable, error_behavior) — Locked user decision from phase research; provides runtime metadata for Skills tab dynamic rendering
+- **Front-matter block must be first line of file** (opening --- at line 1) — Parser simplicity and consistency
+- **error_behavior enum with "retry" and "fail" values** — Gives skill authors control over retry semantics
 
 ---
-*Last updated: 2026-04-13*
+*Last updated: 2026-04-15*
 *Milestone: v7.0 — Governance & Operational Maturity*
