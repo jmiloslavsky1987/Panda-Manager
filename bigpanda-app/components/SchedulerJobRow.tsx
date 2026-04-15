@@ -102,6 +102,7 @@ export function SchedulerJobRow({
   const [triggering, setTriggering] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   // ── Enable / Disable toggle ────────────────────────────────────────────────
 
@@ -128,6 +129,21 @@ export function SchedulerJobRow({
     }
   }
 
+  // ── Refresh run history ────────────────────────────────────────────────────
+
+  async function refreshJobData() {
+    setRefreshing(true);
+    try {
+      const r = await fetch(`/api/jobs/${job.id}`);
+      if (r.ok) {
+        const data = (await r.json()) as { job?: ScheduledJob };
+        if (data.job) onJobUpdate(data.job);
+      }
+    } catch { /* non-fatal */ } finally {
+      setRefreshing(false);
+    }
+  }
+
   // ── Trigger button ─────────────────────────────────────────────────────────
 
   async function handleTrigger() {
@@ -139,19 +155,21 @@ export function SchedulerJobRow({
         body: JSON.stringify({ jobId: job.id, skillName: job.skill_name }),
       });
       if (!res.ok) throw new Error(`Trigger failed: ${res.status}`);
-      toast.success(`Job "${job.name}" triggered — check Run History below`);
-      // Expand the row so the user can see run history update
+      toast.success(`Job "${job.name}" triggered — expand to see Run History`);
+      // Expand so the user sees the run history panel immediately
       if (!expanded) onToggleExpand();
-      // Re-fetch once after a short delay to pick up the completed run
-      setTimeout(async () => {
-        try {
-          const r = await fetch(`/api/jobs/${job.id}`);
-          if (r.ok) {
-            const data = (await r.json()) as { job?: ScheduledJob };
-            if (data.job) onJobUpdate(data.job);
-          }
-        } catch { /* non-fatal */ }
-      }, 3000);
+      // Poll at 2s, 8s, 20s, 45s to catch both fast and slow AI jobs
+      for (const delay of [2000, 8000, 20000, 45000]) {
+        setTimeout(async () => {
+          try {
+            const r = await fetch(`/api/jobs/${job.id}`);
+            if (r.ok) {
+              const data = (await r.json()) as { job?: ScheduledJob };
+              if (data.job) onJobUpdate(data.job);
+            }
+          } catch { /* non-fatal */ }
+        }, delay);
+      }
     } catch {
       toast.error(`Failed to trigger job "${job.name}"`);
     } finally {
@@ -345,9 +363,19 @@ export function SchedulerJobRow({
 
               {/* Run history */}
               <div>
-                <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1">
-                  Run History
-                </p>
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                    Run History
+                  </p>
+                  <button
+                    onClick={refreshJobData}
+                    disabled={refreshing}
+                    className="text-xs text-zinc-400 hover:text-zinc-600 disabled:opacity-50 transition-colors"
+                    title="Refresh run history"
+                  >
+                    {refreshing ? <Loader2 className="w-3 h-3 animate-spin inline" /> : '↻ Refresh'}
+                  </button>
+                </div>
                 {runHistory.length === 0 ? (
                   <p className="text-xs text-zinc-400 italic">No runs yet.</p>
                 ) : (

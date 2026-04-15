@@ -20,7 +20,7 @@ vi.mock('../../db', () => ({
         where: vi.fn().mockResolvedValue([
           {
             id: 1,
-            run_history: JSON.stringify([]),
+            run_history_json: [],
           },
         ]),
       }),
@@ -64,7 +64,7 @@ describe('appendRunHistoryEntry', () => {
         where: vi.fn().mockResolvedValue([
           {
             id: 1,
-            run_history: JSON.stringify(existingEntries),
+            run_history_json: existingEntries,
           },
         ]),
       }),
@@ -79,9 +79,7 @@ describe('appendRunHistoryEntry', () => {
 
     const setCall = mockDbUpdate.mock.results[0].value.set;
     const setArg = setCall.mock.calls[0][0];
-    const savedHistory = typeof setArg.run_history === 'string'
-      ? JSON.parse(setArg.run_history)
-      : setArg.run_history;
+    const savedHistory = setArg.run_history_json;
     expect(savedHistory.length).toBeLessThanOrEqual(10);
   });
 
