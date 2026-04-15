@@ -272,7 +272,13 @@ Plans:
   4. Scheduler job list persists state when navigating away and returning
   5. Manually triggered job results appear in job history view in Scheduler
   6. Nav badge next to Scheduler label is removed
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 65-01-PLAN.md — DB schema project_id + GET/POST /api/jobs filtering + sidebar badge removal
+- [ ] 65-02-PLAN.md — Project-scoped jobs API + CreateJobWizard projectId prop
+- [ ] 65-03-PLAN.md — Skills page server fetch + SkillsTabClient project scheduler section + global /scheduler filter
+- [ ] 65-04-PLAN.md — Human verification gate: all SCHED requirements
 
 ### Phase 66: Overview Tracks Redesign
 **Goal**: Overview displays hybrid static/dynamic onboarding tracks with auto-scheduled weekly focus
@@ -340,7 +346,7 @@ Plans:
 | 62. Ingestion Consolidation | 2/2 | Complete    | 2026-04-15 | - |
 | 63. Skills Design Standard | 4/4 | Complete    | 2026-04-15 | - |
 | 64. Editable Prompts UI | 5/5 | Complete    | 2026-04-15 | - |
-| 65. Project-Scoped Scheduling | v7.0 | 0/? | Not started | - |
+| 65. Project-Scoped Scheduling | v7.0 | 0/4 | Not started | - |
 | 66. Overview Tracks Redesign | v7.0 | 0/? | Not started | - |
 | 67. Delivery Tab Cleanup | v7.0 | 0/? | Not started | - |
 | 68. Gantt Bi-directional Sync | v7.0 | 0/? | Not started | - |
