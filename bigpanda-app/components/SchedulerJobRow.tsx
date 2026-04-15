@@ -139,7 +139,19 @@ export function SchedulerJobRow({
         body: JSON.stringify({ jobId: job.id, skillName: job.skill_name }),
       });
       if (!res.ok) throw new Error(`Trigger failed: ${res.status}`);
-      toast.success(`Job "${job.name}" triggered successfully`);
+      toast.success(`Job "${job.name}" triggered — check Run History below`);
+      // Expand the row so the user can see run history update
+      if (!expanded) onToggleExpand();
+      // Re-fetch once after a short delay to pick up the completed run
+      setTimeout(async () => {
+        try {
+          const r = await fetch(`/api/jobs/${job.id}`);
+          if (r.ok) {
+            const data = (await r.json()) as { job?: ScheduledJob };
+            if (data.job) onJobUpdate(data.job);
+          }
+        } catch { /* non-fatal */ }
+      }, 3000);
     } catch {
       toast.error(`Failed to trigger job "${job.name}"`);
     } finally {

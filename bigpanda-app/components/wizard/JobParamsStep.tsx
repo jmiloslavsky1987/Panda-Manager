@@ -12,11 +12,12 @@ interface JobParamsStepProps {
   params: Record<string, unknown>
   projects: Project[]
   onChange: (params: Record<string, unknown>) => void
+  lockedProjectId?: number
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function JobParamsStep({ skillId, params, projects, onChange }: JobParamsStepProps) {
+export function JobParamsStep({ skillId, params, projects, onChange, lockedProjectId }: JobParamsStepProps) {
   function update(key: string, value: unknown) {
     onChange({ ...params, [key]: value })
   }
@@ -80,48 +81,50 @@ export function JobParamsStep({ skillId, params, projects, onChange }: JobParams
         </div>
       )}
 
-      {(skillId === 'weekly-customer-status' || skillId === 'context-updater') && (
+      {(skillId === 'weekly-customer-status' || skillId === 'context-updater') && lockedProjectId !== undefined && (
         <div className="space-y-1">
           <label htmlFor="project-select" className="block text-sm font-medium text-gray-700">
-            Project <span className="text-red-500">*</span>
+            Project
           </label>
           <select
             id="project-select"
-            value={typeof params.projectId === 'string' ? params.projectId : ''}
-            onChange={(e) => update('projectId', e.target.value)}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            value={typeof params.projectId === 'string' ? params.projectId : String(lockedProjectId)}
+            disabled
+            className="w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500 cursor-not-allowed"
           >
-            <option value="">— Select project —</option>
             {projects.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
               </option>
             ))}
           </select>
+          <p className="text-xs text-gray-400">Set automatically from project context.</p>
         </div>
       )}
 
       {skillId === 'discovery-scan' && (
         <div className="space-y-4">
-          {/* Project picker */}
-          <div className="space-y-1">
-            <label htmlFor="scan-project" className="block text-sm font-medium text-gray-700">
-              Project <span className="text-red-500">*</span>
-            </label>
-            <select
-              id="scan-project"
-              value={typeof params.projectId === 'string' ? params.projectId : ''}
-              onChange={(e) => update('projectId', e.target.value)}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            >
-              <option value="">— Select project —</option>
-              {projects.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Project picker — shown only in project context */}
+          {lockedProjectId !== undefined && (
+            <div className="space-y-1">
+              <label htmlFor="scan-project" className="block text-sm font-medium text-gray-700">
+                Project
+              </label>
+              <select
+                id="scan-project"
+                value={typeof params.projectId === 'string' ? params.projectId : String(lockedProjectId)}
+                disabled
+                className="w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500 cursor-not-allowed"
+              >
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-400">Set automatically from project context.</p>
+            </div>
+          )}
 
           {/* Slack channels */}
           <div className="space-y-1">
