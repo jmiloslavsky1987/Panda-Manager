@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: — Governance & Operational Maturity
 status: executing
-last_updated: "2026-04-15T19:56:14Z"
+last_updated: "2026-04-15T20:04:09.458Z"
 last_activity: 2026-04-15 — Completed 65-01-PLAN.md (Schema and API foundation)
 progress:
   total_phases: 12
   completed_phases: 7
-  total_plans: 27
+  total_plans: 29
   completed_plans: 27
   percent: 100
 ---
@@ -20,16 +20,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-13 after v7.0 milestone start)
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
-**Current focus:** Phase 65 (Project-Scoped Scheduling) — Plan 1 of 4 complete (Schema and API foundation)
+**Current focus:** Phase 65 (Project-Scoped Scheduling) — Plan 2 of 4 complete (Project-scoped jobs API & wizard integration)
 
 ## Current Position
 
 Phase: 65 of 69 (Project-Scoped Scheduling) — IN PROGRESS
-Plan: 2 of 4 in current phase
-Status: In Progress — 65-01-PLAN.md complete (Schema and API foundation)
-Last activity: 2026-04-15 — Completed 65-01-PLAN.md (Schema and API foundation)
+Plan: 3 of 4 in current phase
+Status: In Progress — 65-02-PLAN.md complete (Project-scoped jobs API & wizard integration)
+Last activity: 2026-04-15 — Completed 65-02-PLAN.md (Project-scoped jobs API & wizard integration)
 
-Progress: [████████████████████] 100% (27 of 27 plans complete in milestone)
+Progress: [██████████] 99% (231 of 233 plans complete in milestone)
 
 ## Milestone History
 
@@ -145,6 +145,12 @@ Progress: [████████████████████] 100% (2
 - **ON DELETE SET NULL for project_id FK** — If a project is deleted, its jobs become global (project_id = NULL) rather than being cascade-deleted or blocking deletion; preserves work and allows jobs to continue running
 - **Global view filters to IS NULL, not all jobs** — GET /api/jobs with no projectId param returns only jobs with project_id IS NULL; separates global and project-scoped jobs cleanly; prevents project jobs from appearing in global scheduler
 - **NotificationBadge removed from Scheduler sidebar link** — Scheduler failure notifications will be per-project in future phases; global badge no longer fits the scoping model; removed badge and associated query to avoid UX confusion during transition
+
+### Phase 65-02: Project-Scoped Jobs API & Wizard Integration
+- **Exported CreateJobSchema from global jobs route for reuse** — Project-scoped route imports schema to ensure validation consistency; avoids schema drift between global and project routes
+- **Project route forces project_id to route param** — Security boundary: caller cannot override project_id via request body; always set to numericId from URL param for RBAC enforcement
+- **Auto-inject projectId into skill_params_json at server side** — BullMQ worker receives project context without client-side knowledge; server-side injection pattern ensures workers have correct project scope
+- **hideScope prop pattern for JobSkillStep** — Cleaner than passing projectId down; encapsulates conditional UI rendering in child component
 
 ---
 *Last updated: 2026-04-15*
