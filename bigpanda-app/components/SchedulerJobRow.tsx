@@ -35,6 +35,7 @@ export interface ScheduledJob {
   last_run_outcome: 'success' | 'failure' | 'partial' | null;
   run_history_json: RunHistoryEntry[];
   next_run: string | null;
+  project_id?: number | null;
 }
 
 interface SchedulerJobRowProps {

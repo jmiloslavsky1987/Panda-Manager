@@ -24,6 +24,7 @@ export interface CreateJobWizardProps {
   onClose: () => void
   onJobCreated: (job: ScheduledJob) => void
   initialJob?: ScheduledJob
+  projectId?: number
 }
 
 interface WizardState {
@@ -56,13 +57,13 @@ const ALL_STEPS = [
 
 // ─── Initial state ────────────────────────────────────────────────────────────
 
-function buildInitialState(initialJob?: ScheduledJob): WizardState {
+function buildInitialState(initialJob?: ScheduledJob, projectId?: number): WizardState {
   if (!initialJob) {
     return {
       step: 1,
       skillId: '',
       jobName: '',
-      scope: 'global',
+      scope: projectId ? 'per-project' : 'global',
       frequency: 'daily',
       hour: 9,
       minute: 0,
@@ -102,19 +103,20 @@ export function CreateJobWizard({
   onClose,
   onJobCreated,
   initialJob,
+  projectId,
 }: CreateJobWizardProps) {
   const isEditMode = Boolean(initialJob)
 
-  const [state, setState] = useState<WizardState>(() => buildInitialState(initialJob))
+  const [state, setState] = useState<WizardState>(() => buildInitialState(initialJob, projectId))
   const [submitting, setSubmitting] = useState(false)
   const [projects, setProjects] = useState<Project[]>([])
 
   // Re-populate state when initialJob changes (edit mode)
   useEffect(() => {
     if (open) {
-      setState(buildInitialState(initialJob))
+      setState(buildInitialState(initialJob, projectId))
     }
-  }, [initialJob, open])
+  }, [initialJob, projectId, open])
 
   // Fetch projects for JobParamsStep
   useEffect(() => {
@@ -200,7 +202,12 @@ export function CreateJobWizard({
         enabled: true,
       }
 
-      const url = isEditMode ? `/api/jobs/${initialJob!.id}` : '/api/jobs'
+      // When projectId is set, POST to project-scoped route; otherwise use global route
+      const url = isEditMode
+        ? `/api/jobs/${initialJob!.id}`
+        : projectId
+          ? `/api/projects/${projectId}/jobs`
+          : '/api/jobs'
       const method = isEditMode ? 'PATCH' : 'POST'
 
       const res = await fetch(url, {
@@ -314,6 +321,7 @@ export function CreateJobWizard({
                   scope: s as 'global' | 'per-project',
                 }))
               }
+              hideScope={Boolean(projectId)}
             />
           )}
 

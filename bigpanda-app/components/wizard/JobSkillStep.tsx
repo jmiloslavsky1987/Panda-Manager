@@ -12,6 +12,7 @@ interface JobSkillStepProps {
   onSkillSelect: (id: string) => void
   onJobNameChange: (n: string) => void
   onScopeChange: (s: string) => void
+  hideScope?: boolean
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -23,6 +24,7 @@ export function JobSkillStep({
   onSkillSelect,
   onJobNameChange,
   onScopeChange,
+  hideScope = false,
 }: JobSkillStepProps) {
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
@@ -61,7 +63,7 @@ export function JobSkillStep({
       </div>
 
       {/* Job name + scope row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className={hideScope ? 'grid grid-cols-1 gap-4' : 'grid grid-cols-1 md:grid-cols-2 gap-4'}>
         {/* Job Name */}
         <div className="space-y-1">
           <label htmlFor="job-name" className="block text-sm font-medium text-gray-700">
@@ -77,21 +79,23 @@ export function JobSkillStep({
           />
         </div>
 
-        {/* Scope */}
-        <div className="space-y-1">
-          <label htmlFor="job-scope" className="block text-sm font-medium text-gray-700">
-            Scope
-          </label>
-          <select
-            id="job-scope"
-            value={scope}
-            onChange={(e) => onScopeChange(e.target.value)}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          >
-            <option value="global">Global</option>
-            <option value="per-project">Per-Project</option>
-          </select>
-        </div>
+        {/* Scope — hidden when hideScope is true */}
+        {!hideScope && (
+          <div className="space-y-1">
+            <label htmlFor="job-scope" className="block text-sm font-medium text-gray-700">
+              Scope
+            </label>
+            <select
+              id="job-scope"
+              value={scope}
+              onChange={(e) => onScopeChange(e.target.value)}
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            >
+              <option value="global">Global</option>
+              <option value="per-project">Per-Project</option>
+            </select>
+          </div>
+        )}
       </div>
     </div>
   )
