@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Badge } from './ui/badge';
 import type { SkillMeta } from '../types/skills';
+import { PromptEditModal } from './PromptEditModal';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -31,6 +32,8 @@ interface SkillsTabClientProps {
   projectId: number;
   recentRuns: SkillRun[];
   skills: SkillMeta[];
+  promptEditingEnabled: boolean;
+  isAdmin: boolean;
 }
 
 // ── Status badge helpers ───────────────────────────────────────────────────────
@@ -73,7 +76,7 @@ function ElapsedTime({ startedAt }: { startedAt: Date }) {
 
 const TERMINAL_STATES = new Set(['completed', 'failed', 'cancelled']);
 
-export function SkillsTabClient({ projectId, recentRuns, skills }: SkillsTabClientProps) {
+export function SkillsTabClient({ projectId, recentRuns, skills, promptEditingEnabled, isAdmin }: SkillsTabClientProps) {
   const router = useRouter();
   const [isInitialLoading, setIsInitialLoading] = useState(false);
   const [runningJobs, setRunningJobs] = useState<Map<string, RunningJob>>(new Map());
@@ -255,6 +258,22 @@ export function SkillsTabClient({ projectId, recentRuns, skills }: SkillsTabClie
                       Cancel
                     </button>
                   </div>
+                )}
+
+                {/* Edit button — shown for admins when prompt editing is enabled */}
+                {promptEditingEnabled && isAdmin && !isRunning && (
+                  <PromptEditModal
+                    skill={skill}
+                    trigger={
+                      <button
+                        className="shrink-0 text-sm px-2 py-1 rounded-md border border-zinc-300 text-zinc-600 hover:bg-zinc-50 transition-colors"
+                        title={`Edit prompt for ${skill.label}`}
+                      >
+                        Edit
+                      </button>
+                    }
+                    onSaved={() => { /* no router refresh needed — prompt content only */ }}
+                  />
                 )}
 
                 {/* Run button — always shown when NOT running (all skills from server are runnable) */}

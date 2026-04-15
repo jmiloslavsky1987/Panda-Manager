@@ -52,7 +52,7 @@ describe('UXPOL-03 — Loading Skeletons', () => {
     // Mock fetch to delay so loading state is testable
     fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(() => new Promise(() => {}))
 
-    const { container } = render(<SkillsTabClient projectId={123} recentRuns={[]} />)
+    const { container } = render(<SkillsTabClient projectId={123} recentRuns={[]} skills={[]} promptEditingEnabled={false} isAdmin={false} />)
 
     // Expect animate-pulse element visible before fetch resolves
     const skeletons = container.querySelectorAll('.animate-pulse')
