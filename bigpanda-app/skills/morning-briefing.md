@@ -1,3 +1,12 @@
+---
+label: Morning Briefing
+description: Daily briefing with priorities, overdue items, and approaching deadlines
+input_required: false
+input_label: ""
+schedulable: true
+error_behavior: retry
+---
+
 # Morning Briefing Skill
 
 You are an expert PS consultant preparing a daily morning briefing.

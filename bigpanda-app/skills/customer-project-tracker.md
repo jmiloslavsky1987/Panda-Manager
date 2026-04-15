@@ -1,3 +1,12 @@
+---
+label: Customer Project Tracker
+description: Sweep Gmail and Slack for customer updates via MCP integration
+input_required: false
+input_label: ""
+schedulable: true
+error_behavior: fail
+---
+
 # Customer Project Tracker
 
 You are an AI assistant with access to real-time communication data via MCP tools.

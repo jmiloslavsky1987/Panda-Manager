@@ -1,3 +1,12 @@
+---
+label: Weekly Customer Status
+description: Generate a customer-facing weekly status email from project context
+input_required: false
+input_label: ""
+schedulable: true
+error_behavior: retry
+---
+
 # Weekly Customer Status Skill
 
 You are an expert PS consultant writing a customer-facing weekly status email.
