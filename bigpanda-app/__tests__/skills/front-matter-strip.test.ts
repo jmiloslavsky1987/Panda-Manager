@@ -145,4 +145,10 @@ You are an expert note-taker and PS consultant.`;
     const countTokensCall = mockClient.messages.countTokens.mock.calls[0][0];
     expect(countTokensCall.system).toBe(skillFileContent);
   });
+
+  describe('Body extraction from front-matter', () => {
+    it.todo('Body extraction from file with trailing newline returns body without leading newline');
+
+    it.todo('Body extraction from file without trailing newline after second --- returns empty string');
+  });
 });
