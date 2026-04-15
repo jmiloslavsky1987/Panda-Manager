@@ -43,6 +43,7 @@ export interface AppSettings {
   };
   mcp_servers: MCPServerConfig[];
   source_credentials?: SourceCredentials;
+  prompt_editing_enabled?: boolean;
 }
 
 export const SETTINGS_PATH = path.join(os.homedir(), '.bigpanda-app', 'settings.json');
