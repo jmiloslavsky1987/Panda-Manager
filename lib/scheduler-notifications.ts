@@ -95,11 +95,9 @@ export async function appendRunHistoryEntry(
   // Prepend new entry (newest first) and cap at MAX_HISTORY_ENTRIES
   const newHistory = [entry, ...currentHistory].slice(0, MAX_HISTORY_ENTRIES);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (db.update(scheduledJobs).set({
+  await db.update(scheduledJobs).set({
     run_history_json: newHistory,
-    run_history: JSON.stringify(newHistory),
     last_run_at: new Date(entry.timestamp),
     last_run_outcome: entry.outcome,
-  } as any).where(eq(scheduledJobs.id, jobId)));
+  }).where(eq(scheduledJobs.id, jobId));
 }
