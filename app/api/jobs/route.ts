@@ -8,7 +8,7 @@
 import 'server-only';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { desc, asc, sql } from 'drizzle-orm';
+import { desc, asc, sql, isNull, eq } from 'drizzle-orm';
 import { db } from '../../../db';
 import { scheduledJobs } from '../../../db/schema';
 import { SKILL_LIST, type SkillDef } from '../../../lib/scheduler-skills';
@@ -38,11 +38,12 @@ const CreateJobSchema = z.object({
   skill_params:     z.record(z.string(), z.unknown()).optional(),
   skill_params_json: z.record(z.string(), z.unknown()).optional(),
   enabled:          z.boolean().optional(),
+  project_id:       z.number().int().positive().optional(),
 });
 
 // ─── GET /api/jobs ────────────────────────────────────────────────────────────
 
-export async function GET(_request: Request): Promise<Response> {
+export async function GET(request: Request): Promise<Response> {
   const { session, redirectResponse } = await requireSession();
   if (redirectResponse) return redirectResponse;
 
@@ -51,14 +52,29 @@ export async function GET(_request: Request): Promise<Response> {
   }
 
   try {
-    const jobs = await db
-      .select()
-      .from(scheduledJobs)
-      .orderBy(
-        // enabled first (true > false), then by id
-        sql`${scheduledJobs.enabled} DESC`,
-        asc(scheduledJobs.id),
-      );
+    // Parse optional projectId query param for project-scoped filtering
+    const url = new URL(request.url);
+    const projectIdParam = url.searchParams.get('projectId');
+
+    let query = db.select().from(scheduledJobs);
+
+    // Apply project filter
+    if (projectIdParam) {
+      const projectId = parseInt(projectIdParam, 10);
+      if (!isNaN(projectId)) {
+        // Filter to jobs for this specific project
+        query = query.where(eq(scheduledJobs.project_id, projectId)) as typeof query;
+      }
+    } else {
+      // No projectId param = global scheduler view (project_id IS NULL)
+      query = query.where(isNull(scheduledJobs.project_id)) as typeof query;
+    }
+
+    const jobs = await query.orderBy(
+      // enabled first (true > false), then by id
+      sql`${scheduledJobs.enabled} DESC`,
+      asc(scheduledJobs.id),
+    );
 
     // Add next_run as null (cron-parser not available; UI shows "—" for null)
     const jobsWithNextRun = jobs.map((job) => ({
@@ -108,6 +124,7 @@ export async function POST(request: Request): Promise<Response> {
       skill_params,
       skill_params_json,
       enabled = true,
+      project_id,
     } = parsed.data;
 
     // Derive cron_expression from frequency if not provided directly
@@ -134,6 +151,7 @@ export async function POST(request: Request): Promise<Response> {
         timezone: timezone ?? null,
         skill_params_json: paramsJson,
         enabled,
+        project_id: project_id ?? null,
       })
       .returning();
 
