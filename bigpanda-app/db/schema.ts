@@ -661,6 +661,7 @@ export const scheduledJobs = pgTable('scheduled_jobs', {
   enabled:           boolean('enabled').default(true).notNull(),
   timezone:          text('timezone'),
   skill_params_json: jsonb('skill_params_json').default({}).notNull(),
+  project_id:        integer('project_id').references(() => projects.id, { onDelete: 'set null' }),
   last_run_at:       timestamp('last_run_at'),
   last_run_outcome:  jobRunOutcomeEnum('last_run_outcome'),
   run_history_json:  jsonb('run_history_json').default([]).notNull(),
