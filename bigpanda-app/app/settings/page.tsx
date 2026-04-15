@@ -79,6 +79,9 @@ function SettingsPageInner() {
   const [testing, setTesting] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // Prompt editing toggle state
+  const [promptEditingEnabled, setPromptEditingEnabled] = useState(false);
+
   // Source Connections state
   const searchParams = useSearchParams();
   const gmailError = searchParams.get('gmail_error');
@@ -114,6 +117,7 @@ function SettingsPageInner() {
     if (res.ok) {
       const data = await res.json();
       setMcpServers(data.mcp_servers ?? []);
+      setPromptEditingEnabled(data.prompt_editing_enabled ?? false);
     }
   }, []);
 
@@ -334,6 +338,13 @@ function SettingsPageInner() {
             data-testid="time-tracking-tab"
           >
             Time Tracking
+          </Tabs.Trigger>
+          <Tabs.Trigger
+            value="skills"
+            className={TAB_CLASS}
+            data-testid="skills-tab"
+          >
+            Skills
           </Tabs.Trigger>
         </Tabs.List>
 
@@ -756,6 +767,35 @@ function SettingsPageInner() {
         {/* ── Time Tracking tab ── */}
         <Tabs.Content value="time-tracking">
           <TimeTrackingSettings />
+        </Tabs.Content>
+
+        {/* ── Skills tab ── */}
+        <Tabs.Content value="skills" data-testid="skills-section">
+          <div className="space-y-6">
+            <div className="border border-zinc-200 rounded-lg p-6 max-w-lg">
+              <h2 className="text-base font-semibold text-zinc-900 mb-4">Skill Prompts</h2>
+              <div className="flex items-center justify-between py-3 border-b border-zinc-100">
+                <div>
+                  <p className="text-sm font-medium">Prompt Editing</p>
+                  <p className="text-xs text-zinc-500">Allow admins to edit skill prompt files from the Skills tab</p>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={promptEditingEnabled}
+                  onChange={async (e) => {
+                    const newVal = e.target.checked;
+                    setPromptEditingEnabled(newVal);
+                    await fetch('/api/settings', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ prompt_editing_enabled: newVal }),
+                    });
+                  }}
+                  className="h-4 w-4 accent-zinc-900"
+                />
+              </div>
+            </div>
+          </div>
         </Tabs.Content>
       </Tabs.Root>
     </div>
