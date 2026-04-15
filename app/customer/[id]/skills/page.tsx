@@ -13,6 +13,7 @@ import { resolveRole } from '../../../../lib/auth-utils';
 import { db } from '../../../../db';
 import { projectMembers } from '../../../../db/schema';
 import { and, eq } from 'drizzle-orm';
+import type { ScheduledJob } from '../../../../components/SchedulerJobRow';
 
 // Skills excluded from the Skills tab (backend processing skills, removed from catalog)
 const EXCLUDED_SKILLS = new Set([
@@ -144,6 +145,22 @@ export default async function SkillsPage({ params }: { params: Promise<{ id: str
 
   const skills = await loadSkills();
 
+  // Fetch project-scoped scheduled jobs
+  let projectJobs: ScheduledJob[] = [];
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000';
+    const jobsRes = await fetch(`${baseUrl}/api/projects/${projectId}/jobs`, {
+      cache: 'no-store',
+      headers: { cookie: (await headers()).get('cookie') ?? '' },
+    });
+    if (jobsRes.ok) {
+      const data = (await jobsRes.json()) as { jobs?: ScheduledJob[] };
+      projectJobs = data.jobs ?? [];
+    }
+  } catch {
+    // Non-fatal: skills tab loads without scheduler section data
+  }
+
   // Resolve admin role for prompt editing feature
   const settings = await readSettings();
   const session = await auth.api.getSession({ headers: await headers() });
@@ -167,6 +184,7 @@ export default async function SkillsPage({ params }: { params: Promise<{ id: str
       skills={skills}
       promptEditingEnabled={settings.prompt_editing_enabled ?? false}
       isAdmin={isAdmin}
+      initialJobs={projectJobs}
     />
   );
 }

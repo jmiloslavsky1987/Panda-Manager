@@ -7,12 +7,19 @@ import { SkillsTabClient } from '@/components/SkillsTabClient';
 // Mock next/navigation
 const mockPush = vi.fn();
 const mockRefresh = vi.fn();
+const mockReplace = vi.fn();
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: mockPush,
-    refresh: mockRefresh
-  })
+    refresh: mockRefresh,
+    replace: mockReplace
+  }),
+  useSearchParams: () => ({
+    get: vi.fn(() => null),
+    toString: vi.fn(() => '')
+  }),
+  usePathname: () => '/customer/1/skills'
 }));
 
 global.fetch = vi.fn();
@@ -57,7 +64,7 @@ describe('SkillsTabClient - Job Progress', () => {
 
   it('shows elapsed time counter when job is running', async () => {
     const user = userEvent.setup({ delay: null });
-    render(<SkillsTabClient projectId={1} recentRuns={mockRecentRuns} skills={mockSkills} promptEditingEnabled={false} isAdmin={false} />);
+    render(<SkillsTabClient projectId={1} recentRuns={mockRecentRuns} skills={mockSkills} promptEditingEnabled={false} isAdmin={false} initialJobs={[]} />);
 
     const runButton = document.querySelector('[data-skill="weekly-customer-status"] [data-run]') as HTMLButtonElement;
     await user.click(runButton);
@@ -70,7 +77,7 @@ describe('SkillsTabClient - Job Progress', () => {
 
   it('shows spinner when job is running', async () => {
     const user = userEvent.setup({ delay: null });
-    render(<SkillsTabClient projectId={1} recentRuns={mockRecentRuns} skills={mockSkills} promptEditingEnabled={false} isAdmin={false} />);
+    render(<SkillsTabClient projectId={1} recentRuns={mockRecentRuns} skills={mockSkills} promptEditingEnabled={false} isAdmin={false} initialJobs={[]} />);
 
     const runButton = document.querySelector('[data-skill="weekly-customer-status"] [data-run]') as HTMLButtonElement;
     await user.click(runButton);
@@ -84,7 +91,7 @@ describe('SkillsTabClient - Job Progress', () => {
 
   it('shows Cancel button for running jobs', async () => {
     const user = userEvent.setup({ delay: null });
-    render(<SkillsTabClient projectId={1} recentRuns={mockRecentRuns} skills={mockSkills} promptEditingEnabled={false} isAdmin={false} />);
+    render(<SkillsTabClient projectId={1} recentRuns={mockRecentRuns} skills={mockSkills} promptEditingEnabled={false} isAdmin={false} initialJobs={[]} />);
 
     const runButton = document.querySelector('[data-skill="weekly-customer-status"] [data-run]') as HTMLButtonElement;
     await user.click(runButton);
@@ -107,7 +114,7 @@ describe('SkillsTabClient - Job Progress', () => {
         json: async () => ({ success: true, status: 'cancelled' })
       });
 
-    render(<SkillsTabClient projectId={1} recentRuns={mockRecentRuns} skills={mockSkills} promptEditingEnabled={false} isAdmin={false} />);
+    render(<SkillsTabClient projectId={1} recentRuns={mockRecentRuns} skills={mockSkills} promptEditingEnabled={false} isAdmin={false} initialJobs={[]} />);
 
     const runButton = document.querySelector('[data-skill="weekly-customer-status"] [data-run]') as HTMLButtonElement;
     await user.click(runButton);
@@ -152,7 +159,7 @@ describe('SkillsTabClient - Job Progress', () => {
       return Promise.reject(new Error('Unexpected URL'));
     });
 
-    render(<SkillsTabClient projectId={1} recentRuns={mockRecentRuns} skills={mockSkills} promptEditingEnabled={false} isAdmin={false} />);
+    render(<SkillsTabClient projectId={1} recentRuns={mockRecentRuns} skills={mockSkills} promptEditingEnabled={false} isAdmin={false} initialJobs={[]} />);
 
     const runButton = document.querySelector('[data-skill="weekly-customer-status"] [data-run]') as HTMLButtonElement;
     await user.click(runButton);
@@ -173,7 +180,7 @@ describe('SkillsTabClient - Job Progress', () => {
 
   it('does NOT navigate to skill run page after trigger', async () => {
     const user = userEvent.setup({ delay: null });
-    render(<SkillsTabClient projectId={1} recentRuns={mockRecentRuns} skills={mockSkills} promptEditingEnabled={false} isAdmin={false} />);
+    render(<SkillsTabClient projectId={1} recentRuns={mockRecentRuns} skills={mockSkills} promptEditingEnabled={false} isAdmin={false} initialJobs={[]} />);
 
     const runButton = document.querySelector('[data-skill="weekly-customer-status"] [data-run]') as HTMLButtonElement;
     await user.click(runButton);

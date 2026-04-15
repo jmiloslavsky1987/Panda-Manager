@@ -45,6 +45,7 @@ interface SchedulerJobRowProps {
   onJobUpdate: (j: ScheduledJob) => void;
   onJobDelete: (id: number) => void;
   onEdit?: (job: ScheduledJob) => void;
+  readOnly?: boolean;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -95,6 +96,7 @@ export function SchedulerJobRow({
   onJobUpdate,
   onJobDelete,
   onEdit,
+  readOnly = false,
 }: SchedulerJobRowProps) {
   const [toggling, setToggling] = useState(false);
   const [triggering, setTriggering] = useState(false);
@@ -227,23 +229,27 @@ export function SchedulerJobRow({
           className="px-3 py-2"
           onClick={(e) => e.stopPropagation()}
         >
-          <button
-            role="switch"
-            aria-checked={job.enabled}
-            disabled={toggling}
-            onClick={handleToggleEnabled}
-            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
-              job.enabled ? 'bg-blue-600' : 'bg-zinc-300'
-            } ${toggling ? 'opacity-50 cursor-wait' : 'cursor-pointer'}`}
-            aria-label={job.enabled ? 'Disable job' : 'Enable job'}
-            data-testid={`toggle-${job.id}`}
-          >
-            <span
-              className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
-                job.enabled ? 'translate-x-4' : 'translate-x-0.5'
-              }`}
-            />
-          </button>
+          {readOnly ? (
+            <span className="text-sm text-zinc-500">{job.enabled ? 'Yes' : 'No'}</span>
+          ) : (
+            <button
+              role="switch"
+              aria-checked={job.enabled}
+              disabled={toggling}
+              onClick={handleToggleEnabled}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+                job.enabled ? 'bg-blue-600' : 'bg-zinc-300'
+              } ${toggling ? 'opacity-50 cursor-wait' : 'cursor-pointer'}`}
+              aria-label={job.enabled ? 'Disable job' : 'Enable job'}
+              data-testid={`toggle-${job.id}`}
+            >
+              <span
+                className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                  job.enabled ? 'translate-x-4' : 'translate-x-0.5'
+                }`}
+              />
+            </button>
+          )}
         </td>
 
         {/* Trigger button */}
@@ -251,15 +257,17 @@ export function SchedulerJobRow({
           className="px-3 py-2"
           onClick={(e) => e.stopPropagation()}
         >
-          <button
-            disabled={triggering}
-            onClick={handleTrigger}
-            className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-zinc-300 text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 disabled:cursor-wait transition-colors"
-            data-testid={`trigger-${job.id}`}
-          >
-            {triggering ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
-            Run
-          </button>
+          {!readOnly && (
+            <button
+              disabled={triggering}
+              onClick={handleTrigger}
+              className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-zinc-300 text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 disabled:cursor-wait transition-colors"
+              data-testid={`trigger-${job.id}`}
+            >
+              {triggering ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+              Run
+            </button>
+          )}
         </td>
       </tr>
 
@@ -268,58 +276,60 @@ export function SchedulerJobRow({
         <tr data-testid={`job-row-${job.id}-expanded`}>
           <td colSpan={7} className="bg-zinc-50 border-b border-zinc-200 px-4 py-3">
             <div className="space-y-3">
-              {/* Controls */}
-              <div className="flex items-center gap-2">
-                {/* Edit */}
-                <button
-                  onClick={() => onEdit?.(job)}
-                  disabled={!onEdit}
-                  className={`text-xs px-3 py-1.5 rounded border transition-colors ${
-                    onEdit
-                      ? 'border-zinc-300 text-zinc-700 hover:bg-zinc-100'
-                      : 'border-zinc-300 text-zinc-400 cursor-not-allowed'
-                  }`}
-                  data-testid={`edit-${job.id}`}
-                >
-                  Edit
-                </button>
-
-                {/* Enable / Disable */}
-                <button
-                  onClick={handleToggleEnabled}
-                  disabled={toggling}
-                  className="text-xs px-3 py-1.5 rounded border border-zinc-300 text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 transition-colors"
-                >
-                  {job.enabled ? 'Disable' : 'Enable'}
-                </button>
-
-                {/* Delete */}
-                {confirmDelete ? (
-                  <span className="flex items-center gap-2 text-xs">
-                    <span className="text-red-600 font-medium">Are you sure?</span>
-                    <button
-                      onClick={handleDelete}
-                      disabled={deleting}
-                      className="px-2 py-1 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
-                    >
-                      {deleting ? 'Deleting…' : 'Confirm'}
-                    </button>
-                    <button
-                      onClick={() => setConfirmDelete(false)}
-                      className="px-2 py-1 rounded border border-zinc-300 text-zinc-700 hover:bg-zinc-100"
-                    >
-                      Cancel
-                    </button>
-                  </span>
-                ) : (
+              {/* Controls (hidden in readOnly mode) */}
+              {!readOnly && (
+                <div className="flex items-center gap-2">
+                  {/* Edit */}
                   <button
-                    onClick={() => setConfirmDelete(true)}
-                    className="text-xs px-3 py-1.5 rounded border border-red-300 text-red-600 hover:bg-red-50 transition-colors"
+                    onClick={() => onEdit?.(job)}
+                    disabled={!onEdit}
+                    className={`text-xs px-3 py-1.5 rounded border transition-colors ${
+                      onEdit
+                        ? 'border-zinc-300 text-zinc-700 hover:bg-zinc-100'
+                        : 'border-zinc-300 text-zinc-400 cursor-not-allowed'
+                    }`}
+                    data-testid={`edit-${job.id}`}
                   >
-                    Delete
+                    Edit
                   </button>
-                )}
-              </div>
+
+                  {/* Enable / Disable */}
+                  <button
+                    onClick={handleToggleEnabled}
+                    disabled={toggling}
+                    className="text-xs px-3 py-1.5 rounded border border-zinc-300 text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 transition-colors"
+                  >
+                    {job.enabled ? 'Disable' : 'Enable'}
+                  </button>
+
+                  {/* Delete */}
+                  {confirmDelete ? (
+                    <span className="flex items-center gap-2 text-xs">
+                      <span className="text-red-600 font-medium">Are you sure?</span>
+                      <button
+                        onClick={handleDelete}
+                        disabled={deleting}
+                        className="px-2 py-1 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                      >
+                        {deleting ? 'Deleting…' : 'Confirm'}
+                      </button>
+                      <button
+                        onClick={() => setConfirmDelete(false)}
+                        className="px-2 py-1 rounded border border-zinc-300 text-zinc-700 hover:bg-zinc-100"
+                      >
+                        Cancel
+                      </button>
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmDelete(true)}
+                      className="text-xs px-3 py-1.5 rounded border border-red-300 text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      Delete
+                    </button>
+                  )}
+                </div>
+              )}
 
               {/* Run history */}
               <div>
