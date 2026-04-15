@@ -91,6 +91,25 @@ function ProjectSchedulerSection({
   const pathname = usePathname();
   const router = useRouter();
 
+  // Live jobs state — seeded from server, refreshed client-side on mount
+  // so run history written between navigations is always visible.
+  const [liveJobs, setLiveJobs] = useState<ScheduledJob[]>(initialJobs);
+  const [tableKey, setTableKey] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/projects/${projectId}/jobs`)
+      .then((r) => r.json())
+      .then((data: { jobs?: ScheduledJob[] }) => {
+        if (!cancelled && data.jobs) {
+          setLiveJobs(data.jobs);
+          setTableKey((k) => k + 1); // remount SchedulerJobTable with fresh initialJobs
+        }
+      })
+      .catch(() => { /* non-fatal */ });
+    return () => { cancelled = true; };
+  }, [projectId]);
+
   // Read expanded row ID from URL param
   const [expandedId, setExpandedId] = useState<number | null>(() => {
     const param = searchParams.get('sched_expanded');
@@ -113,7 +132,8 @@ function ProjectSchedulerSection({
 
   return (
     <SchedulerJobTable
-      initialJobs={initialJobs}
+      key={tableKey}
+      initialJobs={liveJobs}
       projectId={projectId}
       readOnly={!isAdmin}
       expandedId={expandedId}
