@@ -92,22 +92,19 @@ export async function POST(req: NextRequest) {
 
     // ─── Onboarding Step Seeding ──────────────────────────────────────────
 
-    // Fetch the just-inserted phases so we have their IDs
-    const insertedAdrPhases = await tx
-      .select({ id: onboardingPhases.id, name: onboardingPhases.name })
+    // Fetch all just-inserted phases with track so we can match by name+track
+    const insertedPhases = await tx
+      .select({ id: onboardingPhases.id, name: onboardingPhases.name, track: onboardingPhases.track })
       .from(onboardingPhases)
       .where(eq(onboardingPhases.project_id, inserted.id))
 
     async function seedSteps(config: typeof ADR_ONBOARDING_CONFIG, track: string) {
       for (const phaseConfig of config) {
-        const phase = insertedAdrPhases.find(
-          p => p.name === phaseConfig.name
-        ) ?? insertedAdrPhases.find(
-          // Biggy phases share same inserted list — both tracks share the query above
-          p => p.name === phaseConfig.name
+        // Must match both name AND track — ADR and Biggy share phase names
+        const phase = insertedPhases.find(
+          p => p.name === phaseConfig.name && p.track === track
         )
-        if (!phase) continue
-        if (phaseConfig.steps.length === 0) continue
+        if (!phase || phaseConfig.steps.length === 0) continue
         await tx.insert(onboardingSteps).values(
           phaseConfig.steps.map((stepName, i) => ({
             phase_id: phase.id,
