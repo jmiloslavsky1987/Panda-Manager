@@ -170,12 +170,22 @@ export function WeeklyFocus({ projectId }: WeeklyFocusProps) {
   return (
     <section data-testid="weekly-focus-section" className="px-4">
       <div className="bg-white border border-zinc-200 rounded-lg p-4 space-y-3">
-        {/* Header row with title and progress ring */}
-        <div className="flex items-center justify-between">
+        {/* Header row: title | Generate Now button | progress ring */}
+        <div className="flex items-center justify-between gap-2">
           <h2 className="text-sm font-semibold text-zinc-700 uppercase tracking-wide">
             Weekly Focus
           </h2>
-          <ProgressRing pct={overallPct} />
+          <div className="flex items-center gap-3">
+            <button
+              data-testid="generate-now-btn"
+              onClick={handleGenerateNow}
+              disabled={generating}
+              className="px-3 py-1 text-xs font-medium text-zinc-600 border border-zinc-300 rounded hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {generating ? 'Generating...' : 'Generate Now'}
+            </button>
+            <ProgressRing pct={overallPct} />
+          </div>
         </div>
 
         {/* Content: bullets or empty state */}
@@ -193,22 +203,14 @@ export function WeeklyFocus({ projectId }: WeeklyFocusProps) {
             ))}
           </ul>
         ) : (
-          <div className="text-center py-6 space-y-3">
-            <p className="text-sm text-zinc-500">
-              No weekly focus generated yet. The scheduled job runs every Monday at 6am.
-            </p>
-            <button
-              data-testid="generate-now-btn"
-              onClick={handleGenerateNow}
-              disabled={generating}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {generating ? 'Generating...' : 'Generate Now'}
-            </button>
-            {generateMessage && (
-              <p className="text-sm text-blue-600 font-medium">{generateMessage}</p>
-            )}
-          </div>
+          <p className="text-xs text-zinc-400 italic">
+            Weekly focus generates automatically every Monday at 6am.
+          </p>
+        )}
+
+        {/* Generation message */}
+        {generateMessage && (
+          <p className="text-sm text-zinc-500 font-medium">{generateMessage}</p>
         )}
       </div>
     </section>
