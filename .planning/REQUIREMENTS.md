@@ -50,10 +50,10 @@
 - [ ] **DLVRY-04**: Date changes to milestones or tasks outside the Gantt propagate back to the Gantt display
 - [ ] **DLVRY-05**: Plan tab is removed; "Generate Plan" button and functionality are available in the Task Board tab
 - [ ] **DLVRY-06**: WBS structure is audited and aligned with Generate Plan output schema before reimplementation
-- [ ] **DLVRY-07**: Actions tab hides ID and Source columns by default
-- [ ] **DLVRY-08**: Risks tab hides ID column by default
-- [ ] **DLVRY-09**: Milestones tab hides ID column by default
-- [ ] **DLVRY-10**: Decisions entry form is scoped to operational impact documentation only (business transformation events, event intelligence improvements, automation and routing changes); existing records are preserved
+- [x] **DLVRY-07**: Actions tab hides ID and Source columns by default
+- [x] **DLVRY-08**: Risks tab hides ID column by default
+- [x] **DLVRY-09**: Milestones tab hides ID column by default
+- [x] **DLVRY-10**: Decisions entry form is scoped to operational impact documentation only (business transformation events, event intelligence improvements, automation and routing changes); existing records are preserved
 
 ### Team Tab
 
@@ -144,10 +144,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DLVRY-04 | Phase 68 | Pending |
 | DLVRY-05 | Phase 67 | Pending |
 | DLVRY-06 | Phase 67 | Pending |
-| DLVRY-07 | Phase 67 | Pending |
-| DLVRY-08 | Phase 67 | Pending |
-| DLVRY-09 | Phase 67 | Pending |
-| DLVRY-10 | Phase 67 | Pending |
+| DLVRY-07 | Phase 67 | Complete |
+| DLVRY-08 | Phase 67 | Complete |
+| DLVRY-09 | Phase 67 | Complete |
+| DLVRY-10 | Phase 67 | Complete |
 | TEAM-01 | Phase 67 | Pending |
 | TEAM-02 | Phase 67 | Pending |
 | SKILL-01 | Phase 63 | Complete |
