@@ -1,13 +1,15 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   DndContext,
+  DragOverlay,
   PointerSensor,
   useSensor,
   useSensors,
   DragEndEvent,
+  DragStartEvent,
 } from '@dnd-kit/core'
 import type { WbsItem } from '@/lib/queries'
 import { WbsNode } from './WbsNode'
@@ -46,10 +48,15 @@ export function WbsTree({ adrItems, biggyItems, projectId, showGeneratePlan }: W
     return new Set(items.filter(item => item.level === 1).map(item => item.id))
   })
 
-  // Re-initialize expandedIds when track changes
+  // Only reset expanded state when the track tab changes, not on data refresh
+  const prevTrackRef = useRef(activeTrack)
   useEffect(() => {
+    if (prevTrackRef.current === activeTrack) return
+    prevTrackRef.current = activeTrack
     setExpandedIds(new Set(items.filter(item => item.level === 1).map(item => item.id)))
   }, [activeTrack, items])
+
+  const [draggingId, setDraggingId] = useState<number | null>(null)
 
   // Toggle expand/collapse
   const toggleExpand = (id: number) => {
@@ -71,8 +78,13 @@ export function WbsTree({ adrItems, biggyItems, projectId, showGeneratePlan }: W
     })
   )
 
+  const handleDragStart = (event: DragStartEvent) => {
+    setDraggingId(Number(event.active.id))
+  }
+
   // Handle drag end
   const handleDragEnd = async (event: DragEndEvent) => {
+    setDraggingId(null)
     const { active, over } = event
     if (!over || active.id === over.id) return
 
@@ -86,7 +98,7 @@ export function WbsTree({ adrItems, biggyItems, projectId, showGeneratePlan }: W
         body: JSON.stringify({
           itemId: draggedId,
           newParentId,
-          newDisplayOrder: 0, // Server will auto-assign
+          newDisplayOrder: 0, // Server auto-assigns to end of target parent
         }),
       })
 
@@ -154,7 +166,7 @@ export function WbsTree({ adrItems, biggyItems, projectId, showGeneratePlan }: W
       </div>
 
       {/* Tree content */}
-      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+      <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <div className="space-y-1">
           {rootNodes.map(node => (
             <WbsNode
@@ -169,6 +181,13 @@ export function WbsTree({ adrItems, biggyItems, projectId, showGeneratePlan }: W
             />
           ))}
         </div>
+        <DragOverlay>
+          {draggingId ? (
+            <div className="bg-white border border-blue-400 rounded shadow-lg px-3 py-2 text-sm font-medium text-zinc-700">
+              {items.find(i => i.id === draggingId)?.name}
+            </div>
+          ) : null}
+        </DragOverlay>
       </DndContext>
     </div>
   )
