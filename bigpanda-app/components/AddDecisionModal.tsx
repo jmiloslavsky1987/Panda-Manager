@@ -75,26 +75,26 @@ export function AddDecisionModal({ projectId, open: controlledOpen, onOpenChange
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-zinc-700 mb-1">
-              Decision <span className="text-red-500">*</span>
+              Decision / Action <span className="text-red-500">*</span>
             </label>
             <textarea
               value={decision}
               onChange={e => setDecision(e.target.value)}
               rows={3}
               required
-              placeholder="Describe the decision made..."
+              placeholder="What was decided or agreed operationally? (e.g. routing rule change, automation enabled, process formalized)"
               className="w-full border rounded p-2 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-zinc-400"
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-zinc-700 mb-1">
-              Context <span className="text-zinc-400 font-normal">(optional)</span>
+              Operational Impact / Rationale <span className="text-zinc-400 font-normal">(optional)</span>
             </label>
             <textarea
               value={context}
               onChange={e => setContext(e.target.value)}
               rows={3}
-              placeholder="Why was this decision made? What alternatives were considered?"
+              placeholder="Why this decision? What does it affect operationally? What was the alternative?"
               className="w-full border rounded p-2 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-zinc-400"
             />
           </div>
