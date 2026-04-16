@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: — Governance & Operational Maturity
-status: verifying
-last_updated: "2026-04-16T16:40:07.152Z"
-last_activity: 2026-04-16 — Completed Phase 67 Plan 04 (Build Verification & Human Approval — Phase 67 complete)
+status: executing
+last_updated: "2026-04-16T18:49:45Z"
+last_activity: 2026-04-16 — Completed Phase 68 Plan 01 (Wave 0 TDD RED Stubs)
 progress:
   total_phases: 12
   completed_phases: 9
-  total_plans: 36
-  completed_plans: 35
-  percent: 100
+  total_plans: 41
+  completed_plans: 37
+  percent: 90
 ---
 
 # Project State
@@ -24,12 +24,12 @@ See: .planning/PROJECT.md (updated 2026-04-13 after v7.0 milestone start)
 
 ## Current Position
 
-Phase: 67 of 69 (Delivery Tab Cleanup) — COMPLETE
-Plan: 4 of 4 complete
-Status: Phase 67 complete — all 8 requirements (DLVRY-05 through DLVRY-10, TEAM-01, TEAM-02) verified in browser
-Last activity: 2026-04-16 — Completed Phase 67 Plan 04 (Build Verification & Human Approval — Phase 67 complete)
+Phase: 68 of 69 (Gantt Bi-directional Sync) — IN PROGRESS
+Plan: 1 of 5 complete
+Status: Wave 0 TDD RED stubs complete (13 RED tests + 5 GREEN tests across 5 files)
+Last activity: 2026-04-16 — Completed Phase 68 Plan 01 (Wave 0 TDD RED Stubs)
 
-Progress: [██████████] 100% (239 of 240 plans complete in v7.0 milestone)
+Progress: [█████████░] 90% (37 of 41 plans complete in v7.0 milestone)
 
 ## Milestone History
 
@@ -98,6 +98,11 @@ Progress: [██████████] 100% (239 of 240 plans complete in v7
 **Next action:** Execute Phase 68 (Gantt Bi-directional Sync — DLVRY-01 through DLVRY-04)
 
 ## Recent Decisions
+
+### Phase 68-01: Wave 0 TDD RED Stubs
+- **Mock inspection pattern verifies date field stripped by Zod** — Plan expected Zod to reject unknown fields with 400, but Zod strips fields silently in default mode; added mock spies to verify date field presence in update payload, ensuring correct RED state
+- **Inline stub functions ensure RED state by returning wrong results** — buildWbsRows returns [], computeEdgeDrag returns unchanged dates; pattern ensures tests fail until real implementations exported
+- **Contract tests document expected PATCH field names before implementation** — MilestonesTableClient and inline date cell tests simulate broken handlers to document correct field contracts (date vs target_date, start_date vs due)
 
 ### Phase 63-01: Skills Design Standard
 - **YAML front-matter schema with 6 required fields** (label, description, input_required, input_label, schedulable, error_behavior) — Locked user decision from phase research; provides runtime metadata for Skills tab dynamic rendering

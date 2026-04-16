@@ -44,10 +44,10 @@
 
 ### Delivery Tab
 
-- [ ] **DLVRY-01**: Gantt chart displays a static structural skeleton (phases, milestone markers) on page load without user action
-- [ ] **DLVRY-02**: Gantt chart supports drag-edge date adjustment and manual date entry
-- [ ] **DLVRY-03**: Date changes in Gantt propagate to milestone and task records across the application
-- [ ] **DLVRY-04**: Date changes to milestones or tasks outside the Gantt propagate back to the Gantt display
+- [x] **DLVRY-01**: Gantt chart displays a static structural skeleton (phases, milestone markers) on page load without user action
+- [x] **DLVRY-02**: Gantt chart supports drag-edge date adjustment and manual date entry
+- [x] **DLVRY-03**: Date changes in Gantt propagate to milestone and task records across the application
+- [x] **DLVRY-04**: Date changes to milestones or tasks outside the Gantt propagate back to the Gantt display
 - [x] **DLVRY-05**: Plan tab is removed; "Generate Plan" button and functionality are available in the Task Board tab
 - [x] **DLVRY-06**: WBS structure is audited and aligned with Generate Plan output schema before reimplementation
 - [x] **DLVRY-07**: Actions tab hides ID and Source columns by default
@@ -138,10 +138,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INGEST-03 | Phase 62 | Complete |
 | INGEST-04 | Phase 62 | Complete |
 | INGEST-05 | Phase 61 | Complete |
-| DLVRY-01 | Phase 68 | Pending |
-| DLVRY-02 | Phase 68 | Pending |
-| DLVRY-03 | Phase 68 | Pending |
-| DLVRY-04 | Phase 68 | Pending |
+| DLVRY-01 | Phase 68 | Complete |
+| DLVRY-02 | Phase 68 | Complete |
+| DLVRY-03 | Phase 68 | Complete |
+| DLVRY-04 | Phase 68 | Complete |
 | DLVRY-05 | Phase 67 | Complete |
 | DLVRY-06 | Phase 67 | Complete |
 | DLVRY-07 | Phase 67 | Complete |
