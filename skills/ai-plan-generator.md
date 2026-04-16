@@ -16,7 +16,9 @@ Return a JSON object with the following structure (no prose, no markdown fences)
       "priority": "high" | "medium" | "low",
       "type": "technical" | "organizational" | "customer-facing",
       "phase": "Discovery" | "Design" | "Build" | "Test" | "Go-Live",
-      "due": "YYYY-MM-DD"
+      "due": "YYYY-MM-DD",
+      "track": "ADR" | "Biggy",
+      "wbs_phase": "The level-2 WBS parent item name this task falls under (e.g. 'Platform Config', 'Discovery & Kickoff', 'UAT/Validation', 'Build')"
     }
   ]
 }

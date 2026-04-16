@@ -14,10 +14,13 @@ interface ProposedTask {
   type: 'technical' | 'organizational' | 'customer-facing';
   phase?: string;
   due?: string;
+  track?: 'ADR' | 'Biggy';
+  wbs_phase?: string;
 }
 
 interface AiPlanPanelProps {
   projectId: number;
+  existingTasks: { title: string }[];
 }
 
 const PRIORITY_COLOR: Record<string, string> = {
@@ -26,7 +29,14 @@ const PRIORITY_COLOR: Record<string, string> = {
   low: 'bg-green-100 text-green-700',
 };
 
-export function AiPlanPanel({ projectId }: AiPlanPanelProps) {
+function isDuplicate(proposed: string, existing: { title: string }[]): boolean {
+  const lower = proposed.toLowerCase();
+  return existing.some(t =>
+    t.title.toLowerCase().includes(lower) || lower.includes(t.title.toLowerCase())
+  );
+}
+
+export function AiPlanPanel({ projectId, existingTasks }: AiPlanPanelProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [tasks, setTasks] = useState<ProposedTask[] | null>(null);
@@ -42,7 +52,13 @@ export function AiPlanPanel({ projectId }: AiPlanPanelProps) {
       if (!res.ok) throw new Error(data.error ?? 'Generation failed');
       const taskList: ProposedTask[] = data.tasks ?? [];
       setTasks(taskList);
-      setSelected(new Set(taskList.map((_, i) => i))); // all checked by default
+      // Only select non-duplicate tasks by default
+      setSelected(new Set(
+        taskList
+          .map((t, i) => ({ t, i }))
+          .filter(({ t }) => !isDuplicate(t.title, existingTasks))
+          .map(({ i }) => i)
+      ));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to generate plan');
     } finally {
@@ -54,9 +70,23 @@ export function AiPlanPanel({ projectId }: AiPlanPanelProps) {
     if (!tasks) return;
     setCommitting(true);
     const toCommit = tasks.filter((_, i) => selected.has(i));
+
+    // Fetch current WBS tree once before the loop (for parent lookup)
+    let wbsTree: { id: number; name: string; level: number; track: string; parent_id: number | null }[] = [];
+    try {
+      const wbsRes = await fetch(`/api/projects/${projectId}/wbs`);
+      if (wbsRes.ok) {
+        const wbsData = await wbsRes.json();
+        wbsTree = wbsData.items ?? wbsData ?? [];
+      }
+    } catch {
+      // WBS fetch failure is non-blocking
+    }
+
     let successCount = 0;
     for (const task of toCommit) {
       try {
+        // 1. Write to tasks table (existing logic)
         const res = await fetch('/api/tasks', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -72,11 +102,37 @@ export function AiPlanPanel({ projectId }: AiPlanPanelProps) {
           }),
         });
         if (res.ok) successCount++;
+
+        // 2. Write to WBS tree (non-blocking)
+        if (task.track && task.wbs_phase) {
+          const level2Parent = wbsTree.find(
+            item => item.level === 2 &&
+              item.track.toLowerCase() === task.track!.toLowerCase() &&
+              item.name.toLowerCase() === task.wbs_phase!.toLowerCase()
+          );
+          if (level2Parent) {
+            try {
+              await fetch(`/api/projects/${projectId}/wbs`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  name: task.title,
+                  parent_id: level2Parent.id,
+                  level: 3,
+                  track: task.track,
+                }),
+              });
+            } catch {
+              // WBS insert failure is non-blocking
+            }
+          }
+          // If level2Parent not found — skip WBS insert, do NOT create level-2 items
+        }
       } catch {
         // continue on individual task failure
       }
     }
-    toast.success(`${successCount} task${successCount !== 1 ? 's' : ''} committed to plan`);
+    toast.success(`${successCount} task${successCount !== 1 ? 's' : ''} committed to Task Board`);
     setTasks(null);
     setSelected(new Set());
     setCommitting(false);
@@ -121,27 +177,31 @@ export function AiPlanPanel({ projectId }: AiPlanPanelProps) {
           </CardHeader>
           <CardContent>
             <div className="space-y-2 mb-4">
-              {tasks.map((task, i) => (
-                <div key={i} className="flex items-start gap-3 p-2 rounded border border-zinc-100 hover:bg-zinc-50">
-                  <Checkbox
-                    checked={selected.has(i)}
-                    onCheckedChange={() => toggleTask(i)}
-                    className="mt-0.5"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">{task.title}</p>
-                    {task.description && <p className="text-xs text-zinc-500 mt-0.5">{task.description}</p>}
-                    <div className="flex gap-1 mt-1 flex-wrap">
-                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${PRIORITY_COLOR[task.priority] ?? ''}`}>
-                        {task.priority}
-                      </span>
-                      <Badge variant="outline" className="text-xs">{task.type}</Badge>
-                      {task.phase && <Badge variant="outline" className="text-xs">{task.phase}</Badge>}
-                      {task.due && <span className="text-xs text-zinc-400">{task.due}</span>}
+              {tasks.map((task, i) => {
+                const dup = isDuplicate(task.title, existingTasks);
+                return (
+                  <div key={i} className={`flex items-start gap-3 p-2 rounded border ${dup ? 'border-zinc-200 bg-zinc-50 opacity-60' : 'border-zinc-100 hover:bg-zinc-50'}`}>
+                    <Checkbox
+                      checked={selected.has(i)}
+                      onCheckedChange={() => toggleTask(i)}
+                      className="mt-0.5"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium">{task.title}</p>
+                      {dup && <span className="text-xs text-zinc-400 italic">Already exists</span>}
+                      {!dup && task.description && <p className="text-xs text-zinc-500 mt-0.5">{task.description}</p>}
+                      <div className="flex gap-1 mt-1 flex-wrap">
+                        <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${PRIORITY_COLOR[task.priority] ?? ''}`}>
+                          {task.priority}
+                        </span>
+                        <Badge variant="outline" className="text-xs">{task.type}</Badge>
+                        {task.phase && <Badge variant="outline" className="text-xs">{task.phase}</Badge>}
+                        {task.due && <span className="text-xs text-zinc-400">{task.due}</span>}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
             <div className="flex gap-2">
               <button
