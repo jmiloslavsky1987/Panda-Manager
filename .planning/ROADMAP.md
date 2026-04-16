@@ -366,7 +366,7 @@ Plans:
 | 65. Project-Scoped Scheduling | 3/4 | In Progress|  | - |
 | 66. Overview Tracks Redesign | 3/3 | Complete    | 2026-04-16 | - |
 | 67. Delivery Tab Cleanup | 4/4 | Complete    | 2026-04-16 | - |
-| 68. Gantt Bi-directional Sync | 1/5 | In Progress|  | - |
+| 68. Gantt Bi-directional Sync | 2/5 | In Progress|  | - |
 | 69. Knowledge Base + Outputs + Testing | v7.0 | 0/? | Not started | - |
 
 ---

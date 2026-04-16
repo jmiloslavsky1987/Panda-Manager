@@ -2,8 +2,8 @@
 gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: — Governance & Operational Maturity
-status: executing
-last_updated: "2026-04-16T18:49:45Z"
+status: completed
+last_updated: "2026-04-16T18:56:16.556Z"
 last_activity: 2026-04-16 — Completed Phase 68 Plan 01 (Wave 0 TDD RED Stubs)
 progress:
   total_phases: 12
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-04-13 after v7.0 milestone start)
 ## Current Position
 
 Phase: 68 of 69 (Gantt Bi-directional Sync) — IN PROGRESS
-Plan: 1 of 5 complete
-Status: Wave 0 TDD RED stubs complete (13 RED tests + 5 GREEN tests across 5 files)
-Last activity: 2026-04-16 — Completed Phase 68 Plan 01 (Wave 0 TDD RED Stubs)
+Plan: 2 of 5 complete
+Status: Milestone date PATCH field alignment complete
+Last activity: 2026-04-16 — Completed Phase 68 Plan 02 (Milestone Date PATCH Field Alignment)
 
-Progress: [█████████░] 90% (37 of 41 plans complete in v7.0 milestone)
+Progress: [█████████░] 93% (38 of 41 plans complete in v7.0 milestone)
 
 ## Milestone History
 
@@ -98,6 +98,11 @@ Progress: [█████████░] 90% (37 of 41 plans complete in v7.0 
 **Next action:** Execute Phase 68 (Gantt Bi-directional Sync — DLVRY-01 through DLVRY-04)
 
 ## Recent Decisions
+
+### Phase 68-02: Milestone Date PATCH Field Alignment
+- **Added date: z.string().nullable().optional() to patchSchema for milestone date updates** — Extends milestones PATCH API to accept date field for Gantt bi-directional sync; nullable allows clearing date with { date: null }
+- **Fixed MilestonesTableClient DatePickerCell to use date field instead of non-existent target_date field** — Corrected field alignment bug where DatePickerCell was saving to target_date (silently dropped by Zod) instead of canonical date column
+- **Updated displayDate to use m.date directly (not m.target ?? m.date)** — Prevents confusion between free-text target description and ISO date field; DatePickerCell should only show/edit the canonical date
 
 ### Phase 68-01: Wave 0 TDD RED Stubs
 - **Mock inspection pattern verifies date field stripped by Zod** — Plan expected Zod to reject unknown fields with 400, but Zod strips fields silently in default mode; added mock spies to verify date field presence in update payload, ensuring correct RED state
