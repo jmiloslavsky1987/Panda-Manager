@@ -1,27 +1,26 @@
 // tests/components/GanttChart-inline-dates.test.ts
-// RED stubs for DLVRY-02 inline date cell PATCH behavior
+// GREEN tests for DLVRY-02 inline date cell PATCH behavior
 // Contract: GanttChart left-panel DatePickerCell cells fire the correct PATCH field.
 // Implementation is in Plan 04 Task 2 (add DatePickerCell to left panel JSX).
 import { describe, it, expect, vi } from 'vitest';
 
-// Simulate the fetch calls as they SHOULD be wired in Plan 04.
-// These stubs call the WRONG field to stay RED until Plan 04 wires them correctly.
+// Verify the real wiring pattern from GanttChart.tsx after Plan 04 Task 2.
 
 describe('GanttChart inline date cells — PATCH field contracts (DLVRY-02)', () => {
   it('start date cell onSave PATCHes start_date field (not due, not date)', async () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true });
     vi.stubGlobal('fetch', fetchMock);
 
-    // Simulate CURRENT (broken) inline start cell — uses wrong field to keep RED
-    const brokenStartOnSave = async (v: string | null) => {
+    // Simulate the REAL inline start cell wiring from Plan 04 Task 2
+    const correctStartOnSave = async (v: string | null) => {
       await fetch('/api/tasks/task-1', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ due: v }),  // wrong field — RED until Plan 04
+        body: JSON.stringify({ start_date: v }),  // correct field
       });
     };
 
-    await brokenStartOnSave('2026-06-15');
+    await correctStartOnSave('2026-06-15');
 
     expect(fetchMock).toHaveBeenCalledWith('/api/tasks/task-1', expect.objectContaining({
       method: 'PATCH',
@@ -35,16 +34,16 @@ describe('GanttChart inline date cells — PATCH field contracts (DLVRY-02)', ()
     const fetchMock = vi.fn().mockResolvedValue({ ok: true });
     vi.stubGlobal('fetch', fetchMock);
 
-    // Simulate CURRENT (broken) inline end cell — uses wrong field to keep RED
-    const brokenEndOnSave = async (v: string | null) => {
+    // Simulate the REAL inline end cell wiring from Plan 04 Task 2
+    const correctEndOnSave = async (v: string | null) => {
       await fetch('/api/tasks/task-1', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ start_date: v }),  // wrong field — RED until Plan 04
+        body: JSON.stringify({ due: v }),  // correct field
       });
     };
 
-    await brokenEndOnSave('2026-06-30');
+    await correctEndOnSave('2026-06-30');
 
     expect(fetchMock).toHaveBeenCalledWith('/api/tasks/task-1', expect.objectContaining({
       method: 'PATCH',

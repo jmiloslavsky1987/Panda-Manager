@@ -1,6 +1,7 @@
 'use client'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import { DatePickerCell } from '@/components/DatePickerCell'
 
 // ── Public types (consumed by gantt/page.tsx) ─────────────────────────────────
 
@@ -278,14 +279,21 @@ export default function GanttChart({
 
   const todayX = useMemo(() => daysBetween(timelineStart, new Date()) * pxPerDay, [timelineStart, pxPerDay])
 
+  // ── Milestone drag state ──────────────────────────────────────────────────
+
+  const [milestoneOverride, setMilestoneOverride] = useState<Map<number, Date>>(new Map())
+
   // ── Milestone marker positions ────────────────────────────────────────────
 
   const markerPositions = useMemo(() =>
     milestones
       .filter(m => m.date && /^\d{4}-\d{2}-\d{2}/.test(m.date!))
-      .map(m => ({ ...m, x: daysBetween(timelineStart, parseDate(m.date!)) * pxPerDay }))
+      .map(m => {
+        const effectiveDate = milestoneOverride.get(m.id) ?? parseDate(m.date!)
+        return { ...m, x: daysBetween(timelineStart, effectiveDate) * pxPerDay, effectiveDate }
+      })
       .filter(m => m.x >= 0),
-  [milestones, timelineStart, pxPerDay])
+  [milestones, timelineStart, pxPerDay, milestoneOverride])
 
   // ── Drag-to-reschedule ────────────────────────────────────────────────────
 
@@ -461,6 +469,45 @@ export default function GanttChart({
     return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp) }
   }, [])
 
+  // ── Milestone drag ────────────────────────────────────────────────────────
+
+  const milestoneDragRef = useRef<{
+    milestoneId: number; origDate: Date; startX: number; pxPerDay: number; curDate: Date
+  } | null>(null)
+
+  useEffect(() => {
+    function onMsMove(e: MouseEvent) {
+      if (!milestoneDragRef.current) return
+      const delta = Math.round((e.clientX - milestoneDragRef.current.startX) / milestoneDragRef.current.pxPerDay)
+      const nd = addDays(milestoneDragRef.current.origDate, delta)
+      milestoneDragRef.current.curDate = nd
+      setMilestoneOverride(prev => new Map(prev).set(milestoneDragRef.current!.milestoneId, nd))
+    }
+    async function onMsUp() {
+      if (!milestoneDragRef.current) return
+      const { milestoneId, origDate, curDate } = milestoneDragRef.current
+      milestoneDragRef.current = null
+      if (fmtISO(curDate) === fmtISO(origDate)) {
+        setMilestoneOverride(prev => { const m = new Map(prev); m.delete(milestoneId); return m })
+        return
+      }
+      try {
+        const res = await fetch(`/api/milestones/${milestoneId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ date: fmtISO(curDate) }),
+        })
+        if (!res.ok) throw new Error()
+      } catch {
+        setMilestoneOverride(prev => { const m = new Map(prev); m.delete(milestoneId); return m })
+        toast.error('Failed to save milestone date')
+      }
+    }
+    window.addEventListener('mousemove', onMsMove)
+    window.addEventListener('mouseup', onMsUp)
+    return () => { window.removeEventListener('mousemove', onMsMove); window.removeEventListener('mouseup', onMsUp) }
+  }, [])
+
   function resolvedDates(task: GanttTask): { start: Date; end: Date } {
     return dragOverride.get(task.id) ?? { start: parseDate(task.start), end: parseDate(task.end) }
   }
@@ -614,8 +661,32 @@ export default function GanttChart({
                 style={{ height: ROW_H }}>
                 <div className="w-7 pl-2 shrink-0 text-[10px] text-zinc-300">{row.rowNum}</div>
                 <div className="flex-1 pl-2 pr-1 truncate text-xs text-zinc-700" title={row.task.name}>{row.task.name}</div>
-                <div className="w-[52px] text-right shrink-0 pr-1 text-xs text-zinc-400">{fmtShort(start)}</div>
-                <div className="w-[52px] text-right shrink-0 pr-1 text-xs text-zinc-400">{fmtShort(end)}</div>
+                <div className="w-[52px] shrink-0 flex items-center justify-end">
+                  <DatePickerCell
+                    value={fmtISO(start)}
+                    onSave={async (v) => {
+                      await fetch(`/api/tasks/${row.task.id}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ start_date: v }),
+                      })
+                      if (v) setDragOverride(prev => new Map(prev).set(row.task.id, { start: parseDate(v), end }))
+                    }}
+                  />
+                </div>
+                <div className="w-[52px] shrink-0 flex items-center justify-end">
+                  <DatePickerCell
+                    value={fmtISO(end)}
+                    onSave={async (v) => {
+                      await fetch(`/api/tasks/${row.task.id}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ due: v }),
+                      })
+                      if (v) setDragOverride(prev => new Map(prev).set(row.task.id, { start, end: parseDate(v) }))
+                    }}
+                  />
+                </div>
                 <div className="w-10 text-right shrink-0 pr-3 text-xs text-zinc-400">{fmtDuration(start, end)}</div>
               </div>
             )
@@ -660,8 +731,20 @@ export default function GanttChart({
                 return (
                   <div key={`mk-${m.id}`} className="absolute top-0 bottom-0 pointer-events-none z-10"
                     style={{ left: m.x }}>
-                    <div className="absolute top-0 bottom-0 pointer-events-none"
-                      style={{ left: 0, width: 0, borderLeft: '1.5px dashed #6366f1', opacity: 0.5 }} />
+                    <div
+                      className="absolute top-0 bottom-0 pointer-events-auto cursor-ew-resize"
+                      style={{ left: 0, width: 8, borderLeft: '1.5px dashed #6366f1', opacity: 0.5 }}
+                      onMouseDown={e => {
+                        e.preventDefault()
+                        milestoneDragRef.current = {
+                          milestoneId: m.id,
+                          origDate: m.effectiveDate,
+                          startX: e.clientX,
+                          pxPerDay,
+                          curDate: m.effectiveDate
+                        }
+                      }}
+                    />
                     <div className="pointer-events-auto absolute cursor-pointer rounded px-1"
                       style={{ top: 4 + nearby * 24, left: 3, fontSize: 10, color: '#6366f1', background: 'rgba(99,102,241,0.08)', whiteSpace: 'nowrap', zIndex: 11 }}
                       onClick={() => setPopup({ name: m.name, date: m.date!, status: m.status })}>
@@ -691,14 +774,32 @@ export default function GanttChart({
                       </div>
                     )
                   } else {
-                    // Span bar showing actual task range
+                    // Span bar showing actual task range (draggable with edge handles)
                     const left  = barLeft(row.spanStart)
                     const width = barWidth(row.spanStart, row.spanEnd)
+                    const childOriginals = row.tasks
+                      .filter(t => t.start && t.end)
+                      .map(t => ({ taskId: t.id, origStart: parseDate(t.start), origEnd: parseDate(t.end) }))
                     return (
                       <div key={`rwbs-${row.wbsId}-${i}`} className="relative border-b border-zinc-100"
                         style={{ height: ROW_H, background: '#fafafa' }}>
-                        <div className="absolute rounded pointer-events-none"
-                          style={{ left, width, top: '50%', transform: 'translateY(-50%)', height: 8, background: color.bar, opacity: 0.25 }} />
+                        <div
+                          className="absolute rounded flex items-center cursor-grab"
+                          style={{ left, width, top: '50%', transform: 'translateY(-50%)', height: 8, background: color.bar, opacity: 0.25 }}
+                          onMouseDown={e => onBarMouseDown(e, `wbs-${row.wbsId}`, row.spanStart!, row.spanEnd!, childOriginals)}>
+                          {/* Left edge handle */}
+                          <div
+                            className="absolute top-0 bottom-0 w-1.5 rounded-l cursor-ew-resize hover:bg-black/20 z-20"
+                            style={{ left: 0 }}
+                            onMouseDown={e => onEdgeMouseDown(e, `wbs-${row.wbsId}`, row.spanStart!, row.spanEnd!, 'left', childOriginals)}
+                          />
+                          {/* Right edge handle */}
+                          <div
+                            className="absolute top-0 bottom-0 w-1.5 rounded-r cursor-ew-resize hover:bg-black/20 z-20"
+                            style={{ right: 0 }}
+                            onMouseDown={e => onEdgeMouseDown(e, `wbs-${row.wbsId}`, row.spanStart!, row.spanEnd!, 'right', childOriginals)}
+                          />
+                        </div>
                       </div>
                     )
                   }
@@ -731,7 +832,19 @@ export default function GanttChart({
                         zIndex: isDragging ? 30 : 5,
                       }}
                       onMouseDown={e => onBarMouseDown(e, row.task.id, parseDate(row.task.start), parseDate(row.task.end))}>
+                      {/* Left edge handle */}
+                      <div
+                        className="absolute top-0 bottom-0 w-1.5 rounded-l cursor-ew-resize hover:bg-black/20 z-20"
+                        style={{ left: 0 }}
+                        onMouseDown={e => onEdgeMouseDown(e, row.task.id, parseDate(row.task.start), parseDate(row.task.end), 'left')}
+                      />
                       <span className="truncate">{row.task.name}</span>
+                      {/* Right edge handle */}
+                      <div
+                        className="absolute top-0 bottom-0 w-1.5 rounded-r cursor-ew-resize hover:bg-black/20 z-20"
+                        style={{ right: 0 }}
+                        onMouseDown={e => onEdgeMouseDown(e, row.task.id, parseDate(row.task.start), parseDate(row.task.end), 'right')}
+                      />
                     </div>
                   </div>
                 )
