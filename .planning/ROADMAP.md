@@ -129,7 +129,7 @@ Full details: `.planning/milestones/v6.0-ROADMAP.md` (archived)
 - [x] **Phase 62: Ingestion Consolidation** - Scan for Updates consolidation and enhanced completeness analysis (completed 2026-04-15)
 - [x] **Phase 63: Skills Design Standard** - Define standard, audit skills, schema validation (completed 2026-04-15)
 - [x] **Phase 64: Editable Prompts UI** - Admin-controlled prompt editing with global toggle (completed 2026-04-15)
-- [ ] **Phase 65: Project-Scoped Scheduling** - Per-project scheduler with RBAC and state persistence
+- [x] **Phase 65: Project-Scoped Scheduling** - Per-project scheduler with RBAC and state persistence (completed 2026-04-15)
 - [ ] **Phase 66: Overview Tracks Redesign** - Static/dynamic tracks with auto-scheduled weekly focus
 - [ ] **Phase 67: Delivery Tab Cleanup** - Column hiding, Plan tab removal, WBS alignment, stakeholder operations
 - [ ] **Phase 68: Gantt Bi-directional Sync** - Date propagation with skeleton display and drag adjustment
@@ -275,10 +275,10 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
-- [ ] 65-01-PLAN.md — DB schema project_id + GET/POST /api/jobs filtering + sidebar badge removal
-- [ ] 65-02-PLAN.md — Project-scoped jobs API + CreateJobWizard projectId prop
-- [ ] 65-03-PLAN.md — Skills page server fetch + SkillsTabClient project scheduler section + global /scheduler filter
-- [ ] 65-04-PLAN.md — Human verification gate: all SCHED requirements
+- [x] 65-01-PLAN.md — DB schema project_id + GET/POST /api/jobs filtering + sidebar badge removal ✅
+- [x] 65-02-PLAN.md — Project-scoped jobs API + CreateJobWizard projectId prop ✅
+- [x] 65-03-PLAN.md — Skills page server fetch + SkillsTabClient project scheduler section + global /scheduler filter ✅
+- [x] 65-04-PLAN.md — Human verification gate: all SCHED requirements ✅
 
 ### Phase 66: Overview Tracks Redesign
 **Goal**: Overview displays hybrid static/dynamic onboarding tracks with auto-scheduled weekly focus

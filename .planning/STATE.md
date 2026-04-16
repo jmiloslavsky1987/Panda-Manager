@@ -4,10 +4,10 @@ milestone: v7.0
 milestone_name: — Governance & Operational Maturity
 status: executing
 last_updated: "2026-04-15T20:11:42.000Z"
-last_activity: 2026-04-15 — Completed 65-03-PLAN.md (Project-scoped scheduler UI integration)
+last_activity: 2026-04-15 — Completed Phase 65 (Project-Scoped Scheduling) — UAT 9/9 passed
 progress:
   total_phases: 12
-  completed_phases: 7
+  completed_phases: 8
   total_plans: 29
   completed_plans: 29
   percent: 100
@@ -20,14 +20,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-13 after v7.0 milestone start)
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
-**Current focus:** Phase 65 (Project-Scoped Scheduling) — Plan 3 of 4 complete (Project-scoped scheduler UI integration)
+**Current focus:** Phase 66 (Overview Tracks Redesign) — next up
 
 ## Current Position
 
-Phase: 65 of 69 (Project-Scoped Scheduling) — IN PROGRESS
-Plan: 4 of 4 in current phase
-Status: In Progress — 65-03-PLAN.md complete (Project-scoped scheduler UI integration)
-Last activity: 2026-04-15 — Completed 65-03-PLAN.md (Project-scoped scheduler UI integration)
+Phase: 65 of 69 (Project-Scoped Scheduling) — COMPLETE
+Plan: 4 of 4 complete
+Status: Complete — UAT 9/9 passed, all SCHED-01–05 requirements verified
+Last activity: 2026-04-15 — Completed Phase 65 (Project-Scoped Scheduling)
 
 Progress: [██████████] 100% (232 of 233 plans complete in milestone)
 
