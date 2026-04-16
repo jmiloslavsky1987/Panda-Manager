@@ -78,6 +78,20 @@ const INTEG_STATUS_CYCLE = [
 const ADR_TYPES = ['Inbound', 'Outbound', 'Enrichment'] as const
 const BIGGY_TYPES = ['Real-time', 'Context', 'Knowledge', 'UDC'] as const
 
+// Static track configuration — phase names are hardcoded (never from DB)
+// Step STATUS is still fetched from DB by matching phase name
+const STATIC_ADR_TRACKS = [
+  { name: 'Discovery & Kickoff', display_order: 1 },
+  { name: 'Platform Config', display_order: 2 },
+  { name: 'UAT', display_order: 3 },
+] as const
+
+const STATIC_BIGGY_TRACKS = [
+  { name: 'Discovery & Kickoff', display_order: 1 },
+  { name: 'Platform Config', display_order: 2 },
+  { name: 'Validation', display_order: 3 },
+] as const
+
 // ─── Status badge colors ──────────────────────────────────────────────────────
 
 const STEP_STATUS_COLORS: Record<string, string> = {
@@ -210,6 +224,12 @@ function StepOwnerField({
 export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
   const [adrPhases, setAdrPhases] = useState<PhaseWithSteps[]>([])
   const [biggyPhases, setBiggyPhases] = useState<PhaseWithSteps[]>([])
+  // rawAdrPhases / rawBiggyPhases hold ALL phases from DB before static filtering.
+  // REQUIRED: Teams phase is not in STATIC_ADR_TRACKS/STATIC_BIGGY_TRACKS, so
+  // adrPhases/biggyPhases will never contain it. rawAdrPhases/rawBiggyPhases are
+  // the source of truth for the Teams dynamic summary cards.
+  const [rawAdrPhases, setRawAdrPhases] = useState<PhaseWithSteps[]>([])
+  const [rawBiggyPhases, setRawBiggyPhases] = useState<PhaseWithSteps[]>([])
   const [integrations, setIntegrations] = useState<Integration[]>([])
   const [risks, setRisks] = useState<Risk[]>([])
   const [milestones, setMilestones] = useState<Milestone[]>([])
@@ -238,8 +258,22 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
         const fetchedRisks: Risk[] = rk.risks ?? rk ?? []
         const fetchedMilestones: Milestone[] = ml.milestones ?? ml ?? []
 
-        setAdrPhases(fetchedAdr)
-        setBiggyPhases(fetchedBiggy)
+        // Capture raw DB phases before static filter — needed for dynamic summary cards
+        setRawAdrPhases(fetchedAdr)
+        setRawBiggyPhases(fetchedBiggy)
+
+        // Map static config → DB phases matched by name (for step status)
+        const staticAdrPhases = STATIC_ADR_TRACKS.map(track => {
+          const dbPhase = fetchedAdr.find((p: PhaseWithSteps) => p.name === track.name)
+          return dbPhase ?? { id: -track.display_order, name: track.name, display_order: track.display_order, steps: [] }
+        })
+        const staticBiggyPhases = STATIC_BIGGY_TRACKS.map(track => {
+          const dbPhase = fetchedBiggy.find((p: PhaseWithSteps) => p.name === track.name)
+          return dbPhase ?? { id: -track.display_order, name: track.name, display_order: track.display_order, steps: [] }
+        })
+        setAdrPhases(staticAdrPhases)
+        setBiggyPhases(staticBiggyPhases)
+
         setIntegrations(fetchedIntegrations)
         setRisks(Array.isArray(fetchedRisks) ? fetchedRisks : [])
         setMilestones(Array.isArray(fetchedMilestones) ? fetchedMilestones : [])
@@ -247,7 +281,7 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
 
         // Default: collapse complete phases (both tracks)
         const collapseMap: Record<number, boolean> = {}
-        ;[...fetchedAdr, ...fetchedBiggy].forEach((p) => {
+        ;[...staticAdrPhases, ...staticBiggyPhases].forEach((p) => {
           collapseMap[p.id] = p.steps.length > 0 && p.steps.every((s) => s.status === 'complete')
         })
         setCollapsed(collapseMap)
@@ -419,6 +453,22 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
     }
   }
 
+  const deleteIntegration = async (integId: number) => {
+    // Optimistic remove
+    setIntegrations((prev) => prev.filter((i) => i.id !== integId))
+    try {
+      await fetch(`/api/projects/${projectId}/integrations/${integId}`, { method: 'DELETE' })
+    } catch (err) {
+      console.error('Failed to delete integration:', err)
+      // On error, refetch integrations to restore state
+      const res = await fetch(`/api/projects/${projectId}/integrations`)
+      if (res.ok) {
+        const data = await res.json()
+        setIntegrations(data.integrations ?? [])
+      }
+    }
+  }
+
   // ─── Filter helpers ─────────────────────────────────────────────────────────
 
   const stepMatchesFilter = (step: Step): boolean => {
@@ -455,9 +505,22 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
         data-testid="integration-card"
         className="border border-zinc-200 rounded-lg p-3 space-y-3 bg-white"
       >
-        {/* Tool name + category badge */}
+        {/* Tool name + category badge + delete button */}
         <div className="space-y-1">
-          <span className="text-sm font-semibold text-zinc-900 block">{integ.tool}</span>
+          <div className="flex items-start justify-between">
+            <span className="text-sm font-semibold text-zinc-900 block">{integ.tool}</span>
+            <button
+              data-testid="delete-integration-btn"
+              onClick={() => deleteIntegration(integ.id)}
+              className="ml-auto p-1 text-zinc-400 hover:text-red-500 transition-colors"
+              title="Delete integration"
+              aria-label={`Delete ${integ.tool}`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
           <div className="flex flex-wrap items-center gap-1.5">
             {integ.category && (
               <span
@@ -829,6 +892,63 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
           ) : (
             biggyPhases.map((phase) => renderPhaseCard(phase))
           )}
+        </section>
+      </div>
+
+      <hr className="border-zinc-200 mx-4" />
+
+      {/* ── Dynamic Track Summary Cards ─────────────────────────────────── */}
+      <div data-testid="dynamic-track-summary" className="px-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* ADR dynamic tracks: Integrations + Teams */}
+        <section className="space-y-3 border-l-4 border-blue-200 pl-4">
+          <h2 className="text-sm font-semibold text-zinc-700 uppercase tracking-wide">ADR — Live Tracks</h2>
+          {/* Integrations summary */}
+          <div className="border border-zinc-200 rounded-lg p-3 bg-white">
+            <p className="text-xs font-semibold text-zinc-700 mb-1">Integrations</p>
+            <p className="text-xs text-zinc-500">
+              {integrations.filter(i => i.track === 'ADR' && i.status === 'validated').length} validated,{' '}
+              {integrations.filter(i => i.track === 'ADR' && i.status === 'configured').length} configured,{' '}
+              {integrations.filter(i => i.track === 'ADR' && i.status === 'blocked').length} blocked
+            </p>
+          </div>
+          {/* Teams summary — use rawAdrPhases (all DB phases before static filter) */}
+          <div className="border border-zinc-200 rounded-lg p-3 bg-white">
+            <p className="text-xs font-semibold text-zinc-700 mb-1">Teams</p>
+            {(() => {
+              // rawAdrPhases contains ALL DB phases for ADR, including Teams.
+              // adrPhases only contains static tracks (Discovery & Kickoff, Platform Config, UAT)
+              // and will never match "Teams" — always use rawAdrPhases here.
+              const teamsPhases = rawAdrPhases.filter(p => p.name.toLowerCase().includes('team'))
+              const complete = teamsPhases.flatMap(p => p.steps).filter(s => s.status === 'complete').length
+              const total = teamsPhases.flatMap(p => p.steps).length
+              return <p className="text-xs text-zinc-500">{complete} of {total} steps complete</p>
+            })()}
+          </div>
+        </section>
+        {/* Biggy dynamic tracks: IT Knowledge Graph + Teams */}
+        <section className="space-y-3 border-l-4 border-green-200 pl-4">
+          <h2 className="text-sm font-semibold text-zinc-700 uppercase tracking-wide">Biggy — Live Tracks</h2>
+          {/* IT Knowledge Graph summary — biggy integrations */}
+          <div className="border border-zinc-200 rounded-lg p-3 bg-white">
+            <p className="text-xs font-semibold text-zinc-700 mb-1">IT Knowledge Graph</p>
+            <p className="text-xs text-zinc-500">
+              {integrations.filter(i => i.track === 'Biggy' && i.status === 'validated').length} validated,{' '}
+              {integrations.filter(i => i.track === 'Biggy' && i.status === 'configured').length} configured,{' '}
+              {integrations.filter(i => i.track === 'Biggy' && i.status === 'blocked').length} blocked
+            </p>
+          </div>
+          {/* Teams summary — use rawBiggyPhases (all DB phases before static filter) */}
+          <div className="border border-zinc-200 rounded-lg p-3 bg-white">
+            <p className="text-xs font-semibold text-zinc-700 mb-1">Teams</p>
+            {(() => {
+              // rawBiggyPhases contains ALL DB phases for Biggy, including Teams.
+              // biggyPhases only contains static tracks — always use rawBiggyPhases here.
+              const teamsPhases = rawBiggyPhases.filter(p => p.name.toLowerCase().includes('team'))
+              const complete = teamsPhases.flatMap(p => p.steps).filter(s => s.status === 'complete').length
+              const total = teamsPhases.flatMap(p => p.steps).length
+              return <p className="text-xs text-zinc-500">{complete} of {total} steps complete</p>
+            })()}
+          </div>
         </section>
       </div>
 
