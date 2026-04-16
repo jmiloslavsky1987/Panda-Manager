@@ -130,7 +130,7 @@ Full details: `.planning/milestones/v6.0-ROADMAP.md` (archived)
 - [x] **Phase 63: Skills Design Standard** - Define standard, audit skills, schema validation (completed 2026-04-15)
 - [x] **Phase 64: Editable Prompts UI** - Admin-controlled prompt editing with global toggle (completed 2026-04-15)
 - [x] **Phase 65: Project-Scoped Scheduling** - Per-project scheduler with RBAC and state persistence (completed 2026-04-15)
-- [ ] **Phase 66: Overview Tracks Redesign** - Static/dynamic tracks with auto-scheduled weekly focus
+- [x] **Phase 66: Overview Tracks Redesign** - Static/dynamic tracks with auto-scheduled weekly focus (completed 2026-04-16)
 - [ ] **Phase 67: Delivery Tab Cleanup** - Column hiding, Plan tab removal, WBS alignment, stakeholder operations
 - [ ] **Phase 68: Gantt Bi-directional Sync** - Date propagation with skeleton display and drag adjustment
 - [ ] **Phase 69: Knowledge Base + Outputs + Testing** - Audit and cleanup with TDD stubs GREEN
@@ -293,9 +293,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 66-01-PLAN.md — DELETE integration endpoint + weekly-focus repeatable job registration on project creation
-- [ ] 66-02-PLAN.md — OnboardingDashboard static tracks refactor + dynamic summary cards + integration delete UI + WeeklyFocus redesign
-- [ ] 66-03-PLAN.md — Build verification + human verification gate (all 5 OVRVW requirements)
+- [x] 66-01-PLAN.md — DELETE integration endpoint + weekly-focus repeatable job registration on project creation ✅
+- [x] 66-02-PLAN.md — OnboardingDashboard static tracks refactor + dynamic summary cards + integration delete UI + WeeklyFocus redesign ✅
+- [x] 66-03-PLAN.md — Build verification + human verification gate (all 5 OVRVW requirements) ✅
 
 ### Phase 67: Delivery Tab Cleanup
 **Goal**: Delivery tabs are streamlined with hidden columns, Plan tab removal, WBS alignment, and stakeholder operations
@@ -352,7 +352,7 @@ Plans:
 | 63. Skills Design Standard | 4/4 | Complete    | 2026-04-15 | - |
 | 64. Editable Prompts UI | 5/5 | Complete    | 2026-04-15 | - |
 | 65. Project-Scoped Scheduling | 3/4 | In Progress|  | - |
-| 66. Overview Tracks Redesign | 2/3 | In Progress|  | - |
+| 66. Overview Tracks Redesign | 3/3 | Complete   | 2026-04-16 | - |
 | 67. Delivery Tab Cleanup | v7.0 | 0/? | Not started | - |
 | 68. Gantt Bi-directional Sync | v7.0 | 0/? | Not started | - |
 | 69. Knowledge Base + Outputs + Testing | v7.0 | 0/? | Not started | - |
