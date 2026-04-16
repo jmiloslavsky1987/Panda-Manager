@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: — Governance & Operational Maturity
 status: completed
-last_updated: "2026-04-16T18:56:16.556Z"
-last_activity: 2026-04-16 — Completed Phase 68 Plan 01 (Wave 0 TDD RED Stubs)
+last_updated: "2026-04-16T19:03:59.948Z"
+last_activity: 2026-04-16 — Completed Phase 68 Plan 02 (Milestone Date PATCH Field Alignment)
 progress:
   total_phases: 12
   completed_phases: 9
   total_plans: 41
-  completed_plans: 37
-  percent: 90
+  completed_plans: 38
+  percent: 93
 ---
 
 # Project State
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-04-13 after v7.0 milestone start)
 ## Current Position
 
 Phase: 68 of 69 (Gantt Bi-directional Sync) — IN PROGRESS
-Plan: 2 of 5 complete
-Status: Milestone date PATCH field alignment complete
-Last activity: 2026-04-16 — Completed Phase 68 Plan 02 (Milestone Date PATCH Field Alignment)
+Plan: 3 of 5 complete
+Status: WBS-based Gantt row model complete
+Last activity: 2026-04-16 — Completed Phase 68 Plan 03 (WBS-Based Gantt Row Model)
 
-Progress: [█████████░] 93% (38 of 41 plans complete in v7.0 milestone)
+Progress: [█████████░] 95% (39 of 41 plans complete in v7.0 milestone)
 
 ## Milestone History
 
@@ -98,6 +98,12 @@ Progress: [█████████░] 93% (38 of 41 plans complete in v7.0 
 **Next action:** Execute Phase 68 (Gantt Bi-directional Sync — DLVRY-01 through DLVRY-04)
 
 ## Recent Decisions
+
+### Phase 68-03: WBS-Based Gantt Row Model
+- **WBS-item-based row model replaces milestone grouping for static skeleton structure** — Gantt now shows WBS level-1 items as always-visible rows regardless of task dates; establishes DLVRY-01 requirement for static structural skeleton visible before dates are set
+- **Empty WBS rows show dashed placeholder bar (4 weeks, opacity 0.3) instead of hiding** — Empty rows render visual placeholder to indicate position in timeline where tasks will appear; improves UX by showing skeleton structure
+- **buildWbsRows exported as pure function for testability and span computation** — Extracted span calculation logic (earliest start to latest end) as testable pure function; enables TDD contract tests in GanttChart-wbs-rows.test.ts
+- **Server page pre-groups tasks by WBS assignment, passing wbsRows prop to GanttChart** — gantt/page.tsx performs grouping logic using wbsTaskAssignments join; GanttChart receives structured data rather than computing groupings client-side
 
 ### Phase 68-02: Milestone Date PATCH Field Alignment
 - **Added date: z.string().nullable().optional() to patchSchema for milestone date updates** — Extends milestones PATCH API to accept date field for Gantt bi-directional sync; nullable allows clearing date with { date: null }
