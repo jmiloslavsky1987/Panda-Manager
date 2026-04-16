@@ -303,7 +303,6 @@ export function MilestonesTableClient({ milestones, artifacts, projectId }: Mile
                   onCheckedChange={toggleSelectAll}
                 />
               </TableHead>
-              <TableHead className="w-[130px]">ID</TableHead>
               <TableHead>Name</TableHead>
               <TableHead className="w-[160px]">Status</TableHead>
               <TableHead className="w-[120px]">Target / Date</TableHead>
@@ -314,7 +313,7 @@ export function MilestonesTableClient({ milestones, artifacts, projectId }: Mile
           <TableBody>
             {filteredMilestones.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-zinc-400 py-8">
+                <TableCell colSpan={6} className="text-center text-zinc-400 py-8">
                   No milestones found.
                 </TableCell>
               </TableRow>
@@ -336,7 +335,6 @@ export function MilestonesTableClient({ milestones, artifacts, projectId }: Mile
                         onCheckedChange={() => toggleSelection(m.id)}
                       />
                     </TableCell>
-                    <TableCell className="font-mono text-xs text-zinc-500">{m.external_id}</TableCell>
                     <TableCell className="text-sm font-medium">
                       <div className="space-y-1">
                         <span>{m.name}</span>
