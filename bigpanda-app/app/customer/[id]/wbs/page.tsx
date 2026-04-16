@@ -1,6 +1,5 @@
 import { getWbsItems } from '@/lib/queries'
 import { WbsTree } from '@/components/WbsTree'
-import { WbsGeneratePlanModal } from '@/components/WbsGeneratePlanModal'
 import { auth } from '@/lib/auth'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
@@ -23,7 +22,6 @@ export default async function WbsPage({ params }: { params: Promise<{ id: string
         adrItems={adrItems}
         biggyItems={biggyItems}
         projectId={projectId}
-        showGeneratePlan
       />
     </div>
   )

@@ -103,15 +103,39 @@ export function AiPlanPanel({ projectId, existingTasks }: AiPlanPanelProps) {
         });
         if (res.ok) successCount++;
 
-        // 2. Write to WBS tree (non-blocking)
+        // 2. Write to WBS tree — auto-create level-2 parent if missing
         if (task.track && task.wbs_phase) {
-          const level2Parent = wbsTree.find(
-            item => item.level === 2 &&
-              item.track.toLowerCase() === task.track!.toLowerCase() &&
-              item.name.toLowerCase() === task.wbs_phase!.toLowerCase()
-          );
-          if (level2Parent) {
-            try {
+          try {
+            let level2Parent = wbsTree.find(
+              item => item.level === 2 &&
+                item.track.toLowerCase() === task.track!.toLowerCase() &&
+                item.name.toLowerCase() === task.wbs_phase!.toLowerCase()
+            );
+
+            if (!level2Parent) {
+              const level1Root = wbsTree.find(
+                item => item.level === 1 && item.track.toLowerCase() === task.track!.toLowerCase()
+              );
+              if (level1Root) {
+                const createRes = await fetch(`/api/projects/${projectId}/wbs`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    name: task.wbs_phase,
+                    parent_id: level1Root.id,
+                    level: 2,
+                    track: task.track,
+                  }),
+                });
+                if (createRes.ok) {
+                  const created = await createRes.json();
+                  level2Parent = { id: created.id, name: task.wbs_phase!, level: 2, track: task.track!, parent_id: level1Root.id };
+                  wbsTree = [...wbsTree, level2Parent];
+                }
+              }
+            }
+
+            if (level2Parent) {
               await fetch(`/api/projects/${projectId}/wbs`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -122,16 +146,16 @@ export function AiPlanPanel({ projectId, existingTasks }: AiPlanPanelProps) {
                   track: task.track,
                 }),
               });
-            } catch {
-              // WBS insert failure is non-blocking
             }
+          } catch {
+            // WBS write failure is non-blocking
           }
-          // If level2Parent not found — skip WBS insert, do NOT create level-2 items
         }
       } catch {
         // continue on individual task failure
       }
     }
+    // TODO(gantt-phase): trigger Gantt gap-fill here — pass projectId + committed task phases/tracks for timeline insertion
     toast.success(`${successCount} task${successCount !== 1 ? 's' : ''} committed to Task Board`);
     setTasks(null);
     setSelected(new Set());
