@@ -72,14 +72,21 @@ export function AiPlanPanel({ projectId, existingTasks }: AiPlanPanelProps) {
     setCommitting(true);
     const toCommit = tasks.filter((_, i) => selected.has(i));
 
-    // Fetch current WBS tree once before the loop (for parent lookup)
+    // Fetch WBS tree for both tracks upfront (GET requires ?track= param)
     let wbsTree: { id: number; name: string; level: number; track: string; parent_id: number | null }[] = [];
     try {
-      const wbsRes = await fetch(`/api/projects/${projectId}/wbs`);
-      if (wbsRes.ok) {
-        const wbsData = await wbsRes.json();
-        wbsTree = wbsData.items ?? wbsData ?? [];
-      }
+      const [adrRes, biggyRes] = await Promise.all([
+        fetch(`/api/projects/${projectId}/wbs?track=ADR`),
+        fetch(`/api/projects/${projectId}/wbs?track=Biggy`),
+      ]);
+      const [adrData, biggyData] = await Promise.all([
+        adrRes.ok ? adrRes.json() : [],
+        biggyRes.ok ? biggyRes.json() : [],
+      ]);
+      wbsTree = [
+        ...(Array.isArray(adrData) ? adrData : []),
+        ...(Array.isArray(biggyData) ? biggyData : []),
+      ];
     } catch {
       // WBS fetch failure is non-blocking
     }
