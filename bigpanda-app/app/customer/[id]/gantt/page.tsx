@@ -44,7 +44,7 @@ function mapDataToWbsRows(
     return null
   }
 
-  // Build task-id → directly-assigned wbs_item_id map
+  // Build task-id → directly-assigned wbs_item_id map (from junction table)
   const taskToWbs = new Map<number, number>()
   assignments.forEach(a => taskToWbs.set(a.task_id, a.wbs_item_id))
 
@@ -52,18 +52,28 @@ function mapDataToWbsRows(
   const wbsToTasks = new Map<number, typeof tasks>()
   level1Items.forEach(item => wbsToTasks.set(item.id, []))
 
+  // Build case-insensitive name → level-1 WBS item id map (fallback for task.phase matching)
+  const wbsNameToId = new Map<string, number>()
+  level1Items.forEach(item => wbsNameToId.set(item.name.toLowerCase(), item.id))
+
   const today = new Date().toISOString().split('T')[0]
 
   tasks.forEach(task => {
     const wbsId = taskToWbs.get(task.id)
+    let l1Id: number | null = null
+
     if (wbsId !== undefined) {
-      // Walk up to level-1 ancestor (handles tasks assigned to level-2+ items)
-      const l1Id = level1AncestorOf(wbsId)
-      if (l1Id !== null && wbsToTasks.has(l1Id)) {
-        wbsToTasks.get(l1Id)!.push(task)
-      }
+      // Primary: junction table — walk up to level-1 ancestor
+      l1Id = level1AncestorOf(wbsId)
+    } else if (task.phase) {
+      // Fallback: match task.phase against level-1 WBS item names (case-insensitive)
+      l1Id = wbsNameToId.get(task.phase.toLowerCase()) ?? null
     }
-    // tasks not in any wbs fall into unassigned (handled in GanttChart)
+
+    if (l1Id !== null && wbsToTasks.has(l1Id)) {
+      wbsToTasks.get(l1Id)!.push(task)
+    }
+    // tasks that still don't match fall into unassigned (handled in GanttChart)
   })
 
   // Build milestone index for custom_class (keep priority coloring)
@@ -121,9 +131,11 @@ export default async function GanttPage({
     // Build WBS rows with assigned tasks — ADR first, then Biggy
     wbsRows = mapDataToWbsRows(adrWbs, biggyWbs, tasks, assignments, milestones)
 
-    // Compute unassigned tasks
+    // Compute unassigned tasks — exclude any task already placed in a WBS row
+    // (covers both junction-table assignments and phase-name fallback matches)
     const today = new Date().toISOString().split('T')[0]
-    const assignedTaskIds = new Set(assignments.map(a => a.task_id))
+    const assignedTaskIds = new Set<number>()
+    wbsRows.forEach(row => row.tasks.forEach(t => assignedTaskIds.add(Number(t.id))))
     const milestoneIndexMap = new Map(milestones.map((m, i) => [m.id, i]))
 
     function toGanttTask(task: (typeof tasks)[0]): GanttTask | null {
