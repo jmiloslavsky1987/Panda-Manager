@@ -26,6 +26,7 @@ export interface GanttWbsRow {
   id: number
   name: string
   colorIdx: number
+  track?: 'ADR' | 'Biggy'
   tasks: GanttTask[]
 }
 
@@ -95,6 +96,7 @@ type WbsSummaryRow = {
   wbsId: number | 'unassigned'
   label: string
   colorIdx: number       // -1 = unassigned
+  track?: 'ADR' | 'Biggy'
   tasks: GanttTask[]
   spanStart: Date | null
   spanEnd: Date | null
@@ -108,12 +110,16 @@ type TaskRow = {
   start: Date
   end: Date
 }
-type Row = WbsSummaryRow | TaskRow
+type SectionHeaderRow = {
+  kind: 'section-header'
+  label: string
+}
+type Row = WbsSummaryRow | TaskRow | SectionHeaderRow
 
 // ── Pure function: build WBS summary rows with span computation ───────────────
 
 export function buildWbsRows(
-  wbsItems: Array<{ id: number; name: string; colorIdx: number; tasks: GanttTask[] }>,
+  wbsItems: Array<{ id: number; name: string; colorIdx: number; track?: 'ADR' | 'Biggy'; tasks: GanttTask[] }>,
   unassignedTasks: GanttTask[]
 ): WbsSummaryRow[] {
   const rows: WbsSummaryRow[] = wbsItems.map(item => {
@@ -121,7 +127,7 @@ export function buildWbsRows(
     const dates = dated.map(t => ({ s: parseDate(t.start), e: parseDate(t.end) }))
     const spanStart = dates.length ? new Date(Math.min(...dates.map(d => d.s.getTime()))) : null
     const spanEnd = dates.length ? new Date(Math.max(...dates.map(d => d.e.getTime()))) : null
-    return { kind: 'wbs', wbsId: item.id, label: item.name, colorIdx: item.colorIdx, tasks: item.tasks, spanStart, spanEnd }
+    return { kind: 'wbs', wbsId: item.id, label: item.name, colorIdx: item.colorIdx, track: item.track, tasks: item.tasks, spanStart, spanEnd }
   })
   // Unassigned group
   const unassignedDates = unassignedTasks.filter(t => t.start && t.end).map(t => ({ s: parseDate(t.start), e: parseDate(t.end) }))
@@ -183,7 +189,12 @@ export default function GanttChart({
 
   const rows = useMemo((): Row[] => {
     const result: Row[] = []
+    let currentTrack: string | undefined
     wbsSummaryRows.forEach((summary, gi) => {
+      if (summary.track && summary.track !== currentTrack) {
+        result.push({ kind: 'section-header', label: summary.track })
+        currentTrack = summary.track
+      }
       result.push(summary)
       if (expanded.has(String(summary.wbsId))) {
         summary.tasks.forEach((t, ti) => {
@@ -625,6 +636,18 @@ export default function GanttChart({
 
           {/* Left rows */}
           {rows.map((row, i) => {
+            if (row.kind === 'section-header') {
+              return (
+                <div key={`lsec-${row.label}-${i}`}
+                  className="flex items-center shrink-0 border-b border-zinc-300 bg-zinc-100 px-3 gap-2"
+                  style={{ height: ROW_H }}>
+                  <div className="h-px flex-1 bg-zinc-300" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 shrink-0">{row.label}</span>
+                  <div className="h-px flex-1 bg-zinc-300" />
+                </div>
+              )
+            }
+
             const color = row.colorIdx === -1 ? UNASSIGNED_COLOR : COLORS[row.colorIdx]
 
             if (row.kind === 'wbs') {
@@ -756,6 +779,13 @@ export default function GanttChart({
 
               {/* Data rows */}
               {rows.map((row, i) => {
+                if (row.kind === 'section-header') {
+                  return (
+                    <div key={`rsec-${row.label}-${i}`} className="relative border-b border-zinc-300 bg-zinc-100"
+                      style={{ height: ROW_H }} />
+                  )
+                }
+
                 const color = row.colorIdx === -1 ? UNASSIGNED_COLOR : COLORS[row.colorIdx]
 
                 if (row.kind === 'wbs') {
