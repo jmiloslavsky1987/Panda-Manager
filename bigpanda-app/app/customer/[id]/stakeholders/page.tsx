@@ -2,6 +2,9 @@ import Link from 'next/link'
 import { getWorkspaceData } from '../../../../lib/queries'
 import { StakeholderEditModal } from '../../../../components/StakeholderEditModal'
 import { SourceBadge } from '../../../../components/SourceBadge'
+import { db } from '../../../../db'
+import { projects } from '../../../../db/schema'
+import { eq } from 'drizzle-orm'
 
 function truncate(str: string | null | undefined, max: number): string {
   if (!str) return ''
@@ -14,6 +17,10 @@ export default async function StakeholdersPage({ params }: { params: Promise<{ i
   const data = await getWorkspaceData(projectId)
   const stakeholders = data.stakeholders
   const artifactMap = new Map(data.artifacts.map((a) => [a.id, a.name]))
+
+  // Fetch project to get customer company name
+  const [project] = await db.select().from(projects).where(eq(projects.id, projectId))
+  const customerCompany = project?.customer ?? ''
 
   // Group by company: BigPanda first, then others
   const bigpandaContacts = stakeholders.filter(
@@ -51,6 +58,7 @@ export default async function StakeholdersPage({ params }: { params: Promise<{ i
         key={s.id}
         stakeholder={s}
         projectId={projectId}
+        customerCompany={customerCompany}
         trigger={
           <tr className="align-top border-b border-zinc-100 hover:bg-zinc-50 cursor-pointer">
             <td className="py-3 pr-4 font-medium text-zinc-900 whitespace-nowrap">
@@ -112,6 +120,7 @@ export default async function StakeholdersPage({ params }: { params: Promise<{ i
           </Link>
           <StakeholderEditModal
             projectId={projectId}
+            customerCompany={customerCompany}
             trigger={
               <button
                 data-testid="add-stakeholder-btn"
@@ -132,6 +141,7 @@ export default async function StakeholdersPage({ params }: { params: Promise<{ i
           </p>
           <StakeholderEditModal
             projectId={projectId}
+            customerCompany={customerCompany}
             trigger={
               <button className="inline-flex items-center rounded-md bg-zinc-900 text-white text-sm px-4 py-2 hover:bg-zinc-700 transition-colors">
                 Add Stakeholder

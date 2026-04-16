@@ -15,10 +15,11 @@ import type { Stakeholder } from '../lib/queries'
 interface StakeholderEditModalProps {
   stakeholder?: Stakeholder
   projectId: number
+  customerCompany: string
   trigger: React.ReactNode
 }
 
-export function StakeholderEditModal({ stakeholder, projectId, trigger }: StakeholderEditModalProps) {
+export function StakeholderEditModal({ stakeholder, projectId, customerCompany, trigger }: StakeholderEditModalProps) {
   const router = useRouter()
   const isEdit = stakeholder !== undefined
   const [open, setOpen] = useState(false)
@@ -29,6 +30,8 @@ export function StakeholderEditModal({ stakeholder, projectId, trigger }: Stakeh
   const [slackId, setSlackId] = useState(stakeholder?.slack_id ?? '')
   const [notes, setNotes] = useState(stakeholder?.notes ?? '')
   const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [moving, setMoving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   async function handleSave() {
@@ -82,6 +85,50 @@ export function StakeholderEditModal({ stakeholder, projectId, trigger }: Stakeh
       setError('Network error — please try again')
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handleDelete() {
+    if (!stakeholder) return
+    setDeleting(true)
+    try {
+      const res = await fetch(`/api/stakeholders/${stakeholder.id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setError(data.error ?? 'Failed to delete')
+        return
+      }
+      setOpen(false)
+      router.refresh()
+    } catch {
+      setError('Network error — please try again')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  async function handleMove() {
+    if (!stakeholder) return
+    setMoving(true)
+    // Toggle: if currently BigPanda -> move to customer; otherwise -> move to BigPanda
+    const targetCompany = stakeholder.company === 'BigPanda' ? customerCompany : 'BigPanda'
+    try {
+      const res = await fetch(`/api/stakeholders/${stakeholder.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ company: targetCompany }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setError(data.error ?? 'Failed to move')
+        return
+      }
+      setOpen(false)
+      router.refresh()
+    } catch {
+      setError('Network error — please try again')
+    } finally {
+      setMoving(false)
     }
   }
 
@@ -186,6 +233,25 @@ export function StakeholderEditModal({ stakeholder, projectId, trigger }: Stakeh
           {error && <p className="text-red-600 text-sm">{error}</p>}
 
           <DialogFooter>
+            {isEdit && (
+              <>
+                <Button
+                  variant="destructive"
+                  onClick={handleDelete}
+                  disabled={deleting || saving}
+                  className="mr-auto"
+                >
+                  {deleting ? 'Deleting...' : 'Delete'}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleMove}
+                  disabled={moving || saving}
+                >
+                  {moving ? 'Moving...' : `Move to ${stakeholder?.company === 'BigPanda' ? customerCompany : 'BigPanda'}`}
+                </Button>
+              </>
+            )}
             <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>
               Cancel
             </Button>
