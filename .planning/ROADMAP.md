@@ -323,12 +323,18 @@ Plans:
 **Depends on**: Nothing (independent feature, high complexity deferred)
 **Requirements**: DLVRY-01, DLVRY-02, DLVRY-03, DLVRY-04
 **Success Criteria** (what must be TRUE):
-  1. Gantt chart displays static structural skeleton (phases, milestone markers) on page load
-  2. User can drag task edges to adjust dates or manually enter dates in Gantt
-  3. Date changes in Gantt propagate to milestone and task records with transaction-based cascade
-  4. Date changes to milestones or tasks outside Gantt (workspace tabs) propagate back to Gantt display
-  5. Concurrent drag operations use advisory locks to prevent race conditions
-**Plans**: TBD
+  1. Gantt chart displays static structural skeleton (WBS level-1 items as rows, milestone markers as vertical lines) on page load
+  2. User can drag task bar edges to adjust start or end date independently; milestone markers are also draggable
+  3. Date changes in Gantt propagate to milestone and task records via DB transaction
+  4. Date changes to milestones or tasks in workspace tabs propagate back to Gantt display via router.refresh()
+**Plans**: 5 plans
+
+Plans:
+- [ ] 68-01-PLAN.md — TDD RED stubs: milestones date field, WBS row model, edge drag delta, MilestonesTableClient field alignment
+- [ ] 68-02-PLAN.md — API layer: add `date` to milestones patchSchema + fix MilestonesTableClient target_date bug
+- [ ] 68-03-PLAN.md — GanttChart WBS row model redesign + gantt/page.tsx WBS data fetch + getWbsTaskAssignments query
+- [ ] 68-04-PLAN.md — Edge drag handles (left/right), milestone drag, inline DatePickerCell in left panel
+- [ ] 68-05-PLAN.md — Production build verification + human verification gate (all 4 DLVRY requirements)
 
 ### Phase 69: Knowledge Base + Outputs + Testing
 **Goal**: Knowledge Base and Outputs are audited for value, TDD stubs are GREEN
@@ -360,7 +366,7 @@ Plans:
 | 65. Project-Scoped Scheduling | 3/4 | In Progress|  | - |
 | 66. Overview Tracks Redesign | 3/3 | Complete    | 2026-04-16 | - |
 | 67. Delivery Tab Cleanup | 4/4 | Complete    | 2026-04-16 | - |
-| 68. Gantt Bi-directional Sync | v7.0 | 0/? | Not started | - |
+| 68. Gantt Bi-directional Sync | v7.0 | 0/5 | Planned | - |
 | 69. Knowledge Base + Outputs + Testing | v7.0 | 0/? | Not started | - |
 
 ---
