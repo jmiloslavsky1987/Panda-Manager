@@ -52,11 +52,15 @@ export function DatePickerCell({ value, onSave }: DatePickerCellProps) {
     }
   }
 
+  const displayValue = optimisticValue
+    ? new Date(optimisticValue + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    : 'Set date'
+
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
       <Popover.Trigger asChild>
-        <span className="cursor-pointer hover:bg-zinc-100 rounded px-2 py-1 text-sm min-w-[80px] inline-block border border-transparent hover:border-zinc-200">
-          {optimisticValue ?? 'Set date'}
+        <span className="cursor-pointer hover:bg-zinc-100 rounded px-1 py-0.5 text-xs inline-block border border-transparent hover:border-zinc-200 whitespace-nowrap">
+          {displayValue}
         </span>
       </Popover.Trigger>
       <Popover.Portal>
