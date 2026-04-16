@@ -132,6 +132,29 @@ export function buildWbsRows(
   return rows
 }
 
+// ── Pure function: compute edge drag delta for TDD (DLVRY-02) ────────────────
+
+export function computeEdgeDrag(
+  side: 'left' | 'right',
+  origStart: string,
+  origEnd: string,
+  deltaDays: number
+): { start: string; end: string } {
+  const s = parseDate(origStart)
+  const e = parseDate(origEnd)
+  if (side === 'left') {
+    const ns = addDays(s, deltaDays)
+    // clamp: start must be at most end - 1 day
+    const clamped = ns >= e ? addDays(e, -1) : ns
+    return { start: fmtISO(clamped), end: origEnd }
+  } else {
+    const ne = addDays(e, deltaDays)
+    // clamp: end must be at least start + 1 day
+    const clamped = ne <= s ? addDays(s, 1) : ne
+    return { start: origStart, end: fmtISO(clamped) }
+  }
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function GanttChart({
@@ -269,36 +292,163 @@ export default function GanttChart({
   const dragRef = useRef<{
     taskId: string; origStart: Date; origEnd: Date
     startX: number; pxPerDay: number; curStart: Date; curEnd: Date
+    side: 'move' | 'left' | 'right'
+    wbsChildOriginals?: Array<{ taskId: string; origStart: Date; origEnd: Date }>
   } | null>(null)
 
-  function onBarMouseDown(e: React.MouseEvent, taskId: string, start: Date, end: Date) {
+  function onBarMouseDown(
+    e: React.MouseEvent,
+    taskId: string,
+    start: Date,
+    end: Date,
+    wbsChildOriginals?: Array<{ taskId: string; origStart: Date; origEnd: Date }>
+  ) {
     e.preventDefault()
-    dragRef.current = { taskId, origStart: start, origEnd: end, startX: e.clientX, pxPerDay, curStart: start, curEnd: end }
+    dragRef.current = {
+      taskId,
+      origStart: start,
+      origEnd: end,
+      startX: e.clientX,
+      pxPerDay,
+      curStart: start,
+      curEnd: end,
+      side: 'move',
+      wbsChildOriginals
+    }
+  }
+
+  function onEdgeMouseDown(
+    e: React.MouseEvent,
+    taskId: string,
+    start: Date,
+    end: Date,
+    side: 'left' | 'right',
+    wbsChildOriginals?: Array<{ taskId: string; origStart: Date; origEnd: Date }>
+  ) {
+    e.preventDefault()
+    e.stopPropagation()  // prevent whole-bar drag from also firing
+    dragRef.current = {
+      taskId,
+      origStart: start,
+      origEnd: end,
+      startX: e.clientX,
+      pxPerDay,
+      curStart: start,
+      curEnd: end,
+      side,
+      wbsChildOriginals
+    }
   }
 
   useEffect(() => {
     function onMove(e: MouseEvent) {
       if (!dragRef.current) return
       const delta = Math.round((e.clientX - dragRef.current.startX) / dragRef.current.pxPerDay)
-      const ns = addDays(dragRef.current.origStart, delta)
-      const ne = addDays(dragRef.current.origEnd, delta)
-      dragRef.current.curStart = ns; dragRef.current.curEnd = ne
-      const taskId = dragRef.current.taskId  // capture before async callback
+      const { side, origStart, origEnd, taskId, wbsChildOriginals } = dragRef.current
+      let ns: Date, ne: Date
+
+      if (side === 'left') {
+        const result = computeEdgeDrag('left', fmtISO(origStart), fmtISO(origEnd), delta)
+        ns = parseDate(result.start)
+        ne = parseDate(result.end)
+      } else if (side === 'right') {
+        const result = computeEdgeDrag('right', fmtISO(origStart), fmtISO(origEnd), delta)
+        ns = parseDate(result.start)
+        ne = parseDate(result.end)
+      } else {
+        // side === 'move' — shift both by delta
+        ns = addDays(origStart, delta)
+        ne = addDays(origEnd, delta)
+      }
+
+      dragRef.current.curStart = ns
+      dragRef.current.curEnd = ne
       setDragOverride(prev => new Map(prev).set(taskId, { start: ns, end: ne }))
+
+      // For WBS summary drag: update all child task overrides too
+      if (wbsChildOriginals && wbsChildOriginals.length > 0) {
+        setDragOverride(prev => {
+          const m = new Map(prev)
+          wbsChildOriginals.forEach(child => {
+            if (side === 'move') {
+              m.set(child.taskId, {
+                start: addDays(child.origStart, delta),
+                end: addDays(child.origEnd, delta)
+              })
+            }
+            // For edge drag on WBS summary, we also shift children by delta
+            // (dragging WBS edge = move all children together)
+            else {
+              m.set(child.taskId, {
+                start: addDays(child.origStart, delta),
+                end: addDays(child.origEnd, delta)
+              })
+            }
+          })
+          return m
+        })
+      }
     }
     async function onUp() {
       if (!dragRef.current) return
-      const { taskId, origStart, curStart, curEnd } = dragRef.current
+      const { taskId, origStart, origEnd, curStart, curEnd, side, wbsChildOriginals } = dragRef.current
       dragRef.current = null
-      if (fmtISO(curStart) === fmtISO(origStart)) {
+
+      // WBS summary drag: patch all children
+      if (wbsChildOriginals && wbsChildOriginals.length > 0) {
+        const delta = daysBetween(origStart, curStart)
+        if (delta === 0) {
+          wbsChildOriginals.forEach(c => {
+            setDragOverride(prev => {
+              const m = new Map(prev)
+              m.delete(c.taskId)
+              return m
+            })
+          })
+          return
+        }
+        try {
+          await Promise.all(wbsChildOriginals.map(async (c) => {
+            const ns = addDays(c.origStart, delta)
+            const ne = addDays(c.origEnd, delta)
+            const res = await fetch(`/api/tasks/${c.taskId}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ start_date: fmtISO(ns), due: fmtISO(ne) }),
+            })
+            if (!res.ok) throw new Error()
+          }))
+        } catch {
+          wbsChildOriginals.forEach(c => {
+            setDragOverride(prev => {
+              const m = new Map(prev)
+              m.delete(c.taskId)
+              return m
+            })
+          })
+          toast.error('Failed to save new dates')
+        }
+        return
+      }
+
+      // Single task drag — check if anything changed
+      const startChanged = fmtISO(curStart) !== fmtISO(origStart)
+      const endChanged = fmtISO(curEnd) !== fmtISO(origEnd)
+      if (!startChanged && !endChanged) {
         setDragOverride(prev => { const m = new Map(prev); m.delete(taskId); return m })
         return
       }
+
+      // Build PATCH body based on side
+      const body: Record<string, string> = {}
+      if (side === 'left' || side === 'move') body.start_date = fmtISO(curStart)
+      if (side === 'right' || side === 'move') body.due = fmtISO(curEnd)
+
       try {
         const res = await fetch(`/api/tasks/${taskId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ start_date: fmtISO(curStart), due: fmtISO(curEnd) }),
+          body: JSON.stringify(body),
         })
         if (!res.ok) throw new Error()
       } catch {
