@@ -100,6 +100,7 @@ type WbsSummaryRow = {
   colorIdx: number       // -1 = unassigned
   level: number
   parentWbsId: number | null
+  hasChildren: boolean   // true if any WBS item lists this as parentId
   track?: 'ADR' | 'Biggy'
   tasks: GanttTask[]
   spanStart: Date | null
@@ -126,12 +127,13 @@ export function buildWbsRows(
   wbsItems: Array<{ id: number; name: string; colorIdx: number; level: number; parentId: number | null; track?: 'ADR' | 'Biggy'; tasks: GanttTask[] }>,
   unassignedTasks: GanttTask[]
 ): WbsSummaryRow[] {
+  const childParentIds = new Set(wbsItems.map(i => i.parentId).filter((id): id is number => id !== null))
   const rows: WbsSummaryRow[] = wbsItems.map(item => {
     const dated = item.tasks.filter(t => t.start && t.end)
     const dates = dated.map(t => ({ s: parseDate(t.start), e: parseDate(t.end) }))
     const spanStart = dates.length ? new Date(Math.min(...dates.map(d => d.s.getTime()))) : null
     const spanEnd = dates.length ? new Date(Math.max(...dates.map(d => d.e.getTime()))) : null
-    return { kind: 'wbs', wbsId: item.id, label: item.name, colorIdx: item.colorIdx, level: item.level, parentWbsId: item.parentId, track: item.track, tasks: item.tasks, spanStart, spanEnd }
+    return { kind: 'wbs', wbsId: item.id, label: item.name, colorIdx: item.colorIdx, level: item.level, parentWbsId: item.parentId, hasChildren: childParentIds.has(item.id), track: item.track, tasks: item.tasks, spanStart, spanEnd }
   })
   // Propagate spans bottom-up so parent rows reflect descendant task dates
   const rowById = new Map(rows.map(r => [r.wbsId, r]))
@@ -150,7 +152,7 @@ export function buildWbsRows(
   const unassignedSpanStart = unassignedDates.length ? new Date(Math.min(...unassignedDates.map(d => d.s.getTime()))) : null
   const unassignedSpanEnd = unassignedDates.length ? new Date(Math.max(...unassignedDates.map(d => d.e.getTime()))) : null
   if (unassignedTasks.length > 0) {
-    rows.push({ kind: 'wbs', wbsId: 'unassigned', label: 'Unassigned', colorIdx: -1, level: 1, parentWbsId: null, tasks: unassignedTasks, spanStart: unassignedSpanStart, spanEnd: unassignedSpanEnd })
+    rows.push({ kind: 'wbs', wbsId: 'unassigned', label: 'Unassigned', colorIdx: -1, level: 1, parentWbsId: null, hasChildren: false, tasks: unassignedTasks, spanStart: unassignedSpanStart, spanEnd: unassignedSpanEnd })
   }
   return rows
 }
@@ -698,8 +700,10 @@ export default function GanttChart({
                   className="flex items-center shrink-0 border-b border-zinc-100 cursor-pointer hover:bg-zinc-100/60 font-medium"
                   style={{ height: ROW_H, background: '#f9f9f9' }}
                   onClick={() => setExpanded(p => { const n = new Set(p); isExp ? n.delete(String(row.wbsId)) : n.add(String(row.wbsId)); return n })}>
-                  <div className="shrink-0" style={{ width: 8 + (row.level - 1) * 14 }} />
-                  <div className="w-4 shrink-0 text-[11px]" style={{ color: color.bar }}>{isExp ? '▾' : '▸'}</div>
+                  <div className="shrink-0" style={{ width: 8 + (row.level - 1) * 20 }} />
+                  <div className="w-4 shrink-0 text-[11px]" style={{ color: color.bar }}>
+                    {(row.hasChildren || row.tasks.length > 0) ? (isExp ? '▾' : '▸') : <span className="text-zinc-300">–</span>}
+                  </div>
                   <div
                     className={`flex-1 pl-1 pr-1 truncate text-sm ${row.level === 1 ? 'font-semibold' : 'font-normal'}`}
                     style={{ color: row.level === 1 ? color.text : '#111827' }}
