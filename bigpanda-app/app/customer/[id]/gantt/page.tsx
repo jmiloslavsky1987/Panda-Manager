@@ -28,11 +28,27 @@ function mapDataToWbsRows(
   // Filter to level-1 items only (summary rows)
   const level1Items = allWbsItems.filter(item => item.level === 1)
 
-  // Build task-id → wbs_item_id map
+  // Build parent/level lookups so we can walk any WBS item up to its level-1 ancestor
+  const parentOf = new Map<number, number | null>()
+  const levelOf = new Map<number, number>()
+  allWbsItems.forEach(item => {
+    parentOf.set(item.id, item.parent_id ?? null)
+    levelOf.set(item.id, item.level)
+  })
+  function level1AncestorOf(wbsId: number): number | null {
+    let cur: number | null = wbsId
+    while (cur !== null) {
+      if (levelOf.get(cur) === 1) return cur
+      cur = parentOf.get(cur) ?? null
+    }
+    return null
+  }
+
+  // Build task-id → directly-assigned wbs_item_id map
   const taskToWbs = new Map<number, number>()
   assignments.forEach(a => taskToWbs.set(a.task_id, a.wbs_item_id))
 
-  // Build wbs_item_id → tasks[] map
+  // Build level-1 wbs_item_id → tasks[] map
   const wbsToTasks = new Map<number, typeof tasks>()
   level1Items.forEach(item => wbsToTasks.set(item.id, []))
 
@@ -40,8 +56,12 @@ function mapDataToWbsRows(
 
   tasks.forEach(task => {
     const wbsId = taskToWbs.get(task.id)
-    if (wbsId && wbsToTasks.has(wbsId)) {
-      wbsToTasks.get(wbsId)!.push(task)
+    if (wbsId !== undefined) {
+      // Walk up to level-1 ancestor (handles tasks assigned to level-2+ items)
+      const l1Id = level1AncestorOf(wbsId)
+      if (l1Id !== null && wbsToTasks.has(l1Id)) {
+        wbsToTasks.get(l1Id)!.push(task)
+      }
     }
     // tasks not in any wbs fall into unassigned (handled in GanttChart)
   })
