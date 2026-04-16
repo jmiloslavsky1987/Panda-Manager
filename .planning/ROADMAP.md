@@ -352,7 +352,7 @@ Plans:
 | 63. Skills Design Standard | 4/4 | Complete    | 2026-04-15 | - |
 | 64. Editable Prompts UI | 5/5 | Complete    | 2026-04-15 | - |
 | 65. Project-Scoped Scheduling | 3/4 | In Progress|  | - |
-| 66. Overview Tracks Redesign | v7.0 | 0/3 | Not started | - |
+| 66. Overview Tracks Redesign | 1/3 | In Progress|  | - |
 | 67. Delivery Tab Cleanup | v7.0 | 0/? | Not started | - |
 | 68. Gantt Bi-directional Sync | v7.0 | 0/? | Not started | - |
 | 69. Knowledge Base + Outputs + Testing | v7.0 | 0/? | Not started | - |

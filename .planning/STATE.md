@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: — Governance & Operational Maturity
 status: executing
-last_updated: "2026-04-15T20:11:42.000Z"
-last_activity: 2026-04-15 — Completed Phase 65 (Project-Scoped Scheduling) — UAT 9/9 passed
+last_updated: "2026-04-16T03:59:06Z"
+last_activity: 2026-04-16 — Completed Phase 66 Plan 01 (Integration Deletion & Weekly Focus Automation)
 progress:
   total_phases: 12
-  completed_phases: 8
-  total_plans: 29
-  completed_plans: 29
-  percent: 100
+  completed_phases: 7
+  total_plans: 32
+  completed_plans: 30
+  percent: 94
 ---
 
 # Project State
@@ -24,12 +24,12 @@ See: .planning/PROJECT.md (updated 2026-04-13 after v7.0 milestone start)
 
 ## Current Position
 
-Phase: 65 of 69 (Project-Scoped Scheduling) — COMPLETE
-Plan: 4 of 4 complete
-Status: Complete — UAT 9/9 passed, all SCHED-01–05 requirements verified
-Last activity: 2026-04-15 — Completed Phase 65 (Project-Scoped Scheduling)
+Phase: 66 of 69 (Overview Tracks Redesign) — IN PROGRESS
+Plan: 1 of 3 complete
+Status: Executing Phase 66-01 (Integration Deletion & Weekly Focus Automation)
+Last activity: 2026-04-16 — Completed Phase 66 Plan 01 (Integration Deletion & Weekly Focus Automation)
 
-Progress: [██████████] 100% (232 of 233 plans complete in milestone)
+Progress: [██████████] 99% (233 of 236 plans complete in milestone)
 
 ## Milestone History
 
@@ -95,7 +95,7 @@ Progress: [██████████] 100% (232 of 233 plans complete in mi
 - Soft-delete cascade blind spots: 57+ phases of FK evolution requires careful audit
 - Gantt bi-directional sync race conditions: Advisory locks required for Phase 68
 
-**Next action:** Execute Phase 64-04 (Wire up save button to PATCH endpoint)
+**Next action:** Execute Phase 66-02 (next plan in Overview Tracks Redesign)
 
 ## Recent Decisions
 
@@ -157,6 +157,12 @@ Progress: [██████████] 100% (232 of 233 plans complete in mi
 - **Controlled/uncontrolled expandedId pattern** — Allows URL state management in project context (controlled mode with useSearchParams) while preserving standalone table behavior (uncontrolled mode for global scheduler)
 - **readOnly mode hides all action controls** — Non-admin users see jobs and run history but cannot Create/Edit/Delete/Toggle/Trigger; cleaner than per-button conditionals
 
+### Phase 66-01: Integration Deletion & Weekly Focus Automation
+- **DELETE endpoint uses same 'user' role guard as PATCH for consistency** — Users should be able to delete integrations they can edit; role consistency reduces confusion
+- **Weekly-focus job registration is best-effort with try/catch** — Prevents Redis unavailability from failing project creation; job registration degrades gracefully as convenience feature
+- **Job scheduler key pattern: weekly-focus-project-{id}** — Ensures uniqueness per project; upsertJobScheduler makes pattern idempotent for future updates
+- **Cron pattern 0 6 * * 1 hardcoded** — Weekly focus timing is product requirement (every Monday 6am UTC), not user configuration; consistent schedule across all projects
+
 ---
-*Last updated: 2026-04-15*
+*Last updated: 2026-04-16*
 *Milestone: v7.0 — Governance & Operational Maturity*
