@@ -61,7 +61,7 @@ function WbsNodeComponent({
   const indentPx = (node.level - 1) * 16
 
   // Drag and drop
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: node.id,
   })
   const style = {
@@ -222,7 +222,9 @@ function WbsNodeComponent({
       <div
         ref={setNodeRef}
         style={{ ...style, paddingLeft: `${indentPx}px` }}
-        className="flex items-center gap-2 py-1.5 px-2 hover:bg-zinc-50 rounded group relative"
+        className={`flex items-center gap-2 py-1.5 px-2 rounded group relative transition-colors ${
+          isDragging ? 'opacity-40 bg-blue-50 ring-1 ring-blue-300' : 'hover:bg-zinc-50'
+        }`}
         onMouseEnter={() => setHovering(true)}
         onMouseLeave={() => setHovering(false)}
       >
@@ -237,10 +239,18 @@ function WbsNodeComponent({
           {hasChildren && (isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />)}
         </button>
 
-        {/* Drag handle */}
-        <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
-          <GripVertical size={16} className="text-zinc-400" />
-        </div>
+        {/* Drag handle — visible on hover or while dragging */}
+        {!locked && (
+          <div
+            {...attributes}
+            {...listeners}
+            className={`cursor-grab active:cursor-grabbing transition-opacity ${
+              hovering || isDragging ? 'opacity-100' : 'opacity-0'
+            }`}
+          >
+            <GripVertical size={16} className="text-zinc-400" />
+          </div>
+        )}
 
         {/* Node name */}
         {isEditing ? (
