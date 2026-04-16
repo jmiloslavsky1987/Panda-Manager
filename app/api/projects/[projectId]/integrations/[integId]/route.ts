@@ -79,3 +79,38 @@ export async function PATCH(
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ projectId: string; integId: string }> }
+) {
+  const { projectId, integId } = await params
+  const numericProjectId = parseInt(projectId, 10)
+  const numericIntegId = parseInt(integId, 10)
+
+  if (isNaN(numericProjectId)) {
+    return NextResponse.json({ error: 'Invalid projectId' }, { status: 400 })
+  }
+
+  if (isNaN(numericIntegId)) {
+    return NextResponse.json({ error: 'Invalid integId' }, { status: 400 })
+  }
+
+  const { session, redirectResponse } = await requireProjectRole(numericProjectId, 'user');
+  if (redirectResponse) return redirectResponse;
+
+  try {
+    await db.transaction(async (tx) => {
+      await tx.execute(sql.raw(`SET LOCAL app.current_project_id = ${numericProjectId}`))
+
+      await tx
+        .delete(integrations)
+        .where(eq(integrations.id, numericIntegId))
+    })
+
+    return NextResponse.json({ ok: true })
+  } catch (err) {
+    console.error('DELETE /api/projects/[projectId]/integrations/[integId] error:', err)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
