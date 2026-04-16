@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/db'
-import { projects, onboardingPhases, wbsItems, teamEngagementSections, archTracks, archNodes, projectMembers } from '@/db/schema'
+import { projects, onboardingPhases, onboardingSteps, wbsItems, teamEngagementSections, archTracks, archNodes, projectMembers } from '@/db/schema'
+import { eq } from 'drizzle-orm'
 import { requireSession } from "@/lib/auth-server";
 import { getActiveProjects } from '@/lib/queries'
+import { ADR_ONBOARDING_CONFIG, BIGGY_ONBOARDING_CONFIG } from '@/lib/onboarding-config'
 
 export async function GET(req: NextRequest) {
   const { session, redirectResponse } = await requireSession();
@@ -34,22 +36,23 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // Standardized ADR phases from 33-CONTEXT.md
+  // Full phase list — standard phases + live-track phases (Integrations, Teams, IT Knowledge Graph)
   const adrPhases = [
     { name: 'Discovery & Kickoff', display_order: 1 },
     { name: 'Integrations', display_order: 2 },
     { name: 'Platform Configuration', display_order: 3 },
     { name: 'Teams', display_order: 4 },
     { name: 'UAT', display_order: 5 },
+    { name: 'Go-Live', display_order: 6 },
   ]
 
-  // Standardized Biggy phases from 33-CONTEXT.md
   const biggyPhases = [
     { name: 'Discovery & Kickoff', display_order: 1 },
     { name: 'IT Knowledge Graph', display_order: 2 },
     { name: 'Platform Configuration', display_order: 3 },
     { name: 'Teams', display_order: 4 },
     { name: 'Validation', display_order: 5 },
+    { name: 'Go-Live', display_order: 6 },
   ]
 
   // Atomic transaction: project creation + phase seeding
@@ -86,6 +89,39 @@ export async function POST(req: NextRequest) {
         display_order: p.display_order,
       }))
     )
+
+    // ─── Onboarding Step Seeding ──────────────────────────────────────────
+
+    // Fetch the just-inserted phases so we have their IDs
+    const insertedAdrPhases = await tx
+      .select({ id: onboardingPhases.id, name: onboardingPhases.name })
+      .from(onboardingPhases)
+      .where(eq(onboardingPhases.project_id, inserted.id))
+
+    async function seedSteps(config: typeof ADR_ONBOARDING_CONFIG, track: string) {
+      for (const phaseConfig of config) {
+        const phase = insertedAdrPhases.find(
+          p => p.name === phaseConfig.name
+        ) ?? insertedAdrPhases.find(
+          // Biggy phases share same inserted list — both tracks share the query above
+          p => p.name === phaseConfig.name
+        )
+        if (!phase) continue
+        if (phaseConfig.steps.length === 0) continue
+        await tx.insert(onboardingSteps).values(
+          phaseConfig.steps.map((stepName, i) => ({
+            phase_id: phase.id,
+            project_id: inserted.id,
+            name: stepName,
+            display_order: i + 1,
+            track,
+          }))
+        )
+      }
+    }
+
+    await seedSteps(ADR_ONBOARDING_CONFIG, 'ADR')
+    await seedSteps(BIGGY_ONBOARDING_CONFIG, 'Biggy')
 
     // ─── WBS Template Seeding ─────────────────────────────────────────────
 
