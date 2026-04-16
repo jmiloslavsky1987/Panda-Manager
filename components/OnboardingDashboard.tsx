@@ -78,18 +78,18 @@ const INTEG_STATUS_CYCLE = [
 const ADR_TYPES = ['Inbound', 'Outbound', 'Enrichment'] as const
 const BIGGY_TYPES = ['Real-time', 'Context', 'Knowledge', 'UDC'] as const
 
-// Static track configuration — phase names are hardcoded (never from DB)
-// Step STATUS is still fetched from DB by matching phase name
+// Static track configuration — phase names must match DB exactly.
+// Only the 3 content phases per track (live cards and Go-Live are rendered separately).
 const STATIC_ADR_TRACKS = [
   { name: 'Discovery & Kickoff', display_order: 1 },
-  { name: 'Platform Config', display_order: 2 },
-  { name: 'UAT', display_order: 3 },
+  { name: 'Platform Configuration', display_order: 3 },
+  { name: 'UAT', display_order: 5 },
 ] as const
 
 const STATIC_BIGGY_TRACKS = [
   { name: 'Discovery & Kickoff', display_order: 1 },
-  { name: 'Platform Config', display_order: 2 },
-  { name: 'Validation', display_order: 3 },
+  { name: 'Platform Configuration', display_order: 3 },
+  { name: 'Validation', display_order: 5 },
 ] as const
 
 // ─── Status badge colors ──────────────────────────────────────────────────────
@@ -234,15 +234,19 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
   const [risks, setRisks] = useState<Risk[]>([])
   const [milestones, setMilestones] = useState<Milestone[]>([])
   const [projectSummary, setProjectSummary] = useState<ProjectSummary | null>(null)
+  const [adrGoLivePhase, setAdrGoLivePhase] = useState<PhaseWithSteps | null>(null)
+  const [biggyGoLivePhase, setBiggyGoLivePhase] = useState<PhaseWithSteps | null>(null)
   const [loading, setLoading] = useState(true)
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
-  const [collapsed, setCollapsed] = useState<Record<number, boolean>>({})
+  const [collapsed, setCollapsed] = useState<Record<string | number, boolean>>({})
   const [noteInputs, setNoteInputs] = useState<Record<number, string>>({})
   const [integNotes, setIntegNotes] = useState<Record<number, string>>({})
 
   useEffect(() => {
-    Promise.all([
+    const load = async () => {
+      try {
+    const [ob, ig, rk, ml, ps] = await Promise.all([
       fetch(`/api/projects/${projectId}/onboarding`).then((r) => r.json()),
       fetch(`/api/projects/${projectId}/integrations`).then((r) => r.json()),
       fetch(`/api/projects/${projectId}/risks`).then((r) => (r.ok ? r.json() : { risks: [] })),
@@ -251,18 +255,42 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
       ),
       fetch(`/api/projects/${projectId}`).then((r) => (r.ok ? r.json() : { project: null })),
     ])
-      .then(([ob, ig, rk, ml, ps]) => {
-        const fetchedAdr: PhaseWithSteps[] = ob.adr ?? []
-        const fetchedBiggy: PhaseWithSteps[] = ob.biggy ?? []
+
+        let fetchedAdr: PhaseWithSteps[] = ob.adr ?? []
+        let fetchedBiggy: PhaseWithSteps[] = ob.biggy ?? []
         const fetchedIntegrations: Integration[] = ig.integrations ?? []
         const fetchedRisks: Risk[] = rk.risks ?? rk ?? []
         const fetchedMilestones: Milestone[] = ml.milestones ?? ml ?? []
 
-        // Capture raw DB phases before static filter — needed for dynamic summary cards
+        // Seed standard steps if any standard phase is missing steps
+        const standardAdrNames = ['Discovery & Kickoff', 'Platform Configuration', 'UAT']
+        const standardBiggyNames = ['Discovery & Kickoff', 'Platform Configuration', 'Validation']
+        const needsSeed =
+          standardAdrNames.some(n => {
+            const p = fetchedAdr.find(x => x.name === n)
+            return !p || p.steps.length === 0
+          }) ||
+          standardBiggyNames.some(n => {
+            const p = fetchedBiggy.find(x => x.name === n)
+            return !p || p.steps.length === 0
+          })
+        if (needsSeed) {
+          const seeded = await fetch(`/api/projects/${projectId}/onboarding/seed`, {
+            method: 'POST',
+          }).then(r => r.json())
+          if (seeded.adr) fetchedAdr = seeded.adr
+          if (seeded.biggy) fetchedBiggy = seeded.biggy
+        }
+
+        // Capture raw DB phases for Teams live card data
         setRawAdrPhases(fetchedAdr)
         setRawBiggyPhases(fetchedBiggy)
 
-        // Map static config → DB phases matched by name (for step status)
+        // Extract Go-Live phases (rendered as special cards, not regular phase cards)
+        setAdrGoLivePhase(fetchedAdr.find(p => p.name === 'Go-Live') ?? null)
+        setBiggyGoLivePhase(fetchedBiggy.find(p => p.name === 'Go-Live') ?? null)
+
+        // Map static config → DB phases matched by name
         const staticAdrPhases = STATIC_ADR_TRACKS.map(track => {
           const dbPhase = fetchedAdr.find((p: PhaseWithSteps) => p.name === track.name)
           return dbPhase ?? { id: -track.display_order, name: track.name, display_order: track.display_order, steps: [] }
@@ -279,8 +307,8 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
         setMilestones(Array.isArray(fetchedMilestones) ? fetchedMilestones : [])
         setProjectSummary(ps.project ?? null)
 
-        // Default: collapse complete phases (both tracks)
-        const collapseMap: Record<number, boolean> = {}
+        // Default: collapse complete phases
+        const collapseMap: Record<string | number, boolean> = {}
         ;[...staticAdrPhases, ...staticBiggyPhases].forEach((p) => {
           collapseMap[p.id] = p.steps.length > 0 && p.steps.every((s) => s.status === 'complete')
         })
@@ -292,12 +320,16 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
           notesMap[i.id] = i.notes ?? ''
         })
         setIntegNotes(notesMap)
-      })
-      .finally(() => setLoading(false))
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
   }, [projectId])
 
   // ─── Derived stats ──────────────────────────────────────────────────────────
 
+  // Exclude Go-Live phase from progress rings (it's a milestone, not a step)
   const adrSteps = adrPhases.flatMap((p) => p.steps)
   const adrTotal = adrSteps.length
   const adrComplete = adrSteps.filter((s) => s.status === 'complete').length
@@ -334,6 +366,18 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
           ? { ...p, steps: p.steps.map((s) => (s.id === stepId ? { ...s, status: nextStatus } : s)) }
           : p
       )
+    )
+
+    // Update Go-Live phases
+    setAdrGoLivePhase((prev) =>
+      prev?.id === phaseId
+        ? { ...prev, steps: prev.steps.map((s) => (s.id === stepId ? { ...s, status: nextStatus } : s)) }
+        : prev
+    )
+    setBiggyGoLivePhase((prev) =>
+      prev?.id === phaseId
+        ? { ...prev, steps: prev.steps.map((s) => (s.id === stepId ? { ...s, status: nextStatus } : s)) }
+        : prev
     )
 
     await fetch(`/api/projects/${projectId}/onboarding/steps/${stepId}`, {
@@ -657,6 +701,123 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
 
   // ─── Phase card renderer (DRY) ──────────────────────────────────────────────
 
+  // ─── Live card renderers ─────────────────────────────────────────────────────
+
+  const renderIntegrationsCard = (track: 'ADR' | 'Biggy') => {
+    const key = `integrations-${track}`
+    const isCollapsed = collapsed[key] ?? false
+    const trackIntegrations = integrations.filter(i => i.track === track)
+    const validated = trackIntegrations.filter(i => i.status === 'validated').length
+    const configured = trackIntegrations.filter(i => i.status === 'configured').length
+    const blocked = trackIntegrations.filter(i => i.status === 'blocked').length
+    const total = trackIntegrations.length
+    const label = track === 'ADR' ? 'Integrations' : 'IT Knowledge Graph'
+    return (
+      <div key={key} className="border border-zinc-200 rounded-lg overflow-hidden">
+        <button
+          className="w-full flex items-center justify-between px-4 py-3 bg-zinc-50 hover:bg-zinc-100 transition-colors text-left"
+          onClick={() => setCollapsed(prev => ({ ...prev, [key]: !prev[key] }))}
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-semibold text-zinc-900">{label}</span>
+            <span className="text-xs text-zinc-500">{validated}/{total} validated</span>
+          </div>
+          <svg className={`w-4 h-4 text-zinc-400 transition-transform ${isCollapsed ? '' : 'rotate-180'}`} viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+          </svg>
+        </button>
+        {!isCollapsed && (
+          <div className="px-4 py-3 space-y-1">
+            {total === 0 ? (
+              <p className="text-xs text-zinc-400">No integrations yet — add from the Integrations tab.</p>
+            ) : (
+              <>
+                <p className="text-xs text-zinc-700"><span className="font-medium text-green-700">{validated}</span> validated</p>
+                <p className="text-xs text-zinc-700"><span className="font-medium text-blue-700">{configured}</span> configured</p>
+                {blocked > 0 && <p className="text-xs text-zinc-700"><span className="font-medium text-red-600">{blocked}</span> blocked</p>}
+                <p className="text-xs text-zinc-400 pt-1">{total - validated - configured - blocked} not connected</p>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  const renderTeamsCard = (track: 'ADR' | 'Biggy') => {
+    const key = `teams-${track}`
+    const isCollapsed = collapsed[key] ?? false
+    const rawPhases = track === 'ADR' ? rawAdrPhases : rawBiggyPhases
+    const teamsPhases = rawPhases.filter(p => p.name.toLowerCase().includes('team'))
+    const allSteps = teamsPhases.flatMap(p => p.steps)
+    const complete = allSteps.filter(s => s.status === 'complete').length
+    const total = allSteps.length
+    return (
+      <div key={key} className="border border-zinc-200 rounded-lg overflow-hidden">
+        <button
+          className="w-full flex items-center justify-between px-4 py-3 bg-zinc-50 hover:bg-zinc-100 transition-colors text-left"
+          onClick={() => setCollapsed(prev => ({ ...prev, [key]: !prev[key] }))}
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-semibold text-zinc-900">Teams</span>
+            <span className="text-xs text-zinc-500">{complete}/{total} steps</span>
+          </div>
+          <svg className={`w-4 h-4 text-zinc-400 transition-transform ${isCollapsed ? '' : 'rotate-180'}`} viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+          </svg>
+        </button>
+        {!isCollapsed && (
+          <div className="px-4 py-3">
+            {total === 0 ? (
+              <p className="text-xs text-zinc-400">No team steps yet — add via the Teams tab.</p>
+            ) : (
+              <div className="space-y-1">
+                {allSteps.map(step => (
+                  <div key={step.id} className="flex items-center justify-between">
+                    <span className="text-xs text-zinc-700">{step.name}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STEP_STATUS_COLORS[step.status] ?? 'bg-zinc-100 text-zinc-600'}`}>
+                      {step.status.replace('-', ' ').replace(/\b\w/g, c => c.toUpperCase())}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  const renderGoLiveCard = (track: 'ADR' | 'Biggy') => {
+    const phase = track === 'ADR' ? adrGoLivePhase : biggyGoLivePhase
+    const step = phase?.steps[0] ?? null
+    const isLive = step?.status === 'complete'
+    return (
+      <div className={`border-2 rounded-lg overflow-hidden transition-colors ${isLive ? 'border-green-400 bg-green-50' : 'border-zinc-200 bg-white'}`}>
+        <div className="px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className={`w-3 h-3 rounded-full ${isLive ? 'bg-green-500' : 'bg-zinc-300'}`} />
+            <span className={`text-sm font-semibold ${isLive ? 'text-green-800' : 'text-zinc-500'}`}>
+              {track} — Go Live
+            </span>
+          </div>
+          {step && (
+            <button
+              onClick={() => cycleStepStatus(phase!.id, step.id, step.status)}
+              className={`text-xs px-3 py-1 rounded-full font-medium border transition-colors ${
+                isLive
+                  ? 'bg-green-100 text-green-800 border-green-300 hover:bg-green-200'
+                  : 'bg-zinc-100 text-zinc-600 border-zinc-300 hover:bg-zinc-200'
+              }`}
+            >
+              {isLive ? 'Live ✓' : 'Mark Live'}
+            </button>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   const renderPhaseCard = (phase: PhaseWithSteps) => {
     const matching = visibleSteps(phase)
     const isCollapsed = collapsed[phase.id] ?? false
@@ -858,97 +1019,50 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
 
       {/* ── Onboarding Phases section (dual-track) ───────────────────────── */}
       <div data-testid="onboarding-phases" className="px-4 grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* ADR Column */}
+        {/* ADR Column — interleaved: phase cards + live cards + go-live */}
         <section data-testid="adr-track" className="space-y-4 border-l-4 border-blue-200 pl-4">
           <h2 className="text-sm font-semibold text-zinc-700 uppercase tracking-wide">
             ADR Onboarding
           </h2>
           {loading ? (
             <div className="space-y-2 animate-pulse">
-              {[1, 2].map((i) => (
-                <div key={i} className="h-20 bg-zinc-100 rounded-lg" />
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="h-14 bg-zinc-100 rounded-lg" />
               ))}
             </div>
-          ) : adrPhases.length === 0 ? (
-            <p className="text-sm text-zinc-400">No ADR phases found.</p>
           ) : (
-            adrPhases.map((phase) => renderPhaseCard(phase))
+            <>
+              {renderPhaseCard(adrPhases.find(p => p.name === 'Discovery & Kickoff') ?? { id: -1, name: 'Discovery & Kickoff', display_order: 1, steps: [] })}
+              {renderIntegrationsCard('ADR')}
+              {renderPhaseCard(adrPhases.find(p => p.name === 'Platform Configuration') ?? { id: -3, name: 'Platform Configuration', display_order: 3, steps: [] })}
+              {renderTeamsCard('ADR')}
+              {renderPhaseCard(adrPhases.find(p => p.name === 'UAT') ?? { id: -5, name: 'UAT', display_order: 5, steps: [] })}
+              {renderGoLiveCard('ADR')}
+            </>
           )}
         </section>
 
-        {/* Biggy Column */}
+        {/* Biggy Column — interleaved: phase cards + live cards + go-live */}
         <section data-testid="biggy-track" className="space-y-4 border-l-4 border-green-200 pl-4">
           <h2 className="text-sm font-semibold text-zinc-700 uppercase tracking-wide">
             Biggy Onboarding
           </h2>
           {loading ? (
             <div className="space-y-2 animate-pulse">
-              {[1, 2].map((i) => (
-                <div key={i} className="h-20 bg-zinc-100 rounded-lg" />
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="h-14 bg-zinc-100 rounded-lg" />
               ))}
             </div>
-          ) : biggyPhases.length === 0 ? (
-            <p className="text-sm text-zinc-400">No Biggy phases found.</p>
           ) : (
-            biggyPhases.map((phase) => renderPhaseCard(phase))
+            <>
+              {renderPhaseCard(biggyPhases.find(p => p.name === 'Discovery & Kickoff') ?? { id: -11, name: 'Discovery & Kickoff', display_order: 1, steps: [] })}
+              {renderIntegrationsCard('Biggy')}
+              {renderPhaseCard(biggyPhases.find(p => p.name === 'Platform Configuration') ?? { id: -13, name: 'Platform Configuration', display_order: 3, steps: [] })}
+              {renderTeamsCard('Biggy')}
+              {renderPhaseCard(biggyPhases.find(p => p.name === 'Validation') ?? { id: -15, name: 'Validation', display_order: 5, steps: [] })}
+              {renderGoLiveCard('Biggy')}
+            </>
           )}
-        </section>
-      </div>
-
-      <hr className="border-zinc-200 mx-4" />
-
-      {/* ── Dynamic Track Summary Cards ─────────────────────────────────── */}
-      <div data-testid="dynamic-track-summary" className="px-4 grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* ADR dynamic tracks: Integrations + Teams */}
-        <section className="space-y-3 border-l-4 border-blue-200 pl-4">
-          <h2 className="text-sm font-semibold text-zinc-700 uppercase tracking-wide">ADR — Live Tracks</h2>
-          {/* Integrations summary */}
-          <div className="border border-zinc-200 rounded-lg p-3 bg-white">
-            <p className="text-xs font-semibold text-zinc-700 mb-1">Integrations</p>
-            <p className="text-xs text-zinc-500">
-              {integrations.filter(i => i.track === 'ADR' && i.status === 'validated').length} validated,{' '}
-              {integrations.filter(i => i.track === 'ADR' && i.status === 'configured').length} configured,{' '}
-              {integrations.filter(i => i.track === 'ADR' && i.status === 'blocked').length} blocked
-            </p>
-          </div>
-          {/* Teams summary — use rawAdrPhases (all DB phases before static filter) */}
-          <div className="border border-zinc-200 rounded-lg p-3 bg-white">
-            <p className="text-xs font-semibold text-zinc-700 mb-1">Teams</p>
-            {(() => {
-              // rawAdrPhases contains ALL DB phases for ADR, including Teams.
-              // adrPhases only contains static tracks (Discovery & Kickoff, Platform Config, UAT)
-              // and will never match "Teams" — always use rawAdrPhases here.
-              const teamsPhases = rawAdrPhases.filter(p => p.name.toLowerCase().includes('team'))
-              const complete = teamsPhases.flatMap(p => p.steps).filter(s => s.status === 'complete').length
-              const total = teamsPhases.flatMap(p => p.steps).length
-              return <p className="text-xs text-zinc-500">{complete} of {total} steps complete</p>
-            })()}
-          </div>
-        </section>
-        {/* Biggy dynamic tracks: IT Knowledge Graph + Teams */}
-        <section className="space-y-3 border-l-4 border-green-200 pl-4">
-          <h2 className="text-sm font-semibold text-zinc-700 uppercase tracking-wide">Biggy — Live Tracks</h2>
-          {/* IT Knowledge Graph summary — biggy integrations */}
-          <div className="border border-zinc-200 rounded-lg p-3 bg-white">
-            <p className="text-xs font-semibold text-zinc-700 mb-1">IT Knowledge Graph</p>
-            <p className="text-xs text-zinc-500">
-              {integrations.filter(i => i.track === 'Biggy' && i.status === 'validated').length} validated,{' '}
-              {integrations.filter(i => i.track === 'Biggy' && i.status === 'configured').length} configured,{' '}
-              {integrations.filter(i => i.track === 'Biggy' && i.status === 'blocked').length} blocked
-            </p>
-          </div>
-          {/* Teams summary — use rawBiggyPhases (all DB phases before static filter) */}
-          <div className="border border-zinc-200 rounded-lg p-3 bg-white">
-            <p className="text-xs font-semibold text-zinc-700 mb-1">Teams</p>
-            {(() => {
-              // rawBiggyPhases contains ALL DB phases for Biggy, including Teams.
-              // biggyPhases only contains static tracks — always use rawBiggyPhases here.
-              const teamsPhases = rawBiggyPhases.filter(p => p.name.toLowerCase().includes('team'))
-              const complete = teamsPhases.flatMap(p => p.steps).filter(s => s.status === 'complete').length
-              const total = teamsPhases.flatMap(p => p.steps).length
-              return <p className="text-xs text-zinc-500">{complete} of {total} steps complete</p>
-            })()}
-          </div>
         </section>
       </div>
 
