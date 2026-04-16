@@ -310,7 +310,13 @@ Plans:
   6. Decisions entry form is scoped to operational impact documentation only
   7. User can move a stakeholder to different section in Teams tab
   8. User can delete a stakeholder from Teams tab
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 67-01-PLAN.md — Column cleanup: remove ID/Source from Actions, Risks, Milestones; update Decisions form labels
+- [ ] 67-02-PLAN.md — Stakeholder API DELETE handler + Move/Delete buttons in StakeholderEditModal
+- [ ] 67-03-PLAN.md — Plan tab removal, AiPlanPanel migration to Task Board, de-dup + WBS commit
+- [ ] 67-04-PLAN.md — Production build verification + human verification gate (all 8 requirements)
 
 ### Phase 68: Gantt Bi-directional Sync
 **Goal**: Gantt and workspace tabs stay in sync with drag-to-reschedule and date propagation
@@ -353,10 +359,10 @@ Plans:
 | 64. Editable Prompts UI | 5/5 | Complete    | 2026-04-15 | - |
 | 65. Project-Scoped Scheduling | 3/4 | In Progress|  | - |
 | 66. Overview Tracks Redesign | 3/3 | Complete    | 2026-04-16 | - |
-| 67. Delivery Tab Cleanup | v7.0 | 0/? | Not started | - |
+| 67. Delivery Tab Cleanup | v7.0 | 0/4 | Not started | - |
 | 68. Gantt Bi-directional Sync | v7.0 | 0/? | Not started | - |
 | 69. Knowledge Base + Outputs + Testing | v7.0 | 0/? | Not started | - |
 
 ---
-*Last updated: 2026-04-15*
+*Last updated: 2026-04-16*
 *Current milestone: v7.0 — Governance & Operational Maturity*
