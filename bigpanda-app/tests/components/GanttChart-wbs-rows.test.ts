@@ -7,7 +7,7 @@ import type { GanttTask } from '@/components/GanttChart';
 
 describe('buildWbsRows — WBS row model (DLVRY-01)', () => {
   it('WBS row with no child tasks has spanStart=null and spanEnd=null', () => {
-    const wbsItems = [{ id: 1, name: 'Phase 1: Discovery', colorIdx: 0, tasks: [] }];
+    const wbsItems = [{ id: 1, name: 'Phase 1: Discovery', colorIdx: 0, level: 1, parentId: null, tasks: [] }];
     const unassignedTasks: GanttTask[] = [];
     const rows = buildWbsRows(wbsItems, unassignedTasks);
     expect(rows).toHaveLength(1);
@@ -33,7 +33,7 @@ describe('buildWbsRows — WBS row model (DLVRY-01)', () => {
   });
 
   it('tasks with no WBS assignment fall into unassigned group', () => {
-    const wbsItems = [{ id: 1, name: 'Phase 1', colorIdx: 0, tasks: [] }];
+    const wbsItems = [{ id: 1, name: 'Phase 1', colorIdx: 0, level: 1, parentId: null, tasks: [] }];
     const unassignedTasks: GanttTask[] = [
       { id: 't1', name: 'Unassigned Task', start: '2026-06-01', end: '2026-06-15', progress: 0, dependencies: '' },
     ];

@@ -698,10 +698,11 @@ export default function GanttChart({
                   className="flex items-center shrink-0 border-b border-zinc-100 cursor-pointer hover:bg-zinc-100/60 font-medium"
                   style={{ height: ROW_H, background: '#f9f9f9' }}
                   onClick={() => setExpanded(p => { const n = new Set(p); isExp ? n.delete(String(row.wbsId)) : n.add(String(row.wbsId)); return n })}>
-                  <div className="w-7 pl-2 shrink-0 text-[11px]" style={{ color: color.bar }}>{isExp ? '▾' : '▸'}</div>
+                  <div className="shrink-0" style={{ width: 8 + (row.level - 1) * 14 }} />
+                  <div className="w-4 shrink-0 text-[11px]" style={{ color: color.bar }}>{isExp ? '▾' : '▸'}</div>
                   <div
-                    className="flex-1 pr-1 truncate text-sm font-semibold"
-                    style={{ color: color.text, paddingLeft: 4 + (row.level - 1) * 14 }}
+                    className={`flex-1 pl-1 pr-1 truncate text-sm ${row.level === 1 ? 'font-semibold' : 'font-normal'}`}
+                    style={{ color: row.level === 1 ? color.text : '#111827' }}
                     onMouseEnter={e => { const r = e.currentTarget.getBoundingClientRect(); setLabelTip({ text: row.label, x: r.left, y: r.bottom + 6 }) }}
                     onMouseLeave={() => setLabelTip(null)}>
                     {row.label}
