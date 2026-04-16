@@ -11,7 +11,7 @@ import { sql } from 'drizzle-orm'
 const ReorderWbsItemSchema = z.object({
   itemId: z.number().int(),
   newParentId: z.number().int(),
-  newDisplayOrder: z.number().int().min(1),
+  newDisplayOrder: z.number().int().min(0),
 })
 
 // ─── POST /api/projects/[projectId]/wbs/reorder ───────────────────────────────
@@ -41,7 +41,7 @@ export async function POST(
     return Response.json({ error: parsed.error.flatten() }, { status: 400 })
   }
 
-  const { itemId, newParentId, newDisplayOrder } = parsed.data
+  const { itemId, newParentId, newDisplayOrder: requestedOrder } = parsed.data
 
   try {
     // Fetch the item to check its level
@@ -58,6 +58,16 @@ export async function POST(
     // Level 1 nodes cannot be reordered
     if (item.level === 1) {
       return Response.json({ error: 'Level 1 headers cannot be reordered' }, { status: 403 })
+    }
+
+    // 0 means "append to end" — resolve to max sibling order + 1
+    let newDisplayOrder = requestedOrder
+    if (newDisplayOrder === 0) {
+      const [maxRow] = await db
+        .select({ max: sql<number>`COALESCE(MAX(${wbsItems.display_order}), 0)` })
+        .from(wbsItems)
+        .where(and(eq(wbsItems.project_id, projectId), eq(wbsItems.parent_id, newParentId)))
+      newDisplayOrder = (maxRow?.max ?? 0) + 1
     }
 
     // Shift siblings at target position (those with display_order >= newDisplayOrder)
