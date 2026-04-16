@@ -10,6 +10,7 @@ const patchSchema = z.object({
   target: z.string().optional(),
   owner: z.string().optional(),
   notes: z.string().optional(),
+  date: z.string().nullable().optional(),
 })
 
 export async function PATCH(
