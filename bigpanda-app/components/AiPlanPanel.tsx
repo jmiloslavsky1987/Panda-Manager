@@ -15,6 +15,7 @@ interface ProposedTask {
   phase?: string;
   due?: string;
   track?: 'ADR' | 'Biggy';
+  wbs_level?: 2 | 3;
   wbs_phase?: string;
 }
 
@@ -103,49 +104,67 @@ export function AiPlanPanel({ projectId, existingTasks }: AiPlanPanelProps) {
         });
         if (res.ok) successCount++;
 
-        // 2. Write to WBS tree — auto-create level-2 parent if missing
-        if (task.track && task.wbs_phase) {
+        // 2. Write to WBS tree — level determined by wbs_level field (default 3)
+        if (task.track) {
           try {
-            let level2Parent = wbsTree.find(
-              item => item.level === 2 &&
-                item.track.toLowerCase() === task.track!.toLowerCase() &&
-                item.name.toLowerCase() === task.wbs_phase!.toLowerCase()
-            );
+            const wbsLevel = task.wbs_level ?? 3;
 
-            if (!level2Parent) {
+            if (wbsLevel === 2) {
+              // Create a new WBS phase/section directly under the level-1 track root
               const level1Root = wbsTree.find(
                 item => item.level === 1 && item.track.toLowerCase() === task.track!.toLowerCase()
               );
               if (level1Root) {
-                const createRes = await fetch(`/api/projects/${projectId}/wbs`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    name: task.wbs_phase,
-                    parent_id: level1Root.id,
-                    level: 2,
-                    track: task.track,
-                  }),
-                });
-                if (createRes.ok) {
-                  const created = await createRes.json();
-                  level2Parent = { id: created.id, name: task.wbs_phase!, level: 2, track: task.track!, parent_id: level1Root.id };
-                  wbsTree = [...wbsTree, level2Parent];
+                const existing = wbsTree.find(
+                  item => item.level === 2 &&
+                    item.track.toLowerCase() === task.track!.toLowerCase() &&
+                    item.name.toLowerCase() === task.title.toLowerCase()
+                );
+                if (!existing) {
+                  const createRes = await fetch(`/api/projects/${projectId}/wbs`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: task.title, parent_id: level1Root.id, level: 2, track: task.track }),
+                  });
+                  if (createRes.ok) {
+                    const created = await createRes.json();
+                    wbsTree = [...wbsTree, { id: created.id, name: task.title, level: 2, track: task.track!, parent_id: level1Root.id }];
+                  }
                 }
               }
-            }
+            } else if (task.wbs_phase) {
+              // Create a task (level 3) under the named level-2 parent, auto-creating the parent if needed
+              let level2Parent = wbsTree.find(
+                item => item.level === 2 &&
+                  item.track.toLowerCase() === task.track!.toLowerCase() &&
+                  item.name.toLowerCase() === task.wbs_phase!.toLowerCase()
+              );
 
-            if (level2Parent) {
-              await fetch(`/api/projects/${projectId}/wbs`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  name: task.title,
-                  parent_id: level2Parent.id,
-                  level: 3,
-                  track: task.track,
-                }),
-              });
+              if (!level2Parent) {
+                const level1Root = wbsTree.find(
+                  item => item.level === 1 && item.track.toLowerCase() === task.track!.toLowerCase()
+                );
+                if (level1Root) {
+                  const createRes = await fetch(`/api/projects/${projectId}/wbs`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: task.wbs_phase, parent_id: level1Root.id, level: 2, track: task.track }),
+                  });
+                  if (createRes.ok) {
+                    const created = await createRes.json();
+                    level2Parent = { id: created.id, name: task.wbs_phase!, level: 2, track: task.track!, parent_id: level1Root.id };
+                    wbsTree = [...wbsTree, level2Parent];
+                  }
+                }
+              }
+
+              if (level2Parent) {
+                await fetch(`/api/projects/${projectId}/wbs`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ name: task.title, parent_id: level2Parent.id, level: 3, track: task.track }),
+                });
+              }
             }
           } catch {
             // WBS write failure is non-blocking

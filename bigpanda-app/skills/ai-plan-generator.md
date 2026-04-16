@@ -18,7 +18,12 @@ Return a JSON object with the following structure (no prose, no markdown fences)
       "phase": "Discovery" | "Design" | "Build" | "Test" | "Go-Live",
       "due": "YYYY-MM-DD",
       "track": "ADR" | "Biggy",
-      "wbs_phase": "The level-2 WBS parent item name this task falls under (e.g. 'Platform Config', 'Discovery & Kickoff', 'UAT/Validation', 'Build')"
+      "wbs_level": 2 | 3,
+      "wbs_phase": "Required when wbs_level is 3. The level-2 WBS parent item name this task falls under (e.g. 'Platform Config', 'Discovery & Kickoff', 'UAT/Validation', 'Build'). Omit when wbs_level is 2."
     }
   ]
 }
+
+wbs_level guidance:
+- Use 2 when the item IS a WBS phase or section that is missing from the project structure (e.g. 'UAT/Validation' workstream doesn't exist yet). The item will be created directly under the track root.
+- Use 3 (default) when the item is a specific actionable task that belongs inside a WBS phase. Always pair with wbs_phase.
