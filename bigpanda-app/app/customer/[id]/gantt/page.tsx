@@ -17,11 +17,14 @@ function addDays(dateStr: string, days: number): string {
 }
 
 function mapDataToWbsRows(
-  allWbsItems: WbsItem[],
+  adrWbsItems: WbsItem[],
+  biggyWbsItems: WbsItem[],
   tasks: Awaited<ReturnType<typeof getTasksForProject>>,
   assignments: Array<{ wbs_item_id: number; task_id: number }>,
   milestoneList: GanttMilestone[]
 ): GanttWbsRow[] {
+  const allWbsItems = [...adrWbsItems, ...biggyWbsItems]
+  const adrItemIds = new Set(adrWbsItems.map(i => i.id))
   // Filter to level-1 items only (summary rows)
   const level1Items = allWbsItems.filter(item => item.level === 1)
 
@@ -62,7 +65,7 @@ function mapDataToWbsRows(
   return level1Items.map((item, idx) => {
     const rawTasks = wbsToTasks.get(item.id) ?? []
     const ganttTasks = rawTasks.map(toGanttTask).filter((t): t is GanttTask => t !== null)
-    return { id: item.id, name: item.name, colorIdx: idx % 6, tasks: ganttTasks }
+    return { id: item.id, name: item.name, colorIdx: idx % 6, track: adrItemIds.has(item.id) ? 'ADR' : 'Biggy', tasks: ganttTasks }
   })
 }
 
@@ -87,9 +90,6 @@ export default async function GanttPage({
       getMilestonesForProject(projectId),
     ])
 
-    // Combine both tracks into single WBS list
-    const allWbsItems = [...adrWbs, ...biggyWbs]
-
     // Map Milestone to GanttMilestone (only the fields GanttChart needs)
     milestones = milestonesData.map(m => ({
       id: m.id,
@@ -98,8 +98,8 @@ export default async function GanttPage({
       status: m.status,
     }))
 
-    // Build WBS rows with assigned tasks
-    wbsRows = mapDataToWbsRows(allWbsItems, tasks, assignments, milestones)
+    // Build WBS rows with assigned tasks — ADR first, then Biggy
+    wbsRows = mapDataToWbsRows(adrWbs, biggyWbs, tasks, assignments, milestones)
 
     // Compute unassigned tasks
     const today = new Date().toISOString().split('T')[0]
