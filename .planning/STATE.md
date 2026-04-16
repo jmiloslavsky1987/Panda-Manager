@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: — Governance & Operational Maturity
 status: completed
-last_updated: "2026-04-16T19:03:59.948Z"
-last_activity: 2026-04-16 — Completed Phase 68 Plan 02 (Milestone Date PATCH Field Alignment)
+last_updated: "2026-04-16T19:12:35Z"
+last_activity: 2026-04-16 — Completed Phase 68 Plan 04 (Edge Drag Handles + Milestone Drag + Inline Date Cells)
 progress:
   total_phases: 12
   completed_phases: 9
   total_plans: 41
-  completed_plans: 38
-  percent: 93
+  completed_plans: 40
+  percent: 98
 ---
 
 # Project State
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-04-13 after v7.0 milestone start)
 ## Current Position
 
 Phase: 68 of 69 (Gantt Bi-directional Sync) — IN PROGRESS
-Plan: 3 of 5 complete
-Status: WBS-based Gantt row model complete
-Last activity: 2026-04-16 — Completed Phase 68 Plan 03 (WBS-Based Gantt Row Model)
+Plan: 4 of 5 complete
+Status: Edge drag handles, milestone drag, and inline date cells complete
+Last activity: 2026-04-16 — Completed Phase 68 Plan 04 (Edge Drag Handles + Milestone Drag + Inline Date Cells)
 
-Progress: [█████████░] 95% (39 of 41 plans complete in v7.0 milestone)
+Progress: [██████████] 98% (40 of 41 plans complete in v7.0 milestone)
 
 ## Milestone History
 
@@ -98,6 +98,12 @@ Progress: [█████████░] 95% (39 of 41 plans complete in v7.0 
 **Next action:** Execute Phase 68 (Gantt Bi-directional Sync — DLVRY-01 through DLVRY-04)
 
 ## Recent Decisions
+
+### Phase 68-04: Edge Drag Handles + Milestone Drag + Inline Date Cells
+- **Edge drag clamping enforces 1-day minimum span** — Left edge cannot drag past end - 1 day; right edge cannot drag before start + 1 day; prevents zero-duration or negative-duration task states
+- **WBS summary bar edge drag shifts all child tasks by same delta** — Maintains relative task spacing within phase; simplifies UX by treating phase-level reschedule as atomic operation
+- **Milestone drag uses separate dragRef to avoid state conflicts** — Isolates milestone drag state from task drag state; prevents edge case where simultaneous drag events could corrupt shared ref
+- **DatePickerCell integrated for inline date editing in left panel** — Replaced static date displays with DatePickerCell; provides consistent date-picking UX across Gantt and Milestones table
 
 ### Phase 68-03: WBS-Based Gantt Row Model
 - **WBS-item-based row model replaces milestone grouping for static skeleton structure** — Gantt now shows WBS level-1 items as always-visible rows regardless of task dates; establishes DLVRY-01 requirement for static structural skeleton visible before dates are set
