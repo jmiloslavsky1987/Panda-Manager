@@ -2,19 +2,7 @@
 // RED stubs for DLVRY-02 edge drag delta computation
 // Tests pure functions to be exported from GanttChart.tsx in Plan 04.
 import { describe, it, expect } from 'vitest';
-
-// TODO: replace with actual import after Plan 04
-// import { computeEdgeDrag } from '@/components/GanttChart';
-
-// Inline stub — always returns unchanged dates so tests fail RED
-function computeEdgeDrag(
-  _side: 'left' | 'right',
-  origStart: string,
-  origEnd: string,
-  _deltadays: number
-) {
-  return { start: origStart, end: origEnd };  // stub — RED until Plan 04
-}
+import { computeEdgeDrag } from '@/components/GanttChart';
 
 describe('computeEdgeDrag — edge drag delta (DLVRY-02)', () => {
   it('left-edge drag by +3 days moves only start date forward', () => {
