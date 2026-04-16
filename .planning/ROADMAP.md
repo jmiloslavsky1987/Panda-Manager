@@ -290,7 +290,12 @@ Plans:
   3. Weekly Focus generates automatically every Monday morning via scheduled job
   4. Weekly Focus "Generate Now" button is labeled as manual override (not default action)
   5. User can delete individual integrations from Integration Tracker
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 66-01-PLAN.md — DELETE integration endpoint + weekly-focus repeatable job registration on project creation
+- [ ] 66-02-PLAN.md — OnboardingDashboard static tracks refactor + dynamic summary cards + integration delete UI + WeeklyFocus redesign
+- [ ] 66-03-PLAN.md — Build verification + human verification gate (all 5 OVRVW requirements)
 
 ### Phase 67: Delivery Tab Cleanup
 **Goal**: Delivery tabs are streamlined with hidden columns, Plan tab removal, WBS alignment, and stakeholder operations
@@ -347,7 +352,7 @@ Plans:
 | 63. Skills Design Standard | 4/4 | Complete    | 2026-04-15 | - |
 | 64. Editable Prompts UI | 5/5 | Complete    | 2026-04-15 | - |
 | 65. Project-Scoped Scheduling | 3/4 | In Progress|  | - |
-| 66. Overview Tracks Redesign | v7.0 | 0/? | Not started | - |
+| 66. Overview Tracks Redesign | v7.0 | 0/3 | Not started | - |
 | 67. Delivery Tab Cleanup | v7.0 | 0/? | Not started | - |
 | 68. Gantt Bi-directional Sync | v7.0 | 0/? | Not started | - |
 | 69. Knowledge Base + Outputs + Testing | v7.0 | 0/? | Not started | - |
