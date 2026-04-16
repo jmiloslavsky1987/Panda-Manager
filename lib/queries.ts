@@ -25,6 +25,7 @@ import {
   teamPathways,
   auditLog,
   wbsItems,
+  wbsTaskAssignments,
   archTracks,
   archNodes,
   archTeamStatus,
@@ -1188,6 +1189,23 @@ export async function getWbsItems(projectId: number, track: string): Promise<Wbs
     .from(wbsItems)
     .where(and(eq(wbsItems.project_id, projectId), eq(wbsItems.track, track)))
     .orderBy(asc(wbsItems.level), asc(wbsItems.display_order));
+}
+
+/**
+ * Returns WBS-to-task assignments for a project across all tracks.
+ * Used by Phase 68 Gantt WBS row model to group tasks under their WBS parents.
+ */
+export async function getWbsTaskAssignments(
+  projectId: number
+): Promise<Array<{ wbs_item_id: number; task_id: number }>> {
+  return db
+    .select({
+      wbs_item_id: wbsTaskAssignments.wbs_item_id,
+      task_id: wbsTaskAssignments.task_id,
+    })
+    .from(wbsTaskAssignments)
+    .innerJoin(wbsItems, eq(wbsTaskAssignments.wbs_item_id, wbsItems.id))
+    .where(eq(wbsItems.project_id, projectId));
 }
 
 /**
