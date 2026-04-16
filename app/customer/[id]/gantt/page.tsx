@@ -25,8 +25,24 @@ function mapDataToWbsRows(
 ): GanttWbsRow[] {
   const allWbsItems = [...adrWbsItems, ...biggyWbsItems]
   const adrItemIds = new Set(adrWbsItems.map(i => i.id))
-  // Filter to level-1 items only (summary rows)
   const level1Items = allWbsItems.filter(item => item.level === 1)
+
+  // Assign colorIdx to L1 items; L2/L3 inherit from their L1 ancestor
+  const l1ColorIdx = new Map<number, number>()
+  level1Items.forEach((item, idx) => l1ColorIdx.set(item.id, idx % 6))
+  const itemColorIdx = new Map<number, number>()
+  // Build parent map for ancestor walk
+  const itemParentMap = new Map<number, number | null>()
+  allWbsItems.forEach(item => itemParentMap.set(item.id, item.parent_id ?? null))
+  function getColorIdx(itemId: number): number {
+    let cur: number | null = itemId
+    while (cur !== null) {
+      if (l1ColorIdx.has(cur)) return l1ColorIdx.get(cur)!
+      cur = itemParentMap.get(cur) ?? null
+    }
+    return 0
+  }
+  allWbsItems.forEach(item => itemColorIdx.set(item.id, getColorIdx(item.id)))
 
   // Build parent/level lookups so we can walk any WBS item up to its level-1 ancestor
   const parentOf = new Map<number, number | null>()
@@ -48,30 +64,39 @@ function mapDataToWbsRows(
   const taskToWbs = new Map<number, number>()
   assignments.forEach(a => taskToWbs.set(a.task_id, a.wbs_item_id))
 
-  // Build level-1 wbs_item_id → tasks[] map
+  // Build all-levels wbs_item_id → tasks[] map
   const wbsToTasks = new Map<number, typeof tasks>()
-  level1Items.forEach(item => wbsToTasks.set(item.id, []))
+  allWbsItems.forEach(item => wbsToTasks.set(item.id, []))
 
-  // Build case-insensitive name → level-1 WBS item id map (fallback for task.phase matching)
+  // Build case-insensitive name → WBS item id map (try all levels; most specific wins)
+  // Ordered so deeper levels registered last overwrite shallower ones for same name
   const wbsNameToId = new Map<string, number>()
-  level1Items.forEach(item => wbsNameToId.set(item.name.toLowerCase(), item.id))
+  allWbsItems
+    .slice()
+    .sort((a, b) => a.level - b.level)
+    .forEach(item => wbsNameToId.set(item.name.toLowerCase(), item.id))
 
   const today = new Date().toISOString().split('T')[0]
 
   tasks.forEach(task => {
     const wbsId = taskToWbs.get(task.id)
-    let l1Id: number | null = null
+    let targetId: number | null = null
 
     if (wbsId !== undefined) {
       // Primary: junction table — walk up to level-1 ancestor
-      l1Id = level1AncestorOf(wbsId)
+      targetId = level1AncestorOf(wbsId)
     } else if (task.phase) {
-      // Fallback: match task.phase against level-1 WBS item names (case-insensitive)
-      l1Id = wbsNameToId.get(task.phase.toLowerCase()) ?? null
+      // Fallback: match task.phase against any WBS item name (case-insensitive)
+      targetId = wbsNameToId.get(task.phase.toLowerCase()) ?? null
+      // If matched item is not level-1, walk up to its level-1 ancestor for grouping
+      if (targetId !== null) {
+        const matchedLevel = allWbsItems.find(i => i.id === targetId)?.level ?? 1
+        if (matchedLevel > 1) targetId = level1AncestorOf(targetId)
+      }
     }
 
-    if (l1Id !== null && wbsToTasks.has(l1Id)) {
-      wbsToTasks.get(l1Id)!.push(task)
+    if (targetId !== null && wbsToTasks.has(targetId)) {
+      wbsToTasks.get(targetId)!.push(task)
     }
     // tasks that still don't match fall into unassigned (handled in GanttChart)
   })
@@ -92,10 +117,19 @@ function mapDataToWbsRows(
     return { id: String(task.id), name: task.title, start, end: safeEnd, progress, dependencies, custom_class: [msClass, priorityClass].filter(Boolean).join(' ') || undefined }
   }
 
-  return level1Items.map((item, idx) => {
+  // Return ALL WBS levels — GanttChart renders the full hierarchy
+  return allWbsItems.map(item => {
     const rawTasks = wbsToTasks.get(item.id) ?? []
     const ganttTasks = rawTasks.map(toGanttTask).filter((t): t is GanttTask => t !== null)
-    return { id: item.id, name: item.name, colorIdx: idx % 6, track: adrItemIds.has(item.id) ? 'ADR' : 'Biggy', tasks: ganttTasks }
+    return {
+      id: item.id,
+      name: item.name,
+      colorIdx: itemColorIdx.get(item.id) ?? 0,
+      level: item.level,
+      parentId: item.parent_id ?? null,
+      track: item.level === 1 ? (adrItemIds.has(item.id) ? 'ADR' : 'Biggy') : undefined,
+      tasks: ganttTasks,
+    }
   })
 }
 
