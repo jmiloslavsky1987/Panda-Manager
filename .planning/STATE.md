@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: — Governance & Operational Maturity
 status: executing
-last_updated: "2026-04-16T14:42:35.715Z"
-last_activity: 2026-04-16 — Completed Phase 67 Plan 02 (Stakeholder Delete & Move Operations — DELETE endpoint + Move/Delete buttons in modal)
+last_updated: "2026-04-16T16:35:18.194Z"
+last_activity: 2026-04-16 — Completed Phase 67 Plan 04 (Build Verification & Human Approval — Phase 67 complete)
 progress:
   total_phases: 12
-  completed_phases: 8
+  completed_phases: 9
   total_plans: 36
-  completed_plans: 34
+  completed_plans: 35
   percent: 100
 ---
 
@@ -20,16 +20,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-13 after v7.0 milestone start)
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
-**Current focus:** Phase 67 (Delivery Tab Cleanup) — next up
+**Current focus:** Phase 68 (Gantt Bi-directional Sync) — next up
 
 ## Current Position
 
-Phase: 67 of 69 (Delivery Tab Cleanup) — IN PROGRESS
-Plan: 3 of 4 complete
-Status: Phase 67 in progress — plan 03 complete (Generate Plan migration with de-dup and WBS commit)
-Last activity: 2026-04-16 — Completed Phase 67 Plan 03 (Delivery Tab Cleanup — removed Plan tab, migrated AiPlanPanel to Task Board with de-duplication and WBS integration)
+Phase: 67 of 69 (Delivery Tab Cleanup) — COMPLETE
+Plan: 4 of 4 complete
+Status: Phase 67 complete — all 8 requirements (DLVRY-05 through DLVRY-10, TEAM-01, TEAM-02) verified in browser
+Last activity: 2026-04-16 — Completed Phase 67 Plan 04 (Build Verification & Human Approval — Phase 67 complete)
 
-Progress: [██████████] 99% (238 of 240 plans complete in v7.0 milestone)
+Progress: [██████████] 100% (239 of 240 plans complete in v7.0 milestone)
 
 ## Milestone History
 
@@ -95,7 +95,7 @@ Progress: [██████████] 99% (238 of 240 plans complete in v7.
 - Soft-delete cascade blind spots: 57+ phases of FK evolution requires careful audit
 - Gantt bi-directional sync race conditions: Advisory locks required for Phase 68
 
-**Next action:** Execute Phase 67 (Delivery Tab Cleanup — DLVRY-05 through DLVRY-10, TEAM-01 through TEAM-02)
+**Next action:** Execute Phase 68 (Gantt Bi-directional Sync — DLVRY-01 through DLVRY-04)
 
 ## Recent Decisions
 
@@ -180,6 +180,13 @@ Progress: [██████████] 99% (238 of 240 plans complete in v7.
 - **Delete button uses destructive variant with left-alignment (mr-auto)** — Pushes delete to left side of footer for visual separation from Save/Cancel
 - **No confirmation dialog on delete per Phase 66 inline delete pattern** — Follows Phase 66 inline delete pattern for consistent UX
 
+### Phase 67-04: Build Verification & Human Approval
+- **Generate Plan unified to single Task Board button** — Removed redundant WBS-side Generate Plan button; consolidated to single Task Board entry point per Phase 67 intent
+- **WBS GET endpoint requires track param for proper data scoping** — All WBS tree fetches must include ?track= query parameter; enforces proper ADR/Biggy separation
+- **WBS reorder schema accepts newDisplayOrder=0 as valid** — Changed Zod schema from .positive() to .min(0) to allow dragging items to top position (display_order=0)
+- **WBS collapse state persists across navigation via sessionStorage** — Collapsed nodes stay collapsed on page refresh using sessionStorage key pattern wbs-expanded-{projectId}-{nodeId}
+- **Drag handle shows on row hover with green overlay** — Added hover-only drag handle visibility with green background overlay for better drag affordance and discoverability
+
 ---
-*Last updated: 2026-04-16T14:41:46Z*
+*Last updated: 2026-04-16T16:36:00Z*
 *Milestone: v7.0 — Governance & Operational Maturity*

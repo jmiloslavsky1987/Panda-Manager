@@ -131,7 +131,7 @@ Full details: `.planning/milestones/v6.0-ROADMAP.md` (archived)
 - [x] **Phase 64: Editable Prompts UI** - Admin-controlled prompt editing with global toggle (completed 2026-04-15)
 - [x] **Phase 65: Project-Scoped Scheduling** - Per-project scheduler with RBAC and state persistence (completed 2026-04-15)
 - [x] **Phase 66: Overview Tracks Redesign** - Static/dynamic tracks with auto-scheduled weekly focus (completed 2026-04-16)
-- [ ] **Phase 67: Delivery Tab Cleanup** - Column hiding, Plan tab removal, WBS alignment, stakeholder operations
+- [x] **Phase 67: Delivery Tab Cleanup** - Column hiding, Plan tab removal, WBS alignment, stakeholder operations (completed 2026-04-16)
 - [ ] **Phase 68: Gantt Bi-directional Sync** - Date propagation with skeleton display and drag adjustment
 - [ ] **Phase 69: Knowledge Base + Outputs + Testing** - Audit and cleanup with TDD stubs GREEN
 
@@ -359,7 +359,7 @@ Plans:
 | 64. Editable Prompts UI | 5/5 | Complete    | 2026-04-15 | - |
 | 65. Project-Scoped Scheduling | 3/4 | In Progress|  | - |
 | 66. Overview Tracks Redesign | 3/3 | Complete    | 2026-04-16 | - |
-| 67. Delivery Tab Cleanup | 3/4 | In Progress|  | - |
+| 67. Delivery Tab Cleanup | 4/4 | Complete   | 2026-04-16 | - |
 | 68. Gantt Bi-directional Sync | v7.0 | 0/? | Not started | - |
 | 69. Knowledge Base + Outputs + Testing | v7.0 | 0/? | Not started | - |
 
