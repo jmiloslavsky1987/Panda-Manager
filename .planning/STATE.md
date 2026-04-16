@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: — Governance & Operational Maturity
 status: executing
-last_updated: "2026-04-16T03:59:06Z"
+last_updated: "2026-04-16T04:05:05Z"
 last_activity: 2026-04-16 — Completed Phase 66 Plan 01 (Integration Deletion & Weekly Focus Automation)
 progress:
   total_phases: 12
   completed_phases: 7
   total_plans: 32
-  completed_plans: 30
-  percent: 94
+  completed_plans: 31
+  percent: 97
 ---
 
 # Project State
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-04-13 after v7.0 milestone start)
 ## Current Position
 
 Phase: 66 of 69 (Overview Tracks Redesign) — IN PROGRESS
-Plan: 1 of 3 complete
-Status: Executing Phase 66-01 (Integration Deletion & Weekly Focus Automation)
-Last activity: 2026-04-16 — Completed Phase 66 Plan 01 (Integration Deletion & Weekly Focus Automation)
+Plan: 2 of 3 complete
+Status: Executing Phase 66-02 (Overview Tracks Redesign - Static/Dynamic Hybrid)
+Last activity: 2026-04-16 — Completed Phase 66 Plan 02 (Overview Tracks Redesign - Static/Dynamic Hybrid)
 
-Progress: [██████████] 99% (233 of 236 plans complete in milestone)
+Progress: [██████████] 99% (234 of 236 plans complete in milestone)
 
 ## Milestone History
 
@@ -162,6 +162,14 @@ Progress: [██████████] 99% (233 of 236 plans complete in mil
 - **Weekly-focus job registration is best-effort with try/catch** — Prevents Redis unavailability from failing project creation; job registration degrades gracefully as convenience feature
 - **Job scheduler key pattern: weekly-focus-project-{id}** — Ensures uniqueness per project; upsertJobScheduler makes pattern idempotent for future updates
 - **Cron pattern 0 6 * * 1 hardcoded** — Weekly focus timing is product requirement (every Monday 6am UTC), not user configuration; consistent schedule across all projects
+
+### Phase 66-02: Overview Tracks Redesign - Static/Dynamic Hybrid
+- **Static track config constants define phase structure (names never from DB)** — STATIC_ADR_TRACKS and STATIC_BIGGY_TRACKS provide hardcoded phase names and order; DB phases matched by name for step status only
+- **Raw phase state captured before static filtering** — rawAdrPhases/rawBiggyPhases hold ALL DB phases before static filter; required for dynamic summary cards to access Teams phase data
+- **Teams phase access requires raw state** — Static-filtered adrPhases/biggyPhases never contain Teams phase; dynamic summary cards must use rawAdrPhases/rawBiggyPhases for accurate counts
+- **Integration delete is immediate with optimistic UI** — No confirmation dialog per user decision; optimistic remove with rollback on error provides responsive UX
+- **Generate Now button moved to header with outline style** — Always visible regardless of bullets state; secondary outline style (not primary blue) for less visual prominence
+- **Empty state shows quiet italic text** — Replaced large CTA with understated placeholder: "Weekly focus generates automatically every Monday at 6am."
 
 ---
 *Last updated: 2026-04-16*

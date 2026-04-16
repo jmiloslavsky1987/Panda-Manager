@@ -23,10 +23,10 @@
 
 ### Overview Tab
 
-- [ ] **OVRVW-01**: Overview section displays static onboarding tracks (ADR: Discovery & Kickoff, Platform Config, UAT; Biggy: Discovery & Kickoff, Platform Config, Validation) from hardcoded config — no Claude call, no Generate button
-- [ ] **OVRVW-02**: Overview section displays dynamic onboarding tracks (ADR: Integrations, Teams; Biggy: IT Knowledge Graph, Teams) populated from context and integration data
+- [x] **OVRVW-01**: Overview section displays static onboarding tracks (ADR: Discovery & Kickoff, Platform Config, UAT; Biggy: Discovery & Kickoff, Platform Config, Validation) from hardcoded config — no Claude call, no Generate button
+- [x] **OVRVW-02**: Overview section displays dynamic onboarding tracks (ADR: Integrations, Teams; Biggy: IT Knowledge Graph, Teams) populated from context and integration data
 - [x] **OVRVW-03**: Weekly Focus generates automatically every Monday morning via scheduled job (not on manual trigger by default)
-- [ ] **OVRVW-04**: Weekly Focus "Generate Now" button is labeled and presented as a manual override
+- [x] **OVRVW-04**: Weekly Focus "Generate Now" button is labeled and presented as a manual override
 - [x] **OVRVW-05**: User can delete integrations from the Integration Tracker
 
 ### Health Dashboard
@@ -126,10 +126,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PROJ-02 | Phase 59 | Complete |
 | PROJ-03 | Phase 59 | Complete |
 | PROJ-04 | Phase 59 | Complete |
-| OVRVW-01 | Phase 66 | Pending |
-| OVRVW-02 | Phase 66 | Pending |
+| OVRVW-01 | Phase 66 | Complete |
+| OVRVW-02 | Phase 66 | Complete |
 | OVRVW-03 | Phase 66 | Complete |
-| OVRVW-04 | Phase 66 | Pending |
+| OVRVW-04 | Phase 66 | Complete |
 | OVRVW-05 | Phase 66 | Complete |
 | HLTH-01 | Phase 60 | Complete |
 | HLTH-02 | Phase 60 | Complete |
