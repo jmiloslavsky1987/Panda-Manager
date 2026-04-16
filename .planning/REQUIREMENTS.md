@@ -48,8 +48,8 @@
 - [ ] **DLVRY-02**: Gantt chart supports drag-edge date adjustment and manual date entry
 - [ ] **DLVRY-03**: Date changes in Gantt propagate to milestone and task records across the application
 - [ ] **DLVRY-04**: Date changes to milestones or tasks outside the Gantt propagate back to the Gantt display
-- [ ] **DLVRY-05**: Plan tab is removed; "Generate Plan" button and functionality are available in the Task Board tab
-- [ ] **DLVRY-06**: WBS structure is audited and aligned with Generate Plan output schema before reimplementation
+- [x] **DLVRY-05**: Plan tab is removed; "Generate Plan" button and functionality are available in the Task Board tab
+- [x] **DLVRY-06**: WBS structure is audited and aligned with Generate Plan output schema before reimplementation
 - [x] **DLVRY-07**: Actions tab hides ID and Source columns by default
 - [x] **DLVRY-08**: Risks tab hides ID column by default
 - [x] **DLVRY-09**: Milestones tab hides ID column by default
@@ -142,8 +142,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DLVRY-02 | Phase 68 | Pending |
 | DLVRY-03 | Phase 68 | Pending |
 | DLVRY-04 | Phase 68 | Pending |
-| DLVRY-05 | Phase 67 | Pending |
-| DLVRY-06 | Phase 67 | Pending |
+| DLVRY-05 | Phase 67 | Complete |
+| DLVRY-06 | Phase 67 | Complete |
 | DLVRY-07 | Phase 67 | Complete |
 | DLVRY-08 | Phase 67 | Complete |
 | DLVRY-09 | Phase 67 | Complete |
