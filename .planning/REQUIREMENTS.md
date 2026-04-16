@@ -57,8 +57,8 @@
 
 ### Team Tab
 
-- [ ] **TEAM-01**: User can move a stakeholder to a different section
-- [ ] **TEAM-02**: User can delete a stakeholder
+- [x] **TEAM-01**: User can move a stakeholder to a different section
+- [x] **TEAM-02**: User can delete a stakeholder
 
 ### Skills
 
@@ -148,8 +148,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DLVRY-08 | Phase 67 | Complete |
 | DLVRY-09 | Phase 67 | Complete |
 | DLVRY-10 | Phase 67 | Complete |
-| TEAM-01 | Phase 67 | Pending |
-| TEAM-02 | Phase 67 | Pending |
+| TEAM-01 | Phase 67 | Complete |
+| TEAM-02 | Phase 67 | Complete |
 | SKILL-01 | Phase 63 | Complete |
 | SKILL-02 | Phase 63 | Complete |
 | SKILL-03a | Phase 64 | Complete |

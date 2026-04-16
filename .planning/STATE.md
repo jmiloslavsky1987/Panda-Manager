@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: — Governance & Operational Maturity
-status: executing
-last_updated: "2026-04-16T14:35:26Z"
-last_activity: 2026-04-16 — Completed Phase 67 Plan 01 (Delivery Tab Cleanup — removed noisy ID/Source columns)
+status: completed
+last_updated: "2026-04-16T14:41:46.531Z"
+last_activity: 2026-04-16 — Completed Phase 67 Plan 01 (Delivery Tab Cleanup — removed noisy ID/Source columns, scoped decision form labels)
 progress:
   total_phases: 12
   completed_phases: 8
-  total_plans: 32
-  completed_plans: 32
+  total_plans: 36
+  completed_plans: 33
   percent: 100
 ---
 
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-04-13 after v7.0 milestone start)
 ## Current Position
 
 Phase: 67 of 69 (Delivery Tab Cleanup) — IN PROGRESS
-Plan: 1 of 4 complete
-Status: Phase 67 started — plan 01 complete (removed ID/Source columns, scoped decision form)
-Last activity: 2026-04-16 — Completed Phase 67 Plan 01 (Delivery Tab Cleanup — removed noisy ID/Source columns, scoped decision form labels)
+Plan: 2 of 4 complete
+Status: Phase 67 in progress — plan 02 complete (stakeholder delete & move operations)
+Last activity: 2026-04-16 — Completed Phase 67 Plan 02 (Stakeholder Delete & Move Operations — DELETE endpoint + Move/Delete buttons in modal)
 
 Progress: [██████████] 100% (32 of 32 plans complete in v7.0 milestone)
 
@@ -174,6 +174,12 @@ Progress: [██████████] 100% (32 of 32 plans complete in v7.0
 - **Generate Now button moved to header with outline style** — Always visible regardless of bullets state; secondary outline style (not primary blue) for less visual prominence
 - **Empty state shows quiet italic text** — Replaced large CTA with understated placeholder: "Weekly focus generates automatically every Monday at 6am."
 
+### Phase 67-02: Stakeholder Delete & Move Operations
+- **DELETE endpoint follows existing audit log pattern with transaction wrapping** — Transaction wraps db.delete() and audit log insert, consistent with Phase 66 patterns
+- **Move operation toggles company field between BigPanda and customer company via PATCH** — Existing PATCH handler already supports company updates; no new endpoint needed
+- **Delete button uses destructive variant with left-alignment (mr-auto)** — Pushes delete to left side of footer for visual separation from Save/Cancel
+- **No confirmation dialog on delete per Phase 66 inline delete pattern** — Follows Phase 66 inline delete pattern for consistent UX
+
 ---
-*Last updated: 2026-04-16T06:14:40Z*
+*Last updated: 2026-04-16T14:41:46Z*
 *Milestone: v7.0 — Governance & Operational Maturity*
