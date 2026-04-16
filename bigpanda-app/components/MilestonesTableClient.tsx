@@ -321,7 +321,7 @@ export function MilestonesTableClient({ milestones, artifacts, projectId }: Mile
               filteredMilestones.map((m) => {
                 const statusKey = normaliseMilestoneStatus(m.status)
                 const badgeClass = statusBadgeColors[statusKey] ?? 'bg-zinc-100 text-zinc-700'
-                const displayDate = m.target ?? m.date ?? null
+                const displayDate = m.date ?? null
                 const overdue = isOverdueMilestone(displayDate, m.status)
                 return (
                   <TableRow
@@ -363,7 +363,7 @@ export function MilestonesTableClient({ milestones, artifacts, projectId }: Mile
                     <TableCell className="text-sm text-zinc-600">
                       <DatePickerCell
                         value={displayDate}
-                        onSave={(v) => patchMilestone(m.id, { target_date: v })}
+                        onSave={(v) => patchMilestone(m.id, { date: v })}
                       />
                     </TableCell>
                     <TableCell className="text-sm text-zinc-600">
