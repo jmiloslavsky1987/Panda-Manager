@@ -62,3 +62,36 @@ export async function PATCH(
 
   return NextResponse.json({ ok: true })
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
+  const { id } = await params;
+  const numericId = parseInt(id, 10);
+  if (isNaN(numericId)) {
+    return NextResponse.json({ error: 'Invalid id' }, { status: 400 });
+  }
+
+  const [before] = await db.select().from(stakeholders).where(eq(stakeholders.id, numericId));
+  if (!before) {
+    return NextResponse.json({ error: 'Stakeholder not found' }, { status: 404 });
+  }
+
+  await db.transaction(async (tx) => {
+    await tx.delete(stakeholders).where(eq(stakeholders.id, numericId));
+    await tx.insert(auditLog).values({
+      entity_type: 'stakeholder',
+      entity_id: numericId,
+      action: 'delete',
+      actor_id: 'default',
+      before_json: before as Record<string, unknown>,
+      after_json: null,
+    });
+  });
+
+  return NextResponse.json({ ok: true });
+}
