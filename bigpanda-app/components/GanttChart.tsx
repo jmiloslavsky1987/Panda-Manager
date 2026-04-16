@@ -26,6 +26,8 @@ export interface GanttWbsRow {
   id: number
   name: string
   colorIdx: number
+  level: number
+  parentId: number | null
   track?: 'ADR' | 'Biggy'
   tasks: GanttTask[]
 }
@@ -96,6 +98,8 @@ type WbsSummaryRow = {
   wbsId: number | 'unassigned'
   label: string
   colorIdx: number       // -1 = unassigned
+  level: number
+  parentWbsId: number | null
   track?: 'ADR' | 'Biggy'
   tasks: GanttTask[]
   spanStart: Date | null
@@ -119,7 +123,7 @@ type Row = WbsSummaryRow | TaskRow | SectionHeaderRow
 // ── Pure function: build WBS summary rows with span computation ───────────────
 
 export function buildWbsRows(
-  wbsItems: Array<{ id: number; name: string; colorIdx: number; track?: 'ADR' | 'Biggy'; tasks: GanttTask[] }>,
+  wbsItems: Array<{ id: number; name: string; colorIdx: number; level: number; parentId: number | null; track?: 'ADR' | 'Biggy'; tasks: GanttTask[] }>,
   unassignedTasks: GanttTask[]
 ): WbsSummaryRow[] {
   const rows: WbsSummaryRow[] = wbsItems.map(item => {
@@ -127,14 +131,26 @@ export function buildWbsRows(
     const dates = dated.map(t => ({ s: parseDate(t.start), e: parseDate(t.end) }))
     const spanStart = dates.length ? new Date(Math.min(...dates.map(d => d.s.getTime()))) : null
     const spanEnd = dates.length ? new Date(Math.max(...dates.map(d => d.e.getTime()))) : null
-    return { kind: 'wbs', wbsId: item.id, label: item.name, colorIdx: item.colorIdx, track: item.track, tasks: item.tasks, spanStart, spanEnd }
+    return { kind: 'wbs', wbsId: item.id, label: item.name, colorIdx: item.colorIdx, level: item.level, parentWbsId: item.parentId, track: item.track, tasks: item.tasks, spanStart, spanEnd }
   })
+  // Propagate spans bottom-up so parent rows reflect descendant task dates
+  const rowById = new Map(rows.map(r => [r.wbsId, r]))
+  const maxLevel = rows.reduce((m, r) => Math.max(m, r.level), 1)
+  for (let l = maxLevel; l >= 1; l--) {
+    rows.filter(r => r.level === l && r.parentWbsId !== null).forEach(row => {
+      if (!row.spanStart && !row.spanEnd) return
+      const parent = rowById.get(row.parentWbsId!)
+      if (!parent) return
+      if (row.spanStart) parent.spanStart = parent.spanStart ? new Date(Math.min(parent.spanStart.getTime(), row.spanStart.getTime())) : row.spanStart
+      if (row.spanEnd)   parent.spanEnd   = parent.spanEnd   ? new Date(Math.max(parent.spanEnd.getTime(),   row.spanEnd.getTime()))   : row.spanEnd
+    })
+  }
   // Unassigned group
   const unassignedDates = unassignedTasks.filter(t => t.start && t.end).map(t => ({ s: parseDate(t.start), e: parseDate(t.end) }))
   const unassignedSpanStart = unassignedDates.length ? new Date(Math.min(...unassignedDates.map(d => d.s.getTime()))) : null
   const unassignedSpanEnd = unassignedDates.length ? new Date(Math.max(...unassignedDates.map(d => d.e.getTime()))) : null
   if (unassignedTasks.length > 0) {
-    rows.push({ kind: 'wbs', wbsId: 'unassigned', label: 'Unassigned', colorIdx: -1, tasks: unassignedTasks, spanStart: unassignedSpanStart, spanEnd: unassignedSpanEnd })
+    rows.push({ kind: 'wbs', wbsId: 'unassigned', label: 'Unassigned', colorIdx: -1, level: 1, parentWbsId: null, tasks: unassignedTasks, spanStart: unassignedSpanStart, spanEnd: unassignedSpanEnd })
   }
   return rows
 }
@@ -190,26 +206,51 @@ export default function GanttChart({
   const rows = useMemo((): Row[] => {
     const result: Row[] = []
     let currentTrack: string | undefined
-    wbsSummaryRows.forEach((summary, gi) => {
-      if (summary.track && summary.track !== currentTrack) {
-        result.push({ kind: 'section-header', label: summary.track })
-        currentTrack = summary.track
+    let wbsIdx = 0
+
+    // Build parent → ordered children map for DFS
+    const childrenOf = new Map<string, WbsSummaryRow[]>()
+    wbsSummaryRows.forEach(row => {
+      const key = row.wbsId !== 'unassigned' && row.parentWbsId !== null
+        ? String(row.parentWbsId)
+        : '__root__'
+      if (!childrenOf.has(key)) childrenOf.set(key, [])
+      childrenOf.get(key)!.push(row)
+    })
+
+    function visitRow(row: WbsSummaryRow): void {
+      // Section header at L1 track transitions only
+      if (row.parentWbsId === null && row.wbsId !== 'unassigned' && row.track && row.track !== currentTrack) {
+        result.push({ kind: 'section-header', label: row.track })
+        currentTrack = row.track
       }
-      result.push(summary)
-      if (expanded.has(String(summary.wbsId))) {
-        summary.tasks.forEach((t, ti) => {
-          result.push({
-            kind: 'task',
-            task: t,
-            wbsId: summary.wbsId,
-            colorIdx: summary.colorIdx,
-            rowNum: `${gi + 1}.${ti + 1}`,
-            start: parseDate(t.start),
-            end: parseDate(t.end),
-          })
+      const gi = wbsIdx++
+      result.push(row)
+      if (!expanded.has(String(row.wbsId))) return
+
+      const children = childrenOf.get(String(row.wbsId)) ?? []
+      // Show WBS children (structural hierarchy)
+      children.forEach(child => visitRow(child))
+      // Show direct tasks on this row below any WBS children
+      row.tasks.forEach((t, ti) => {
+        result.push({ kind: 'task', task: t, wbsId: row.wbsId, colorIdx: row.colorIdx, rowNum: `${gi + 1}.${ti + 1}`, start: parseDate(t.start), end: parseDate(t.end) })
+      })
+    }
+
+    // DFS from root rows (L1, no parent)
+    const rootRows = childrenOf.get('__root__') ?? []
+    rootRows.filter(r => r.wbsId !== 'unassigned').forEach(row => visitRow(row))
+
+    // Unassigned always at bottom
+    const unassigned = wbsSummaryRows.find(r => r.wbsId === 'unassigned')
+    if (unassigned) {
+      result.push(unassigned)
+      if (expanded.has('unassigned')) {
+        unassigned.tasks.forEach((t, ti) => {
+          result.push({ kind: 'task', task: t, wbsId: 'unassigned', colorIdx: -1, rowNum: `U.${ti + 1}`, start: parseDate(t.start), end: parseDate(t.end) })
         })
       }
-    })
+    }
     return result
   }, [wbsSummaryRows, expanded])
 
@@ -658,7 +699,9 @@ export default function GanttChart({
                   style={{ height: ROW_H, background: '#f9f9f9' }}
                   onClick={() => setExpanded(p => { const n = new Set(p); isExp ? n.delete(String(row.wbsId)) : n.add(String(row.wbsId)); return n })}>
                   <div className="w-7 pl-2 shrink-0 text-[11px]" style={{ color: color.bar }}>{isExp ? '▾' : '▸'}</div>
-                  <div className="flex-1 pl-1 pr-1 truncate text-sm font-semibold" style={{ color: color.text }}
+                  <div
+                    className="flex-1 pr-1 truncate text-sm font-semibold"
+                    style={{ color: color.text, paddingLeft: 4 + (row.level - 1) * 14 }}
                     onMouseEnter={e => { const r = e.currentTarget.getBoundingClientRect(); setLabelTip({ text: row.label, x: r.left, y: r.bottom + 6 }) }}
                     onMouseLeave={() => setLabelTip(null)}>
                     {row.label}
