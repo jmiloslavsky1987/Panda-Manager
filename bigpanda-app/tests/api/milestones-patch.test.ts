@@ -125,3 +125,85 @@ describe('PATCH /api/milestones/[id] — enum validation', () => {
     expect(response.status).toBe(400);
   });
 });
+
+describe('PATCH /api/milestones/[id] — date field (DLVRY-03)', () => {
+  let mockUpdate: any;
+  let mockSet: any;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.resetModules();
+    mockRequireSession.mockResolvedValue({
+      session: { user: { id: '1' } },
+      redirectResponse: null
+    });
+
+    // Setup mock to capture what fields are passed to update().set()
+    mockSet = vi.fn().mockReturnValue({
+      where: vi.fn().mockResolvedValue(undefined)
+    });
+    mockUpdate = vi.fn().mockReturnValue({
+      set: mockSet
+    });
+
+    // Mock db.transaction to use our spies
+    vi.doMock('@/db', () => ({
+      db: {
+        update: mockUpdate,
+        select: vi.fn().mockReturnValue({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue([{ id: 1, name: 'Test Milestone', status: 'not_started' }])
+          })
+        }),
+        transaction: vi.fn().mockImplementation(async (callback) => {
+          return callback({
+            update: mockUpdate,
+            insert: vi.fn().mockReturnValue({
+              values: vi.fn().mockResolvedValue(undefined)
+            })
+          });
+        })
+      }
+    }));
+  });
+
+  it('PATCH with date ISO string persists date field', async () => {
+    const { PATCH } = await import('@/app/api/milestones/[id]/route');
+    const req = new NextRequest('http://localhost:3000/api/milestones/1', {
+      method: 'PATCH',
+      body: JSON.stringify({ date: '2026-06-30' })
+    });
+    const response = await PATCH(req, { params: Promise.resolve({ id: '1' }) });
+    const json = await response.json();
+
+    // Response should be 200
+    expect(response.status).toBe(200);
+    expect(json).toEqual({ ok: true });
+
+    // RED: date field should be in the update call, but it's not (Zod strips it)
+    // After Plan 02 adds date to patchSchema, this will pass (GREEN)
+    expect(mockSet).toHaveBeenCalledWith(
+      expect.objectContaining({ date: '2026-06-30' })
+    );
+  });
+
+  it('PATCH with date=null (clear date) persists null', async () => {
+    const { PATCH } = await import('@/app/api/milestones/[id]/route');
+    const req = new NextRequest('http://localhost:3000/api/milestones/1', {
+      method: 'PATCH',
+      body: JSON.stringify({ date: null })
+    });
+    const response = await PATCH(req, { params: Promise.resolve({ id: '1' }) });
+    const json = await response.json();
+
+    // Response should be 200
+    expect(response.status).toBe(200);
+    expect(json).toEqual({ ok: true });
+
+    // RED: date field should be in the update call, but it's not (Zod strips it)
+    // After Plan 02 adds date to patchSchema, this will pass (GREEN)
+    expect(mockSet).toHaveBeenCalledWith(
+      expect.objectContaining({ date: null })
+    );
+  });
+});
