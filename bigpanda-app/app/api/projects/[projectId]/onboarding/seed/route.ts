@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/db'
 import { onboardingPhases, onboardingSteps } from '@/db/schema'
-import { eq, and, asc } from 'drizzle-orm'
+import { eq, and, asc, inArray } from 'drizzle-orm'
 import { sql } from 'drizzle-orm'
 import { requireProjectRole } from '@/lib/auth-server'
 import { ADR_ONBOARDING_CONFIG, BIGGY_ONBOARDING_CONFIG, PhaseConfig } from '@/lib/onboarding-config'
@@ -10,7 +10,8 @@ import { ADR_ONBOARDING_CONFIG, BIGGY_ONBOARDING_CONFIG, PhaseConfig } from '@/l
  * POST /api/projects/[projectId]/onboarding/seed
  *
  * Idempotently seeds standard phases + steps for a project.
- * Only creates what doesn't already exist — safe to call multiple times.
+ * Also cleans up cross-track mis-seeded steps (steps whose track doesn't
+ * match their parent phase's track) — caused by a missing track filter bug.
  * Returns the full updated phase data (same shape as GET /onboarding).
  */
 export async function POST(
@@ -30,16 +31,43 @@ export async function POST(
     await db.transaction(async (tx) => {
       await tx.execute(sql.raw(`SET LOCAL app.current_project_id = ${numericId}`))
 
+      // ── Cleanup: remove cross-track mis-seeded steps ──────────────────
+      // Find all phases for this project so we can check track mismatches
+      const allPhases = await tx
+        .select({ id: onboardingPhases.id, track: onboardingPhases.track })
+        .from(onboardingPhases)
+        .where(eq(onboardingPhases.project_id, numericId))
+
+      for (const phase of allPhases) {
+        // Delete steps that don't belong to this phase's track
+        const badSteps = await tx
+          .select({ id: onboardingSteps.id })
+          .from(onboardingSteps)
+          .where(
+            and(
+              eq(onboardingSteps.phase_id, phase.id),
+              sql`${onboardingSteps.track} != ${phase.track}`
+            )
+          )
+        if (badSteps.length > 0) {
+          await tx
+            .delete(onboardingSteps)
+            .where(inArray(onboardingSteps.id, badSteps.map(s => s.id)))
+        }
+      }
+
+      // ── Seed phases + steps, filtering by track ───────────────────────
       async function seedTrack(config: PhaseConfig[], track: string) {
         for (const phaseConfig of config) {
-          // Find or create the phase
+          // Find or create the phase — MUST filter by track to avoid cross-track match
           let [phase] = await tx
             .select()
             .from(onboardingPhases)
             .where(
               and(
                 eq(onboardingPhases.project_id, numericId),
-                eq(onboardingPhases.name, phaseConfig.name)
+                eq(onboardingPhases.name, phaseConfig.name),
+                eq(onboardingPhases.track, track)
               )
             )
 
@@ -55,7 +83,7 @@ export async function POST(
               .returning()
           }
 
-          // Seed missing steps
+          // Seed missing steps (check by name under this specific phase)
           const existingSteps = await tx
             .select({ name: onboardingSteps.name })
             .from(onboardingSteps)
