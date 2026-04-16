@@ -1,6 +1,7 @@
-import { getTasksForProject, getMilestonesForProject } from '@/lib/queries'
+import { getTasksForProject, getMilestonesForProject, getWbsItems, getWbsTaskAssignments } from '@/lib/queries'
 import GanttChart from '@/components/GanttChart'
-import type { GanttTask, GanttMilestone } from '@/components/GanttChart'
+import type { GanttTask, GanttMilestone, GanttWbsRow } from '@/components/GanttChart'
+import type { WbsItem } from '@/db/schema'
 
 function toGanttDate(dateStr: string | null, fallback: string): string {
   if (!dateStr) return fallback
@@ -15,47 +16,54 @@ function addDays(dateStr: string, days: number): string {
   return d.toISOString().split('T')[0]
 }
 
-function mapTasksToGantt(
+function mapDataToWbsRows(
+  allWbsItems: WbsItem[],
   tasks: Awaited<ReturnType<typeof getTasksForProject>>,
+  assignments: Array<{ wbs_item_id: number; task_id: number }>,
   milestoneList: GanttMilestone[]
-): GanttTask[] {
+): GanttWbsRow[] {
+  // Filter to level-1 items only (summary rows)
+  const level1Items = allWbsItems.filter(item => item.level === 1)
+
+  // Build task-id → wbs_item_id map
+  const taskToWbs = new Map<number, number>()
+  assignments.forEach(a => taskToWbs.set(a.task_id, a.wbs_item_id))
+
+  // Build wbs_item_id → tasks[] map
+  const wbsToTasks = new Map<number, typeof tasks>()
+  level1Items.forEach(item => wbsToTasks.set(item.id, []))
+
   const today = new Date().toISOString().split('T')[0]
+
+  tasks.forEach(task => {
+    const wbsId = taskToWbs.get(task.id)
+    if (wbsId && wbsToTasks.has(wbsId)) {
+      wbsToTasks.get(wbsId)!.push(task)
+    }
+    // tasks not in any wbs fall into unassigned (handled in GanttChart)
+  })
+
+  // Build milestone index for custom_class (keep priority coloring)
   const milestoneIndexMap = new Map(milestoneList.map((m, i) => [m.id, i]))
 
-  return tasks
-    .filter(task => task.due || task.start_date)  // only tasks with at least one date
-    .map(task => {
-      const start = toGanttDate(task.start_date, toGanttDate(task.due, today))
-      const end = toGanttDate(task.due, addDays(start, 7))
-      // end must be >= start
-      const safeEnd = end < start ? addDays(start, 1) : end
+  function toGanttTask(task: (typeof tasks)[0]): GanttTask | null {
+    if (!task.due && !task.start_date) return null  // skip undated tasks
+    const start = toGanttDate(task.start_date, toGanttDate(task.due, today))
+    const end = toGanttDate(task.due, addDays(start, 7))
+    const safeEnd = end < start ? addDays(start, 1) : end
+    const progress = task.status === 'done' ? 100 : task.status === 'in_progress' ? 50 : task.status === 'blocked' ? 10 : 0
+    const dependencies = task.blocked_by ? String(task.blocked_by) : ''
+    const msIndex = task.milestone_id ? milestoneIndexMap.get(task.milestone_id) : undefined
+    const msClass = msIndex !== undefined ? `gantt-ms-${task.milestone_id} gantt-milestone-${msIndex % 6}` : ''
+    const priorityClass = task.priority === 'high' ? 'gantt-high-priority' : task.priority === 'low' ? 'gantt-low-priority' : ''
+    return { id: String(task.id), name: task.title, start, end: safeEnd, progress, dependencies, custom_class: [msClass, priorityClass].filter(Boolean).join(' ') || undefined }
+  }
 
-      // Map status to progress
-      const progress =
-        task.status === 'done' ? 100 :
-        task.status === 'in_progress' ? 50 :
-        task.status === 'blocked' ? 10 : 0
-
-      // dependencies: frappe-gantt expects comma-separated string of task IDs as strings
-      // blocked_by is a single integer FK — convert to string
-      const dependencies = task.blocked_by ? String(task.blocked_by) : ''
-
-      // custom_class: encode milestone + priority info
-      const msIndex = task.milestone_id ? milestoneIndexMap.get(task.milestone_id) : undefined
-      const msClass = msIndex !== undefined ? `gantt-ms-${task.milestone_id} gantt-milestone-${msIndex % 6}` : ''
-      const priorityClass = task.priority === 'high' ? 'gantt-high-priority' : task.priority === 'low' ? 'gantt-low-priority' : ''
-      const customClass = [msClass, priorityClass].filter(Boolean).join(' ')
-
-      return {
-        id: String(task.id),
-        name: task.title,
-        start,
-        end: safeEnd,
-        progress,
-        dependencies,
-        custom_class: customClass || undefined,
-      }
-    })
+  return level1Items.map((item, idx) => {
+    const rawTasks = wbsToTasks.get(item.id) ?? []
+    const ganttTasks = rawTasks.map(toGanttTask).filter((t): t is GanttTask => t !== null)
+    return { id: item.id, name: item.name, colorIdx: idx % 6, tasks: ganttTasks }
+  })
 }
 
 export default async function GanttPage({
@@ -66,14 +74,22 @@ export default async function GanttPage({
   const { id } = await params
   const projectId = parseInt(id)
 
-  let tasks: Awaited<ReturnType<typeof getTasksForProject>> = []
+  let wbsRows: GanttWbsRow[] = []
+  let unassignedTasks: GanttTask[] = []
   let milestones: GanttMilestone[] = []
+
   try {
-    const [tasksData, milestonesData] = await Promise.all([
+    const [adrWbs, biggyWbs, tasks, assignments, milestonesData] = await Promise.all([
+      getWbsItems(projectId, 'ADR'),
+      getWbsItems(projectId, 'Biggy'),
       getTasksForProject(projectId),
+      getWbsTaskAssignments(projectId),
       getMilestonesForProject(projectId),
     ])
-    tasks = tasksData
+
+    // Combine both tracks into single WBS list
+    const allWbsItems = [...adrWbs, ...biggyWbs]
+
     // Map Milestone to GanttMilestone (only the fields GanttChart needs)
     milestones = milestonesData.map(m => ({
       id: m.id,
@@ -81,20 +97,52 @@ export default async function GanttPage({
       date: m.date,
       status: m.status,
     }))
+
+    // Build WBS rows with assigned tasks
+    wbsRows = mapDataToWbsRows(allWbsItems, tasks, assignments, milestones)
+
+    // Compute unassigned tasks
+    const today = new Date().toISOString().split('T')[0]
+    const assignedTaskIds = new Set(assignments.map(a => a.task_id))
+    const milestoneIndexMap = new Map(milestones.map((m, i) => [m.id, i]))
+
+    function toGanttTask(task: (typeof tasks)[0]): GanttTask | null {
+      if (!task.due && !task.start_date) return null
+      const start = toGanttDate(task.start_date, toGanttDate(task.due, today))
+      const end = toGanttDate(task.due, addDays(start, 7))
+      const safeEnd = end < start ? addDays(start, 1) : end
+      const progress = task.status === 'done' ? 100 : task.status === 'in_progress' ? 50 : task.status === 'blocked' ? 10 : 0
+      const dependencies = task.blocked_by ? String(task.blocked_by) : ''
+      const msIndex = task.milestone_id ? milestoneIndexMap.get(task.milestone_id) : undefined
+      const msClass = msIndex !== undefined ? `gantt-ms-${task.milestone_id} gantt-milestone-${msIndex % 6}` : ''
+      const priorityClass = task.priority === 'high' ? 'gantt-high-priority' : task.priority === 'low' ? 'gantt-low-priority' : ''
+      return { id: String(task.id), name: task.title, start, end: safeEnd, progress, dependencies, custom_class: [msClass, priorityClass].filter(Boolean).join(' ') || undefined }
+    }
+
+    unassignedTasks = tasks
+      .filter(t => !assignedTaskIds.has(t.id) && (t.due || t.start_date))
+      .map(toGanttTask)
+      .filter((t): t is GanttTask => t !== null)
   } catch {
     // DB not available — render empty gantt
   }
-  const ganttTasks = mapTasksToGantt(tasks, milestones)
+
+  const totalTaskCount = wbsRows.reduce((sum, r) => sum + r.tasks.length, 0) + unassignedTasks.length
 
   return (
     <div className="p-4">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold">Gantt Timeline</h2>
-        <p className="text-xs text-zinc-400">{tasks.length} tasks ({ganttTasks.length} with dates)</p>
+        <p className="text-xs text-zinc-400">{totalTaskCount} tasks · {wbsRows.length} phases</p>
       </div>
       {/* gantt-container wraps GanttChart (ssr:false) — div is server-rendered so test can find it */}
       <div data-testid="gantt-container" className="overflow-x-auto">
-        <GanttChart tasks={ganttTasks} viewMode="Month" milestones={milestones} />
+        <GanttChart
+          wbsRows={wbsRows}
+          unassignedTasks={unassignedTasks}
+          viewMode="Month"
+          milestones={milestones}
+        />
       </div>
     </div>
   )

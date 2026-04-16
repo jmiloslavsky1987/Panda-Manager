@@ -21,10 +21,18 @@ export interface GanttMilestone {
   status: string | null
 }
 
-interface GanttChartProps {
+export interface GanttWbsRow {
+  id: number
+  name: string
+  colorIdx: number
   tasks: GanttTask[]
-  viewMode?: ViewMode
+}
+
+interface GanttChartProps {
+  wbsRows: GanttWbsRow[]
+  unassignedTasks?: GanttTask[]
   milestones?: GanttMilestone[]
+  viewMode?: ViewMode
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -43,7 +51,7 @@ const PX_PER_DAY: Record<ViewMode, number> = {
   'Quarter Year': 2,
 }
 
-// 6 cycling colours — one per milestone group
+// 6 cycling colours — one per WBS item
 const COLORS = [
   { bar: '#10b981', light: '#d1fae5', text: '#065f46' },  // emerald
   { bar: '#6366f1', light: '#e0e7ff', text: '#3730a3' },  // indigo
@@ -81,34 +89,59 @@ function fmtDuration(start: Date, end: Date): string {
 
 // ── Row model ─────────────────────────────────────────────────────────────────
 
-type MilestoneRow = {
-  kind: 'milestone'
-  key: string
+type WbsSummaryRow = {
+  kind: 'wbs'
+  wbsId: number | 'unassigned'
   label: string
   colorIdx: number       // -1 = unassigned
   tasks: GanttTask[]
-  spanStart: Date
-  spanEnd: Date
+  spanStart: Date | null
+  spanEnd: Date | null
 }
 type TaskRow = {
   kind: 'task'
   task: GanttTask
+  wbsId: number | 'unassigned'
   colorIdx: number
   rowNum: string
   start: Date
   end: Date
 }
-type Row = MilestoneRow | TaskRow
+type Row = WbsSummaryRow | TaskRow
+
+// ── Pure function: build WBS summary rows with span computation ───────────────
+
+export function buildWbsRows(
+  wbsItems: Array<{ id: number; name: string; colorIdx: number; tasks: GanttTask[] }>,
+  unassignedTasks: GanttTask[]
+): WbsSummaryRow[] {
+  const rows: WbsSummaryRow[] = wbsItems.map(item => {
+    const dated = item.tasks.filter(t => t.start && t.end)
+    const dates = dated.map(t => ({ s: parseDate(t.start), e: parseDate(t.end) }))
+    const spanStart = dates.length ? new Date(Math.min(...dates.map(d => d.s.getTime()))) : null
+    const spanEnd = dates.length ? new Date(Math.max(...dates.map(d => d.e.getTime()))) : null
+    return { kind: 'wbs', wbsId: item.id, label: item.name, colorIdx: item.colorIdx, tasks: item.tasks, spanStart, spanEnd }
+  })
+  // Unassigned group
+  const unassignedDates = unassignedTasks.filter(t => t.start && t.end).map(t => ({ s: parseDate(t.start), e: parseDate(t.end) }))
+  const unassignedSpanStart = unassignedDates.length ? new Date(Math.min(...unassignedDates.map(d => d.s.getTime()))) : null
+  const unassignedSpanEnd = unassignedDates.length ? new Date(Math.max(...unassignedDates.map(d => d.e.getTime()))) : null
+  if (unassignedTasks.length > 0) {
+    rows.push({ kind: 'wbs', wbsId: 'unassigned', label: 'Unassigned', colorIdx: -1, tasks: unassignedTasks, spanStart: unassignedSpanStart, spanEnd: unassignedSpanEnd })
+  }
+  return rows
+}
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function GanttChart({
-  tasks,
+  wbsRows,
+  unassignedTasks = [],
   viewMode: initVM = 'Month',
   milestones = [],
 }: GanttChartProps) {
   const [viewMode, setViewMode] = useState<ViewMode>(initVM)
-  // Start with all milestone groups collapsed
+  // Start with all WBS groups collapsed
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set())
   const [popup, setPopup] = useState<{ name: string; date: string; status: string | null } | null>(null)
   const [dragOverride, setDragOverride] = useState<Map<string, { start: Date; end: Date }>>(new Map())
@@ -116,47 +149,25 @@ export default function GanttChart({
   const [containerWidth, setContainerWidth] = useState(1200)
   const [labelTip, setLabelTip] = useState<{ text: string; x: number; y: number } | null>(null)
 
-  // ── Milestone → task grouping ─────────────────────────────────────────────
+  // ── Build WBS summary rows ────────────────────────────────────────────────
 
-  const milestoneGroups = useMemo(() => {
-    const map = new Map<string, GanttTask[]>()
-    milestones.forEach(m => map.set(`ms-${m.id}`, []))
-    map.set('unassigned', [])
-    tasks.forEach(t => {
-      const m = t.custom_class?.match(/gantt-ms-(\d+)/)
-      if (m) {
-        const key = `ms-${m[1]}`
-        if (!map.has(key)) map.set(key, [])
-        map.get(key)!.push(t)
-      } else {
-        map.get('unassigned')!.push(t)
-      }
-    })
-    return map
-  }, [tasks, milestones])
+  const wbsSummaryRows = useMemo(() =>
+    buildWbsRows(wbsRows, unassignedTasks),
+  [wbsRows, unassignedTasks])
 
   // ── Build ordered row list ────────────────────────────────────────────────
 
   const rows = useMemo((): Row[] => {
     const result: Row[] = []
-    const groups = [
-      ...milestones.map((m, i) => ({ key: `ms-${m.id}`, label: m.name, colorIdx: i % COLORS.length, isUnassigned: false })),
-      { key: 'unassigned', label: 'Unassigned', colorIdx: -1, isUnassigned: true },
-    ]
-    groups.forEach((g, gi) => {
-      const grpTasks = milestoneGroups.get(g.key) ?? []
-      const dates = grpTasks.map(t => ({ s: parseDate(t.start), e: parseDate(t.end) }))
-      const spanStart = dates.length ? new Date(Math.min(...dates.map(d => d.s.getTime()))) : new Date()
-      const spanEnd   = dates.length ? new Date(Math.max(...dates.map(d => d.e.getTime()))) : new Date()
-
-      result.push({ kind: 'milestone', key: g.key, label: g.label, colorIdx: g.colorIdx, tasks: grpTasks, spanStart, spanEnd })
-
-      if (expanded.has(g.key)) {
-        grpTasks.forEach((t, ti) => {
+    wbsSummaryRows.forEach((summary, gi) => {
+      result.push(summary)
+      if (expanded.has(String(summary.wbsId))) {
+        summary.tasks.forEach((t, ti) => {
           result.push({
             kind: 'task',
             task: t,
-            colorIdx: g.colorIdx,
+            wbsId: summary.wbsId,
+            colorIdx: summary.colorIdx,
             rowNum: `${gi + 1}.${ti + 1}`,
             start: parseDate(t.start),
             end: parseDate(t.end),
@@ -165,13 +176,14 @@ export default function GanttChart({
       }
     })
     return result
-  }, [milestones, milestoneGroups, expanded])
+  }, [wbsSummaryRows, expanded])
 
   // ── Timeline bounds ───────────────────────────────────────────────────────
 
   const { timelineStart, totalDays } = useMemo(() => {
+    const allTasks = [...wbsRows.flatMap(r => r.tasks), ...unassignedTasks]
     const allDates: Date[] = [
-      ...tasks.flatMap(t => [parseDate(t.start), parseDate(t.end)]),
+      ...allTasks.flatMap(t => [parseDate(t.start), parseDate(t.end)]),
       ...milestones.filter(m => m.date && /^\d{4}-\d{2}-\d{2}/.test(m.date!)).map(m => parseDate(m.date!)),
     ]
     if (!allDates.length) {
@@ -182,7 +194,7 @@ export default function GanttChart({
     const start = addDays(new Date(minT), -14)
     const end   = addDays(new Date(maxT), 21)
     return { timelineStart: start, totalDays: Math.max(60, daysBetween(start, end)) }
-  }, [tasks, milestones])
+  }, [wbsRows, unassignedTasks, milestones])
 
   // Auto-scale: ensure timeline always fills the container — prevents tiny chart in Quarter/Month views
   const pxPerDay = useMemo(() => {
@@ -361,7 +373,8 @@ export default function GanttChart({
 
   // ── Empty state ───────────────────────────────────────────────────────────
 
-  if (tasks.length === 0) {
+  const totalTaskCount = wbsRows.reduce((sum, r) => sum + r.tasks.length, 0) + unassignedTasks.length
+  if (totalTaskCount === 0 && wbsRows.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-48 text-zinc-400 text-sm gap-1">
         <span>No tasks with dates to display.</span>
@@ -372,12 +385,14 @@ export default function GanttChart({
 
   // ── Render ────────────────────────────────────────────────────────────────
 
+  const allTaskCount = wbsRows.reduce((sum, r) => sum + r.tasks.length, 0) + unassignedTasks.length
+
   return (
     <div className="flex flex-col border border-zinc-200 rounded-lg overflow-hidden bg-white select-none">
 
       {/* Toolbar */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200 bg-zinc-50 shrink-0">
-        <span className="text-xs text-zinc-500">{tasks.length} tasks · {milestones.length} milestones</span>
+        <span className="text-xs text-zinc-500">{allTaskCount} tasks · {wbsRows.length} phases · {milestones.length} milestones</span>
         <div className="flex rounded border border-zinc-200 overflow-hidden">
           {VIEW_MODES.map(m => (
             <button key={m} onClick={() => setViewMode(m)}
@@ -415,13 +430,13 @@ export default function GanttChart({
           {rows.map((row, i) => {
             const color = row.colorIdx === -1 ? UNASSIGNED_COLOR : COLORS[row.colorIdx]
 
-            if (row.kind === 'milestone') {
-              const isExp = expanded.has(row.key)
+            if (row.kind === 'wbs') {
+              const isExp = expanded.has(String(row.wbsId))
               return (
-                <div key={`lms-${row.key}-${i}`}
+                <div key={`lwbs-${row.wbsId}-${i}`}
                   className="flex items-center shrink-0 border-b border-zinc-100 cursor-pointer hover:bg-zinc-100/60 font-medium"
                   style={{ height: ROW_H, background: '#f9f9f9' }}
-                  onClick={() => setExpanded(p => { const n = new Set(p); isExp ? n.delete(row.key) : n.add(row.key); return n })}>
+                  onClick={() => setExpanded(p => { const n = new Set(p); isExp ? n.delete(String(row.wbsId)) : n.add(String(row.wbsId)); return n })}>
                   <div className="w-7 pl-2 shrink-0 text-[11px]" style={{ color: color.bar }}>{isExp ? '▾' : '▸'}</div>
                   <div className="flex-1 pl-1 pr-1 truncate text-sm font-semibold" style={{ color: color.text }}
                     onMouseEnter={e => { const r = e.currentTarget.getBoundingClientRect(); setLabelTip({ text: row.label, x: r.left, y: r.bottom + 6 }) }}
@@ -429,13 +444,13 @@ export default function GanttChart({
                     {row.label}
                   </div>
                   <div className="w-[52px] text-right shrink-0 pr-1 text-xs text-zinc-400">
-                    {row.tasks.length ? fmtShort(row.spanStart) : '—'}
+                    {row.spanStart ? fmtShort(row.spanStart) : '—'}
                   </div>
                   <div className="w-[52px] text-right shrink-0 pr-1 text-xs text-zinc-400">
-                    {row.tasks.length ? fmtShort(row.spanEnd) : '—'}
+                    {row.spanEnd ? fmtShort(row.spanEnd) : '—'}
                   </div>
                   <div className="w-10 text-right shrink-0 pr-3 text-xs text-zinc-400">
-                    {row.tasks.length ? fmtDuration(row.spanStart, row.spanEnd) : '—'}
+                    {row.spanStart && row.spanEnd ? fmtDuration(row.spanStart, row.spanEnd) : '—'}
                   </div>
                 </div>
               )
@@ -510,18 +525,33 @@ export default function GanttChart({
               {rows.map((row, i) => {
                 const color = row.colorIdx === -1 ? UNASSIGNED_COLOR : COLORS[row.colorIdx]
 
-                if (row.kind === 'milestone') {
-                  const left  = row.tasks.length ? barLeft(row.spanStart) : 0
-                  const width = row.tasks.length ? barWidth(row.spanStart, row.spanEnd) : 0
-                  return (
-                    <div key={`rms-${row.key}-${i}`} className="relative border-b border-zinc-100"
-                      style={{ height: ROW_H, background: '#fafafa' }}>
-                      {row.tasks.length > 0 && (
+                if (row.kind === 'wbs') {
+                  // WBS summary row with placeholder or span bar
+                  if (row.spanStart === null || row.spanEnd === null) {
+                    // Placeholder bar for empty WBS rows
+                    const placeholderStart = addDays(timelineStart, 7)
+                    const placeholderEnd = addDays(placeholderStart, 28)
+                    const left  = barLeft(placeholderStart)
+                    const width = barWidth(placeholderStart, placeholderEnd)
+                    return (
+                      <div key={`rwbs-${row.wbsId}-${i}`} className="relative border-b border-zinc-100"
+                        style={{ height: ROW_H, background: '#fafafa' }}>
+                        <div className="absolute rounded pointer-events-none"
+                          style={{ left, width, top: '50%', transform: 'translateY(-50%)', height: 8, background: color.bar, opacity: 0.3, border: '1px dashed rgba(0,0,0,0.2)' }} />
+                      </div>
+                    )
+                  } else {
+                    // Span bar showing actual task range
+                    const left  = barLeft(row.spanStart)
+                    const width = barWidth(row.spanStart, row.spanEnd)
+                    return (
+                      <div key={`rwbs-${row.wbsId}-${i}`} className="relative border-b border-zinc-100"
+                        style={{ height: ROW_H, background: '#fafafa' }}>
                         <div className="absolute rounded pointer-events-none"
                           style={{ left, width, top: '50%', transform: 'translateY(-50%)', height: 8, background: color.bar, opacity: 0.25 }} />
-                      )}
-                    </div>
-                  )
+                      </div>
+                    )
+                  }
                 }
 
                 // task row
@@ -561,7 +591,7 @@ export default function GanttChart({
         </div>
       </div>
 
-      {/* Full-name tooltip for truncated milestone labels */}
+      {/* Full-name tooltip for truncated WBS labels */}
       {labelTip && (
         <div className="fixed z-50 bg-zinc-800 text-white text-xs rounded px-2.5 py-1.5 shadow-lg max-w-xs pointer-events-none"
           style={{ left: labelTip.x, top: labelTip.y }}>
