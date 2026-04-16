@@ -217,5 +217,24 @@ export async function POST(req: NextRequest) {
     return inserted
   })
 
+  // Auto-register weekly-focus repeatable job for new project (OVRVW-03)
+  try {
+    const { Queue } = await import('bullmq');
+    const { createApiRedisConnection } = await import('@/worker/connection');
+    const queue = new Queue('scheduled-jobs', { connection: createApiRedisConnection() as any });
+    await queue.upsertJobScheduler(
+      `weekly-focus-project-${result.id}`,
+      { pattern: '0 6 * * 1' },  // Every Monday at 6am UTC
+      {
+        name: 'weekly-focus',
+        data: { triggeredBy: 'scheduled', projectId: result.id },
+        opts: { removeOnComplete: 100, removeOnFail: 50 },
+      }
+    );
+    await queue.close();
+  } catch (queueErr) {
+    console.error('[api/projects POST] Weekly-focus BullMQ registration failed (non-fatal):', queueErr);
+  }
+
   return NextResponse.json({ project: result }, { status: 201 })
 }
