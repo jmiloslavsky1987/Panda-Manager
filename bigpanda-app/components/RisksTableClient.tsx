@@ -307,7 +307,6 @@ export function RisksTableClient({ risks, artifacts, projectId }: RisksTableClie
                   onCheckedChange={toggleSelectAll}
                 />
               </TableHead>
-              <TableHead className="w-[130px]">ID</TableHead>
               <TableHead>Description</TableHead>
               <TableHead className="w-[110px]">Severity</TableHead>
               <TableHead className="w-[120px]">Owner</TableHead>
@@ -318,7 +317,7 @@ export function RisksTableClient({ risks, artifacts, projectId }: RisksTableClie
           <TableBody>
             {filteredRisks.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-zinc-400 py-8">
+                <TableCell colSpan={6} className="text-center text-zinc-400 py-8">
                   No risks found.
                 </TableCell>
               </TableRow>
@@ -339,7 +338,6 @@ export function RisksTableClient({ risks, artifacts, projectId }: RisksTableClie
                         onCheckedChange={() => toggleSelection(risk.id)}
                       />
                     </TableCell>
-                    <TableCell className="font-mono text-xs text-zinc-500">{risk.external_id}</TableCell>
                     <TableCell className="text-sm">
                       <div className="space-y-1">
                         <span>{risk.description.length > 100

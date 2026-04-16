@@ -8,7 +8,6 @@ import { InlineSelectCell } from '@/components/InlineSelectCell'
 import { DatePickerCell } from '@/components/DatePickerCell'
 import { OwnerCell } from '@/components/OwnerCell'
 import { ActionEditModal } from '@/components/ActionEditModal'
-import { SourceBadge } from '@/components/SourceBadge'
 import { EmptyState } from '@/components/EmptyState'
 import { AddActionModal } from '@/components/AddActionModal'
 import type { Action } from '@/lib/queries'
@@ -294,18 +293,16 @@ export function ActionsTableClient({ actions, projectId }: ActionsTableClientPro
                   onCheckedChange={toggleSelectAll}
                 />
               </TableHead>
-              <TableHead className="w-20">ID</TableHead>
               <TableHead>Description</TableHead>
               <TableHead className="w-40">Owner</TableHead>
               <TableHead className="w-32">Due Date</TableHead>
               <TableHead className="w-32">Status</TableHead>
-              <TableHead className="w-32">Source</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredActions.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-zinc-500 text-sm py-8">
+                <TableCell colSpan={5} className="text-center text-zinc-500 text-sm py-8">
                   No actions found.
                 </TableCell>
               </TableRow>
@@ -325,11 +322,6 @@ export function ActionsTableClient({ actions, projectId }: ActionsTableClientPro
                         checked={selectedIds.has(action.id)}
                         onCheckedChange={() => toggleSelection(action.id)}
                       />
-                    </TableCell>
-
-                    {/* ID */}
-                    <TableCell className="font-mono text-xs text-zinc-400">
-                      {action.external_id}
                     </TableCell>
 
                     {/* Description — opens ActionEditModal */}
@@ -367,15 +359,6 @@ export function ActionsTableClient({ actions, projectId }: ActionsTableClientPro
                         value={normalisedStatus}
                         options={ACTION_STATUS_OPTIONS}
                         onSave={async v => patchAction(action.id, { status: v })}
-                      />
-                    </TableCell>
-
-                    {/* Source */}
-                    <TableCell>
-                      <SourceBadge
-                        source={action.source ?? 'manual'}
-                        artifactName={action.source_artifact_id ? `Artifact ${action.source_artifact_id}` : null}
-                        discoverySource={action.discovery_source}
                       />
                     </TableCell>
                   </TableRow>
