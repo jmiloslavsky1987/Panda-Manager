@@ -1,5 +1,30 @@
 # Milestones
 
+## v7.0 Governance & Operational Maturity (Shipped: 2026-04-16)
+
+**Phases completed:** 12 phases (58–69), 41 plans
+**Code delta:** ~75,894 LOC TypeScript (from ~69,606 at v6.0)
+**Timeline:** 3 days (2026-04-14 → 2026-04-16)
+
+**Key accomplishments:**
+- Per-project Admin/User RBAC enforced at all 40+ route handlers; project Members tab with role management and email invite (Phase 58)
+- Full project lifecycle: archive (read-only soft-delete), permanent delete with pre-flight validation, restore, portfolio separation of archived projects, user logout (Phase 59)
+- Health Dashboard redesigned with auto-derived metrics (overdue tasks, at-risk milestones, stale updates) — no manual input required (Phase 60)
+- Ingestion edit-before-approve with note entity reclassification (type dropdown, field remap, correct routing on approval); Analyze Completeness with per-field 0–100% scoring and conflicting detection (Phases 61–62)
+- Skills Design Standard (YAML front-matter schema); editable prompts UI with CodeMirror editor, admin toggle, atomic file write + backup, audit log capture (Phases 63–64)
+- Project-scoped scheduling: per-project jobs with RBAC, CreateJobWizard projectId wiring, state persistence, nav badge removed; global scheduler restricted to non-project jobs (Phase 65)
+- Overview tracks hybrid static/dynamic redesign with Monday auto-scheduling via BullMQ; integration delete; Weekly Focus generate-now as quiet manual override (Phase 66)
+- Delivery tab cleanup: Plan tab removed (Generate Plan → Task Board), WBS schema aligned, column hiding for ID/Source columns, Decisions repurposed for operational impact, stakeholder move and delete (Phase 67)
+- Gantt bi-directional sync: WBS skeleton with full hierarchy (L1→L2→L3), ADR/Biggy track separation, edge drag handles, milestone drag, inline DatePickerCell, depth computed from parent chain (not stale level column) (Phase 68)
+- Knowledge Base: audited and retained — use case is cross-project institutional knowledge capture, distinct from document ingestion (Phase 69)
+
+**Known gaps accepted:**
+- INGEST-02: Move approved ingested item to different section — deferred to v8.0
+- OUT-01: Outputs section audit — dropped (not worth the work)
+- TEST-01: 4 portfolio TDD RED stubs — dropped (stubs remain but not blocking)
+
+---
+
 ## v6.0 Dashboard, Navigation & Intelligence (Shipped: 2026-04-14)
 
 **Phases completed:** 16 phases, 45 plans, 49 tasks

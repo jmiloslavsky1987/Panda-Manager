@@ -211,6 +211,60 @@
 
 ---
 
+## Milestone: v7.0 — Governance & Operational Maturity
+
+**Shipped:** 2026-04-16
+**Phases:** 12 (58–69) | **Plans:** 41 | **Duration:** 3 days (2026-04-14 → 2026-04-16)
+**Code delta:** ~75,894 LOC TypeScript (from ~69,606 at v6.0; +~6,288)
+
+### What Was Built
+
+- **Per-project RBAC (Phase 58):** `requireProjectRole()` wrapper at all 40+ [projectId] route handlers; project Members tab with role CRUD and email invite flow; Admin/User role distinction enforced at API and UI level
+- **Project lifecycle management (Phase 59):** Archive (read-only soft-delete with ArchivedBanner), permanent delete with pre-flight validation (no active BullMQ jobs), restore, portfolio separation into active/archived views, user logout via SidebarUserIsland
+- **Health Dashboard redesign (Phase 60):** Auto-derived executive metrics — overdue tasks count, at-risk milestones, stale project updates — no manual health input; verdict-first layout readable at a glance
+- **Ingestion edit & reclassification (Phases 61–62):** ExtractionItemEditForm with Type dropdown, field remap on type change, correct DB routing on approval; Analyze Completeness per-field 0–100% scoring with conflicting detection; Scan for Updates consolidated to Context tab
+- **Skills Design Standard (Phases 63–64):** YAML front-matter schema (6 required fields), runtime validation with "Fix required" badge and grayed-out non-compliant skills; editable prompts UI with CodeMirror editor (ssr:false, useRef buffering), atomic file write with `.bak` backup, audit log capture, admin-only global toggle
+- **Project-scoped scheduling (Phase 65):** `project_id` column on scheduled_jobs with `ON DELETE SET NULL`; per-project job list filtered by projectId; CreateJobWizard projectId prop; global scheduler restricted to IS NULL jobs; nav badge removed
+- **Overview tracks redesign (Phase 66):** Static track config constants for ADR/Biggy phases (names never from DB); dynamic summary cards with live counts; Monday auto-schedule via BullMQ (0 6 * * 1 cron); integration DELETE endpoint; Generate Now button as quiet override
+- **Delivery tab cleanup (Phase 67):** ID/Source columns hidden by default on Actions/Risks/Milestones with column toggle; Plan tab removed, Generate Plan migrated to Task Board; Decisions form scoped to operational impact; stakeholder move (toggle company field) and delete with audit log
+- **Gantt bi-directional sync (Phase 68):** WBS-based row model replacing milestone grouping; ADR/Biggy track separation; L1→L2→L3 hierarchy via `computeDepth` from parent_id chain (DB `level` column is stale); edge drag handles (left/right) with 1-day minimum enforcement; milestone drag with separate dragRef; inline DatePickerCell in left panel
+- **Knowledge Base audit (Phase 69):** Feature audited and retained — ~1,408 LOC, cross-project institutional knowledge capture, distinct from document ingestion pipeline
+
+### What Worked
+
+- **Inline phase completion (Phase 69):** KB audit done in-session without a full plan/execute cycle — right call for a verification-only task with no code changes needed
+- **DB query as debugging tool:** `psql` query to inspect `level` vs `parent_id` values on wbs_items immediately revealed the root cause of L3 indentation failure; DB inspection before CSS investigation saved multiple context turns
+- **computeDepth pattern generalizes:** Recursive depth-from-parent-chain with `depthCache` map is O(n) and handles arbitrary tree depth; correct for any tree stored without reliable level column
+- **Phase 67 debt isolation:** Grouping 8 cleanup requirements (column hiding, tab removal, stakeholder ops) into one phase prevented scope creep in earlier phases while ensuring they shipped together
+
+### What Was Inefficient
+
+- **paddingLeft vs spacer div discovery:** First fix (empty flex spacer div) was CSS-correct but masked that the data was wrong; needed two iterations — CSS fix + DB diagnosis — to fully resolve. Root-cause-first approach would have been faster.
+- **Phase 69 late scoping:** Original Phase 69 scope (KB + Outputs + TDD stubs) was overly ambitious; only KB audit was actually valuable. Scoping this down could have happened at milestone planning instead of at execution.
+- **Progress table staleness in ROADMAP.md:** The inline progress table had stale `In Progress` entries at milestone close; the per-phase `[x]` checkboxes in the phase list are the authoritative source, the table is redundant — removed at archive.
+
+### Patterns Established
+
+- **`requireProjectRole()` wrapper pattern:** Single function wrapping `requireSession()` + role lookup + project membership check — apply to all future project-scoped route handlers
+- **`computeDepth` from parent chain for tree depth:** When tree data is stored with a `level` column that may be stale, always compute depth recursively from `parent_id` chain using a `depthCache` map — never trust stored level
+- **Weekly-focus job registration on project create (best-effort):** `try/catch` around `upsertJobScheduler` in project creation flow; cron pattern `0 6 * * 1` hardcoded (product requirement, not user config); idempotent via key pattern `weekly-focus-project-{id}`
+- **Editable prompts atomic write pattern:** Read file → strip front-matter → validate new body → write atomically with `.${Date.now()}.bak` backup → audit log insert; separate from DB transaction (filesystem not transactional with PostgreSQL)
+
+### Key Lessons
+
+1. **Query the DB before debugging the UI** — L3 indentation investigation wasted a CSS iteration because the root cause was stale DB data, not rendering; inspect data-layer contracts first for layout/display bugs
+2. **Scope milestones ruthlessly at planning time** — Phase 69's three-item scope (KB + Outputs + TDD) was too broad; auditing value at the milestone scoping stage would have dropped OUT-01 and TEST-01 immediately
+3. **`computeDepth` > stored `level` for trees** — DB `level` column on wbs_items is set inconsistently (child saved with parent's level); structural integrity requires deriving from the parent chain; consider adding a DB check constraint or trigger to enforce level = parent_level + 1 in future
+4. **Deprecate dead tech debt at the milestone boundary** — TEST-01 (4 RED portfolio stubs) carried across three milestones; the cost of explicit "drop this" decision at v7.0 close is lower than carrying forward indefinitely
+
+### Cost Observations
+
+- Model: Claude Sonnet 4.6 throughout
+- Sessions: ~3 sessions across 3 days
+- Notable: Phase 68 required the most debugging iterations (L3 indentation required DB inspection + two code changes); all other phases executed cleanly in single sessions
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -223,6 +277,7 @@
 | v4.0 | 5 | 3 days | Infrastructure migration + UI overhaul; parallel wave execution mature |
 | v5.0 | 6 | 5 days | Full UX overhaul; custom Gantt, cross-tab sync, global search, polish |
 | v6.0 | 16 | 7 days | Dashboard + WBS + Architecture + extraction pipeline maturity; gap-closure phase pattern introduced |
+| v7.0 | 12 | 3 days | Governance & operational maturity; RBAC, lifecycle, Skills Design Standard, Gantt sync |
 
 ### Cumulative Quality
 
@@ -234,6 +289,7 @@
 | v4.0 | ~370 | BullMQ extraction, global time, Overview metrics/health/focus |
 | v5.0 | ~370 | Inline editing, custom Gantt, cross-tab sync, global search, empty states (6 pre-existing failures remain) |
 | v6.0 | 148 files passing | Portfolio, WBS, Architecture, extraction pipeline (21 entity types); 15 pre-existing failures fixed; 4 intentional RED portfolio stubs |
+| v7.0 | 148+ files passing | RBAC, lifecycle, Health Dashboard, ingestion edit, Skills Standard, Gantt hierarchy; 4 RED stubs accepted as known gap |
 
 ### Top Lessons (Verified Across Milestones)
 

@@ -68,6 +68,20 @@ Every PS delivery intelligence the team has built — 15 AI skills, all project 
 - ✓ Consistent empty states with CTAs; overdue highlighting unified across Actions/Milestones/Tasks — v5.0 Phase 41
 - ✓ Full ingestion field coverage: task dates/FKs/priority, milestone owner, action notes/type, cross-entity ID resolution — v5.0 Phase 42
 
+<!-- v7.0 — Governance & Operational Maturity (2026-04-16) -->
+- ✓ Per-project Admin/User RBAC enforced at all 40+ route handlers; project Members tab with role management and email invite — v7.0 Phase 58 (AUTH-02–05)
+- ✓ Project lifecycle: archive (read-only soft-delete), permanent delete with pre-flight validation, restore, portfolio separation; user logout — v7.0 Phase 59 (AUTH-01, PROJ-01–04, PORTF-01–02)
+- ✓ Health Dashboard redesigned with auto-derived metrics (overdue tasks, at-risk milestones, stale updates) — no manual input required — v7.0 Phase 60 (HLTH-01–02)
+- ✓ Ingestion edit-before-approve with note entity reclassification (type dropdown, field remap, correct routing on approval) — v7.0 Phase 61 (INGEST-01, INGEST-05)
+- ✓ Analyze Completeness with per-field 0–100% scoring and conflicting detection; Scan for Updates consolidated to Context tab — v7.0 Phase 62 (INGEST-03–04)
+- ✓ Skills Design Standard (YAML front-matter schema); runtime validation with "Fix required" badges and grayed-out non-compliant skills — v7.0 Phase 63 (SKILL-01–02, SKILL-04)
+- ✓ Editable prompts UI with CodeMirror editor, admin toggle, atomic file write + backup, audit log capture — v7.0 Phase 64 (SKILL-03a, SKILL-03b)
+- ✓ Project-scoped scheduling: per-project jobs with RBAC, CreateJobWizard projectId wiring, state persistence, nav badge removed — v7.0 Phase 65 (SCHED-01–05)
+- ✓ Overview tracks hybrid static/dynamic redesign; Monday auto-scheduling via BullMQ; integration delete; Weekly Focus generate-now as quiet manual override — v7.0 Phase 66 (OVRVW-01–05)
+- ✓ Delivery tab cleanup: Plan tab removed (Generate Plan → Task Board), WBS schema aligned, column hiding for ID/Source, Decisions repurposed for operational impact, stakeholder move and delete — v7.0 Phase 67 (DLVRY-05–10, TEAM-01–02)
+- ✓ Gantt bi-directional sync: WBS skeleton with full hierarchy (L1→L2→L3), ADR/Biggy track separation, edge drag handles, milestone drag, inline DatePickerCell, depth computed from parent chain — v7.0 Phase 68 (DLVRY-01–04)
+- ✓ Knowledge Base: cross-project institutional knowledge capture retained — use case confirmed distinct from document ingestion — v7.0 Phase 69 (KB-01)
+
 <!-- v6.0 — Dashboard, Navigation & Intelligence (2026-04-14) -->
 - ✓ Skills portability: lib/skill-path.ts resolves SKILL.md dynamically at runtime — no hardcoded paths — v6.0 Phase 43 (SKILL-01)
 - ✓ Navigation restructure: Plan first in Delivery, WBS/Task Board/Gantt promoted to top level, Swimlane removed, Decisions → Delivery, Intel → Context tab, Engagement History → Admin — v6.0 Phase 44 (NAV-01–05)
@@ -84,57 +98,18 @@ Every PS delivery intelligence the team has built — 15 AI skills, all project 
 - ✓ Synthesis-first extraction: document type classification, entity prediction, transcript-mode inference, confidence calibration rubric, SINGLETON markers — v6.0 Phase 57 (SYNTH-01–05)
 - ✓ Architecture extraction → arch_node bridge: approved architecture entities upsert matching arch_node in same transaction, syncing visual diagram to extraction status — v6.0 Phase 57
 
-## Current Milestone: v7.0 Governance & Operational Maturity
-
-**Goal:** Introduce per-project RBAC with Admin/User roles, project lifecycle management (archive/delete/restore), Skills Design Standard with editable prompts and full audit, Health Dashboard redesign, Gantt date integrity with bi-directional propagation, project-scoped scheduling, and a broad operational polish pass across ingestion, delivery tabs, teams, scheduler, and cross-cutting UX.
-
-**Target features:**
-- Per-project Admin/User role assignments enforced at route handler level; logout
-- Project archive (soft-delete), permanent delete, archived project view and restore
-- Overview static/dynamic track redesign; Weekly Focus auto-schedule; Integration Tracker delete
-- Health Dashboard full redesign (metrics derivable from existing data, executive readability)
-- Ingestion: edit before approve, move between sections, note entity reclassification, Analyze Completeness fix, Scan for Updates consolidation
-- Delivery: Gantt always-visible skeleton + bi-directional date propagation, Plan tab removal → Task Board, WBS/Generate Plan schema alignment, column cleanup, Decisions repurpose
-- Team: stakeholder move and delete
-- Skills: Design Standard document, audit grayed-out skills, editable prompts UI, consistent output schema
-- Scheduler: project-scoped scheduling, bug fixes (state persistence, job history, nav badge)
-- Portfolio dashboard: archived/deleted project handling
-- Knowledge Base: define use case or deprecate; Outputs section: audit and potentially remove
-- 4 RED portfolio TDD stubs driven to GREEN
-
-### Active
-
-- [ ] AUTH-01: User can log out from the navigation or user menu
-- [ ] AUTH-02: Admin can manage project membership and role assignments (Admin/User role per project)
-- [ ] AUTH-03: Admin role on a project grants full access: delete, archive, user management, and global scheduler actions
-- [ ] AUTH-04: User role on a project is restricted from destructive actions and admin functions
-- [ ] AUTH-05: Role-based access is enforced at the route handler level for all project actions
-- [ ] PROJ-01: Admin can archive a project (soft-delete: read-only, preserved in system)
-- [ ] PROJ-02: Admin can permanently delete a project
-- [ ] PROJ-03: User can view archived projects in a dedicated archived projects view (read-only)
-- [ ] PROJ-04: Admin can restore an archived project back to active status
-- [ ] OVRVW-01 through OVRVW-05, HLTH-01–02, INGEST-01–05, DLVRY-01–10, TEAM-01–02, SKILL-01–04, SCHED-01–05, PORTF-01–02, KB-01, OUT-01, TEST-01 (see REQUIREMENTS.md)
-
-### Out of Scope
-
-- Customer-facing read-only portal — email updates sufficient; external access deferred
-- QBR deck generator — external ELT deck covers the need
-- Microsoft Outlook Calendar integration — permanently excluded (BRD explicit exclusion)
-- Custom role builder — post-launch (BRD explicit exclusion)
-- Approver hierarchy (TT-205) — deferred; single approver sufficient for v3.0
-- pgvector/RAG knowledge base — structured DB query context injection is correct at single-project scope; reconsider only if cross-project knowledge base search becomes a requirement
-- BullMQ-scheduled completeness trigger — on-demand is correct for v3.0; scheduled option deferred to v5.0 (infrastructure exists)
-
 ## Context
 
-v6.0 shipped 2026-04-14. Full stack: Next.js 16 (Turbopack), PostgreSQL, Redis/BullMQ, better-auth, Drizzle ORM, Vercel AI SDK, @xyflow/react, @anthropic-ai/sdk, Recharts. 57 phases (including 48.1), 278 plans completed across v1.0–v6.0. ~69,606 LOC TypeScript. Test suite: 148 files passing, 4 intentional RED stubs in `__tests__/portfolio/` (portfolio RED TDD stubs, never driven to GREEN — deferred to v7.0). Production build clean.
+v7.0 shipped 2026-04-16. Full stack: Next.js 16 (Turbopack), PostgreSQL, Redis/BullMQ, better-auth, Drizzle ORM, Vercel AI SDK, @xyflow/react, @anthropic-ai/sdk, Recharts. 69 phases (including 48.1), ~319 plans completed across v1.0–v7.0. ~75,894 LOC TypeScript. Test suite: 148+ files passing. Production build clean.
 
-v6.0 delivered: portfolio dashboard, WBS tree with AI gap-fill, Architecture diagram with status sync from extraction, Teams 4-section map, navigation restructure, Risks/Milestones parity, 4-pass extraction pipeline (Pass 0 + 3 entity-group passes) with tool use API, synthesis-first prompts for unstructured documents, and 15 pre-existing test failures resolved. Extraction pipeline now covers all 21 entity types end-to-end.
+v7.0 delivered: per-project RBAC at all 40+ route handlers, full project lifecycle (archive/delete/restore), Health Dashboard with auto-derived metrics, ingestion edit-before-approve with note reclassification, Analyze Completeness scoring, Skills Design Standard with editable prompts UI, project-scoped scheduling, Overview hybrid static/dynamic tracks, Delivery tab cleanup, Gantt bi-directional sync with WBS hierarchy, Knowledge Base retained.
 
-Known tech debt entering v7.0:
-- WBS and Portfolio UX human verification pending (performance with 100+ nodes, filter panel, drag-drop)
-- 4 portfolio RED TDD stubs never driven to GREEN
-- Nyquist validation incomplete: 9/16 v6.0 phases at `nyquist_compliant: false` (draft status)
+Known tech debt entering v8.0:
+- INGEST-02: Move approved ingested item to different section — deferred
+- OUT-01: Outputs section audit — dropped (not worth the work)
+- TEST-01: 4 portfolio TDD RED stubs — dropped (stubs remain but not blocking)
+- Nyquist validation incomplete: most v7.0 phases at `nyquist_compliant: false` (draft status)
+- Empty state CTA onClick handlers are `() => {}` placeholders (wiring to creation modals deferred)
 
 This is a full rewrite of a previous Claude Code project assistant build (8 phases, React/Vite/Express/Google Drive architecture). SKILL.md files read from disk at runtime (not bundled). All data model patterns (archive-on-replace, dual-write atomicity, append-only history, source tracing, ID conventions) preserved from the original skill ecosystem.
 
@@ -182,6 +157,13 @@ This is a full rewrite of a previous Claude Code project assistant build (8 phas
 | team_engagement entity type removed from extraction (v6.0) | businessOutcome, e2e_workflow, focus_area populate Teams sections via their own tables — team_engagement was dead infrastructure | ✓ Correct — extraction now routes to correct tables; Teams tab populates cleanly |
 | Synthesis-first extraction posture + document type classification (v6.0) | Transcript/meeting note documents produced near-zero extractions under extraction-first prompts; Pass 0 classification enables adaptive behavior per doc type | ✓ Correct — SYNTH-01–05 contracts verified; confidence calibration rubric makes inferred vs explicit entities distinguishable |
 | Architecture extraction → arch_node bridge in same transaction (v6.0) | Diagram node status must stay in sync with extraction approvals; same transaction prevents partial state | ✓ Correct — approved architecture entities now automatically update visual diagram |
+| requireProjectRole() wrapper at all 40+ [projectId] route handlers (v7.0) | Extends CVE-2025-29927 defense-in-depth to project-level RBAC; no middleware-only trust | ✓ Correct — admin/user enforcement consistent across all project routes |
+| ON DELETE SET NULL for project_id FK on scheduled_jobs (v7.0) | Project deletion preserves job history as global rather than cascade-deleting; useful for audit trail | ✓ Correct — jobs persist and continue running as non-project-scoped after project delete |
+| computeDepth from parent_id chain in buildWbsRows (v7.0) | DB `level` column is set incorrectly on WBS items (children saved with same level as parent); computed depth from parent chain is always correct | ✓ Correct — L3 indentation in Gantt now reflects true tree depth |
+| CodeMirror with ssr:false dynamic import for prompt editing (v7.0) | CodeMirror uses DOM APIs incompatible with Next.js SSR; same pattern as React Flow | ✓ Correct — no hydration errors; uncontrolled mode with useRef buffering prevents cursor-jump re-renders |
+| Weekly-focus job registration on project create is best-effort (v7.0) | Redis unavailability should not fail project creation; job registration is a convenience feature | ✓ Correct — graceful degradation; job auto-schedules on next Redis reconnect |
+| Static track config constants define phase names (v7.0) | Phase names must not drift as DB data changes; hardcoded config + DB match-by-name keeps display stable | ✓ Correct — static tracks always render even before DB phases are created |
+| Knowledge Base retained as cross-project institutional knowledge capture (v7.0) | Audited and confirmed distinct use case from document ingestion — freeform entries linkable to risks/engagement history | ✓ Correct — ~1,408 LOC fully functional; no deprecation needed |
 
 ---
-*Last updated: 2026-04-13 after v7.0 milestone start*
+*Last updated: 2026-04-16 after v7.0 milestone close*
