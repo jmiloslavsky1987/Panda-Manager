@@ -29,7 +29,7 @@ import {
   beforeState,
 } from '@/db/schema';
 import type { EntityType, ExtractionItem } from '@/lib/extraction-types';
-import { requireSession } from "@/lib/auth-server";
+import { requireProjectRole } from "@/lib/auth-server";
 import { createApiRedisConnection } from '@/worker/connection';
 import { coerceWbsItemStatus, coerceArchNodeStatus } from './coercers';
 
@@ -1565,9 +1565,6 @@ async function deleteItem(entityType: EntityType, existingId: number): Promise<{
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
-  const { session, redirectResponse } = await requireSession();
-  if (redirectResponse) return redirectResponse;
-
   // 1. Parse and validate body
   let body: unknown;
   try {
@@ -1583,7 +1580,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const { artifactId, projectId, items, totalExtracted } = parsed.data;
 
-  // 2. Fetch artifact record (for ingestion_log_json)
+  // 2. Check project membership
+  const { redirectResponse } = await requireProjectRole(projectId);
+  if (redirectResponse) return redirectResponse;
+
+  // 3. Fetch artifact record (for ingestion_log_json)
   const artifactRows = await db
     .select({ id: artifacts.id, ingestion_log_json: artifacts.ingestion_log_json })
     .from(artifacts)
@@ -1595,7 +1596,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const existingLog = (artifactRows[0].ingestion_log_json ?? {}) as Record<string, unknown>;
 
-  // 3. Process approved items
+  // 4. Process approved items
   const conflicts: Array<{ itemIndex: number; existingId: number; existingRecord: { id: number } }> = [];
   const written: Record<string, number> = {};
   const skipped: Record<string, number> = {};

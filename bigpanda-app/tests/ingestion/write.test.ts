@@ -87,6 +87,7 @@ vi.mock('@/lib/auth', () => ({
 }));
 vi.mock('@/lib/auth-server', () => ({
   requireSession: vi.fn().mockResolvedValue({ session: { user: { id: 'test-user' } }, redirectResponse: null }),
+  requireProjectRole: vi.fn().mockResolvedValue({ session: { user: { id: 'test-user' } }, redirectResponse: null, projectRole: 'admin' }),
 }));
 
 import { POST } from '@/app/api/ingestion/approve/route';

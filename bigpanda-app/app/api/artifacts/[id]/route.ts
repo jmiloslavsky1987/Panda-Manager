@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { db } from '@/db'
 import { artifacts, auditLog } from '@/db/schema'
 import { eq } from 'drizzle-orm'
-import { requireSession } from "@/lib/auth-server";
+import { requireProjectRole } from "@/lib/auth-server";
 
 const patchSchema = z.object({
   name: z.string().min(1).optional(),
@@ -19,12 +19,20 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { session, redirectResponse } = await requireSession();
-  if (redirectResponse) return redirectResponse;
-
   const { id } = await params
   const numericId = parseInt(id, 10)
   if (isNaN(numericId)) return NextResponse.json({ error: 'Invalid id' }, { status: 400 })
+
+  // Look up artifact's project_id to check membership
+  const [existing] = await db.select({ project_id: artifacts.project_id })
+    .from(artifacts)
+    .where(eq(artifacts.id, numericId))
+    .limit(1)
+
+  if (!existing) return NextResponse.json({ error: 'Artifact not found' }, { status: 404 })
+
+  const { redirectResponse } = await requireProjectRole(existing.project_id)
+  if (redirectResponse) return redirectResponse
 
   const parsed = patchSchema.safeParse(await request.json())
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
