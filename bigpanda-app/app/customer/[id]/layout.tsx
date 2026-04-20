@@ -3,7 +3,7 @@ import { getProjectWithHealth } from '../../../lib/queries'
 import { ProjectHeader } from '../../../components/ProjectHeader'
 import { WorkspaceTabs } from '../../../components/WorkspaceTabs'
 import { AddNotesModal } from '../../../components/AddNotesModal'
-import GlobalSearchBar from '../../../components/GlobalSearchBar'
+import WorkspaceSearchBar from '../../../components/WorkspaceSearchBar'
 import { ArchivedBanner } from '../../../components/ArchivedBanner'
 import { auth } from '@/lib/auth'
 import { headers } from 'next/headers'
@@ -63,7 +63,7 @@ export default async function WorkspaceLayout({
             </div>
           )}
         </div>
-        {project && <GlobalSearchBar projectId={project.id} />}
+        {project && <WorkspaceSearchBar projectId={project.id} />}
       </div>
       {project?.status === 'archived' && (
         <Suspense fallback={null}>

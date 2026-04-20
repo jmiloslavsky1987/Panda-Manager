@@ -1,9 +1,11 @@
 'use client';
 
+// intentional: GlobalProjectSearchBar searches across all projects — routes to /search?q=
+
 import { useState, KeyboardEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
-export function SearchBar() {
+export function GlobalProjectSearchBar() {
   const [value, setValue] = useState('');
   const router = useRouter();
 
