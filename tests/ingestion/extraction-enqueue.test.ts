@@ -28,6 +28,7 @@ vi.mock('bullmq', () => {
 
 vi.mock('../../lib/auth-server', () => ({
   requireSession: vi.fn().mockResolvedValue({ session: { user: { id: 'user-1' } }, redirectResponse: null }),
+  requireProjectRole: vi.fn().mockResolvedValue({ session: { user: { id: 'user-1' } }, redirectResponse: null, projectRole: 'admin' }),
 }));
 
 vi.mock('../../worker/connection', () => ({

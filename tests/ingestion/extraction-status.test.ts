@@ -15,6 +15,7 @@ vi.mock('../../db', () => {
 
 vi.mock('../../lib/auth-server', () => ({
   requireSession: vi.fn().mockResolvedValue({ session: { user: { id: 'user-1' } }, redirectResponse: null }),
+  requireProjectRole: vi.fn().mockResolvedValue({ session: { user: { id: 'user-1' } }, redirectResponse: null, projectRole: 'admin' }),
 }));
 
 // Import the route handler
