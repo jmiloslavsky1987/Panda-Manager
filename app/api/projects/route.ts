@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/db'
-import { projects, onboardingPhases, onboardingSteps, wbsItems, teamEngagementSections, archTracks, archNodes, projectMembers } from '@/db/schema'
+import { projects, onboardingPhases, onboardingSteps, wbsItems, teamEngagementSections, archTracks, archNodes, projectMembers, scheduledJobs } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { requireSession } from "@/lib/auth-server";
 import { getActiveProjects } from '@/lib/queries'
+import { resolveRole } from '@/lib/auth-utils'
 import { ADR_ONBOARDING_CONFIG, BIGGY_ONBOARDING_CONFIG } from '@/lib/onboarding-config'
 
 export async function GET(req: NextRequest) {
@@ -11,7 +12,11 @@ export async function GET(req: NextRequest) {
   if (redirectResponse) return redirectResponse;
 
   try {
-    const activeProjects = await getActiveProjects()
+    const role = resolveRole(session!);
+    const activeProjects = await getActiveProjects({
+      userId: session!.user.id,
+      isGlobalAdmin: role === 'admin',
+    });
     return NextResponse.json({ projects: activeProjects })
   } catch (err) {
     console.error('GET /api/projects error:', err)
@@ -113,7 +118,7 @@ export async function POST(req: NextRequest) {
             display_order: i + 1,
             track,
           }))
-        )
+        ).onConflictDoNothing()
       }
     }
 
@@ -251,16 +256,30 @@ export async function POST(req: NextRequest) {
   })
 
   // Auto-register weekly-focus repeatable job for new project (OVRVW-03)
+  // Creates a scheduled_jobs DB row so it appears in the scheduler UI, then
+  // registers the BullMQ repeatable scheduler.
   try {
+    const [jobRow] = await db
+      .insert(scheduledJobs)
+      .values({
+        name: `Weekly Focus — project ${result.id}`,
+        skill_name: 'weekly-focus',
+        cron_expression: '0 6 * * 1',
+        enabled: true,
+        project_id: result.id,
+        skill_params_json: { projectId: result.id, triggeredBy: 'scheduled' },
+      })
+      .returning({ id: scheduledJobs.id })
+
     const { Queue } = await import('bullmq');
     const { createApiRedisConnection } = await import('@/worker/connection');
     const queue = new Queue('scheduled-jobs', { connection: createApiRedisConnection() as any });
     await queue.upsertJobScheduler(
-      `weekly-focus-project-${result.id}`,
-      { pattern: '0 6 * * 1' },  // Every Monday at 6am UTC
+      `db-job-${jobRow.id}`,          // Match the ID pattern used by registerDbSchedulers
+      { pattern: '0 6 * * 1' },
       {
         name: 'weekly-focus',
-        data: { triggeredBy: 'scheduled', projectId: result.id },
+        data: { triggeredBy: 'scheduled', projectId: result.id, jobId: jobRow.id },
         opts: { removeOnComplete: 100, removeOnFail: 50 },
       }
     );
