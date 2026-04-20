@@ -401,6 +401,15 @@ export async function runMigration(): Promise<{ inserted: number; skipped: numbe
             ? severityRaw
             : null;
 
+        const riskStatusRaw = risk.status != null ? String(risk.status) : null;
+        const riskStatus =
+          riskStatusRaw === 'open' ||
+          riskStatusRaw === 'mitigated' ||
+          riskStatusRaw === 'resolved' ||
+          riskStatusRaw === 'accepted'
+            ? (riskStatusRaw as 'open' | 'mitigated' | 'resolved' | 'accepted')
+            : null;
+
         await db.insert(risks).values({
           project_id: projectId,
           external_id: extId,
@@ -408,7 +417,7 @@ export async function runMigration(): Promise<{ inserted: number; skipped: numbe
           severity,
           owner: risk.owner != null ? String(risk.owner) : null,
           mitigation: risk.mitigation != null ? String(risk.mitigation) : null,
-          status: risk.status != null ? String(risk.status) : null,
+          status: riskStatus,
           last_updated: risk.last_updated != null ? String(risk.last_updated) : null,
           source: 'yaml',
         });
@@ -435,11 +444,20 @@ export async function runMigration(): Promise<{ inserted: number; skipped: numbe
       if (existingMs.length === 0) {
         const name = ms.name != null ? String(ms.name) : 'Untitled milestone';
 
+        const msStatusRaw = ms.status != null ? String(ms.status) : null;
+        const msStatus =
+          msStatusRaw === 'not_started' ||
+          msStatusRaw === 'in_progress' ||
+          msStatusRaw === 'completed' ||
+          msStatusRaw === 'blocked'
+            ? (msStatusRaw as 'not_started' | 'in_progress' | 'completed' | 'blocked')
+            : 'not_started';
+
         await db.insert(milestones).values({
           project_id: projectId,
           external_id: extId,
           name,
-          status: ms.status != null ? String(ms.status) : null,
+          status: msStatus,
           target: ms.target != null ? String(ms.target) : null,
           date: ms.date != null ? String(ms.date) : null,
           notes: ms.notes != null ? String(ms.notes) : null,
