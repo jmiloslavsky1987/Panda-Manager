@@ -1,5 +1,7 @@
 'use client'
 
+// intentional: WorkspaceSearchBar searches within a single project workspace — scoped to one projectId
+
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import type { SearchResult } from '@/lib/queries'
@@ -15,11 +17,11 @@ const TABLE_TO_TAB: Record<string, string> = {
   'engagement_history': 'history',
 }
 
-interface GlobalSearchBarProps {
+interface WorkspaceSearchBarProps {
   projectId: number
 }
 
-export default function GlobalSearchBar({ projectId }: GlobalSearchBarProps) {
+export default function WorkspaceSearchBar({ projectId }: WorkspaceSearchBarProps) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
   const [loading, setLoading] = useState(false)

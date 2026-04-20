@@ -8,7 +8,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import GlobalSearchBar from '@/components/GlobalSearchBar'
+import WorkspaceSearchBar from '@/components/WorkspaceSearchBar'
 
 // Mock Next.js navigation
 const mockPush = vi.fn()
@@ -25,7 +25,7 @@ vi.mock('next/navigation', () => ({
   }),
 }))
 
-describe('GlobalSearchBar (SRCH-01)', () => {
+describe('WorkspaceSearchBar (SRCH-01)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     global.fetch = vi.fn()
@@ -36,14 +36,14 @@ describe('GlobalSearchBar (SRCH-01)', () => {
   })
 
   it('renders search input', () => {
-    render(<GlobalSearchBar projectId={1} />)
+    render(<WorkspaceSearchBar projectId={1} />)
     const input = screen.getByRole('textbox')
     expect(input).toBeInTheDocument()
   })
 
   it('does not fetch for 1-char query', async () => {
     const user = userEvent.setup({ delay: null })
-    render(<GlobalSearchBar projectId={1} />)
+    render(<WorkspaceSearchBar projectId={1} />)
 
     const input = screen.getByRole('textbox')
     await user.type(input, 'a')
@@ -56,25 +56,25 @@ describe('GlobalSearchBar (SRCH-01)', () => {
 
   it.skip('fetches after 300ms debounce for 2+ char query', async () => {
     // Integration test with timing dependencies - requires E2E environment
-    // Implementation complete: 300ms debounce in GlobalSearchBar.tsx useEffect (lines 29-47)
+    // Implementation complete: 300ms debounce in WorkspaceSearchBar.tsx useEffect (lines 29-47)
     // Verified manually via human verification checkpoint
   })
 
   it.skip('groups results by section', async () => {
     // Integration test with timing dependencies - requires E2E environment
-    // Implementation complete: result grouping in GlobalSearchBar.tsx (lines 73-94)
+    // Implementation complete: result grouping in WorkspaceSearchBar.tsx (lines 73-94)
     // Verified manually via human verification checkpoint
   })
 
   it.skip('navigates on result click', async () => {
     // Integration test with timing dependencies - requires E2E environment
-    // Implementation complete: handleResultClick in GlobalSearchBar.tsx (lines 62-67)
+    // Implementation complete: handleResultClick in WorkspaceSearchBar.tsx (lines 62-67)
     // Verified manually via human verification checkpoint
   })
 
   it.skip('closes dropdown on Escape', async () => {
     // Integration test with timing dependencies - requires E2E environment
-    // Implementation complete: handleKeyDown in GlobalSearchBar.tsx (lines 49-54)
+    // Implementation complete: handleKeyDown in WorkspaceSearchBar.tsx (lines 49-54)
     // Verified manually via human verification checkpoint
   })
 })

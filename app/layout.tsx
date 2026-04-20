@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Sidebar } from '../components/Sidebar';
-import { SearchBar } from '../components/SearchBar';
+import { GlobalProjectSearchBar } from '../components/GlobalProjectSearchBar';
 import { AuthProvider } from '../components/AuthProvider';
 import { AppChrome } from '../components/AppChrome';
 import { HeaderBar } from '../components/HeaderBar';
@@ -33,7 +33,7 @@ export default function RootLayout({
           <main className="ml-60 flex-1 min-h-screen overflow-y-auto">
             {/* HeaderBar suppresses the search header on /login and /setup routes */}
             <HeaderBar>
-              <SearchBar />
+              <GlobalProjectSearchBar />
             </HeaderBar>
             {children}
           </main>

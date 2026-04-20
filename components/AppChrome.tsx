@@ -1,7 +1,7 @@
 "use client";
 import { usePathname } from "next/navigation";
 
-// Routes where app chrome (Sidebar + SearchBar) must be suppressed
+// Routes where app chrome (Sidebar + GlobalProjectSearchBar) must be suppressed
 const NO_CHROME_PATHS = ["/login", "/setup"];
 
 interface AppChromeProps {
