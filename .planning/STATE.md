@@ -4,13 +4,13 @@ milestone: v8.0
 milestone_name: Codebase Refactor & Multi-Tenant Deployment
 status: planning
 stopped_at: Phase 71 context gathered
-last_updated: "2026-04-20T06:34:04.587Z"
+last_updated: "2026-04-20T07:04:43.267Z"
 last_activity: 2026-04-20 — Phase 70-01 complete (AI Usage Audit)
 progress:
   total_phases: 14
-  completed_phases: 10
-  total_plans: 42
-  completed_plans: 40
+  completed_phases: 11
+  total_plans: 43
+  completed_plans: 41
   percent: 99
 ---
 
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-04-16 after v7.0 milestone close)
 
 ## Current Position
 
-Phase: 70 of 75 — Plan 01 complete (AI Usage Audit)
-Status: Phase 70-01 complete. Ready for Phase 71 planning.
-Last activity: 2026-04-20 — Phase 70-01 complete (AI Usage Audit)
+Phase: 71 of 75 — Plan 01 complete (Feature Consistency Audit)
+Status: Phase 71-01 complete. Ready for Phase 73 planning.
+Last activity: 2026-04-20 — Phase 71-01 complete (Feature Consistency Audit)
 
-Progress: [█████████░] 99% (244 of 246 plans complete across all milestones)
+Progress: [██████████] 99% (245 of 247 plans complete across all milestones)
 
 ## Milestone History
 
@@ -90,8 +90,15 @@ Progress: [█████████░] 99% (244 of 246 plans complete across
 - All 15 skills classified as genuine AI - require synthesis or unstructured content processing
 - 91% of Claude API calls (21 of 23) are genuine AI and correctly architected
 
+**Phase 71 (Feature Consistency Audit):**
+- Decisions table is intentionally append-only (no edit modal) - correct design for audit trail compliance
+- Workstreams intentionally lack bulk actions - progress slider UX is domain-appropriate for workstream tracking
+- SearchBar vs GlobalSearchBar are distinct components with different scopes (should be renamed for clarity)
+- Dual-mode editing (modal + inline) is intentional and correct UX pattern for Actions/Risks/Milestones
+- Missing DB enums for Risks/Milestones status is HIGH priority data integrity risk for Phase 73
+
 ## Session Continuity
 
-Last session: 2026-04-20T06:34:04.584Z
-Stopped at: Phase 71 context gathered
-Resume file: .planning/phases/71-feature-consistency-audit/71-CONTEXT.md
+Last session: 2026-04-20T06:50:34Z
+Stopped at: Phase 71-01 complete (Feature Consistency Audit)
+Resume file: .planning/phases/71-feature-consistency-audit/71-01-SUMMARY.md

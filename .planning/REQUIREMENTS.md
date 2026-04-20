@@ -9,7 +9,7 @@
 
 - [x] **RFCTR-01**: Codebase audit produces a written report categorizing every Claude API call as: (a) deterministic logic that should be hardcoded, (b) genuine judgment/synthesis that belongs to Claude, or (c) borderline
 - [ ] **RFCTR-02**: All calls identified as deterministic in RFCTR-01 are replaced with hardcoded implementations — no behavior change, just routing
-- [ ] **RFCTR-03**: Feature consistency audit produces a report identifying duplicate features serving the same purpose and UX patterns that are inconsistent across equivalent areas
+- [x] **RFCTR-03**: Feature consistency audit produces a report identifying duplicate features serving the same purpose and UX patterns that are inconsistent across equivalent areas
 - [ ] **RFCTR-04**: All identified duplicates from RFCTR-03 are unified into a single consistent implementation
 
 ### Multi-Tenant Isolation
@@ -71,7 +71,7 @@ Explicitly excluded — not deferred, not planned. Documented to prevent re-addi
 |-------------|-------|--------|
 | RFCTR-01 | Phase 70 | Complete |
 | RFCTR-02 | Phase 71 | Pending |
-| RFCTR-03 | Phase 72 | Pending |
+| RFCTR-03 | Phase 72 | Complete |
 | RFCTR-04 | Phase 73 | Pending |
 | TENANT-01 | Phase 74 | Pending |
 | TENANT-02 | Phase 74 | Pending |
