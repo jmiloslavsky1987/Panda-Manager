@@ -104,8 +104,14 @@ Progress: [██████████] 96% (50 of 52 plans complete in v8.0)
 - Enum parity test pattern: bidirectional containment checks + length verification ensures exact match between UI constants and DB enums
 - Human verification approved - all 13 Phase 71 audit findings resolved (9 code changes, 4 documented as intentional)
 
+**Phase 73 (Multi-Tenant Isolation):**
+- Parse body before auth in approve route - projectId comes from request body, must be extracted before calling requireProjectRole (minimal change, maintains API contract)
+- Lookup artifact.project_id before auth in PATCH - artifact ID is in path but projectId is not; DB lookup required to get project context before membership check
+- Cache isolation has two layers: READ (requireProjectRole at route) and WRITE (project-scoped keys in worker) - both necessary for airtight isolation
+- Single BullMQ queue with data-level isolation is sufficient - job payload is project-scoped, results have project_id FK, cache keys are project-namespaced
+
 ## Session Continuity
 
-Last session: 2026-04-20T17:02:00.037Z
-Stopped at: Completed 73-02-PLAN.md
-Resume file: None
+Last session: 2026-04-20T17:07:15.000Z
+Stopped at: Completed 73-04-PLAN.md
+Resume file: .planning/phases/73-multi-tenant-isolation/73-04-SUMMARY.md
