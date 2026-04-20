@@ -48,6 +48,10 @@ export const severityEnum = pgEnum('severity', [
   'critical',
 ]);
 
+export const riskStatusEnum = pgEnum('risk_status', ['open', 'mitigated', 'resolved', 'accepted']);
+
+export const milestoneStatusEnum = pgEnum('milestone_status', ['not_started', 'in_progress', 'completed', 'blocked']);
+
 export const outputStatusEnum = pgEnum('output_status', [
   'running',
   'complete',
@@ -179,7 +183,7 @@ export const risks = pgTable('risks', {
   severity: severityEnum('severity'),
   owner: text('owner'),
   mitigation: text('mitigation'),
-  status: text('status'),
+  status: riskStatusEnum('status'),
   last_updated: text('last_updated'),
   source: text('source').notNull(),
   source_artifact_id: integer('source_artifact_id').references((): AnyPgColumn => artifacts.id, { onDelete: 'set null' }),
@@ -197,7 +201,7 @@ export const milestones = pgTable('milestones', {
     .references(() => projects.id),
   external_id: text('external_id').notNull(), // M-KAISER-001
   name: text('name').notNull(),
-  status: text('status'),
+  status: milestoneStatusEnum('status'),
   target: text('target'),
   date: text('date'), // TEXT — 'TBD', '2026-Q3', ISO date
   notes: text('notes'),
