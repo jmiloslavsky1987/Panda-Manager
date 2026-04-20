@@ -1,3 +1,5 @@
+// intentional: Decisions are append-only — no bulk actions or status lifecycle
+
 'use client'
 
 import { useMemo, useCallback, useState } from 'react'
@@ -129,8 +131,11 @@ export default function DecisionsTableClient({ decisions, projectId, artifacts =
       </p>
 
       {/* Decisions list */}
+      {/* intentional: Decisions are immutable append-only records — no edit modal */}
       {filtered.length === 0 ? (
-        <p className="text-sm text-zinc-500">No decisions match your filters.</p>
+        <div className="text-center py-8 text-sm text-zinc-500 border rounded-md bg-zinc-50">
+          No decisions match your filters.
+        </div>
       ) : (
         <div className="space-y-4">
           {filtered.map((decision) => (
