@@ -9,7 +9,7 @@ const postSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   target: z.string().optional(),
   owner: z.string().optional(),
-  status: z.string().optional(),
+  status: z.enum(['not_started', 'in_progress', 'completed', 'blocked']).optional(),
   notes: z.string().optional(),
 })
 

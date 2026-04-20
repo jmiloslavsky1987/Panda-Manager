@@ -58,7 +58,7 @@ export async function buildSkillContext(
   }
 
   if (workspace.risks?.length) {
-    const open = workspace.risks.filter(r => r.status !== 'closed');
+    const open = workspace.risks.filter(r => r.status !== 'resolved');
     sections.push(`## Open Risks (${open.length})`);
     open.forEach(r => {
       sections.push(`- [${r.external_id}] ${r.description} | Severity: ${r.severity ?? 'N/A'} | Mitigation: ${r.mitigation ?? 'None'}`);

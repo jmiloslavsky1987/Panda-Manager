@@ -49,7 +49,7 @@ export async function PATCH(
   // Build the update patch
   const patch: {
     severity?: typeof severity
-    status?: string
+    status?: typeof status
     mitigation?: string
     last_updated?: string
   } = {}
