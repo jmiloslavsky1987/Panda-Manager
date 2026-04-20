@@ -83,25 +83,15 @@ export async function POST(
               .returning()
           }
 
-          // Seed missing steps (check by name under this specific phase)
-          const existingSteps = await tx
-            .select({ name: onboardingSteps.name })
-            .from(onboardingSteps)
-            .where(eq(onboardingSteps.phase_id, phase.id))
-
-          const existingNames = new Set(existingSteps.map(s => s.name))
-
+          // Seed all steps — ON CONFLICT DO NOTHING makes this safe under concurrent calls
           for (let i = 0; i < phaseConfig.steps.length; i++) {
-            const stepName = phaseConfig.steps[i]
-            if (!existingNames.has(stepName)) {
-              await tx.insert(onboardingSteps).values({
-                phase_id: phase.id,
-                project_id: numericId,
-                name: stepName,
-                display_order: i + 1,
-                track,
-              })
-            }
+            await tx.insert(onboardingSteps).values({
+              phase_id: phase.id,
+              project_id: numericId,
+              name: phaseConfig.steps[i],
+              display_order: i + 1,
+              track,
+            }).onConflictDoNothing()
           }
         }
       }

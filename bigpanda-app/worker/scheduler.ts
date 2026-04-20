@@ -34,6 +34,35 @@ export async function registerAllSchedulers(): Promise<void> {
 }
 
 /**
+ * Removes BullMQ job schedulers that have no corresponding row in scheduled_jobs.
+ * This cleans up phantom schedulers registered directly (e.g. weekly-focus-project-N)
+ * before the scheduler UI was wired. Safe to call on every restart — idempotent.
+ */
+export async function removeOrphanedSchedulers(): Promise<void> {
+  // Get all BullMQ job schedulers currently registered in Redis
+  const allSchedulers = await jobQueue.getJobSchedulers();
+
+  // Build the set of valid DB-backed scheduler IDs
+  const dbJobs = await db.select({ id: scheduledJobs.id }).from(scheduledJobs);
+  const validIds = new Set(dbJobs.map(j => `db-job-${j.id}`));
+
+  let removed = 0;
+  for (const scheduler of allSchedulers) {
+    // Skip schedulers with no ID (can't remove them); remove any not in the valid DB-backed set
+    if (scheduler.id && !validIds.has(scheduler.id)) {
+      await jobQueue.removeJobScheduler(scheduler.id);
+      console.log(`[scheduler] removed orphaned scheduler: ${scheduler.id}`);
+      removed++;
+    }
+  }
+  if (removed > 0) {
+    console.log(`[scheduler] removed ${removed} orphaned scheduler(s)`);
+  } else {
+    console.log('[scheduler] no orphaned schedulers found');
+  }
+}
+
+/**
  * DB-driven scheduler registration.
  * Reads all enabled rows from scheduled_jobs and calls upsertJobScheduler
  * for each row that has a cron_expression.

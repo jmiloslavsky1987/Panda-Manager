@@ -219,6 +219,11 @@ function StepOwnerField({
   )
 }
 
+// ─── Module-level seed guard ──────────────────────────────────────────────────
+// Prevents React strict-mode's double-effect from calling the seed endpoint
+// twice concurrently and creating duplicate steps.
+const _seedCalledForProject = new Set<number>()
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
@@ -274,7 +279,8 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
             const p = fetchedBiggy.find(x => x.name === n)
             return !p || p.steps.length === 0
           })
-        if (needsSeed) {
+        if (needsSeed && !_seedCalledForProject.has(projectId)) {
+          _seedCalledForProject.add(projectId)
           const seeded = await fetch(`/api/projects/${projectId}/onboarding/seed`, {
             method: 'POST',
           }).then(r => r.json())
@@ -307,10 +313,10 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
         setMilestones(Array.isArray(fetchedMilestones) ? fetchedMilestones : [])
         setProjectSummary(ps.project ?? null)
 
-        // Default: collapse complete phases
+        // Default: all phases collapsed
         const collapseMap: Record<string | number, boolean> = {}
         ;[...staticAdrPhases, ...staticBiggyPhases].forEach((p) => {
-          collapseMap[p.id] = p.steps.length > 0 && p.steps.every((s) => s.status === 'complete')
+          collapseMap[p.id] = true
         })
         setCollapsed(collapseMap)
 
@@ -705,7 +711,7 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
 
   const renderIntegrationsCard = (track: 'ADR' | 'Biggy') => {
     const key = `integrations-${track}`
-    const isCollapsed = collapsed[key] ?? false
+    const isCollapsed = collapsed[key] ?? true
     const trackIntegrations = integrations.filter(i => i.track === track)
     const validated = trackIntegrations.filter(i => i.status === 'validated').length
     const configured = trackIntegrations.filter(i => i.status === 'configured').length
@@ -746,7 +752,7 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
 
   const renderTeamsCard = (track: 'ADR' | 'Biggy') => {
     const key = `teams-${track}`
-    const isCollapsed = collapsed[key] ?? false
+    const isCollapsed = collapsed[key] ?? true
     const rawPhases = track === 'ADR' ? rawAdrPhases : rawBiggyPhases
     const teamsPhases = rawPhases.filter(p => p.name.toLowerCase().includes('team'))
     const allSteps = teamsPhases.flatMap(p => p.steps)
@@ -820,7 +826,7 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
 
   const renderPhaseCard = (phase: PhaseWithSteps) => {
     const matching = visibleSteps(phase)
-    const isCollapsed = collapsed[phase.id] ?? false
+    const isCollapsed = collapsed[phase.id] ?? true
     const phaseCompleted = phase.steps.filter((s) => s.status === 'complete').length
     const phaseTotal = phase.steps.length
 

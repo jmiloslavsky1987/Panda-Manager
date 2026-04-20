@@ -14,7 +14,7 @@ import './env-loader';
 
 import { Worker } from 'bullmq';
 import { createRedisConnection } from './connection';
-import { registerAllSchedulers, registerDbSchedulers } from './scheduler';
+import { registerAllSchedulers, registerDbSchedulers, removeOrphanedSchedulers } from './scheduler';
 import {
   appendRunHistoryEntry,
   insertSchedulerFailureNotification,
@@ -166,10 +166,11 @@ const gracefulShutdown = async (signal: string) => {
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT',  () => gracefulShutdown('SIGINT'));
 
-// Start: clean up legacy schedulers, register DB-driven schedulers, poll every 60s
+// Start: clean up legacy/orphaned schedulers, register DB-driven schedulers, poll every 60s
 async function start() {
   console.log('[worker] starting...');
-  await registerAllSchedulers();
+  await registerAllSchedulers();        // removes named legacy schedulers
+  await removeOrphanedSchedulers();     // removes any BullMQ scheduler not backed by a DB row
   await registerDbSchedulers();
   console.log('[worker] all schedulers registered');
 

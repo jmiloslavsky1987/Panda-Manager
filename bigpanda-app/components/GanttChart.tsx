@@ -127,13 +127,28 @@ export function buildWbsRows(
   wbsItems: Array<{ id: number; name: string; colorIdx: number; level: number; parentId: number | null; track?: 'ADR' | 'Biggy'; tasks: GanttTask[] }>,
   unassignedTasks: GanttTask[]
 ): WbsSummaryRow[] {
+  // Compute actual tree depth from parent chain (DB `level` column can be stale/wrong)
+  const parentMap = new Map<number, number | null>()
+  wbsItems.forEach(item => parentMap.set(item.id, item.parentId))
+  const depthCache = new Map<number, number>()
+  function computeDepth(id: number): number {
+    if (depthCache.has(id)) return depthCache.get(id)!
+    const parentId = parentMap.get(id) ?? null
+    if (parentId === null) { depthCache.set(id, 1); return 1 }
+    const d = computeDepth(parentId) + 1
+    depthCache.set(id, d)
+    return d
+  }
+  wbsItems.forEach(item => computeDepth(item.id))
+
   const childParentIds = new Set(wbsItems.map(i => i.parentId).filter((id): id is number => id !== null))
   const rows: WbsSummaryRow[] = wbsItems.map(item => {
+    const depth = depthCache.get(item.id) ?? item.level
     const dated = item.tasks.filter(t => t.start && t.end)
     const dates = dated.map(t => ({ s: parseDate(t.start), e: parseDate(t.end) }))
     const spanStart = dates.length ? new Date(Math.min(...dates.map(d => d.s.getTime()))) : null
     const spanEnd = dates.length ? new Date(Math.max(...dates.map(d => d.e.getTime()))) : null
-    return { kind: 'wbs', wbsId: item.id, label: item.name, colorIdx: item.colorIdx, level: item.level, parentWbsId: item.parentId, hasChildren: childParentIds.has(item.id), track: item.track, tasks: item.tasks, spanStart, spanEnd }
+    return { kind: 'wbs', wbsId: item.id, label: item.name, colorIdx: item.colorIdx, level: depth, parentWbsId: item.parentId, hasChildren: childParentIds.has(item.id), track: item.track, tasks: item.tasks, spanStart, spanEnd }
   })
   // Propagate spans bottom-up so parent rows reflect descendant task dates
   const rowById = new Map(rows.map(r => [r.wbsId, r]))
@@ -700,16 +715,17 @@ export default function GanttChart({
                   className="flex items-center shrink-0 border-b border-zinc-100 cursor-pointer hover:bg-zinc-100/60 font-medium"
                   style={{ height: ROW_H, background: '#f9f9f9' }}
                   onClick={() => setExpanded(p => { const n = new Set(p); isExp ? n.delete(String(row.wbsId)) : n.add(String(row.wbsId)); return n })}>
-                  <div className="shrink-0" style={{ width: 8 + (row.level - 1) * 20 }} />
-                  <div className="w-4 shrink-0 text-[11px]" style={{ color: color.bar }}>
-                    {(row.hasChildren || row.tasks.length > 0) ? (isExp ? '▾' : '▸') : <span className="text-zinc-300">–</span>}
-                  </div>
-                  <div
-                    className={`flex-1 pl-1 pr-1 truncate text-sm ${row.level === 1 ? 'font-semibold' : 'font-normal'}`}
-                    style={{ color: row.level === 1 ? color.text : '#111827' }}
-                    onMouseEnter={e => { const r = e.currentTarget.getBoundingClientRect(); setLabelTip({ text: row.label, x: r.left, y: r.bottom + 6 }) }}
-                    onMouseLeave={() => setLabelTip(null)}>
-                    {row.label}
+                  <div className="flex items-center min-w-0 flex-1" style={{ paddingLeft: 8 + (row.level - 1) * 20 }}>
+                    <div className="w-5 shrink-0 text-base" style={{ color: color.bar }}>
+                      {(row.hasChildren || row.tasks.length > 0) ? (isExp ? '▾' : '▸') : <span className="text-zinc-300">–</span>}
+                    </div>
+                    <div
+                      className={`flex-1 pl-1 pr-1 truncate text-sm ${row.level === 1 ? 'font-semibold' : 'font-normal'}`}
+                      style={{ color: row.level === 1 ? color.text : '#111827' }}
+                      onMouseEnter={e => { const r = e.currentTarget.getBoundingClientRect(); setLabelTip({ text: row.label, x: r.left, y: r.bottom + 6 }) }}
+                      onMouseLeave={() => setLabelTip(null)}>
+                      {row.label}
+                    </div>
                   </div>
                   <div className="w-[52px] text-right shrink-0 pr-1 text-xs text-zinc-400">
                     {row.spanStart ? fmtShort(row.spanStart) : '—'}
