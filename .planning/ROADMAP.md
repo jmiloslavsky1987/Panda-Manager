@@ -149,6 +149,7 @@ Full details: `.planning/milestones/v7.0-ROADMAP.md` (archived)
 - [x] **Phase 71: Feature Consistency Audit** — Written report identifying duplicate features and inconsistent UX patterns; no code changes (completed 2026-04-20)
 - [ ] **Phase 72: Feature Unification** — Eliminate identified duplicates; unify to single consistent implementation
 - [ ] **Phase 73: Multi-Tenant Isolation** — Enforce project ownership at all API/UI layers; prevent cross-user state bleed
+- [ ] **Phase 73.1: Entity Lifecycle Management** — Document-driven updates (Pass 5 change detection) + manual edit/delete for all entity types [INSERTED]
 - [ ] **Phase 74: Deployment Readiness** — Env-var-only configuration; deployment guide
 
 ## Phase Details
@@ -219,13 +220,24 @@ Plans:
 
 ### Phase 73.1: Entity Lifecycle Management (INSERTED)
 
-**Goal:** [Urgent work - to be planned]
-**Requirements**: TBD
-**Depends on:** Phase 73
-**Plans:** 0 plans
+**Goal**: Ingested entities can be updated, closed, or removed via new document uploads (Pass 5 change detection); all entity types have manual edit/delete UI so users can correct or remove any record after ingestion
+**Depends on**: Phase 73
+**Requirements**: LIFECYCLE-P1, LIFECYCLE-P2
+**Success Criteria** (what must be TRUE):
+  1. Uploading a document with update/closure intent surfaces proposed changes in IngestionModal for user review
+  2. User can approve a proposed change (update/close/remove) and the entity is updated in DB with audit log
+  3. User can reject a proposed change and the entity is not modified
+  4. User can delete any action, risk, milestone, or workstream from the UI (DELETE API handlers + auth)
+  5. BusinessOutcomesSection and E2eWorkflowsSection (Teams tab) have delete buttons per item
+  6. Append-only entities (engagement_history, key_decisions) retain no edit/delete UI
+**Plans**: 5 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 73.1 to break down)
+- [ ] 73.1-01-PLAN.md — TDD Wave 0 RED stubs: entity-lifecycle, change-detection, entity-matcher, IngestionModal-changes
+- [ ] 73.1-02-PLAN.md — DB migration (proposed_changes_json + pg_trgm) + DELETE handlers for actions/risks/milestones/workstreams + requireProjectRole upgrade
+- [ ] 73.1-03-PLAN.md — lib/entity-matcher.ts (pg_trgm fuzzy matching) + worker/jobs/change-detection.ts (Pass 5) + document-extraction.ts integration
+- [ ] 73.1-04-PLAN.md — Approve route updateItem/closeItem/deleteItem + IngestionModal "Proposed Changes" section + BusinessOutcomesSection/E2eWorkflowsSection delete buttons
+- [ ] 73.1-05-PLAN.md — Build verification + human verification gate (both pillars)
 
 ### Phase 74: Deployment Readiness
 **Goal**: The app can be fully configured for a hosted environment using environment variables alone, and a deployment guide documents every prerequisite and configuration step
@@ -252,7 +264,7 @@ Plans:
 | v8.0 | 70–75 | 0/TBD | In progress | - |
 
 ---
-*Last updated: 2026-04-19 — v8.0 roadmap created*
+*Last updated: 2026-04-20 — Phase 73.1 plans created*
 
 ---
 
