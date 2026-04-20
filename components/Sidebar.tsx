@@ -3,10 +3,17 @@ import { BookOpen, CalendarClock, Clock, Library, Settings } from 'lucide-react'
 import { getActiveProjects, getArchivedProjects } from '../lib/queries';
 import { SidebarProjectItem } from './SidebarProjectItem';
 import { SidebarUserIsland } from './SidebarUserIsland';
+import { auth } from '@/lib/auth';
+import { headers } from 'next/headers';
+import { resolveRole } from '@/lib/auth-utils';
 
 export async function Sidebar() {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const userId = session?.user?.id;
+  const isGlobalAdmin = session ? resolveRole(session) === 'admin' : false;
+
   const [projects, archivedProjects] = await Promise.all([
-    getActiveProjects(),
+    getActiveProjects({ userId, isGlobalAdmin }),
     getArchivedProjects(),
   ]);
 
