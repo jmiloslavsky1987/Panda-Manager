@@ -208,7 +208,14 @@ Plans:
   3. Redis cache keys and BullMQ job payloads are namespaced by project and user — no cross-boundary state possible
   4. A BullMQ job triggered in Project A cannot produce results visible in Project B
   5. A new user who accepts an email invite and logs in for the first time sees an empty portfolio — no other users' projects, history, or data visible
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 73-01-PLAN.md — RED test stubs for all 5 TENANT requirements (TDD Wave 0)
+- [ ] 73-02-PLAN.md — Portfolio route fixes: /api/projects, /api/dashboard/watch-list, /api/drafts
+- [ ] 73-03-PLAN.md — Query-param route upgrades: artifacts, tasks, ingestion/upload, ingestion/extract
+- [ ] 73-04-PLAN.md — Remaining route upgrades: ingestion/approve, artifacts/[id]; confirm TENANT-03/04
+- [ ] 73-05-PLAN.md — Build verification + human verification gate (all 5 TENANT requirements)
 
 ### Phase 74: Deployment Readiness
 **Goal**: The app can be fully configured for a hosted environment using environment variables alone, and a deployment guide documents every prerequisite and configuration step
