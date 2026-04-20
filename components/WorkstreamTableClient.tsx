@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { EmptyState } from '@/components/EmptyState'
 
 // Minimal type matching what getWorkspaceData() returns for workstreams
 interface WorkstreamRow {
@@ -17,10 +18,12 @@ interface WorkstreamRow {
 
 interface WorkstreamTableClientProps {
   streams: WorkstreamRow[]
-  emptyMessage?: string
 }
 
-export function WorkstreamTableClient({ streams, emptyMessage }: WorkstreamTableClientProps) {
+// intentional: Workstreams use progress-slider UX — bulk status updates not applicable
+// intentional: WorkstreamTableClient has no filter bar — workstream counts remain small (<10 per project); add track/lead/progress-range filters if row counts grow
+
+export function WorkstreamTableClient({ streams }: WorkstreamTableClientProps) {
   const router = useRouter()
   const [pendingPct, setPendingPct] = useState<Record<number, number>>({})
   const [dirtyIds, setDirtyIds] = useState<Set<number>>(new Set())
@@ -59,7 +62,13 @@ export function WorkstreamTableClient({ streams, emptyMessage }: WorkstreamTable
   }
 
   if (streams.length === 0) {
-    return <p className="text-zinc-400 text-sm py-4">{emptyMessage ?? 'No workstreams'}</p>
+    return (
+      <EmptyState
+        title="No workstreams yet"
+        description="Workstreams organize delivery tracks. Add the first workstream to get started."
+        action={{ label: 'Add Workstream', onClick: () => {} }}
+      />
+    )
   }
 
   return (
