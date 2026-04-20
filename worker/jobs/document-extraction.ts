@@ -74,6 +74,12 @@ export const EXTRACTION_BASE = `You are a project data extractor. Documents are 
 
 The document to extract from is provided in <document> tags in the user message.
 
+FIELD QUALITY RULES (apply to all entity types):
+- Title/name fields: short and to the point — a clear identifying label, not a full sentence. Think "what is this thing called?"
+- Description/decision/notes/rationale fields: use these for the full detail. Write complete sentences that convey the entire meaning without truncation.
+- Never split a thought mid-sentence or end with "...". If a value doesn't fit in a title, move the detail to description/notes.
+- Do not copy raw paragraph text verbatim — distill it, but preserve all the key information.
+
 Output ONLY a JSON array of extraction items — no prose before or after, no markdown code fences.
 Each item follows this exact shape:
 {
@@ -163,7 +169,7 @@ If this document is a slide deck (PPTX), extract all project data visible in bul
 Output only the raw JSON array. Never wrap it in markdown code fences.`;
 
 // Pass-specific prompts: EXTRACTION_BASE + entity type guidance for that pass only
-export const PASS_PROMPTS: Record<1 | 2 | 3, string> = {
+export const PASS_PROMPTS: Record<1 | 2 | 3 | 4, string> = {
   1: `${EXTRACTION_BASE}
 
 FOCUS ON THESE ENTITY TYPES ONLY FOR THIS PASS:
@@ -309,10 +315,6 @@ Input: "NOC Team: currently doing manual alert triage, expected to move to BigPa
 Output: [{"entityType": "team", "fields": {"team_name": "NOC Team", "track": "ADR", "ingest_status": null, "correlation_status": null}, "confidence": 0.85, "sourceExcerpt": "NOC Team: currently doing manual alert triage"}]
 </example>
 
-<example>
-Input: "This week's focus: finalize integration testing with ServiceNow, prepare for pilot launch"
-Output: [{"entityType": "weekly_focus", "fields": {"bullets": ["Finalize integration testing with ServiceNow", "Prepare for pilot launch"]}, "confidence": 0.8, "sourceExcerpt": "This week's focus: finalize integration testing"}]
-</example>
 
 <example>
 Input: "Mike: End-to-end for the NOC — alerts come in through Event Ingest, BigPanda runs correlation and enrichment, then anything that hits the severity threshold automatically creates a ticket in ServiceNow. The NOC engineer reviews it there, works the incident, closes it out. We're also routing high-severity incidents to PagerDuty for on-call escalation but that's still manual."
@@ -327,12 +329,7 @@ NOT a "workstream" or "team_pathway" — a described sequence of steps for a nam
 - focus_area: { title, tracks, why_it_matters, current_status, next_step, bp_owner, customer_owner } — a named focus area or strategic priority with ownership and status; use for named workstreams, priorities, or initiatives with a clear owner and next step
 - e2e_workflow: { team_name, workflow_name, steps } — PRIMARY type for any team workflow sequence. Use this whenever a team's process steps are described, even conversationally. ASSEMBLE from scattered mentions: stitch together a team's end-to-end journey even when steps appear across multiple sections. steps is an array of { label, track, status, position } objects; assign sequential positions starting at 1.
   Example: Document mentions "NOC team starts with alert ingestion, then correlation, then creates incidents in ServiceNow" → extract as steps: [{"label": "Alert Ingestion", "track": "ADR", "status": "live", "position": 1}, {"label": "Correlation", "track": "ADR", "status": "live", "position": 2}, {"label": "Incident Creation in ServiceNow", "track": "ADR", "status": "live", "position": 3}]. Use null for any step field not determinable from context.
-  IMPORTANT: Do NOT use team_pathway for this — team_pathway is only for simple route strings, not step-by-step workflows.
-- team_pathway: { team_name, route_description (the delivery route steps joined by ' → ' e.g. "Alert Ingest → Correlation → Incident Creation → SNow Ticket"), status ("live" | "in_progress" | "pilot" | "planned"), notes } — use ONLY when the document explicitly describes a named delivery route as a simple string with no step details. If step details exist (status per step, descriptions, tools per step), use e2e_workflow instead.
-- weekly_focus: { bullets (JSON array of 3–5 strings — SYNTHESIZE from actual project signals; each bullet is an action-oriented imperative phrase, e.g. "Resolve ServiceNow integration blocker before pilot launch") } — ALWAYS synthesize weekly_focus even if no "This Week" section exists. SOURCE SIGNALS in priority order: (1) open action items and overdue tasks, (2) unresolved risks, (3) upcoming milestones. Do NOT extract verbatim; generate focused, prioritized items from the document's actual project state. Hard limit: 3–5 bullets maximum — prioritize rather than enumerate everything. SINGLETON: Extract at most ONE weekly_focus entity per document.
-- stakeholder: { name, role, email, account }
-- businessOutcome: { title, track, description, delivery_status }
-- onboarding_step: { team_name, step_name, track, status, completed_date } — specific onboarding step for a team. Prefer exact standard step names: ADR: "Kickoff", "Workflow Discovery", "Solution Design", "Single Sign-On", "Data Normalization", "Environments", "Incident Tags", "Correlation", "Documentation", "Go-Live Prep", "UAT". Biggy: "Kickoff", "Single Sign-On", "Security & Approvals", "Action Plans", "Workflows", "Managed Incident Channels", "Testing", "Validation", "Team Launch Prep". NOT the same as a generic task
+  IMPORTANT: Prefer e2e_workflow for any described sequence. team_pathway is handled in Pass 4.
 
 Key disambiguation for this pass:
 - e2e_workflow vs team_pathway: If a team's process involves identifiable steps (even described conversationally), use e2e_workflow. Use team_pathway ONLY for a simple named route string with no step-level detail. When in doubt, prefer e2e_workflow.
@@ -362,7 +359,64 @@ If document type is \`transcript\` or \`status-update\` (from Pass 0 pre_analysi
 - Recognize implicit action items (e.g., "John mentioned he'll look into the configuration")
 - Extract meeting follow-ups, commitments, and decisions from dialogue patterns
 - PRIORITY — \`e2e_workflow\`: Any described sequence of steps a team follows — even in a single conversational sentence — MUST be extracted as an e2e_workflow. Do NOT absorb team process descriptions into \`workstream\`, \`task\`, or \`team_pathway\`. If the document mentions a team and a sequence of steps (even implicitly: "first we do X, then Y, then Z" or "NOC team workflow: A → B → C"), extract it as e2e_workflow with steps. A brief description is sufficient; do not require a formal list.
-- PRIORITY — \`weekly_focus\`: ALWAYS synthesize from open action items, risks, and upcoming milestones in the transcript. Do not require an explicit "This Week" section.
+If document type is \`formal-doc\`:
+- Prefer explicit extraction from labeled sections when available
+- Use higher confidence scores (0.8–0.95) for content from labeled sections
+- Still apply inference for content that spans multiple sections
+
+Extract all names exactly as they appear in the document. Use null for any field not explicitly present.`,
+
+  4: `${EXTRACTION_BASE}
+
+FOCUS ON THESE ENTITY TYPES ONLY FOR THIS PASS:
+<example>
+Input: "John Smith, IT Operations Lead at Acme Corp, john.smith@acme.com"
+Output: [{"entityType": "stakeholder", "fields": {"name": "John Smith", "role": "IT Operations Lead", "email": "john.smith@acme.com", "account": "Acme Corp"}, "confidence": 0.95, "sourceExcerpt": "John Smith, IT Operations Lead at Acme Corp"}]
+</example>
+
+<example>
+Input: "NOC Team ADR onboarding — Solution Design complete, Data Normalization in progress"
+Output: [
+  {"entityType": "onboarding_step", "fields": {"team_name": "NOC Team", "step_name": "Solution Design", "track": "ADR", "status": "complete", "completed_date": null}, "confidence": 0.9, "sourceExcerpt": "Solution Design complete"},
+  {"entityType": "onboarding_step", "fields": {"team_name": "NOC Team", "step_name": "Data Normalization", "track": "ADR", "status": "in_progress", "completed_date": null}, "confidence": 0.9, "sourceExcerpt": "Data Normalization in progress"}
+]
+</example>
+
+<example>
+Input: "NOC team route: Alert Ingest → Correlation → ServiceNow ticket"
+Output: [{"entityType": "team_pathway", "fields": {"team_name": "NOC team", "route_description": "Alert Ingest → Correlation → ServiceNow ticket", "status": "live", "notes": null}, "confidence": 0.85, "sourceExcerpt": "NOC team route: Alert Ingest → Correlation → ServiceNow ticket"}]
+NOT e2e_workflow — this is a simple route string with no per-step detail. e2e_workflow was handled in Pass 3.
+</example>
+
+
+- team_pathway: { team_name, route_description (the delivery route steps joined by ' → ' e.g. "Alert Ingest → Correlation → Incident Creation → SNow Ticket"), status ("live" | "in_progress" | "pilot" | "planned"), notes } — use ONLY when the document describes a named delivery route as a simple route string with no step details. If step details exist, e2e_workflow (Pass 3) already captured it.
+- stakeholder: { name, role, email, account } — a NAMED INDIVIDUAL with role, email, account. Not a team (teams were handled in Pass 3).
+- businessOutcome: { title, track, description, delivery_status }
+- onboarding_step: { team_name, step_name, track, status, completed_date } — specific onboarding step for a team. Prefer exact standard step names: ADR: "Kickoff", "Workflow Discovery", "Solution Design", "Single Sign-On", "Data Normalization", "Environments", "Incident Tags", "Correlation", "Documentation", "Go-Live Prep", "UAT". Biggy: "Kickoff", "Single Sign-On", "Security & Approvals", "Action Plans", "Workflows", "Managed Incident Channels", "Testing", "Validation", "Team Launch Prep". NOT the same as a generic task.
+
+Key disambiguation for this pass:
+- team_pathway vs e2e_workflow: Use team_pathway ONLY for a simple route string with no per-step detail. If step-level detail exists, it was extracted as e2e_workflow in Pass 3.
+- stakeholder vs team: stakeholder = a NAMED INDIVIDUAL with role, email, account. team = a GROUP with onboarding status (handled in Pass 3).
+- onboarding_step vs task: onboarding_step = a specific named step in the BigPanda onboarding template for a specific team. Generic project tasks go to task (Pass 1).
+
+## SCANNING INSTRUCTION
+Before extracting, scan the document section-by-section (introduction, main body, tables, bullet lists,
+appendices). Do not skip any section — entities often appear in tables or footnotes.
+
+## SELF-CHECK
+Before calling record_entities, verify:
+1. Have I extracted all entities of the allowed types from every section?
+2. Have I applied the STATUS NORMALIZATION table to all status fields?
+3. Have I attempted date inference for all date fields (and justified any null)?
+4. Have I used the examples above to resolve ambiguous entity types?
+
+## DOCUMENT-TYPE-AWARE EXTRACTION
+
+If document type is \`transcript\` or \`status-update\` (from Pass 0 pre_analysis above):
+- Infer more aggressively from scattered mentions and conversational language
+- Assemble entities from partial information spread across multiple sections
+- Use lower confidence scores (0.5–0.7) to reflect inference vs direct extraction
+- PRIORITY — \`stakeholder\`: Extract any named individual with a role, even if email is absent. People mentioned in passing ("Sarah handles the integrations") are valid stakeholders.
 
 If document type is \`formal-doc\`:
 - Prefer explicit extraction from labeled sections when available
@@ -375,7 +429,7 @@ Extract all names exactly as they appear in the document. Use null for any field
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface ExtractionPass {
-  passNumber: 0 | 1 | 2 | 3;
+  passNumber: 0 | 1 | 2 | 3 | 4;
   label: string;
   entityTypes: EntityType[];
 }
@@ -431,7 +485,13 @@ export const PASSES: ExtractionPass[] = [
     label: 'Teams & delivery',
     entityTypes: [
       'team', 'wbs_task', 'workstream', 'focus_area', 'e2e_workflow',
-      'team_pathway', 'weekly_focus', 'stakeholder', 'businessOutcome', 'onboarding_step',
+    ],
+  },
+  {
+    passNumber: 4,
+    label: 'People & outcomes',
+    entityTypes: [
+      'team_pathway', 'stakeholder', 'businessOutcome', 'onboarding_step',
     ],
   },
 ];
@@ -577,14 +637,21 @@ async function runClaudeToolUseCall(
   content: Anthropic.MessageParam['content'],
   systemPrompt: string,
 ): Promise<{ items: ExtractionItem[]; coverage: string }> {
-  const response = await client.messages.create({
+  // Use streaming to avoid the 10-minute non-streaming timeout on large documents
+  const stream = client.messages.stream({
     model: 'claude-sonnet-4-6',
-    max_tokens: 16384,
+    max_tokens: 32768,
     system: systemPrompt,
     messages: [{ role: 'user', content }],
     tools: [RECORD_ENTITIES_TOOL],
     tool_choice: { type: 'tool', name: 'record_entities' },
   });
+
+  const response = await stream.finalMessage();
+
+  if (response.stop_reason === 'max_tokens') {
+    console.warn('[extraction] max_tokens hit — response truncated. Entities from this chunk may be incomplete.');
+  }
 
   // Extract tool use block
   const toolBlock = response.content.find(
@@ -595,9 +662,25 @@ async function runClaudeToolUseCall(
     return { items: [], coverage: '' };
   }
 
-  const input = toolBlock.input as { entities?: ExtractionItem[]; coverage?: string };
+  const input = toolBlock.input as { entities?: unknown; coverage?: string };
+
+  // Guard: entities must be an array. If Claude double-serialized it as a JSON string,
+  // attempt to parse it. Otherwise skip (don't spread a string character-by-character).
+  let entities: ExtractionItem[] = [];
+  if (Array.isArray(input.entities)) {
+    entities = input.entities as ExtractionItem[];
+  } else if (typeof input.entities === 'string') {
+    try {
+      const parsed = JSON.parse(input.entities);
+      if (Array.isArray(parsed)) entities = parsed;
+      else console.warn('[extraction] entities field parsed but is not an array — skipping');
+    } catch {
+      console.warn('[extraction] entities field is a string but failed JSON.parse — skipping');
+    }
+  }
+
   return {
-    items: input.entities ?? [],
+    items: entities,
     coverage: input.coverage ?? '',
   };
 }
@@ -761,14 +844,14 @@ export default async function documentExtractionJob(job: Job): Promise<{ status:
       // Pass 0 already complete at 10%, now run Passes 1-3
       await db.update(extractionJobs)
         .set({
-          total_chunks: 3, // Passes 1-3 only (Pass 0 is not a chunk-processing pass)
+          total_chunks: 4, // Passes 1-4 only (Pass 0 is not a chunk-processing pass)
           current_chunk: 0,
           updated_at: new Date()
         })
         .where(eq(extractionJobs.id, jobId));
 
       // Skip Pass 0 in the loop (already done above)
-      const contentPasses = PASSES.filter((p): p is ExtractionPass & { passNumber: 1 | 2 | 3 } => p.passNumber !== 0);
+      const contentPasses = PASSES.filter((p): p is ExtractionPass & { passNumber: 1 | 2 | 3 | 4 } => p.passNumber !== 0);
 
       for (let passIdx = 0; passIdx < contentPasses.length; passIdx++) {
         const pass = contentPasses[passIdx];
@@ -799,8 +882,8 @@ export default async function documentExtractionJob(job: Job): Promise<{ status:
         coverageByPass[pass.passNumber] = passCoverage; // EXTR-10: store per-pass coverage
 
         // Global progress with Pass 0: Pass 0 = 10%, Pass 1 = 40%, Pass 2 = 70%, Pass 3 = 100%
-        const progressMap = { 1: 40, 2: 70, 3: 100 };
-        const globalPct = progressMap[pass.passNumber as 1 | 2 | 3] ?? 100;
+        const progressMap = { 1: 32, 2: 54, 3: 76, 4: 100 };
+        const globalPct = progressMap[pass.passNumber as 1 | 2 | 3 | 4] ?? 100;
         await db.update(extractionJobs)
           .set({
             progress_pct: Math.min(100, globalPct),
@@ -817,14 +900,14 @@ export default async function documentExtractionJob(job: Job): Promise<{ status:
 
       await db.update(extractionJobs)
         .set({
-          total_chunks: totalChunks, // Passes 1-3 only (Pass 0 is not a chunk-processing pass)
+          total_chunks: totalChunks, // Passes 1-4 only (Pass 0 is not a chunk-processing pass)
           current_chunk: 0,
           updated_at: new Date()
         })
         .where(eq(extractionJobs.id, jobId));
 
       // Skip Pass 0 in the loop (already done above)
-      const contentPasses = PASSES.filter((p): p is ExtractionPass & { passNumber: 1 | 2 | 3 } => p.passNumber !== 0);
+      const contentPasses = PASSES.filter((p): p is ExtractionPass & { passNumber: 1 | 2 | 3 | 4 } => p.passNumber !== 0);
 
       for (let passIdx = 0; passIdx < contentPasses.length; passIdx++) {
         const pass = contentPasses[passIdx];
@@ -856,11 +939,11 @@ export default async function documentExtractionJob(job: Job): Promise<{ status:
             coverageByPass[pass.passNumber] = chunkCoverage;
           }
 
-          // Global progress with Pass 0: Pass 0 = 10%, Passes 1-3 split remaining 90%
-          // Pass 1: 10 + (30 * progress), Pass 2: 40 + (30 * progress), Pass 3: 70 + (30 * progress)
+          // Global progress with Pass 0: Pass 0 = 10%, Passes 1-4 split remaining 90% (~22% each)
+          // Pass 1: 10 + (22 * progress), Pass 2: 32 + (22 * progress), Pass 3: 54 + (22 * progress), Pass 4: 76 + (22 * progress)
           const passProgressPct = (i + 1) / totalChunks;
-          const baseProgress = { 1: 10, 2: 40, 3: 70 };
-          const globalPct = Math.round(baseProgress[pass.passNumber as 1 | 2 | 3] + (passProgressPct * 30));
+          const baseProgress = { 1: 10, 2: 32, 3: 54, 4: 76 };
+          const globalPct = Math.round(baseProgress[pass.passNumber as 1 | 2 | 3 | 4] + (passProgressPct * 22));
           await db.update(extractionJobs)
             .set({
               progress_pct: Math.max(0, Math.min(100, globalPct)),
@@ -885,6 +968,7 @@ export default async function documentExtractionJob(job: Job): Promise<{ status:
 
     const newItems = dedupResults
       .filter(r => !r.alreadyIngested)
+      .filter(r => r.item !== null && typeof r.item === 'object' && typeof (r.item as ExtractionItem).entityType === 'string')
       .map(r => {
         const item = r.item;
         const cleanedFields = item.fields && typeof item.fields === 'object'

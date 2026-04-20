@@ -58,6 +58,8 @@ vi.mock('@/db/schema', () => ({
   archTracks: { id: 'id', project_id: 'project_id', name: 'name' },
   artifacts: { id: 'id', project_id: 'project_id', ingestion_status: 'ingestion_status', ingestion_log_json: 'ingestion_log_json' },
   auditLog: { id: 'id', entity_type: 'entity_type', entity_id: 'entity_id', action: 'action', actor_id: 'actor_id', before_json: 'before_json', after_json: 'after_json' },
+  extractionJobs: { id: 'id', artifact_id: 'artifact_id', batch_id: 'batch_id', project_id: 'project_id' },
+  beforeState: { id: 'id', project_id: 'project_id', content: 'content', source: 'source', source_artifact_id: 'source_artifact_id' },
   ingestionStatusEnum: vi.fn(),
 }));
 
@@ -65,7 +67,11 @@ vi.mock('@/db/schema', () => ({
 vi.mock('drizzle-orm', () => ({
   eq: vi.fn((col, val) => ({ col, val })),
   and: vi.fn((...args) => args),
+  or: vi.fn((...args) => args),
   ilike: vi.fn((col, pat) => ({ col, pat })),
+  inArray: vi.fn((col, vals) => ({ col, vals })),
+  sql: vi.fn((strings: TemplateStringsArray, ...values: unknown[]) => ({ strings, values })),
+  asc: vi.fn((col) => ({ col })),
 }));
 
 // Mock @anthropic-ai/sdk
