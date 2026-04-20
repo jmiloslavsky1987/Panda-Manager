@@ -147,9 +147,9 @@ Full details: `.planning/milestones/v7.0-ROADMAP.md` (archived)
 
 - [x] **Phase 70: AI Usage Audit** — Written report categorizing every Claude API call; no code changes (completed 2026-04-20)
 - [x] **Phase 71: Feature Consistency Audit** — Written report identifying duplicate features and inconsistent UX patterns; no code changes (completed 2026-04-20)
-- [x] **Phase 71: Feature Unification** — Eliminate identified duplicates; unify to single consistent implementation (completed 2026-04-20)
-- [ ] **Phase 71: Multi-Tenant Isolation** — Enforce project ownership at all API/UI layers; prevent cross-user state bleed
-- [ ] **Phase 71: Deployment Readiness** — Env-var-only configuration; deployment guide
+- [ ] **Phase 72: Feature Unification** — Eliminate identified duplicates; unify to single consistent implementation
+- [ ] **Phase 73: Multi-Tenant Isolation** — Enforce project ownership at all API/UI layers; prevent cross-user state bleed
+- [ ] **Phase 74: Deployment Readiness** — Env-var-only configuration; deployment guide
 
 ## Phase Details
 
@@ -179,9 +179,9 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 71-01-PLAN.md — Write feature consistency audit report + human review gate
+- [x] 71-01-PLAN.md — Write feature consistency audit report + human review gate
 
-### Phase 71: Feature Unification
+### Phase 72: Feature Unification
 **Goal**: All duplicates and inconsistencies identified in the Phase 71 audit are eliminated — one canonical implementation exists per feature
 **Depends on**: Phase 71 (consistency audit report required before implementation)
 **Requirements**: RFCTR-04
@@ -192,7 +192,7 @@ Plans:
   4. Test suite passes after all unifications
 **Plans**: TBD
 
-### Phase 71: Multi-Tenant Isolation
+### Phase 73: Multi-Tenant Isolation
 **Goal**: Users see only their own projects; unauthorized access returns 403; AI outputs, cache entries, and BullMQ job state cannot cross user or project boundaries; invite onboarding presents a clean empty state
 **Depends on**: Nothing (better-auth and requireProjectRole() foundation from Phase 58 is already in place)
 **Requirements**: TENANT-01, TENANT-02, TENANT-03, TENANT-04, TENANT-05
@@ -204,9 +204,9 @@ Plans:
   5. A new user who accepts an email invite and logs in for the first time sees an empty portfolio — no other users' projects, history, or data visible
 **Plans**: TBD
 
-### Phase 71: Deployment Readiness
+### Phase 74: Deployment Readiness
 **Goal**: The app can be fully configured for a hosted environment using environment variables alone, and a deployment guide documents every prerequisite and configuration step
-**Depends on**: Phase 71 (multi-tenant isolation must be correct before deployment)
+**Depends on**: Phase 73 (multi-tenant isolation must be correct before deployment)
 **Requirements**: DEPLOY-01, DEPLOY-02
 **Success Criteria** (what must be TRUE):
   1. No hardcoded localhost URLs, filesystem paths, or secrets exist anywhere in application code

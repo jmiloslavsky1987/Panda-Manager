@@ -21,12 +21,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-16 after v7.0 milestone close)
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
-**Current focus:** v8.0 Phase 70 — AI Usage Audit (first phase, ready to plan)
+**Current focus:** v8.0 Phase 72 — Feature Unification (ready to plan)
 
 ## Current Position
 
 Phase: 71 of 75 — Plan 01 complete (Feature Consistency Audit)
-Status: Phase 71-01 complete. Ready for Phase 73 planning.
+Status: Phase 71-01 complete. Ready for Phase 72 planning.
 Last activity: 2026-04-20 — Phase 71-01 complete (Feature Consistency Audit)
 
 Progress: [██████████] 99% (245 of 247 plans complete across all milestones)
@@ -50,19 +50,17 @@ Progress: [██████████] 99% (245 of 247 plans complete across
 
 ## v8.0 Roadmap Summary
 
-**6 phases (70–75) covering 11 requirements:**
+**5 phases (70–74) covering 11 requirements:**
 
-- **Phase 70:** AI Usage Audit (RFCTR-01) — written report, no code changes; user review gate
-- **Phase 71:** Deterministic Refactor (RFCTR-02) — replace deterministic Claude calls; blocked by Phase 70
-- **Phase 72:** Feature Consistency Audit (RFCTR-03) — written report, no code changes; user review gate
-- **Phase 73:** Feature Unification (RFCTR-04) — eliminate duplicates; blocked by Phase 72
-- **Phase 74:** Multi-Tenant Isolation (TENANT-01–05) — isolation airtight at all layers
-- **Phase 75:** Deployment Readiness (DEPLOY-01–02) — env-var config + deployment guide; blocked by Phase 74
+- **Phase 70:** AI Usage Audit (RFCTR-01) — written report, no code changes; user review gate ✅
+- **Phase 71:** Feature Consistency Audit (RFCTR-03) — written report, no code changes; user review gate ✅
+- **Phase 72:** Feature Unification (RFCTR-04) — eliminate duplicates; blocked by Phase 71
+- **Phase 73:** Multi-Tenant Isolation (TENANT-01–05) — isolation airtight at all layers
+- **Phase 74:** Deployment Readiness (DEPLOY-01–02) — env-var config + deployment guide; blocked by Phase 73
 
 **Critical dependencies:**
-- Phase 71 blocked by Phase 70 (audit report required before deterministic refactor)
-- Phase 73 blocked by Phase 72 (consistency audit required before unification)
-- Phase 75 blocked by Phase 74 (multi-tenant correctness required before deployment)
+- Phase 72 blocked by Phase 71 (consistency audit required before unification)
+- Phase 74 blocked by Phase 73 (multi-tenant correctness required before deployment)
 
 ## Established Patterns
 
@@ -95,7 +93,7 @@ Progress: [██████████] 99% (245 of 247 plans complete across
 - Workstreams intentionally lack bulk actions - progress slider UX is domain-appropriate for workstream tracking
 - SearchBar vs GlobalSearchBar are distinct components with different scopes (should be renamed for clarity)
 - Dual-mode editing (modal + inline) is intentional and correct UX pattern for Actions/Risks/Milestones
-- Missing DB enums for Risks/Milestones status is HIGH priority data integrity risk for Phase 73
+- Missing DB enums for Risks/Milestones status is HIGH priority data integrity risk for Phase 72
 
 ## Session Continuity
 
