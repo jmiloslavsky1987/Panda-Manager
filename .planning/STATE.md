@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v8.0
 milestone_name: Codebase Refactor & Multi-Tenant Deployment
 status: planning
-stopped_at: Phase 72 context gathered
-last_updated: "2026-04-20T14:43:02.823Z"
+stopped_at: Completed 072-01-PLAN.md
+last_updated: "2026-04-20T15:17:46.000Z"
 last_activity: 2026-04-20 — Phase 71-01 complete (Feature Consistency Audit)
 progress:
   total_phases: 17
   completed_phases: 11
-  total_plans: 43
-  completed_plans: 41
+  total_plans: 47
+  completed_plans: 42
   percent: 99
 ---
 
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-04-16 after v7.0 milestone close)
 
 ## Current Position
 
-Phase: 71 of 75 — Plan 01 complete (Feature Consistency Audit)
-Status: Phase 71-01 complete. Ready for Phase 72 planning.
-Last activity: 2026-04-20 — Phase 71-01 complete (Feature Consistency Audit)
+Phase: 72 of 75 — Plan 01 complete (Risk and Milestone Status Enums)
+Status: Phase 72-01 complete. Ready for Phase 72-02.
+Last activity: 2026-04-20 — Phase 72-01 complete (Risk and Milestone Status Enums)
 
-Progress: [██████████] 99% (245 of 247 plans complete across all milestones)
+Progress: [██████████] 98% (246 of 251 plans complete across all milestones)
 
 ## Milestone History
 
@@ -95,8 +95,13 @@ Progress: [██████████] 99% (245 of 247 plans complete across
 - Dual-mode editing (modal + inline) is intentional and correct UX pattern for Actions/Risks/Milestones
 - Missing DB enums for Risks/Milestones status is HIGH priority data integrity risk for Phase 72
 
+**Phase 72 (Feature Unification):**
+- Risk status invalid values normalized to NULL (un-triaged state) during migration - preserves data fidelity
+- Milestone status invalid values normalized to 'not_started' (default state) - prevents null-handling edge cases in UI
+- Forward-only migration with data normalization before ALTER COLUMN - ensures no data loss
+
 ## Session Continuity
 
-Last session: 2026-04-20T14:43:02.817Z
-Stopped at: Phase 72 context gathered
-Resume file: .planning/phases/072-feature-unification/072-CONTEXT.md
+Last session: 2026-04-20T15:17:45.997Z
+Stopped at: Completed 072-01-PLAN.md
+Resume file: None
