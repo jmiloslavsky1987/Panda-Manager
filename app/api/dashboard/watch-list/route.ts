@@ -10,15 +10,26 @@
 
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { risks, projects } from '@/db/schema';
+import { risks, projects, projectMembers } from '@/db/schema';
 import { eq, and, or, isNull, ne, desc, inArray } from 'drizzle-orm';
 import { requireSession } from "@/lib/auth-server";
+import { resolveRole } from '@/lib/auth-utils';
 
 export async function GET() {
   const { session, redirectResponse } = await requireSession();
   if (redirectResponse) return redirectResponse;
 
   try {
+    const role = resolveRole(session!);
+    const membershipCondition = role === 'admin'
+      ? undefined
+      : inArray(
+          projects.id,
+          db.select({ id: projectMembers.project_id })
+            .from(projectMembers)
+            .where(eq(projectMembers.user_id, session!.user.id))
+        );
+
     const rows = await db
       .select({
         id: risks.id,
@@ -39,6 +50,7 @@ export async function GET() {
             isNull(risks.status),
             ne(risks.status, 'resolved'),
           ),
+          membershipCondition
         )
       )
       .orderBy(desc(risks.created_at))

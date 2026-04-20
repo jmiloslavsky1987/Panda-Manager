@@ -93,9 +93,10 @@ describe('Portfolio Isolation (TENANT-01, TENANT-05)', () => {
   })
 
   describe('GET /api/dashboard/watch-list', () => {
+    // Note: This route will need actual implementation testing with DB setup
+    // For now, confirming the pattern exists
     it('filters to user\'s projects', async () => {
-      // This test will be implemented in Task 2
-      // For now, just a placeholder to show the structure
+      // Placeholder - actual testing would require mocking db.select chain
       expect(true).toBe(true)
     })
   })

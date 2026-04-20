@@ -1,12 +1,23 @@
 import { NextResponse } from 'next/server';
 import db from '../../../db';
-import { drafts, projects } from '../../../db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { drafts, projects, projectMembers } from '../../../db/schema';
+import { eq, desc, and, inArray } from 'drizzle-orm';
 import { requireSession } from "@/lib/auth-server";
+import { resolveRole } from '@/lib/auth-utils';
 
 export async function GET() {
   const { session, redirectResponse } = await requireSession();
   if (redirectResponse) return redirectResponse;
+
+  const role = resolveRole(session!);
+  const membershipCondition = role === 'admin'
+    ? undefined
+    : inArray(
+        drafts.project_id,
+        db.select({ id: projectMembers.project_id })
+          .from(projectMembers)
+          .where(eq(projectMembers.user_id, session!.user.id))
+      );
 
   const pending = await db
     .select({
@@ -24,7 +35,7 @@ export async function GET() {
     })
     .from(drafts)
     .leftJoin(projects, eq(drafts.project_id, projects.id))
-    .where(eq(drafts.status, 'pending'))
+    .where(and(eq(drafts.status, 'pending'), membershipCondition))
     .orderBy(desc(drafts.created_at));
 
   return NextResponse.json(pending);
