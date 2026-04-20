@@ -15,7 +15,7 @@
 ### Multi-Tenant Isolation
 
 - [ ] **TENANT-01**: A user can only see and access projects they have been explicitly added to — enforced at both API and UI layer
-- [ ] **TENANT-02**: A user cannot access another user's project by guessing or manipulating a project ID in the URL or API call (returns 403)
+- [x] **TENANT-02**: A user cannot access another user's project by guessing or manipulating a project ID in the URL or API call (returns 403)
 - [ ] **TENANT-03**: AI outputs, Redis cache entries, and BullMQ job state cannot cross user or project boundaries
 - [ ] **TENANT-04**: BullMQ jobs are scoped strictly to their project; job results appear only in the originating project's context
 - [ ] **TENANT-05**: New user receives an email invite, creates an account, and sees a clean empty state on first login — no other users' projects, history, or data visible
@@ -74,7 +74,7 @@ Explicitly excluded — not deferred, not planned. Documented to prevent re-addi
 | RFCTR-03 | Phase 72 | Complete |
 | RFCTR-04 | Phase 73 | Complete |
 | TENANT-01 | Phase 74 | Pending |
-| TENANT-02 | Phase 74 | Pending |
+| TENANT-02 | Phase 74 | Complete |
 | TENANT-03 | Phase 74 | Pending |
 | TENANT-04 | Phase 74 | Pending |
 | TENANT-05 | Phase 74 | Pending |
