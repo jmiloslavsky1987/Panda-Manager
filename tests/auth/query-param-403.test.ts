@@ -1,5 +1,5 @@
 // tests/auth/query-param-403.test.ts
-// TENANT-02: Route handlers must call requireProjectRole(projectId) to enforce membership
+// RED — TENANT-02: Query-param routes enforce project membership via requireProjectRole()
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock next/server before importing route handlers
@@ -21,13 +21,23 @@ vi.mock('next/headers', () => ({
 // Mock db to avoid real connection
 vi.mock('@/db', () => ({
   db: {
-    select: vi.fn(),
-    insert: vi.fn(),
+    select: vi.fn().mockReturnThis(),
+    from: vi.fn().mockReturnThis(),
+    where: vi.fn().mockReturnThis(),
+    orderBy: vi.fn().mockResolvedValue([]),
+    insert: vi.fn().mockReturnThis(),
+    values: vi.fn().mockReturnThis(),
+    returning: vi.fn().mockResolvedValue([{ id: 1 }]),
   },
   default: {
-    select: vi.fn(),
-    insert: vi.fn(),
-  },
+    select: vi.fn().mockReturnThis(),
+    from: vi.fn().mockReturnThis(),
+    where: vi.fn().mockReturnThis(),
+    orderBy: vi.fn().mockResolvedValue([]),
+    insert: vi.fn().mockReturnThis(),
+    values: vi.fn().mockReturnThis(),
+    returning: vi.fn().mockResolvedValue([{ id: 1 }]),
+  }
 }));
 
 // Mock auth module
@@ -39,270 +49,173 @@ vi.mock('@/lib/auth', () => ({
   },
 }));
 
-// Mock requireProjectRole before importing routes
-const mockRequireProjectRole = vi.fn();
+// Mock auth-server to spy on requireSession and requireProjectRole
 const mockRequireSession = vi.fn();
+const mockRequireProjectRole = vi.fn();
+
 vi.mock('@/lib/auth-server', () => ({
-  requireProjectRole: mockRequireProjectRole,
   requireSession: mockRequireSession,
-}));
-
-// Mock schema and other dependencies
-vi.mock('@/db/schema', () => ({
-  artifacts: { id: 'id', project_id: 'project_id', external_id: 'external_id' },
-  tasks: { id: 'id', project_id: 'project_id' },
-  auditLog: {},
-  extractionJobs: { id: 'id' },
-  projectMembers: {},
-}));
-
-vi.mock('drizzle-orm', () => ({
-  eq: vi.fn(),
-  and: vi.fn(),
-  desc: vi.fn(),
-}));
-
-vi.mock('@/lib/queries', () => ({
-  updateWorkstreamProgress: vi.fn(),
-}));
-
-vi.mock('@/lib/document-extractor', () => ({
-  validateFile: vi.fn().mockReturnValue(null),
-}));
-
-vi.mock('@/lib/settings', () => ({
-  readSettings: vi.fn().mockResolvedValue({ workspace_path: '/tmp/test' }),
-}));
-
-vi.mock('fs/promises', () => ({
-  default: {
-    mkdir: vi.fn().mockResolvedValue(undefined),
-    writeFile: vi.fn().mockResolvedValue(undefined),
-  },
-}));
-
-vi.mock('bullmq', () => ({
-  Queue: vi.fn().mockImplementation(() => ({
-    add: vi.fn().mockResolvedValue({}),
-    close: vi.fn().mockResolvedValue(undefined),
-  })),
-}));
-
-vi.mock('@/worker/connection', () => ({
-  createApiRedisConnection: vi.fn().mockReturnValue({}),
+  requireProjectRole: mockRequireProjectRole,
 }));
 
 beforeEach(() => {
+  mockRequireSession.mockReset();
   mockRequireProjectRole.mockReset();
-});
 
-describe('GET /api/artifacts?projectId=X calls requireProjectRole', () => {
-  it('should call requireProjectRole with projectId from query param', async () => {
-    mockRequireProjectRole.mockResolvedValue({
-      session: { user: { id: 'user-1', email: 'test@example.com' } },
-      redirectResponse: null,
-      projectRole: 'user',
-    });
-
-    // Import after mocks are set up
-    const { GET } = await import('@/app/api/artifacts/route');
-
-    const mockRequest = {
-      nextUrl: {
-        searchParams: new URLSearchParams({ projectId: '123' }),
-      },
-    } as any;
-
-    const mockDb = (await import('@/db')).db as any;
-    mockDb.select.mockReturnValue({
-      from: vi.fn().mockReturnValue({
-        where: vi.fn().mockReturnValue({
-          orderBy: vi.fn().mockResolvedValue([]),
-        }),
-      }),
-    });
-
-    await GET(mockRequest);
-
-    expect(mockRequireProjectRole).toHaveBeenCalledWith(123);
+  // Default: both auth checks succeed
+  mockRequireSession.mockResolvedValue({
+    session: { user: { id: 'user-1', email: 'test@example.com', role: 'user' } },
+    redirectResponse: null,
+  });
+  mockRequireProjectRole.mockResolvedValue({
+    session: { user: { id: 'user-1', email: 'test@example.com', role: 'user' } },
+    redirectResponse: null,
+    projectRole: 'user',
   });
 });
 
-describe('POST /api/artifacts calls requireProjectRole', () => {
-  it('should call requireProjectRole with project_id from request body', async () => {
-    mockRequireProjectRole.mockResolvedValue({
-      session: { user: { id: 'user-1', email: 'test@example.com' } },
-      redirectResponse: null,
-      projectRole: 'user',
+describe('Query-Param Route 403 Enforcement — TENANT-02', () => {
+  describe('GET /api/artifacts?projectId=X', () => {
+    it('calls requireProjectRole(projectId), not requireSession()', async () => {
+      // Import after mocks are set up
+      const { GET } = await import('@/app/api/artifacts/route');
+
+      const mockReq = {
+        nextUrl: {
+          searchParams: new URLSearchParams('projectId=123'),
+        },
+      } as any;
+
+      await GET(mockReq);
+
+      // This WILL FAIL because current implementation calls requireSession()
+      expect(mockRequireProjectRole).toHaveBeenCalledWith(123);
+      expect(mockRequireSession).not.toHaveBeenCalled();
     });
 
-    const { POST } = await import('@/app/api/artifacts/route');
+    it('returns 403 when user is not a member of the project', async () => {
+      // Mock requireProjectRole to return 403 redirectResponse
+      mockRequireProjectRole.mockResolvedValue({
+        session: null,
+        redirectResponse: {
+          status: 403,
+          body: { error: 'Forbidden: not a member of this project' },
+        },
+        projectRole: null,
+      });
 
-    const mockRequest = {
-      json: vi.fn().mockResolvedValue({
-        project_id: 456,
-        name: 'Test Artifact',
-      }),
-    } as any;
+      const { GET } = await import('@/app/api/artifacts/route');
 
-    const mockDb = (await import('@/db')).db as any;
-    mockDb.select.mockReturnValue({
-      from: vi.fn().mockReturnValue({
-        where: vi.fn().mockReturnValue({
-          orderBy: vi.fn().mockResolvedValue([]),
-        }),
-      }),
+      const mockReq = {
+        nextUrl: {
+          searchParams: new URLSearchParams('projectId=456'),
+        },
+      } as any;
+
+      const response = await GET(mockReq);
+
+      // This WILL FAIL because current implementation doesn't call requireProjectRole
+      expect(response.status).toBe(403);
     });
-    mockDb.insert.mockReturnValue({
-      values: vi.fn().mockReturnValue({
-        returning: vi.fn().mockResolvedValue([{ id: 1, external_id: 'X-001' }]),
-      }),
-    });
-
-    await POST(mockRequest);
-
-    expect(mockRequireProjectRole).toHaveBeenCalledWith(456);
   });
-});
 
-describe('GET /api/tasks?projectId=N calls requireProjectRole', () => {
-  it('should call requireProjectRole with projectId from query param', async () => {
-    mockRequireProjectRole.mockResolvedValue({
-      session: { user: { id: 'user-1', email: 'test@example.com' } },
-      redirectResponse: null,
-      projectRole: 'user',
-    });
+  describe('POST /api/artifacts', () => {
+    it('calls requireProjectRole(project_id from body)', async () => {
+      const { POST } = await import('@/app/api/artifacts/route');
 
-    const { GET } = await import('@/app/api/tasks/route');
-
-    const mockRequest = {
-      url: 'http://localhost/api/tasks?projectId=789',
-    } as any;
-
-    const mockDb = (await import('@/db')).db as any;
-    mockDb.select.mockReturnValue({
-      from: vi.fn().mockReturnValue({
-        where: vi.fn().mockReturnValue({
-          orderBy: vi.fn().mockResolvedValue([]),
+      const mockReq = {
+        json: vi.fn().mockResolvedValue({
+          project_id: 789,
+          name: 'Test Artifact',
         }),
-      }),
+      } as any;
+
+      await POST(mockReq);
+
+      // This WILL FAIL because current implementation calls requireSession()
+      expect(mockRequireProjectRole).toHaveBeenCalledWith(789);
+      expect(mockRequireSession).not.toHaveBeenCalled();
     });
-
-    await GET(mockRequest);
-
-    expect(mockRequireProjectRole).toHaveBeenCalledWith(789);
   });
-});
 
-describe('POST /api/tasks calls requireProjectRole', () => {
-  it('should call requireProjectRole with project_id from request body', async () => {
-    mockRequireProjectRole.mockResolvedValue({
-      session: { user: { id: 'user-1', email: 'test@example.com' } },
-      redirectResponse: null,
-      projectRole: 'user',
+  describe('GET /api/tasks?projectId=N', () => {
+    it('calls requireProjectRole(projectId)', async () => {
+      const { GET } = await import('@/app/api/tasks/route');
+
+      const mockReq = {
+        url: 'http://localhost:3000/api/tasks?projectId=321',
+      } as any;
+
+      await GET(mockReq);
+
+      // This WILL FAIL because current implementation calls requireSession()
+      expect(mockRequireProjectRole).toHaveBeenCalledWith(321);
+      expect(mockRequireSession).not.toHaveBeenCalled();
     });
+  });
 
-    const { POST } = await import('@/app/api/tasks/route');
+  describe('POST /api/ingestion/upload', () => {
+    it('calls requireProjectRole(projectId from formData)', async () => {
+      // Mock file-related imports
+      vi.mock('fs/promises', () => ({
+        default: {
+          mkdir: vi.fn().mockResolvedValue(undefined),
+          writeFile: vi.fn().mockResolvedValue(undefined),
+        },
+      }));
+      vi.mock('@/lib/document-extractor', () => ({
+        validateFile: vi.fn().mockReturnValue({ valid: true }),
+      }));
+      vi.mock('@/lib/settings', () => ({
+        readSettings: vi.fn().mockResolvedValue({ workspace_path: '/tmp' }),
+      }));
 
-    const mockRequest = {
-      json: vi.fn().mockResolvedValue({
-        project_id: 999,
-        title: 'Test Task',
-      }),
-    } as any;
+      const { POST } = await import('@/app/api/ingestion/upload/route');
 
-    const mockDb = (await import('@/db')).db as any;
-    mockDb.select.mockReturnValue({
-      from: vi.fn().mockReturnValue({
-        where: vi.fn().mockReturnValue({
-          orderBy: vi.fn().mockResolvedValue([]),
+      const mockFile = new Blob(['test'], { type: 'application/pdf' });
+      const formData = new FormData();
+      formData.append('project_id', '555');
+      formData.append('files', mockFile, 'test.pdf');
+
+      const mockReq = {
+        formData: vi.fn().mockResolvedValue(formData),
+      } as any;
+
+      await POST(mockReq);
+
+      // This WILL FAIL because current implementation calls requireSession()
+      expect(mockRequireProjectRole).toHaveBeenCalledWith(555);
+      expect(mockRequireSession).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('POST /api/ingestion/extract', () => {
+    it('calls requireProjectRole(projectId from body)', async () => {
+      // Mock BullMQ
+      vi.mock('bullmq', () => ({
+        Queue: vi.fn().mockImplementation(() => ({
+          add: vi.fn().mockResolvedValue({ id: 'job-1' }),
+          close: vi.fn().mockResolvedValue(undefined),
+        })),
+      }));
+      vi.mock('@/worker/connection', () => ({
+        createApiRedisConnection: vi.fn().mockReturnValue({}),
+      }));
+
+      const { POST } = await import('@/app/api/ingestion/extract/route');
+
+      const mockReq = {
+        json: vi.fn().mockResolvedValue({
+          artifactIds: [1, 2, 3],
+          projectId: 999,
         }),
-      }),
+      } as any;
+
+      await POST(mockReq);
+
+      // This WILL FAIL because current implementation calls requireSession()
+      expect(mockRequireProjectRole).toHaveBeenCalledWith(999);
+      expect(mockRequireSession).not.toHaveBeenCalled();
     });
-    mockDb.insert.mockReturnValue({
-      values: vi.fn().mockReturnValue({
-        returning: vi.fn().mockResolvedValue([{ id: 1 }]),
-      }),
-    });
-
-    const mockTx = {
-      insert: vi.fn().mockReturnValue({
-        values: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([{ id: 1, project_id: 999 }]),
-        }),
-      }),
-    };
-
-    mockDb.transaction = vi.fn().mockImplementation(async (fn) => fn(mockTx));
-
-    await POST(mockRequest);
-
-    expect(mockRequireProjectRole).toHaveBeenCalledWith(999);
-  });
-});
-
-describe('POST /api/ingestion/upload calls requireProjectRole', () => {
-  it('should call requireProjectRole with project_id from formData', async () => {
-    mockRequireProjectRole.mockResolvedValue({
-      session: { user: { id: 'user-1', email: 'test@example.com' } },
-      redirectResponse: null,
-      projectRole: 'user',
-    });
-
-    const { POST } = await import('@/app/api/ingestion/upload/route');
-
-    const mockFile = Object.create(Blob.prototype);
-    Object.defineProperty(mockFile, 'name', { value: 'test.pdf', writable: false });
-    Object.defineProperty(mockFile, 'size', { value: 1024, writable: false });
-    Object.defineProperty(mockFile, 'type', { value: 'application/pdf', writable: false });
-
-    const formData = new FormData();
-    formData.append('project_id', '111');
-    formData.append('files', mockFile);
-
-    const mockRequest = {
-      formData: vi.fn().mockResolvedValue(formData),
-    } as any;
-
-    const mockDb = (await import('@/db')).db as any;
-    mockDb.insert.mockReturnValue({
-      values: vi.fn().mockReturnValue({
-        returning: vi.fn().mockResolvedValue([{ id: 1, name: 'test.pdf', ingestion_status: 'pending' }]),
-      }),
-    });
-
-    await POST(mockRequest);
-
-    expect(mockRequireProjectRole).toHaveBeenCalledWith(111);
-  });
-});
-
-describe('POST /api/ingestion/extract calls requireProjectRole', () => {
-  it('should call requireProjectRole with projectId from request body', async () => {
-    mockRequireProjectRole.mockResolvedValue({
-      session: { user: { id: 'user-1', email: 'test@example.com' } },
-      redirectResponse: null,
-      projectRole: 'user',
-    });
-
-    const { POST } = await import('@/app/api/ingestion/extract/route');
-
-    const mockRequest = {
-      json: vi.fn().mockResolvedValue({
-        artifactIds: [1, 2, 3],
-        projectId: 222,
-      }),
-    } as any;
-
-    const mockDb = (await import('@/db')).default as any;
-    mockDb.insert.mockReturnValue({
-      values: vi.fn().mockReturnValue({
-        returning: vi.fn().mockResolvedValue([{ id: 1 }]),
-      }),
-    });
-
-    await POST(mockRequest);
-
-    expect(mockRequireProjectRole).toHaveBeenCalledWith(222);
   });
 });
