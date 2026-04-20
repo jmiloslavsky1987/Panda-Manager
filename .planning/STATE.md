@@ -4,13 +4,13 @@ milestone: v8.0
 milestone_name: Codebase Refactor & Multi-Tenant Deployment
 status: "Roadmap created. Run `/gsd:plan-phase 70` to begin."
 stopped_at: Phase 70 context gathered
-last_updated: "2026-04-20T06:02:06.543Z"
+last_updated: "2026-04-20T06:20:54.203Z"
 last_activity: 2026-04-19 — v8.0 roadmap created
 progress:
   total_phases: 18
-  completed_phases: 9
-  total_plans: 41
-  completed_plans: 39
+  completed_phases: 10
+  total_plans: 42
+  completed_plans: 40
   percent: 0
 ---
 
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-04-16 after v7.0 milestone close)
 
 ## Current Position
 
-Phase: 70 of 75 — Ready to plan
-Status: Roadmap created. Run `/gsd:plan-phase 70` to begin.
-Last activity: 2026-04-19 — v8.0 roadmap created
+Phase: 70 of 75 — Plan 01 complete (AI Usage Audit)
+Status: Phase 70-01 complete. Ready for Phase 71 planning.
+Last activity: 2026-04-20 — Phase 70-01 complete (AI Usage Audit)
 
-Progress: [░░░░░░░░░░] 0% (v8.0 not started)
+Progress: [█████████░] 99% (244 of 246 plans complete across all milestones)
 
 ## Milestone History
 
@@ -82,8 +82,16 @@ Progress: [░░░░░░░░░░] 0% (v8.0 not started)
 - INGEST-02: Move approved ingested item to different section — deferred from v7.0
 - 4 portfolio RED TDD stubs remain (TEST-01 dropped from v7.0 scope)
 
+## Recent Decisions (v8.0)
+
+**Phase 70 (AI Usage Audit):**
+- Classification framework: deterministic vs genuine AI vs borderline using governing question "Could this be replaced with deterministic logic and still produce correct, consistent results?"
+- Identified weekly-focus.ts as deterministic - generates priority bullets from structured data
+- All 15 skills classified as genuine AI - require synthesis or unstructured content processing
+- 91% of Claude API calls (21 of 23) are genuine AI and correctly architected
+
 ## Session Continuity
 
-Last session: 2026-04-20T06:02:06.537Z
-Stopped at: Phase 70 context gathered
-Resume file: .planning/phases/070-ai-usage-audit/070-CONTEXT.md
+Last session: 2026-04-20T06:20:54Z
+Stopped at: Phase 70-01 complete (AI Usage Audit)
+Resume file: .planning/phases/70-ai-usage-audit/070-01-SUMMARY.md

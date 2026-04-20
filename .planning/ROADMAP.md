@@ -145,7 +145,7 @@ Full details: `.planning/milestones/v7.0-ROADMAP.md` (archived)
 
 **Milestone Goal:** Audit and refactor the codebase to correctly separate deterministic logic from AI judgment, unify duplicate features, and convert the app to a properly isolated multi-tenant deployment ready for hosting on AWS.
 
-- [ ] **Phase 70: AI Usage Audit** — Written report categorizing every Claude API call; no code changes
+- [x] **Phase 70: AI Usage Audit** — Written report categorizing every Claude API call; no code changes (completed 2026-04-20)
 - [ ] **Phase 71: Deterministic Refactor** — Replace all deterministic Claude calls with hardcoded implementations
 - [ ] **Phase 72: Feature Consistency Audit** — Written report identifying duplicate features and inconsistent UX patterns; no code changes
 - [ ] **Phase 73: Feature Unification** — Eliminate identified duplicates; unify to single consistent implementation
