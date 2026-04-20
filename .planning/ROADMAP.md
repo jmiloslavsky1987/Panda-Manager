@@ -163,7 +163,10 @@ Full details: `.planning/milestones/v7.0-ROADMAP.md` (archived)
   2. Each call is classified as: (a) deterministic — should be hardcoded, (b) genuine judgment/synthesis — belongs to Claude, or (c) borderline — needs human decision
   3. The report is human-readable and reviewable before any implementation begins
   4. No code changes are made in this phase — the deliverable is the report only
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [ ] 070-01-PLAN.md — Write AI usage audit report + human review gate
 
 ### Phase 71: Deterministic Refactor
 **Goal**: All Claude API calls identified as deterministic in the Phase 70 audit are replaced with hardcoded implementations — behavior is identical, AI cost and latency are eliminated
