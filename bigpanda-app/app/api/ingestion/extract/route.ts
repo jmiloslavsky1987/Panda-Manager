@@ -18,7 +18,7 @@ import { z } from 'zod';
 import { createApiRedisConnection } from '@/worker/connection';
 import db from '@/db';
 import { extractionJobs } from '@/db/schema';
-import { requireSession } from '@/lib/auth-server';
+import { requireProjectRole } from '@/lib/auth-server';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,15 +28,15 @@ const Schema = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  const { redirectResponse } = await requireSession();
-  if (redirectResponse) return redirectResponse;
-
   const parsed = Schema.safeParse(await request.json());
   if (!parsed.success) {
     return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
   }
 
   const { artifactIds, projectId } = parsed.data;
+
+  const { redirectResponse } = await requireProjectRole(projectId);
+  if (redirectResponse) return redirectResponse;
   const batchId = randomUUID();
   const queue = new Queue('scheduled-jobs', { connection: createApiRedisConnection() as any });
 
