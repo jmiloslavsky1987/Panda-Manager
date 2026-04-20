@@ -4,7 +4,7 @@ import { db } from '../../../db'
 import { tasks, auditLog } from '../../../db/schema'
 import { eq } from 'drizzle-orm'
 import { updateWorkstreamProgress } from '../../../lib/queries'
-import { requireSession } from "@/lib/auth-server";
+import { requireProjectRole } from "@/lib/auth-server";
 
 // ─── Validation Schemas ───────────────────────────────────────────────────────
 
@@ -28,9 +28,6 @@ const TaskCreateSchema = z.object({
 // ─── GET /api/tasks?projectId=N ───────────────────────────────────────────────
 
 export async function GET(request: NextRequest) {
-  const { session, redirectResponse } = await requireSession();
-  if (redirectResponse) return redirectResponse;
-
   const { searchParams } = new URL(request.url)
   const projectIdStr = searchParams.get('projectId')
   if (!projectIdStr) {
@@ -41,6 +38,9 @@ export async function GET(request: NextRequest) {
   if (isNaN(projectId)) {
     return Response.json({ error: 'Invalid projectId' }, { status: 400 })
   }
+
+  const { session, redirectResponse } = await requireProjectRole(projectId);
+  if (redirectResponse) return redirectResponse;
 
   try {
     const result = await db
@@ -59,9 +59,6 @@ export async function GET(request: NextRequest) {
 // ─── POST /api/tasks ──────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
-  const { session, redirectResponse } = await requireSession();
-  if (redirectResponse) return redirectResponse;
-
   let body: unknown
   try {
     body = await request.json()
@@ -79,6 +76,9 @@ export async function POST(request: NextRequest) {
     type, phase, workstream_id, blocked_by, milestone_id,
     start_date, status, source,
   } = parsed.data
+
+  const { session, redirectResponse } = await requireProjectRole(project_id);
+  if (redirectResponse) return redirectResponse;
 
   try {
     const inserted = await db.transaction(async (tx) => {

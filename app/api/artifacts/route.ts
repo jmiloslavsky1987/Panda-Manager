@@ -3,15 +3,15 @@ import { z } from 'zod'
 import { db } from '@/db'
 import { artifacts } from '@/db/schema'
 import { eq, desc } from 'drizzle-orm'
-import { requireSession } from "@/lib/auth-server";
+import { requireProjectRole } from "@/lib/auth-server";
 
 // GET /api/artifacts?projectId=X
 export async function GET(req: NextRequest) {
-  const { session, redirectResponse } = await requireSession();
-  if (redirectResponse) return redirectResponse;
-
   const projectId = parseInt(req.nextUrl.searchParams.get('projectId') ?? '', 10)
   if (isNaN(projectId)) return NextResponse.json({ error: 'projectId required' }, { status: 400 })
+
+  const { session, redirectResponse } = await requireProjectRole(projectId);
+  if (redirectResponse) return redirectResponse;
 
   const rows = await db.select().from(artifacts).where(eq(artifacts.project_id, projectId)).orderBy(artifacts.external_id)
   return NextResponse.json(rows)
@@ -27,13 +27,13 @@ const postSchema = z.object({
 })
 
 export async function POST(req: NextRequest) {
-  const { session, redirectResponse } = await requireSession();
-  if (redirectResponse) return redirectResponse;
-
   const parsed = postSchema.safeParse(await req.json())
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
 
   const { project_id, name, status, owner, description } = parsed.data
+
+  const { session, redirectResponse } = await requireProjectRole(project_id);
+  if (redirectResponse) return redirectResponse;
 
   // Auto-assign next sequential X-NNN external_id for this project
   // Only consider rows with X-NNN format (numeric suffix) — skip X-KAISER-NNN style from migration
