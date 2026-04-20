@@ -113,6 +113,24 @@ Known tech debt entering v8.0:
 
 This is a full rewrite of a previous Claude Code project assistant build (8 phases, React/Vite/Express/Google Drive architecture). SKILL.md files read from disk at runtime (not bundled). All data model patterns (archive-on-replace, dual-write atomicity, append-only history, source tracing, ID conventions) preserved from the original skill ecosystem.
 
+## Current Milestone: v8.0 Codebase Refactor & Multi-Tenant Deployment
+
+**Goal:** Audit and refactor the codebase to correctly separate deterministic logic from AI judgment, unify duplicate features, and convert the app to a properly isolated multi-tenant deployment ready for hosting on AWS.
+
+**Target features:**
+- Codebase audit: categorize every Claude API call; replace deterministic logic with hardcoded implementations
+- Feature consistency audit: identify and unify duplicate features and inconsistent UX patterns
+- Multi-tenant isolation: users see only their own projects, 403 on unauthorized access, no cross-user/cross-project state bleed
+- BullMQ jobs scoped to project/user with no contamination
+- Email invite onboarding: new user sees clean empty state on first login
+- Deployment readiness: environment-variable-only configuration, deployment guide
+
+**Deferred (explicit — revisit at future milestone planning):**
+- Auth provider migration (Clerk/Auth0): better-auth sufficient at current team size; revisit if SSO/SAML or large team growth
+- Per-user Anthropic API keys: single app-level key sufficient for internal team; revisit if external users needed
+- AWS infrastructure provisioning (EC2/RDS/ElastiCache): follow-on after app is multi-tenant correct
+- Admin console, usage tracking, billing layer: not needed at small team scale
+
 ## Constraints
 
 - **Tech Stack**: Next.js 16 / React / Tailwind CSS / Node.js / PostgreSQL

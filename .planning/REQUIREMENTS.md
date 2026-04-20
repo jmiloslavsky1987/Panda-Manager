@@ -1,0 +1,93 @@
+# Requirements: BigPanda AI Project Management App
+
+**Defined:** 2026-04-19
+**Core Value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
+
+## v8.0 Requirements
+
+### Codebase Refactor
+
+- [ ] **RFCTR-01**: Codebase audit produces a written report categorizing every Claude API call as: (a) deterministic logic that should be hardcoded, (b) genuine judgment/synthesis that belongs to Claude, or (c) borderline
+- [ ] **RFCTR-02**: All calls identified as deterministic in RFCTR-01 are replaced with hardcoded implementations — no behavior change, just routing
+- [ ] **RFCTR-03**: Feature consistency audit produces a report identifying duplicate features serving the same purpose and UX patterns that are inconsistent across equivalent areas
+- [ ] **RFCTR-04**: All identified duplicates from RFCTR-03 are unified into a single consistent implementation
+
+### Multi-Tenant Isolation
+
+- [ ] **TENANT-01**: A user can only see and access projects they have been explicitly added to — enforced at both API and UI layer
+- [ ] **TENANT-02**: A user cannot access another user's project by guessing or manipulating a project ID in the URL or API call (returns 403)
+- [ ] **TENANT-03**: AI outputs, Redis cache entries, and BullMQ job state cannot cross user or project boundaries
+- [ ] **TENANT-04**: BullMQ jobs are scoped strictly to their project; job results appear only in the originating project's context
+- [ ] **TENANT-05**: New user receives an email invite, creates an account, and sees a clean empty state on first login — no other users' projects, history, or data visible
+
+### Deployment Readiness
+
+- [ ] **DEPLOY-01**: App can be configured for a hosted environment via environment variables alone — no hardcoded localhost references, paths, or secrets
+- [ ] **DEPLOY-02**: A deployment guide exists documenting the environment variables, PostgreSQL + Redis dependencies, and how to run in production
+
+## Future Requirements (Deferred)
+
+These were explicitly considered for v8.0 and deferred. Revisit at the next milestone planning session.
+
+### Auth Provider Migration
+
+- **AUTH-PROV-01**: Replace better-auth with Clerk or Auth0 for managed identity — social login, hosted login UI, ops handled externally
+  - *Deferred from v8.0*: better-auth already has sessions, roles, and invite flow; migration complexity not justified at current team size. Revisit if team grows significantly or SSO/SAML becomes a requirement.
+
+### Per-User API Keys
+
+- **APIKEY-01**: Each user supplies their own Anthropic API key, stored securely against their user record; all Claude API calls within a session use that user's key
+  - *Deferred from v8.0*: Small internal team — single app-level key in environment variables is simpler and sufficient. Revisit if the app is opened to external users who need separate billing.
+
+### AWS Infrastructure Provisioning
+
+- **INFRA-01**: Provision EC2, RDS (PostgreSQL), and ElastiCache (Redis) on company AWS account
+- **INFRA-02**: Configure DNS, SSL, and production process management (PM2 or systemd)
+- **INFRA-03**: Set up deployment pipeline (CI/CD or manual deploy workflow)
+  - *Deferred from v8.0*: App must be deployment-ready (DEPLOY-01, DEPLOY-02) before infra is provisioned. AWS setup is a follow-on task once the app is multi-tenant correct.
+
+### Admin & Operations
+
+- **ADMIN-01**: Admin console for user management, usage visibility, and app health monitoring
+- **ADMIN-02**: Usage tracking per user (API call counts, token spend)
+- **ADMIN-03**: Billing layer for per-user cost attribution
+  - *Deferred from v8.0*: Not needed at small team scale. Revisit if the app is opened to multiple teams or external users.
+
+## Out of Scope
+
+Explicitly excluded — not deferred, not planned. Documented to prevent re-adding.
+
+| Feature | Reason |
+|---------|--------|
+| Open self-registration | Invite-only by design — no public sign-up |
+| Multi-region data residency | Single deployment, not an enterprise SaaS requirement |
+| Real-time collaborative editing | No concurrent multi-user editing use case identified |
+| Microsoft Outlook Calendar integration | Permanently excluded (BRD explicit exclusion) |
+| Custom role builder | Post-launch at earliest; admin/user binary is sufficient |
+
+## Traceability
+
+Updated during roadmap creation.
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| RFCTR-01 | TBD | Pending |
+| RFCTR-02 | TBD | Pending |
+| RFCTR-03 | TBD | Pending |
+| RFCTR-04 | TBD | Pending |
+| TENANT-01 | TBD | Pending |
+| TENANT-02 | TBD | Pending |
+| TENANT-03 | TBD | Pending |
+| TENANT-04 | TBD | Pending |
+| TENANT-05 | TBD | Pending |
+| DEPLOY-01 | TBD | Pending |
+| DEPLOY-02 | TBD | Pending |
+
+**Coverage:**
+- v8.0 requirements: 11 total
+- Mapped to phases: 0 (roadmap not yet created)
+- Unmapped: 11 ⚠️
+
+---
+*Requirements defined: 2026-04-19*
+*Last updated: 2026-04-19 after initial definition*
