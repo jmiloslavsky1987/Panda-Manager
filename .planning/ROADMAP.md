@@ -9,6 +9,7 @@
 - ✅ **v5.0** — Workspace UX Overhaul — Phases 37–42 (shipped 2026-04-07)
 - ✅ **v6.0** — Dashboard, Navigation & Intelligence — Phases 43–57 (shipped 2026-04-14)
 - ✅ **v7.0** — Governance & Operational Maturity — Phases 58–69 (shipped 2026-04-16)
+- 🚧 **v8.0** — Codebase Refactor & Multi-Tenant Deployment — Phases 70–75 (in progress)
 
 ## Phases
 
@@ -140,6 +141,86 @@ Full details: `.planning/milestones/v7.0-ROADMAP.md` (archived)
 
 </details>
 
+### 🚧 v8.0 Codebase Refactor & Multi-Tenant Deployment (In Progress)
+
+**Milestone Goal:** Audit and refactor the codebase to correctly separate deterministic logic from AI judgment, unify duplicate features, and convert the app to a properly isolated multi-tenant deployment ready for hosting on AWS.
+
+- [ ] **Phase 70: AI Usage Audit** — Written report categorizing every Claude API call; no code changes
+- [ ] **Phase 71: Deterministic Refactor** — Replace all deterministic Claude calls with hardcoded implementations
+- [ ] **Phase 72: Feature Consistency Audit** — Written report identifying duplicate features and inconsistent UX patterns; no code changes
+- [ ] **Phase 73: Feature Unification** — Eliminate identified duplicates; unify to single consistent implementation
+- [ ] **Phase 74: Multi-Tenant Isolation** — Enforce project ownership at all API/UI layers; prevent cross-user state bleed
+- [ ] **Phase 75: Deployment Readiness** — Env-var-only configuration; deployment guide
+
+## Phase Details
+
+### Phase 70: AI Usage Audit
+**Goal**: Every Claude API call in the codebase is categorized by purpose — deterministic logic, genuine judgment, or borderline — in a written report the user reviews before any code changes
+**Depends on**: Nothing (audit requires no prior changes)
+**Requirements**: RFCTR-01
+**Success Criteria** (what must be TRUE):
+  1. A written audit report exists listing every file and call site that invokes the Claude API
+  2. Each call is classified as: (a) deterministic — should be hardcoded, (b) genuine judgment/synthesis — belongs to Claude, or (c) borderline — needs human decision
+  3. The report is human-readable and reviewable before any implementation begins
+  4. No code changes are made in this phase — the deliverable is the report only
+**Plans**: TBD
+
+### Phase 71: Deterministic Refactor
+**Goal**: All Claude API calls identified as deterministic in the Phase 70 audit are replaced with hardcoded implementations — behavior is identical, AI cost and latency are eliminated
+**Depends on**: Phase 70 (audit report required before implementation)
+**Requirements**: RFCTR-02
+**Success Criteria** (what must be TRUE):
+  1. Every call marked "deterministic" in the Phase 70 report has a hardcoded replacement
+  2. Application behavior is identical to pre-refactor for all replaced call sites (no regressions)
+  3. No Claude API calls remain for logic that produces fixed, rule-based outputs
+  4. Test suite passes after all replacements
+**Plans**: TBD
+
+### Phase 72: Feature Consistency Audit
+**Goal**: Every duplicate feature and inconsistent UX pattern in the codebase is identified and documented in a written report the user reviews before any unification work begins
+**Depends on**: Nothing (independent audit; can run in parallel with Phase 71 if desired)
+**Requirements**: RFCTR-03
+**Success Criteria** (what must be TRUE):
+  1. A written audit report exists listing all features that serve the same purpose with separate implementations
+  2. The report identifies UX patterns that behave differently across equivalent areas (e.g., filtering, bulk actions, empty states)
+  3. Each finding has a recommended resolution (unify to A, unify to B, or create new canonical implementation)
+  4. No code changes are made in this phase — the deliverable is the report only
+**Plans**: TBD
+
+### Phase 73: Feature Unification
+**Goal**: All duplicates and inconsistencies identified in the Phase 72 audit are eliminated — one canonical implementation exists per feature
+**Depends on**: Phase 72 (consistency audit report required before implementation)
+**Requirements**: RFCTR-04
+**Success Criteria** (what must be TRUE):
+  1. Every duplicate feature identified in the Phase 72 report is resolved to a single implementation
+  2. UX patterns flagged as inconsistent behave uniformly across all affected areas
+  3. No dead code or unused duplicate implementations remain after unification
+  4. Test suite passes after all unifications
+**Plans**: TBD
+
+### Phase 74: Multi-Tenant Isolation
+**Goal**: Users see only their own projects; unauthorized access returns 403; AI outputs, cache entries, and BullMQ job state cannot cross user or project boundaries; invite onboarding presents a clean empty state
+**Depends on**: Nothing (better-auth and requireProjectRole() foundation from Phase 58 is already in place)
+**Requirements**: TENANT-01, TENANT-02, TENANT-03, TENANT-04, TENANT-05
+**Success Criteria** (what must be TRUE):
+  1. Portfolio page shows only projects the logged-in user has been explicitly added to — no other users' projects visible
+  2. Attempting to access another user's project by direct URL or API call returns 403 — not a data leak or empty page
+  3. Redis cache keys and BullMQ job payloads are namespaced by project and user — no cross-boundary state possible
+  4. A BullMQ job triggered in Project A cannot produce results visible in Project B
+  5. A new user who accepts an email invite and logs in for the first time sees an empty portfolio — no other users' projects, history, or data visible
+**Plans**: TBD
+
+### Phase 75: Deployment Readiness
+**Goal**: The app can be fully configured for a hosted environment using environment variables alone, and a deployment guide documents every prerequisite and configuration step
+**Depends on**: Phase 74 (multi-tenant isolation must be correct before deployment)
+**Requirements**: DEPLOY-01, DEPLOY-02
+**Success Criteria** (what must be TRUE):
+  1. No hardcoded localhost URLs, filesystem paths, or secrets exist anywhere in application code
+  2. All runtime configuration (database URL, Redis URL, auth secrets, API keys) is injected via environment variables
+  3. A deployment guide exists covering: required environment variables, PostgreSQL and Redis setup, how to run in production, and first-run checklist
+  4. A fresh checkout of the repo can be fully configured for production without reading source code
+**Plans**: TBD
+
 ## Progress
 
 | Milestone | Phases | Plans | Status | Shipped |
@@ -151,9 +232,10 @@ Full details: `.planning/milestones/v7.0-ROADMAP.md` (archived)
 | v5.0 | 37–42 | 29/29 | Complete | 2026-04-07 |
 | v6.0 | 43–57 | 45/45 | Complete | 2026-04-14 |
 | v7.0 | 58–69 | 41/41 | Complete | 2026-04-16 |
+| v8.0 | 70–75 | 0/TBD | In progress | - |
 
 ---
-*Last updated: 2026-04-16 — v7.0 shipped*
+*Last updated: 2026-04-19 — v8.0 roadmap created*
 
 ---
 
@@ -365,4 +447,3 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Knowledge Base has a defined use case documented, or is deprecated/removed based on audit
 **Plans**: TBD
-

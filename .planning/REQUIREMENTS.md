@@ -67,27 +67,25 @@ Explicitly excluded — not deferred, not planned. Documented to prevent re-addi
 
 ## Traceability
 
-Updated during roadmap creation.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| RFCTR-01 | TBD | Pending |
-| RFCTR-02 | TBD | Pending |
-| RFCTR-03 | TBD | Pending |
-| RFCTR-04 | TBD | Pending |
-| TENANT-01 | TBD | Pending |
-| TENANT-02 | TBD | Pending |
-| TENANT-03 | TBD | Pending |
-| TENANT-04 | TBD | Pending |
-| TENANT-05 | TBD | Pending |
-| DEPLOY-01 | TBD | Pending |
-| DEPLOY-02 | TBD | Pending |
+| RFCTR-01 | Phase 70 | Pending |
+| RFCTR-02 | Phase 71 | Pending |
+| RFCTR-03 | Phase 72 | Pending |
+| RFCTR-04 | Phase 73 | Pending |
+| TENANT-01 | Phase 74 | Pending |
+| TENANT-02 | Phase 74 | Pending |
+| TENANT-03 | Phase 74 | Pending |
+| TENANT-04 | Phase 74 | Pending |
+| TENANT-05 | Phase 74 | Pending |
+| DEPLOY-01 | Phase 75 | Pending |
+| DEPLOY-02 | Phase 75 | Pending |
 
 **Coverage:**
 - v8.0 requirements: 11 total
-- Mapped to phases: 0 (roadmap not yet created)
-- Unmapped: 11 ⚠️
+- Mapped to phases: 11/11 ✓
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-19*
-*Last updated: 2026-04-19 after initial definition*
+*Last updated: 2026-04-19 after v8.0 roadmap creation*

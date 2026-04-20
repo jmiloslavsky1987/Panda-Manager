@@ -1,34 +1,34 @@
 ---
 gsd_state_version: 1.0
-milestone: v7.0
-milestone_name: — Governance & Operational Maturity
-status: archived
-last_updated: "2026-04-17T02:30:00.000Z"
-last_activity: 2026-04-16 — v7.0 milestone archived; ready for /gsd:new-milestone
+milestone: v8.0
+milestone_name: — Codebase Refactor & Multi-Tenant Deployment
+status: roadmap_created
+last_updated: "2026-04-19T00:00:00.000Z"
+last_activity: 2026-04-19 — v8.0 roadmap created; ready for /gsd:plan-phase 70
 progress:
-  total_phases: 12
-  completed_phases: 9
-  total_plans: 41
-  completed_plans: 39
-  percent: 100
+  total_phases: 6
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-13 after v7.0 milestone start)
+See: .planning/PROJECT.md (updated 2026-04-16 after v7.0 milestone close)
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
-**Current focus:** v7.0 archived — run `/gsd:new-milestone` to start v8.0
+**Current focus:** v8.0 Phase 70 — AI Usage Audit (first phase, ready to plan)
 
 ## Current Position
 
-Phase: 69 of 69 — COMPLETE
-Status: v7.0 archived. Run `/gsd:new-milestone` to start v8.0.
-Last activity: 2026-04-16 — v7.0 milestone archived
+Phase: 70 of 75 — Ready to plan
+Status: Roadmap created. Run `/gsd:plan-phase 70` to begin.
+Last activity: 2026-04-19 — v8.0 roadmap created
 
-Progress: [██████████] 100% (v7.0 all phases complete)
+Progress: [░░░░░░░░░░] 0% (v8.0 not started)
 
 ## Milestone History
 
@@ -38,18 +38,34 @@ Progress: [██████████] 100% (v7.0 all phases complete)
 - **v4.0** — Infrastructure & UX Foundations (Phases 31–35 complete; Phase 36 deferred, complete 2026-04-03)
 - **v5.0** — Workspace UX Overhaul (Phases 37–42, 29 plans, complete 2026-04-07)
 - **v6.0** — Dashboard, Navigation & Intelligence (Phases 43–57, 45 plans, complete 2026-04-14)
-- **v7.0** — Governance & Operational Maturity (Phases 58–69, in progress)
+- **v7.0** — Governance & Operational Maturity (Phases 58–69, 41 plans, complete 2026-04-16)
 
 ## Tech Stack
 
 - Next.js 16 (Turbopack), PostgreSQL, Redis/BullMQ, better-auth, Drizzle ORM, Vercel AI SDK, @xyflow/react, @anthropic-ai/sdk, Recharts
-- ~69,606 LOC TypeScript (v6.0 shipped)
-- 148 test files passing; 4 intentional RED portfolio stubs (to be resolved in v7.0 Phase 69)
+- ~75,894 LOC TypeScript (v7.0 shipped)
+- 148 test files passing
 - Production build clean
+
+## v8.0 Roadmap Summary
+
+**6 phases (70–75) covering 11 requirements:**
+
+- **Phase 70:** AI Usage Audit (RFCTR-01) — written report, no code changes; user review gate
+- **Phase 71:** Deterministic Refactor (RFCTR-02) — replace deterministic Claude calls; blocked by Phase 70
+- **Phase 72:** Feature Consistency Audit (RFCTR-03) — written report, no code changes; user review gate
+- **Phase 73:** Feature Unification (RFCTR-04) — eliminate duplicates; blocked by Phase 72
+- **Phase 74:** Multi-Tenant Isolation (TENANT-01–05) — isolation airtight at all layers
+- **Phase 75:** Deployment Readiness (DEPLOY-01–02) — env-var config + deployment guide; blocked by Phase 74
+
+**Critical dependencies:**
+- Phase 71 blocked by Phase 70 (audit report required before deterministic refactor)
+- Phase 73 blocked by Phase 72 (consistency audit required before unification)
+- Phase 75 blocked by Phase 74 (multi-tenant correctness required before deployment)
 
 ## Established Patterns
 
-- requireSession() at Route Handler level (CVE-2025-29927 defense-in-depth)
+- requireSession() + requireProjectRole() at Route Handler level (CVE-2025-29927 defense-in-depth)
 - CustomEvent (metrics:invalidate) for cross-tab sync
 - Client-side filtering: Server Component passes full data, Client island filters in-memory via URL params
 - BullMQ background jobs + polling for long-running operations
@@ -57,157 +73,16 @@ Progress: [██████████] 100% (v7.0 all phases complete)
 - React Flow with dynamic import + ssr:false for diagram components
 - Wave 0 RED stubs → Wave 1 implementation → human verification gate (TDD contract)
 - 4-pass extraction pipeline: Pass 0 pre-analysis + Passes 1/2/3 by entity group
-- Synthesis-first extraction: document type classification + transcript-mode conditional instructions
-- Gap-closure phases after milestone audit (Phases 54–57 pattern)
 
-## Known Tech Debt Entering v7.0
+## Known Tech Debt Entering v8.0
 
-- 4 portfolio RED TDD stubs never driven to GREEN (`__tests__/portfolio/`) — in scope for v7.0 (Phase 69: TEST-01)
-- WBS and Portfolio UX human verification pending (performance at 100+ nodes, filter panel, drag-drop)
-- Nyquist validation incomplete: 9/16 v6.0 phases at `nyquist_compliant: false` (draft status)
-- Empty state CTA onClick handlers are `() => {}` placeholders (wiring to creation modals deferred)
+- Nyquist validation incomplete: most v7.0 phases at nyquist_compliant: false (draft status)
+- Empty state CTA onClick handlers are () => {} placeholders (wiring to creation modals deferred)
+- INGEST-02: Move approved ingested item to different section — deferred from v7.0
+- 4 portfolio RED TDD stubs remain (TEST-01 dropped from v7.0 scope)
 
-## v7.0 Roadmap Summary
+## Session Continuity
 
-**12 phases (58–69) covering 43 requirements across 13 categories:**
-
-- **Phase 58:** Per-Project RBAC (AUTH-02–05) — foundation, blocks others
-- **Phase 59:** Project Lifecycle Management (PROJ-01–04, AUTH-01, PORTF-01–02) — archive/delete/restore
-- **Phase 60:** Health Dashboard Redesign (HLTH-01–02) — auto-derived executive metrics
-- **Phase 61:** Ingestion Edit & Move (INGEST-01, 02, 05) — correction workflow
-- **Phase 62:** Ingestion Consolidation (INGEST-03, 04) — scan + completeness
-- **Phase 63:** Skills Design Standard (SKILL-01, 02, 04) — foundation for editing
-- **Phase 64:** Editable Prompts UI (SKILL-03a, 03b) — admin control, blocked by Phase 58 + 63
-- **Phase 65:** Project-Scoped Scheduling (SCHED-01–05) — blocked by Phase 58
-- **Phase 66:** Overview Tracks Redesign (OVRVW-01–05) — static/dynamic tracks
-- **Phase 67:** Delivery Tab Cleanup (DLVRY-05–10, TEAM-01–02) — polish
-- **Phase 68:** Gantt Bi-directional Sync (DLVRY-01–04) — date integrity
-- **Phase 69:** Knowledge Base + Outputs + Testing (KB-01, OUT-01, TEST-01) — cleanup
-
-**Critical dependencies:**
-- Phase 64 blocked by Phase 63 (Design Standard required before prompt editing)
-- Phase 64 blocked by Phase 58 (admin-only RBAC)
-- Phase 65 blocked by Phase 58 (RBAC required for admin enforcement)
-
-**Critical risks flagged by research:**
-- RBAC migration incompleteness (40+ route handlers): Partial migration creates security holes
-- Soft-delete cascade blind spots: 57+ phases of FK evolution requires careful audit
-- Gantt bi-directional sync race conditions: Advisory locks required for Phase 68
-
-**Next action:** Execute Phase 68 (Gantt Bi-directional Sync — DLVRY-01 through DLVRY-04)
-
-## Recent Decisions
-
-### Phase 68-04: Edge Drag Handles + Milestone Drag + Inline Date Cells
-- **Edge drag clamping enforces 1-day minimum span** — Left edge cannot drag past end - 1 day; right edge cannot drag before start + 1 day; prevents zero-duration or negative-duration task states
-- **WBS summary bar edge drag shifts all child tasks by same delta** — Maintains relative task spacing within phase; simplifies UX by treating phase-level reschedule as atomic operation
-- **Milestone drag uses separate dragRef to avoid state conflicts** — Isolates milestone drag state from task drag state; prevents edge case where simultaneous drag events could corrupt shared ref
-- **DatePickerCell integrated for inline date editing in left panel** — Replaced static date displays with DatePickerCell; provides consistent date-picking UX across Gantt and Milestones table
-
-### Phase 68-03: WBS-Based Gantt Row Model
-- **WBS-item-based row model replaces milestone grouping for static skeleton structure** — Gantt now shows WBS level-1 items as always-visible rows regardless of task dates; establishes DLVRY-01 requirement for static structural skeleton visible before dates are set
-- **Empty WBS rows show dashed placeholder bar (4 weeks, opacity 0.3) instead of hiding** — Empty rows render visual placeholder to indicate position in timeline where tasks will appear; improves UX by showing skeleton structure
-- **buildWbsRows exported as pure function for testability and span computation** — Extracted span calculation logic (earliest start to latest end) as testable pure function; enables TDD contract tests in GanttChart-wbs-rows.test.ts
-- **Server page pre-groups tasks by WBS assignment, passing wbsRows prop to GanttChart** — gantt/page.tsx performs grouping logic using wbsTaskAssignments join; GanttChart receives structured data rather than computing groupings client-side
-
-### Phase 68-02: Milestone Date PATCH Field Alignment
-- **Added date: z.string().nullable().optional() to patchSchema for milestone date updates** — Extends milestones PATCH API to accept date field for Gantt bi-directional sync; nullable allows clearing date with { date: null }
-- **Fixed MilestonesTableClient DatePickerCell to use date field instead of non-existent target_date field** — Corrected field alignment bug where DatePickerCell was saving to target_date (silently dropped by Zod) instead of canonical date column
-- **Updated displayDate to use m.date directly (not m.target ?? m.date)** — Prevents confusion between free-text target description and ISO date field; DatePickerCell should only show/edit the canonical date
-
-### Phase 68-01: Wave 0 TDD RED Stubs
-- **Mock inspection pattern verifies date field stripped by Zod** — Plan expected Zod to reject unknown fields with 400, but Zod strips fields silently in default mode; added mock spies to verify date field presence in update payload, ensuring correct RED state
-- **Inline stub functions ensure RED state by returning wrong results** — buildWbsRows returns [], computeEdgeDrag returns unchanged dates; pattern ensures tests fail until real implementations exported
-- **Contract tests document expected PATCH field names before implementation** — MilestonesTableClient and inline date cell tests simulate broken handlers to document correct field contracts (date vs target_date, start_date vs due)
-
-### Phase 63-01: Skills Design Standard
-- **YAML front-matter schema with 6 required fields** (label, description, input_required, input_label, schedulable, error_behavior) — Locked user decision from phase research; provides runtime metadata for Skills tab dynamic rendering
-- **Front-matter block must be first line of file** (opening --- at line 1) — Parser simplicity and consistency
-- **error_behavior enum with "retry" and "fail" values** — Gives skill authors control over retry semantics
-
-### Phase 63-02: Skills Tab Server Refactor
-- **SkillMeta type in types/skills.ts for shared import** — Both server and client components need the type definition
-- **Manual YAML parsing (no yaml library dependency)** — Simple key-value parsing sufficient for 6-field schema, avoids dependency bloat
-- **All skills runnable (Fix required badge informational only)** — Non-compliant skills remain functional during migration, admin can fix without breaking user workflows
-- **Exclude context-updater from Skills tab** — Backend processing skill per CONTEXT.md scope definition, not a documentation skill
-
-### Phase 63-04: Human Verification Gate
-- **Handoff Doc Generator is valid and kept in catalog** — User confirmed it's a functional skill, not a mistake
-- **Table rendering gap is a follow-up item, not a blocker** — Skill execution works correctly; markdown table formatting in UI is a display enhancement for future phase
-
-### Phase 64-01: TDD RED Stubs for Editable Prompts
-- **Settings round-trip tests use Partial<AppSettings> as any cast for RED phase** — Validates persistence layer before adding TypeScript types; writeSettings already handles unknown fields via object spread
-- **Admin guard tests left as .todo stubs** — RBAC admin enforcement depends on Phase 58 (Per-Project RBAC) implementation; stubs define contract for future wiring
-- **Body extraction regex pattern deferred to GREEN phase** — Todo stubs document edge cases without implementation; regex will be added when driving stubs to GREEN
-
-### Phase 64-02: Backend Implementation for Editable Prompts
-- **Inline validation in prompt route to avoid Server Component import** — parseSkillMeta lives in Server Component and cannot be imported into route handler; implemented inline validateSkillDesignStandard() with same validation logic
-- **Body trimStart() normalization in PATCH** — Always normalizes body with trimStart() before reconstruction to ensure consistent spacing after front-matter block
-- **Audit log not in DB transaction** — File write and audit log insert are separate operations; file system operations are not transactional with PostgreSQL
-- **Backup naming with .bak extension** — Uses ${filePath}.${Date.now()}.bak pattern; .bak files excluded from Skills tab (loader filters .md only)
-- **Next.js 15 async params pattern** — GET and PATCH handlers use params: Promise<{ skillName: string }> and await params for Next.js 15+ compatibility
-
-### Phase 64-03: CodeMirror Editor & Prompt Modal
-- **Used @uiw/react-codemirror wrapper with uncontrolled mode (useRef buffering) to avoid cursor jump issues** — Wrapper provides cleaner React integration; useRef buffering prevents re-render cursor jumps from controlled mode
-- **CSS resize:vertical on editor container for native browser resize handle** — Native browser resize UX, simpler than custom drag handlers
-- **Dynamic import with ssr:false for CodeMirrorEditor** — Prevents SSR issues with CodeMirror's browser-only APIs (document, DOM manipulation)
-
-### Phase 64-04: Wire Editable Prompts UI
-- **Server-side admin resolution in skills/page.tsx using same pattern as layout.tsx** — Ensures isAdmin prop is correctly resolved before rendering client island; reuses established resolveRole + projectMembers query pattern
-- **Edit button conditionally rendered when promptEditingEnabled && isAdmin && !isRunning** — Clean three-condition check prevents edit access during skill execution; UX concern to avoid confusion
-- **Settings page Skills tab rendered unconditionally (server-side 403 guard is security boundary)** — Client-side rendering of admin-only controls is UI convenience per plan guidance; /api/settings POST handler enforces admin-only access
-- **Test files updated with new required props (Rule 3 deviation)** — Extended SkillsTabClientProps interface broke 7 test render calls; added mockSkills array and updated all calls to fix blocking TypeScript errors
-
-### Phase 64-05: Build Verification + Human Verification Gate
-- **Human verification confirmed all 8 verification steps passing** — Settings toggle persistence, Edit button visibility (admin-only, toggle-gated), modal rendering with locked front-matter and CodeMirror editor, resize handle, full-screen toggle, successful save with persistence and backup, validation failure with inline error, and audit log entry all verified in browser
-- **Modal state reset pattern prevents unsaved edits from leaking across open/close cycles** — Bug discovered during verification: editor state (editorContent, editorHeight, isFullScreen) persisted across modal close/open; fixed by resetting state in onClose handler to discard unsaved edits on Cancel
-
-### Phase 65-01: Schema and API Foundation for Project-Scoped Scheduling
-- **ON DELETE SET NULL for project_id FK** — If a project is deleted, its jobs become global (project_id = NULL) rather than being cascade-deleted or blocking deletion; preserves work and allows jobs to continue running
-- **Global view filters to IS NULL, not all jobs** — GET /api/jobs with no projectId param returns only jobs with project_id IS NULL; separates global and project-scoped jobs cleanly; prevents project jobs from appearing in global scheduler
-- **NotificationBadge removed from Scheduler sidebar link** — Scheduler failure notifications will be per-project in future phases; global badge no longer fits the scoping model; removed badge and associated query to avoid UX confusion during transition
-
-### Phase 65-02: Project-Scoped Jobs API & Wizard Integration
-- **Exported CreateJobSchema from global jobs route for reuse** — Project-scoped route imports schema to ensure validation consistency; avoids schema drift between global and project routes
-- **Project route forces project_id to route param** — Security boundary: caller cannot override project_id via request body; always set to numericId from URL param for RBAC enforcement
-- **Auto-inject projectId into skill_params_json at server side** — BullMQ worker receives project context without client-side knowledge; server-side injection pattern ensures workers have correct project scope
-- **hideScope prop pattern for JobSkillStep** — Cleaner than passing projectId down; encapsulates conditional UI rendering in child component
-
-### Phase 65-03: Project-Scoped Scheduler UI Integration
-- **ProjectSchedulerSection as local component in SkillsTabClient** — Scope encapsulation; not a separate file since it's tightly coupled to Skills tab context
-- **Controlled/uncontrolled expandedId pattern** — Allows URL state management in project context (controlled mode with useSearchParams) while preserving standalone table behavior (uncontrolled mode for global scheduler)
-- **readOnly mode hides all action controls** — Non-admin users see jobs and run history but cannot Create/Edit/Delete/Toggle/Trigger; cleaner than per-button conditionals
-
-### Phase 66-01: Integration Deletion & Weekly Focus Automation
-- **DELETE endpoint uses same 'user' role guard as PATCH for consistency** — Users should be able to delete integrations they can edit; role consistency reduces confusion
-- **Weekly-focus job registration is best-effort with try/catch** — Prevents Redis unavailability from failing project creation; job registration degrades gracefully as convenience feature
-- **Job scheduler key pattern: weekly-focus-project-{id}** — Ensures uniqueness per project; upsertJobScheduler makes pattern idempotent for future updates
-- **Cron pattern 0 6 * * 1 hardcoded** — Weekly focus timing is product requirement (every Monday 6am UTC), not user configuration; consistent schedule across all projects
-
-### Phase 66-03: Human Verification Gate
-- **All 5 OVRVW requirements confirmed passing via human visual browser verification** — Static 3-track ADR/Biggy cards, dynamic summary cards with live counts, always-visible Generate Now button with quiet empty state, and immediate integration delete all verified by user in browser
-
-### Phase 66-02: Overview Tracks Redesign - Static/Dynamic Hybrid
-- **Static track config constants define phase structure (names never from DB)** — STATIC_ADR_TRACKS and STATIC_BIGGY_TRACKS provide hardcoded phase names and order; DB phases matched by name for step status only
-- **Raw phase state captured before static filtering** — rawAdrPhases/rawBiggyPhases hold ALL DB phases before static filter; required for dynamic summary cards to access Teams phase data
-- **Teams phase access requires raw state** — Static-filtered adrPhases/biggyPhases never contain Teams phase; dynamic summary cards must use rawAdrPhases/rawBiggyPhases for accurate counts
-- **Integration delete is immediate with optimistic UI** — No confirmation dialog per user decision; optimistic remove with rollback on error provides responsive UX
-- **Generate Now button moved to header with outline style** — Always visible regardless of bullets state; secondary outline style (not primary blue) for less visual prominence
-- **Empty state shows quiet italic text** — Replaced large CTA with understated placeholder: "Weekly focus generates automatically every Monday at 6am."
-
-### Phase 67-02: Stakeholder Delete & Move Operations
-- **DELETE endpoint follows existing audit log pattern with transaction wrapping** — Transaction wraps db.delete() and audit log insert, consistent with Phase 66 patterns
-- **Move operation toggles company field between BigPanda and customer company via PATCH** — Existing PATCH handler already supports company updates; no new endpoint needed
-- **Delete button uses destructive variant with left-alignment (mr-auto)** — Pushes delete to left side of footer for visual separation from Save/Cancel
-- **No confirmation dialog on delete per Phase 66 inline delete pattern** — Follows Phase 66 inline delete pattern for consistent UX
-
-### Phase 67-04: Build Verification & Human Approval
-- **Generate Plan unified to single Task Board button** — Removed redundant WBS-side Generate Plan button; consolidated to single Task Board entry point per Phase 67 intent
-- **WBS GET endpoint requires track param for proper data scoping** — All WBS tree fetches must include ?track= query parameter; enforces proper ADR/Biggy separation
-- **WBS reorder schema accepts newDisplayOrder=0 as valid** — Changed Zod schema from .positive() to .min(0) to allow dragging items to top position (display_order=0)
-- **WBS collapse state persists across navigation via sessionStorage** — Collapsed nodes stay collapsed on page refresh using sessionStorage key pattern wbs-expanded-{projectId}-{nodeId}
-- **Drag handle shows on row hover with green overlay** — Added hover-only drag handle visibility with green background overlay for better drag affordance and discoverability
-
----
-*Last updated: 2026-04-16T16:36:00Z*
-*Milestone: v7.0 — Governance & Operational Maturity*
+Last session: 2026-04-19
+Stopped at: v8.0 roadmap created — Phase 70 ready to plan
+Resume file: None
