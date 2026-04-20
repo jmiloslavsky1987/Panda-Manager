@@ -217,6 +217,16 @@ Plans:
 - [ ] 73-04-PLAN.md — Remaining route upgrades: ingestion/approve, artifacts/[id]; confirm TENANT-03/04
 - [ ] 73-05-PLAN.md — Build verification + human verification gate (all 5 TENANT requirements)
 
+### Phase 73.1: Entity Lifecycle Management (INSERTED)
+
+**Goal:** [Urgent work - to be planned]
+**Requirements**: TBD
+**Depends on:** Phase 73
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 73.1 to break down)
+
 ### Phase 74: Deployment Readiness
 **Goal**: The app can be fully configured for a hosted environment using environment variables alone, and a deployment guide documents every prerequisite and configuration step
 **Depends on**: Phase 73 (multi-tenant isolation must be correct before deployment)

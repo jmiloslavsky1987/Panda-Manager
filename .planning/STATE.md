@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v8.0
 milestone_name: Codebase Refactor & Multi-Tenant Deployment
 status: in_progress
-stopped_at: Completed 73-04-PLAN.md
-last_updated: "2026-04-20T17:07:15.000Z"
-last_activity: 2026-04-20 — Phase 73-04 complete (Membership gates + isolation verification)
+stopped_at: Completed Phase 73
+last_updated: "2026-04-20T19:00:00.000Z"
+last_activity: 2026-04-20 — Phase 73 complete (Multi-Tenant Isolation — all 5 TENANT requirements verified)
 progress:
-  total_phases: 17
-  completed_phases: 12
+  total_phases: 18
+  completed_phases: 13
   total_plans: 52
-  completed_plans: 50
-  percent: 96
+  completed_plans: 52
+  percent: 98
 ---
 
 # Project State
@@ -25,10 +25,9 @@ See: .planning/PROJECT.md (updated 2026-04-16 after v7.0 milestone close)
 
 ## Current Position
 
-Phase: 73 of 75 — IN PROGRESS (Multi-Tenant Isolation)
-Status: Phase 73 in progress. Plan 04 of 5 complete.
-Current Plan: 73-04 (complete) — Membership gates for ingestion/approve and artifacts PATCH
-Last activity: 2026-04-20 — Phase 73-04 complete (TENANT-02/03/04 verified)
+Phase: 73.1 of 75 — NEXT (Entity Lifecycle Management — inserted)
+Status: Phase 73 complete. Phase 73.1 inserted and context documented. Phase 74 next after 73.1.
+Last activity: 2026-04-20 — Phase 73 complete. Sidebar isolation bug fixed during human verification.
 
 Progress: [██████████] 96% (50 of 52 plans complete in v8.0)
 
@@ -109,6 +108,11 @@ Progress: [██████████] 96% (50 of 52 plans complete in v8.0)
 - Lookup artifact.project_id before auth in PATCH - artifact ID is in path but projectId is not; DB lookup required to get project context before membership check
 - Cache isolation has two layers: READ (requireProjectRole at route) and WRITE (project-scoped keys in worker) - both necessary for airtight isolation
 - Single BullMQ queue with data-level isolation is sufficient - job payload is project-scoped, results have project_id FK, cache keys are project-namespaced
+
+## Accumulated Context
+
+### Roadmap Evolution
+- Phase 73.1 inserted after Phase 73: Entity Lifecycle Management (URGENT)
 
 ## Session Continuity
 
