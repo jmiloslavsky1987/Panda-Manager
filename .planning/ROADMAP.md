@@ -190,7 +190,13 @@ Plans:
   2. UX patterns flagged as inconsistent behave uniformly across all affected areas
   3. No dead code or unused duplicate implementations remain after unification
   4. Test suite passes after all unifications
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 072-01-PLAN.md — DB enum migration: riskStatusEnum + milestoneStatusEnum with data normalization
+- [ ] 072-02-PLAN.md — UX unification: text search for Risks/Milestones, EmptyState for Workstreams, filter-zero fix for Decisions
+- [ ] 072-03-PLAN.md — Component renames: GlobalProjectSearchBar, WorkspaceSearchBar, TeamMetadataEditModal + severity parity test
+- [ ] 072-04-PLAN.md — Build verification + human verification gate (all 13 findings)
 
 ### Phase 73: Multi-Tenant Isolation
 **Goal**: Users see only their own projects; unauthorized access returns 403; AI outputs, cache entries, and BullMQ job state cannot cross user or project boundaries; invite onboarding presents a clean empty state
