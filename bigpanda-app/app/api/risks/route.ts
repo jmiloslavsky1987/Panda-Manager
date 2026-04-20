@@ -9,7 +9,7 @@ const postSchema = z.object({
   description: z.string().min(1, 'Description is required'),
   severity: z.enum(['low', 'medium', 'high', 'critical']).optional(),
   owner: z.string().optional(),
-  status: z.string().optional(),
+  status: z.enum(['open', 'mitigated', 'resolved', 'accepted']).optional(),
   mitigation: z.string().optional(),
 })
 

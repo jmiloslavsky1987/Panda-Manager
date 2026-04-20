@@ -128,6 +128,28 @@ function coerceOnboardingStatus(raw: string | undefined | null): OnboardingStepS
   return 'not-started';
 }
 
+type RiskStatus = 'open' | 'mitigated' | 'resolved' | 'accepted';
+function coerceRiskStatus(raw: string | undefined | null): RiskStatus | null {
+  if (!raw) return null;
+  const v = raw.toLowerCase().trim();
+  if (['open', 'new', 'active'].includes(v)) return 'open';
+  if (['mitigated', 'mitigating', 'in progress', 'in-progress'].includes(v)) return 'mitigated';
+  if (['resolved', 'closed', 'done', 'complete'].includes(v)) return 'resolved';
+  if (['accepted', 'acknowledged', 'risk-accepted'].includes(v)) return 'accepted';
+  return null; // unrecognized — caller will use null (un-triaged state)
+}
+
+type MilestoneStatus = 'not_started' | 'in_progress' | 'completed' | 'blocked';
+function coerceMilestoneStatus(raw: string | undefined | null): MilestoneStatus {
+  if (!raw) return 'not_started';
+  const v = raw.toLowerCase().trim();
+  if (['completed', 'complete', 'done', 'finished'].includes(v)) return 'completed';
+  if (['in_progress', 'in progress', 'in-progress', 'ongoing', 'active'].includes(v)) return 'in_progress';
+  if (['blocked', 'stuck', 'on-hold', 'on hold'].includes(v)) return 'blocked';
+  if (['not_started', 'not started', 'pending', 'planned', 'upcoming'].includes(v)) return 'not_started';
+  return 'not_started'; // unrecognized — default to not_started (safe fallback)
+}
+
 async function resolveEntityRef(
   tableName: 'milestones' | 'workstreams',
   nameField: string,
@@ -399,7 +421,7 @@ async function insertItem(
           name: f.name ?? '',
           target: f.target_date ?? null,
           date: f.target_date ?? null,
-          status: f.status ?? null,
+          status: coerceMilestoneStatus(f.status),
           owner: f.owner ?? null,
           ...attribution,
         }).returning();
@@ -1113,7 +1135,7 @@ async function mergeItem(
       const [beforeRecord] = await db.select().from(milestones).where(eq(milestones.id, existingId));
       const patch = {
         target: f.target_date ?? undefined,
-        status: f.status ?? undefined,
+        status: f.status ? coerceMilestoneStatus(f.status) : undefined,
         owner: beforeRecord.owner ? undefined : (f.owner ?? undefined),
         ...attribution,
       };

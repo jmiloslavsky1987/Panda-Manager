@@ -54,9 +54,9 @@ export async function buildChatContext(projectId: number): Promise<string> {
     }
   }
 
-  // Open Risks (filter out closed)
+  // Open Risks (filter out resolved)
   if (workspace.risks?.length) {
-    const open = workspace.risks.filter(r => r.status !== 'closed');
+    const open = workspace.risks.filter(r => r.status !== 'resolved');
     sections.push('', `## Open Risks (${open.length})`);
     if (open.length > 0) {
       open.forEach(r => {
