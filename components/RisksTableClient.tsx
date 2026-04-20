@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { Input } from '@/components/ui/input'
 import { RiskEditModal } from '@/components/RiskEditModal'
 import { SourceBadge } from '@/components/SourceBadge'
 import { InlineSelectCell } from '@/components/InlineSelectCell'
@@ -79,6 +80,7 @@ export function RisksTableClient({ risks, artifacts, projectId }: RisksTableClie
 
   const [addModalOpen, setAddModalOpen] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const [q, setQ] = useState('')
 
   // Update URL param callback
   const updateParam = useCallback((key: string, value: string) => {
@@ -121,6 +123,15 @@ export function RisksTableClient({ risks, artifacts, projectId }: RisksTableClie
       return aOrder - bOrder
     })
 
+    // Text search on description and mitigation
+    if (q) {
+      const lowerQ = q.toLowerCase()
+      result = result.filter(r =>
+        (r.description?.toLowerCase().includes(lowerQ) ?? false) ||
+        (r.mitigation?.toLowerCase().includes(lowerQ) ?? false)
+      )
+    }
+
     if (statusFilter) {
       result = result.filter(r => normaliseRiskStatus(r.status) === statusFilter)
     }
@@ -138,7 +149,7 @@ export function RisksTableClient({ risks, artifacts, projectId }: RisksTableClie
     }
 
     return result
-  }, [risks, statusFilter, severityFilter, ownerFilter, fromDate, toDate])
+  }, [risks, q, statusFilter, severityFilter, ownerFilter, fromDate, toDate])
 
   // Multi-select functions
   function toggleSelection(id: number) {
@@ -231,6 +242,12 @@ export function RisksTableClient({ risks, artifacts, projectId }: RisksTableClie
 
       {/* Filter bar */}
       <div className="flex flex-wrap gap-2">
+        <Input
+          placeholder="Search risks..."
+          value={q}
+          onChange={e => setQ(e.target.value)}
+          className="h-8 w-48"
+        />
         <select
           value={statusFilter}
           onChange={e => updateParam('status', e.target.value)}
@@ -281,9 +298,10 @@ export function RisksTableClient({ risks, artifacts, projectId }: RisksTableClie
             className="border rounded px-2 py-1 text-sm"
           />
         </label>
-        {(statusFilter || severityFilter || ownerFilter || fromDate || toDate) && (
+        {(q || statusFilter || severityFilter || ownerFilter || fromDate || toDate) && (
           <button
             onClick={() => {
+              setQ('')
               updateParam('status', '')
               updateParam('severity', '')
               updateParam('owner', '')

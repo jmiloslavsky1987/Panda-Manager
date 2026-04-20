@@ -11,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { MilestoneEditModal } from '@/components/MilestoneEditModal'
 import { SourceBadge } from '@/components/SourceBadge'
@@ -63,6 +64,7 @@ export function MilestonesTableClient({ milestones, artifacts, projectId }: Mile
   const searchParams = useSearchParams()
   const [addModalOpen, setAddModalOpen] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const [q, setQ] = useState('')
 
   // Read filter values from URL params
   const statusFilter = searchParams.get('status') ?? ''
@@ -151,6 +153,15 @@ export function MilestonesTableClient({ milestones, artifacts, projectId }: Mile
   const filteredMilestones = useMemo(() => {
     let result = [...milestones]
 
+    // Text search on name and notes
+    if (q) {
+      const lowerQ = q.toLowerCase()
+      result = result.filter(m =>
+        (m.name?.toLowerCase().includes(lowerQ) ?? false) ||
+        (m.notes?.toLowerCase().includes(lowerQ) ?? false)
+      )
+    }
+
     // Apply status filter
     if (statusFilter) {
       result = result.filter(m => normaliseMilestoneStatus(m.status) === statusFilter)
@@ -181,7 +192,7 @@ export function MilestonesTableClient({ milestones, artifacts, projectId }: Mile
     const incomplete = result.filter(m => normaliseMilestoneStatus(m.status) !== 'completed')
     const complete = result.filter(m => normaliseMilestoneStatus(m.status) === 'completed')
     return [...incomplete.sort(sortByDate), ...complete.sort(sortByDate)]
-  }, [milestones, statusFilter, ownerFilter, fromDate, toDate])
+  }, [milestones, q, statusFilter, ownerFilter, fromDate, toDate])
 
   // Show empty state when no milestones exist
   if (milestones.length === 0) {
@@ -213,6 +224,12 @@ export function MilestonesTableClient({ milestones, artifacts, projectId }: Mile
 
       {/* Filter Bar */}
       <div className="flex flex-wrap gap-2 mb-4">
+        <Input
+          placeholder="Search milestones..."
+          value={q}
+          onChange={e => setQ(e.target.value)}
+          className="h-8 w-48"
+        />
         <select
           value={statusFilter}
           onChange={e => updateParam('status', e.target.value)}
@@ -250,9 +267,10 @@ export function MilestonesTableClient({ milestones, artifacts, projectId }: Mile
             className="border rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-400"
           />
         </label>
-        {(statusFilter || ownerFilter || fromDate || toDate) && (
+        {(q || statusFilter || ownerFilter || fromDate || toDate) && (
           <button
             onClick={() => {
+              setQ('')
               updateParam('status', '')
               updateParam('owner', '')
               updateParam('from', '')
