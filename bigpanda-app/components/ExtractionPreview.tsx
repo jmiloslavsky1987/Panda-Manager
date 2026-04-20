@@ -90,7 +90,7 @@ export function ExtractionPreview({ items, onItemChange, onApprove }: Extraction
     items.forEach((item, idx) => {
       if (!item.approved) return
       const primaryField = getPrimaryField(item.entityType)
-      if (primaryField && !item.fields[primaryField]?.trim()) {
+      if (primaryField && !String(item.fields[primaryField] ?? '').trim()) {
         errorIndices.add(idx)
       }
     })

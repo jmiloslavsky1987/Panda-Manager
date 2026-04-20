@@ -51,6 +51,7 @@ export function ContextTab({ projectId }: ContextTabProps) {
   const [expandedTabs, setExpandedTabs] = useState<Set<string>>(new Set())
   const [schemaVersion, setSchemaVersion] = useState<string | null>(null)
   const [activeBatch, setActiveBatch] = useState<ActiveBatch | null>(null)
+  const [cancelling, setCancelling] = useState(false)
   const toastFiredRef = useRef<Set<string>>(new Set())
   const [initialStage, setInitialStage] = useState<'uploading' | 'reviewing'>('uploading')
   const [initialReviewItems, setInitialReviewItems] = useState<ExtractionItem[]>([])
@@ -78,6 +79,16 @@ export function ContextTab({ projectId }: ContextTabProps) {
     setInitialArtifactId(firstArtifactId)
     setInitialStage('reviewing')
     setIngestionModalOpen(true)
+  }
+
+  const cancelExtraction = async () => {
+    if (!activeBatch || cancelling) return
+    setCancelling(true)
+    await Promise.allSettled(
+      activeBatch.jobs.map(job => fetch(`/api/ingestion/jobs/${job.id}`, { method: 'DELETE' }))
+    )
+    setActiveBatch(null)
+    setCancelling(false)
   }
 
   // Poll extraction status for background progress
@@ -196,7 +207,16 @@ export function ContextTab({ projectId }: ContextTabProps) {
         {/* Show extraction progress if active batch exists and not complete */}
         {activeBatch && !activeBatch.batch_complete && (
           <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 p-4">
-            <h3 className="text-sm font-medium text-blue-900 mb-3">Extraction in Progress</h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-medium text-blue-900">Extraction in Progress</h3>
+              <button
+                onClick={cancelExtraction}
+                disabled={cancelling}
+                className="text-xs text-blue-500 hover:text-red-600 underline underline-offset-2 disabled:opacity-50 transition-colors"
+              >
+                {cancelling ? 'Cancelling…' : 'Cancel extraction'}
+              </button>
+            </div>
             <div className="space-y-2">
               {activeBatch.jobs.map((job, i) => {
                 const filename = job.filename || `File ${i + 1}`

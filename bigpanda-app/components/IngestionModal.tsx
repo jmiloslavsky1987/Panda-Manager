@@ -15,7 +15,46 @@ import { NOTE_RECLASSIFY_PRIMARY_FIELD, type NoteReclassifyTarget } from './Extr
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const PASS_LABELS = ['Project data', 'Architecture', 'Teams & delivery']
+const PASS_LABELS = ['Project data', 'Architecture', 'Teams & delivery', 'People & outcomes']
+
+// ─── Cross-job dedup ──────────────────────────────────────────────────────────
+
+function norm(s: unknown) { return String(s ?? '').toLowerCase().replace(/[^a-z0-9]/g, '') }
+
+function dedupeKey(item: ExtractionItem): string | null {
+  const t = item.entityType
+  const f = item.fields ?? {}
+  switch (t) {
+    case 'action': return f.description ? `${t}::${norm(f.description)}` : null
+    case 'risk': return f.description ? `${t}::${norm(f.description)}` : null
+    case 'decision': return f.decision ? `${t}::${norm(f.decision)}` : null
+    case 'milestone': return f.name ? `${t}::${norm(f.name)}` : null
+    case 'stakeholder': return f.name ? `${t}::${norm(f.name)}` : null
+    case 'task': return f.title ? `${t}::${norm(f.title)}` : null
+    case 'architecture': return f.tool_name ? `${t}::${norm(f.tool_name)}` : null
+    case 'integration': return f.tool_name ? `${t}::${norm(f.tool_name)}` : null
+    case 'team': return f.team_name ? `${t}::${norm(f.team_name)}` : null
+    case 'businessOutcome': return f.title ? `${t}::${norm(f.title)}` : null
+    case 'focus_area': return f.title ? `${t}::${norm(f.title)}` : null
+    case 'workstream': return f.name ? `${t}::${norm(f.name)}` : null
+    case 'wbs_task': return (f.title && f.track) ? `${t}::${norm(f.title)}::${norm(f.track)}` : (f.title ? `${t}::${norm(f.title)}` : null)
+    case 'onboarding_step': return f.step_name ? `${t}::${norm(f.step_name)}` : null
+    case 'arch_node': return (f.node_name && f.track) ? `${t}::${norm(f.node_name)}::${norm(f.track)}` : null
+    case 'e2e_workflow': return f.workflow_name ? `${t}::${norm(f.workflow_name)}` : null
+    default: return null
+  }
+}
+
+function deduplicateCrossJob(items: ReviewItem[]): ReviewItem[] {
+  const seen = new Set<string>()
+  return items.filter(item => {
+    const key = dedupeKey(item)
+    if (key === null) return true
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -86,8 +125,9 @@ export function IngestionModal({
   } | null>(null)
   // Ref prevents double-firing in React StrictMode
   const autoStartedRef = useRef(false)
-  // Store jobIds for polling
+  // Store jobIds for polling and cancellation
   const [jobIds, setJobIds] = useState<number[]>([])
+  const [cancelling, setCancelling] = useState(false)
   // Polling interval ref for cleanup
   const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const isPollingRef = useRef(false)
@@ -107,21 +147,35 @@ export function IngestionModal({
         )
 
         // Update per-file progress
+        let progressMessage: string | null = null
+        let runningCount = 0
+        let pendingCount = 0
+
         responses.forEach((data, idx) => {
           if (!data) return
           const file = statuses[idx]
           if (!file) return
 
-          if (data.status === 'running' || data.status === 'pending') {
+          if (data.status === 'pending') {
+            pendingCount++
+          } else if (data.status === 'running') {
+            runningCount++
+            // Running jobs take priority for the progress message
             const progress_pct = data.progress_pct || 0
-            // Pass-aware message using global progress scale (0-33: pass 1, 34-66: pass 2, 67-100: pass 3)
-            const passIdx = progress_pct <= 33 ? 0 : progress_pct <= 66 ? 1 : 2
-            const passLabel = PASS_LABELS[passIdx]
-            const passNum = passIdx + 1
-            const passStartPct = passIdx * 34  // 0, 34, 68 for passes 1, 2, 3
-            const withinPassRaw = Math.round(Math.max(0, progress_pct - passStartPct) * 3)
-            const withinPassPct = Math.min(100, withinPassRaw)
-            setExtractionMessage(`Pass ${passNum} of 3 — ${passLabel} (${withinPassPct}%)`)
+            const fileLabel = statuses.length > 1 ? ` (file ${idx + 1}/${statuses.length})` : ''
+            if (progress_pct === 0) {
+              // Pass 0 (pre-analysis) still running — no percentage yet
+              progressMessage = `Analyzing document…${fileLabel}`
+            } else {
+              // Pass-aware message using global progress scale: pass 1=10-32%, 2=32-54%, 3=54-76%, 4=76-100%
+              const passIdx = progress_pct <= 32 ? 0 : progress_pct <= 54 ? 1 : progress_pct <= 76 ? 2 : 3
+              const passLabel = PASS_LABELS[passIdx]
+              const passNum = passIdx + 1
+              const passStartPcts = [10, 32, 54, 76]
+              const withinPassRaw = Math.round(Math.max(0, progress_pct - passStartPcts[passIdx]) * (100 / 22))
+              const withinPassPct = Math.min(100, withinPassRaw)
+              progressMessage = `Pass ${passNum} of 4 — ${passLabel} (${withinPassPct}%)${fileLabel}`
+            }
           } else if (data.status === 'failed') {
             setFileStatuses(prev => prev.map((f, i) =>
               i === idx ? { ...f, status: 'error' } : f
@@ -133,6 +187,14 @@ export function IngestionModal({
             ))
           }
         })
+
+        // Set message: running job progress takes priority over queued state
+        if (progressMessage) {
+          setExtractionMessage(progressMessage)
+        } else if (pendingCount > 0 && runningCount === 0) {
+          const queuedLabel = pendingCount > 1 ? `${pendingCount} files queued` : 'Queued'
+          setExtractionMessage(`${queuedLabel} — waiting for worker…`)
+        }
 
         // Check if all jobs are done
         const allCompleted = responses.every(data => data && data.status === 'completed')
@@ -181,7 +243,9 @@ export function IngestionModal({
               }
             }
 
-            setReviewItems(allItems)
+            // Dedup across files: same entity type + same primary identifier
+            const deduped = deduplicateCrossJob(allItems)
+            setReviewItems(deduped)
             setFilteredCount(totalFiltered)
             setStage('reviewing')
           }
@@ -196,6 +260,25 @@ export function IngestionModal({
     // Poll every 2 seconds
     pollingIntervalRef.current = setInterval(poll, 2000)
   }, [projectId])
+
+  // ── Cancel all active extraction jobs ────────────────────────────────────
+  const cancelExtraction = useCallback(async () => {
+    if (jobIds.length === 0) return
+    setCancelling(true)
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current)
+      pollingIntervalRef.current = null
+    }
+    isPollingRef.current = false
+    await Promise.allSettled(
+      jobIds.map(id => fetch(`/api/ingestion/jobs/${id}`, { method: 'DELETE' }))
+    )
+    setCancelling(false)
+    setStage('uploading')
+    setJobIds([])
+    setFileStatuses([])
+    setExtractionMessage('')
+  }, [jobIds])
 
   // ── Enqueue extraction jobs and start polling ─────────────────────────────
   const startExtraction = useCallback(async (statuses: FileStatus[]) => {
@@ -280,11 +363,12 @@ export function IngestionModal({
   // Pre-populate reviewItems when opened at review stage
   useEffect(() => {
     if (open && initialStage === 'reviewing' && initialReviewItems.length > 0) {
-      setReviewItems(initialReviewItems.map(item => ({
+      const mapped = initialReviewItems.map(item => ({
         ...item,
         approved: true,
         edited: false,
-      })))
+      }))
+      setReviewItems(deduplicateCrossJob(mapped))
       setStage('reviewing')
       if (initialFilteredCount !== undefined) setFilteredCount(initialFilteredCount)
     }
@@ -475,7 +559,18 @@ export function IngestionModal({
               {/* Extracting stage: progress message + pulsing skeleton */}
               {(stage === 'extracting' || stage === 'uploading') && (
                 <div className="space-y-4">
-                  <p className="text-sm text-zinc-600 animate-pulse">{extractionMessage || 'Uploading files…'}</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-zinc-600 animate-pulse">{extractionMessage || 'Uploading files…'}</p>
+                    {stage === 'extracting' && (
+                      <button
+                        onClick={cancelExtraction}
+                        disabled={cancelling}
+                        className="text-xs text-zinc-500 hover:text-red-600 underline underline-offset-2 disabled:opacity-50 transition-colors shrink-0"
+                      >
+                        {cancelling ? 'Cancelling…' : 'Cancel extraction'}
+                      </button>
+                    )}
+                  </div>
                   <div className="space-y-3">
                     {[...Array(5)].map((_, i) => (
                       <div

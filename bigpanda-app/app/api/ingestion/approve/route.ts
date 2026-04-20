@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { eq, and, ilike, or, sql, asc } from 'drizzle-orm';
+import { eq, and, ilike, or, sql, asc, inArray } from 'drizzle-orm';
 import { db } from '@/db';
 import {
   actions,
@@ -27,6 +27,7 @@ import {
   e2eWorkflows,
   workflowSteps,
   beforeState,
+  extractionJobs,
 } from '@/db/schema';
 import type { EntityType, ExtractionItem } from '@/lib/extraction-types';
 import { requireProjectRole } from "@/lib/auth-server";
@@ -1720,6 +1721,31 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       ingestion_log_json: log,
     })
     .where(eq(artifacts.id, artifactId));
+
+  // Mark all other artifacts in the same batch as approved so they stop
+  // reappearing in extraction-status polls after the user reviews the batch.
+  const [jobForArtifact] = await db
+    .select({ batch_id: extractionJobs.batch_id })
+    .from(extractionJobs)
+    .where(eq(extractionJobs.artifact_id, artifactId));
+
+  if (jobForArtifact) {
+    const batchJobs = await db
+      .select({ artifact_id: extractionJobs.artifact_id })
+      .from(extractionJobs)
+      .where(eq(extractionJobs.batch_id, jobForArtifact.batch_id));
+
+    const remainingArtifactIds = batchJobs
+      .map(j => j.artifact_id)
+      .filter((id): id is number => id != null && id !== artifactId);
+
+    if (remainingArtifactIds.length > 0) {
+      await db
+        .update(artifacts)
+        .set({ ingestion_status: 'approved' })
+        .where(inArray(artifacts.id, remainingArtifactIds));
+    }
+  }
 
   // 6. Return summary
   const parts: string[] = [];

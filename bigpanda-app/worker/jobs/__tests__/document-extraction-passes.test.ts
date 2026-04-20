@@ -10,19 +10,24 @@ import type { ExtractionItem, EntityType } from '../document-extraction';
 // Track progress updates
 const progressUpdates: Array<Record<string, unknown>> = [];
 
-// Mock Anthropic SDK with messages.create (tool use)
+// Mock Anthropic SDK with messages.stream (tool use)
 vi.mock('@anthropic-ai/sdk', () => {
+  const mockFinalMessage = {
+    content: [
+      {
+        type: 'tool_use',
+        name: 'record_entities',
+        input: { entities: [], coverage: 'action: 0 | GAPS: none' },
+      },
+    ],
+    stop_reason: 'tool_use',
+  };
   return {
     default: vi.fn().mockImplementation(() => ({
       messages: {
-        create: vi.fn().mockResolvedValue({
-          content: [
-            {
-              type: 'tool_use',
-              name: 'record_entities',
-              input: { entities: [], coverage: 'action: 0 | GAPS: none' },
-            },
-          ],
+        create: vi.fn().mockResolvedValue(mockFinalMessage),
+        stream: vi.fn().mockReturnValue({
+          finalMessage: vi.fn().mockResolvedValue(mockFinalMessage),
         }),
       },
     })),
@@ -104,17 +109,22 @@ describe('document-extraction-passes', () => {
     const mockAnthropic = vi.mocked(Anthropic);
     mockAnthropic.mockClear();
     // Use function declaration (not arrow function) so it can be used as a constructor
+    const defaultMessage = {
+      content: [
+        {
+          type: 'tool_use',
+          name: 'record_entities',
+          input: { entities: [], coverage: 'action: 0 | GAPS: none' },
+        },
+      ],
+      stop_reason: 'tool_use',
+    };
     mockAnthropic.mockImplementation(function(this: any) {
       return {
         messages: {
-          create: vi.fn().mockResolvedValue({
-            content: [
-              {
-                type: 'tool_use',
-                name: 'record_entities',
-                input: { entities: [], coverage: 'action: 0 | GAPS: none' },
-              },
-            ],
+          create: vi.fn().mockResolvedValue(defaultMessage),
+          stream: vi.fn().mockReturnValue({
+            finalMessage: vi.fn().mockResolvedValue(defaultMessage),
           }),
         },
       };
@@ -172,25 +182,26 @@ describe('document-extraction-passes', () => {
 
       await processDocumentExtraction(mockJob as any);
 
-      // Get the messages.create mock from the Anthropic constructor mock
+      // Get the messages.stream mock from the Anthropic constructor mock
       const instances = mockAnthropic.mock.results;
       expect(instances.length).toBeGreaterThan(0);
       const instance = instances[0].value;
-      const createCalls = instance.messages.create.mock.calls;
+      const streamCalls = instance.messages.stream.mock.calls;
 
-      // 1 Pass 0 call + 3 extraction passes = 4 total
-      expect(createCalls.length).toBe(4);
+      // Pass 0 uses messages.create; Passes 1-4 use messages.stream → 4 stream calls
+      expect(streamCalls.length).toBe(4);
 
-      // The 3 extraction calls (indices 1-3) use PASS_PROMPTS which contain pass-specific types
-      const extractionSystems = createCalls.slice(1).map((c: any[]) => c[0].system);
+      // All 4 stream calls are extraction passes with PASS_PROMPTS
+      const extractionSystems = streamCalls.map((c: any[]) => c[0].system);
       expect(extractionSystems[0]).toContain('action'); // Pass 1
       expect(extractionSystems[1]).toContain('arch_node'); // Pass 2
       expect(extractionSystems[2]).toContain('wbs_task'); // Pass 3
+      expect(extractionSystems[3]).toContain('stakeholder'); // Pass 4
     });
   });
 
-  describe('Text 3 passes', () => {
-    it('text extraction makes 3 * chunkCount Claude calls', async () => {
+  describe('Text 4 passes', () => {
+    it('text extraction makes 4 * chunkCount Claude calls', async () => {
       // Return text content that fits in 1 chunk (under 80k chars)
       vi.mocked(extractDocumentText).mockResolvedValue({
         kind: 'text',
@@ -206,10 +217,10 @@ describe('document-extraction-passes', () => {
       await processDocumentExtraction(mockJob as any);
 
       const instance = mockAnthropic.mock.results[0].value;
-      const createCalls = instance.messages.create.mock.calls;
+      const streamCalls = instance.messages.stream.mock.calls;
 
-      // 1 chunk: 1 Pass 0 + 3 passes * 1 chunk = 4 total calls
-      expect(createCalls.length).toBe(4);
+      // 1 chunk: Pass 0 uses create, Passes 1-4 use stream → 4 stream calls
+      expect(streamCalls.length).toBe(4);
     });
   });
 
@@ -221,40 +232,44 @@ describe('document-extraction-passes', () => {
       });
 
       // Override the Anthropic mock to return different responses per call
+      // Pass 0 uses messages.create; Passes 1-4 use messages.stream
       const mockAnthropic = vi.mocked(Anthropic);
-      const mockCreateFn = vi.fn();
+      const mockCreateFn = vi.fn().mockResolvedValue({
+        content: [{ type: 'text', text: '<relevant_section>test</relevant_section>' }]
+      });
+      const mockStreamFn = vi.fn();
 
-      // Set up sequential responses
-      mockCreateFn
-        .mockResolvedValueOnce({
-          // Pass 0: text response
-          content: [{ type: 'text', text: '<relevant_section>test</relevant_section>' }]
-        })
-        .mockResolvedValueOnce({
+      // Each stream() call returns an object whose finalMessage() resolves sequentially
+      const makeStream = (msg: object) => ({ finalMessage: vi.fn().mockResolvedValue(msg) });
+      const emptyEntities = { content: [{ type: 'tool_use', name: 'record_entities', input: { entities: [], coverage: 'none' } }] };
+
+      mockStreamFn
+        .mockReturnValueOnce(makeStream({
           // Pass 1: action entity
           content: [{ type: 'tool_use', name: 'record_entities', input: {
             entities: [{ entityType: 'action', fields: { description: 'Deploy to production', owner: 'Alice' }, confidence: 0.9, sourceExcerpt: 'Deploy' }],
             coverage: 'action: 1',
           }}]
-        })
-        .mockResolvedValueOnce({
+        }))
+        .mockReturnValueOnce(makeStream({
           // Pass 2: arch_node entity
           content: [{ type: 'tool_use', name: 'record_entities', input: {
             entities: [{ entityType: 'arch_node', fields: { track: 'ADR Track', node_name: 'Alert Intelligence', status: 'live' }, confidence: 0.9, sourceExcerpt: 'Alert Intelligence' }],
             coverage: 'arch_node: 1',
           }}]
-        })
-        .mockResolvedValueOnce({
+        }))
+        .mockReturnValueOnce(makeStream({
           // Pass 3: wbs_task entity
           content: [{ type: 'tool_use', name: 'record_entities', input: {
             entities: [{ entityType: 'wbs_task', fields: { title: 'Solution Design', track: 'ADR', parent_section_name: 'Solution Design', level: '2', status: 'in_progress' }, confidence: 0.9, sourceExcerpt: 'Solution Design' }],
             coverage: 'wbs_task: 1',
           }}]
-        });
+        }))
+        .mockReturnValue(makeStream(emptyEntities)); // Pass 4 and any extras
 
       mockAnthropic.mockImplementation(function(this: any) {
         return {
-          messages: { create: mockCreateFn },
+          messages: { create: mockCreateFn, stream: mockStreamFn },
         };
       });
 
@@ -291,9 +306,11 @@ describe('document-extraction-passes', () => {
         .map(u => u.progress_pct as number);
 
       expect(pcts).toContain(10);  // Pass 0 complete
-      expect(pcts).toContain(40);  // Pass 1 complete (PDF)
-      expect(pcts).toContain(70);  // Pass 2 complete (PDF)
-      expect(pcts).toContain(100); // Pass 3 complete (PDF) — or final status update
+      // Passes 1-4 spread remaining 90% evenly: ~32, ~54, ~76, 100
+      expect(pcts.some((p: number) => p >= 30 && p <= 35)).toBe(true); // Pass 1
+      expect(pcts.some((p: number) => p >= 52 && p <= 58)).toBe(true); // Pass 2
+      expect(pcts.some((p: number) => p >= 74 && p <= 80)).toBe(true); // Pass 3
+      expect(pcts).toContain(100); // Pass 4 complete — final status update
     });
   });
 
