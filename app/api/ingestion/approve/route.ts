@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { eq, and, ilike, or, sql } from 'drizzle-orm';
+import { eq, and, ilike, or, sql, asc } from 'drizzle-orm';
 import { db } from '@/db';
 import {
   actions,
@@ -18,6 +18,7 @@ import {
   auditLog,
   workstreams,
   onboardingSteps,
+  onboardingPhases,
   integrations,
   wbsItems,
   archNodes,
@@ -712,12 +713,40 @@ async function insertItem(
     }
 
     case 'onboarding_step': {
-      // onboarding_steps table has NO source/attribution columns; phase_id default to 1
+      // Resolve phase_id dynamically — phase_id:1 was hardcoded and fails for any project
+      // except the first one ever created (FK constraint violation).
+      // Use the track from the extracted entity to find the first matching phase for this project.
+      const track = typeof f.track === 'string' ? f.track : 'ADR';
+      const phaseRows = await db
+        .select({ id: onboardingPhases.id })
+        .from(onboardingPhases)
+        .where(and(eq(onboardingPhases.project_id, projectId), eq(onboardingPhases.track, track)))
+        .orderBy(asc(onboardingPhases.display_order))
+        .limit(1);
+
+      // Fall back to any phase for the project if track doesn't match
+      const fallbackPhaseRows = phaseRows.length === 0
+        ? await db
+            .select({ id: onboardingPhases.id })
+            .from(onboardingPhases)
+            .where(eq(onboardingPhases.project_id, projectId))
+            .orderBy(asc(onboardingPhases.display_order))
+            .limit(1)
+        : phaseRows;
+
+      if (fallbackPhaseRows.length === 0) {
+        const skipErr = new Error('onboarding_step:no_phases_found');
+        (skipErr as any).skipEntity = true;
+        throw skipErr;
+      }
+
+      const resolvedPhaseId = fallbackPhaseRows[0].id;
+
       // Gap 6 fix: track field added (completed_date not in schema — cannot persist)
       await db.transaction(async (tx) => {
         const [inserted] = await tx.insert(onboardingSteps).values({
           project_id: projectId,
-          phase_id: 1, // default phase since extraction cannot determine phase
+          phase_id: resolvedPhaseId,
           name: f.step_name ?? '',
           description: f.description ?? null,
           owner: f.team_name ?? null,
