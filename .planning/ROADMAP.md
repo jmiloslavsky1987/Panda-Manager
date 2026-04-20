@@ -176,7 +176,10 @@ Plans:
   2. The report identifies UX patterns that behave differently across equivalent areas (e.g., filtering, bulk actions, empty states)
   3. Each finding has a recommended resolution (unify to A, unify to B, or create new canonical implementation)
   4. No code changes are made in this phase — the deliverable is the report only
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [ ] 71-01-PLAN.md — Write feature consistency audit report + human review gate
 
 ### Phase 71: Feature Unification
 **Goal**: All duplicates and inconsistencies identified in the Phase 71 audit are eliminated — one canonical implementation exists per feature
