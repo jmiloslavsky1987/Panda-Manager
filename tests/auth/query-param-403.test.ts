@@ -58,6 +58,56 @@ vi.mock('@/lib/auth-server', () => ({
   requireProjectRole: mockRequireProjectRole,
 }));
 
+// Mock schema and dependencies
+vi.mock('@/db/schema', () => ({
+  artifacts: { id: 'id', project_id: 'project_id', external_id: 'external_id' },
+  tasks: { id: 'id', project_id: 'project_id', created_at: 'created_at' },
+  auditLog: {},
+  extractionJobs: { id: 'id' },
+  projectMembers: {},
+}));
+
+vi.mock('drizzle-orm', () => ({
+  eq: vi.fn(),
+  and: vi.fn(),
+  desc: vi.fn(),
+}));
+
+vi.mock('@/lib/queries', () => ({
+  updateWorkstreamProgress: vi.fn(),
+}));
+
+vi.mock('fs/promises', () => ({
+  default: {
+    mkdir: vi.fn().mockResolvedValue(undefined),
+    writeFile: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
+vi.mock('@/lib/document-extractor', () => ({
+  validateFile: vi.fn().mockReturnValue(null),
+}));
+
+vi.mock('@/lib/settings', () => ({
+  readSettings: vi.fn().mockResolvedValue({ workspace_path: '/tmp/test' }),
+}));
+
+vi.mock('bullmq', () => {
+  const mockQueue = function() {
+    return {
+      add: vi.fn().mockResolvedValue({ id: 'job-1' }),
+      close: vi.fn().mockResolvedValue(undefined),
+    };
+  };
+  return {
+    Queue: mockQueue,
+  };
+});
+
+vi.mock('@/worker/connection', () => ({
+  createApiRedisConnection: vi.fn().mockReturnValue({}),
+}));
+
 beforeEach(() => {
   mockRequireSession.mockReset();
   mockRequireProjectRole.mockReset();
@@ -156,20 +206,6 @@ describe('Query-Param Route 403 Enforcement — TENANT-02', () => {
 
   describe('POST /api/ingestion/upload', () => {
     it('calls requireProjectRole(projectId from formData)', async () => {
-      // Mock file-related imports
-      vi.mock('fs/promises', () => ({
-        default: {
-          mkdir: vi.fn().mockResolvedValue(undefined),
-          writeFile: vi.fn().mockResolvedValue(undefined),
-        },
-      }));
-      vi.mock('@/lib/document-extractor', () => ({
-        validateFile: vi.fn().mockReturnValue({ valid: true }),
-      }));
-      vi.mock('@/lib/settings', () => ({
-        readSettings: vi.fn().mockResolvedValue({ workspace_path: '/tmp' }),
-      }));
-
       const { POST } = await import('@/app/api/ingestion/upload/route');
 
       const mockFile = new Blob(['test'], { type: 'application/pdf' });
@@ -191,17 +227,6 @@ describe('Query-Param Route 403 Enforcement — TENANT-02', () => {
 
   describe('POST /api/ingestion/extract', () => {
     it('calls requireProjectRole(projectId from body)', async () => {
-      // Mock BullMQ
-      vi.mock('bullmq', () => ({
-        Queue: vi.fn().mockImplementation(() => ({
-          add: vi.fn().mockResolvedValue({ id: 'job-1' }),
-          close: vi.fn().mockResolvedValue(undefined),
-        })),
-      }));
-      vi.mock('@/worker/connection', () => ({
-        createApiRedisConnection: vi.fn().mockReturnValue({}),
-      }));
-
       const { POST } = await import('@/app/api/ingestion/extract/route');
 
       const mockReq = {
