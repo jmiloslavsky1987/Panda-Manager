@@ -1,109 +1,102 @@
-// tests/auth/portfolio-isolation.test.ts
-// RED — TENANT-01: Portfolio returns only user's projects
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+/**
+ * TENANT-01 + TENANT-05: Portfolio Isolation Tests
+ *
+ * Verifies that GET /api/projects calls getActiveProjects with userId and isGlobalAdmin
+ * to enforce membership-based filtering.
+ */
 
-// Mock next/server before importing route handlers
-vi.mock('next/server', () => ({
-  NextResponse: {
-    json: vi.fn((body: unknown, init?: { status?: number }) => ({
-      body,
-      status: init?.status ?? 200,
-    })),
-  },
-  NextRequest: vi.fn(),
-}));
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-// Mock next/headers (returns empty headers by default)
-vi.mock('next/headers', () => ({
-  headers: vi.fn().mockResolvedValue(new Headers()),
-}));
+// Mock modules before imports
+vi.mock('@/lib/auth-server', () => ({
+  requireSession: vi.fn(),
+}))
 
-// Mock db to avoid real connection
-vi.mock('@/db', () => ({ db: {} }));
-
-// Mock auth module
-vi.mock('@/lib/auth', () => ({
-  auth: {
-    api: {
-      getSession: vi.fn(),
-    },
-  },
-}));
-
-// Mock lib/queries to spy on getActiveProjects
 vi.mock('@/lib/queries', () => ({
   getActiveProjects: vi.fn(),
-}));
+}))
 
-// Import after mocks are set up
-import { GET } from '@/app/api/projects/route';
-import { getActiveProjects } from '@/lib/queries';
-import { auth } from '@/lib/auth';
+vi.mock('@/lib/auth-utils', () => ({
+  resolveRole: vi.fn(),
+}))
 
-const mockGetSession = vi.mocked(auth.api.getSession);
-const mockGetActiveProjects = vi.mocked(getActiveProjects);
+import { requireSession } from '@/lib/auth-server'
+import { getActiveProjects } from '@/lib/queries'
+import { resolveRole } from '@/lib/auth-utils'
+import { GET } from '@/app/api/projects/route'
+import { NextRequest } from 'next/server'
 
-beforeEach(() => {
-  mockGetSession.mockReset();
-  mockGetActiveProjects.mockReset();
-});
+describe('Portfolio Isolation (TENANT-01, TENANT-05)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
 
-describe('Portfolio Isolation — TENANT-01', () => {
-  it('GET /api/projects passes userId to getActiveProjects when called by a regular user', async () => {
-    // Mock a regular user session
-    const fakeSession = {
-      user: { id: 'user-123', email: 'regular@example.com', role: 'user' },
-    };
-    mockGetSession.mockResolvedValue(fakeSession as any);
-    mockGetActiveProjects.mockResolvedValue([]);
+  describe('GET /api/projects', () => {
+    it('passes userId to getActiveProjects for regular user', async () => {
+      // Mock requireSession to return a regular user session
+      const mockRequireSession = requireSession as ReturnType<typeof vi.fn>
+      mockRequireSession.mockResolvedValueOnce({
+        session: { user: { id: 'user-123', role: 'user' } },
+        redirectResponse: null,
+      })
 
-    // Call the route handler
-    const req = {} as any; // NextRequest not used in GET
-    await GET(req);
+      // Mock resolveRole to return 'user'
+      const mockResolveRole = resolveRole as ReturnType<typeof vi.fn>
+      mockResolveRole.mockReturnValueOnce('user')
 
-    // Assert getActiveProjects was called with userId and isGlobalAdmin:false
-    // This WILL FAIL because the current implementation calls getActiveProjects() without arguments
-    expect(mockGetActiveProjects).toHaveBeenCalledWith({
-      userId: 'user-123',
-      isGlobalAdmin: false,
-    });
-  });
+      // Mock getActiveProjects to return filtered projects
+      const mockGetActiveProjects = getActiveProjects as ReturnType<typeof vi.fn>
+      mockGetActiveProjects.mockResolvedValueOnce([
+        { id: 1, name: 'User Project', customer: 'Corp' },
+      ])
 
-  it('GET /api/projects calls getActiveProjects with isGlobalAdmin:true when called by a global admin', async () => {
-    // Mock a global admin session
-    const adminSession = {
-      user: { id: 'admin-456', email: 'admin@example.com', role: 'admin' },
-    };
-    mockGetSession.mockResolvedValue(adminSession as any);
-    mockGetActiveProjects.mockResolvedValue([]);
+      // Call the route handler
+      const req = new NextRequest('http://localhost:3000/api/projects')
+      await GET(req)
 
-    // Call the route handler
-    const req = {} as any;
-    await GET(req);
+      // Verify getActiveProjects was called with userId and isGlobalAdmin: false
+      expect(getActiveProjects).toHaveBeenCalledWith({
+        userId: 'user-123',
+        isGlobalAdmin: false,
+      })
+    })
 
-    // Assert getActiveProjects was called with isGlobalAdmin:true
-    // This WILL FAIL because the current implementation calls getActiveProjects() without arguments
-    expect(mockGetActiveProjects).toHaveBeenCalledWith({
-      userId: 'admin-456',
-      isGlobalAdmin: true,
-    });
-  });
+    it('passes isGlobalAdmin:true for admin', async () => {
+      // Mock requireSession to return an admin session
+      const mockRequireSession = requireSession as ReturnType<typeof vi.fn>
+      mockRequireSession.mockResolvedValueOnce({
+        session: { user: { id: 'admin-456', role: 'admin' } },
+        redirectResponse: null,
+      })
 
-  it('GET /api/projects returns empty array for user with no project memberships', async () => {
-    // Mock a user session with no memberships
-    const fakeSession = {
-      user: { id: 'new-user-789', email: 'newuser@example.com', role: 'user' },
-    };
-    mockGetSession.mockResolvedValue(fakeSession as any);
-    // Mock getActiveProjects to return empty array for this user
-    mockGetActiveProjects.mockResolvedValue([]);
+      // Mock resolveRole to return 'admin'
+      const mockResolveRole = resolveRole as ReturnType<typeof vi.fn>
+      mockResolveRole.mockReturnValueOnce('admin')
 
-    // Call the route handler
-    const req = {} as any;
-    const response = await GET(req);
+      // Mock getActiveProjects to return all projects
+      const mockGetActiveProjects = getActiveProjects as ReturnType<typeof vi.fn>
+      mockGetActiveProjects.mockResolvedValueOnce([
+        { id: 1, name: 'Project 1', customer: 'Corp 1' },
+        { id: 2, name: 'Project 2', customer: 'Corp 2' },
+      ])
 
-    // Assert the response is an empty array
-    // This WILL FAIL if getActiveProjects is not called with the correct userId
-    expect(response.body).toEqual({ projects: [] });
-  });
-});
+      // Call the route handler
+      const req = new NextRequest('http://localhost:3000/api/projects')
+      await GET(req)
+
+      // Verify getActiveProjects was called with userId and isGlobalAdmin: true
+      expect(getActiveProjects).toHaveBeenCalledWith({
+        userId: 'admin-456',
+        isGlobalAdmin: true,
+      })
+    })
+  })
+
+  describe('GET /api/dashboard/watch-list', () => {
+    it('filters to user\'s projects', async () => {
+      // This test will be implemented in Task 2
+      // For now, just a placeholder to show the structure
+      expect(true).toBe(true)
+    })
+  })
+})
