@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import type { E2eWorkflowWithSteps, WorkflowStep } from '@/lib/queries'
 import { WarnBanner } from './WarnBanner'
-import { InlineEditModal } from './InlineEditModal'
+import { TeamMetadataEditModal } from './TeamMetadataEditModal'
 
 // Track colors for step cards
 function stepTrackStyle(track: string) {
@@ -220,7 +220,7 @@ export function E2eWorkflowsSection({ projectId, workflows, onUpdate }: Props) {
       )}
 
       {stepModal && (
-        <InlineEditModal
+        <TeamMetadataEditModal
           title="Add Workflow Step"
           fields={STEP_FIELDS}
           initialValues={{ position: String(workflows.find((w) => w.id === stepModal.workflowId)?.steps.length ?? 0) }}
@@ -230,7 +230,7 @@ export function E2eWorkflowsSection({ projectId, workflows, onUpdate }: Props) {
       )}
 
       {workflowModalOpen && (
-        <InlineEditModal
+        <TeamMetadataEditModal
           title="Add E2E Workflow"
           fields={WORKFLOW_FIELDS}
           initialValues={{}}

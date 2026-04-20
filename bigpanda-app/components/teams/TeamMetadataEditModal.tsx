@@ -1,5 +1,7 @@
 'use client'
 
+// intentional: TeamMetadataEditModal edits project-level team metadata (business outcomes, focus areas) — not entity rows
+
 import { useState } from 'react'
 
 export interface FieldDef {
@@ -17,7 +19,7 @@ interface Props {
   onClose: () => void
 }
 
-export function InlineEditModal({ title, fields, initialValues, onSave, onClose }: Props) {
+export function TeamMetadataEditModal({ title, fields, initialValues, onSave, onClose }: Props) {
   const [values, setValues] = useState<Record<string, string>>(initialValues)
 
   function handleChange(name: string, value: string) {

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import type { FocusArea } from '@/lib/queries'
 import { WarnBanner } from './WarnBanner'
-import { InlineEditModal } from './InlineEditModal'
+import { TeamMetadataEditModal } from './TeamMetadataEditModal'
 
 // Left border color for cards (4px)
 function leftBorderColor(tracks: string | null) {
@@ -196,7 +196,7 @@ export function FocusAreasSection({ projectId, focusAreas, onUpdate }: Props) {
       )}
 
       {addModalOpen && (
-        <InlineEditModal
+        <TeamMetadataEditModal
           title="Add Focus Area"
           fields={FOCUS_AREA_FIELDS}
           initialValues={{}}
@@ -206,7 +206,7 @@ export function FocusAreasSection({ projectId, focusAreas, onUpdate }: Props) {
       )}
 
       {editTarget && (
-        <InlineEditModal
+        <TeamMetadataEditModal
           title="Edit Focus Area"
           fields={FOCUS_AREA_FIELDS}
           initialValues={{

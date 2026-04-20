@@ -2,7 +2,7 @@
 
 import type { BusinessOutcome } from '@/lib/queries'
 import { WarnBanner } from './WarnBanner'
-import { InlineEditModal } from './InlineEditModal'
+import { TeamMetadataEditModal } from './TeamMetadataEditModal'
 import { useState } from 'react'
 
 // Track emoji mapping
@@ -181,7 +181,7 @@ export function BusinessOutcomesSection({ projectId, outcomes, onUpdate }: Props
       )}
 
       {modalOpen && (
-        <InlineEditModal
+        <TeamMetadataEditModal
           title="Add Business Outcome"
           fields={OUTCOME_FIELDS}
           initialValues={{}}
