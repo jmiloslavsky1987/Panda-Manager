@@ -27,7 +27,7 @@ const RISK_STATUS_OPTIONS: { value: 'open' | 'mitigated' | 'resolved' | 'accepte
   { value: 'accepted', label: 'Accepted' },
 ]
 
-const SEVERITY_OPTIONS: { value: 'low' | 'medium' | 'high' | 'critical'; label: string }[] = [
+export const SEVERITY_OPTIONS: { value: 'low' | 'medium' | 'high' | 'critical'; label: string }[] = [
   { value: 'low', label: 'Low' },
   { value: 'medium', label: 'Medium' },
   { value: 'high', label: 'High' },
