@@ -148,14 +148,19 @@ export default async function SkillsPage({ params }: { params: Promise<{ id: str
   // Fetch project-scoped scheduled jobs
   let projectJobs: ScheduledJob[] = [];
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000';
-    const jobsRes = await fetch(`${baseUrl}/api/projects/${projectId}/jobs`, {
-      cache: 'no-store',
-      headers: { cookie: (await headers()).get('cookie') ?? '' },
-    });
-    if (jobsRes.ok) {
-      const data = (await jobsRes.json()) as { jobs?: ScheduledJob[] };
-      projectJobs = data.jobs ?? [];
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL!;
+    if (!baseUrl) {
+      console.warn('NEXT_PUBLIC_BASE_URL not set - skipping server-side job fetch');
+      // Non-fatal: skills tab loads without scheduler section data
+    } else {
+      const jobsRes = await fetch(`${baseUrl}/api/projects/${projectId}/jobs`, {
+        cache: 'no-store',
+        headers: { cookie: (await headers()).get('cookie') ?? '' },
+      });
+      if (jobsRes.ok) {
+        const data = (await jobsRes.json()) as { jobs?: ScheduledJob[] };
+        projectJobs = data.jobs ?? [];
+      }
     }
   } catch {
     // Non-fatal: skills tab loads without scheduler section data

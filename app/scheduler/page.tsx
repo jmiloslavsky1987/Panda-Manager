@@ -12,11 +12,16 @@ export default async function SchedulerPage() {
   let jobs: ScheduledJob[] = [];
 
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000';
-    const res = await fetch(`${baseUrl}/api/jobs`, { cache: 'no-store' });
-    if (res.ok) {
-      const data = (await res.json()) as { jobs?: ScheduledJob[] };
-      jobs = data.jobs ?? [];
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL!;
+    if (!baseUrl) {
+      console.warn('NEXT_PUBLIC_BASE_URL not set - skipping server-side job fetch');
+      // Fall through to empty state - scheduler page will still render
+    } else {
+      const res = await fetch(`${baseUrl}/api/jobs`, { cache: 'no-store' });
+      if (res.ok) {
+        const data = (await res.json()) as { jobs?: ScheduledJob[] };
+        jobs = data.jobs ?? [];
+      }
     }
   } catch {
     // Dev server may not be available during SSR build — fall through to empty state
