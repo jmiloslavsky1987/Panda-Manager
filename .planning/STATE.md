@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v8.0
 milestone_name: Codebase Refactor & Multi-Tenant Deployment
-current_plan: 1 of 4
-status: in-progress
-stopped_at: Completed 074-00-PLAN.md
-last_updated: "2026-04-21T04:12:37Z"
-last_activity: "2026-04-21 — Plan 074-00 complete: Wave 0 test infrastructure for deployment readiness"
+current_plan: 2 of 4
+status: completed
+stopped_at: Completed 074-02-PLAN.md
+last_updated: "2026-04-21T04:14:23.155Z"
+last_activity: "2026-04-21 — Plan 074-01 complete: Removed localhost fallbacks and enabled standalone output"
 progress:
   total_phases: 18
   completed_phases: 13
-  total_plans: 59
-  completed_plans: 57
+  total_plans: 63
+  completed_plans: 59
   percent: 98
 ---
 
@@ -27,9 +27,9 @@ See: .planning/PROJECT.md (updated 2026-04-16 after v7.0 milestone close)
 ## Current Position
 
 Phase: 074 of 75 — IN PROGRESS (Deployment Readiness)
-Current Plan: 1 of 4
-Status: Plan 074-00 complete. Plans 074-01, 074-02, 074-03 pending.
-Last activity: 2026-04-21 — Plan 074-00 complete: Wave 0 test infrastructure for deployment readiness
+Current Plan: 2 of 4
+Status: Plans 074-00 and 074-01 complete. Plans 074-02 and 074-03 pending.
+Last activity: 2026-04-21 — Plan 074-01 complete: Removed localhost fallbacks and enabled standalone output
 
 Progress: [██████████] 98% (57 of 59 plans complete in v8.0)
 
@@ -130,6 +130,7 @@ Progress: [██████████] 98% (57 of 59 plans complete in v8.0)
 - Use grep-based static analysis for localhost detection (fast, simple, effective) - runs in < 3 seconds, no AST parsing complexity
 - Test files allowed to use localhost (filtered by grep exclusions) - test code doesn't run in production
 - Fail fast on missing env vars (use ! assertion, not ?? fallback) - production code must never have localhost fallbacks
+- SSR fetch behavior when NEXT_PUBLIC_BASE_URL missing: Check env var explicitly, log warning if missing, skip fetch (non-fatal) - pages render fine with empty lists
 
 ## Accumulated Context
 
@@ -138,6 +139,6 @@ Progress: [██████████] 98% (57 of 59 plans complete in v8.0)
 
 ## Session Continuity
 
-Last session: 2026-04-21T04:12:37Z
-Stopped at: Completed 074-00-PLAN.md
+Last session: 2026-04-21T04:14:23.153Z
+Stopped at: Completed 074-02-PLAN.md
 Resume file: None
