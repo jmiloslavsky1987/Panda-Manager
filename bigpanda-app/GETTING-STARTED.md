@@ -6,14 +6,32 @@
 
 ---
 
-## Step 1 — Run the setup script
+## Step 1 — Download and unzip
 
-**Mac / Linux:**
+Go to the GitHub page, click the green **Code** button → **Download ZIP**. Unzip the downloaded file.
+
+---
+
+## Step 2 — Open a terminal in the folder
+
+**Mac:**
+In Finder, right-click the unzipped folder and choose **New Terminal at Folder**.
+
+> If you don't see that option: open Terminal, type `cd ` (with a space), then drag the unzipped folder onto the Terminal window and press Enter.
+
+**Windows:**
+Hold **Shift** and right-click the unzipped folder, then choose **Open PowerShell window here**.
+
+---
+
+## Step 3 — Run the setup script
+
+**Mac:**
 ```
 ./setup.sh
 ```
 
-**Windows (PowerShell):**
+**Windows:**
 ```
 .\setup.ps1
 ```
@@ -22,7 +40,7 @@ The script will ask for your Anthropic API key (just paste it in), then build an
 
 ---
 
-## Step 2 — Log in
+## Step 4 — Log in
 
 The browser opens automatically. Use these credentials:
 
