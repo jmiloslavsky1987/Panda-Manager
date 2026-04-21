@@ -149,7 +149,7 @@ Full details: `.planning/milestones/v7.0-ROADMAP.md` (archived)
 - [x] **Phase 71: Feature Consistency Audit** — Written report identifying duplicate features and inconsistent UX patterns; no code changes (completed 2026-04-20)
 - [ ] **Phase 72: Feature Unification** — Eliminate identified duplicates; unify to single consistent implementation
 - [ ] **Phase 73: Multi-Tenant Isolation** — Enforce project ownership at all API/UI layers; prevent cross-user state bleed
-- [ ] **Phase 73.1: Entity Lifecycle Management** — Document-driven updates (Pass 5 change detection) + manual edit/delete for all entity types [INSERTED]
+- [x] **Phase 73.1: Entity Lifecycle Management** — Document-driven updates (Pass 5 change detection) + manual edit/delete for all entity types [INSERTED] (completed 2026-04-21)
 - [ ] **Phase 74: Deployment Readiness** — Env-var-only configuration; deployment guide
 
 ## Phase Details
