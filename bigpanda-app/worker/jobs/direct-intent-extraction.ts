@@ -67,7 +67,8 @@ export async function runDirectIntentExtraction(
                     },
                     entityType: {
                       type: 'string',
-                      description: 'The type of entity (action, risk, milestone, workstream, decision, workflow, etc.)'
+                      enum: ['action', 'risk', 'milestone', 'workstream', 'businessOutcome', 'e2e_workflow', 'focus_area', 'stakeholder', 'task'],
+                      description: 'The type of entity. Use exact values: action, risk, milestone, workstream, businessOutcome, e2e_workflow, focus_area, stakeholder, task'
                     },
                     entityName: {
                       type: 'string',
@@ -101,10 +102,22 @@ export async function runDirectIntentExtraction(
           content: `You are analyzing a document to find explicit instructions about updating, closing, removing, or merging existing entities.
 
 IMPORTANT: Only extract instructions that EXPLICITLY state a lifecycle action:
-- "Action X is now complete" → close intent
-- "Remove the Y section" → remove intent
-- "Update milestone Z to in-progress" → update intent
-- "Merge workflows A and B" → merge intent
+- "Action X is now complete" → close intent, entityType: "action"
+- "Remove the Y business outcome" → remove intent, entityType: "businessOutcome"
+- "Update milestone Z to in-progress" → update intent, entityType: "milestone"
+- "Merge workflows A and B into one" → merge intent, entityType: "e2e_workflow"
+- "The risk has been mitigated" → close intent, entityType: "risk"
+- "Workstream X should be closed" → close intent, entityType: "workstream"
+
+ENTITY TYPE MAPPING (use these exact values):
+- Actions/tasks/to-dos → "action"
+- Risks/issues/blockers → "risk"
+- Milestones/deadlines/dates → "milestone"
+- Workstreams/tracks → "workstream"
+- Business outcomes/OKRs/goals → "businessOutcome"
+- End-to-end workflows/processes → "e2e_workflow"
+- Focus areas/themes → "focus_area"
+- Stakeholders/people → "stakeholder"
 
 DO NOT extract:
 - New entities being described
