@@ -14,10 +14,11 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
+import type { EntityType } from '@/lib/extraction-types';
 
 export interface DirectIntentItem {
   intent: 'update' | 'close' | 'remove' | 'merge';
-  entityType: string;
+  entityType: EntityType;
   entityName: string;  // Name/description from document
   proposedFields?: Record<string, unknown>;  // For update/merge intents
   sourceExcerpt: string;  // Where this instruction appeared

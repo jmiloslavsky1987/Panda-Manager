@@ -40,6 +40,7 @@ function getPrimaryText(item: ExtractionItem): string | null {
     case 'stakeholder': return String(f.name ?? '');
     case 'workstream': return String(f.name ?? '');
     case 'focus_area': return String(f.title ?? '');
+    case 'businessOutcome': return String(f.title ?? '');
     case 'e2e_workflow': return String(f.workflow_name ?? '');
     case 'task': return String(f.title ?? '');
     default: return null;
@@ -114,7 +115,7 @@ Respond with valid JSON only:
       };
 
       if (result.intent === 'new' || !result.matchedId) continue;
-      if (result.confidence < 0.6) continue;
+      if (result.confidence < 0.75) continue;
 
       const existing = candidates.find(c => c.id === result.matchedId);
       if (!existing) continue;
