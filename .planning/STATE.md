@@ -2,16 +2,17 @@
 gsd_state_version: 1.0
 milestone: v8.0
 milestone_name: Codebase Refactor & Multi-Tenant Deployment
-status: in_progress
-stopped_at: Completed Phase 73
-last_updated: "2026-04-20T19:00:00.000Z"
-last_activity: 2026-04-20 — Phase 73 complete (Multi-Tenant Isolation — all 5 TENANT requirements verified)
+current_plan: 2 of 5
+status: completed
+stopped_at: Completed 73.1-01-PLAN.md
+last_updated: "2026-04-21T01:08:44.598Z"
+last_activity: "2026-04-21 — Plan 73.1-02 complete: DELETE handlers + requireProjectRole upgrade + proposed_changes_json migration"
 progress:
   total_phases: 18
   completed_phases: 13
-  total_plans: 52
+  total_plans: 57
   completed_plans: 52
-  percent: 98
+  percent: 96
 ---
 
 # Project State
@@ -25,11 +26,12 @@ See: .planning/PROJECT.md (updated 2026-04-16 after v7.0 milestone close)
 
 ## Current Position
 
-Phase: 73.1 of 75 — NEXT (Entity Lifecycle Management — inserted)
-Status: Phase 73 complete. Phase 73.1 inserted and context documented. Phase 74 next after 73.1.
-Last activity: 2026-04-20 — Phase 73 complete. Sidebar isolation bug fixed during human verification.
+Phase: 73.1 of 75 — IN PROGRESS (Entity Lifecycle Management)
+Current Plan: 3 of 5
+Status: Plans 73.1-01 and 73.1-02 complete. Plan 73.1-03 next.
+Last activity: 2026-04-21 — Plan 73.1-01 complete: Wave 0 RED test stubs for entity lifecycle, change detection, entity matching, and IngestionModal changes UI
 
-Progress: [██████████] 96% (50 of 52 plans complete in v8.0)
+Progress: [██████████] 98% (256 of 261 plans complete in v8.0)
 
 ## Milestone History
 
@@ -109,6 +111,12 @@ Progress: [██████████] 96% (50 of 52 plans complete in v8.0)
 - Cache isolation has two layers: READ (requireProjectRole at route) and WRITE (project-scoped keys in worker) - both necessary for airtight isolation
 - Single BullMQ queue with data-level isolation is sufficient - job payload is project-scoped, results have project_id FK, cache keys are project-namespaced
 
+**Phase 73.1 (Entity Lifecycle Management):**
+- Use pg_trgm extension for fuzzy entity matching in Pass 5 change detection - provides similarity scoring and index support
+- Store proposed changes in extraction_jobs table (not separate table) - 1:1 relationship with job, simpler cleanup, aligns with staged_items_json pattern
+- DELETE handlers do not call updateXlsxRow() - hard delete from DB is correct, xlsx is archival/export not source of truth
+- Upgrade all entity PATCH handlers to requireProjectRole simultaneously with DELETE addition - ensures consistent auth pattern across all entity operations
+
 ## Accumulated Context
 
 ### Roadmap Evolution
@@ -116,6 +124,6 @@ Progress: [██████████] 96% (50 of 52 plans complete in v8.0)
 
 ## Session Continuity
 
-Last session: 2026-04-20T17:07:15.000Z
-Stopped at: Completed 73-04-PLAN.md
-Resume file: .planning/phases/73-multi-tenant-isolation/73-04-SUMMARY.md
+Last session: 2026-04-21T01:08:44.596Z
+Stopped at: Completed 73.1-01-PLAN.md
+Resume file: None

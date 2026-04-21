@@ -25,6 +25,11 @@
 - [ ] **DEPLOY-01**: App can be configured for a hosted environment via environment variables alone — no hardcoded localhost references, paths, or secrets
 - [ ] **DEPLOY-02**: A deployment guide exists documenting the environment variables, PostgreSQL + Redis dependencies, and how to run in production
 
+### Entity Lifecycle Management
+
+- [x] **LIFECYCLE-P1**: Ingested entities can be updated, closed, or removed via new document uploads — Pass 5 change detection surfaces proposed changes in IngestionModal for user approval
+- [x] **LIFECYCLE-P2**: All entity types have manual edit/delete UI so users can correct or remove any record after ingestion (except append-only tables)
+
 ## Future Requirements (Deferred)
 
 These were explicitly considered for v8.0 and deferred. Revisit at the next milestone planning session.
@@ -80,12 +85,14 @@ Explicitly excluded — not deferred, not planned. Documented to prevent re-addi
 | TENANT-05 | Phase 74 | Complete |
 | DEPLOY-01 | Phase 75 | Pending |
 | DEPLOY-02 | Phase 75 | Pending |
+| LIFECYCLE-P1 | Phase 73.1 | Complete |
+| LIFECYCLE-P2 | Phase 73.1 | Complete |
 
 **Coverage:**
-- v8.0 requirements: 11 total
-- Mapped to phases: 11/11 ✓
+- v8.0 requirements: 13 total
+- Mapped to phases: 13/13 ✓
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-19*
-*Last updated: 2026-04-19 after v8.0 roadmap creation*
+*Last updated: 2026-04-20 after Phase 73.1 entity lifecycle management planning*

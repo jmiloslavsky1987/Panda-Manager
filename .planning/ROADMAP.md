@@ -234,7 +234,7 @@ Plans:
 
 Plans:
 - [ ] 73.1-01-PLAN.md — TDD Wave 0 RED stubs: entity-lifecycle, change-detection, entity-matcher, IngestionModal-changes
-- [ ] 73.1-02-PLAN.md — DB migration (proposed_changes_json + pg_trgm) + DELETE handlers for actions/risks/milestones/workstreams + requireProjectRole upgrade
+- [x] 73.1-02-PLAN.md — DB migration (proposed_changes_json + pg_trgm) + DELETE handlers for actions/risks/milestones/workstreams + requireProjectRole upgrade ✅ 2026-04-21
 - [ ] 73.1-03-PLAN.md — lib/entity-matcher.ts (pg_trgm fuzzy matching) + worker/jobs/change-detection.ts (Pass 5) + document-extraction.ts integration
 - [ ] 73.1-04-PLAN.md — Approve route updateItem/closeItem/deleteItem + IngestionModal "Proposed Changes" section + BusinessOutcomesSection/E2eWorkflowsSection delete buttons
 - [ ] 73.1-05-PLAN.md — Build verification + human verification gate (both pillars)
