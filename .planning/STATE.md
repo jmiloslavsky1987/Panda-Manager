@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v8.0
 milestone_name: Codebase Refactor & Multi-Tenant Deployment
-current_plan: 7 of 7
-status: completed
-stopped_at: Completed 73.1-07-PLAN.md
-last_updated: "2026-04-21T03:21:09.035Z"
-last_activity: "2026-04-21 — Plan 73.1-06 complete: Pass 5 gap closure (lowered threshold, raised confidence, added businessOutcome)"
+current_plan: 1 of 4
+status: in-progress
+stopped_at: Completed 074-00-PLAN.md
+last_updated: "2026-04-21T04:12:37Z"
+last_activity: "2026-04-21 — Plan 074-00 complete: Wave 0 test infrastructure for deployment readiness"
 progress:
   total_phases: 18
   completed_phases: 13
   total_plans: 59
-  completed_plans: 56
+  completed_plans: 57
   percent: 98
 ---
 
@@ -26,12 +26,12 @@ See: .planning/PROJECT.md (updated 2026-04-16 after v7.0 milestone close)
 
 ## Current Position
 
-Phase: 73.1 of 75 — IN PROGRESS (Entity Lifecycle Management)
-Current Plan: 7 of 7
-Status: Plans 73.1-01, 73.1-02, 73.1-03, 73.1-04, 73.1-06, and 73.1-07 complete. Plan 73.1-05 pending.
-Last activity: 2026-04-21 — Plan 73.1-06 complete: Pass 5 gap closure (lowered threshold, raised confidence, added businessOutcome)
+Phase: 074 of 75 — IN PROGRESS (Deployment Readiness)
+Current Plan: 1 of 4
+Status: Plan 074-00 complete. Plans 074-01, 074-02, 074-03 pending.
+Last activity: 2026-04-21 — Plan 074-00 complete: Wave 0 test infrastructure for deployment readiness
 
-Progress: [██████████] 98% (258 of 261 plans complete in v8.0)
+Progress: [██████████] 98% (57 of 59 plans complete in v8.0)
 
 ## Milestone History
 
@@ -126,6 +126,11 @@ Progress: [██████████] 98% (258 of 261 plans complete in v8.
 - Direct intent items prepended to allRawItems array - participates in change detection alongside standard extraction
 - Confidence set to 0.85 for direct instructions - high confidence for explicit text like "close action X"
 
+**Phase 074 (Deployment Readiness):**
+- Use grep-based static analysis for localhost detection (fast, simple, effective) - runs in < 3 seconds, no AST parsing complexity
+- Test files allowed to use localhost (filtered by grep exclusions) - test code doesn't run in production
+- Fail fast on missing env vars (use ! assertion, not ?? fallback) - production code must never have localhost fallbacks
+
 ## Accumulated Context
 
 ### Roadmap Evolution
@@ -133,6 +138,6 @@ Progress: [██████████] 98% (258 of 261 plans complete in v8.
 
 ## Session Continuity
 
-Last session: 2026-04-21T02:10:31.364Z
-Stopped at: Completed 73.1-07-PLAN.md
+Last session: 2026-04-21T04:12:37Z
+Stopped at: Completed 074-00-PLAN.md
 Resume file: None
