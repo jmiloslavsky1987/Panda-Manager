@@ -36,7 +36,10 @@ services:
       BETTER_AUTH_URL: http://localhost:3000
       NEXT_PUBLIC_BASE_URL: http://localhost:3000
     command: >
-      sh -c "npx tsx scripts/run-migrations.ts && npx tsx scripts/seed-admin.ts"
+      sh -c "npx tsx scripts/run-migrations.ts && npx tsx scripts/seed-admin.ts && npx tsx scripts/seed-settings.ts"
+    volumes:
+      - app_settings:/root/.bigpanda-app
+      - app_workspace:/app/workspace
     depends_on:
       postgres:
         condition: service_healthy
@@ -55,6 +58,9 @@ services:
     command: npx next dev --hostname 0.0.0.0 --port 3000
     ports:
       - "3000:3000"
+    volumes:
+      - app_settings:/root/.bigpanda-app
+      - app_workspace:/app/workspace
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -72,6 +78,9 @@ services:
       BETTER_AUTH_URL: http://localhost:3000
       NEXT_PUBLIC_BASE_URL: http://localhost:3000
     command: npx tsx worker/index.ts
+    volumes:
+      - app_settings:/root/.bigpanda-app
+      - app_workspace:/app/workspace
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -81,3 +90,5 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  app_settings:
+  app_workspace:
