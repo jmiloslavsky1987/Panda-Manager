@@ -4,14 +4,14 @@ milestone: v8.0
 milestone_name: Codebase Refactor & Multi-Tenant Deployment
 current_plan: 7 of 7
 status: completed
-stopped_at: Completed 73.1-07-PLAN.md
-last_updated: "2026-04-21T02:10:31.368Z"
-last_activity: "2026-04-21 — Plan 73.1-07 complete: Direct intent extraction pre-pass (Pass 0.5) detects explicit lifecycle instructions"
+stopped_at: Completed 73.1-06-PLAN.md
+last_updated: "2026-04-21T02:09:36Z"
+last_activity: "2026-04-21 — Plan 73.1-06 complete: Pass 5 gap closure (lowered threshold, raised confidence, added businessOutcome)"
 progress:
   total_phases: 18
   completed_phases: 13
   total_plans: 59
-  completed_plans: 56
+  completed_plans: 57
   percent: 98
 ---
 
@@ -28,10 +28,10 @@ See: .planning/PROJECT.md (updated 2026-04-16 after v7.0 milestone close)
 
 Phase: 73.1 of 75 — IN PROGRESS (Entity Lifecycle Management)
 Current Plan: 7 of 7
-Status: Plans 73.1-01, 73.1-02, 73.1-03, 73.1-04, and 73.1-07 complete. Plan 73.1-05 and 73.1-06 pending.
-Last activity: 2026-04-21 — Plan 73.1-07 complete: Direct intent extraction pre-pass (Pass 0.5) detects explicit lifecycle instructions
+Status: Plans 73.1-01, 73.1-02, 73.1-03, 73.1-04, 73.1-06, and 73.1-07 complete. Plan 73.1-05 pending.
+Last activity: 2026-04-21 — Plan 73.1-06 complete: Pass 5 gap closure (lowered threshold, raised confidence, added businessOutcome)
 
-Progress: [██████████] 98% (257 of 261 plans complete in v8.0)
+Progress: [██████████] 98% (258 of 261 plans complete in v8.0)
 
 ## Milestone History
 
@@ -121,6 +121,7 @@ Progress: [██████████] 98% (257 of 261 plans complete in v8.
 - Top 3 candidates per query balances precision vs recall - enough context for Claude to disambiguate, avoids diminishing returns
 - Pass 5 failure is non-fatal (try/catch, logs warning) - extraction pipeline completes even if change detection fails
 - Pass 0.5 runs after Pass 0 pre-analysis but before Pass 1 entity extraction - detects explicit lifecycle instructions early
+- Lower trigram threshold to 0.5 while raising Claude confidence to 0.75 for precision-recall balance - merge/rename scenarios with 50-70% similarity were missed at 0.7 threshold; compensate increased false positives with stricter Claude classification
 - DirectIntentItem results converted to ExtractionItem format for Pass 5 compatibility - preserves intent in _direct_intent field
 - Direct intent items prepended to allRawItems array - participates in change detection alongside standard extraction
 - Confidence set to 0.85 for direct instructions - high confidence for explicit text like "close action X"
