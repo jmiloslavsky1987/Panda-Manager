@@ -862,12 +862,19 @@ export default async function documentExtractionJob(job: Job): Promise<{ status:
           )
         : {};
 
+      // Set entity-type-specific primary field so getPrimaryText() in Pass 5 can match
+      const entitySpecificField: Record<string, string> =
+        di.entityType === 'e2e_workflow' ? { workflow_name: di.entityName }
+        : di.entityType === 'task' ? { title: di.entityName }
+        : {};
+
       return {
         entityType: di.entityType as ExtractionItem['entityType'],
         fields: {
           name: di.entityName,
           description: di.entityName,
           title: di.entityName,
+          ...entitySpecificField,
           ...proposedFieldsAsStrings,
           _direct_intent: di.intent,  // Preserve original intent for Pass 5
         },
