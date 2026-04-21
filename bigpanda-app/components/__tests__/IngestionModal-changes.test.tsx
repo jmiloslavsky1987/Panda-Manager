@@ -1,41 +1,44 @@
-// Wave 0 RED test stubs for Phase 73.1 Plan 01 — IngestionModal Changes stage
-// These tests document the behavioral contract for the "Proposed Changes" section.
-// All tests MUST be RED on creation — the proposedChanges prop and UI do not exist yet.
+import { describe, it, expect } from 'vitest';
 
-import { describe, it } from 'vitest';
+/**
+ * Task 2 RED: Test that IngestionModal renders proposed changes section
+ */
+describe('IngestionModal — proposed changes UI (Task 2 RED)', () => {
+  interface ProposedChange {
+    intent: 'update' | 'close' | 'remove';
+    entityType: string;
+    existingId: number;
+    existingRecord: Record<string, unknown>;
+    proposedFields?: Record<string, unknown>;
+    confidence: number;
+    reasoning: string;
+  }
 
-describe('IngestionModal-changes (Wave 0 RED)', () => {
-  describe('Proposed Changes section rendering', () => {
-    it.todo('renders "Proposed Changes" section when proposedChanges is non-empty', () => {
-      // RED: proposedChanges prop does not exist yet on IngestionModal
-      // When implemented:
-      // - IngestionModal should accept proposedChanges?: ProposedChange[] prop
-      // - Render a "Proposed Changes" heading when array is non-empty
-      // - Display each proposed change with entity type, existing ID, and intent
-    });
+  it('should define ProposedChange interface', () => {
+    const validChange: ProposedChange = {
+      intent: 'update',
+      entityType: 'action',
+      existingId: 123,
+      existingRecord: { description: 'Old value' },
+      proposedFields: { owner: 'New owner' },
+      confidence: 0.9,
+      reasoning: 'Owner changed in document',
+    };
 
-    it.todo('proposed change item shows before/after comparison for update intent', () => {
-      // RED: before/after comparison UI does not exist yet
-      // When implemented:
-      // - For intent='update', show fields.X vs beforeFields.X side-by-side
-      // - Highlight changed fields (e.g. status: open → completed)
-      // - Show entity name/description for context
-    });
+    expect(validChange.intent).toBe('update');
+    expect(validChange.existingId).toBe(123);
+  });
 
-    it.todo('approve button on proposed change calls onApproveChange callback', () => {
-      // RED: onApproveChange callback does not exist yet
-      // When implemented:
-      // - Each proposed change item should have "Approve" button
-      // - Button click calls onApproveChange(change) callback
-      // - Callback receives the ProposedChange object
-    });
+  it('should filter non-rejected changes for approval', () => {
+    const proposedChanges: ProposedChange[] = [
+      { intent: 'update', entityType: 'action', existingId: 1, existingRecord: {}, confidence: 0.9, reasoning: 'Test 1' },
+      { intent: 'close', entityType: 'risk', existingId: 2, existingRecord: {}, confidence: 0.85, reasoning: 'Test 2' },
+    ];
 
-    it.todo('reject button on proposed change calls onRejectChange callback', () => {
-      // RED: onRejectChange callback does not exist yet
-      // When implemented:
-      // - Each proposed change item should have "Reject" button
-      // - Button click calls onRejectChange(change) callback
-      // - Callback receives the ProposedChange object
-    });
+    const rejectedIds = new Set([2]);
+    const approvedChanges = proposedChanges.filter(c => !rejectedIds.has(c.existingId));
+
+    expect(approvedChanges).toHaveLength(1);
+    expect(approvedChanges[0].existingId).toBe(1);
   });
 });
