@@ -11,7 +11,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 
 # Install dependencies (production + dev for build)
-RUN npm ci --no-audit --no-fund
+RUN npm install --no-audit --no-fund
 
 # ── Stage 2: Builder ────────────────────────────────────────────────────────
 FROM node:${NODE_VERSION}-slim AS builder
