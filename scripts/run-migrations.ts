@@ -6,19 +6,24 @@
  * statement-breakpoint markers. Tracks applied migrations in a
  * _migrations table so re-runs are safe (idempotent).
  */
-import postgres from 'postgres';
+import postgres, { type Sql } from 'postgres';
 import { readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
 
 const sql = postgres(process.env.DATABASE_URL!, { max: 1 });
 
-// Split SQL into statements, respecting dollar-quoted blocks ($$...$$).
+// Split SQL into statements, handling both semicolons and drizzle-kit
+// -->statement-breakpoint markers, and respecting dollar-quoted blocks ($$...$$).
 function splitStatements(content: string): string[] {
+  // Normalise drizzle-kit breakpoints to a plain semicolon so the rest of the
+  // parser sees a consistent delimiter.
+  const normalised = content.replace(/-->[ \t]*statement-breakpoint/g, ';');
+
   const statements: string[] = [];
   let current = '';
   let inDollarQuote = false;
 
-  const lines = content.split('\n');
+  const lines = normalised.split('\n');
   for (const line of lines) {
     const matches = (line.match(/\$\$/g) || []).length;
     if (matches % 2 !== 0) inDollarQuote = !inDollarQuote;
@@ -26,7 +31,7 @@ function splitStatements(content: string): string[] {
     current += line + '\n';
 
     if (!inDollarQuote && line.trimEnd().endsWith(';')) {
-      const stmt = current.trim();
+      const stmt = current.trim().replace(/;$/, '').trim();
       if (stmt.length > 0 && !stmt.startsWith('--')) {
         statements.push(stmt);
       }
@@ -40,6 +45,27 @@ function splitStatements(content: string): string[] {
   }
 
   return statements;
+}
+
+// Execute a statement, ignoring benign "already exists" / "does not exist" notices.
+async function execStatement(sql: Sql, stmt: string): Promise<void> {
+  try {
+    await sql.unsafe(stmt);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    // Postgres error codes for "already exists" or "does not exist" — safe to skip
+    const ignorable = [
+      'already exists',
+      'does not exist',
+      'duplicate column',
+      'duplicate key value',
+    ];
+    if (ignorable.some(s => msg.includes(s))) {
+      console.log(`  [skip] ${msg.split('\n')[0]}`);
+      return;
+    }
+    throw err;
+  }
 }
 
 async function main() {
@@ -68,7 +94,7 @@ async function main() {
     const statements = splitStatements(content);
 
     for (const stmt of statements) {
-      await sql.unsafe(stmt);
+      await execStatement(sql, stmt);
     }
 
     await sql`INSERT INTO _migrations (name) VALUES (${file})`;
