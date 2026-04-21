@@ -31,11 +31,13 @@ export type SessionResult =
  */
 export async function requireSession(): Promise<SessionResult> {
   const h = await headers();
-  // Wrap in a Request so better-call's isRequest() path is used — avoids
-  // the instanceof Headers check failing when Next.js ReadonlyHeaders is not
-  // the same Headers class as the one better-call was compiled against.
-  const req = new Request("http://localhost/api/auth/get-session", { headers: h });
-  const session = await auth.api.getSession({ request: req });
+  // Convert ReadonlyHeaders to a plain object so better-call's
+  // `new Headers(context.headers)` path works correctly — the instanceof
+  // Headers check fails in Docker because Next.js ReadonlyHeaders is a
+  // different class than the one better-call compiled against.
+  const headersObj: Record<string, string> = {};
+  h.forEach((value, key) => { headersObj[key] = value; });
+  const session = await auth.api.getSession({ headers: new Headers(headersObj) });
   if (!session) {
     return {
       session: null,
