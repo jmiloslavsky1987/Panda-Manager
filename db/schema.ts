@@ -787,6 +787,7 @@ export const extractionJobs = pgTable('extraction_jobs', {
   staged_items_json: jsonb('staged_items_json'),
   filtered_count:    integer('filtered_count').default(0).notNull(),
   coverage_json:     jsonb('coverage_json'),
+  proposed_changes_json: jsonb('proposed_changes_json'),
   error_message:     text('error_message'),
   created_at:        timestamp('created_at').defaultNow().notNull(),
   updated_at:        timestamp('updated_at').defaultNow().notNull(),
