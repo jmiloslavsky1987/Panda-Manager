@@ -61,6 +61,16 @@ export function WorkstreamTableClient({ streams }: WorkstreamTableClientProps) {
     router.refresh()
   }
 
+  async function deleteWorkstream(id: number) {
+    try {
+      const res = await fetch(`/api/workstreams/${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Delete failed')
+      router.refresh()
+    } catch (err) {
+      console.error('Delete failed:', err)
+    }
+  }
+
   if (streams.length === 0) {
     return (
       <EmptyState
@@ -81,6 +91,7 @@ export function WorkstreamTableClient({ streams }: WorkstreamTableClientProps) {
           <th className="py-2 pr-4 font-medium">Last Updated</th>
           <th className="py-2 pr-4 font-medium">Progress</th>
           <th className="py-2 font-medium"></th>
+          <th className="py-2 font-medium w-10"></th>
         </tr>
       </thead>
       <tbody>
@@ -122,6 +133,16 @@ export function WorkstreamTableClient({ streams }: WorkstreamTableClientProps) {
                     {isSaving ? 'Saving…' : 'Save'}
                   </Button>
                 )}
+              </td>
+              <td className="py-2 w-10">
+                <button
+                  onClick={() => deleteWorkstream(ws.id)}
+                  className="text-zinc-400 hover:text-red-500 transition-colors"
+                  title="Delete"
+                  aria-label="Delete"
+                >
+                  ✕
+                </button>
               </td>
             </tr>
           )

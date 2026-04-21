@@ -97,6 +97,17 @@ export function MilestonesTableClient({ milestones, artifacts, projectId }: Mile
     window.dispatchEvent(new CustomEvent('metrics:invalidate'))
   }
 
+  async function deleteMilestone(id: number) {
+    try {
+      const res = await fetch(`/api/milestones/${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Delete failed')
+      router.refresh()
+      window.dispatchEvent(new CustomEvent('metrics:invalidate'))
+    } catch (err) {
+      console.error('Delete failed:', err)
+    }
+  }
+
   // Bulk update status
   async function bulkUpdateStatus(status: string) {
     await fetch('/api/milestones/bulk-update', {
@@ -326,12 +337,13 @@ export function MilestonesTableClient({ milestones, artifacts, projectId }: Mile
               <TableHead className="w-[120px]">Target / Date</TableHead>
               <TableHead className="w-[120px]">Owner</TableHead>
               <TableHead>Notes</TableHead>
+              <TableHead className="w-10" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredMilestones.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-zinc-400 py-8">
+                <TableCell colSpan={7} className="text-center text-zinc-400 py-8">
                   No milestones found.
                 </TableCell>
               </TableRow>
@@ -400,6 +412,16 @@ export function MilestonesTableClient({ milestones, artifacts, projectId }: Mile
                           </span>
                         }
                       />
+                    </TableCell>
+                    <TableCell className="w-10">
+                      <button
+                        onClick={() => deleteMilestone(m.id)}
+                        className="text-zinc-400 hover:text-red-500 transition-colors"
+                        title="Delete"
+                        aria-label="Delete"
+                      >
+                        ✕
+                      </button>
                     </TableCell>
                   </TableRow>
                 )

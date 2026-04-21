@@ -108,6 +108,18 @@ export function ActionsTableClient({ actions, projectId }: ActionsTableClientPro
     window.dispatchEvent(new CustomEvent('metrics:invalidate'))
   }
 
+  // DELETE single action
+  async function deleteAction(id: number) {
+    try {
+      const res = await fetch(`/api/actions/${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Delete failed')
+      router.refresh()
+      window.dispatchEvent(new CustomEvent('metrics:invalidate'))
+    } catch (err) {
+      console.error('Delete failed:', err)
+    }
+  }
+
   // Bulk update status
   async function bulkUpdateStatus(status: string) {
     await fetch('/api/actions/bulk-update', {
@@ -297,12 +309,13 @@ export function ActionsTableClient({ actions, projectId }: ActionsTableClientPro
               <TableHead className="w-40">Owner</TableHead>
               <TableHead className="w-32">Due Date</TableHead>
               <TableHead className="w-32">Status</TableHead>
+              <TableHead className="w-10" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredActions.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-zinc-500 text-sm py-8">
+                <TableCell colSpan={6} className="text-center text-zinc-500 text-sm py-8">
                   No actions found.
                 </TableCell>
               </TableRow>
@@ -360,6 +373,18 @@ export function ActionsTableClient({ actions, projectId }: ActionsTableClientPro
                         options={ACTION_STATUS_OPTIONS}
                         onSave={async v => patchAction(action.id, { status: v })}
                       />
+                    </TableCell>
+
+                    {/* Delete button */}
+                    <TableCell className="w-10">
+                      <button
+                        onClick={() => deleteAction(action.id)}
+                        className="text-zinc-400 hover:text-red-500 transition-colors"
+                        title="Delete"
+                        aria-label="Delete"
+                      >
+                        ✕
+                      </button>
                     </TableCell>
                   </TableRow>
                 )

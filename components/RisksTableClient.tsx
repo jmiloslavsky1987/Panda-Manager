@@ -107,6 +107,17 @@ export function RisksTableClient({ risks, artifacts, projectId }: RisksTableClie
     window.dispatchEvent(new CustomEvent('metrics:invalidate'))
   }
 
+  async function deleteRisk(id: number) {
+    try {
+      const res = await fetch(`/api/risks/${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Delete failed')
+      router.refresh()
+      window.dispatchEvent(new CustomEvent('metrics:invalidate'))
+    } catch (err) {
+      console.error('Delete failed:', err)
+    }
+  }
+
   const artifactMap = new Map(artifacts.map((a) => [a.id, a.name]))
 
   // Compute unique owners for filter dropdown (from full list, not filtered)
@@ -330,12 +341,13 @@ export function RisksTableClient({ risks, artifacts, projectId }: RisksTableClie
               <TableHead className="w-[120px]">Owner</TableHead>
               <TableHead className="w-[110px]">Status</TableHead>
               <TableHead>Mitigation</TableHead>
+              <TableHead className="w-10" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredRisks.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-zinc-400 py-8">
+                <TableCell colSpan={7} className="text-center text-zinc-400 py-8">
                   No risks found.
                 </TableCell>
               </TableRow>
@@ -402,6 +414,16 @@ export function RisksTableClient({ risks, artifacts, projectId }: RisksTableClie
                           </span>
                         }
                       />
+                    </TableCell>
+                    <TableCell className="w-10">
+                      <button
+                        onClick={() => deleteRisk(risk.id)}
+                        className="text-zinc-400 hover:text-red-500 transition-colors"
+                        title="Delete"
+                        aria-label="Delete"
+                      >
+                        ✕
+                      </button>
                     </TableCell>
                   </TableRow>
                 )
