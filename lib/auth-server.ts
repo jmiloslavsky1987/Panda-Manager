@@ -30,7 +30,12 @@ export type SessionResult =
  * this is the actual security boundary.
  */
 export async function requireSession(): Promise<SessionResult> {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const h = await headers();
+  // Wrap in a Request so better-call's isRequest() path is used — avoids
+  // the instanceof Headers check failing when Next.js ReadonlyHeaders is not
+  // the same Headers class as the one better-call was compiled against.
+  const req = new Request("http://localhost/api/auth/get-session", { headers: h });
+  const session = await auth.api.getSession({ request: req });
   if (!session) {
     return {
       session: null,
