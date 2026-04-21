@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v8.0
 milestone_name: Codebase Refactor & Multi-Tenant Deployment
-current_plan: 2 of 5
+current_plan: 3 of 5
 status: completed
-stopped_at: Completed 73.1-01-PLAN.md
-last_updated: "2026-04-21T01:08:44.598Z"
-last_activity: "2026-04-21 — Plan 73.1-02 complete: DELETE handlers + requireProjectRole upgrade + proposed_changes_json migration"
+stopped_at: Completed 73.1-03-PLAN.md
+last_updated: "2026-04-21T01:14:36Z"
+last_activity: "2026-04-21 — Plan 73.1-03 complete: Fuzzy entity matching + Pass 5 change detection classifies document-driven updates/closures"
 progress:
   total_phases: 18
   completed_phases: 13
   total_plans: 57
-  completed_plans: 52
+  completed_plans: 53
   percent: 96
 ---
 
@@ -27,11 +27,11 @@ See: .planning/PROJECT.md (updated 2026-04-16 after v7.0 milestone close)
 ## Current Position
 
 Phase: 73.1 of 75 — IN PROGRESS (Entity Lifecycle Management)
-Current Plan: 3 of 5
-Status: Plans 73.1-01 and 73.1-02 complete. Plan 73.1-03 next.
-Last activity: 2026-04-21 — Plan 73.1-01 complete: Wave 0 RED test stubs for entity lifecycle, change detection, entity matching, and IngestionModal changes UI
+Current Plan: 4 of 5
+Status: Plans 73.1-01, 73.1-02, and 73.1-03 complete. Plan 73.1-04 next.
+Last activity: 2026-04-21 — Plan 73.1-03 complete: Fuzzy entity matching + Pass 5 change detection classifies document-driven updates/closures
 
-Progress: [██████████] 98% (256 of 261 plans complete in v8.0)
+Progress: [██████████] 98% (257 of 261 plans complete in v8.0)
 
 ## Milestone History
 
@@ -116,6 +116,10 @@ Progress: [██████████] 98% (256 of 261 plans complete in v8.
 - Store proposed changes in extraction_jobs table (not separate table) - 1:1 relationship with job, simpler cleanup, aligns with staged_items_json pattern
 - DELETE handlers do not call updateXlsxRow() - hard delete from DB is correct, xlsx is archival/export not source of truth
 - Upgrade all entity PATCH handlers to requireProjectRole simultaneously with DELETE addition - ensures consistent auth pattern across all entity operations
+- Pass 5 runs on allRawItems (before dedup filtering) for comprehensive change detection - dedup would filter out updates/closures as already-ingested
+- Confidence threshold 0.6 filters out low-confidence matches - balances false positives vs missed updates
+- Top 3 candidates per query balances precision vs recall - enough context for Claude to disambiguate, avoids diminishing returns
+- Pass 5 failure is non-fatal (try/catch, logs warning) - extraction pipeline completes even if change detection fails
 
 ## Accumulated Context
 
@@ -124,6 +128,6 @@ Progress: [██████████] 98% (256 of 261 plans complete in v8.
 
 ## Session Continuity
 
-Last session: 2026-04-21T01:08:44.596Z
-Stopped at: Completed 73.1-01-PLAN.md
+Last session: 2026-04-21T01:14:36Z
+Stopped at: Completed 73.1-03-PLAN.md
 Resume file: None
