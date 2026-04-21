@@ -48,6 +48,7 @@ export async function runDirectIntentExtraction(
     const response = await client.messages.create({
       model: 'claude-3-5-sonnet-20241022',
       max_tokens: 2000,
+      tool_choice: { type: 'tool', name: 'extract_lifecycle_instructions' },
       tools: [
         {
           name: 'extract_lifecycle_instructions',
