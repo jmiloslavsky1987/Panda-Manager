@@ -1500,8 +1500,6 @@ ALTER TABLE ONLY public.workflow_steps ALTER COLUMN id SET DEFAULT nextval('publ
 
 ALTER TABLE ONLY public.workstreams ALTER COLUMN id SET DEFAULT nextval('public.workstreams_id_seq'::regclass);
 
-    ADD CONSTRAINT __drizzle_migrations_pkey PRIMARY KEY (id);
-
 ALTER TABLE ONLY public.__drizzle_migrations
     ADD CONSTRAINT __drizzle_migrations_pkey PRIMARY KEY (id);
 
