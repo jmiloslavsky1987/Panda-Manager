@@ -42,7 +42,7 @@ export async function findSimilarEntities(
   entityType: string,
   primaryText: string,
   projectId: number,
-  threshold = 0.7
+  threshold = 0.5
 ): Promise<MatchCandidate[]> {
   if (SKIP_MATCH_TYPES.has(entityType)) return [];
   if (!primaryText || primaryText.trim().length < 10) return [];
@@ -122,6 +122,17 @@ export async function findSimilarEntities(
           FROM e2e_workflows
           WHERE project_id = ${projectId}
             AND similarity(workflow_name, ${primaryText}) > ${threshold}
+          ORDER BY similarity DESC LIMIT 3
+        `);
+        return rows.map(r => ({ ...r as Record<string, unknown>, entityType } as MatchCandidate));
+      }
+      case 'business_outcome': {
+        const rows = await db.execute(sql`
+          SELECT id, title, outcome_text, track,
+            similarity(title, ${primaryText}) AS similarity
+          FROM business_outcomes
+          WHERE project_id = ${projectId}
+            AND similarity(title, ${primaryText}) > ${threshold}
           ORDER BY similarity DESC LIMIT 3
         `);
         return rows.map(r => ({ ...r as Record<string, unknown>, entityType } as MatchCandidate));
