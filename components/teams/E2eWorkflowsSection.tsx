@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import type { E2eWorkflowWithSteps, WorkflowStep } from '@/lib/queries'
 import { WarnBanner } from './WarnBanner'
 import { TeamMetadataEditModal } from './TeamMetadataEditModal'
@@ -62,8 +63,24 @@ interface StepModalState {
 }
 
 export function E2eWorkflowsSection({ projectId, workflows, onUpdate }: Props) {
+  const router = useRouter()
   const [stepModal, setStepModal] = useState<StepModalState | null>(null)
   const [workflowModalOpen, setWorkflowModalOpen] = useState(false)
+
+  async function handleDeleteWorkflow(workflowId: number) {
+    const prev = workflows
+    onUpdate(workflows.filter(wf => wf.id !== workflowId)) // optimistic removal
+    try {
+      const res = await fetch(`/api/projects/${projectId}/e2e-workflows/${workflowId}`, {
+        method: 'DELETE',
+      })
+      if (!res.ok) throw new Error('Delete failed')
+      router.refresh()
+    } catch (err) {
+      console.error('Failed to delete workflow:', err)
+      onUpdate(prev) // rollback on error
+    }
+  }
 
   async function handleAddStep(workflowId: number, values: Record<string, string>) {
     const optimistic: WorkflowStep = {
@@ -162,7 +179,7 @@ export function E2eWorkflowsSection({ projectId, workflows, onUpdate }: Props) {
                   const trackStyle = stepTrackStyle(wf.steps[0]?.track ?? 'ADR')
                   return (
                     <div key={wf.id} className="flex-1 p-4 space-y-3 min-w-0">
-                      {/* Workflow name + add step */}
+                      {/* Workflow name + add step + delete */}
                       <div className="flex items-center justify-between gap-2">
                         <span
                           className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border"
@@ -170,12 +187,22 @@ export function E2eWorkflowsSection({ projectId, workflows, onUpdate }: Props) {
                         >
                           {wf.workflow_name || 'Unnamed'}
                         </span>
-                        <button
-                          onClick={() => setStepModal({ workflowId: wf.id, open: true })}
-                          className="text-xs px-2 py-0.5 rounded border border-zinc-300 hover:bg-zinc-50 flex-shrink-0"
-                        >
-                          + Step
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setStepModal({ workflowId: wf.id, open: true })}
+                            className="text-xs px-2 py-0.5 rounded border border-zinc-300 hover:bg-zinc-50 flex-shrink-0"
+                          >
+                            + Step
+                          </button>
+                          <button
+                            onClick={() => handleDeleteWorkflow(wf.id)}
+                            className="text-zinc-400 hover:text-red-500 transition-colors"
+                            title="Delete workflow"
+                            aria-label="Delete workflow"
+                          >
+                            ✕
+                          </button>
+                        </div>
                       </div>
 
                       {/* Steps flow */}

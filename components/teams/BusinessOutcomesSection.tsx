@@ -4,6 +4,7 @@ import type { BusinessOutcome } from '@/lib/queries'
 import { WarnBanner } from './WarnBanner'
 import { TeamMetadataEditModal } from './TeamMetadataEditModal'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 // Track emoji mapping
 function trackEmoji(track: string) {
@@ -69,7 +70,23 @@ const OUTCOME_FIELDS = [
 ]
 
 export function BusinessOutcomesSection({ projectId, outcomes, onUpdate }: Props) {
+  const router = useRouter()
   const [modalOpen, setModalOpen] = useState(false)
+
+  async function handleDelete(outcomeId: number) {
+    const prev = outcomes
+    onUpdate(outcomes.filter(o => o.id !== outcomeId)) // optimistic removal
+    try {
+      const res = await fetch(`/api/projects/${projectId}/business-outcomes/${outcomeId}`, {
+        method: 'DELETE',
+      })
+      if (!res.ok) throw new Error('Delete failed')
+      router.refresh()
+    } catch (err) {
+      console.error('Failed to delete outcome:', err)
+      onUpdate(prev) // rollback on error
+    }
+  }
 
   async function handleSave(values: Record<string, string>) {
     const optimistic: BusinessOutcome = {
@@ -133,12 +150,20 @@ export function BusinessOutcomesSection({ projectId, outcomes, onUpdate }: Props
                 className="rounded-xl border border-zinc-200 bg-white p-4 flex flex-col gap-3"
                 style={{ borderLeftWidth: '4px', borderLeftColor: leftBorder }}
               >
-                {/* emoji circle + title */}
+                {/* emoji circle + title + delete button */}
                 <div className="flex items-start gap-3">
                   <div className="w-8 h-8 rounded-full border border-zinc-200 flex-shrink-0 flex items-center justify-center text-lg">
                     {emoji}
                   </div>
-                  <p className="font-bold text-zinc-900 text-sm leading-tight">{outcome.title}</p>
+                  <p className="font-bold text-zinc-900 text-sm leading-tight flex-1">{outcome.title}</p>
+                  <button
+                    onClick={() => handleDelete(outcome.id)}
+                    className="text-zinc-400 hover:text-red-500 transition-colors flex-shrink-0"
+                    title="Delete outcome"
+                    aria-label="Delete outcome"
+                  >
+                    ✕
+                  </button>
                 </div>
 
                 {/* track badges */}

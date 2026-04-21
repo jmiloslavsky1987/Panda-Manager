@@ -69,6 +69,16 @@ export interface ReviewItem extends ExtractionItem {
   }
 }
 
+interface ProposedChange {
+  intent: 'update' | 'close' | 'remove'
+  entityType: string
+  existingId: number
+  existingRecord: Record<string, unknown>
+  proposedFields?: Record<string, unknown>
+  confidence: number
+  reasoning: string
+}
+
 type Stage = 'uploading' | 'extracting' | 'reviewing' | 'submitting' | 'done'
 
 interface FileStatus {
@@ -113,6 +123,8 @@ export function IngestionModal({
   const [currentFileIndex, setCurrentFileIndex] = useState(0)
   const [reviewItems, setReviewItems] = useState<ReviewItem[]>([])
   const [filteredCount, setFilteredCount] = useState<number>(0)
+  const [proposedChanges, setProposedChanges] = useState<ProposedChange[]>([])
+  const [rejectedChangeIds, setRejectedChangeIds] = useState<Set<number>>(new Set())
   // Track the artifact ID used during extraction (drop-zone flow has no prop-level artifactId)
   const [lastExtractedArtifactId, setLastExtractedArtifactId] = useState<number | null>(null)
   const [extractionMessage, setExtractionMessage] = useState<string>('')
@@ -219,8 +231,9 @@ export function IngestionModal({
             )
             const completedData = await completedJobsRes.json()
 
-            // Find our batch and extract all items
+            // Find our batch and extract all items + proposed changes
             const allItems: ReviewItem[] = []
+            const allChanges: ProposedChange[] = []
             let totalFiltered = 0
 
             for (const job of completedData.jobs) {
@@ -236,6 +249,10 @@ export function IngestionModal({
                     edited: false,
                   })))
 
+                // Extract proposed changes from Pass 5 (change detection)
+                const changes = Array.isArray(job.proposed_changes_json) ? job.proposed_changes_json as ProposedChange[] : []
+                allChanges.push(...changes)
+
                 // Track filtered count if available
                 if (job.filtered_count) {
                   totalFiltered += job.filtered_count
@@ -246,6 +263,7 @@ export function IngestionModal({
             // Dedup across files: same entity type + same primary identifier
             const deduped = deduplicateCrossJob(allItems)
             setReviewItems(deduped)
+            setProposedChanges(allChanges)
             setFilteredCount(totalFiltered)
             setStage('reviewing')
           }
@@ -442,6 +460,9 @@ export function IngestionModal({
     setError(null)
 
     try {
+      // Filter out rejected proposed changes
+      const approvedChanges = proposedChanges.filter(c => !rejectedChangeIds.has(c.existingId))
+
       const res = await fetch('/api/ingestion/approve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -450,6 +471,7 @@ export function IngestionModal({
           artifactId: artifactId ?? lastExtractedArtifactId ?? initialArtifactId,
           items: approvedItems.map(item => ({ ...item, conflictResolution: item.conflictResolution ?? 'skip' })),
           totalExtracted: reviewItems.length,
+          approvedChanges,
         }),
       })
       const text = await res.text()
@@ -591,6 +613,74 @@ export function IngestionModal({
                       <span className="font-medium text-zinc-700">{filteredCount} item{filteredCount !== 1 ? 's' : ''} already in your project</span> — skipped as duplicates and not shown below.
                     </div>
                   )}
+
+                  {/* Proposed Changes section (Pillar 1 — document-driven lifecycle) */}
+                  {proposedChanges.length > 0 && (
+                    <div className="mb-4 px-4">
+                      <h3 className="text-sm font-semibold text-amber-700 mb-2">
+                        Proposed Changes ({proposedChanges.filter(c => !rejectedChangeIds.has(c.existingId)).length} pending)
+                      </h3>
+                      <div className="space-y-2">
+                        {proposedChanges.map((change) => {
+                          const isRejected = rejectedChangeIds.has(change.existingId)
+                          const entityName = String(
+                            change.existingRecord.description ??
+                            change.existingRecord.name ??
+                            change.existingRecord.title ??
+                            (change.existingRecord as any).workflow_name ??
+                            `ID ${change.existingId}`
+                          )
+                          return (
+                            <div
+                              key={change.existingId}
+                              className={`border rounded p-3 text-sm transition-all ${
+                                isRejected ? 'opacity-40 line-through bg-zinc-50' : 'border-amber-200 bg-amber-50'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-xs font-mono bg-white px-1.5 py-0.5 rounded border border-zinc-200">
+                                  {change.entityType}
+                                </span>
+                                <span className={`text-xs font-semibold uppercase ${
+                                  change.intent === 'close' ? 'text-blue-600' :
+                                  change.intent === 'remove' ? 'text-red-600' : 'text-amber-700'
+                                }`}>
+                                  {change.intent}
+                                </span>
+                                <span className="text-xs text-zinc-500 ml-auto">
+                                  {Math.round(change.confidence * 100)}% confidence
+                                </span>
+                              </div>
+                              <p className="font-medium truncate text-zinc-800">{entityName}</p>
+                              <p className="text-xs text-zinc-600 mt-1">{change.reasoning}</p>
+                              <div className="flex gap-2 mt-2">
+                                {!isRejected ? (
+                                  <button
+                                    onClick={() => setRejectedChangeIds(prev => new Set([...prev, change.existingId]))}
+                                    className="text-xs text-zinc-500 hover:text-red-600 underline"
+                                  >
+                                    Reject
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => setRejectedChangeIds(prev => {
+                                      const s = new Set(prev)
+                                      s.delete(change.existingId)
+                                      return s
+                                    })}
+                                    className="text-xs text-blue-600 underline"
+                                  >
+                                    Undo reject
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+
                   <ExtractionPreview
                     items={reviewItems}
                     onItemChange={handleItemChange}
