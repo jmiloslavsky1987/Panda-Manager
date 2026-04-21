@@ -168,7 +168,7 @@ export async function computeProjectAnalytics(projectId: number): Promise<{
         SELECT count(*)::int AS count
         FROM risks
         WHERE project_id = ${projectId}
-          AND status NOT IN ('resolved', 'closed', 'accepted')
+          AND status NOT IN ('resolved', 'accepted')
       `
     );
     const openRiskCount = Number(openNowRows[0]?.count ?? 0);
@@ -179,7 +179,7 @@ export async function computeProjectAnalytics(projectId: number): Promise<{
         SELECT count(*)::int AS count
         FROM risks
         WHERE project_id = ${projectId}
-          AND status NOT IN ('resolved', 'closed', 'accepted')
+          AND status NOT IN ('resolved', 'accepted')
           AND created_at < now() - interval '7 days'
       `
     );
@@ -242,8 +242,7 @@ async function computeHealth(projectId: number): Promise<{
       and(
         eq(risks.project_id, projectId),
         inArray(risks.severity, ['high', 'critical']),
-        // status is not 'resolved' or 'closed'
-        sql`${risks.status} NOT IN ('resolved', 'closed')`,
+        sql`${risks.status} NOT IN ('resolved', 'accepted')`,
       )
     );
   const highRisks = highRisksResult[0]?.count ?? 0;
