@@ -264,17 +264,6 @@ BEGIN
 END;
 $$;
 
-    id integer NOT NULL,
-    hash text NOT NULL,
-    created_at bigint
-);
-
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
 CREATE TABLE public.__drizzle_migrations (
     id integer NOT NULL,
     hash text NOT NULL,
