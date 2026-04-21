@@ -78,7 +78,13 @@ export async function POST(req: NextRequest) {
     expiresAt,
   });
 
-  const appUrl = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
+  const appUrl = process.env.BETTER_AUTH_URL!;
+  if (!appUrl) {
+    return NextResponse.json(
+      { error: 'BETTER_AUTH_URL environment variable is required' },
+      { status: 500 }
+    );
+  }
   const inviteUrl = `${appUrl}/accept-invite?token=${token}`;
 
   try {

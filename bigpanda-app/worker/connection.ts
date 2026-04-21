@@ -9,7 +9,10 @@ import { Redis } from 'ioredis';
 
 /** For BullMQ Worker — must use maxRetriesPerRequest: null */
 export function createRedisConnection(): Redis {
-  const url = process.env.REDIS_URL ?? 'redis://localhost:6379';
+  const url = process.env.REDIS_URL!;
+  if (!url) {
+    throw new Error('REDIS_URL environment variable is required');
+  }
   return new Redis(url, {
     maxRetriesPerRequest: null,  // REQUIRED for BullMQ Worker
     enableReadyCheck: false,
@@ -18,7 +21,10 @@ export function createRedisConnection(): Redis {
 
 /** For Queue clients in API routes — fail fast if Redis is unavailable */
 export function createApiRedisConnection(): Redis {
-  const url = process.env.REDIS_URL ?? 'redis://localhost:6379';
+  const url = process.env.REDIS_URL!;
+  if (!url) {
+    throw new Error('REDIS_URL environment variable is required');
+  }
   return new Redis(url, {
     maxRetriesPerRequest: 1,
     enableReadyCheck: false,
