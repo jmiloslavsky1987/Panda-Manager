@@ -42,6 +42,18 @@ function splitStatements(content: string): string[] {
 }
 
 async function main() {
+  // Idempotency check — if core tables already exist, skip migration entirely.
+  const [row] = await sql`
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'projects'
+    LIMIT 1
+  `;
+  if (row) {
+    console.log('Database already migrated — skipping.');
+    await sql.end();
+    return;
+  }
+
   const content = readFileSync('./db/migrations/0001_initial.sql', 'utf-8');
 
   const statements = splitStatements(content);
