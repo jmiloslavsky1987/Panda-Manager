@@ -67,11 +67,12 @@ export async function readSettings(settingsPath: string = SETTINGS_PATH): Promis
   try {
     const raw = await fsPromises.readFile(settingsPath, 'utf-8');
     const parsed = JSON.parse(raw) as Partial<AppSettings>;
-    // Normalize workspace_path: if stored without homedir prefix (e.g. /Documents/...)
-    // resolve it relative to os.homedir() so paths like '/Documents/PM Application'
-    // expand correctly on every OS user account.
+    // Normalize workspace_path: macOS paths stored without homedir prefix
+    // (e.g. '/Documents/PM Application') need os.homedir() prepended.
+    // Do NOT touch paths that are already valid absolute paths (e.g. /app/workspace in Docker).
     let workspacePath = parsed.workspace_path ?? DEFAULTS.workspace_path;
-    if (workspacePath && !workspacePath.startsWith(os.homedir()) && workspacePath.startsWith('/')) {
+    const macRelativePattern = /^\/(Documents|Users|home)\//;
+    if (workspacePath && macRelativePattern.test(workspacePath) && !workspacePath.startsWith(os.homedir())) {
       workspacePath = path.join(os.homedir(), workspacePath);
     }
     return {
