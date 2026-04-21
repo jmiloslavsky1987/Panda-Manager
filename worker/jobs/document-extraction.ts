@@ -17,6 +17,7 @@ import { extractionJobs, artifacts, actions, risks, milestones, keyDecisions, en
 import { extractDocumentText } from '../../lib/document-extractor';
 import { readSettings } from '../../lib/settings-core';
 import { isAlreadyIngested } from '../../lib/extraction-types';
+import { runPass5ChangeDetection } from './change-detection';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -978,6 +979,15 @@ export default async function documentExtractionJob(job: Job): Promise<{ status:
       });
     const filteredCount = allRawItems.length - newItems.length;
 
+    // ─── Pass 5: Change Detection ─────────────────────────────────────────────
+    let proposedChanges: import('./change-detection').ProposedChange[] = [];
+    try {
+      proposedChanges = await runPass5ChangeDetection(allRawItems, projectId, client);
+      console.log(`[Pass 5] ${proposedChanges.length} proposed changes detected`);
+    } catch (err) {
+      console.warn('[Pass 5] change detection failed (non-fatal):', err);
+    }
+
     // 7. Mark completed with staged items
     await db.update(extractionJobs)
       .set({
@@ -986,6 +996,7 @@ export default async function documentExtractionJob(job: Job): Promise<{ status:
         staged_items_json: newItems,
         filtered_count: filteredCount,
         coverage_json: coverageByPass, // EXTR-10: store per-pass coverage summary
+        proposed_changes_json: proposedChanges.length > 0 ? proposedChanges : null,
         updated_at: new Date()
       })
       .where(eq(extractionJobs.id, jobId));
