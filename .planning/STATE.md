@@ -27,11 +27,11 @@ See: .planning/PROJECT.md (updated 2026-04-16 after v7.0 milestone close)
 ## Current Position
 
 Phase: 074 of 75 — IN PROGRESS (Deployment Readiness)
-Current Plan: 2 of 4
-Status: Plans 074-00 and 074-01 complete. Plans 074-02 and 074-03 pending.
-Last activity: 2026-04-21 — Plan 074-01 complete: Removed localhost fallbacks and enabled standalone output
+Current Plan: 3 of 4
+Status: Plans 074-00, 074-01, and 074-02 complete. Plan 074-03 pending.
+Last activity: 2026-04-21 — Plan 074-02 complete: Deployment infrastructure files (env template, Docker, PM2)
 
-Progress: [██████████] 98% (57 of 59 plans complete in v8.0)
+Progress: [██████████] 98% (58 of 59 plans complete in v8.0)
 
 ## Milestone History
 
@@ -131,6 +131,10 @@ Progress: [██████████] 98% (57 of 59 plans complete in v8.0)
 - Test files allowed to use localhost (filtered by grep exclusions) - test code doesn't run in production
 - Fail fast on missing env vars (use ! assertion, not ?? fallback) - production code must never have localhost fallbacks
 - SSR fetch behavior when NEXT_PUBLIC_BASE_URL missing: Check env var explicitly, log warning if missing, skip fetch (non-fatal) - pages render fine with empty lists
+- Fixed .gitignore to allow .env.example while ignoring other .env files (Rule 3 auto-fix) - deployment template should be version controlled
+- Used Node.js 24.13.0-slim for glibc compatibility (not Alpine's musl) - can break native binaries per 074-RESEARCH.md
+- PM2 fork mode for both apps (not cluster) per 074-RESEARCH.md Pattern 2 - BullMQ handles concurrency internally
+- docker-compose for local development only (production uses Dockerfile with external services) - RDS, ElastiCache, etc.
 
 ## Accumulated Context
 

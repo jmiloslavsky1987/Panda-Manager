@@ -23,7 +23,7 @@
 ### Deployment Readiness
 
 - [x] **DEPLOY-01**: App can be configured for a hosted environment via environment variables alone — no hardcoded localhost references, paths, or secrets
-- [ ] **DEPLOY-02**: A deployment guide exists documenting the environment variables, PostgreSQL + Redis dependencies, and how to run in production
+- [x] **DEPLOY-02**: A deployment guide exists documenting the environment variables, PostgreSQL + Redis dependencies, and how to run in production
 
 ### Entity Lifecycle Management
 
@@ -84,7 +84,7 @@ Explicitly excluded — not deferred, not planned. Documented to prevent re-addi
 | TENANT-04 | Phase 74 | Complete |
 | TENANT-05 | Phase 74 | Complete |
 | DEPLOY-01 | Phase 75 | Complete |
-| DEPLOY-02 | Phase 75 | Pending |
+| DEPLOY-02 | Phase 75 | Complete |
 | LIFECYCLE-P1 | Phase 73.1 | Complete |
 | LIFECYCLE-P2 | Phase 73.1 | Complete |
 
