@@ -20,6 +20,10 @@ export const auth = betterAuth({
     usePlural: true,  // maps 'user' -> 'users', 'session' -> 'sessions' (project uses plural table names)
     schema,
   }),
+  trustedOrigins: [
+    "http://localhost:3000",
+    ...(process.env.BETTER_AUTH_URL ? [process.env.BETTER_AUTH_URL] : []),
+  ],
   emailAndPassword: {
     enabled: true,
     disableSignUp: true,  // No self-signup; admin creates users via Settings > Users tab
