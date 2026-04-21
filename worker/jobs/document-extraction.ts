@@ -18,6 +18,7 @@ import { extractDocumentText } from '../../lib/document-extractor';
 import { readSettings } from '../../lib/settings-core';
 import { isAlreadyIngested } from '../../lib/extraction-types';
 import { runPass5ChangeDetection } from './change-detection';
+import { runDirectIntentExtraction, type DirectIntentItem } from './direct-intent-extraction';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -836,8 +837,47 @@ export default async function documentExtractionJob(job: Job): Promise<{ status:
       preAnalysisContext = '';
     }
 
+    // ─── Pass 0.5: Direct Intent Extraction (pre-pass) ────────────────────────
+    // Detects explicit update/close/remove/merge instructions BEFORE entity classification
+    console.log('[Pass 0.5] Running direct intent extraction...');
+    let directIntentItems: DirectIntentItem[] = [];
+    try {
+      const documentText = extractResult.kind === 'pdf' ? '' : extractResult.content;
+      if (documentText) {
+        directIntentItems = await runDirectIntentExtraction(documentText, projectId, client);
+        console.log(`[Pass 0.5] Found ${directIntentItems.length} direct lifecycle instructions`);
+      } else {
+        console.log('[Pass 0.5] Skipping for PDF documents (not yet supported)');
+      }
+    } catch (err) {
+      console.warn('[Pass 0.5] Non-fatal error in direct intent extraction:', err);
+    }
+
+    // Convert DirectIntentItem to ExtractionItem format for Pass 5 compatibility
+    const directIntentAsExtractionItems: ExtractionItem[] = directIntentItems.map(di => {
+      // Convert proposedFields to string values for ExtractionItem
+      const proposedFieldsAsStrings = di.proposedFields
+        ? Object.fromEntries(
+            Object.entries(di.proposedFields).map(([k, v]) => [k, String(v)])
+          )
+        : {};
+
+      return {
+        entityType: di.entityType as ExtractionItem['entityType'],
+        fields: {
+          name: di.entityName,
+          description: di.entityName,
+          title: di.entityName,
+          ...proposedFieldsAsStrings,
+          _direct_intent: di.intent,  // Preserve original intent for Pass 5
+        },
+        sourceExcerpt: di.sourceExcerpt,
+        confidence: 0.85,  // Direct instructions have high confidence
+      };
+    });
+
     // 5. Extract — 3-pass extraction (Phase 52, now with Pass 0 pre-analysis context)
-    let allRawItems: ExtractionItem[] = [];
+    let allRawItems: ExtractionItem[] = [...directIntentAsExtractionItems];
     const coverageByPass: Record<number, string> = {};
 
     if (extractResult.kind === 'pdf') {
