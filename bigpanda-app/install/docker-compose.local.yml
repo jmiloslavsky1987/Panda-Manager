@@ -36,7 +36,7 @@ services:
       BETTER_AUTH_URL: http://localhost:3000
       NEXT_PUBLIC_BASE_URL: http://localhost:3000
     command: >
-      sh -c "npx drizzle-kit migrate && npx tsx scripts/seed-admin.ts"
+      sh -c "npx tsx scripts/run-migrations.ts && npx tsx scripts/seed-admin.ts"
     depends_on:
       postgres:
         condition: service_healthy
