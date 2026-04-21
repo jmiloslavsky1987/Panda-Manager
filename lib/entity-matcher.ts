@@ -58,7 +58,7 @@ export async function findSimilarEntities(
             AND similarity(description, ${primaryText}) > ${threshold}
           ORDER BY similarity DESC LIMIT 3
         `);
-        return rows.rows.map(r => ({ ...r as Record<string, unknown>, entityType } as MatchCandidate));
+        return rows.map(r => ({ ...r as Record<string, unknown>, entityType } as MatchCandidate));
       }
       case 'risk': {
         const rows = await db.execute(sql`
@@ -69,7 +69,7 @@ export async function findSimilarEntities(
             AND similarity(description, ${primaryText}) > ${threshold}
           ORDER BY similarity DESC LIMIT 3
         `);
-        return rows.rows.map(r => ({ ...r as Record<string, unknown>, entityType } as MatchCandidate));
+        return rows.map(r => ({ ...r as Record<string, unknown>, entityType } as MatchCandidate));
       }
       case 'milestone': {
         const rows = await db.execute(sql`
@@ -80,7 +80,7 @@ export async function findSimilarEntities(
             AND similarity(name, ${primaryText}) > ${threshold}
           ORDER BY similarity DESC LIMIT 3
         `);
-        return rows.rows.map(r => ({ ...r as Record<string, unknown>, entityType } as MatchCandidate));
+        return rows.map(r => ({ ...r as Record<string, unknown>, entityType } as MatchCandidate));
       }
       case 'stakeholder': {
         const rows = await db.execute(sql`
@@ -91,7 +91,7 @@ export async function findSimilarEntities(
             AND similarity(name, ${primaryText}) > ${threshold}
           ORDER BY similarity DESC LIMIT 3
         `);
-        return rows.rows.map(r => ({ ...r as Record<string, unknown>, entityType } as MatchCandidate));
+        return rows.map(r => ({ ...r as Record<string, unknown>, entityType } as MatchCandidate));
       }
       case 'workstream': {
         const rows = await db.execute(sql`
@@ -102,7 +102,7 @@ export async function findSimilarEntities(
             AND similarity(name, ${primaryText}) > ${threshold}
           ORDER BY similarity DESC LIMIT 3
         `);
-        return rows.rows.map(r => ({ ...r as Record<string, unknown>, entityType } as MatchCandidate));
+        return rows.map(r => ({ ...r as Record<string, unknown>, entityType } as MatchCandidate));
       }
       case 'focus_area': {
         const rows = await db.execute(sql`
@@ -113,7 +113,7 @@ export async function findSimilarEntities(
             AND similarity(title, ${primaryText}) > ${threshold}
           ORDER BY similarity DESC LIMIT 3
         `);
-        return rows.rows.map(r => ({ ...r as Record<string, unknown>, entityType } as MatchCandidate));
+        return rows.map(r => ({ ...r as Record<string, unknown>, entityType } as MatchCandidate));
       }
       case 'e2e_workflow': {
         const rows = await db.execute(sql`
@@ -124,7 +124,7 @@ export async function findSimilarEntities(
             AND similarity(workflow_name, ${primaryText}) > ${threshold}
           ORDER BY similarity DESC LIMIT 3
         `);
-        return rows.rows.map(r => ({ ...r as Record<string, unknown>, entityType } as MatchCandidate));
+        return rows.map(r => ({ ...r as Record<string, unknown>, entityType } as MatchCandidate));
       }
       case 'task': {
         const rows = await db.execute(sql`
@@ -135,7 +135,7 @@ export async function findSimilarEntities(
             AND similarity(title, ${primaryText}) > ${threshold}
           ORDER BY similarity DESC LIMIT 3
         `);
-        return rows.rows.map(r => ({ ...r as Record<string, unknown>, entityType } as MatchCandidate));
+        return rows.map(r => ({ ...r as Record<string, unknown>, entityType } as MatchCandidate));
       }
       default:
         return [];

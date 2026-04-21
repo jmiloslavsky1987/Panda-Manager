@@ -68,6 +68,16 @@ const ApprovalItemSchema = z.object({
   existingId: z.number().optional(),
 });
 
+const ProposedChangeSchema = z.object({
+  intent: z.enum(['update', 'close', 'remove']),
+  entityType: z.string(),
+  existingId: z.number().int().positive(),
+  existingRecord: z.record(z.string(), z.unknown()),
+  proposedFields: z.record(z.string(), z.unknown()).optional(),
+  confidence: z.number(),
+  reasoning: z.string(),
+});
+
 const ApproveRequestSchema = z.object({
   artifactId: z.number(),
   projectId: z.number(),
@@ -78,6 +88,7 @@ const ApproveRequestSchema = z.object({
     })
   ),
   totalExtracted: z.number(),
+  approvedChanges: z.array(ProposedChangeSchema).optional(),
 });
 
 type ApprovalItem = z.infer<typeof ApprovalItemSchema>;
@@ -1372,6 +1383,105 @@ async function mergeItem(
   }
 }
 
+// ─── Entity lifecycle handlers for Pillar 1 (document-driven changes) ───────
+
+/**
+ * Update an existing entity with proposed fields from document analysis
+ */
+async function updateItemLifecycle(
+  entityType: string,
+  entityId: number,
+  fields: Record<string, unknown>,
+  projectId: number,
+  actorId: string
+): Promise<void> {
+  const tableMap: Record<string, typeof actions | typeof risks | typeof milestones | typeof workstreams | typeof tasks | typeof focusAreas> = {
+    action: actions,
+    risk: risks,
+    milestone: milestones,
+    workstream: workstreams,
+    task: tasks,
+    focus_area: focusAreas,
+  };
+  const table = tableMap[entityType];
+  if (!table) return;
+
+  const [before] = await db.select().from(table).where(eq((table as any).id, entityId));
+  if (!before) return;
+
+  await db.transaction(async (tx) => {
+    await tx.execute(sql.raw(`SET LOCAL app.current_project_id = ${projectId}`));
+    await tx.update(table).set(fields as any).where(eq((table as any).id, entityId));
+    await tx.insert(auditLog).values({
+      entity_type: entityType,
+      entity_id: entityId,
+      action: 'update',
+      actor_id: actorId,
+      before_json: before as Record<string, unknown>,
+      after_json: { ...before, ...fields } as Record<string, unknown>,
+    });
+  });
+}
+
+/**
+ * Close an existing entity by setting its status field to the appropriate closed state
+ */
+async function closeItemLifecycle(
+  entityType: string,
+  entityId: number,
+  projectId: number,
+  actorId: string
+): Promise<void> {
+  const closeStatusMap: Record<string, Record<string, unknown>> = {
+    action: { status: 'closed' },
+    risk: { status: 'resolved' },
+    milestone: { status: 'completed' },
+    workstream: { current_status: 'complete' },
+    task: { status: 'completed' },
+    focus_area: { status: 'completed' },
+  };
+  const fields = closeStatusMap[entityType];
+  if (!fields) return;
+  await updateItemLifecycle(entityType, entityId, fields, projectId, actorId);
+}
+
+/**
+ * Delete an existing entity from the database
+ */
+async function deleteItemLifecycle(
+  entityType: string,
+  entityId: number,
+  projectId: number,
+  actorId: string
+): Promise<void> {
+  const tableMap: Record<string, typeof actions | typeof risks | typeof milestones | typeof workstreams | typeof tasks | typeof focusAreas> = {
+    action: actions,
+    risk: risks,
+    milestone: milestones,
+    workstream: workstreams,
+    task: tasks,
+    focus_area: focusAreas,
+  };
+  const table = tableMap[entityType];
+  if (!table) return;
+
+  const [before] = await db.select().from(table).where(eq((table as any).id, entityId));
+  if (!before) return;
+
+  await db.transaction(async (tx) => {
+    await tx.execute(sql.raw(`SET LOCAL app.current_project_id = ${projectId}`));
+    await tx.insert(auditLog).values({
+      entity_type: entityType,
+      entity_id: entityId,
+      action: 'delete',
+      actor_id: actorId,
+      before_json: before as Record<string, unknown>,
+      after_json: null,
+    });
+    await tx.delete(table).where(eq((table as any).id, entityId));
+  });
+}
+
 // ─── Entity delete helpers (replace step 1) ──────────────────────────────────
 
 async function deleteItem(entityType: EntityType, existingId: number): Promise<{ unresolvedMilestones: number; unresolvedWorkstreams: number }> {
@@ -1579,10 +1689,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Invalid request', issues: parsed.error.issues }, { status: 400 });
   }
 
-  const { artifactId, projectId, items, totalExtracted } = parsed.data;
+  const { artifactId, projectId, items, totalExtracted, approvedChanges } = parsed.data;
 
   // 2. Check project membership
-  const { redirectResponse } = await requireProjectRole(projectId);
+  const { redirectResponse, session } = await requireProjectRole(projectId);
   if (redirectResponse) return redirectResponse;
 
   // 3. Fetch artifact record (for ingestion_log_json)
@@ -1693,6 +1803,43 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           console.error(`[approve] Failed to insert ${item.entityType}:`, err);
           errors.push({ entityType: item.entityType, error: (err as Error).message });
         }
+      }
+    }
+  }
+
+  // Process approved changes (Pillar 1 — document-driven lifecycle events)
+  if (approvedChanges && approvedChanges.length > 0) {
+    for (const change of approvedChanges) {
+      try {
+        if (change.intent === 'update' && change.proposedFields) {
+          await updateItemLifecycle(
+            change.entityType,
+            change.existingId,
+            change.proposedFields,
+            projectId,
+            session.user.id
+          );
+        } else if (change.intent === 'close') {
+          await closeItemLifecycle(
+            change.entityType,
+            change.existingId,
+            projectId,
+            session.user.id
+          );
+        } else if (change.intent === 'remove') {
+          await deleteItemLifecycle(
+            change.entityType,
+            change.existingId,
+            projectId,
+            session.user.id
+          );
+        }
+      } catch (err) {
+        console.error(
+          `[approve] Failed to process change for ${change.entityType} id=${change.existingId}:`,
+          err
+        );
+        // Non-fatal: continue processing other changes
       }
     }
   }
