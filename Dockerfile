@@ -25,7 +25,7 @@ COPY . .
 
 # Build Next.js standalone output
 # Requires output: "standalone" in next.config.ts (set in Plan 074-01)
-RUN npm run build
+RUN NODE_OPTIONS="--max-old-space-size=4096" npm run build
 
 # ── Stage 3: Runner ─────────────────────────────────────────────────────────
 FROM node:${NODE_VERSION}-slim AS runner
