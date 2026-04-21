@@ -34,4 +34,10 @@ export function createApiRedisConnection(): Redis {
 }
 
 // Shared connection for Queue clients (not for Worker — Worker needs its own)
-export const redisConnection = createRedisConnection();
+let _redisConnection: Redis | null = null;
+export function getRedisConnection(): Redis {
+  if (!_redisConnection) {
+    _redisConnection = createRedisConnection();
+  }
+  return _redisConnection;
+}

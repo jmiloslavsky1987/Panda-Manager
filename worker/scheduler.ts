@@ -1,12 +1,12 @@
 // bigpanda-app/worker/scheduler.ts
 import { Queue } from 'bullmq';
-import { redisConnection } from './connection';
+import { getRedisConnection } from './connection';
 import { db } from '../db';
 import { scheduledJobs } from '../db/schema';
 import { eq } from 'drizzle-orm';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const jobQueue = new Queue('scheduled-jobs', { connection: redisConnection as any });
+export const jobQueue = new Queue('scheduled-jobs', { connection: getRedisConnection() as any });
 
 /**
  * Removes legacy settings-based scheduler IDs from Redis.
