@@ -248,7 +248,12 @@ Plans:
   2. All runtime configuration (database URL, Redis URL, auth secrets, API keys) is injected via environment variables
   3. A deployment guide exists covering: required environment variables, PostgreSQL and Redis setup, how to run in production, and first-run checklist
   4. A fresh checkout of the repo can be fully configured for production without reading source code
-**Plans**: TBD
+Plans: 3 plans (Wave 1: 2 parallel, Wave 2: 1)
+
+Plans:
+- [ ] 074-01-PLAN.md — Remove localhost fallbacks + enable standalone output
+- [ ] 074-02-PLAN.md — Create deployment infrastructure (.env.example, Dockerfile, docker-compose.yml, PM2 config)
+- [ ] 074-03-PLAN.md — Create DEPLOYMENT.md guide + human verification gate
 
 ## Progress
 
