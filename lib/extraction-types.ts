@@ -7,7 +7,7 @@
  * - UI components that preview extracted data
  */
 
-import { eq, and, ilike } from 'drizzle-orm';
+import { eq, and, ilike, ne, or, isNull } from 'drizzle-orm';
 import { db } from '@/db';
 import {
   actions,
@@ -264,13 +264,10 @@ export async function isAlreadyIngested(
       return rows.length > 0;
     }
 
-    case 'onboarding_step': {
-      const key = normalize(f.step_name);
-      if (!key) return false;
-      const rows = await db.select({ id: onboardingSteps.id }).from(onboardingSteps)
-        .where(and(eq(onboardingSteps.project_id, projectId), ilike(onboardingSteps.name, `${key}%`)));
-      return rows.length > 0;
-    }
+    case 'onboarding_step':
+      // onboarding_steps has no source_trace — seeded template steps share names with real extracted steps.
+      // Always surface for review; the approve handler does an upsert so no duplicates are written.
+      return false;
 
     case 'integration': {
       const key = normalize(f.tool_name);
@@ -291,6 +288,7 @@ export async function isAlreadyIngested(
             eq(wbsItems.project_id, projectId),
             eq(wbsItems.track, f.track ?? 'ADR'),
             ilike(wbsItems.name, `${key}%`),
+            or(isNull(wbsItems.source_trace), ne(wbsItems.source_trace, 'template')),
           ),
         );
       return rows.length > 0;

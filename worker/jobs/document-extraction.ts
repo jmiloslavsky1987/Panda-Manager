@@ -932,6 +932,7 @@ export default async function documentExtractionJob(job: Job): Promise<{ status:
 
         // EXTR-08: use tool use instead of streaming
         const { items: passItems, coverage: passCoverage } = await runClaudeToolUseCall(client, userContent, passSystemPrompt);
+        console.log(`[Pass ${pass.passNumber}] PDF: ${passItems.length} items extracted`);
         allRawItems.push(...passItems);
         coverageByPass[pass.passNumber] = passCoverage; // EXTR-10: store per-pass coverage
 
@@ -986,6 +987,7 @@ export default async function documentExtractionJob(job: Job): Promise<{ status:
 
           // EXTR-08: use tool use instead of streaming
           const { items: chunkItems, coverage: chunkCoverage } = await runClaudeToolUseCall(client, userContent, passSystemPrompt);
+          console.log(`[Pass ${pass.passNumber}] chunk ${i + 1}/${chunks.length}: ${chunkItems.length} items extracted`);
           allRawItems.push(...chunkItems);
 
           // EXTR-10: accumulate coverage (last chunk of pass overwrites — this is OK for text chunks)
