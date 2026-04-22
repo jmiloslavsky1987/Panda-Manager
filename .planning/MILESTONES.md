@@ -1,5 +1,14 @@
 # Milestones
 
+## v8.0 Codebase Refactor & Multi-Tenant Deployment (Shipped: 2026-04-22)
+
+**Phases completed:** 17 phases, 63 plans, 59 tasks
+
+**Key accomplishments:**
+- (none recorded)
+
+---
+
 ## v7.0 Governance & Operational Maturity (Shipped: 2026-04-16)
 
 **Phases completed:** 12 phases (58–69), 41 plans

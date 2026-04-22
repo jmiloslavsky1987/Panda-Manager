@@ -265,6 +265,59 @@
 
 ---
 
+## Milestone: v8.0 — Codebase Refactor & Multi-Tenant Deployment
+
+**Shipped:** 2026-04-22
+**Phases:** 6 (70–74, including inserted 73.1) | **Plans:** 63 | **Duration:** 6 days (2026-04-16 → 2026-04-22)
+**Code delta:** ~75,894+ LOC TypeScript (from v7.0 base)
+
+### What Was Built
+
+- **AI usage audit (Phase 70):** Written classification of all 23 Claude API call sites — 91% genuine AI (21/23); weekly-focus.ts identified as deterministic (generates priority bullets from structured data); RFCTR-02 deferred with explicit rationale
+- **Feature consistency audit (Phase 71):** 13 findings documented — SearchBar vs GlobalSearchBar scope distinction (renamed for clarity), Decisions table intentionally append-only confirmed, dual-mode editing confirmed intentional, missing DB enums flagged as HIGH priority
+- **Feature unification (Phase 72):** DB enums for riskStatusEnum + milestoneStatusEnum with forward-only migration and data normalization; text search added to Risks/Milestones; EmptyState for Workstreams; component renames (GlobalProjectSearchBar, WorkspaceSearchBar, TeamMetadataEditModal); enum parity test with bidirectional containment checks
+- **Multi-tenant isolation (Phase 73):** Portfolio route filtered by project membership; 403 enforcement at all [projectId] route handlers; Redis cache keys project-namespaced; BullMQ job payloads project-scoped; approve route body-parse-before-auth; artifact PATCH lookup before auth
+- **Entity lifecycle management (Phase 73.1 — INSERTED):** Pass 5 change detection using pg_trgm fuzzy matching (threshold 0.5) + Claude scoring (threshold 0.75); DELETE handlers for actions/risks/milestones/workstreams/business_outcomes/e2e_workflows; IngestionModal "Proposed Changes" section; proposed_changes_json stored in extraction_jobs; direct intent items with 0.85 confidence
+- **Deployment readiness (Phase 74):** Removed all localhost fallbacks; standalone Next.js output enabled; .env.example with all 12 env vars; Dockerfile (Node.js 24.13.0-slim for glibc); docker-compose for local dev; PM2 ecosystem.config.js (fork mode, 2 apps); DEPLOYMENT.md guide (540 lines, 8-step production checklist)
+- **Out-of-band fixes (2026-04-22):** AiPreviewStep.tsx rewritten from broken SSE contract to BullMQ polling; weekly-focus job enum typo fixed ('complete'→'completed'); WeeklyFocus.tsx polling loop replaced one-shot 10s timeout; GlobalBank demo seed covering all 20+ entity types; architecture tab BeforeBigPandaTab pain_points_json format fixed
+
+### What Worked
+
+- **Audit-before-implement pattern:** Phases 70–71 were pure written reports with explicit human review gates; this prevented wasted implementation of decisions that weren't yet made. The pattern cleanly separated "what exists" from "what to change."
+- **Data normalization on migration:** Phase 72's forward-only migration normalized invalid risk/milestone status values before ALTER COLUMN — zero data loss, no null-handling edge cases shipped to UI
+- **pg_trgm + Claude two-layer entity matching:** Lower trigram threshold (0.5) with higher Claude confidence (0.75) for Pass 5 gave correct precision-recall balance — fuzzy candidates found with trigram, noise filtered with Claude
+- **Code root migration handled cleanly:** Moving from bigpanda-app/ to Panda-Manager/ was documented in CLAUDE.md, STATE.md, and GSD workflows; future plan execution auto-resolves correct paths
+- **GSD workflow patched for auto-push:** execute-plan.md and execute-phase.md both now git push after every commit — no more "done but not in git" states
+
+### What Was Inefficient
+
+- **Out-of-band work outside GSD framework:** 6 fixes were implemented directly (wizard extraction, weekly focus, demo seed, architecture tab, etc.) without GSD plans. These were high-urgency items but created a documentation gap that required manual STATE.md annotation. A lightweight "hotfix" plan template would prevent this pattern.
+- **Docker tooling mismatch:** `docker-compose` binary was a broken text file; `docker compose` plugin not available. Discovery was late in Phase 74 verification, requiring workaround with raw `docker build` + `docker run`. Should have been checked during RESEARCH.md phase.
+- **Two-repo state confusion:** Planning root (Project Assistant Code, branch v8.0-dev) and code root (Panda-Manager, branch main) are separate repos but share the same remote URL history. Push failures from stale PAT in remote URL caused extra debugging. Future: explicit remote URL verification in GSD pre-execution checklist.
+- **Settings volume missing from Docker container:** install-app-1 was recreated without the settings volume, causing `readSettings()` to fall back to `/nonexistent/Documents/PM Application` and break uploads. Root cause: Docker run command not documented anywhere. Fixed by adding to CLAUDE.md memory and DEPLOYMENT.md.
+
+### Patterns Established
+
+- **Audit phase pattern (no code changes):** Phase 70/71 pattern — written report only, explicit human review gate before any implementation — generalizes to any "evaluate before act" phase
+- **Forward-only DB migration with data normalization:** Normalize invalid values to sensible defaults (NULL for un-triaged, 'not_started' for new state) BEFORE ALTER COLUMN NOT NULL — apply to all future enum migrations with existing dirty data
+- **Pass 5 entity lifecycle detection architecture:** pg_trgm similarity index + top-k candidate retrieval + Claude confidence scoring + direct intent prepend to allRawItems — reusable pattern for any "find and update existing entity" pipeline
+- **Two-layer isolation (route + worker):** Cache isolation requires BOTH requireProjectRole at route (READ) AND project-scoped keys in worker (WRITE) — single-layer misses the other; always audit both sides when adding new cached operations
+
+### Key Lessons
+
+1. **Document Docker run commands before the phase ends** — the exact `docker run` invocation (user, volumes, network) is operational knowledge that's never in source code; it belongs in DEPLOYMENT.md and CLAUDE.md or it will be rediscovered every session
+2. **Out-of-band fixes need lightweight tracking** — urgent fixes outside GSD are sometimes correct (fast, context-present), but they must be logged immediately in STATE.md "Out-of-Band Work" section with file paths and what changed; otherwise future sessions start confused about what was done
+3. **Check tooling availability during research phase** — docker-compose, pg_trgm, and other external dependencies should be verified available in RESEARCH.md before assuming they work; late discovery forces workarounds or re-planning
+4. **Audit phases benefit from explicit deferred-with-rationale** — RFCTR-02 was deferred, but the audit report captured the specific call site (weekly-focus.ts) and the argument for deferral; this makes the decision revisitable and prevents re-investigating the same code in the next milestone
+
+### Cost Observations
+
+- Model: Claude Sonnet 4.6 throughout
+- Sessions: ~4 sessions across 6 days
+- Notable: Phase 73.1 (Entity Lifecycle Management) was the most complex — 5 plans including pg_trgm integration, Pass 5 pipeline, and IngestionModal UI changes. Direct intent items and confidence calibration required two iterations to get precision-recall balance right.
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -278,6 +331,7 @@
 | v5.0 | 6 | 5 days | Full UX overhaul; custom Gantt, cross-tab sync, global search, polish |
 | v6.0 | 16 | 7 days | Dashboard + WBS + Architecture + extraction pipeline maturity; gap-closure phase pattern introduced |
 | v7.0 | 12 | 3 days | Governance & operational maturity; RBAC, lifecycle, Skills Design Standard, Gantt sync |
+| v8.0 | 6 | 6 days | Codebase refactor; AI usage audit, feature unification, multi-tenant isolation, entity lifecycle, deployment readiness |
 
 ### Cumulative Quality
 
@@ -290,6 +344,7 @@
 | v5.0 | ~370 | Inline editing, custom Gantt, cross-tab sync, global search, empty states (6 pre-existing failures remain) |
 | v6.0 | 148 files passing | Portfolio, WBS, Architecture, extraction pipeline (21 entity types); 15 pre-existing failures fixed; 4 intentional RED portfolio stubs |
 | v7.0 | 148+ files passing | RBAC, lifecycle, Health Dashboard, ingestion edit, Skills Standard, Gantt hierarchy; 4 RED stubs accepted as known gap |
+| v8.0 | 148+ files passing | Feature unification (DB enums, component renames), multi-tenant isolation, Pass 5 entity lifecycle; RFCTR-02 deferred |
 
 ### Top Lessons (Verified Across Milestones)
 

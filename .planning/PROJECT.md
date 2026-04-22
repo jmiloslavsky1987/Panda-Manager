@@ -82,6 +82,16 @@ Every PS delivery intelligence the team has built — 15 AI skills, all project 
 - ✓ Gantt bi-directional sync: WBS skeleton with full hierarchy (L1→L2→L3), ADR/Biggy track separation, edge drag handles, milestone drag, inline DatePickerCell, depth computed from parent chain — v7.0 Phase 68 (DLVRY-01–04)
 - ✓ Knowledge Base: cross-project institutional knowledge capture retained — use case confirmed distinct from document ingestion — v7.0 Phase 69 (KB-01)
 
+<!-- v8.0 — Codebase Refactor & Multi-Tenant Deployment (2026-04-22) -->
+- ✓ AI usage audit: 23 Claude API call sites classified; 91% genuine AI (21/23); weekly-focus.ts identified as deterministic — v8.0 Phase 70 (RFCTR-01)
+- ✓ Feature consistency audit: 13 findings documented; SearchBar/GlobalSearchBar rename, Decisions append-only confirmed, dual-mode editing confirmed intentional — v8.0 Phase 71 (RFCTR-03)
+- ✓ Feature unification: DB enums for risk/milestone status, text search for Risks/Milestones, EmptyState for Workstreams, component renames — v8.0 Phase 72 (RFCTR-04)
+- ✓ Multi-tenant isolation: portfolio filtered by membership, 403 on unauthorized project access, Redis cache keys project-namespaced, BullMQ job payloads project-scoped — v8.0 Phase 73 (TENANT-01–05)
+- ✓ Entity lifecycle management: Pass 5 change detection (pg_trgm fuzzy matching + Claude scoring), DELETE handlers for all entity types, IngestionModal proposed changes UI — v8.0 Phase 73.1 (LIFECYCLE-P1, LIFECYCLE-P2)
+- ✓ Deployment readiness: env-var-only configuration, no localhost fallbacks, DEPLOYMENT.md guide, Dockerfile + PM2 ecosystem.config.js — v8.0 Phase 74 (DEPLOY-01, DEPLOY-02)
+- ✓ Wizard extraction fix: AiPreviewStep.tsx rewritten from broken SSE contract to BullMQ polling pattern — v8.0 out-of-band
+- ✓ Weekly focus fix: milestone status enum typo ('complete' → 'completed') + polling loop in WeeklyFocus.tsx — v8.0 out-of-band
+
 <!-- v6.0 — Dashboard, Navigation & Intelligence (2026-04-14) -->
 - ✓ Skills portability: lib/skill-path.ts resolves SKILL.md dynamically at runtime — no hardcoded paths — v6.0 Phase 43 (SKILL-01)
 - ✓ Navigation restructure: Plan first in Delivery, WBS/Task Board/Gantt promoted to top level, Swimlane removed, Decisions → Delivery, Intel → Context tab, Engagement History → Admin — v6.0 Phase 44 (NAV-01–05)
@@ -100,36 +110,24 @@ Every PS delivery intelligence the team has built — 15 AI skills, all project 
 
 ## Context
 
-v7.0 shipped 2026-04-16. Full stack: Next.js 16 (Turbopack), PostgreSQL, Redis/BullMQ, better-auth, Drizzle ORM, Vercel AI SDK, @xyflow/react, @anthropic-ai/sdk, Recharts. 69 phases (including 48.1), ~319 plans completed across v1.0–v7.0. ~75,894 LOC TypeScript. Test suite: 148+ files passing. Production build clean.
+v8.0 shipped 2026-04-22. Full stack: Next.js 16 (Turbopack), PostgreSQL, Redis/BullMQ, better-auth, Drizzle ORM, Vercel AI SDK, @xyflow/react, @anthropic-ai/sdk, Recharts. 75 phases (including inserted phases), ~382 plans completed across v1.0–v8.0. ~75,894+ LOC TypeScript. Test suite: 148+ files passing. Production build clean.
 
-v7.0 delivered: per-project RBAC at all 40+ route handlers, full project lifecycle (archive/delete/restore), Health Dashboard with auto-derived metrics, ingestion edit-before-approve with note reclassification, Analyze Completeness scoring, Skills Design Standard with editable prompts UI, project-scoped scheduling, Overview hybrid static/dynamic tracks, Delivery tab cleanup, Gantt bi-directional sync with WBS hierarchy, Knowledge Base retained.
+v8.0 delivered: AI usage audit (91% genuine AI), feature consistency audit (13 findings resolved), DB enums for risk/milestone status, multi-tenant isolation at all route handlers + cache + BullMQ, Pass 5 entity lifecycle management (pg_trgm + Claude change detection), DELETE handlers for all entity types, deployment-ready env-var configuration with DEPLOYMENT.md guide, Dockerfile + PM2 production configs, AiPreviewStep.tsx wizard extraction fixed (BullMQ polling pattern), weekly focus job fixed.
 
-Known tech debt entering v8.0:
+Code root migrated 2026-04-22: application code lives at `/Users/jmiloslavsky/Documents/Panda-Manager` (git: github.com/jmiloslavsky1987/Panda-Manager). GSD planning root remains at `/Users/jmiloslavsky/Documents/Project Assistant Code`.
+
+Known tech debt entering next milestone:
+- RFCTR-02: Replace deterministic Claude calls with hardcode — deferred (weekly-focus.ts identified as candidate)
 - INGEST-02: Move approved ingested item to different section — deferred
-- OUT-01: Outputs section audit — dropped (not worth the work)
-- TEST-01: 4 portfolio TDD RED stubs — dropped (stubs remain but not blocking)
-- Nyquist validation incomplete: most v7.0 phases at `nyquist_compliant: false` (draft status)
+- TEST-01: 4 portfolio TDD RED stubs — accepted as known gap (stubs remain but not blocking)
+- Nyquist validation incomplete: most v7.0–v8.0 phases at `nyquist_compliant: false` (draft status)
 - Empty state CTA onClick handlers are `() => {}` placeholders (wiring to creation modals deferred)
 
 This is a full rewrite of a previous Claude Code project assistant build (8 phases, React/Vite/Express/Google Drive architecture). SKILL.md files read from disk at runtime (not bundled). All data model patterns (archive-on-replace, dual-write atomicity, append-only history, source tracing, ID conventions) preserved from the original skill ecosystem.
 
-## Current Milestone: v8.0 Codebase Refactor & Multi-Tenant Deployment
+## Current Milestone
 
-**Goal:** Audit and refactor the codebase to correctly separate deterministic logic from AI judgment, unify duplicate features, and convert the app to a properly isolated multi-tenant deployment ready for hosting on AWS.
-
-**Target features:**
-- Codebase audit: categorize every Claude API call; replace deterministic logic with hardcoded implementations
-- Feature consistency audit: identify and unify duplicate features and inconsistent UX patterns
-- Multi-tenant isolation: users see only their own projects, 403 on unauthorized access, no cross-user/cross-project state bleed
-- BullMQ jobs scoped to project/user with no contamination
-- Email invite onboarding: new user sees clean empty state on first login
-- Deployment readiness: environment-variable-only configuration, deployment guide
-
-**Deferred (explicit — revisit at future milestone planning):**
-- Auth provider migration (Clerk/Auth0): better-auth sufficient at current team size; revisit if SSO/SAML or large team growth
-- Per-user Anthropic API keys: single app-level key sufficient for internal team; revisit if external users needed
-- AWS infrastructure provisioning (EC2/RDS/ElastiCache): follow-on after app is multi-tenant correct
-- Admin console, usage tracking, billing layer: not needed at small team scale
+None — v8.0 archived 2026-04-22. Start next milestone with `/gsd:new-milestone`.
 
 ## Constraints
 
