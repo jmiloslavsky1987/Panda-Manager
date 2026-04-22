@@ -42,6 +42,109 @@ const PRIORITY_COLORS: Record<string, string> = {
   low: 'bg-green-100 text-green-700',
 }
 
+const STATUS_BADGE_COLORS: Record<string, string> = {
+  todo: 'bg-zinc-100 text-zinc-600',
+  in_progress: 'bg-blue-100 text-blue-700',
+  blocked: 'bg-red-100 text-red-700',
+  done: 'bg-green-100 text-green-700',
+}
+
+// ─── Week view helpers ────────────────────────────────────────────────────────
+
+function getWeekBuckets(referenceDate: Date): { label: string; start: string; end: string }[] {
+  const day = referenceDate.getDay()
+  const diff = day === 0 ? -6 : 1 - day
+  const monday = new Date(referenceDate)
+  monday.setDate(referenceDate.getDate() + diff)
+  monday.setHours(0, 0, 0, 0)
+  return Array.from({ length: 4 }, (_, i) => {
+    const start = new Date(monday)
+    start.setDate(monday.getDate() + i * 7)
+    const end = new Date(start)
+    end.setDate(start.getDate() + 6)
+    const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    return {
+      label: `${fmt(start)} – ${fmt(end)}`,
+      start: start.toISOString().split('T')[0],
+      end: end.toISOString().split('T')[0],
+    }
+  })
+}
+
+// ─── Week Task Card ───────────────────────────────────────────────────────────
+
+function WeekTaskCard({ task }: { task: Task }) {
+  return (
+    <div className="bg-white border border-zinc-200 rounded-lg px-3 py-2 flex items-center gap-3 shadow-sm">
+      <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${STATUS_BADGE_COLORS[task.status] ?? 'bg-zinc-100 text-zinc-600'}`}>
+        {task.status.replace('_', ' ')}
+      </span>
+      <span className="text-sm text-zinc-900 flex-1 min-w-0 truncate">{task.title}</span>
+      {task.owner && <span className="text-xs text-zinc-400 shrink-0">{task.owner}</span>}
+      {task.due && <span className="text-xs text-zinc-400 shrink-0">{task.due}</span>}
+      {task.priority && (
+        <span className={`text-xs px-1.5 py-0.5 rounded shrink-0 ${PRIORITY_COLORS[task.priority] ?? 'bg-zinc-100 text-zinc-600'}`}>
+          {task.priority}
+        </span>
+      )}
+    </div>
+  )
+}
+
+// ─── Week View ────────────────────────────────────────────────────────────────
+
+function WeekView({ tasks }: { tasks: Task[] }) {
+  const buckets = getWeekBuckets(new Date())
+  const isIsoDate = (d: string | null) => !!d && /^\d{4}-\d{2}-\d{2}/.test(d)
+
+  const tasksInBucket = (start: string, end: string) =>
+    tasks.filter(t => isIsoDate(t.due) && t.due! >= start && t.due! <= end)
+
+  const unscheduled = tasks.filter(t => !isIsoDate(t.due))
+
+  return (
+    <div className="flex flex-col gap-4">
+      {buckets.map(bucket => {
+        const bucketTasks = tasksInBucket(bucket.start, bucket.end)
+        return (
+          <div key={bucket.start} className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-zinc-700">{bucket.label}</h3>
+              <span className="text-xs text-zinc-400 bg-zinc-100 rounded px-1.5 py-0.5">{bucketTasks.length}</span>
+            </div>
+            {bucketTasks.length === 0 ? (
+              <p className="text-xs text-zinc-400 px-2 py-3 bg-zinc-50 rounded border border-zinc-200">No tasks due this week</p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {bucketTasks.map(task => (
+                  <WeekTaskCard key={task.id} task={task} />
+                ))}
+              </div>
+            )}
+          </div>
+        )
+      })}
+
+      {/* Unscheduled group */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-zinc-500">Unscheduled</h3>
+          <span className="text-xs text-zinc-400 bg-zinc-100 rounded px-1.5 py-0.5">{unscheduled.length}</span>
+        </div>
+        {unscheduled.length === 0 ? (
+          <p className="text-xs text-zinc-400 px-2 py-3 bg-zinc-50 rounded border border-zinc-200">No unscheduled tasks</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {unscheduled.map(task => (
+              <WeekTaskCard key={task.id} task={task} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ─── Sortable Task Card ───────────────────────────────────────────────────────
 
 interface TaskCardProps {
@@ -294,6 +397,7 @@ export function TaskBoard({ tasks: initialTasks, projectId }: TaskBoardProps) {
   const [tasks, setTasks] = useState<Task[]>(initialTasks)
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [activeId, setActiveId] = useState<number | null>(null)
+  const [viewMode, setViewMode] = useState<'board' | 'week'>('board')
 
   // Sync with new props only when task content actually changes AND no drag is active.
   // Using a stable signature avoids firing on every reference change (new array on each render).
@@ -377,7 +481,23 @@ export function TaskBoard({ tasks: initialTasks, projectId }: TaskBoardProps) {
             </button>
           }
         />
-        <span className="text-sm text-zinc-500">{tasks.length} tasks</span>
+        <div className="flex items-center gap-2">
+          <div className="flex rounded-md border border-zinc-200 overflow-hidden">
+            <button
+              onClick={() => setViewMode('board')}
+              className={`px-3 py-1 text-xs font-medium ${viewMode === 'board' ? 'bg-zinc-900 text-white' : 'bg-white text-zinc-600 hover:bg-zinc-50'}`}
+            >
+              Board
+            </button>
+            <button
+              onClick={() => setViewMode('week')}
+              className={`px-3 py-1 text-xs font-medium border-l border-zinc-200 ${viewMode === 'week' ? 'bg-zinc-900 text-white' : 'bg-white text-zinc-600 hover:bg-zinc-50'}`}
+            >
+              Week
+            </button>
+          </div>
+          <span className="text-sm text-zinc-500">{tasks.length} tasks</span>
+        </div>
       </div>
 
       {/* Bulk toolbar — shows when 2+ selected */}
@@ -392,58 +512,62 @@ export function TaskBoard({ tasks: initialTasks, projectId }: TaskBoardProps) {
         />
       )}
 
-      {/* Kanban columns */}
-      <DndContext
-        sensors={sensors}
-        onDragStart={(e) => setActiveId(Number(e.active.id))}
-        onDragEnd={handleDragEnd}
-      >
-        <div className="grid grid-cols-4 gap-3">
-          {COLUMNS.map((col) => {
-            const colTasks = tasks.filter((t) => t.status === col.id)
-            return (
-              <div key={col.id} className="flex flex-col gap-2">
-                <div className="flex items-center justify-between px-1">
-                  <h3 className="text-sm font-semibold text-zinc-700">{col.label}</h3>
-                  <span className="text-xs text-zinc-400 bg-zinc-100 rounded px-1.5 py-0.5">
-                    {colTasks.length}
-                  </span>
+      {/* Board or Week view */}
+      {viewMode === 'week' ? (
+        <WeekView tasks={tasks} />
+      ) : (
+        <DndContext
+          sensors={sensors}
+          onDragStart={(e) => setActiveId(Number(e.active.id))}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="grid grid-cols-4 gap-3">
+            {COLUMNS.map((col) => {
+              const colTasks = tasks.filter((t) => t.status === col.id)
+              return (
+                <div key={col.id} className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between px-1">
+                    <h3 className="text-sm font-semibold text-zinc-700">{col.label}</h3>
+                    <span className="text-xs text-zinc-400 bg-zinc-100 rounded px-1.5 py-0.5">
+                      {colTasks.length}
+                    </span>
+                  </div>
+
+                  <SortableContext
+                    id={col.id}
+                    items={colTasks.map((t) => t.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <DroppableColumn columnId={col.id}>
+                      {colTasks.map((task) => (
+                        <TaskCard
+                          key={task.id}
+                          task={task}
+                          projectId={projectId}
+                          selected={selected.has(task.id)}
+                          onSelect={handleSelect}
+                        />
+                      ))}
+                      {colTasks.length === 0 && (
+                        <p className="text-xs text-zinc-400 text-center py-4">No tasks</p>
+                      )}
+                    </DroppableColumn>
+                  </SortableContext>
                 </div>
+              )
+            })}
+          </div>
 
-                <SortableContext
-                  id={col.id}
-                  items={colTasks.map((t) => t.id)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  <DroppableColumn columnId={col.id}>
-                    {colTasks.map((task) => (
-                      <TaskCard
-                        key={task.id}
-                        task={task}
-                        projectId={projectId}
-                        selected={selected.has(task.id)}
-                        onSelect={handleSelect}
-                      />
-                    ))}
-                    {colTasks.length === 0 && (
-                      <p className="text-xs text-zinc-400 text-center py-4">No tasks</p>
-                    )}
-                  </DroppableColumn>
-                </SortableContext>
+          {/* Drag overlay */}
+          <DragOverlay>
+            {activeTask && (
+              <div className="bg-white border border-zinc-300 rounded-lg p-3 shadow-lg text-sm font-medium text-zinc-900 opacity-90">
+                {activeTask.title}
               </div>
-            )
-          })}
-        </div>
-
-        {/* Drag overlay */}
-        <DragOverlay>
-          {activeTask && (
-            <div className="bg-white border border-zinc-300 rounded-lg p-3 shadow-lg text-sm font-medium text-zinc-900 opacity-90">
-              {activeTask.title}
-            </div>
-          )}
-        </DragOverlay>
-      </DndContext>
+            )}
+          </DragOverlay>
+        </DndContext>
+      )}
     </div>
   )
 }
