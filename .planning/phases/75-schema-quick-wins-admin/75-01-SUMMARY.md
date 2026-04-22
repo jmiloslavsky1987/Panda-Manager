@@ -126,6 +126,20 @@ None - no external service configuration required. Migrations applied automatica
 - Phase 75-04 (admin settings) can now read/write active_tracks JSONB on projects
 - Concern: run-migrations.ts ignorable error list doesn't include "multiple primary keys" — Docker fresh installs need further testing to confirm 0001_initial.sql applies cleanly from scratch
 
+## Self-Check: PASSED
+
+All files present, all commits verified:
+- FOUND: db/migrations/0038_gantt_baselines.sql
+- FOUND: db/migrations/0039_chat_messages_project_id.sql
+- FOUND: db/migrations/0040_owner_fk_columns.sql
+- FOUND: db/migrations/0041_risk_fields.sql
+- FOUND: db/migrations/0042_projects_active_tracks.sql
+- FOUND: db/schema.ts (modified)
+- FOUND: .planning/phases/75-schema-quick-wins-admin/75-01-SUMMARY.md
+- COMMIT `91c3b9bd`: chore(75-01) write SQL migration files
+- COMMIT `264af17a`: feat(75-01) update Drizzle schema.ts
+- COMMIT `3d61687`: docs(75-01) complete schema migrations plan
+
 ---
 *Phase: 75-schema-quick-wins-admin*
 *Completed: 2026-04-22*
