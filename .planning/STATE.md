@@ -141,8 +141,23 @@ Progress: [██████████] 98% (58 of 59 plans complete in v8.0)
 ### Roadmap Evolution
 - Phase 73.1 inserted after Phase 73: Entity Lifecycle Management (URGENT)
 
+### Code Root Migration (2026-04-22)
+- Application code has moved to `/Users/jmiloslavsky/Documents/Panda-Manager` (git: github.com/jmiloslavsky1987/Panda-Manager)
+- GSD planning root remains at `/Users/jmiloslavsky/Documents/Project Assistant Code`
+- All file paths in plans like `bigpanda-app/components/...` now resolve to `../Panda-Manager/components/...`
+- When executing plans, `cd /Users/jmiloslavsky/Documents/Panda-Manager` before any code changes
+
+### Out-of-Band Work (2026-04-22, outside GSD framework)
+The following were implemented directly without GSD plans — already committed and pushed to Panda-Manager repo:
+- **Weekly focus job fix**: `worker/jobs/weekly-focus.ts` — milestone status enum typo (`'complete'` → `'completed'`) was crashing all weekly focus job runs
+- **Weekly focus polling**: `components/WeeklyFocus.tsx` — replaced one-shot 10s timeout with proper 3s polling loop (20 attempts)
+- **GlobalBank demo seed**: `scripts/seed-demo.ts` — comprehensive seed covering all 20+ entity types for showcase project
+- **Test update doc**: `test-docs/globalbank-update-week-of-apr-21.md` — triggers Pass 5 proposed changes flow
+- **Architecture tab fix**: `pain_points_json` in seed fixed from `{id,text}[]` to `string[]` (BeforeBigPandaTab renders as React children)
+- **Wizard extraction fix**: `components/wizard/AiPreviewStep.tsx` — replaced broken SSE API contract with BullMQ polling pattern matching IngestionModal
+
 ## Session Continuity
 
-Last session: 2026-04-21T04:14:23.153Z
-Stopped at: Completed 074-02-PLAN.md
+Last session: 2026-04-22T00:00:00.000Z
+Stopped at: Completed 074-02-PLAN.md (074-03 pending — DEPLOYMENT.md docs only)
 Resume file: None
