@@ -209,13 +209,21 @@ export function ContextTab({ projectId }: ContextTabProps) {
           <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-medium text-blue-900">Extraction in Progress</h3>
-              <button
-                onClick={cancelExtraction}
-                disabled={cancelling}
-                className="text-xs text-blue-500 hover:text-red-600 underline underline-offset-2 disabled:opacity-50 transition-colors"
-              >
-                {cancelling ? 'Cancelling…' : 'Cancel extraction'}
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => { setInitialStage('uploading'); setIngestionModalOpen(true); }}
+                  className="text-xs text-blue-700 hover:text-blue-900 underline underline-offset-2 transition-colors"
+                >
+                  View Progress
+                </button>
+                <button
+                  onClick={cancelExtraction}
+                  disabled={cancelling}
+                  className="text-xs text-blue-500 hover:text-red-600 underline underline-offset-2 disabled:opacity-50 transition-colors"
+                >
+                  {cancelling ? 'Cancelling…' : 'Cancel extraction'}
+                </button>
+              </div>
             </div>
             <div className="space-y-2">
               {activeBatch.jobs.map((job, i) => {
