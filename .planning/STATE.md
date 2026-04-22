@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v9.0
 milestone_name: — UX Maturity & Intelligence
 status: executing
-stopped_at: Completed 75-schema-quick-wins-admin/75-04-PLAN.md
-last_updated: "2026-04-22T20:20:17.429Z"
-last_activity: "2026-04-22 — 75-04 complete: Board/Week toggle + WeekView with 4 rolling week buckets + Unscheduled group + STATUS_BADGE_COLORS in TaskBoard.tsx"
+stopped_at: Completed 75-schema-quick-wins-admin/75-05-PLAN.md
+last_updated: "2026-04-22T20:26:03.567Z"
+last_activity: "2026-04-22 — 75-05 complete: ProjectSettingsForm + PATCH /settings route + active_tracks WbsTree filter + WBS page activeTracks prop wiring"
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 5
-  completed_plans: 4
-  percent: 60
+  completed_plans: 5
+  percent: 99
 ---
 
 # Project State
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-04-22 after v9.0 milestone start)
 ## Current Position
 
 Phase: 75 of 78 (Schema + Quick Wins + Admin)
-Plan: 4 of 5 complete
+Plan: 5 of 5 complete — Phase 75 DONE
 Status: In Progress
-Last activity: 2026-04-22 — 75-04 complete: Board/Week toggle + WeekView with 4 rolling week buckets + Unscheduled group + STATUS_BADGE_COLORS in TaskBoard.tsx
+Last activity: 2026-04-22 — 75-05 complete: ProjectSettingsForm + PATCH /settings route + active_tracks WbsTree filter + WBS page activeTracks prop wiring
 
 Progress: [██████████] 99%
 
@@ -97,16 +97,20 @@ Progress: [██████████] 99%
 - (75-04) No DnD in Week view — omitted for simplicity per design intent
 - (75-04) STATUS_BADGE_COLORS at module level (not inline) for potential reuse by future components
 - (75-04) isIsoDate regex routes TBD/blank/non-ISO due strings to Unscheduled group
+- (75-05) Non-admin sees read-only settings form (fields disabled, no Save button) instead of access-denied page
+- (75-05) WbsTree activeTracks prop filter is render-layer only — pipelines and skill context receive full WBS dataset
+- (75-05) WBS page wraps getProjectWithHealth in .catch(() => null) so missing project degrades to showing both tracks
+- (75-05) visibleTracks recomputed each render; useEffect resets expandedIds + activeTrack on activeTracks prop change
 
 ### Blockers/Concerns
 
 - Migration number confirmed: 0037 was highest before Phase 75; 0038–0042 applied cleanly
 - Owner picker dual-write: audit all tables with owner text column against db/schema.ts before writing PATCH handlers in Phase 76 (known candidates: tasks, actions, risks, milestones, artifacts, wbs_items)
 - docx-preview SSR: validate dynamic import + ssr:false is compatible with Outputs Library page before Phase 78 implementation
-- Active tracks filter: WBS expandedIds must be reset in useEffect when active_tracks config changes (stale Set can reveal hidden rows)
+- Active tracks filter: RESOLVED in 75-05 — WBS expandedIds reset via useEffect when active_tracks config changes
 
 ## Session Continuity
 
-Last session: 2026-04-22T20:20:17.426Z
-Stopped at: Completed 75-schema-quick-wins-admin/75-04-PLAN.md
+Last session: 2026-04-22T20:26:03.565Z
+Stopped at: Completed 75-schema-quick-wins-admin/75-05-PLAN.md
 Resume file: None

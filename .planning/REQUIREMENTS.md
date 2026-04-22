@@ -42,10 +42,10 @@
 
 ### Admin Settings
 
-- [ ] **ADMIN-01**: User can rename a project from Admin > Settings
-- [ ] **ADMIN-02**: User can set and edit a project go-live date from Admin > Settings
-- [ ] **ADMIN-03**: User can add and edit a project description/notes from Admin > Settings
-- [ ] **ADMIN-04**: User can enable or disable ADR Track and Biggy Track per project from Admin > Settings; disabling a track hides it from WBS, Gantt, and Overview
+- [x] **ADMIN-01**: User can rename a project from Admin > Settings
+- [x] **ADMIN-02**: User can set and edit a project go-live date from Admin > Settings
+- [x] **ADMIN-03**: User can add and edit a project description/notes from Admin > Settings
+- [x] **ADMIN-04**: User can enable or disable ADR Track and Biggy Track per project from Admin > Settings; disabling a track hides it from WBS, Gantt, and Overview
 
 ### Outputs Library
 
@@ -101,10 +101,10 @@
 | TASK-03 | Phase 75 | Complete |
 | TASK-04 | Phase 75 | Complete |
 | TASK-05 | Phase 75 | Complete |
-| ADMIN-01 | Phase 75 | Pending |
-| ADMIN-02 | Phase 75 | Pending |
-| ADMIN-03 | Phase 75 | Pending |
-| ADMIN-04 | Phase 75 | Pending |
+| ADMIN-01 | Phase 75 | Complete |
+| ADMIN-02 | Phase 75 | Complete |
+| ADMIN-03 | Phase 75 | Complete |
+| ADMIN-04 | Phase 75 | Complete |
 | PICK-01 | Phase 76 | Pending |
 | PICK-02 | Phase 76 | Pending |
 | PICK-03 | Phase 76 | Pending |
