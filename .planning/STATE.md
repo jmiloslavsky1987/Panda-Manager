@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v9.0
 milestone_name: — UX Maturity & Intelligence
 status: executing
-stopped_at: Completed 75-schema-quick-wins-admin/75-03-PLAN.md
-last_updated: "2026-04-22T20:30:00.000Z"
-last_activity: "2026-04-22 — 75-03 complete: DroppableColumn fixes empty-column dnd-kit drop targets; DELETE /api/tasks-bulk + BulkToolbar Delete Selected button"
+stopped_at: Completed 75-schema-quick-wins-admin/75-04-PLAN.md
+last_updated: "2026-04-22T20:20:17.429Z"
+last_activity: "2026-04-22 — 75-04 complete: Board/Week toggle + WeekView with 4 rolling week buckets + Unscheduled group + STATUS_BADGE_COLORS in TaskBoard.tsx"
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 5
-  completed_plans: 3
+  completed_plans: 4
   percent: 60
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-22 after v9.0 milestone start)
 ## Current Position
 
 Phase: 75 of 78 (Schema + Quick Wins + Admin)
-Plan: 3 of 5 complete
+Plan: 4 of 5 complete
 Status: In Progress
-Last activity: 2026-04-22 — 75-03 complete: DroppableColumn fixes empty-column dnd-kit drop targets; DELETE /api/tasks-bulk + BulkToolbar Delete Selected button
+Last activity: 2026-04-22 — 75-04 complete: Board/Week toggle + WeekView with 4 rolling week buckets + Unscheduled group + STATUS_BADGE_COLORS in TaskBoard.tsx
 
-Progress: [███░░░░░░░] 60%
+Progress: [██████████] 99%
 
 ## Milestone History
 
@@ -94,6 +94,9 @@ Progress: [███░░░░░░░] 60%
 - (75-03) DroppableColumn placed inside SortableContext so SortableContext owns sort logic while DroppableColumn provides droppable identity for empty-column resolution via over.id
 - (75-03) tasks-bulk DELETE uses first task's project_id for requireProjectRole; full per-task validation deferred to Phase 76's multi-tenant gap fix
 - (75-03) No delete confirmation dialog in BulkToolbar per design intent
+- (75-04) No DnD in Week view — omitted for simplicity per design intent
+- (75-04) STATUS_BADGE_COLORS at module level (not inline) for potential reuse by future components
+- (75-04) isIsoDate regex routes TBD/blank/non-ISO due strings to Unscheduled group
 
 ### Blockers/Concerns
 
@@ -104,6 +107,6 @@ Progress: [███░░░░░░░] 60%
 
 ## Session Continuity
 
-Last session: 2026-04-22T20:30:00.000Z
-Stopped at: Completed 75-schema-quick-wins-admin/75-03-PLAN.md
+Last session: 2026-04-22T20:20:17.426Z
+Stopped at: Completed 75-schema-quick-wins-admin/75-04-PLAN.md
 Resume file: None
