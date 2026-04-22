@@ -65,7 +65,7 @@ async function buildDeliverySnapshot(projectId: number): Promise<DeliverySnapsho
     .from(milestones)
     .where(and(
       eq(milestones.project_id, projectId),
-      sql`${milestones.status} != 'complete'`
+      sql`${milestones.status} != 'completed'`
     ))
     .orderBy(milestones.date)
     .limit(1);

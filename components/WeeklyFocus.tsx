@@ -125,27 +125,42 @@ export function WeeklyFocus({ projectId }: WeeklyFocusProps) {
       const res = await fetch(`/api/projects/${projectId}/weekly-focus`, {
         method: 'POST',
       })
-      if (res.ok) {
-        // Job queued successfully - show success message and refetch after delay
-        setGenerateMessage('Generation started. Refreshing in 10 seconds...')
-        setTimeout(async () => {
-          try {
-            const wfRes = await fetch(`/api/projects/${projectId}/weekly-focus`)
-            if (wfRes.ok) {
-              const wfData = await wfRes.json()
-              setBullets(wfData.bullets ?? null)
-              setGenerateMessage('Weekly focus updated successfully!')
-              setTimeout(() => setGenerateMessage(null), 3000)
-            }
-          } catch (err) {
-            console.error('Failed to refetch weekly focus:', err)
-            setGenerateMessage('Generation queued. Refresh the page to see results.')
-          }
-        }, 10000)
-      } else {
+      if (!res.ok) {
         setGenerateMessage('Failed to generate. Please try again.')
         setTimeout(() => setGenerateMessage(null), 3000)
+        return
       }
+
+      // Poll every 3s until bullets arrive (max 60s)
+      setGenerateMessage('Generating…')
+      const INTERVAL = 3000
+      const MAX_ATTEMPTS = 20
+      let attempts = 0
+
+      const poll = async () => {
+        attempts++
+        try {
+          const wfRes = await fetch(`/api/projects/${projectId}/weekly-focus`)
+          if (wfRes.ok) {
+            const wfData = await wfRes.json()
+            if (Array.isArray(wfData.bullets) && wfData.bullets.length > 0) {
+              setBullets(wfData.bullets)
+              setGenerateMessage('Weekly focus updated!')
+              setTimeout(() => setGenerateMessage(null), 3000)
+              return
+            }
+          }
+        } catch (err) {
+          console.error('Failed to poll weekly focus:', err)
+        }
+        if (attempts < MAX_ATTEMPTS) {
+          setTimeout(poll, INTERVAL)
+        } else {
+          setGenerateMessage('Taking longer than expected — refresh the page to see results.')
+        }
+      }
+
+      setTimeout(poll, INTERVAL)
     } catch (err) {
       console.error('Failed to trigger weekly focus generation:', err)
       setGenerateMessage('Error: Could not start generation.')
