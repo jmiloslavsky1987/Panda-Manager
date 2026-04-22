@@ -94,45 +94,45 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TASK-01 | — | Pending |
-| TASK-02 | — | Pending |
-| TASK-03 | — | Pending |
-| TASK-04 | — | Pending |
-| TASK-05 | — | Pending |
-| GANTT-01 | — | Pending |
-| GANTT-02 | — | Pending |
-| GANTT-03 | — | Pending |
-| GANTT-04 | — | Pending |
-| PICK-01 | — | Pending |
-| PICK-02 | — | Pending |
-| PICK-03 | — | Pending |
-| PICK-04 | — | Pending |
-| PICK-05 | — | Pending |
-| RISK-01 | — | Pending |
-| RISK-02 | — | Pending |
-| RISK-03 | — | Pending |
-| RISK-04 | — | Pending |
-| MILE-01 | — | Pending |
-| MILE-02 | — | Pending |
-| ADMIN-01 | — | Pending |
-| ADMIN-02 | — | Pending |
-| ADMIN-03 | — | Pending |
-| ADMIN-04 | — | Pending |
-| OUT-01 | — | Pending |
-| OUT-02 | — | Pending |
-| HLTH-01 | — | Pending |
-| HLTH-02 | — | Pending |
-| HLTH-03 | — | Pending |
-| SKILL-01 | — | Pending |
-| SKILL-02 | — | Pending |
-| SKILL-03 | — | Pending |
-| SKILL-04 | — | Pending |
+| TASK-01 | Phase 76 | Pending |
+| TASK-02 | Phase 76 | Pending |
+| TASK-03 | Phase 76 | Pending |
+| TASK-04 | Phase 76 | Pending |
+| TASK-05 | Phase 76 | Pending |
+| GANTT-01 | Phase 79 | Pending |
+| GANTT-02 | Phase 79 | Pending |
+| GANTT-03 | Phase 79 | Pending |
+| GANTT-04 | Phase 79 | Pending |
+| PICK-01 | Phase 77 | Pending |
+| PICK-02 | Phase 77 | Pending |
+| PICK-03 | Phase 77 | Pending |
+| PICK-04 | Phase 77 | Pending |
+| PICK-05 | Phase 77 | Pending |
+| RISK-01 | Phase 77 | Pending |
+| RISK-02 | Phase 77 | Pending |
+| RISK-03 | Phase 77 | Pending |
+| RISK-04 | Phase 77 | Pending |
+| MILE-01 | Phase 76 | Pending |
+| MILE-02 | Phase 76 | Pending |
+| ADMIN-01 | Phase 76 | Pending |
+| ADMIN-02 | Phase 76 | Pending |
+| ADMIN-03 | Phase 76 | Pending |
+| ADMIN-04 | Phase 81 | Pending |
+| OUT-01 | Phase 80 | Pending |
+| OUT-02 | Phase 80 | Pending |
+| HLTH-01 | Phase 78 | Pending |
+| HLTH-02 | Phase 78 | Pending |
+| HLTH-03 | Phase 78 | Pending |
+| SKILL-01 | Phase 80 | Pending |
+| SKILL-02 | Phase 80 | Pending |
+| SKILL-03 | Phase 80 | Pending |
+| SKILL-04 | Phase 80 | Pending |
 
 **Coverage:**
 - v9.0 requirements: 33 total
-- Mapped to phases: 0
-- Unmapped: 33 ⚠️
+- Mapped to phases: 33
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-04-22*
-*Last updated: 2026-04-22 after initial definition*
+*Last updated: 2026-04-22 — traceability mapped to v9.0 roadmap (Phases 75–81)*
