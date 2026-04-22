@@ -649,7 +649,13 @@ async function runClaudeToolUseCall(
     tool_choice: { type: 'tool', name: 'record_entities' },
   });
 
-  const response = await stream.finalMessage();
+  const TIMEOUT_MS = 3 * 60 * 1000; // 3 minutes
+  const response = await Promise.race([
+    stream.finalMessage(),
+    new Promise<never>((_, reject) =>
+      setTimeout(() => { stream.abort(); reject(new Error('Claude API call timed out after 3 minutes')); }, TIMEOUT_MS)
+    ),
+  ]);
 
   if (response.stop_reason === 'max_tokens') {
     console.warn('[extraction] max_tokens hit — response truncated. Entities from this chunk may be incomplete.');
