@@ -1,4 +1,5 @@
 import { DangerZoneSection } from '@/components/workspace/DangerZoneSection'
+import { ProjectSettingsForm } from '@/components/ProjectSettingsForm'
 import { auth } from '@/lib/auth'
 import { headers } from 'next/headers'
 import { db } from '@/db'
@@ -35,18 +36,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ id: s
     }
   }
 
-  // Non-admins can't access settings
-  if (!isProjectAdmin) {
-    return (
-      <div className="max-w-2xl">
-        <p className="text-sm text-zinc-500">
-          You do not have permission to access project settings.
-        </p>
-      </div>
-    )
-  }
-
-  // Fetch project to get archived status
+  // Fetch project for settings form
   let project = null
   try {
     project = await getProjectWithHealth(projectId)
@@ -57,7 +47,18 @@ export default async function SettingsPage({ params }: { params: Promise<{ id: s
   return (
     <div className="max-w-2xl">
       <h2 className="text-lg font-semibold text-zinc-900 mb-6">Project Settings</h2>
-      <DangerZoneSection projectId={projectId} isArchived={project?.status === 'archived'} />
+      {project ? (
+        <ProjectSettingsForm
+          project={project}
+          projectId={projectId}
+          isAdmin={isProjectAdmin}
+        />
+      ) : (
+        <p className="text-sm text-zinc-500 mb-6">Could not load project settings.</p>
+      )}
+      {isProjectAdmin && (
+        <DangerZoneSection projectId={projectId} isArchived={project?.status === 'archived'} />
+      )}
     </div>
   )
 }

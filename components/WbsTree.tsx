@@ -21,11 +21,19 @@ interface WbsTreeProps {
   biggyItems: WbsItem[]
   projectId: number
   showGeneratePlan?: boolean
+  activeTracks?: { adr: boolean; biggy: boolean }
 }
 
-export function WbsTree({ adrItems, biggyItems, projectId, showGeneratePlan }: WbsTreeProps) {
+export function WbsTree({ adrItems, biggyItems, projectId, showGeneratePlan, activeTracks }: WbsTreeProps) {
   const router = useRouter()
-  const [activeTrack, setActiveTrack] = useState<'ADR' | 'Biggy'>('ADR')
+
+  const tracks = activeTracks ?? { adr: true, biggy: true }
+  const visibleTracks: Array<'ADR' | 'Biggy'> = [
+    ...(tracks.adr ? ['ADR' as const] : []),
+    ...(tracks.biggy ? ['Biggy' as const] : []),
+  ]
+
+  const [activeTrack, setActiveTrack] = useState<'ADR' | 'Biggy'>(visibleTracks[0] ?? 'ADR')
 
   // Derive current items based on active track
   const items = activeTrack === 'ADR' ? adrItems : biggyItems
@@ -55,6 +63,18 @@ export function WbsTree({ adrItems, biggyItems, projectId, showGeneratePlan }: W
     prevTrackRef.current = activeTrack
     setExpandedIds(new Set(items.filter(item => item.level === 1).map(item => item.id)))
   }, [activeTrack, items])
+
+  // Reset expandedIds and activeTrack when activeTracks prop changes (e.g. after admin saves settings)
+  useEffect(() => {
+    const newTracks = activeTracks ?? { adr: true, biggy: true }
+    const newVisible: Array<'ADR' | 'Biggy'> = [
+      ...(newTracks.adr ? ['ADR' as const] : []),
+      ...(newTracks.biggy ? ['Biggy' as const] : []),
+    ]
+    if (newVisible.length > 0) setActiveTrack(newVisible[0])
+    const newItems = newVisible[0] === 'ADR' ? adrItems : biggyItems
+    setExpandedIds(new Set(newItems.filter(item => item.level === 1).map(item => item.id)))
+  }, [activeTracks, adrItems, biggyItems])
 
   const [draggingId, setDraggingId] = useState<number | null>(null)
 
@@ -141,29 +161,40 @@ export function WbsTree({ adrItems, biggyItems, projectId, showGeneratePlan }: W
         </div>
       )}
 
-      {/* Tab switcher */}
+      {/* Tab switcher — only render visible tracks */}
       <div className="flex gap-4 border-b border-zinc-200 mb-4">
-        <button
-          onClick={() => setActiveTrack('ADR')}
-          className={`px-4 py-2 text-sm font-medium transition-colors ${
-            activeTrack === 'ADR'
-              ? 'text-blue-600 border-b-2 border-blue-600'
-              : 'text-zinc-500 hover:text-zinc-700'
-          }`}
-        >
-          ADR
-        </button>
-        <button
-          onClick={() => setActiveTrack('Biggy')}
-          className={`px-4 py-2 text-sm font-medium transition-colors ${
-            activeTrack === 'Biggy'
-              ? 'text-blue-600 border-b-2 border-blue-600'
-              : 'text-zinc-500 hover:text-zinc-700'
-          }`}
-        >
-          Biggy
-        </button>
+        {visibleTracks.includes('ADR') && (
+          <button
+            onClick={() => setActiveTrack('ADR')}
+            className={`px-4 py-2 text-sm font-medium transition-colors ${
+              activeTrack === 'ADR'
+                ? 'text-blue-600 border-b-2 border-blue-600'
+                : 'text-zinc-500 hover:text-zinc-700'
+            }`}
+          >
+            ADR
+          </button>
+        )}
+        {visibleTracks.includes('Biggy') && (
+          <button
+            onClick={() => setActiveTrack('Biggy')}
+            className={`px-4 py-2 text-sm font-medium transition-colors ${
+              activeTrack === 'Biggy'
+                ? 'text-blue-600 border-b-2 border-blue-600'
+                : 'text-zinc-500 hover:text-zinc-700'
+            }`}
+          >
+            Biggy
+          </button>
+        )}
       </div>
+
+      {/* All tracks disabled fallback */}
+      {visibleTracks.length === 0 && (
+        <p className="text-sm text-zinc-500 py-8 text-center">
+          All tracks are disabled. Enable tracks in Admin &gt; Settings.
+        </p>
+      )}
 
       {/* Tree content */}
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
