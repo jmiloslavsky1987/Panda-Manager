@@ -6,9 +6,9 @@ current_plan: 0
 status: roadmap_created
 stopped_at: ""
 last_updated: "2026-04-22T00:00:00.000Z"
-last_activity: "2026-04-22 — v9.0 roadmap created (Phases 75-81, 33 requirements mapped)"
+last_activity: "2026-04-22 — v9.0 roadmap revised to 4 phases (75–78, 33 requirements mapped)"
 progress:
-  total_phases: 7
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -26,10 +26,10 @@ See: .planning/PROJECT.md (updated 2026-04-22 after v9.0 milestone start)
 
 ## Current Position
 
-Phase: 75 of 81 (Schema Foundation)
+Phase: 75 of 78 (Schema + Quick Wins + Admin)
 Plan: —
 Status: Ready to plan
-Last activity: 2026-04-22 — v9.0 roadmap created (7 phases, 33 requirements mapped)
+Last activity: 2026-04-22 — v9.0 roadmap revised to 4 phases (75–78), 33 requirements mapped
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -54,15 +54,12 @@ Progress: [░░░░░░░░░░] 0%
 
 ## v9.0 Roadmap Summary
 
-**7 phases (75–81) covering 33 requirements:**
+**4 phases (75–78) covering 33 requirements:**
 
-- **Phase 75:** Schema Foundation — 5 DB migrations; unblocks all subsequent phases
-- **Phase 76:** Quick Wins (MILE-01/02, TASK-01–05, ADMIN-01–03) — fix broken basics
-- **Phase 77:** Pickers & Risk Fields (PICK-01–05, RISK-01–04) — FK-based owner/dependency pickers; closes tasks-bulk security gap
-- **Phase 78:** Intelligence Features (HLTH-01–03) — per-project exceptions panel; depends on Phase 76
-- **Phase 79:** Gantt Enhancements (GANTT-01–04) — phase date aggregation + baseline ghost bars
-- **Phase 80:** AI & Content (SKILL-01–04, OUT-01–02) — Meeting Prep skill + Outputs inline preview + XSS hardening
-- **Phase 81:** Active Tracks Config (ADMIN-04) — render-layer track filtering; depends on Phase 75 + 76
+- **Phase 75:** Schema + Quick Wins + Admin (MILE-01/02, TASK-01–05, ADMIN-01–04) — all 5 DB migrations + fix broken basics + admin settings form including active tracks toggle
+- **Phase 76:** Pickers & Risk Fields (PICK-01–05, RISK-01–04) — FK-based owner/dependency/milestone pickers; risk structured fields with computed score; closes tasks-bulk multi-tenant security gap
+- **Phase 77:** Intelligence & Gantt (HLTH-01–03, GANTT-01–04) — per-project exceptions panel with auto-computed health status + deep-links; Gantt phase date aggregation from tasks + baseline ghost bars
+- **Phase 78:** AI & Content (SKILL-01–04, OUT-01–02) — Meeting Prep skill via existing BullMQ/skill infrastructure; inline output with copy button; Outputs Library inline preview + XSS hardening
 
 ## Accumulated Context
 
@@ -73,20 +70,29 @@ Progress: [░░░░░░░░░░] 0%
 - BullMQ + polling pattern for all long-running AI operations
 - Code root migrated: `bigpanda-app/...` paths now resolve to `../Panda-Manager/...`
 
+### v9.0 Architecture Decisions
+
+- ADMIN-04 (active tracks toggle) moved to Phase 75 — co-located with admin settings form (ADMIN-01–03) and the active_tracks JSONB migration; avoids a separate phase for a single requirement
+- Track filtering is render-layer only — skill context, extraction pipelines, and Gantt baselines always receive the full WBS dataset regardless of active_tracks setting
+- Risk Score computed via pure function (lib/risk-score.ts), never stored as a DB column
+- tasks-bulk multi-tenant security gap fixed in Phase 76 (same phase as bulk action UI extension)
+- XSS hardening (rehype-sanitize) applied to all react-markdown instances in Phase 78 (same phase as Outputs Library preview — the new surface that introduces risk)
+
 ### Security Flags for v9.0
 
-- tasks-bulk multi-tenant gap: confirmed in app/api/tasks-bulk/route.ts — fix in Phase 77
-- react-markdown XSS gap: ChatMessage.tsx renders without rehype-sanitize — fix in Phase 80
-- Meeting Prep prompt injection risk: escape user-controlled strings before interpolation — enforce in Phase 80
+- tasks-bulk multi-tenant gap: confirmed in app/api/tasks-bulk/route.ts — fix in Phase 76
+- react-markdown XSS gap: ChatMessage.tsx renders without rehype-sanitize — fix in Phase 78
+- Meeting Prep prompt injection risk: escape user-controlled strings before interpolation — enforce in Phase 78
 
 ### Blockers/Concerns
 
-- Migration number must be verified against live db/migrations/ before Phase 75 starts (current highest: 0037_entity_lifecycle.sql — may have changed)
-- Owner picker dual-write: audit all tables with owner text column before writing PATCH handlers in Phase 77
-- docx-preview SSR: validate dynamic import + ssr:false is compatible with Outputs Library page before Phase 80
+- Migration number must be verified against live db/migrations/ before Phase 75 starts (current highest known: 0037_entity_lifecycle.sql — verify before writing migrations 0038–0042)
+- Owner picker dual-write: audit all tables with owner text column against db/schema.ts before writing PATCH handlers in Phase 76 (known candidates: tasks, actions, risks, milestones, artifacts, wbs_items)
+- docx-preview SSR: validate dynamic import + ssr:false is compatible with Outputs Library page before Phase 78 implementation
+- Active tracks filter: WBS expandedIds must be reset in useEffect when active_tracks config changes (stale Set can reveal hidden rows)
 
 ## Session Continuity
 
 Last session: 2026-04-22
-Stopped at: v9.0 roadmap created — Phase 75 ready to plan
+Stopped at: v9.0 roadmap revised — 4 phases (75–78), Phase 75 ready to plan
 Resume file: None

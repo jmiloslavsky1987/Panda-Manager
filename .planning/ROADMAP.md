@@ -10,7 +10,7 @@
 - ✅ **v6.0** — Dashboard, Navigation & Intelligence — Phases 43–57 (shipped 2026-04-14)
 - ✅ **v7.0** — Governance & Operational Maturity — Phases 58–69 (shipped 2026-04-16)
 - ✅ **v8.0** — Codebase Refactor & Multi-Tenant Deployment — Phases 70–74 (shipped 2026-04-22)
-- 🚧 **v9.0** — UX Maturity & Intelligence — Phases 75–81 (in progress)
+- 🚧 **v9.0** — UX Maturity & Intelligence — Phases 75–78 (in progress)
 
 ## Phases
 
@@ -160,106 +160,69 @@ Full details: `.planning/milestones/v8.0-ROADMAP.md` (archived)
 
 **Milestone Goal:** Elevate data quality, interaction polish, and AI-powered intelligence across the workspace — fixing data model gaps, wiring unbuilt UX interactions, and adding proactive exception surfacing and meeting prep.
 
-- [ ] **Phase 75: Schema Foundation** — Five DB migrations establishing all new tables and columns required by v9.0
-- [ ] **Phase 76: Quick Wins** — Fix broken basics: milestone status enum, Task Board DnD cross-column, week view, bulk actions, admin project settings
-- [ ] **Phase 77: Pickers & Risk Fields** — Owner stakeholder picker, task dependency/milestone pickers, risk structured fields with computed score; patch confirmed multi-tenant security gap
-- [ ] **Phase 78: Intelligence Features** — Proactive per-project exceptions panel with auto-computed health status and deep-link navigation
-- [ ] **Phase 79: Gantt Enhancements** — Phase date aggregation from tasks; baseline snapshot capture with ghost bar overlay and variance column
-- [ ] **Phase 80: AI & Content** — Meeting Prep skill via existing skill infrastructure; Outputs Library inline preview with XSS hardening
-- [ ] **Phase 81: Active Tracks Config** — Per-project ADR/Biggy track enable/disable with render-layer filtering across WBS, Gantt, and Overview
+- [ ] **Phase 75: Schema + Quick Wins + Admin** — All 5 DB migrations, milestone status enum fix (+ portfolio counter), Task Board DnD cross-column, Task Board week view, bulk actions, admin project settings form
+- [ ] **Phase 76: Pickers & Risk Fields** — Owner stakeholder picker (FK + free-text fallback), task dependency/milestone pickers, blocked indicator, risk Likelihood/Impact/Target Date with auto-computed Risk Score; closes tasks-bulk multi-tenant security gap
+- [ ] **Phase 77: Intelligence & Gantt** — Per-project exceptions panel with auto-computed health status and deep-links; Gantt phase dates derived from tasks; Gantt baseline snapshot + ghost bar overlay + variance column
+- [ ] **Phase 78: AI & Content** — Meeting Prep skill via existing BullMQ/skill infrastructure; inline output rendering with copy-to-clipboard; Outputs Library inline preview (markdown + DOCX via docx-preview, PPTX as slide count + download); XSS hardening for all react-markdown instances
 
 ## Phase Details
 
-### Phase 75: Schema Foundation
-**Goal**: All five DB schema changes are committed and migrated so every subsequent phase can reference new tables and columns without migration conflicts
+### Phase 75: Schema + Quick Wins + Admin
+**Goal**: All five DB migrations are live and every broken or missing baseline interaction is working — users can drag task cards across Kanban columns, switch to week view, perform bulk task actions, set milestone statuses, and configure basic project settings
 **Depends on**: Phase 74
-**Requirements**: (infrastructure phase — no direct v9.0 requirements; unblocks all subsequent phases)
+**Requirements**: MILE-01, MILE-02, TASK-01, TASK-02, TASK-03, TASK-04, TASK-05, ADMIN-01, ADMIN-02, ADMIN-03, ADMIN-04
 **Success Criteria** (what must be TRUE):
-  1. `gantt_baselines` table exists in the DB with columns for project_id, name, snapshot_json, created_at, and created_by
-  2. `chat_messages` table exists with project_id, role, content, pinned, and created_at columns, with an index on project_id
-  3. Owner FK columns (owner_stakeholder_id) exist on tasks, actions, risks, and milestones tables
-  4. Likelihood, impact, target_date, and status columns exist on the risks table
-  5. `active_tracks` JSONB column exists on the projects table
+  1. All five schema changes are migrated to the DB: `gantt_baselines` table, `chat_messages` table with project_id index, owner FK columns on tasks/actions/risks/milestones, risk fields (likelihood, impact, target_date) on risks, and `active_tracks` JSONB on projects
+  2. User can drag a task card from one Kanban column to another and the task status updates immediately; bulk status change and bulk delete work on multi-selected task cards
+  3. User can toggle Task Board to Week view and see tasks grouped by due-date week; tasks with no due date appear in an Unscheduled group
+  4. User can set a milestone status (On Track / At Risk / Complete / Missed) from the milestone edit surface; the Portfolio overdue milestones counter reflects live data (target_date < today AND status != Complete)
+  5. User can rename a project, set a go-live date, add a description, and toggle ADR Track / Biggy Track per project from Admin > Settings; disabled tracks are hidden from WBS, Gantt, and Overview at the render layer (skill context always receives full data)
 **Plans**: TBD
 
-### Phase 76: Quick Wins
-**Goal**: Users can drag task cards between Kanban columns, switch to week view, perform bulk task actions, set milestone statuses, and configure basic project settings — all previously broken or missing interactions are working
-**Depends on**: Phase 75
-**Requirements**: MILE-01, MILE-02, TASK-01, TASK-02, TASK-03, TASK-04, TASK-05, ADMIN-01, ADMIN-02, ADMIN-03
-**Success Criteria** (what must be TRUE):
-  1. User can drag a task card from one Kanban column to another and the task status updates immediately
-  2. User can select multiple task cards and change all their statuses in a single bulk action, or bulk delete them
-  3. User can toggle the Task Board to Week view and see tasks grouped by due-date week, with undated tasks collected in an Unscheduled group
-  4. User can set a milestone status (On Track / At Risk / Complete / Missed) from the milestone edit surface, and the Portfolio overdue counter reflects the correct live count (target_date < today AND status != Complete)
-  5. User can rename a project, set a go-live date, and add a description from Admin > Settings
-**Plans**: TBD
-
-### Phase 77: Pickers & Risk Fields
-**Goal**: Owner fields across all entity types save a stakeholder FK rather than plain text; tasks have searchable dependency and milestone link pickers; risks expose structured likelihood/impact/target-date fields with an auto-computed risk score; the confirmed tasks-bulk multi-tenant security gap is closed
-**Depends on**: Phase 75
+### Phase 76: Pickers & Risk Fields
+**Goal**: Owner fields across all entity types save a stakeholder FK rather than plain text; tasks have searchable dependency and milestone link pickers with a visible blocked indicator; risks expose structured likelihood/impact/target-date fields with an auto-computed score; the confirmed tasks-bulk multi-tenant security gap is closed
+**Depends on**: Phase 75 (owner FK columns and risk field columns must exist in DB)
 **Requirements**: PICK-01, PICK-02, PICK-03, PICK-04, PICK-05, RISK-01, RISK-02, RISK-03, RISK-04
 **Success Criteria** (what must be TRUE):
-  1. User can assign an owner on Tasks, Actions, Risks, or Milestones by searching for a stakeholder name; the saved record stores the stakeholder ID (not just display text); free-text entry still works when the assignee is not in the list
-  2. User can mark a task as blocked by one or more other tasks via a searchable multi-select dropdown; blocked tasks display a blocked indicator on the Task Board and in the WBS
-  3. User can link a task to a milestone via a searchable dropdown; the linked milestone name is visible on the task card
-  4. User can set Likelihood, Impact, and Target Date on a risk; the risk list displays an auto-computed Risk Score (Likelihood x Impact) without storing the score as a DB column
-  5. Cross-project task bulk updates are scoped to the current project (tasks-bulk multi-tenant gap resolved — no route returns tasks outside the authenticated user's project)
+  1. User can assign an owner on Tasks, Actions, Risks, or Milestones from a searchable stakeholder dropdown; the saved record stores the stakeholder FK (not just display text); free-text entry works when the assignee is not in the stakeholder list
+  2. User can mark a task as blocked by one or more other tasks via a searchable multi-select dropdown with chip display; tasks with unresolved blockers show a blocked indicator on both the Task Board and WBS views
+  3. User can link a task to a milestone via a searchable dropdown; the linked milestone name is visible on the task
+  4. User can set Likelihood (Low / Medium / High), Impact (Low / Medium / High), and Target Date on a risk; the risk list displays an auto-computed Risk Score (Likelihood x Impact) — the score is never stored as a DB column
+  5. Cross-project task bulk updates are scoped to the current project; no route returns or modifies tasks outside the authenticated user's project membership (tasks-bulk multi-tenant gap resolved)
 **Plans**: TBD
 
-### Phase 78: Intelligence Features
-**Goal**: The project Overview tab surfaces a live Exceptions panel listing specific, actionable data quality issues with direct links to affected records, and the project health status badge is auto-computed from exceptions rather than entered manually
-**Depends on**: Phase 76 (milestone status must be reliable before exception rules run)
-**Requirements**: HLTH-01, HLTH-02, HLTH-03
+### Phase 77: Intelligence & Gantt
+**Goal**: The project Overview tab surfaces a live exceptions panel listing specific actionable issues with direct navigation links and an auto-computed health badge; the Gantt derives phase date ranges from child tasks and supports baseline snapshot capture with ghost bar comparison and a numeric variance column
+**Depends on**: Phase 75 (milestone status enum fix required for correct exception evaluation; gantt_baselines table required for baseline storage)
+**Requirements**: HLTH-01, HLTH-02, HLTH-03, GANTT-01, GANTT-02, GANTT-03, GANTT-04
 **Success Criteria** (what must be TRUE):
-  1. The project Overview tab displays an Exceptions panel listing detected issues (overdue tasks, at-risk milestones, stale items) as specific, actionable entries — not a generic summary
-  2. Project health status (Healthy / At Risk / Red) is auto-computed from exception count and severity; no manual health field is required or displayed
-  3. Each exception entry in the panel is a clickable link that navigates directly to the relevant record or tab
+  1. The project Overview tab displays an Exceptions panel listing detected issues (overdue tasks, at-risk milestones, stale items) as specific, actionable entries derived from live workspace data — not a generic summary
+  2. Project health status (Healthy / At Risk / Red) is auto-computed from exception count and severity; no manual health field is present or required
+  3. Each exception entry is a clickable link that navigates directly to the relevant record or tab
+  4. WBS phase rows in the Gantt automatically display a date bar spanning the earliest task start to the latest task due date across all tasks assigned to that phase — no manual phase date entry required
+  5. User can save a named Gantt baseline snapshot, toggle a ghost bar overlay showing the baseline schedule behind the current bars, and read a Variance column displaying the numeric difference (in days) between baseline and current end dates for each row
 **Plans**: TBD
 
-### Phase 79: Gantt Enhancements
-**Goal**: Gantt phase rows display dates derived from their child tasks rather than requiring manual entry; users can capture a baseline snapshot and toggle a ghost bar overlay to compare planned vs current schedule with a numeric variance column
-**Depends on**: Phase 75 (gantt_baselines table required), Phase 76 (task data quality improves with milestone status fix)
-**Requirements**: GANTT-01, GANTT-02, GANTT-03, GANTT-04
-**Success Criteria** (what must be TRUE):
-  1. WBS phase rows in the Gantt automatically display a date bar spanning the earliest task start to the latest task due date across all tasks assigned to that phase — no manual phase date entry required
-  2. User can click a "Save Baseline" control in the Gantt toolbar and the current phase and task schedule is captured as a named snapshot
-  3. User can toggle a ghost bar overlay that renders the baseline schedule behind the current schedule bars, making slippage visually apparent
-  4. Each Gantt row displays a Variance column showing the numeric difference (in days, positive = ahead, negative = behind) between the current end date and the baseline end date
-**Plans**: TBD
-
-### Phase 80: AI & Content
-**Goal**: Users can generate a structured Meeting Prep brief from the Skills tab using the existing skill infrastructure; skill outputs and markdown outputs in the Outputs Library can be read inline without leaving the app; all react-markdown rendering surfaces are XSS-hardened
-**Depends on**: Phase 76 (stable skill infrastructure baseline)
+### Phase 78: AI & Content
+**Goal**: Users can generate a structured Meeting Prep brief from the Skills tab using the existing skill infrastructure; the output renders inline with a copy button; Outputs Library supports inline preview of markdown and DOCX outputs; all react-markdown rendering surfaces are XSS-hardened
+**Depends on**: Phase 75 (stable skill infrastructure baseline for Meeting Prep SKILL.md integration)
 **Requirements**: SKILL-01, SKILL-02, SKILL-03, SKILL-04, OUT-01, OUT-02
 **Success Criteria** (what must be TRUE):
   1. Meeting Prep appears as a standard skill entry in the Skills tab; user can trigger it and receive a structured brief (open items, recent activity, suggested agenda) derived from live project data via the existing BullMQ + skill_runs pipeline
-  2. The Meeting Prep output renders inline in the Skills/Outputs surface and has a Copy to Clipboard button
-  3. The Meeting Prep prompt is editable via Admin > Prompts using the existing editable-prompts UI
-  4. Markdown skill outputs in the Outputs Library render as formatted text inline (not as raw markdown); DOCX outputs render via docx-preview; PPTX outputs show slide count and a download link
-  5. All react-markdown rendering instances (Outputs Library and ChatMessage) include rehype-sanitize, closing the existing XSS gap
-**Plans**: TBD
-
-### Phase 81: Active Tracks Config
-**Goal**: Users can enable or disable the ADR Track and Biggy Track per project from Admin > Settings; disabled tracks are hidden from WBS, Gantt, and Overview at the render layer without affecting skill context, extraction, or baseline data
-**Depends on**: Phase 75 (active_tracks JSONB column on projects), Phase 76 (Admin Settings form foundation)
-**Requirements**: ADMIN-04
-**Success Criteria** (what must be TRUE):
-  1. Admin > Settings displays toggle controls for ADR Track and Biggy Track; toggling and saving updates the project's active_tracks configuration
-  2. A disabled track's rows are hidden from the WBS tree, Gantt chart, and Overview tracks sections immediately after the setting is saved — without a full page reload
-  3. Skill context builders and extraction pipelines always receive the full WBS dataset regardless of track enable/disable state (filtering is render-layer only)
+  2. The Meeting Prep output renders inline in the output surface and has a functional Copy to Clipboard button
+  3. The Meeting Prep prompt is editable via Admin > Prompts using the existing editable-prompts UI (inherited from skill infrastructure — no separate implementation required)
+  4. Markdown skill outputs in the Outputs Library render as formatted text inline; DOCX outputs render via docx-preview (dynamic import + ssr:false); PPTX outputs show slide count and a download link with no inline render
+  5. All react-markdown instances — Outputs Library preview and ChatMessage — include rehype-sanitize, closing the existing XSS gap confirmed in ChatMessage.tsx
 **Plans**: TBD
 
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 75. Schema Foundation | 0/TBD | Not started | - |
-| 76. Quick Wins | 0/TBD | Not started | - |
-| 77. Pickers & Risk Fields | 0/TBD | Not started | - |
-| 78. Intelligence Features | 0/TBD | Not started | - |
-| 79. Gantt Enhancements | 0/TBD | Not started | - |
-| 80. AI & Content | 0/TBD | Not started | - |
-| 81. Active Tracks Config | 0/TBD | Not started | - |
+| 75. Schema + Quick Wins + Admin | 0/TBD | Not started | - |
+| 76. Pickers & Risk Fields | 0/TBD | Not started | - |
+| 77. Intelligence & Gantt | 0/TBD | Not started | - |
+| 78. AI & Content | 0/TBD | Not started | - |
 
 ---
-*Last updated: 2026-04-22 — v9.0 roadmap created*
+*Last updated: 2026-04-22 — v9.0 roadmap revised to 4 phases (75–78), 33 requirements mapped*
