@@ -1,271 +1,360 @@
-# Pitfalls Research: v7.0 Governance & Operational Maturity
+# Pitfalls Research: v9.0 UX Maturity & Intelligence
 
-**Domain:** Adding RBAC, soft-delete, bi-directional sync, filesystem editing, and project-scoped scheduling to an existing Next.js/PostgreSQL/better-auth application
-**Researched:** 2026-04-13
-**Confidence:** HIGH (based on system architecture analysis and migration patterns)
+**Domain:** Adding Kanban DnD, Gantt baseline tracking, chat persistence, owner FK migration, risk scoring, exceptions rules, Meeting Prep AI, Outputs Library preview, active track toggle, and stakeholder contact extraction to an existing Next.js 16 + PostgreSQL + BullMQ production application.
+**Researched:** 2026-04-22
+**Confidence:** HIGH (based on direct codebase analysis — WbsTree.tsx, TaskBoard.tsx, GanttChart.tsx, ChatPanel.tsx, PortfolioExceptionsPanel.tsx, schema.ts, outputs page, migrations, auth patterns)
+
+---
 
 ## Critical Pitfalls
 
-### Pitfall 1: Incomplete RBAC Migration — Global Role Leakage
+### Pitfall 1: @dnd-kit Nested DndContext Collision Between WBS Reorder and Kanban
 
 **What goes wrong:**
-Route handlers partially migrated to per-project RBAC still have code paths checking the old global `user.role === 'admin'` instead of `projectMembership.role === 'admin'`. Results in unauthorized access or false denials. With 40+ route handlers already using `requireSession()`, mixed authorization logic creates security holes.
+`WbsTree.tsx` and `TaskBoard.tsx` each instantiate their own `DndContext`. These live on separate routes today (WBS tab vs Task Board tab), so there is no nesting. If any future layout change renders both on the same page (e.g., a split-pane Plan view, the Gantt page with side-panel), two `DndContext` trees will be active simultaneously. @dnd-kit allows nested contexts but they share the same pointer sensor — drag events from the inner context bubble up and are processed by both, causing double-fire of `onDragEnd` handlers.
+
+More immediately: the new Kanban DnD in TaskBoard uses `SortableContext` + column-based droppable strategy. If a developer wires the new column droppables using `useDroppable` with the same ID namespace as WBS nodes (both use integer IDs as `over.id`), a drag event intended for a Kanban column fires the WBS reorder API (`/api/projects/[id]/wbs/reorder`) with a column ID like `"todo"` parsed as NaN, silently corrupting the WBS `newParentId` field.
 
 **Why it happens:**
-Global role checks are already embedded throughout 40+ route handlers from v3.0 Phase 26. When adding per-project roles, developers grep for explicit `role` checks but miss:
-- Implicit checks in helper functions
-- Authorization logic in service layer (not route handler)
-- Role-based UI rendering decisions in Server Components
-- BullMQ job handlers that run outside HTTP context
+Both components use bare integer task/WBS IDs as DnD identifiers. Column identifiers in Kanban (`"todo"`, `"in_progress"`, `"blocked"`, `"done"`) are strings, which avoids the integer collision specifically. But WBS reorder uses `over.id === 'root' ? null : Number(over.id)` — `Number("todo")` is NaN, which passes the `!over` guard and calls the API with `newParentId: NaN`, which Drizzle silently passes as NULL.
 
 **How to avoid:**
-1. **Create exhaustive audit manifest** — grep for ALL occurrences: `user.role`, `session.user.role`, `requireSession()` callsites, any conditional on `=== 'admin'` or `=== 'user'`
-2. **Introduce `requireProjectRole(projectId, minRole)` wrapper** — replaces bare `requireSession()` for project-scoped routes; enforces project membership lookup BEFORE authorization check
-3. **Deprecate global role column immediately** — add DB constraint `CHECK (role IS NULL)` or default to `'legacy'` with migration script to force code paths to break loudly during testing
-4. **Separate auth module** — extract all authorization into `lib/auth-rbac.ts` with single source of truth; route handlers import ONLY from this module
+1. Namespace all DnD IDs by type: WBS nodes use `wbs-{id}`, Kanban tasks use `task-{id}`, Kanban columns use `col-{id}`. Never use raw integers as DnD IDs.
+2. In `handleDragEnd` for WBS reorder, add `if (typeof over.id !== 'number' || isNaN(over.id as number))` guard to reject non-WBS drops.
+3. Keep `TaskBoard.tsx` and `WbsTree.tsx` on separate tabs that cannot co-render. Document this constraint in component JSDoc.
+4. Add a test: render both components in the same tree, verify drag events do not cross.
 
 **Warning signs:**
-- Unit tests pass but E2E tests show unauthorized 403s
-- Admin users can't perform admin actions on projects they're assigned to
-- Regular users can access admin-only endpoints on some projects
-- Inconsistent behavior between route handlers (some check global, some check project)
+- WBS items silently move to root (parent_id becomes NULL) without user dragging them in the WBS tab
+- `reorder` API receives `newParentId: null` when it should receive a valid integer
+- Console errors: "Cannot read properties of undefined (reading 'id')" during Kanban drag
 
 **Phase to address:**
-AUTH-01 through AUTH-05 — MUST be first phase in v7.0 roadmap. All other features (archive, schedule, prompts) depend on correct RBAC enforcement.
+Kanban DnD phase (Task Board sub-feature). Before adding any new `DndContext`, audit all existing `DndContext` instances and verify namespacing. Address ID namespace before wiring `onDragEnd`.
 
 ---
 
-### Pitfall 2: Soft-Delete Cascade Blind Spots — Foreign Key Chaos
+### Pitfall 2: Kanban Optimistic Update Race Condition on Rapid Cross-Column Drag
 
 **What goes wrong:**
-Adding `archived_at` to `projects` table in a DB with 57+ phases worth of tables causes:
-- Foreign key constraint violations when child records try to reference archived projects
-- Queries returning archived project data mixed with active data
-- Cascade deletes triggering when they shouldn't (or not triggering when they should)
-- `JOIN` queries exploding in complexity with `WHERE projects.archived_at IS NULL` scattered everywhere
+User drags task from "To Do" to "In Progress". Optimistic update fires immediately (`setTasks` with new status). API call `PATCH /api/tasks/{id}` is in-flight. User drags the same task again to "Done" before first API call resolves. Second optimistic update fires. First API call resolves — `router.refresh()` triggers server re-fetch. Server returns task with `status: 'in_progress'` (first PATCH committed). React reconciliation resets task to "In Progress" state, overwriting the second (locally-applied) "Done" state. User sees task bounce back.
+
+The current `TaskBoard.tsx` uses a `tasksSig` guard (`if (activeId !== null) return`) to block sync during drag, but the guard releases as soon as `setActiveId(null)` fires in `handleDragEnd` — before the second drag begins if the user moves fast. The `router.refresh()` in the catch block of the first PATCH will overwrite local state even if a second PATCH is in-flight.
 
 **Why it happens:**
-Complex relational DBs have dozens of tables with `project_id` foreign keys. Each has different semantics:
-- **Should cascade to read-only:** actions, risks, milestones, tasks (preserve for archive view)
-- **Should block archive:** active BullMQ scheduled jobs (must be cancelled first)
-- **Should be nullable on archive:** scheduled_jobs.project_id (keep job history even after project deleted)
-
-With Drizzle ORM, foreign key `onDelete: 'cascade'` behavior was set in v1.0-v6.0 without considering soft-delete. Adding `archived_at` doesn't change FK constraints.
+The pattern "optimistic update + `router.refresh()` on API resolve" is correct for single actions. It breaks when actions queue faster than the server round-trip. No request cancellation or serialization mechanism exists. The second drag has no way to cancel or supersede the first in-flight request.
 
 **How to avoid:**
-1. **Map every table with project_id FK** — create matrix: table name | FK behavior | archive semantics | query pattern
-2. **Add `archived_at IS NULL` default to base query helpers** — create `getActiveProjects()` wrapper in `db/queries.ts`; never use raw `db.query.projects` outside of archive-specific views
-3. **Implement archive pre-flight checks** — before setting `archived_at`, verify:
-   - No active scheduled jobs (`SELECT COUNT(*) FROM scheduled_jobs WHERE project_id = $1 AND next_run_at IS NOT NULL`)
-   - No pending extraction jobs (`SELECT COUNT(*) FROM extraction_jobs WHERE project_id = $1 AND status = 'processing'`)
-4. **Create archived project view route** — separate `/archived-projects` page that explicitly queries `WHERE archived_at IS NOT NULL`; regular portfolio dashboard uses `WHERE archived_at IS NULL`
-5. **Test cascade on RESTORE** — restoring archived project must not resurrect deleted child records; use separate `deleted_at` column for permanent deletes
+1. Assign a `dragSeq` counter (monotonically increasing integer ref). Each `handleDragEnd` captures its sequence number. The `router.refresh()` call is gated: `if (seq === dragSeqRef.current) router.refresh()`. Later drags increment the counter, blocking stale refreshes.
+2. Replace `router.refresh()` with surgical local state update after successful PATCH — only call `router.refresh()` on the first render after mount or explicit user action.
+3. Alternatively: debounce multiple status changes for the same task ID — if a second drag fires within 500ms of the first, cancel the first PATCH with `AbortController` and send only the final status.
 
 **Warning signs:**
-- Portfolio dashboard shows 0 projects after archiving one
-- Error: `violates foreign key constraint` when archiving
-- Archived project data appearing in active project dropdowns/autocomplete
-- Restored projects missing child records (actions, risks, tasks)
+- Task bounces back to previous column after rapid dragging
+- Task lands in wrong column after two quick successive drags
+- Browser network tab shows two sequential PATCH requests for same task ID, second one overwriting with stale status
 
 **Phase to address:**
-PROJ-01 (archive) MUST audit all FK relationships and implement query layer filtering BEFORE implementing archive UI. PROJ-04 (restore) needs cascade restore testing.
+Kanban DnD phase. The guard must be built into the initial implementation — retrofitting it once the bug appears in production is harder.
 
 ---
 
-### Pitfall 3: Gantt Bi-Directional Sync Race Conditions
+### Pitfall 3: Gantt Baseline JSONB Storage Causes Unbounded Column Growth
 
 **What goes wrong:**
-User drags task in Gantt → updates task.start_date → triggers re-render → fetches from DB → Gantt position recalculates → triggers another drag event → infinite loop or stale data overwrites. Or: Gantt shows updated dates but DB still has old dates after browser refresh.
+Baseline tracking stores a snapshot of Gantt task positions at a point in time. If stored as a JSONB column on the `projects` table (e.g., `gantt_baseline jsonb`), every snapshot replaces the previous one — only one baseline per project. If stored as an array (`gantt_baselines jsonb[]`), the column grows unbounded and the row becomes multi-megabyte, causing slow full-row fetches.
+
+If stored as a normalized table (`gantt_baselines` with rows per task per snapshot), the JOIN pattern for rendering ghost bars requires fetching O(tasks × snapshots) rows. With 50 tasks and 10 snapshots, that is 500 rows fetched and joined in the frontend to render a single Gantt view.
+
+The specific failure: `GanttChart.tsx` already accepts `wbsRows` as a prop and renders from an array of `GanttTask` objects. Adding baseline ghost bars requires a second prop of the same shape (`baselineWbsRows?: GanttWbsRow[]`). If the Gantt page passes both current and baseline to `GanttChart.tsx`, the baseline data must be fetched on the same page load — meaning the page query doubles in complexity.
 
 **Why it happens:**
-Gantt component (custom GanttChart.tsx from v5.0) stores visual state independently from DB. Bi-directional sync means:
-- **Gantt → DB:** Drag event calls API to update task dates
-- **DB → Gantt:** Any task edit (from Task Board or inline edit) must update Gantt visual state
-
-Without careful state management:
-- Optimistic updates show change immediately, but API call fails → UI lies
-- Race condition: user drags task while API is in-flight → later API response overwrites newer state
-- Milestone propagation cascades (task extends → milestone moves → all downstream tasks shift) cause N+1 query explosions
+Baseline features are easy to prototype (serialize current state, store, reload) but the storage model has long-term cost. JSONB blobs are convenient but opaque to SQL queries. Normalized tables are queryable but expensive to hydrate.
 
 **How to avoid:**
-1. **Single source of truth: DB** — Gantt always derives position from DB records; drag handler updates DB first, then re-fetches
-2. **Optimistic update with rollback** — drag handler immediately updates Gantt state + marks as "pending", API call resolves → commit, API call fails → revert to pre-drag state
-3. **Debounce drag events** — collect all position changes during drag, send single bulk update API call `onDragEnd` (not `onDrag`)
-4. **Cascade propagation in transaction** — if task extends and pushes milestone, all downstream date updates happen in single DB transaction with advisory lock: `SELECT pg_advisory_xact_lock(project_id)`
-5. **Version-based concurrency control** — add `version` column to tasks/milestones; API rejects updates if `version` doesn't match (optimistic locking)
+1. Use a dedicated `gantt_baselines` table: `{ id, project_id, created_at, label, snapshot_json JSONB }`. One row per named snapshot. `snapshot_json` stores `{ tasks: GanttTask[], wbs: GanttWbsRow[] }` — complete serialized state for the Gantt at snapshot time. This is O(1) fetch for the most recent baseline.
+2. Cap baselines at 5 per project (enforce via DB trigger or API guard). Oldest deleted on cap overflow.
+3. Fetch baseline lazily — only when user toggles "Show Baseline" in the UI. Do not include in default Gantt page load query.
+4. `GanttChart.tsx` already has a clean prop interface. Add `baselineRows?: GanttWbsRow[]` prop. Render ghost bars as a second layer, computed from `baselineRows` using the same geometry functions. The baseline layer is purely visual — no DnD, no date pickers.
+5. Drizzle migration: `gantt_baselines` table with `snapshot_json jsonb NOT NULL`. Add index on `project_id, created_at DESC` for "fetch latest baseline" query.
 
 **Warning signs:**
-- Gantt flickers/resets position after drag
-- Task dates in Gantt don't match Task Board after page refresh
-- Milestone moves trigger dozens of sequential API calls (N+1 pattern)
-- Simultaneous edits from two users cause one user's changes to vanish
+- Gantt page load time increases after adding baseline (query fetching too much data)
+- `projects` table rows become multi-MB (JSONB column growing per snapshot)
+- Ghost bars render with stale data after task edits (baseline not refreshed)
+- Baseline snapshot is lost on the next snapshot (single-JSONB-column overwrite)
 
 **Phase to address:**
-DLVRY-02 (bi-directional sync) — requires transaction design, debounce implementation, and version column migration. Must include load testing with 50+ tasks in Gantt view.
+Gantt Baseline phase. The storage model must be decided before any UI work. Migration file must be written first. Do not prototype with JSONB on `projects` table.
 
 ---
 
-### Pitfall 4: Filesystem Prompt Edit Security Holes
+### Pitfall 4: Chat Persistence Breaks the useChat Hook Message Array Contract
 
 **What goes wrong:**
-API route allows editing SKILL.md files with insufficient validation → user injects malicious prompt content → next skill execution sends attacker-controlled instructions to Claude → data exfiltration, prompt injection, or privilege escalation. Or: concurrent edits cause file corruption or lost updates.
+`ChatPanel.tsx` uses `useChat` from `@ai-sdk/react@3.0.144`. The `useChat` hook owns the `messages` array internally. It manages streaming assembly, partial message state, and `status` transitions. When adding persistence (load messages from DB on mount), the naive approach is to call `setMessages(loadedMessages)` from a `useEffect` on mount.
+
+Three failure modes:
+1. `setMessages` called while a stream is in-flight (`status === 'streaming'`) → partial message object in the array at the time of `setMessages` is discarded → stream appears to hang
+2. Messages loaded from DB use a different `id` format than what `useChat` generates internally (UUIDs vs DB serial integers) → React key collisions in the message list → duplicate rendering or missing messages
+3. `setMessages` with restored messages containing `role: 'tool'` or `role: 'system'` (which `buildChatContext` currently injects as a system prompt) → `useChat` does not display these but they count toward the `messages.filter(m => m.role === 'user' || m.role === 'assistant')` rendered list → message count mismatch confuses the "Clear conversation" button behavior
+
+The current `ChatPanel.tsx` filters to `role === 'user' || role === 'assistant'` before rendering, so persisted messages with other roles appear invisible but remain in the array.
 
 **Why it happens:**
-SKILL.md files live on disk at `/Users/.../cowork-skills/.skills/[skill-name]/SKILL.md` (not in database). Web UI edit means:
-- API route reads file, user edits in textarea, API route writes back
-- No atomic file locking (Node.js `fs.writeFile` can interleave writes)
-- No validation that edited content is still a valid SKILL.md structure
-- No audit trail of WHO changed WHAT in prompt (constraint: "prompts must not be modified" from PROJECT.md — but v7.0 explicitly adds editable prompts)
-
-This contradicts "Skill Fidelity" constraint: "SKILL.md files read from disk at runtime; prompts must not be modified". v7.0 is intentionally relaxing this for "editable prompts UI" feature.
+`useChat` was designed for stateless single-session conversations. Persistence requires restoring state into a hook that was designed to own its state from initialization. The Vercel AI SDK v6 `useChat` hook accepts `initialMessages` at construction time — this is the correct restoration point, not `setMessages` in `useEffect`.
 
 **How to avoid:**
-1. **Read-only by default, explicit opt-in for editability** — add `editable: true` flag to skill metadata; only flagged skills show edit UI
-2. **Atomic write with file locking** — use `fs.promises.open(..., 'wx')` for exclusive write, or proper-lockfile npm package
-3. **Schema validation on write** — parse edited SKILL.md with markdown parser, verify required sections (`## Task`, `## Input`, `## Output`) still exist
-4. **Prompt injection defense** — strip/escape any `</document>` tags, control characters, or nested XML tags user might inject
-5. **Append-only audit log** — every edit creates entry in `skill_prompt_edits` table: `{skill_name, edited_by_user_id, edited_at, diff, version}`
-6. **Backup before write** — copy current SKILL.md to `.planning/skill-backups/[skill-name]-[timestamp].md` before overwrite
-7. **RBAC enforcement** — only project admins can edit prompts; requires `requireProjectRole(projectId, 'admin')`
+1. Use `initialMessages` option on `useChat` construction, not `setMessages` in `useEffect`. Pass restored messages as `initialMessages: loadedMessages` when constructing the hook. This avoids the mid-stream race condition entirely.
+2. Persist only `role: 'user'` and `role: 'assistant'` messages to DB. Never persist system/tool roles. The system prompt is rebuilt fresh on each request from `buildChatContext`.
+3. Assign consistent IDs: DB stores messages with a `client_id` column (UUID generated client-side before sending). `useChat` generates its own UUIDs — persist the `message.id` value from the hook, not a DB serial.
+4. For pinning: add a `pinned: boolean` column to the messages table. Pinned messages are fetched separately and displayed above the conversation in a collapsible "Pinned Answers" section — they are NOT injected into the `useChat` messages array. The pin action calls a PATCH endpoint, not `setMessages`.
+5. On "Clear conversation": call `setMessages([])` AND call `DELETE /api/projects/{id}/chat/messages` to clear DB records. The CLEAR must be atomic — if DB delete fails, do not clear local state.
 
 **Warning signs:**
-- Two users edit same skill simultaneously → one edit lost
-- Skill execution fails with "missing required section" after edit
-- Edited prompt contains suspicious XML tags or control characters
-- No way to see who changed a prompt or rollback changes
+- Messages disappear from view after page refresh even though DB has them
+- "Thinking..." indicator appears but no response follows (stream drops after `setMessages`)
+- Message count in "Clear" button doesn't match visible messages
+- Pinned answer re-appears in the main chat flow after clearing
 
 **Phase to address:**
-SKILL-03 (editable prompts) — must implement file locking, validation, and audit trail BEFORE exposing edit UI. Consider moving to DB storage instead of filesystem (breaking Cowork compatibility constraint).
+Chat persistence phase. Decide on `initialMessages` vs `setMessages` before writing any persistence code. The DB schema (messages table with `client_id`, `project_id`, `role`, `content`, `pinned`, `created_at`) must be migrated first.
 
 ---
 
-### Pitfall 5: Project-Scoped Scheduling Metadata Filter Brittleness
+### Pitfall 5: owner → stakeholder_id FK Migration Breaks Free-Text Owner Fields Across 6+ Tables
 
 **What goes wrong:**
-BullMQ scheduled jobs use `metadata: { project_id }` for project scoping. Migration to project-scoped UI queries jobs with `getJobs()` then filters `job.data.metadata?.project_id === projectId` in application code. Results in:
-- O(N) filtering (fetches all jobs, filters in-memory)
-- Jobs with missing/malformed metadata pass through filter
-- Admin "all projects" view has no efficient query path
-- Job cancellation/edit doesn't verify user has admin role on job's project
+`tasks`, `risks`, `milestones`, `actions`, `artifacts`, and `wbs_items` all have `owner: text('owner')` columns (confirmed in schema.ts). Adding `stakeholder_id` as a nullable FK means existing rows have `owner = 'John Smith'` but `stakeholder_id = NULL`. New rows should save `stakeholder_id` with `owner` as fallback display text.
+
+Three failure modes:
+1. The stakeholder picker sets `stakeholder_id` but leaves `owner` unchanged at the old free-text value. Queries that JOIN on `stakeholder_id` return correct data, but the Gantt/exceptions panel reads `owner` (text field), not `stakeholder_id` → owner display stays stale after pick.
+2. The bulk tasks API (`/api/tasks-bulk`) currently updates `owner` as free text with NO `project_id` scoping (confirmed: the WHERE clause is `inArray(tasks.id, task_ids)` with no project filter). Adding stakeholder ID support to this endpoint without adding the project_id filter is a multi-tenant data leak: user can patch tasks from other projects by guessing task IDs.
+3. Migration sets `stakeholder_id` nullable with no default. Drizzle `ALTER TABLE ADD COLUMN` succeeds. But if any NOT NULL constraint is added in the same migration (e.g., `owner` column made NOT NULL for new writes), existing rows with NULL owner fail validation on any ORM-level update.
 
 **Why it happens:**
-BullMQ doesn't natively support querying by nested metadata fields. `queue.getJobs(['active', 'waiting'])` returns ALL jobs. Current implementation (v2.0 Phase 24) already uses `project_id` in job data, but UI shows global view. v7.0 adds per-project scheduling UI → needs efficient per-project filtering.
-
-Better-auth session context in route handlers has `user.id`, but no "current project" context → every job action API call must accept `projectId` and verify membership.
+The free-text owner pattern was a deliberate early choice (PROJECT.md key decision "owner autocomplete (from stakeholders)" introduced in v5.0 Phase 37). Adding FK references requires dual-write: both `owner` (text, for backward compatibility with existing queries, skills context, and Cowork exports) and `stakeholder_id` (FK, for new relational lookups) must stay in sync. Dual-write on 6+ tables with different API routes is easily missed.
 
 **How to avoid:**
-1. **Redis Set index** — maintain `projects:{projectId}:jobs` Redis set; add job ID to set on schedule, remove on complete/fail; query set for project-scoped views
-2. **Job name prefix convention** — name jobs `{projectId}:{skillName}:{timestamp}` → filter with `queue.getJobs()` then regex match `^${projectId}:`
-3. **Pagination for global admin view** — don't fetch all jobs; use `queue.getJobs(type, start, end, asc)` with cursor pagination
-4. **RBAC at job action level** — every cancel/edit/run-now API must: fetch job → extract `project_id` from job.data → call `requireProjectRole(projectId, 'admin')`
-5. **Job metadata schema validation** — enforce `metadata: { project_id: string, user_id: string, skill_name: string }` at job creation; reject jobs with missing project_id
+1. Migration adds `stakeholder_id integer REFERENCES stakeholders(id) ON DELETE SET NULL` as nullable on each relevant table. Existing data untouched — `stakeholder_id` starts as NULL everywhere.
+2. Stakeholder picker component writes BOTH fields atomically: `{ owner: stakeholder.name, stakeholder_id: stakeholder.id }`. API routes for PATCH accept both fields.
+3. Display logic reads: `stakeholder_id ? stakeholders[stakeholder_id].name : owner`. Never display raw `owner` text when `stakeholder_id` is set — the stakeholder name is canonical.
+4. **Fix `/api/tasks-bulk` multi-tenant gap now**: add `AND project_id = $projectId` to the WHERE clause. This is an existing security issue independent of the owner migration — it must be fixed in the same phase.
+5. Skill context builder (`lib/skill-context.ts`) and `buildChatContext` read `owner` text column. Do not change these — they continue to read the text field, which is always populated.
 
 **Warning signs:**
-- Scheduling UI slow to load (fetching 1000+ jobs then filtering)
-- User can cancel another project's scheduled jobs
-- Jobs created before v7.0 migration have no `project_id` metadata → invisible in new UI
-- Redis memory grows unbounded (no job ID cleanup in index sets)
+- Stakeholder picker sets a person but the Gantt/exceptions panel still shows old free-text name
+- Bulk task update via toolbar changes tasks from another project (multi-tenant gap)
+- Stakeholder deleted → rows with `stakeholder_id` FK show NULL in pickers but `owner` field still has the name
+- Skills context shows "undefined" for owner after picker is used (query changed to read `stakeholder_id` but skill reads text column)
 
 **Phase to address:**
-SCHED-01 through SCHED-05 — Redis index must be implemented FIRST, then RBAC enforcement, then UI. Must handle backward compatibility with jobs created pre-v7.0 (add migration script to backfill metadata).
+Owner field phase. Fix the `tasks-bulk` multi-tenant gap in the SAME phase — it is already present in the codebase and touches the same API handler being extended.
 
 ---
 
-### Pitfall 6: Completeness Analysis Definition Drift
+### Pitfall 6: Risk Score Auto-Compute NULL Propagation and Enum Mismatch
 
 **What goes wrong:**
-"Analyze Completeness" scores project against "expected data model" defined in code/config. Over time:
-- New phases add tables/columns → old projects scored as "incomplete" for data that didn't exist when project was created
-- Definition changes (e.g., "milestone needs owner" becomes required) → retroactively marks 100% complete projects as 70%
-- No versioning of completeness rules → can't compare score trends over time
+`likelihood × impact` matrix produces a numeric score (1–25 typically, with a 5×5 grid). Three failure modes:
+
+1. `likelihood` and `impact` are stored as text or nullable enums (the `risks` table currently has `severity: severityEnum` but no `likelihood` or `impact` columns — these must be added in a migration). If added as nullable columns, `NULL × 5 = NULL` — score is NULL for any risk where only one dimension is filled. The Health Dashboard exceptions panel then either ignores these risks (false negatives) or errors trying to compare NULL to a threshold.
+
+2. The `severityEnum` already exists on the risks table. If likelihood/impact are added as the same `severityEnum` type (values: `'low' | 'medium' | 'high' | 'critical'`), the product formula requires mapping text → integer before multiplying. If the mapping is inconsistent (low=1 in one place, low=0 in another), scores computed in the API differ from scores displayed in the UI.
+
+3. If `risk_score` is computed and stored as a DB column (via trigger or migration default), updates to `likelihood` or `impact` via PATCH must also update `risk_score`. If the PATCH handler sets `likelihood` but forgets to recompute `risk_score`, the stored score goes stale. The Health Dashboard reads the stored column — it never sees the live calculation.
 
 **Why it happens:**
-Completeness is inherently a moving target. v3.0 Phase 30 Context Hub includes "completeness analysis with per-tab gap descriptions" but doesn't specify how rules evolve. With 57+ phases of schema evolution, definition of "complete" is ambiguous.
-
-Implemented as code (likely `lib/completeness.ts` with rules like `hasOwner && hasDueDate && ...`) → code changes = definition changes = score changes without explicit versioning.
+Derived columns that depend on two parent columns require update discipline at every write path. In a system with 40+ route handlers, the computation is easy to omit in one path. Storing a computed value avoids double-query but creates a consistency problem.
 
 **How to avoid:**
-1. **Version completeness schemas** — store rules as versioned JSON configs: `completeness_schema_v1.json`, `v2.json`, etc.; projects reference schema version at creation
-2. **Grandfathering for schema upgrades** — new rules apply only to new projects OR after explicit project "upgrade schema version" action
-3. **Score components separately** — don't show single "70% complete"; show "Actions: 100%, Risks: 80%, Team Stakeholders: 40%" with per-area breakdowns
-4. **Time-series score storage** — store completeness scores in `completeness_snapshots` table with `{project_id, scored_at, schema_version, scores_json}`; enables trend tracking
-5. **Optional vs required distinction** — rules marked `required: true` block project completion; `required: false` are nice-to-haves that don't affect core score
+1. Do NOT store `risk_score` as a DB column. Compute it at query time: `COALESCE(likelihood_num, 0) * COALESCE(impact_num, 0) AS risk_score`. Define the mapping once in a view or a DB-generated column (`GENERATED ALWAYS AS`).
+2. Add `likelihood` and `impact` as integer columns (1–5 scale), not text enums. Simpler multiplication, simpler NULL handling (`COALESCE(likelihood, 0)`).
+3. If UI shows text labels ("Low / Medium / High"), map integer → label in the TypeScript query result transformer, not in the DB.
+4. For NULL handling: a risk with no likelihood/impact scores as 0 — not as NULL. Zero score = unassessed, not ignored.
+5. The existing `severityEnum` is for overall risk severity (the existing field). Do not repurpose it for likelihood or impact — these are separate dimensions.
 
 **Warning signs:**
-- All project scores drop after deployment (definition changed)
-- Users complain "it says we're incomplete but we filled everything in"
-- No way to explain WHY a score is 75% vs 80%
-- Completeness score changes on page refresh (non-deterministic rules)
+- Risk Score column shows "—" for risks that have both likelihood and impact filled in
+- Two risks with same likelihood/impact show different scores on refresh (inconsistent mapping)
+- Health Dashboard exception rule "risk_score > 15" never fires even when expected (NULL comparison)
+- Editing likelihood does not update the score in the list until page reload
 
 **Phase to address:**
-INGEST-04 (Analyze Completeness fix) — must define schema versioning and grandfathering strategy before fixing bugs in current implementation.
+Risk fields phase. DB migration adds `likelihood integer`, `impact integer` as nullable. Generated column or view computes `risk_score`. No stored derived column.
 
 ---
 
-### Pitfall 7: Cross-Feature Integration Gap — Archive + RBAC
+### Pitfall 7: Exceptions Panel False Positives From Stale Portfolio Query Data
 
 **What goes wrong:**
-User archives project while scheduled jobs still running → jobs continue executing → job tries to update archived project data → error OR data written to archived project. Or: User loses project admin role during extraction job → job fails halfway through with 403 error.
+`PortfolioExceptionsPanel.tsx` runs `computeExceptions(projects)` entirely client-side on the `PortfolioProject[]` array fetched by the portfolio page's Server Component. The exception logic uses `project.updated_at` for staleness detection (>14 days = stale) and `project.nextMilestoneDate` for overdue detection.
+
+Two false positive failure modes:
+1. `project.updated_at` reflects the `projects` table row update timestamp, not activity across child tables. A project can have 50 new actions/risks/tasks added today (all writing to `actions`, `risks`, `tasks` tables) but `projects.updated_at` stays stale if no one edits the project row itself. The staleness exception fires for an active project.
+2. `project.nextMilestone` / `project.nextMilestoneDate` comes from `getPortfolioData()`. If the portfolio query's milestone aggregation uses `MIN(date)` and a past milestone exists with no status (unarchived), that past milestone is returned as `nextMilestoneDate` and fires the overdue exception even if the relevant milestone is already marked "Completed" in the milestones table.
+
+The existing `computeExceptions` also has a logical bug (line 81): the `dependency` exception block checks `project.dependencyStatus === 'Blocked' && !alreadyHasBlockerException`, but `alreadyHasBlockerException` was set to `true` in the same case — this exception never fires.
 
 **Why it happens:**
-Features developed in isolation:
-- **RBAC (AUTH-01-05):** Enforces roles at route handler level
-- **Archive (PROJ-01-04):** Adds `archived_at` to projects, makes read-only
-- **Scheduling (SCHED-01-05):** Project-scoped jobs
-- **Extraction (existing v6.0):** BullMQ background jobs write data on approval
-
-Integration matrix of 4 features = 6 interaction edges, easy to miss:
-- Can archived project have scheduled jobs? (Should block or auto-cancel)
-- Can non-admin restore archived project? (RBAC enforcement in restore route)
-- Can extraction job write to project if user loses admin role during job? (Job runs under original user's identity)
+Exception logic is computed from a denormalized portfolio view projection that was designed for display, not for exception analysis. The query is optimized for the table view, not for rule evaluation.
 
 **How to avoid:**
-1. **Cross-feature validation matrix** — for each new feature, list all existing features; document interaction rules explicitly
-2. **Pre-flight checks for destructive actions:**
-   - Archive: cancel all scheduled jobs, wait for running jobs to finish OR warn user
-   - Role change: check for in-flight jobs owned by user; warn if downgrading admin
-3. **Background job identity context** — store `{ user_id, role_at_job_creation }` in job metadata; check role again before writes (don't assume still admin)
-4. **Integration tests for cross-feature scenarios:**
-   - Test: Archive project with running extraction job
-   - Test: Remove user's admin role during scheduled skill execution
-   - Test: Restore project that had jobs cancelled on archive
-5. **Saga pattern for multi-step operations** — archive = "cancel jobs → wait for completion → set archived_at" atomic sequence with rollback on failure
+1. Fix staleness to use `MAX(updated_at)` across all child tables for the project: `SELECT GREATEST(p.updated_at, MAX(a.updated_at), MAX(r.updated_at), MAX(t.updated_at)) FROM projects p LEFT JOIN actions a ... WHERE p.id = $id`. Run this in the portfolio query or a dedicated exceptions endpoint.
+2. Fix overdue milestone detection: filter out milestones with `status IN ('completed', 'missed')` before selecting `nextMilestoneDate`. Only `'on_track'` and `'at_risk'` milestones should trigger overdue exceptions.
+3. Fix the dead `dependency` exception block (the `!alreadyHasBlockerException` condition is always false when `dependencyStatus === 'Blocked'`). Separate blocker and dependency detection.
+4. Add an `exceptions` count to the portfolio query server-side to avoid full `computeExceptions` client-side on every render.
+5. When adding new exception rules for the Health Dashboard, evaluate them server-side via a dedicated `/api/projects/[id]/exceptions` endpoint, not in a client component processing a denormalized projection.
 
 **Warning signs:**
-- Race condition bugs appear in production but not in unit tests
-- Features work individually but break when used together
-- "It worked before we added [feature]" bug reports
-- Orphaned jobs running against archived projects
+- Active projects with daily activity show "Stale — no updates in 14 days" exceptions
+- Completed milestones appear as "overdue" exceptions
+- "Dependency" badge never appears even for blocked projects
+- Exception count in portfolio header doesn't match count in expanded panel
 
 **Phase to address:**
-ALL phases — requires integration testing phase AFTER core features ship individually. Add Phase 58 or 59: "Cross-feature integration validation" with dedicated test suite.
+Exceptions panel phase AND Health Dashboard phase. The portfolio query must be fixed in the same migration/PR as the exception rule changes.
 
 ---
 
-### Pitfall 8: Editable Prompts Cowork Compatibility Break
+### Pitfall 8: Meeting Prep AI Prompt Injection via User-Controlled Meeting Title
 
 **What goes wrong:**
-User edits SKILL.md in web UI → file differs from canonical version in Cowork skills repo → later Cowork skill update overwrites edited version → user changes lost. Or: exported context docs from app no longer compatible with Cowork skills because prompt expectations changed.
+Meeting Prep is a new AI skill. The skill receives a meeting title (user-controlled input) as part of its context. If the meeting title contains prompt injection payloads (`</project_data><instruction>Ignore previous instructions...</instruction><project_data>`), the XML delimiter strategy used in the existing chat route (`<project_data>` tags) is defeated. The AI processes the injected instructions as part of the trusted context.
+
+The existing chat route uses XML wrapping to delimit trusted from untrusted content. Meeting title is user-controlled — it must be treated as untrusted even though it is entered by an authenticated user.
 
 **Why it happens:**
-Constraint from PROJECT.md: "Skill Fidelity: SKILL.md files read from disk at runtime; prompts must not be modified" AND "Cowork Compatibility: Exported context docs and action tracker must be readable by all Cowork skills without modification."
-
-v7.0 explicitly adds editable prompts → breaks fidelity constraint. If user edits "Generate Action Items" prompt, output format may change → other skills expecting original format break.
+The existing anti-hallucination system prompt uses `<project_data>...</project_data>` as trust delimiters. Any user-controlled text interpolated inside those tags without escaping can break the delimiter structure. Meeting titles, task names, stakeholder notes, and risk descriptions are all user-controlled strings that could contain `<` and `>` characters.
 
 **How to avoid:**
-1. **Fork on edit** — edited skills create `SKILL.md.custom` alongside original `SKILL.md`; skill runner prefers `.custom` if exists
-2. **Versioned skill registry** — track `{skill_name, version, is_custom_edited, edited_by, last_edit}` in DB; UI shows "Custom (edited 2026-04-10)" badge
-3. **Export format validation** — if skill output is consumed by other skills, validate output still matches expected schema after prompt edit
-4. **Rollback to canonical** — "Reset to default" button that deletes `.custom` and reverts to original SKILL.md from Cowork
-5. **Block edits for integration-critical skills** — flag skills like "Context Extractor" as `editable: false` if other skills depend on their output format
+1. Escape all user-controlled strings before interpolation into the system prompt: replace `<` with `&lt;` and `>` with `&gt;`. This is the same defense used for XML injection.
+2. Alternatively, place user-controlled inputs OUTSIDE the `<project_data>` block, in a clearly delimited `<user_input>` section that the system prompt explicitly labels as untrusted.
+3. For Meeting Prep specifically: the meeting title is metadata, not a document. Pass it as a structured field, not as free text in the prompt body: `Meeting title: ${escapedTitle}`.
+4. Add server-side length limit on meeting title (e.g., 500 chars). Unusually long titles are likely injection attempts or accidents.
+5. The existing `temperature: 0.3` and "ONLY use information present in the project data" instruction help but do not prevent injection — they are not a substitute for input escaping.
 
 **Warning signs:**
-- User edits prompt, later updates to Cowork skills don't apply
-- Exported action tracker CSV format changed → other tools can't parse it
-- One edited skill breaks downstream skills in execution chain
+- AI response in Meeting Prep does not cite any project records despite having data
+- AI response contains hallucinated facts not in the DB ("the meeting is to discuss your Q3 roadmap" when none was set)
+- AI refuses to answer or behaves erratically when meeting title contains special characters
 
 **Phase to address:**
-SKILL-03 (editable prompts) — must decide: fork-on-edit OR accept compatibility break with Cowork. Document decision and implement safeguards.
+Meeting Prep AI phase. Escaping must be applied at the skill context builder level, not just in the Meeting Prep route. Audit ALL skill routes that interpolate user-controlled strings into system prompts.
+
+---
+
+### Pitfall 9: Outputs Library Inline Preview XSS via Unsanitized Markdown Rendering
+
+**What goes wrong:**
+`OutputLibraryPage` already uses `<iframe sandbox="allow-same-origin" srcDoc={output.content}>` for HTML outputs — this is correct for HTML files. The new feature adds inline preview for markdown and potentially DOCX/PPTX outputs.
+
+If markdown preview renders using `react-markdown` without `rehype-sanitize`, a skill output that contains raw HTML in a markdown code block (or a malicious skill prompt that generates `<script>` tags in its markdown output) will execute scripts in the browser. `react-markdown` by default does NOT sanitize HTML — it passes `dangerouslySetInnerHTML` for HTML elements in markdown.
+
+For DOCX/PPTX preview using `mammoth` (already installed as a dependency): `mammoth.convertToHtml()` generates HTML from Word documents. That HTML is then typically rendered with `dangerouslySetInnerHTML` or injected into an iframe. DOCX files uploaded by users can contain embedded HTML fields or OLE objects that survive mammoth conversion.
+
+**Why it happens:**
+`react-markdown` is already used in `ChatMessage.tsx` without `rehype-sanitize`. The chat context is AI-generated text, which is lower-risk. Skill outputs are also AI-generated but could be influenced by data ingested from external documents (meeting notes with attacker-controlled content). The output content path: user uploads doc → extraction runs → doc content influences skill prompt → skill output contains HTML → rendered in browser.
+
+**How to avoid:**
+1. Add `rehype-sanitize` to the `react-markdown` pipeline everywhere it renders AI-generated content: `<ReactMarkdown rehypePlugins={[rehypeSanitize]}>`. Apply to `ChatMessage.tsx` as well — this is a defense-in-depth fix.
+2. For DOCX/PPTX preview: use `mammoth.convertToHtml()` server-side in an API route, then serve the result via iframe with `sandbox="allow-same-origin"` (no `allow-scripts`). Never render mammoth output with `dangerouslySetInnerHTML`.
+3. The existing iframe in `OutputLibraryPage` uses `sandbox="allow-same-origin"` but NOT `allow-scripts`. This is correct — do not add `allow-scripts` to the sandbox. `allow-same-origin` is needed for CSS to load but does not grant script execution.
+4. For PPTX: server-side thumbnail rendering requires LibreOffice or a headless Chrome approach — neither is in the current stack. Defer PPTX preview to a "show slide count + filename + download" pattern. Do not attempt browser-side PPTX rendering.
+5. For plain text / markdown outputs: render with `react-markdown` + `rehype-sanitize`. For HTML outputs: use the existing iframe pattern. For DOCX: mammoth server-side → iframe.
+
+**Warning signs:**
+- Skill output containing `<script>alert(1)</script>` in a code block executes in the browser
+- DOCX preview shows raw HTML tags in the rendered text
+- iframe content makes fetch requests to external URLs (script execution despite sandbox)
+
+**Phase to address:**
+Outputs Library preview phase. Apply `rehype-sanitize` globally before shipping any new markdown rendering surface — fix `ChatMessage.tsx` at the same time since it has the same gap.
+
+---
+
+### Pitfall 10: Active Tracks Toggle Silently Hides Data That Cannot Be Restored From UI
+
+**What goes wrong:**
+Disabling ADR or Biggy track in Project Settings hides those track's WBS items in the tree, those tasks in the Gantt's track separator, and those items in the Overview. If the toggle is a simple boolean flag on the `projects` table, the data is not deleted — it is filtered at render time.
+
+The risk: if the toggle is mis-implemented as a DB-level filter (e.g., `WHERE wbs_items.track = activeTrack` in the query), the disabled track's data will also not appear in skill context, extraction, and Gantt baseline queries. Skills like "Generate Plan" will not see Biggy items and will re-generate them as new items on re-run — creating duplicate WBS items when the track is re-enabled.
+
+Additionally: `WbsTree.tsx` initializes `expandedIds` with `items.filter(item => item.level === 1).map(item => item.id)`. If the active track changes and items is filtered to the new track, the `expandedIds` set retains IDs from the old track's level-1 nodes. These IDs are now absent from `childrenMap`, so `toggleExpand` silently fails for those IDs — the expand state becomes polluted with stale IDs.
+
+**Why it happens:**
+Track visibility is a display concern, not a data concern. But the system's existing track constants (`Static track config constants define phase names` — v7.0 KEY DECISION) mean track names are hardcoded. A new "disabled tracks" config stored on the project row can interact unexpectedly with any component that reads track data unconditionally.
+
+**How to avoid:**
+1. Store `active_tracks: text[] DEFAULT '{"ADR","Biggy"}'` as a PostgreSQL array column on `projects`. The toggle modifies this array.
+2. Filter ONLY at the component/rendering layer. Do not add `WHERE track = ANY(active_tracks)` to DB queries used by skills, extraction, or Gantt baseline. Skills always get full data.
+3. `GanttChart.tsx` already has track-aware rendering (ADR/Biggy section headers). Respect the `active_tracks` setting in the Gantt page loader by filtering `wbsRows` to only include active tracks before passing to `GanttChart`.
+4. When track is disabled and re-enabled, no re-generation should be triggered. The "Generate Plan" skill should receive the full WBS regardless of active track setting.
+5. `WbsTree.tsx`'s `expandedIds` stale ID issue: the existing `useEffect` on `activeTrack` resets `expandedIds` — extend this logic to also reset when `active_tracks` config changes.
+
+**Warning signs:**
+- Re-enabling Biggy track after disabling → "Generate Plan" creates duplicate WBS items
+- Skills context does not include Biggy workstream data for active Biggy projects
+- WBS tree expand/collapse broken after toggling track (stale IDs in expandedIds Set)
+- Gantt baseline snapshot taken while a track is disabled does not include that track's ghost bars after re-enabling
+
+**Phase to address:**
+Active Tracks toggle phase (Project Settings). Must explicitly document "filter at render layer only" as a constraint in the plan.
+
+---
+
+### Pitfall 11: Stakeholder Contact Extraction Overwrites Manually Entered Data
+
+**What goes wrong:**
+The `stakeholders` table has `email` and `slack_id` columns. These may have been manually entered by a user. The new extraction feature runs extraction → approves → calls the ingestion approval API → upserts stakeholder record including `email` and `slack_id` from the extracted document.
+
+If the extraction produces a slightly different email (e.g., `john@bigpanda.io` vs `j.smith@bigpanda.io` for the same person), and the upsert uses `ON CONFLICT (name, project_id) DO UPDATE SET email = EXCLUDED.email`, the manually entered correct email is silently overwritten with the extracted (potentially wrong) value.
+
+The existing ingestion approval flow in `app/api/ingestion/approve/route.ts` uses change detection (Pass 5 — pg_trgm fuzzy matching). But Pass 5 is designed for detecting whether an extracted entity is a near-duplicate of an existing one, not for protecting specific fields from overwrite.
+
+**Why it happens:**
+Ingestion approval intentionally updates existing records with new data. For most fields this is correct behavior. Contact details (email, Slack handle) are high-trust fields where a manually entered value should not be silently replaced by an AI extraction.
+
+**How to avoid:**
+1. For `email` and `slack_id` specifically: use `ON CONFLICT ... DO UPDATE SET email = CASE WHEN excluded.email IS NOT NULL AND target.email IS NULL THEN excluded.email ELSE target.email END`. In plain terms: only fill in a field if it was previously empty. Never overwrite a non-null value with an extracted value.
+2. Alternatively: add a `email_source: 'manual' | 'extracted'` and `slack_id_source: 'manual' | 'extracted'` column. Update only if current source is `'extracted'` or NULL. Manual values are always protected.
+3. Show the proposed contact overwrite in the IngestionModal's "edit before approve" UI (v7.0 Phase 61 pattern). The user explicitly reviews and approves contact field changes.
+4. If an extracted email differs from an existing manual email, create a flag in `proposed_changes_json` (the existing Pass 5 mechanism) for the reviewer to resolve.
+
+**Warning signs:**
+- User notices stakeholder email changed to wrong value after running document ingestion
+- Slack handle for a stakeholder becomes blank after an extraction that did not find a Slack handle
+- Two different email addresses for the same stakeholder appearing in different views (one from extraction, one from UI edit)
+
+**Phase to address:**
+Stakeholder contact extraction phase. The upsert logic must be written with field-protection semantics from the start.
+
+---
+
+### Pitfall 12: New Route Handlers Missing requireProjectRole() — Multi-Tenant Auth Gap Carried Forward
+
+**What goes wrong:**
+The existing `tasks-bulk` route (`/api/tasks-bulk`) uses `requireSession()` (session only, no project role check) and does not filter by `project_id`. This is a known gap in the v8.0 multi-tenant isolation audit. Any new route handler added in v9.0 that handles task bulk updates, chat message persistence, stakeholder updates, or risk score writes risks repeating this pattern if the developer follows the `tasks-bulk` route as a reference.
+
+At v9.0 scale (10 new features, many new route handlers), the probability of at least one handler missing `requireProjectRole()` is high if there is no enforcement mechanism.
+
+**Why it happens:**
+The pattern `requireProjectRole()` is documented in PROJECT.md and used in 126 route files (confirmed grep). But `tasks-bulk` is a global (non-project-scoped) route — it uses `requireSession()` correctly for its level of scoping. New developers (or AI-assisted coding) looking at `tasks-bulk` as a template for a new global-ish endpoint will copy the pattern without adding project scoping.
+
+**How to avoid:**
+1. For every new API route in v9.0: if the route path contains `[projectId]`, it MUST use `requireProjectRole(numericId, 'user')` or `requireProjectRole(numericId, 'admin')`. No exceptions. Use `requireSession()` only for truly global routes (e.g., `/api/outputs`, `/api/tasks-bulk`).
+2. For global routes that operate on project-scoped data (like `tasks-bulk`): add `AND project_id = ANY(SELECT project_id FROM project_members WHERE user_id = $userId)` to the WHERE clause, or at minimum restrict to task IDs the user has access to.
+3. New chat messages endpoint: `POST /api/projects/[projectId]/chat/messages` → requires `requireProjectRole`.
+4. New baseline endpoint: `POST /api/projects/[projectId]/gantt-baselines` → requires `requireProjectRole`.
+5. Add a lint rule or code review checklist item: any `app/api/projects/[projectId]/` route that does NOT call `requireProjectRole` is a review blocker.
+
+**Warning signs:**
+- New v9.0 route handler using `requireSession()` without project membership check in a `/api/projects/[projectId]/` path
+- Bulk operations that accept `project_id` as a body parameter instead of deriving it from the URL path
+- Test coverage missing for "user from project A cannot access project B" scenario on new endpoints
+
+**Phase to address:**
+Every v9.0 phase that adds new route handlers. This is a cross-cutting constraint, not a single phase. Add to the plan template as a required checklist item.
 
 ---
 
@@ -273,105 +362,151 @@ SKILL-03 (editable prompts) — must decide: fork-on-edit OR accept compatibilit
 
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| In-memory filtering for project-scoped jobs instead of Redis index | 2 hours to ship feature | O(N) query, slow UI at 100+ jobs | MVP only; must add index in Phase 59 |
-| Skip version column for Gantt optimistic locking | Simpler initial implementation | Race conditions on concurrent edits | Only if single-user project mode; never for multi-user |
-| Global `archived_at IS NULL` filter in every query | Fastest to implement soft-delete | Hard to find all query callsites; bugs leak archived data | Never — use query layer abstraction from day 1 |
-| Prompt edits directly overwrite SKILL.md without backup | No extra storage needed | Lost ability to rollback bad edits | Never — backups are required for filesystem writes from web UI |
-| RBAC migration leaves global role column as fallback | Backward compatibility during transition | Security holes from mixed authorization logic | Only during 1-2 sprint transition; then hard cut |
-| Completeness rules in code instead of versioned config | No config storage layer needed | Can't track why scores changed or compare across versions | POC only; production needs versioned schemas |
+| Storing `risk_score` as a DB column updated on each PATCH | Single DB read for score display | Score goes stale when likelihood/impact are updated via bulk or skill routes | Never — use computed/generated column |
+| Passing raw integer IDs as @dnd-kit identifiers | Simplest code | ID namespace collisions when multiple DndContexts are on same page | Never — prefix IDs with type |
+| `setMessages(loadedMessages)` in `useEffect` for chat restore | Quick to implement | Race condition with streaming; breaks on mid-stream page blur/refocus | Never — use `initialMessages` at hook init |
+| Single JSONB column on `projects` for Gantt baseline | No migration needed | Only one baseline per project, lost on next snapshot | Never — use dedicated `gantt_baselines` table |
+| `ON CONFLICT DO UPDATE SET email = EXCLUDED.email` for stakeholder upsert | Simple merge logic | Silently overwrites manually-entered contacts with extracted values | Never for contact fields |
+| Following `tasks-bulk` as a template for new project-scoped handlers | Familiar pattern | Missing project_id filter allows cross-project data access | Never — tasks-bulk is itself a known gap |
+| Computing exceptions client-side from portfolio projection | No new API needed | False positives from stale `updated_at` and unfiltered past milestones | MVP only; needs server-side rule engine by v10.0 |
+
+---
 
 ## Integration Gotchas
 
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| better-auth + per-project roles | Storing project membership in JWT session (size explosion) | Store only user_id in session; query project_memberships on each request |
-| Drizzle ORM + soft-delete | Using Drizzle's `.delete()` method | Always use `.update({ archived_at: new Date() })`; reserve `.delete()` for permanent delete |
-| BullMQ + RBAC | Checking user role at job creation only | Re-check role on each job execution (user may lose admin role while job queued) |
-| Custom Gantt + DB dates | Two-way binding causing update loops | Single source of truth (DB); Gantt always derives from DB; debounce writes |
-| Node.js fs + concurrent writes | `fs.writeFileSync` interleaving | Use `proper-lockfile` or atomic write pattern with rename |
-| PostgreSQL FKs + soft-delete | Cascade delete still triggers on `DELETE` | Change FK `onDelete` to `SET NULL` or `NO ACTION`; handle cleanup manually |
+| @dnd-kit + two DndContexts | Using raw integer IDs that collide across contexts | Namespace IDs: `wbs-{id}`, `task-{id}`, `col-{id}` |
+| `useChat` + DB persistence | `setMessages()` in `useEffect` on mount | Pass `initialMessages` at `useChat()` construction; persist only user/assistant roles |
+| Vercel AI SDK streaming + pin action | Injecting pinned messages into `messages` array | Render pinned messages in a separate UI section; never insert into `useChat` state |
+| mammoth DOCX conversion + inline render | `dangerouslySetInnerHTML` of mammoth output | Server-side conversion → serve via iframe with `sandbox="allow-same-origin"` only |
+| `react-markdown` + AI-generated content | No sanitization (current ChatMessage.tsx) | Add `rehype-sanitize` plugin to all `react-markdown` instances |
+| Drizzle nullable FK + existing text owner | Forgetting to dual-write both `owner` and `stakeholder_id` | Write both in every PATCH handler; display prefers `stakeholder_id` name |
+| `tasks-bulk` + new owner/status fields | Copying `tasks-bulk`'s missing `project_id` filter | Always scope bulk ops to project membership; fix existing gap in same phase |
+| Active tracks toggle + skill context | Filtering DB query by active track | Filter at render layer only; skills always receive full WBS |
+
+---
 
 ## Performance Traps
 
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
-| Fetching all BullMQ jobs and filtering by project_id | Scheduling page slow to load | Redis Set index for per-project job IDs | >100 total jobs across all projects |
-| N+1 queries when cascading Gantt date updates | Milestone move triggers 50+ sequential DB calls | Bulk update in single transaction | >20 tasks tied to one milestone |
-| Completeness analysis recalculating on every page view | Page load time >2s | Cache score in `completeness_snapshots` with 24hr TTL | >50 tabs to analyze per project |
-| Unindexed `archived_at IS NULL` filter | Portfolio dashboard slow | Add partial index: `CREATE INDEX idx_projects_active ON projects (id) WHERE archived_at IS NULL` | >25 projects (per PERF-01) |
-| Filesystem SKILL.md reads on every skill execution | Cold start 500ms | Read once at worker startup, cache in memory, watch file for changes | >10 concurrent skill executions |
-| Querying project memberships without index | RBAC check slow on every API call | Add index: `CREATE INDEX idx_project_memberships_lookup ON project_memberships (user_id, project_id)` | >50 projects per user |
+| Loading Gantt baseline on every page render | Gantt page slow to open | Lazy-load baseline only when "Show Baseline" toggle is on | Immediately with 50+ tasks × multiple baselines |
+| `computeExceptions()` client-side on every portfolio render with all project data | Portfolio page rerender lag | Move rule evaluation to server; cache result | >20 projects in portfolio |
+| Chat messages DB table with no `(project_id, created_at)` index | Chat history slow to load on tab switch | Add composite index `(project_id, created_at DESC)` in migration | >200 messages per project |
+| Mammoth DOCX → HTML conversion in the HTTP request cycle | Output Library preview causes slow response | Convert server-side in BullMQ job; cache result in outputs table | Files >500KB |
+| `risk_score` recomputed in every portfolio query JOIN | Portfolio query slow when aggregating across many risks | Materialized view or denormalized score column with consistent update | >100 risks per project |
+| Meeting Prep AI building full project context on every call | 3–5s skill startup time | Cache `buildChatContext()` output in Redis with short TTL (60s) | Concurrent Meeting Prep runs for same project |
+
+---
 
 ## Security Mistakes
 
 | Mistake | Risk | Prevention |
 |---------|------|------------|
-| Checking RBAC only in middleware (CVE-2025-29927) | Next.js middleware bypass → unauthorized access | MUST call `requireProjectRole()` in every route handler (constraint already documented) |
-| Trusting job metadata `user_id` without re-verification | Attacker spoofs user_id in job data → privilege escalation | Background jobs MUST query session/DB to verify user still has required role |
-| No path sanitization in SKILL.md file writes | Path traversal: edit `../../../../etc/passwd` | Validate skill_name against whitelist; reject if contains `..` or `/` |
-| Archived project data visible in autocomplete/search | Data leakage from "deleted" projects | All autocomplete queries MUST filter `archived_at IS NULL` |
-| Prompt injection via edited SKILL.md | User injects `</document><instruction>Ignore previous instructions` | Escape/strip XML tags; validate prompt structure; consider sandboxing skill execution |
-| No rate limiting on prompt edit API | Attacker rapidly overwrites SKILL.md → DoS or data loss | Rate limit: 5 edits per skill per hour per user |
+| Interpolating meeting title directly into AI system prompt without escaping | Prompt injection: attacker injects `</project_data>` to break trust delimiter | Escape `<>&"'` in all user-controlled strings before prompt interpolation |
+| `tasks-bulk` missing `project_id` filter (existing gap) | User updates tasks from projects they are not members of | Add `WHERE project_id IN (SELECT project_id FROM project_members WHERE user_id = $userId)` |
+| New chat messages endpoint without `requireProjectRole()` | User persists messages to another project's chat history | Every `/api/projects/[projectId]/` route MUST use `requireProjectRole()` |
+| Rendering mammoth DOCX output with `dangerouslySetInnerHTML` | XSS from embedded HTML in DOCX fields | Always render via sandboxed iframe, never via `dangerouslySetInnerHTML` |
+| `react-markdown` without `rehype-sanitize` (existing gap in ChatMessage.tsx) | XSS from AI output containing `<script>` in markdown code blocks | Add `rehype-sanitize` to all react-markdown instances; fix ChatMessage.tsx in same PR |
+| Stakeholder upsert overwrites manually-entered email | Data integrity loss; user-trust degradation | Field-protection upsert: only fill NULL fields from extraction |
+
+---
 
 ## UX Pitfalls
 
 | Pitfall | User Impact | Better Approach |
 |---------|-------------|-----------------|
-| Archiving project without warning about scheduled jobs | Jobs continue running → confusion | Pre-flight check modal: "This project has 3 active scheduled jobs. Cancel them before archiving?" |
-| Gantt drag updates DB but doesn't show success feedback | User drags twice, thinking first drag failed → data inconsistency | Optimistic update with visual "saving..." indicator and success checkmark |
-| Completeness score drops after schema upgrade with no explanation | User perceives regression: "we were 100%, now 70%" | Show diff: "New requirements: Team Stakeholders (0/5), WBS Coverage (40%)" |
-| Prompt edit form doesn't show current prompt structure | User breaks required sections → skill fails | Split-pane editor: left = editable text, right = live preview with required section validation |
-| Archive vs Delete not clearly distinguished | User archives thinking it's permanent delete → data still exists | Clear labels: "Archive (read-only, can restore)" vs "Permanently Delete (cannot undo)" |
-| Per-project role change has no notification | User loses admin access with no explanation | Email notification + in-app banner: "Your role on [project] changed to User. Contact [admin] if this is incorrect." |
+| Kanban task "bounces back" to previous column on rapid double-drag | User loses confidence in DnD reliability | `dragSeq` counter prevents stale refresh; surgical local state update |
+| "Clear conversation" clears local state but not DB — messages reappear on refresh | User confused: conversation was not cleared | Clear must be atomic: `setMessages([])` AND `DELETE` DB records |
+| Gantt ghost bar (baseline) renders even when baseline has not been set | Confusing empty ghost bars | Only render ghost bar layer when baseline exists; show "No baseline set" empty state otherwise |
+| Risk score shown as 0 for risks with no likelihood/impact entered | User interprets 0 as "no risk" rather than "unscored" | Show "—" for unscored risks (NULL treatment), not 0 |
+| Active track disable hides data in WBS/Gantt — user fears data loss | Anxiety: "did I delete something?" | Show banner: "ADR track hidden — data preserved. Re-enable in Project Settings." |
+| Stakeholder picker saves stakeholder_id but old owner text shown in task list until refresh | Inconsistent display state mid-session | Update local task state optimistically with `stakeholder.name` on pick |
+
+---
 
 ## "Looks Done But Isn't" Checklist
 
-- [ ] **RBAC Migration:** All 40+ route handlers updated to use `requireProjectRole()` — verify with grep for old `requireSession()` without project check
-- [ ] **Soft-Delete:** All queries using `projects` table have `archived_at IS NULL` filter — verify with DB query log analysis
-- [ ] **Gantt Sync:** Tested with 50+ tasks, concurrent edits from 2 users, and during in-flight API call — verify no race conditions
-- [ ] **Prompt Editing:** File locking implemented, backup created before write, audit log entry recorded — verify with concurrent edit test
-- [ ] **Project-Scoped Jobs:** Redis index created, RBAC verified on cancel/edit, backward compatibility for pre-v7.0 jobs — verify with migration script
-- [ ] **Completeness:** Schema versioned, scores reproducible, trend tracking works — verify score doesn't change on refresh
-- [ ] **Archive + Jobs:** Scheduled jobs cancelled before archive, in-flight jobs complete before archive proceeds — verify with integration test
-- [ ] **Prompt + Cowork:** Edited skills forked or flagged, rollback to canonical works — verify Cowork skill updates don't overwrite edits
+- [ ] **Kanban DnD:** DnD ID namespacing verified — `wbs-{id}` and `task-{id}` prefixes confirmed. No integer ID collisions.
+- [ ] **Kanban DnD:** Rapid double-drag test passed — second drag does not produce a stale server-overwrite bounce.
+- [ ] **Chat persistence:** `initialMessages` used at hook construction, not `setMessages` in `useEffect`. Confirmed by code inspection.
+- [ ] **Chat persistence:** "Clear conversation" deletes DB records atomically — verified by checking network tab shows DELETE call.
+- [ ] **Chat pinning:** Pinned messages rendered in separate UI section, NOT injected into `useChat` messages array.
+- [ ] **Gantt baseline:** Storage uses `gantt_baselines` table (not JSONB column on `projects`). Migration file committed.
+- [ ] **Gantt baseline:** Ghost bars only render when `baselineRows` prop is non-null and non-empty.
+- [ ] **owner → stakeholder_id:** Both `owner` (text) and `stakeholder_id` (integer) written in every PATCH handler for affected tables.
+- [ ] **owner → stakeholder_id:** `tasks-bulk` multi-tenant gap fixed (project_id filter added) in the same phase.
+- [ ] **Risk score:** No stored `risk_score` column — computed at query time via generated column or view.
+- [ ] **Exceptions panel:** `nextMilestoneDate` query filters completed/missed milestones. Staleness uses MAX across child tables.
+- [ ] **Meeting Prep AI:** User-controlled strings (meeting title, attendee names) HTML-escaped before prompt interpolation.
+- [ ] **Outputs Library:** `react-markdown` uses `rehype-sanitize` plugin. DOCX preview uses server-side iframe pattern.
+- [ ] **Active tracks:** Track filter applied at render layer only. Skill context queries are unchanged (return full WBS).
+- [ ] **Stakeholder contacts:** Upsert uses field-protection logic — only fills NULL fields from extraction.
+- [ ] **All new [projectId] routes:** `requireProjectRole()` called before any DB access. Verified by grep for `requireSession()` in `/app/api/projects/[projectId]/` paths.
+
+---
 
 ## Recovery Strategies
 
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| RBAC leakage after migration | HIGH (security incident) | 1. Immediate: disable affected route handlers<br>2. Audit: review access logs for unauthorized access<br>3. Fix: add `requireProjectRole` to all missed handlers<br>4. Redeploy and verify with E2E test suite |
-| Soft-delete cascade breaks restore | MEDIUM | 1. DB backup restore to pre-archive state<br>2. Analyze: map all FK dependencies<br>3. Implement: cascade restore logic in transaction<br>4. Test: archive → restore → verify all child records |
-| Gantt sync infinite loop | LOW | 1. Browser refresh to reset Gantt state<br>2. Fix: add debounce to drag handler<br>3. Add circuit breaker: max 5 updates per 10 seconds |
-| Prompt edit corrupts SKILL.md | MEDIUM | 1. Restore from `.planning/skill-backups/` directory<br>2. If no backup: git checkout original from Cowork repo<br>3. Add file locking to prevent future corruption |
-| BullMQ job metadata missing project_id | MEDIUM | 1. Migration script: backfill metadata from job name or related DB records<br>2. Add schema validation to reject future jobs without metadata |
-| Completeness scores drop after deploy | LOW | 1. Document schema version change in release notes<br>2. Provide "Recalculate with old schema" button for comparison<br>3. Grandfather existing projects to old schema version |
+| DnD ID collision causes WBS reorder corruption | MEDIUM | 1. Identify affected rows (wbs_items with unexpected parent_id = NULL). 2. Restore from last-known-good backup or audit_log. 3. Add namespace prefix to fix root cause. |
+| Chat messages failed to persist (streaming contract broken) | LOW | 1. `setMessages([])` resets to clean state. 2. Switch to `initialMessages` approach. 3. No DB corruption risk — messages are append-only. |
+| Gantt baseline JSONB overwrote previous snapshot | MEDIUM | 1. Create `gantt_baselines` table immediately. 2. Note: previous snapshots are lost (no undo). 3. Document limitation. |
+| Stakeholder email overwritten by extraction | LOW | 1. User manually re-enters correct email. 2. Fix upsert logic to protect non-null fields. 3. Log all extraction-driven field changes in audit_log for recovery reference. |
+| Risk score column stale after bulk update | LOW | 1. Recalculate via one-time SQL: `UPDATE risks SET risk_score = COALESCE(likelihood,0) * COALESCE(impact,0)`. 2. Move to generated column to prevent recurrence. |
+| New route missing requireProjectRole — security gap | HIGH | 1. Immediately disable affected endpoint. 2. Audit access logs for cross-project calls. 3. Add `requireProjectRole()` and redeploy. 4. Report as security incident. |
+
+---
 
 ## Pitfall-to-Phase Mapping
 
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| RBAC leakage | AUTH-01 through AUTH-05 (FIRST) | E2E test suite covers all 40+ route handlers; zero `user.role` references outside `lib/auth-rbac.ts` |
-| Soft-delete cascade | PROJ-01 (before UI) | All `projects` queries filtered; integration test: archive → query → verify no archived data in results |
-| Gantt sync race conditions | DLVRY-02 | Load test: 50 tasks, 2 concurrent users, drag + edit simultaneously → no data loss; advisory lock visible in DB logs |
-| Prompt edit security | SKILL-03 | File locking test: 2 concurrent edits → one waits for other; path traversal test: reject `../` in skill_name |
-| Project-scoped job filter | SCHED-01 (before UI) | Redis index created; query time <100ms for 200 jobs; RBAC test: user can't cancel other project's job |
-| Completeness drift | INGEST-04 | Schema version stored; score reproducible; trend chart shows historical scores with schema version annotations |
-| Archive + RBAC integration | Phase 58/59 (integration phase) | Cross-feature test matrix: archive with running jobs, role change during job, restore with jobs |
-| Prompt + Cowork compatibility | SKILL-03 | Fork-on-edit verified; Cowork update doesn't overwrite custom edits; rollback button restores canonical |
+| @dnd-kit ID namespace collision | Kanban DnD phase (first action) | Confirm `data-dnd-id` attributes have type prefix; render WbsTree + TaskBoard in same test tree |
+| Optimistic update race condition | Kanban DnD phase | Automated test: two rapid drags on same task → task lands in final target column |
+| Gantt baseline JSONB bloat | Gantt baseline phase (migration first) | Migration creates `gantt_baselines` table; no `gantt_baseline` column on `projects` table |
+| useChat `setMessages` race condition | Chat persistence phase | Load messages in `initialMessages`; stress-test: blur page during stream → messages still present on refocus |
+| owner dual-write inconsistency | Owner field phase | Grep confirms all PATCH handlers for tasks/risks/milestones/actions write both fields |
+| tasks-bulk multi-tenant gap | Owner field phase (same PR) | Test: user from project A cannot bulk-update task IDs from project B |
+| Risk score NULL propagation | Risk fields phase | SQL: `SELECT COUNT(*) FROM risks WHERE likelihood IS NOT NULL AND impact IS NOT NULL AND risk_score IS NULL` → must return 0 |
+| Exceptions panel false positives | Exceptions/Health Dashboard phase | Verify active project with recent child-table edits does NOT trigger stale exception |
+| Meeting Prep prompt injection | Meeting Prep AI phase | Test: meeting title with `</project_data>` does not break AI response |
+| react-markdown XSS gap | Outputs Library preview phase (+ ChatMessage.tsx in same PR) | Test: markdown output with `<script>alert(1)</script>` does not execute |
+| Active tracks skip-filter in skills | Active tracks phase | Test: disable ADR → run "Generate Plan" skill → WBS contains both ADR and Biggy items |
+| Stakeholder contact overwrite | Stakeholder extraction phase | Test: run extraction on doc that contains wrong email for existing stakeholder → manual email preserved |
+| Missing requireProjectRole() | Every v9.0 phase with new route handlers | Grep: zero `requireSession()` calls in `/app/api/projects/[projectId]/` paths that lack `requireProjectRole` |
+
+---
 
 ## Sources
 
-- **Project architecture:** `/Users/jmiloslavsky/Documents/Project Assistant Code/.planning/PROJECT.md` — system constraints, tech stack, 57-phase evolution history
-- **Existing RBAC:** v3.0 Phase 26 implementation (40+ route handlers with `requireSession()` at handler level; CVE-2025-29927 defense-in-depth pattern)
-- **BullMQ patterns:** v2.0 Phase 24 (scheduler infrastructure with `project_id` metadata)
-- **Gantt implementation:** v5.0 Phase 38 (custom GanttChart.tsx with drag-to-reschedule, milestone markers)
-- **Extraction pipeline:** v6.0 Phases 52-57 (multi-pass with tool use API, synthesis-first, approval flow)
-- **better-auth security:** Known limitation — session storage should not include large objects; per-project roles must query DB on each request
-- **Drizzle soft-delete patterns:** Community best practice — never use `.delete()` for soft-delete; partial indexes for performance
-- **PostgreSQL advisory locks:** Official docs — `pg_advisory_xact_lock(bigint)` for application-level locking during cascading updates
-- **Node.js filesystem concurrency:** `proper-lockfile` npm package — standard solution for atomic file writes from concurrent processes
+- **Codebase analysis (direct):**
+  - `/Users/jmiloslavsky/Documents/Panda-Manager/components/WbsTree.tsx` — DnD pattern, ID usage, track tab logic
+  - `/Users/jmiloslavsky/Documents/Panda-Manager/components/TaskBoard.tsx` — DnD, optimistic update, `tasks-bulk` caller, multi-tenant gap at line 310
+  - `/Users/jmiloslavsky/Documents/Panda-Manager/components/GanttChart.tsx` — `buildWbsRows`, split-panel data model, GanttWbsRow interface
+  - `/Users/jmiloslavsky/Documents/Panda-Manager/components/chat/ChatPanel.tsx` — `useChat` with `setMessages`, no persistence
+  - `/Users/jmiloslavsky/Documents/Panda-Manager/components/chat/ChatMessage.tsx` — `react-markdown` without `rehype-sanitize`
+  - `/Users/jmiloslavsky/Documents/Panda-Manager/components/PortfolioExceptionsPanel.tsx` — client-side exception logic, dead `dependency` block
+  - `/Users/jmiloslavsky/Documents/Panda-Manager/app/outputs/page.tsx` — iframe sandbox pattern, HTML-only preview
+  - `/Users/jmiloslavsky/Documents/Panda-Manager/app/api/tasks-bulk/route.ts` — missing project_id filter (confirmed)
+  - `/Users/jmiloslavsky/Documents/Panda-Manager/app/api/projects/[projectId]/chat/route.ts` — XML delimiter anti-injection pattern
+  - `/Users/jmiloslavsky/Documents/Panda-Manager/db/schema.ts` — risks table (no likelihood/impact columns), stakeholders (email/slack_id), tasks (owner text, no stakeholder_id)
+  - `/Users/jmiloslavsky/Documents/Panda-Manager/tests/auth/cache-isolation.test.ts` — Redis key format `weekly_focus:${projectId}`
+- **PROJECT.md constraints:**
+  - v7.0 KEY DECISION: `computeDepth from parent_id chain` (WBS level column unreliable)
+  - v7.0 KEY DECISION: `requireProjectRole()` at all 40+ [projectId] handlers
+  - v5.0 KEY DECISION: Custom `GanttChart.tsx` replaces frappe-gantt
+  - v3.0 KEY DECISION: Vercel AI SDK `useChat` + `toUIMessageStreamResponse`
+- **Known tech debt entering v9.0:**
+  - `tasks-bulk` missing project_id filter — confirmed in route handler
+  - `react-markdown` in ChatMessage.tsx without rehype-sanitize — confirmed
+  - `PortfolioExceptionsPanel.tsx` dead `dependency` exception block — confirmed (line 81)
+- **@dnd-kit docs (HIGH confidence):** Multiple `DndContext` trees are supported but require explicit collision detection configuration when nested; ID uniqueness is the developer's responsibility
+- **Vercel AI SDK v6 docs (MEDIUM confidence):** `initialMessages` is the documented approach for pre-loading conversation history; `setMessages` is for programmatic updates during a session
 
 ---
-*Pitfalls research for: v7.0 Governance & Operational Maturity — adding RBAC, soft-delete, bi-directional sync, filesystem editing, and project-scoped scheduling to existing system*
-*Researched: 2026-04-13*
-*Context: 69,606 LOC TypeScript codebase, 57+ phases of schema evolution, 40+ existing route handlers, complex relational DB*
+*Pitfalls research for: v9.0 UX Maturity & Intelligence — adding 10 new features to a 75,894 LOC Next.js 16 + PostgreSQL + BullMQ production codebase*
+*Researched: 2026-04-22*
+*Context: 75+ phases of schema evolution, @dnd-kit already installed for WBS, custom GanttChart.tsx, Vercel AI SDK useChat, better-auth with requireProjectRole() at 126+ handlers, multi-tenant isolation enforced at v8.0*

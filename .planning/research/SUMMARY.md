@@ -1,251 +1,198 @@
 # Project Research Summary
 
-**Project:** BigPanda AI Project Management App — v7.0 Governance & Operational Maturity
-**Domain:** AI-native Professional Services project management with governance controls
-**Researched:** 2026-04-13
+**Project:** BigPanda AI Project Management App — v9.0 UX Maturity & Intelligence
+**Domain:** AI-native professional services delivery tool (Next.js 16, PostgreSQL, BullMQ, Vercel AI SDK)
+**Researched:** 2026-04-22
 **Confidence:** HIGH
 
 ## Executive Summary
 
-v7.0 adds operational maturity to an existing AI-native project management platform with 57 phases already shipped. The research reveals that **minimal new technology** is needed — only a lightweight code editor (@uiw/react-codemirror) for prompt editing UI. The existing stack (Next.js 16, PostgreSQL, Drizzle ORM, better-auth@1.5.6, Redis/BullMQ) handles all other features through schema additions and application logic changes.
+v9.0 is an additive milestone on a mature, 75,894-LOC production codebase. The stack is fixed and sufficient — the single new dependency is `docx-preview@^0.3.7` for inline DOCX rendering. Every other feature is achievable by extending existing components, adding DB migrations, and following patterns already established in the codebase. The recommended approach is to front-load all five DB migrations as a single schema wave, then implement features in dependency order rather than by perceived priority. Most "table stakes" features (Kanban DnD cross-column, milestone status enum, task dependency picker) require no new API endpoints — they fix existing half-wired UIs.
 
-The recommended approach is **foundation-first**: implement per-project RBAC before any other feature, as it's a dependency blocker for archive/delete, scheduling controls, and prompt editing. better-auth's global roles must be supplemented with a custom `project_members` table for per-project Admin/User roles. Archive/restore follows standard soft-delete patterns using timestamp columns, with explicit query filtering to prevent data leakage. Project-scoped scheduling extends existing BullMQ infrastructure with Redis indexing for efficient filtering.
+The architecture is well-defined and must not be subverted. Key patterns to maintain: `requireProjectRole()` on every `/api/projects/[projectId]/` route handler, Server Component data fetching passed as props (not client-side `useEffect` fetches), and the `skill_runs`/BullMQ pipeline for all AI invocations. The Meeting Prep skill must be implemented as a new `SKILL.md` file — not an inline modal AI call — to get streaming, history, and Output Library storage for free. The exceptions panel must be a pure computation over already-fetched workspace data, mirroring `PortfolioExceptionsPanel.tsx`, not an independent data-fetching component.
 
-**Critical risk: RBAC migration incompleteness.** With 40+ route handlers already using `requireSession()`, partial migration to per-project roles creates security holes. The mitigation strategy is audit-first (map all route handlers), create a `requireProjectRole()` wrapper, deprecate global role checks immediately, and validate with E2E tests covering all handlers. Secondary risks include soft-delete cascade blind spots (FK relationships across 57+ phases), Gantt bi-directional sync race conditions, and filesystem prompt editing concurrency issues.
+The most dangerous pitfalls are security-class: a confirmed `tasks-bulk` route missing `project_id` scoping (multi-tenant data leak), potential `react-markdown` XSS in the Outputs Library preview (gap already present in `ChatMessage.tsx`), and prompt injection risk in the Meeting Prep skill's user-controlled meeting title input. All three have clear mitigations and must be addressed in the same phase that introduces the vulnerable surface. Chat persistence has a subtle but critical failure mode: `setMessages()` in `useEffect` must never be used for history restoration — `initialMessages` at hook construction is the only correct approach.
+
+---
 
 ## Key Findings
 
 ### Recommended Stack
 
-**No major stack changes needed.** The existing Next.js 16 + PostgreSQL + Drizzle ORM + better-auth + BullMQ architecture supports all v7.0 features. Only addition: @uiw/react-codemirror (~80KB) for editable prompt UI — chosen over Monaco Editor (300KB, SSR-incompatible) because prompts are plain text/markdown, not full IDE content.
+The existing stack handles v9.0 with one addition. `docx-preview@^0.3.7` enables browser-native DOCX rendering via DOM APIs (requires `dynamic import` + `ssr: false`, same pattern as `@xyflow/react`). PPTX preview is not feasible without legacy jQuery/D3 dependencies — use "slide count + download" instead. `date-fns` must NOT be added for ISO week grouping; a 10-line native `Date` algorithm is sufficient. The `@dnd-kit` suite is already installed and structurally correct for multi-column Kanban — the fix is three missing code additions (`onDragOver`, `useDroppable` on columns, `DragOverlay` rendering), not a library change.
 
-**Core technologies:**
-- **@uiw/react-codemirror ^4.25.9**: Editable prompt UI with syntax highlighting — lightweight, React 18 native, SSR-compatible
-- **Custom project_members table**: Per-project RBAC (better-auth has global roles only) — follows existing Drizzle schema patterns
-- **Timestamp-based soft-delete**: archived_at + deleted_at columns on projects table — standard PostgreSQL pattern, no library needed
-- **Redis Set indexing**: Project-scoped job filtering for BullMQ scheduler — addresses O(N) filtering performance trap
-
-**Critical version compatibility:** All existing packages (better-auth@1.5.6, drizzle-orm@0.45.1, Next.js@16.2.0, BullMQ@5.71.0) are v7.0-compatible with no upgrades required.
+**Core technologies (new or confirmed for v9.0):**
+- `docx-preview@^0.3.7`: DOCX inline preview in Outputs Library — only new dependency; browser-compatible, ES module, actively maintained (Sept 2025)
+- `@dnd-kit/core@^6.3.1` (existing): Kanban cross-column DnD — multi-container pattern confirmed via official MultipleContainers.tsx story
+- `react-markdown@^10.1.0` (existing): Outputs Library markdown rendering — must add `rehype-sanitize` for defense-in-depth
+- `ai@^6.0.142` Vercel AI SDK (existing): chat persistence via `initialMessages` prop — no API changes needed
+- `drizzle-orm@^0.45.1` (existing): all 5 new migrations follow established schema patterns
 
 ### Expected Features
 
-Research identified a clear MVP boundary: **governance foundations + executive visibility + data quality**. Per-project RBAC is the highest-priority table stake — multi-user apps need project ownership. Archive/restore provides project lifecycle management (soft-delete with read-only preservation, reversible). Health Dashboard redesign delivers auto-derived executive KPIs from existing data. Analyze Completeness surfaces missing/sparse/conflicting fields for validation feedback.
+**Must have (table stakes) — fix broken basics first:**
+- Task Board DnD cross-column — every Kanban tool since Trello; currently half-wired, code-only fix
+- Milestone status enum select — DB enum exists; `MilestoneEditModal` uses freeform `<input>` (regression); fixes portfolio overdue counter bug
+- Admin project rename/description/go-live — all columns exist; just missing the form
+- Task dependency picker — FKs exist; currently raw integer input; searchable combobox required
+- Owner field as stakeholder picker — existing `OwnerCell` needs combobox upgrade + FK migration
+- Chat conversation persistence + pin — history lost on page navigate; `chat_messages` table + `initialMessages` wiring
+- Task Board week view — client-side ISO week grouping over existing `tasks.due` field
 
-**Must have (table stakes):**
-- Per-project Admin/User roles — two-tier model expected; enforces ownership
-- Archive project (soft-delete) — completed projects need preservation without cluttering active list
-- Restore archived project — archive must be reversible for mistake recovery
-- Permanent delete project — admin nuclear option for test data cleanup
-- View archived projects list — discoverable toggle on portfolio dashboard
-- Logout button — basic auth hygiene (currently missing)
-- Health Dashboard with auto-derived metrics — executive KPIs from tasks/milestones/risks data
-- Analyze Completeness on-demand — surface missing/conflicting data with per-field scoring
-- Edit before approve in ingestion — correction workflow without re-extraction
-- Skills Design Standard audit — identify non-compliant skills, grey out in UI
-- Project-scoped scheduling — skills run per-project, scoping is table stakes
+**Should have (differentiators):**
+- Proactive exceptions panel (project-level) — port of existing `PortfolioExceptionsPanel` pattern to per-project Health Dashboard
+- Risk structured fields (likelihood, impact, score, target_date) — PRINCE2/PMI standard 2-axis model; differentiates from generic PM tools
+- Gantt baseline tracking — ghost bars showing plan vs actuals; rare in lightweight PM tools; PS reporting value
+- AI Meeting Prep skill — on-demand structured brief for client calls; purpose-built for PS delivery workflow
+- Outputs Library inline preview — markdown rendering + DOCX preview; closes the "read output without leaving app" gap
 
-**Should have (competitive):**
-- Static + dynamic tracks in Overview tab — hybrid manual config + live integration data
-- Editable prompts UI — tune AI behavior without code changes (HIGH complexity, P2)
-- Move items between sections — reclassify extraction errors (task → action, note → decision)
-- Note entity reclassification — upgrade "note" catch-all to structured types
-- Repurpose Decisions tab — focus on operational impact vs append-only log
-
-**Defer (v2+):**
-- Scheduled completeness analysis — on-demand sufficient for v7.0
-- Custom role builder — two-tier Admin/User binary sufficient (explicit PROJECT.md exclusion)
-- Per-skill permissions — granular RBAC adds complexity; skills should be safe by design
-- Editable prompt version history — audit log captures runs; git is version control
+**Defer to v9.1+:**
+- Active tracks configuration — design decision on storage model needed; medium complexity; not a broken feature
+- Stakeholder contact extraction from ingested docs — high complexity; extraction pipeline changes + dedup logic; enhances owner picker but does not block it
+- Multi-user real-time chat sync — WebSocket infrastructure not in stack; persistence solves the core pain
+- Gantt critical path — task dependency model insufficient for CPM until dependency picker ships and data quality improves
+- AI auto-close of risks/actions — violates audit-trail trust model; surface stale exceptions instead
 
 ### Architecture Approach
 
-v7.0 integrates with existing Next.js 16 App Router architecture through **extension, not replacement**. Route Handlers maintain the requireSession() security boundary (CVE-2025-29927 defense-in-depth pattern). Per-project RBAC extends this with a post-session check that queries project_members table. Soft-delete uses timestamp filtering at the query layer (all projects queries filtered WHERE archived_at IS NULL). Gantt bi-directional sync operates through transaction-based cascading updates with advisory locks to prevent race conditions. BullMQ workers read project_id from job metadata and verify RBAC on execution.
+The architecture is established and must be followed, not reinvented. Server Components fetch data and pass it as props; Client Islands handle optimistic updates and fire PATCH requests; `router.refresh()` re-syncs Server Component data after mutations. BullMQ handles all long-running AI operations. `requireProjectRole()` is enforced at 126+ route handlers. Every new feature in v9.0 extends this architecture: Meeting Prep via a new SKILL.md file (zero code changes to the orchestrator), exceptions panel via a pure computation component over workspace data, chat persistence via `initialMessages` prop seeded from a Server Component fetch.
 
-**Major components:**
-1. **Auth layer extension** — `requireProjectRole(projectId, minRole)` wrapper for route handlers; queries project_members table after session check
-2. **Query layer filtering** — helper functions (getActiveProjects(), notDeleted()) wrap Drizzle queries to ensure archived_at IS NULL filter applied consistently
-3. **Gantt sync utility** — transaction-based date propagation across tasks/milestones with pg_advisory_xact_lock for concurrency control
-4. **Scheduler Redis index** — projects:{projectId}:jobs Set maintains per-project job ID index for efficient filtering (avoids O(N) in-memory filter)
-5. **Prompt editing service** — filesystem write-back with proper-lockfile for atomicity, schema validation, backup creation, and audit logging
-
-**Key patterns:** Authorization at route handler level (not middleware), soft-delete through timestamps (not separate state tables), single source of truth for Gantt (DB drives UI, never reverse), Redis indexing for BullMQ metadata filtering.
+**Major components modified or created in v9.0:**
+1. `components/TaskBoard.tsx` — add `onDragOver`, `useDroppable` on columns, `DragOverlay` rendering; add `dragSeq` counter for rapid-drag race condition
+2. `components/GanttChart.tsx` — add `baseline?: BaselineRow[]` prop; render ghost bars; add `phaseStart`/`phaseEnd` to `GanttWbsRow` interface
+3. `components/chat/ChatPanel.tsx` — accept `initialMessages` prop; persist user/assistant turns on send/finish
+4. `components/ProjectExceptionsPanel.tsx` (new) — pure computation over workspace data; mirrors `PortfolioExceptionsPanel` pattern
+5. `components/ProjectSettingsForm.tsx` (new) — rename, go-live, description, active tracks toggles
+6. `lib/risk-score.ts` (new) — pure `computeRiskScore(likelihood, impact)` function; never a stored DB column
+7. New route handlers: `gantt-baseline` (GET/POST), `chat-messages` (GET/POST), `chat-messages/[id]` (PATCH)
+8. Five migrations: `gantt_baselines` table, `chat_messages` table + index, owner FK columns on 4 tables, risk fields, `active_tracks` JSONB on projects
 
 ### Critical Pitfalls
 
-Research identified eight critical pitfalls with specific prevention strategies:
+1. **@dnd-kit ID namespace collision between WbsTree and TaskBoard** — Use prefixed IDs (`wbs-{id}`, `task-{id}`, `col-{id}`) from the start; never use raw integers as DnD identifiers; add guard in WBS reorder handler against non-integer `over.id`
 
-1. **Incomplete RBAC Migration (CRITICAL)** — With 40+ route handlers, partial migration creates security holes where some check global role, others check project role. **Avoid:** Create exhaustive audit manifest (grep all user.role references), introduce requireProjectRole() wrapper, deprecate global role immediately, extract all auth logic to single lib/auth-rbac.ts module.
+2. **`tasks-bulk` multi-tenant security gap (existing, confirmed)** — The route at `app/api/tasks-bulk/route.ts` is missing `project_id` scoping; allows cross-project task updates; fix in the same phase as the Owner Picker migration since the same handler is being extended
 
-2. **Soft-Delete Cascade Blind Spots (CRITICAL)** — 57+ phases of schema evolution = dozens of project_id FKs with different semantics. Archive can violate FK constraints or leak archived data. **Avoid:** Map every table with project_id FK, add archived_at IS NULL to base query helpers (never raw db.query.projects), implement archive pre-flight checks (no active jobs), test cascade on RESTORE.
+3. **`useChat` persistence race condition** — `setMessages()` in `useEffect` breaks mid-stream; always pass restored messages via `initialMessages` at hook construction; persist only `role: 'user'` and `role: 'assistant'` turns; never inject pinned messages into the `useChat` messages array
 
-3. **Gantt Bi-Directional Sync Race Conditions (HIGH)** — Drag updates DB while API in-flight causes state divergence or infinite loops. **Avoid:** DB is single source of truth, optimistic update with rollback, debounce drag events (send on onDragEnd only), cascade propagation in transaction with advisory lock, version-based concurrency control.
+4. **`react-markdown` XSS gap** — `ChatMessage.tsx` already renders without `rehype-sanitize`; the Outputs Library preview adds another unprotected surface; add `rehype-sanitize` to all `react-markdown` instances in the same PR as the Outputs Library phase
 
-4. **Filesystem Prompt Edit Security Holes (HIGH)** — Web UI editing SKILL.md files without validation enables prompt injection or concurrent write corruption. **Avoid:** Atomic write with file locking (proper-lockfile), schema validation on write (verify required sections), backup before overwrite, append-only audit log, RBAC enforcement (admin-only), strip XML/control characters.
+5. **Meeting Prep prompt injection via meeting title** — user-controlled strings interpolated into system prompts can break XML trust delimiters; escape all user-controlled strings (`<`, `>`, `&`) before prompt interpolation; applies to all skill routes, not just Meeting Prep
 
-5. **Project-Scoped Scheduling Filter Brittleness (MODERATE)** — BullMQ metadata filtering in-memory = O(N) performance, missing metadata passes filter. **Avoid:** Redis Set index (projects:{projectId}:jobs), job name prefix convention, RBAC at job action level, metadata schema validation, handle pre-v7.0 jobs with migration.
+6. **Stakeholder contact extraction overwrites manually entered data** — upsert must use field-protection semantics: only fill NULL fields from extraction; never overwrite a non-null `email` or `slack_id` with an extracted value
 
-6. **Completeness Analysis Definition Drift (MODERATE)** — Schema evolution makes old projects retroactively "incomplete" without versioning. **Avoid:** Version completeness schemas (v1.json, v2.json), grandfather old projects, score components separately (per-area breakdowns), time-series storage for trend tracking.
+7. **Active tracks filter must stay at render layer only** — filtering DB queries by active track breaks skill context, extraction, and Gantt baseline; WBS, Gantt, and Overview filter their displayed data; skill context builders always receive the full dataset
 
-7. **Cross-Feature Integration Gap (MODERATE)** — Archive + RBAC + Scheduling + Extraction developed in isolation create interaction bugs (archived project with running jobs). **Avoid:** Cross-feature validation matrix, pre-flight checks for destructive actions, background job identity re-verification, integration tests for cross-feature scenarios, saga pattern for multi-step operations.
-
-8. **Editable Prompts Cowork Compatibility Break (MODERATE)** — User edits break Cowork skills repo compatibility; later updates overwrite edits. **Avoid:** Fork-on-edit (create SKILL.md.custom), versioned skill registry with custom badge, export format validation, rollback to canonical, block edits for integration-critical skills.
+---
 
 ## Implications for Roadmap
 
-Based on research, suggested phase structure prioritizes **foundations → lifecycle → visibility → quality → maturity**:
+Based on research, the build order is driven by three forcing functions: (1) DB schema must exist before UI that references it, (2) milestone status enum fix unblocks the exceptions panel and the portfolio overdue counter bug, and (3) security fixes (`tasks-bulk` gap, XSS) must ship in the same phase as the features that touch those surfaces.
 
-### Phase 1: Per-Project RBAC Foundation
-**Rationale:** Dependency blocker for archive/delete, scheduling controls, prompt editing. Must come first to avoid security holes. With 40+ route handlers, this is the highest-risk migration.
-**Delivers:** project_members table, requireProjectRole() wrapper, migration of all route handlers, E2E test coverage
-**Addresses:** AUTH-02, AUTH-03, AUTH-04, AUTH-05 (Admin/User roles per project)
-**Avoids:** Pitfall #1 (Incomplete RBAC Migration) — exhaustive audit prevents global role leakage
-**Research needed:** No — standard two-tier RBAC pattern, well-documented
+### Phase 1: Schema Foundation
+**Rationale:** All 5 migrations must exist before any UI references new columns; batching them together prevents migration file numbering conflicts and lets all subsequent phases start immediately.
+**Delivers:** All new tables and columns committed to DB and `db/schema.ts`: `gantt_baselines` table, `chat_messages` table + index, owner FK columns on tasks/actions/risks/milestones, risk fields on risks table, `active_tracks` JSONB on projects
+**Addresses:** Foundation for 8 of 13 v9.0 features
+**Avoids:** Schema-blocking mid-phase; migration numbering conflicts (current highest is `0037_entity_lifecycle.sql` — verify before writing)
 
-### Phase 2: Project Lifecycle Management
-**Rationale:** Natural next step after RBAC; archive/delete/restore require admin role enforcement. Soft-delete is standard pattern with low risk.
-**Delivers:** archived_at/deleted_at columns, query layer filtering, portfolio dashboard toggle, admin-only delete with confirmation
-**Addresses:** PROJ-01 (archive), PROJ-02 (permanent delete), PROJ-03 (view archived), PROJ-04 (restore), AUTH-01 (logout)
-**Uses:** Timestamp-based soft-delete (standard PostgreSQL pattern from STACK.md)
-**Avoids:** Pitfall #2 (Soft-Delete Cascade Blind Spots) — FK audit and pre-flight checks prevent constraint violations
-**Research needed:** No — established soft-delete pattern
+### Phase 2: Quick Wins — Fix Broken Basics
+**Rationale:** These features fix existing regressions or complete half-wired functionality with no new API endpoints and no migrations; ship these first to demonstrate progress and unblock downstream features.
+**Delivers:** Milestone status enum select (fixes portfolio counter bug), Task Board DnD cross-column (adds `onDragOver` + `useDroppable`), Task Board week view (client-side ISO week grouping), admin project rename/description/go-live form
+**Addresses:** 4 table-stakes features, all P1
+**Avoids:** DnD ID namespace collision (prefix IDs from the start); rapid-drag race condition (add `dragSeq` counter in this phase)
 
-### Phase 3: Health Dashboard Redesign
-**Rationale:** Executive visibility is high-value, low-risk. Uses existing data (tasks, milestones, risks) and existing Recharts library. Independent of other features.
-**Delivers:** Auto-derived metrics (overdue tasks, at-risk milestones, stale updates), portfolio-level rollup, drill-down transparency
-**Addresses:** HLTH-01 (Health Dashboard redesign), HLTH-02 (auto-derived metrics)
-**Uses:** Recharts ^3.8.1 (already installed) — no new dependencies
-**Avoids:** Anti-feature: manual metric overrides (defeats auto-derivation purpose)
-**Research needed:** No — metric derivation from existing data model
+### Phase 3: Data Model Enhancements — Pickers and Risk Fields
+**Rationale:** Owner picker and task dependency picker require FK columns from Phase 1; risk fields require the `risks` columns from Phase 1; these are medium-complexity features with well-understood patterns.
+**Delivers:** Owner field as stakeholder combobox (dual-write `owner` + `owner_stakeholder_id`), task dependency picker (searchable combobox over existing FKs), risk structured fields with computed score (`lib/risk-score.ts`)
+**Addresses:** 3 P1/P2 features
+**Avoids:** Dual-write omission (both `owner` text and `owner_stakeholder_id` FK in every PATCH handler); `tasks-bulk` multi-tenant gap must be fixed in this same phase; risk score must never be stored as a DB column (compute via generated column or pure function)
 
-### Phase 4: Data Completeness Analysis
-**Rationale:** Data quality validation complements Health Dashboard. On-demand analysis is sufficient (scheduled analysis deferred to v8.0).
-**Delivers:** Per-field completeness scoring (0-100%), missing/sparse/conflicting detection, modal with per-tab gaps and recommendations
-**Addresses:** INGEST-04 (Analyze Completeness fix), INGEST-05 (structured output migration)
-**Implements:** Completeness analysis component from ARCHITECTURE.md
-**Avoids:** Pitfall #6 (Definition Drift) — versioned schemas prevent retroactive scoring changes
-**Research needed:** MEDIUM — Claude structured outputs pattern for completeness scoring may need validation
+### Phase 4: Intelligence Features — Exceptions Panel and Chat Persistence
+**Rationale:** Exceptions panel requires milestone status to be reliable (fixed in Phase 2); chat persistence requires `chat_messages` table (Phase 1); both use the established "Server Component seeds data, Client Island computes" pattern.
+**Delivers:** Per-project exceptions panel (pure computation over workspace data, mirrors `PortfolioExceptionsPanel`), chat conversation persistence + pin (Server Component seeds `initialMessages`; pin rendered in separate UI section)
+**Addresses:** Chat persistence + pin (P2), exceptions panel (P1)
+**Avoids:** Client-side exception data fetching (use Server Component props pattern); `setMessages()` in `useEffect` (use `initialMessages` at construction); pinned messages injected into `useChat` array (render in separate section); exceptions staleness from `project.updated_at` (use `MAX(updated_at)` across child tables)
 
-### Phase 5: Ingestion Corrections Workflow
-**Rationale:** Depends on data quality visibility from Phase 4. High UX complexity (21 entity types in single form) but high user value.
-**Delivers:** Editable ExtractionPreview modal, merge edited values with extracted values, client-side validation
-**Addresses:** INGEST-01 (edit before approve), INGEST-02 (move items), INGEST-03 (note reclassification)
-**Uses:** Existing ExtractionPreview UI state management
-**Avoids:** Forced re-extraction on misclassification (slow iteration)
-**Research needed:** HIGH — Complex form design for 21 entity types needs UX research
+### Phase 5: Gantt Enhancements — Phase Dates and Baseline
+**Rationale:** Gantt baseline and phase date aggregation both touch `GanttChart.tsx` and `mapDataToWbsRows()`; doing them together avoids two passes through the same components.
+**Delivers:** Phase date range aggregation in Gantt rows (`phaseStart`/`phaseEnd` in `mapDataToWbsRows()`), Gantt baseline tracking with ghost bar rendering, `GanttBaselineCapture.tsx` toolbar button
+**Addresses:** Gantt baseline (P2)
+**Avoids:** Baseline JSONB on `projects` table (use dedicated `gantt_baselines` table from Phase 1 migration); ghost bars rendered without a baseline (only render when `baselineRows` prop is non-null and non-empty)
 
-### Phase 6: Skills Design Standard
-**Rationale:** Foundation for editable prompts (Phase 7). Runtime validation prevents broken skills. Medium complexity, high operational value.
-**Delivers:** SKILL.md YAML front-matter schema (input, output, schedule), runtime validation, UI with "Fix required" badges, grey out non-compliant
-**Addresses:** SKILL-01 (Design Standard definition), SKILL-02 (audit all skills), SKILL-04 (scheduling interface)
-**Uses:** Markdown parser + YAML validation
-**Avoids:** Opaque prompts causing frustration when output wrong
-**Research needed:** No — YAML schema definition for skill metadata
+### Phase 6: AI and Content Features — Meeting Prep and Outputs Preview
+**Rationale:** These are the highest-complexity features; Meeting Prep is a new SKILL.md file (zero code changes to the orchestrator); Outputs Library preview introduces the only new dependency (`docx-preview`) and requires XSS hardening.
+**Delivers:** Meeting Prep skill (new `SKILL.md`, existing infrastructure), Outputs Library inline preview (markdown with `rehype-sanitize`, DOCX via `docx-preview`, PPTX as "slide count + download only")
+**Addresses:** AI Meeting Prep (P2), Outputs Library preview (P2)
+**Avoids:** Inline AI modal for Meeting Prep (must use skill infrastructure); `react-markdown` XSS — add `rehype-sanitize` to ALL instances including `ChatMessage.tsx` in this same PR; prompt injection via meeting title (escape user-controlled strings before interpolation); PPTX browser rendering (no viable dependency)
 
-### Phase 7: Editable Prompts UI
-**Rationale:** Depends on Design Standard (Phase 6) for validation. High complexity due to filesystem writes, concurrency, Cowork compatibility.
-**Delivers:** CodeMirror editor UI, write-back to SKILL.md, file locking, backup creation, audit log, admin-only RBAC
-**Addresses:** SKILL-03 (editable prompts)
-**Uses:** @uiw/react-codemirror ^4.25.9 (new dependency)
-**Avoids:** Pitfall #4 (Security Holes) — file locking + validation + backup prevent corruption/injection; Pitfall #8 (Cowork Break) — fork-on-edit strategy
-**Research needed:** HIGH — File locking patterns, concurrent edit handling, Cowork compatibility strategy
-
-### Phase 8: Project-Scoped Scheduling
-**Rationale:** Requires RBAC from Phase 1 for admin-only controls. Medium complexity due to Redis indexing and metadata validation.
-**Delivers:** Redis Set index (projects:{projectId}:jobs), scheduler page per-project filtering, admin role enforcement, BullMQ metadata validation
-**Addresses:** SCHED-01 (project-scoped scheduling), SCHED-03 (UI), SCHED-04 (RBAC enforcement), SCHED-05 (metadata)
-**Uses:** BullMQ ^5.71.0 + Redis indexing pattern from STACK.md
-**Avoids:** Pitfall #5 (Filter Brittleness) — Redis index prevents O(N) in-memory filtering
-**Research needed:** No — BullMQ job metadata pattern established in v2.0 Phase 24
-
-### Phase 9: Gantt Bi-Directional Sync
-**Rationale:** Complex transaction logic, deferred to later phase. Requires load testing with 50+ tasks. Independent of governance features.
-**Delivers:** Drag-to-reschedule updates DB with cascade propagation, advisory lock for concurrency, optimistic UI updates with rollback
-**Addresses:** DLVRY-02 (bi-directional sync), DLVRY-04 (date propagation)
-**Uses:** PostgreSQL advisory locks (pg_advisory_xact_lock) from STACK.md
-**Avoids:** Pitfall #3 (Race Conditions) — transaction-based atomic updates, debounced drag events
-**Research needed:** MEDIUM — Advisory lock patterns for cascade updates, load testing strategy
-
-### Phase 10: Overview Tracks Redesign
-**Rationale:** UX-heavy, independent feature. Deferred to end after core governance complete. Medium complexity.
-**Delivers:** Static tracks (fixed config cards), dynamic tracks (integration data), hybrid manual + live system state
-**Addresses:** OVRVW-01 through OVRVW-05 (Overview redesign)
-**Uses:** Existing workstreams table from v4.0
-**Avoids:** None (low-risk UX enhancement)
-**Research needed:** No — standard dashboard pattern
+### Phase 7: Project Settings — Active Tracks Configuration
+**Rationale:** Most design-ambiguous feature; touches the widest set of downstream consumers (WBS, Gantt, Overview); deferring it ensures other features are stable before adding track-filtering logic.
+**Delivers:** Full `ProjectSettingsForm.tsx` (rename + go-live + description + active tracks toggles), `active_tracks` JSONB filtering in WBS and Gantt page loaders
+**Addresses:** Admin active tracks config (P3)
+**Avoids:** Track filter at DB query layer (filter at render layer only — skill context always receives full WBS); stale `expandedIds` in WbsTree after track toggle (reset in `useEffect` on config change); skill-triggered WBS duplication after re-enabling a track
 
 ### Phase Ordering Rationale
 
-- **RBAC first (Phase 1):** Dependency blocker for archive, delete, scheduling, prompt editing; highest security risk if incomplete
-- **Lifecycle second (Phase 2):** Natural next step after ownership model established; standard patterns minimize risk
-- **Executive visibility (Phases 3-4):** High value, low risk, independent features; can parallelize Health Dashboard + Completeness
-- **Corrections workflow (Phase 5):** Depends on completeness visibility; high UX complexity justifies later placement
-- **Skills maturity (Phases 6-7):** Design Standard foundation required before editable prompts; prompt editing high complexity deferred until governance solid
-- **Operational features (Phases 8-10):** Scheduling, Gantt sync, Overview tracks are enhancements, not foundations; can ship incrementally
-
-**Dependencies enforced:**
-- Phase 7 (Editable Prompts) blocked by Phase 6 (Design Standard) — validation required before editing
-- Phase 8 (Scheduling) blocked by Phase 1 (RBAC) — admin role enforcement required
-- Phase 2 (Archive/Delete) blocked by Phase 1 (RBAC) — admin-only actions need role model
+- Schema first (Phase 1) because 8 of 13 features reference new tables or columns; batching prevents conflicts
+- Quick wins second (Phase 2) because milestone status fix is a prerequisite for the exceptions panel and unblocks a known portfolio counter bug
+- Pickers and risk fields (Phase 3) before exceptions panel because owner picker FK and risk score data improve exception rule accuracy when both ship before Phase 4
+- Chat and exceptions (Phase 4) together because both use the same "Server Component seeds data, Client Island computes" pattern and can share a test pass
+- Gantt work (Phase 5) isolated because it is the most complex rendering change and benefits from all schema work being stable
+- AI features (Phase 6) last among core features because they depend on content infrastructure being stable and introduce the most security surface
+- Active tracks (Phase 7) last because it has the broadest fan-out across existing components and its storage design decision should be made explicitly
 
 ### Research Flags
 
 Phases likely needing deeper research during planning:
-- **Phase 5 (Ingestion Corrections):** HIGH complexity — 21 entity types in single editable form; may need UX research for form design patterns
-- **Phase 7 (Editable Prompts):** HIGH complexity — filesystem concurrency patterns, Cowork compatibility strategy (fork-on-edit vs DB storage); needs file locking implementation research
-- **Phase 9 (Gantt Sync):** MEDIUM complexity — PostgreSQL advisory lock patterns for cascade updates; load testing strategy for 50+ tasks
+- **Phase 3 (Owner picker / dual-write):** The full list of tables with `owner` text columns needs a pre-implementation audit against `db/schema.ts` — research identifies 6+ tables (tasks, actions, risks, milestones, artifacts, wbs_items); confirm before writing PATCH handlers
+- **Phase 6 (Meeting Prep SKILL.md):** The Phase 63 Skills Design Standard YAML schema must be reviewed before authoring the new file; verify `buildSkillContext()` output is sufficient context for a meeting brief without additional queries
+- **Phase 7 (Active tracks):** Design decision required — JSONB `{ ADR: boolean, Biggy: boolean }` on `projects` vs. a `project_tracks` table; research recommends JSONB for v9.0 but the decision should be explicit and documented in the plan
 
-Phases with standard patterns (skip research-phase):
-- **Phase 1 (RBAC):** Well-documented two-tier pattern; better-auth session + custom project_members table
-- **Phase 2 (Archive/Restore):** Standard soft-delete with timestamp columns; established PostgreSQL pattern
-- **Phase 3 (Health Dashboard):** Metric derivation from existing data model; Recharts already validated
-- **Phase 4 (Completeness):** Per-field scoring pattern; Claude structured outputs for analysis
-- **Phase 6 (Design Standard):** YAML schema definition; runtime validation with markdown parser
-- **Phase 8 (Scheduling):** BullMQ metadata pattern established in v2.0 Phase 24; Redis indexing standard
-- **Phase 10 (Overview Tracks):** Standard dashboard pattern with static/dynamic data sources
+Phases with standard patterns (skip research):
+- **Phase 1 (Schema migrations):** All migrations follow the established Drizzle pattern in `db/schema.ts` + `db/migrations/`; no novel patterns
+- **Phase 2 (Quick wins):** Code-only fixes; @dnd-kit multi-container pattern confirmed in official GitHub story; milestone status enum fix is trivial
+- **Phase 4 (Chat + exceptions):** `initialMessages` pattern is documented in Vercel AI SDK v6; `PortfolioExceptionsPanel` is a direct template
+- **Phase 5 (Gantt baseline):** Storage model is decided (`gantt_baselines` table); ghost bar rendering follows existing bar geometry functions in `GanttChart.tsx`
+
+---
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Minimal new dependencies; existing stack handles all features; only @uiw/react-codemirror needed; version compatibility verified |
-| Features | MEDIUM | Based on training data + codebase analysis (web research denied); two-tier RBAC and soft-delete patterns well-established; editable prompts UX varies across tools |
-| Architecture | HIGH | Clear integration points with existing Next.js 16 patterns; requireSession() security boundary preserved; transaction-based concurrency control standard |
-| Pitfalls | HIGH | Based on 57-phase evolution analysis + complex relational DB patterns; RBAC migration risk highest; soft-delete cascade well-documented |
+| Stack | HIGH | All findings from direct `package.json` inspection + npm registry confirmation; only one new dependency (`docx-preview`) with confirmed browser compatibility |
+| Features | HIGH | Grounded in live codebase inspection of all relevant components; PM tool conventions from established industry tools |
+| Architecture | HIGH | All conclusions from direct file-by-file codebase analysis of Panda-Manager repo; build order derived from confirmed dependency graph |
+| Pitfalls | HIGH | Critical pitfalls confirmed via direct code inspection: `tasks-bulk` gap at line 310, `ChatMessage.tsx` without `rehype-sanitize`, dead exception block at line 81 in `PortfolioExceptionsPanel.tsx` |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-**Editable prompts Cowork compatibility:** SKILL.md filesystem writes break "prompts must not be modified" constraint (PROJECT.md line 144). v7.0 explicitly relaxes this for editable UI. Decision needed: fork-on-edit (SKILL.md.custom) OR accept compatibility break with Cowork skills repo. Recommendation: fork-on-edit with versioned skill registry and rollback-to-canonical button preserves both editability and Cowork compatibility.
+- **Active tracks storage model:** JSONB on `projects` vs. `project_tracks` table. Research recommends JSONB for v9.0 but this is a design decision that must be made explicit in Phase 7 planning before implementation starts.
+- **Migration number verification:** Architecture research identifies current highest migration as `0037_entity_lifecycle.sql`. This must be verified against the live `db/migrations/` directory before writing any migration files — the planned numbers (0038–0042) may need adjustment.
+- **Exceptions panel data completeness:** The `getWorkspaceData()` function's return shape must be verified against the data needs of all 6+ exception rule types before writing `computeProjectExceptions()`; if any required fields are absent, a supplemental query will be needed.
+- **`docx-preview` SSR constraint:** The `dynamic import` + `ssr: false` pattern is established for `@xyflow/react` and CodeMirror; validate that the Outputs Library page does not have conflicting SSR constraints before implementing in Phase 6.
 
-**Completeness scoring schema versioning:** No explicit versioning mechanism researched. With 57+ phases of schema evolution, definition of "complete" is ambiguous. Recommendation: store rules as versioned JSON configs (completeness_schema_v1.json), projects reference schema version at creation, grandfather existing projects on schema upgrades.
-
-**Gantt sync load testing threshold:** Research identifies 50+ tasks as load test target but doesn't specify failure modes. During Phase 9 planning: define acceptable latency (<100ms drag feedback), cascade propagation limit (max 3 levels), concurrent edit handling (version-based optimistic locking).
-
-**BullMQ job backward compatibility:** Jobs created pre-v7.0 may lack project_id metadata. During Phase 8 planning: create migration script to backfill metadata from job name patterns or related DB records; add schema validation to reject future jobs without metadata.
+---
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/Users/jmiloslavsky/Documents/Project Assistant Code/.planning/PROJECT.md` — v7.0 requirements, system constraints, 57-phase evolution context
-- `/Users/jmiloslavsky/Documents/Project Assistant Code/bigpanda-app/db/schema.ts` — existing tables (projects, users, scheduled_jobs), FK constraints, enum definitions
-- `/Users/jmiloslavsky/Documents/Project Assistant Code/.planning/research/STACK.md` — technology additions research (HIGH confidence)
-- `/Users/jmiloslavsky/Documents/Project Assistant Code/.planning/research/ARCHITECTURE.md` — integration patterns research (HIGH confidence)
-- `/Users/jmiloslavsky/Documents/Project Assistant Code/.planning/research/PITFALLS.md` — risk analysis based on system architecture (HIGH confidence)
-- better-auth@1.5.6 documentation (WebFetch) — global role limitations confirmed; no per-resource roles
-- @uiw/react-codemirror npm (WebFetch) — version 4.25.9, 1.8M weekly downloads, React 18+ support verified
+- Live codebase — `/Users/jmiloslavsky/Documents/Panda-Manager/` — direct file inspection: `db/schema.ts`, `components/TaskBoard.tsx`, `components/WbsTree.tsx`, `components/GanttChart.tsx`, `components/chat/ChatPanel.tsx`, `components/chat/ChatMessage.tsx`, `components/PortfolioExceptionsPanel.tsx`, `app/outputs/page.tsx`, `app/api/tasks-bulk/route.ts`, `app/customer/[id]/settings/page.tsx`, `lib/skill-path.ts`, `lib/skill-orchestrator.ts`
+- `@dnd-kit` GitHub (`clauderic/dnd-kit`) — MultipleContainers.tsx official story confirming `onDragOver` + `useDroppable` multi-container pattern
+- `docx-preview` npm registry — v0.3.7 confirmed latest; browser-compatible; active maintenance (Sept 2025 release); Apache-2.0 license
+- `react-markdown` npm registry — v10.1.0 confirmed latest stable; safe-by-default behavior confirmed
 
 ### Secondary (MEDIUM confidence)
-- `/Users/jmiloslavsky/Documents/Project Assistant Code/.planning/research/FEATURES.md` — based on training data + codebase analysis (web research denied)
-- Training data knowledge (January 2025 cutoff) — RBAC patterns (Auth0, AWS IAM), project management tools (Jira, Asana, Linear), soft-delete patterns (GitHub)
-- Drizzle ORM soft-delete patterns — community best practice, timestamp filtering standard
-- PostgreSQL advisory locks — official docs, pg_advisory_xact_lock for application-level locking
-- BullMQ job metadata patterns — v2.0 Phase 24 implementation with project_id in job data
+- Vercel AI SDK v6 docs — `initialMessages` as documented approach for pre-loading conversation history; `setMessages` for programmatic mid-session updates
+- PM tool conventions (Jira, Asana, Linear, Notion) — UI behavior expectations for DnD, week view, owner pickers, milestone status labels; training data
+- PRINCE2 / PMI risk matrix — Likelihood x Impact 1-5 scale as industry standard for risk scoring; training data
 
 ### Tertiary (LOW confidence)
-- AI prompt editing UX patterns — limited training data; LangChain/LangSmith approaches vary; editable prompts in web UI non-standard
-- Completeness scoring specific UX — data quality tools (dbt, Great Expectations) use different UI paradigms; per-field scoring vs aggregate metrics trade-offs
+- `pptx2html` npm registry — confirmed legacy jQuery/D3 dependencies; rejected; PPTX browser preview deferred to download-only approach
 
 ---
-*Research completed: 2026-04-13*
+
+*Research completed: 2026-04-22*
 *Ready for roadmap: yes*

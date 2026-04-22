@@ -1,1342 +1,822 @@
-# Architecture Research: v7.0 Integration Patterns
+# Architecture Research
 
-**Domain:** Per-project RBAC, Project Lifecycle, Gantt Sync, Scheduler Scoping, Extraction Reclassification
-**Researched:** 2026-04-13
-**Confidence:** HIGH
+**Domain:** AI-native project management platform — v9.0 UX Maturity & Intelligence
+**Researched:** 2026-04-22
+**Confidence:** HIGH (all conclusions from direct codebase inspection of Panda-Manager repo)
 
-## Executive Summary
+---
 
-v7.0 introduces operational maturity features that integrate with the existing Next.js 16 + PostgreSQL + BullMQ + better-auth@1.5.6 architecture. This research identifies integration points for six major feature categories, distinguishing between **new components** (require creation) and **modified components** (extend existing patterns). All recommendations preserve the existing requireSession() Route Handler security boundary pattern and avoid breaking changes to the 40+ guarded handlers already deployed.
+## Context: Subsequent Milestone Research
 
-**Key architectural decisions:**
-- Per-project RBAC: New `project_members` table + extend requireSession() to return project-level role
-- Archive/delete: Add `archived_at` column to `projects` table (soft-delete via timestamp, not separate table)
-- Gantt bi-directional sync: New utility function that updates both `tasks` and `milestones` tables atomically based on user drag action
-- Project-scoped scheduling: Extend existing `scheduled_jobs` table with `project_id` column; filter jobs in worker
-- Note reclassification: Extend ExtractionPreview UI to allow entity type dropdown change before approval
-- Completeness: Replace table count heuristic with Claude structured outputs analyzing actual record quality
+This is not a fresh architecture design. The core patterns are established and must not change.
+This document answers only the 10 integration questions for v9.0 features. All recommendations
+are grounded in direct inspection of the live codebase at `/Users/jmiloslavsky/Documents/Panda-Manager/`.
 
-## Standard Architecture Overview
+---
+
+## Established Patterns (reference, not re-researched)
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                     Next.js 16 App Router                        │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
-│  │ Server       │  │ Route        │  │ Client       │          │
-│  │ Components   │  │ Handlers     │  │ Components   │          │
-│  │              │  │              │  │              │          │
-│  │ (RSC)        │  │ (API routes) │  │ ('use client')│          │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘          │
-│         │                 │                 │                    │
-├─────────┴─────────────────┴─────────────────┴────────────────────┤
-│                     Authentication Layer                          │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │ better-auth@1.5.6: session mgmt, global roles           │   │
-│  │ + requireSession() at Route Handler level (40+ handlers) │   │
-│  └──────────────────────────────────────────────────────────┘   │
-├─────────────────────────────────────────────────────────────────┤
-│                       Business Logic                             │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐        │
-│  │ lib/     │  │ worker/  │  │ db/      │  │ app/api/ │        │
-│  │ utils    │  │ jobs     │  │ helpers  │  │ handlers │        │
-│  └──────────┘  └──────────┘  └──────────┘  └──────────┘        │
-├─────────────────────────────────────────────────────────────────┤
-│                      Data & Jobs Layer                           │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │   Drizzle ORM → PostgreSQL (67 tables)                   │   │
-│  └──────────────────────────────────────────────────────────┘   │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │   BullMQ → Redis (scheduled jobs, extraction jobs)       │   │
-│  └──────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          Next.js 16 App Router                               │
+├────────────────────────────────┬────────────────────────────────────────────┤
+│  Server Components (page.tsx)  │  Route Handlers (app/api/**/route.ts)       │
+│  - DB queries via lib/queries  │  - requireSession()/requireProjectRole()    │
+│  - Pass full data to client    │  - Zod validation schemas                   │
+│  - No auth logic here          │  - Drizzle ORM + audit_log writes           │
+├────────────────────────────────┴────────────────────────────────────────────┤
+│                   Client Islands ('use client')                               │
+│  - In-memory filter via URL params (useSearchParams)                         │
+│  - Optimistic updates → fetch PATCH → router.refresh()                      │
+│  - CustomEvent(metrics:invalidate) for cross-tab sync                        │
+│  - @dnd-kit/core already installed (WbsTree + TaskBoard both use it)         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                        BullMQ + Redis                                         │
+│  - Long-running jobs: extraction, weekly-focus, skill runs                   │
+│  - Polling pattern: client polls /api/.../status every N ms                  │
+│  - Advisory lock prevents duplicate LLM calls per project                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                     PostgreSQL via Drizzle ORM                                │
+│  - Schema in db/schema.ts — enums defined before tables that reference them  │
+│  - Migrations in db/migrations/ — auto-applied by run-migrations.ts          │
+│  - Audit log: every PATCH/DELETE writes before/after JSON to audit_log       │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-## Feature 1: Per-Project RBAC
+---
 
-### Current State
-- **Global roles only:** `users.role` is 'admin' or 'user' (set at account level)
-- **requireSession() pattern:** Returns session object with user info; 40+ Route Handlers call this
-- **No project membership tracking:** Any authenticated user can access any project
+## Feature-by-Feature Architecture Decisions
 
-### Integration Architecture
+### Feature 1: Kanban DnD — Cross-Column Status Updates
 
-#### New Components
+**Status: Already implemented. No architecture change needed.**
 
-**1. Database Schema Addition**
-```sql
--- New table: project_members
-CREATE TABLE project_members (
-  id SERIAL PRIMARY KEY,
-  project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  role TEXT NOT NULL CHECK (role IN ('admin', 'user')),
-  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  UNIQUE (project_id, user_id)
-);
+**Verified from codebase:**
 
-CREATE INDEX idx_project_members_user ON project_members(user_id);
-CREATE INDEX idx_project_members_project ON project_members(project_id);
-```
+`components/TaskBoard.tsx` lines 290–327 shows:
+- `DndContext` with `PointerSensor` (`activationConstraint: { distance: 5 }`) from `@dnd-kit/core`
+- `onDragEnd` resolves target column from `over.id` or the task's current status fallback:
+  `tasks.find((t) => t.id === Number(overId))?.status`
+- Optimistic state update via `setTasks()` before the server call
+- `PATCH /api/tasks/${taskId}` with `{ status: columnId }`
+- Revert on error using `initialTasks` reference
+- `router.refresh()` on success to re-sync Server Component data
 
-**Drizzle schema addition (db/schema.ts):**
+The PATCH route at `app/api/tasks/[id]/route.ts` accepts `status` in its Zod schema and
+writes an audit_log entry. The full drag-to-column flow is functional end-to-end.
+
+**What may still need attention (not architecture, but UX):**
+- Dropping a card onto a column header vs onto another card — the fallback
+  `tasks.find((t) => t.id === Number(overId))?.status` handles card-to-card drops.
+- Each column needs a `droppable` zone large enough to catch drops when the column is empty.
+  Check whether empty columns accept drops or require a minimum `SortableContext` item.
+
+**Schema impact:** None.
+
+---
+
+### Feature 2: Gantt Baseline Tracking
+
+**Decision: New `gantt_baselines` table with JSONB snapshot per capture.**
+
+**Rationale:** JSONB on `projects` table limits to one baseline, prevents history, and bloats
+all `SELECT *` queries on projects. A dedicated table with FK supports named baselines, multiple
+captures, and future diff UIs.
+
+**New table — Drizzle schema addition (`db/schema.ts`):**
+
 ```typescript
-export const projectRoleEnum = pgEnum('project_role', ['admin', 'user']);
+export const ganttBaselines = pgTable('gantt_baselines', {
+  id:            serial('id').primaryKey(),
+  project_id:    integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  label:         text('label').notNull().default('Baseline'),
+  snapshot_json: jsonb('snapshot_json').notNull(),
+  // snapshot_json shape: Array<{ wbs_item_id: number, name: string, start: string, end: string }>
+  created_at:    timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  created_by:    text('created_by'),  // session user_id
+});
+export type GanttBaseline = typeof ganttBaselines.$inferSelect;
+```
 
-export const projectMembers = pgTable('project_members', {
-  id: serial('id').primaryKey(),
+**Data flow:**
+
+```
+[Capture Baseline button in GanttChart toolbar]
+    ↓
+POST /api/projects/[projectId]/gantt-baseline
+    → Query: for each wbs_item, compute min(task.start_date) and max(task.due) for tasks in row
+    → Build snapshot_json: [{ wbs_item_id, name, computed_start, computed_end }]
+    → INSERT INTO gantt_baselines
+    ↓
+gantt/page.tsx (Server Component) — on every page load:
+    → SELECT * FROM gantt_baselines WHERE project_id = X ORDER BY created_at DESC LIMIT 1
+    → Pass baseline prop to GanttChart
+    ↓
+GanttChart.tsx:
+    → Accepts optional `baseline?: BaselineRow[]` prop
+    → In bar rendering loop: if baseline entry exists for wbs_item_id, render ghost bar
+      behind the active bar (same row, lower opacity, dashed border)
+```
+
+**New route:** `app/api/projects/[projectId]/gantt-baseline/route.ts`
+- `GET` — fetch latest baseline (or all, with `?all=true`)
+- `POST` — capture new baseline
+
+**GanttChart.tsx changes:**
+- Add `baseline?: BaselineRow[]` to `GanttChartProps`
+- Add `BaselineRow` interface: `{ wbs_item_id: number; start: string; end: string }`
+- In the bar render loop, look up `baseline.find(b => b.wbs_item_id === row.id)` and
+  render a second semi-transparent bar if found
+
+**Migration:** `0038_gantt_baseline.sql`
+
+---
+
+### Feature 3: Chat Persistence
+
+**Decision: New `chat_messages` table per project. Restore last 50 messages on `ChatPanel` mount
+via `useChat` `initialMessages` prop.**
+
+**Current state confirmed:** `ChatPanel.tsx` uses `useChat` with React state only — messages
+are lost on tab navigate away. The `setMessages` function is available but unused for seeding.
+
+**New table — Drizzle schema addition (`db/schema.ts`):**
+
+```typescript
+export const chatMessages = pgTable('chat_messages', {
+  id:         serial('id').primaryKey(),
   project_id: integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
-  user_id: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  role: projectRoleEnum('role').notNull(),
-  created_at: timestamp('created_at').defaultNow().notNull(),
-}, (t) => [
-  uniqueIndex('project_members_project_user_idx').on(t.project_id, t.user_id),
-]);
-
-export type ProjectMember = typeof projectMembers.$inferSelect;
-export type ProjectMemberInsert = typeof projectMembers.$inferInsert;
+  role:       text('role').notNull(),        // 'user' | 'assistant'
+  content:    text('content').notNull(),
+  message_id: text('message_id'),            // Vercel AI SDK message.id for dedup
+  pinned:     boolean('pinned').notNull().default(false),
+  created_at: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+export type ChatMessage = typeof chatMessages.$inferSelect;
 ```
 
-**2. Extended requireSession() Function**
+```sql
+-- Index for the "last 50 messages" query pattern
+CREATE INDEX chat_messages_project_created_idx ON chat_messages(project_id, created_at DESC);
+```
 
-New utility: `lib/auth-project.ts` (extends existing `lib/auth-server.ts`)
+**Data flow change:**
+
+```
+BEFORE:
+  ChatPanel mounts → useChat state = [] → messages lost on navigate away
+
+AFTER:
+  ChatPanel mounts
+      → GET /api/projects/[projectId]/chat-messages?limit=50
+      → Server returns last 50 rows ordered by created_at ASC (for chronological display)
+      → ChatPanel passes as useChat initialMessages OR calls setMessages() in useEffect
+      → useChat manages session from that point forward
+      → On each user send: POST /api/projects/[projectId]/chat-messages { role: 'user', ... }
+      → On useChat onFinish callback: POST with { role: 'assistant', content, message_id }
+```
+
+**Vercel AI SDK note:** The `useChat` hook from `@ai-sdk/react` supports `initialMessages` prop.
+Passing the restored messages as `initialMessages` avoids a flash of empty state and is cleaner
+than `setMessages` in `useEffect`. The Server Component (`chat/page.tsx`) should fetch the last
+50 messages and pass them as a prop to `ChatPanel`, eliminating the client-side fetch on mount.
+
+**ChatPanel.tsx props change:**
 
 ```typescript
-/**
- * lib/auth-project.ts — Project-level RBAC enforcement
- *
- * Extends requireSession() to include project membership check.
- * Returns both global session AND project-level role.
- */
-import { requireSession } from "@/lib/auth-server";
-import { db } from "@/db";
-import { projectMembers, users } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
-import { NextResponse } from "next/server";
+interface ChatPanelProps {
+  projectId: number
+  initialContext: string
+  initialMessages?: UIMessage[]   // NEW — passed from Server Component
+}
+```
 
-export type ProjectRole = 'admin' | 'user';
+**New routes:**
+- `GET /api/projects/[projectId]/chat-messages` — returns `{ messages: ChatMessage[] }`
+- `POST /api/projects/[projectId]/chat-messages` — persist a single message
 
-export type ProjectSessionResult =
-  | {
-      session: NonNullable<Awaited<ReturnType<typeof requireSession>>['session']>;
-      projectRole: ProjectRole;
-      redirectResponse: null;
-    }
-  | {
-      session: null;
-      projectRole: null;
-      redirectResponse: NextResponse;
-    };
+---
 
-/**
- * requireProjectSession() — Enforces both authentication AND project membership.
- *
- * @param projectId - Numeric project ID
- * @returns Session + projectRole ('admin' or 'user'), or 401/403 response
- *
- * Usage:
- *   const { session, projectRole, redirectResponse } = await requireProjectSession(projectId);
- *   if (redirectResponse) return redirectResponse;
- *   // Now use projectRole to guard destructive actions
- */
-export async function requireProjectSession(projectId: number): Promise<ProjectSessionResult> {
-  const { session, redirectResponse } = await requireSession();
-  if (redirectResponse) {
-    return { session: null, projectRole: null, redirectResponse };
-  }
+### Feature 4: Pinned Answers
 
-  // Global admins have implicit 'admin' role on all projects
-  const globalRole = session.user.role;
-  if (globalRole === 'admin') {
-    return { session, projectRole: 'admin', redirectResponse: null };
-  }
+**Decision: `pinned` boolean column on `chat_messages` table. No separate table.**
 
-  // Check project_members table for explicit membership
-  const membership = await db
-    .select()
-    .from(projectMembers)
-    .where(
-      and(
-        eq(projectMembers.project_id, projectId),
-        eq(projectMembers.user_id, session.user.id)
-      )
-    )
-    .limit(1);
+The `chat_messages` table above already includes `pinned BOOLEAN NOT NULL DEFAULT false`.
 
-  if (membership.length === 0) {
-    return {
-      session: null,
-      projectRole: null,
-      redirectResponse: NextResponse.json(
-        { error: "You do not have access to this project" },
-        { status: 403 }
-      ),
-    };
-  }
+**UI change to `ChatMessage.tsx`:**
+- Add a pin icon button (shows on hover for assistant messages only)
+- On click: `PATCH /api/projects/[projectId]/chat-messages/[messageId]` with `{ pinned: true/false }`
+- Pinned messages get a visual indicator (border, background, or icon) in the message list
 
+**New route:** `app/api/projects/[projectId]/chat-messages/[messageId]/route.ts`
+- `PATCH` — toggle `pinned` flag
+
+**Schema impact:** Covered by `chat_messages.pinned`. No additional migration needed beyond
+what Feature 3 adds.
+
+---
+
+### Feature 5: Owner Picker — Saving Stakeholder ID
+
+**Decision: Add `owner_stakeholder_id` FK column alongside existing `owner` TEXT on 4 tables.
+Dual-write both fields during v9.0. Do NOT remove `owner` text yet.**
+
+**Rationale:** The `owner` text field is read by:
+- Extraction pipeline (ingests free text into `owner`)
+- YAML export (`lib/yaml-export.ts`)
+- Skill context builders (`lib/skill-context.ts`)
+- Audit log (stores owner as string in before/after JSON)
+
+Removing it breaks all four without a migration path. The safe pattern is dual-write: UI writes
+both `owner = stakeholder.name` and `owner_stakeholder_id = stakeholder.id`. All existing readers
+continue using the text field. Future milestones can migrate readers to the FK once all write
+paths are updated.
+
+**Schema changes — add columns only:**
+
+```sql
+ALTER TABLE tasks      ADD COLUMN owner_stakeholder_id INTEGER REFERENCES stakeholders(id) ON DELETE SET NULL;
+ALTER TABLE actions    ADD COLUMN owner_stakeholder_id INTEGER REFERENCES stakeholders(id) ON DELETE SET NULL;
+ALTER TABLE risks      ADD COLUMN owner_stakeholder_id INTEGER REFERENCES stakeholders(id) ON DELETE SET NULL;
+ALTER TABLE milestones ADD COLUMN owner_stakeholder_id INTEGER REFERENCES stakeholders(id) ON DELETE SET NULL;
+```
+
+**Drizzle schema change** (add to each of the 4 table definitions):
+
+```typescript
+owner_stakeholder_id: integer('owner_stakeholder_id').references(() => stakeholders.id, { onDelete: 'set null' }),
+```
+
+**OwnerCell.tsx upgrade:**
+
+The current `OwnerCell` fetches stakeholder names for datalist autocomplete via
+`GET /api/stakeholders?project_id=X`. Upgrade the autocomplete to return `{ id, name }` objects.
+When the user selects from the datalist (exact match), include `owner_stakeholder_id` in the
+PATCH payload. When the user types a free-text name not in the list, send only `owner` with no
+`owner_stakeholder_id` (null or unchanged).
+
+```typescript
+// OwnerCell sends:
+{ owner: 'Alice Chen', owner_stakeholder_id: 42 }  // from datalist select
+{ owner: 'unknown person', owner_stakeholder_id: null }  // free text
+```
+
+PATCH schema for tasks/actions/risks/milestones routes must add `owner_stakeholder_id` as an
+optional nullable field to their Zod schemas.
+
+**Migration:** `0039_owner_stakeholder_id.sql` (single migration covering all 4 tables)
+
+---
+
+### Feature 6: Exceptions Panel (Per-Project)
+
+**Decision: Pure server-side query evaluation on page load. No BullMQ job. No cache.**
+
+**Rationale:** All data needed to evaluate exceptions is already fetched for the Overview tab
+via `getWorkspaceData(projectId)`. A pure client-side computation function (following the
+`PortfolioExceptionsPanel.computeExceptions()` pattern) runs in sub-millisecond time over
+the existing data. BullMQ adds latency (stale results) and Redis dependency for what is a
+trivial computation.
+
+**Exception rules and data sources:**
+
+| Exception Type | Rule | Data Already Available |
+|----------------|------|------------------------|
+| Overdue tasks | `due < today AND status != 'done'` | `getTasksForProject()` |
+| At-risk milestones | `date < today AND status NOT IN ('completed','blocked')` | `getMilestonesForProject()` |
+| High/critical open risks | `severity IN ('high','critical') AND status = 'open'` | `getWorkspaceData().risks` |
+| Blocked tasks | `status = 'blocked'` | `getTasksForProject()` |
+| Actions overdue | `due < today AND status NOT IN ('completed','cancelled')` | `getWorkspaceData().actions` |
+| Stale project | `project.updated_at < (today - 14 days)` | `getProjectWithHealth()` |
+
+**Data flow:**
+
+```
+overview/page.tsx (Server Component)
+    → getWorkspaceData(projectId)  [already called for Overview metrics]
+    ↓
+<ExceptionsPanel data={workspaceData} />  (new client component, co-located with HealthDashboard)
+    → computeProjectExceptions(data)  [pure function, same pattern as PortfolioExceptionsPanel]
+    → Render sorted exception rows with severity badges and entity links
+```
+
+**New component:** `components/ProjectExceptionsPanel.tsx`
+
+Follows exact same shape as `PortfolioExceptionsPanel.tsx`:
+- Accepts pre-fetched workspace data as props
+- `computeProjectExceptions()` is a pure function (no fetch calls)
+- Returns sorted `ExceptionRow[]` with `{ entityType, entityId, description, severity }`
+- Links to the relevant entity (e.g., risk R-KAISER-001 → `/customer/[id]/risks?id=1`)
+
+**Schema impact:** None. All data already exists.
+
+---
+
+### Feature 7: Risk Score
+
+**Decision: Computed in application layer (pure function). New columns `likelihood` and `impact`
+(integer 1–5) and `target_date` (TEXT) on the `risks` table. Score label derived as
+Low/Medium/High/Critical from `likelihood * impact`.**
+
+**Rationale:** PostgreSQL generated columns for this computation would add migration complexity
+with no benefit. A pure function (`computeRiskScore()`) is testable and consistent with the
+existing `computeOverallHealth()` and `computeTrackHealth()` pattern in `HealthDashboard.tsx`.
+
+**Schema changes:**
+
+```sql
+ALTER TABLE risks ADD COLUMN likelihood  INTEGER CHECK (likelihood BETWEEN 1 AND 5);
+ALTER TABLE risks ADD COLUMN impact      INTEGER CHECK (impact BETWEEN 1 AND 5);
+ALTER TABLE risks ADD COLUMN target_date TEXT;
+```
+
+**Drizzle schema additions on `risks` table:**
+
+```typescript
+likelihood:  integer('likelihood'),
+impact:      integer('impact'),
+target_date: text('target_date'),
+```
+
+**Score formula — new file `lib/risk-score.ts`:**
+
+```typescript
+export type RiskScoreLabel = 'low' | 'medium' | 'high' | 'critical'
+
+export function computeRiskScore(
+  likelihood: number | null,
+  impact: number | null
+): RiskScoreLabel | null {
+  if (!likelihood || !impact) return null
+  const score = likelihood * impact      // 1-25 scale
+  if (score <= 4)  return 'low'
+  if (score <= 9)  return 'medium'
+  if (score <= 16) return 'high'
+  return 'critical'
+}
+```
+
+**Component changes:**
+- `RisksTableClient.tsx`: Import `computeRiskScore`, add Risk Score column showing computed
+  label badge next to severity badge. Severity remains the manual field; Risk Score is derived.
+- `RiskEditModal.tsx`: Add likelihood (1–5 select) and impact (1–5 select) fields + target_date
+  DatePicker. Show live preview of computed score as user adjusts sliders/selects.
+- `AddRiskModal.tsx`: Same new fields.
+
+**PATCH route for risks** (`app/api/projects/[projectId]/risks/route.ts` or the risk-by-ID
+handler): Add `likelihood`, `impact`, `target_date` to the Zod patch schema.
+
+**Migration:** `0040_risk_fields.sql`
+
+---
+
+### Feature 8: Gantt ↔ Task Dates (Phase Date Aggregation)
+
+**Decision: Compute phase date range in `mapDataToWbsRows()` in `gantt/page.tsx` Server
+Component. No extra DB query — derive from the already-fetched tasks array.**
+
+**Rationale:** `gantt/page.tsx` already fetches all tasks and maps them into `GanttWbsRow[]`.
+Extending `mapDataToWbsRows()` to compute `MIN(task.start_date)` and `MAX(task.due)` per row
+from the in-memory tasks array adds a 1–2 line computation with zero additional DB cost.
+
+**`GanttWbsRow` interface extension:**
+
+```typescript
+export interface GanttWbsRow {
+  id: number
+  name: string
+  colorIdx: number
+  level: number
+  parentId: number | null
+  track?: 'ADR' | 'Biggy'
+  tasks: GanttTask[]
+  phaseStart?: string   // NEW: min(task.start_date) for tasks in this row (ISO date)
+  phaseEnd?: string     // NEW: max(task.due) for tasks in this row (ISO date)
+}
+```
+
+**`mapDataToWbsRows()` extension in `gantt/page.tsx`:**
+
+After building the `wbsToTasks` map and before returning the `GanttWbsRow[]`, add:
+
+```typescript
+// Compute phase date range from assigned tasks
+function computePhaseDates(rowTasks: typeof tasks): { phaseStart?: string; phaseEnd?: string } {
+  const starts = rowTasks.map(t => t.start_date).filter((s): s is string => !!s && /^\d{4}-\d{2}-\d{2}/.test(s))
+  const ends   = rowTasks.map(t => t.due).filter((d): d is string => !!d && /^\d{4}-\d{2}-\d{2}/.test(d))
   return {
-    session,
-    projectRole: membership[0].role as ProjectRole,
-    redirectResponse: null
-  };
-}
-
-/**
- * requireProjectAdmin() — Enforces project-level admin role.
- * Shorthand for requireProjectSession + admin check.
- */
-export async function requireProjectAdmin(projectId: number): Promise<ProjectSessionResult> {
-  const result = await requireProjectSession(projectId);
-  if (result.redirectResponse) return result;
-
-  if (result.projectRole !== 'admin') {
-    return {
-      session: null,
-      projectRole: null,
-      redirectResponse: NextResponse.json(
-        { error: "Admin role required for this action" },
-        { status: 403 }
-      ),
-    };
+    phaseStart: starts.length > 0 ? starts.sort()[0] : undefined,
+    phaseEnd:   ends.length > 0   ? ends.sort().at(-1) : undefined,
   }
-
-  return result;
 }
 ```
 
-#### Modified Components
+**GanttChart.tsx rendering:** The WBS row-level bar span uses `phaseStart`/`phaseEnd` when
+present as the overall row header bar. Individual task bars within the row continue to render
+as-is. This creates a two-level visual: a wide phase span bar at the row header + individual
+task bars inside the row.
 
-**Route Handlers requiring project-level guards:**
-- Archive/delete: `DELETE /api/projects/[projectId]/route.ts` → use `requireProjectAdmin()`
-- User management: New `POST /api/projects/[projectId]/members/route.ts` → use `requireProjectAdmin()`
-- Global scheduler actions: `POST /api/jobs/route.ts` → check if user is admin on ANY project (new helper)
-
-**All other existing handlers:** No changes required for v7.0. Migration to `requireProjectSession()` can be phased in later phases (AUTH-05 suggests gradual rollout).
-
-### Data Flow
-
-```
-User Action (Archive Project)
-    ↓
-Route Handler: DELETE /api/projects/[projectId]
-    ↓
-requireProjectAdmin(projectId)  ← NEW
-    ↓ (if not admin, return 403)
-Archive logic: UPDATE projects SET archived_at = NOW()
-    ↓
-Response
-```
-
-### Rollout Strategy
-
-**Phase 1 (v7.0):** Implement `project_members` table + new helpers; guard only new destructive actions (archive, delete, membership management)
-
-**Phase 2 (v7.1+):** Gradually migrate existing handlers from `requireSession()` to `requireProjectSession()` where per-project access control is desired (e.g., `/api/projects/[projectId]/actions/route.ts`)
-
-**Phase 3 (v7.2+):** Add project membership UI in project settings tab; bulk-assign users to projects
+**Schema impact:** None.
 
 ---
 
-## Feature 2: Project Archive & Delete
+### Feature 9: Active Tracks Config — Project Settings
 
-### Current State
-- `projects.status` enum: 'active', 'archived', 'closed', 'draft'
-- **No soft-delete mechanism:** 'archived' status is manual, not enforced
-- **No restore flow:** Once archived, status change is manual UPDATE
-- **CASCADE behavior:** FK constraints use `ON DELETE CASCADE` for related records
+**Decision: Add `active_tracks` JSONB column to existing `projects` table.**
 
-### Integration Architecture
+**Rationale:** This is project metadata — a small JSONB object `{ ADR: boolean, Biggy: boolean }`.
+A new `project_settings` table is premature abstraction for what is effectively two boolean
+flags. The `projects` table already carries optional config columns (`weekly_hour_target`,
+`exec_action_required`, `description`). If the settings surface grows substantially in future,
+extract to `project_settings` then.
 
-#### Pattern Choice: `archived_at` Column (Soft-Delete)
+**Other v9.0 Settings tab fields and their existing columns:**
+- Project rename → `projects.name` (already exists)
+- Go-live date → `projects.go_live_target` (already exists)
+- Description → `projects.description` (already exists)
 
-**Rationale:**
-- Simpler queries: `WHERE archived_at IS NULL` to filter active projects
-- Timestamp preserves audit trail: when was project archived?
-- No data duplication: archived projects stay in same table
-- Reversible: restore = `SET archived_at = NULL`
+**Active tracks is the only new field.**
 
-**Alternative rejected:** Separate `archived_projects` table duplicates schema, complicates JOINs, loses FK integrity on restore
-
-#### New Components
-
-**1. Schema Migration**
-```sql
--- Add archived_at column to projects table
-ALTER TABLE projects ADD COLUMN archived_at TIMESTAMP;
-ALTER TABLE projects ADD COLUMN deleted_at TIMESTAMP;
-
--- Index for filtering active projects
-CREATE INDEX idx_projects_archived_at ON projects(archived_at) WHERE archived_at IS NULL;
-CREATE INDEX idx_projects_deleted_at ON projects(deleted_at) WHERE deleted_at IS NULL;
-```
-
-**Drizzle schema update (db/schema.ts):**
-```typescript
-export const projects = pgTable('projects', {
-  // ... existing fields ...
-  archived_at: timestamp('archived_at'),
-  deleted_at: timestamp('deleted_at'),
-});
-```
-
-**2. Utility Functions**
-
-New file: `lib/project-lifecycle.ts`
-
-```typescript
-/**
- * lib/project-lifecycle.ts — Project archive/delete/restore utilities
- */
-import { db } from "@/db";
-import { projects } from "@/db/schema";
-import { eq, isNull, isNotNull, and } from "drizzle-orm";
-
-/**
- * Archive a project (soft-delete via archived_at timestamp).
- * Project becomes read-only; related records preserved.
- */
-export async function archiveProject(projectId: number): Promise<void> {
-  await db
-    .update(projects)
-    .set({ archived_at: new Date(), status: 'archived' })
-    .where(eq(projects.id, projectId));
-}
-
-/**
- * Restore an archived project back to active status.
- */
-export async function restoreProject(projectId: number): Promise<void> {
-  await db
-    .update(projects)
-    .set({ archived_at: null, status: 'active' })
-    .where(eq(projects.id, projectId));
-}
-
-/**
- * Permanently delete a project (hard delete).
- * CASCADE will delete all related records (actions, risks, tasks, etc.).
- *
- * Security: Only callable by project admins (enforced at Route Handler).
- */
-export async function deleteProject(projectId: number): Promise<void> {
-  await db
-    .update(projects)
-    .set({ deleted_at: new Date() })
-    .where(eq(projects.id, projectId));
-}
-
-/**
- * Get all active projects (not archived, not deleted).
- */
-export async function getActiveProjects() {
-  return db
-    .select()
-    .from(projects)
-    .where(and(isNull(projects.archived_at), isNull(projects.deleted_at)));
-}
-
-/**
- * Get all archived projects (archived but not deleted).
- */
-export async function getArchivedProjects() {
-  return db
-    .select()
-    .from(projects)
-    .where(and(isNotNull(projects.archived_at), isNull(projects.deleted_at)));
-}
-```
-
-#### Modified Components
-
-**Route Handlers:**
-- `DELETE /api/projects/[projectId]/route.ts` — Add query param `?permanent=true` for hard delete
-- `PATCH /api/projects/[projectId]/route.ts` — Add `restore` action
-- `GET /api/projects/route.ts` — Add query param `?status=archived` to list archived projects
-
-**UI Components:**
-- Portfolio dashboard (`app/dashboard/page.tsx`) — Filter out archived/deleted by default; add "Show Archived" toggle
-- Archived projects view (new page: `app/archived/page.tsx`) — Read-only list of archived projects with restore button
-- Project settings (new section: project lifecycle actions) — Archive/Delete buttons with confirmation modals
-
-### Data Flow: Archive Project
-
-```
-User clicks "Archive Project"
-    ↓
-Confirmation modal (client)
-    ↓
-DELETE /api/projects/[projectId]?action=archive
-    ↓
-requireProjectAdmin(projectId)  ← RBAC guard
-    ↓
-archiveProject(projectId)       ← Sets archived_at
-    ↓
-Invalidate cache / refresh UI
-    ↓
-Project removed from active list
-```
-
-### Cascade Behavior
-
-**Important:** Archived projects preserve ALL related records (actions, risks, tasks, etc.). Only hard delete triggers CASCADE removal.
-
-**User expectation alignment:**
-- **Archive = "close but keep for reference"** → read-only, searchable, restorable
-- **Delete = "permanent removal"** → requires double confirmation, cannot be undone (unless `deleted_at` approach allows 30-day grace period before physical deletion)
-
-**Recommendation for v7.0:** Use `deleted_at` timestamp (not immediate CASCADE deletion). Add background job to purge `deleted_at > 30 days ago` projects monthly. This provides safety net for accidental deletions.
-
----
-
-## Feature 3: Gantt Bi-Directional Date Propagation
-
-### Current State
-- Custom `GanttChart.tsx` component: renders tasks and milestones independently
-- Tasks fetched from `tasks` table; milestones from `milestones` table
-- Drag-to-reschedule updates only the dragged entity (task OR milestone, not both)
-- No sync mechanism: changing task dates doesn't update associated milestone, and vice versa
-
-### Integration Architecture
-
-#### Canonical Source of Truth: Event-Driven Updates
-
-**Pattern:** User drag action on Gantt is the **event source**. Database updates propagate bidirectionally based on FK relationships.
-
-**Relationships:**
-- `tasks.milestone_id` → `milestones.id` (FK exists)
-- Milestone date = earliest start_date of all assigned tasks (derived)
-- Task dates constrain milestone date (milestone cannot be before all tasks complete)
-
-#### New Components
-
-**1. Sync Utility Function**
-
-New file: `lib/gantt-sync.ts`
-
-```typescript
-/**
- * lib/gantt-sync.ts — Bi-directional Gantt date propagation
- *
- * Ensures milestone dates stay consistent with task dates when user drags on Gantt.
- */
-import { db } from "@/db";
-import { tasks, milestones } from "@/db/schema";
-import { eq, and, isNotNull } from "drizzle-orm";
-
-/**
- * Update a task's dates and propagate changes to its associated milestone.
- *
- * Logic:
- * - If task has milestone_id, recalculate milestone.date as MAX(task.due) of all tasks in that milestone
- * - If no tasks remain with valid dates, set milestone.date = null (TBD)
- *
- * @param taskId - Task to update
- * @param newStartDate - New start date (ISO string or null)
- * @param newDueDate - New due date (ISO string or null)
- */
-export async function updateTaskDates(
-  taskId: number,
-  newStartDate: string | null,
-  newDueDate: string | null
-): Promise<void> {
-  // 1. Update task dates
-  const updated = await db
-    .update(tasks)
-    .set({ start_date: newStartDate, due: newDueDate })
-    .where(eq(tasks.id, taskId))
-    .returning();
-
-  if (updated.length === 0) return;
-
-  const task = updated[0];
-  if (!task.milestone_id) return; // No milestone association
-
-  // 2. Recalculate milestone date from all tasks in this milestone
-  const milestoneTasks = await db
-    .select()
-    .from(tasks)
-    .where(
-      and(
-        eq(tasks.milestone_id, task.milestone_id),
-        isNotNull(tasks.due)
-      )
-    );
-
-  let latestDue: string | null = null;
-  for (const t of milestoneTasks) {
-    if (t.due && (!latestDue || t.due > latestDue)) {
-      latestDue = t.due;
-    }
-  }
-
-  // 3. Update milestone date
-  await db
-    .update(milestones)
-    .set({ date: latestDue })
-    .where(eq(milestones.id, task.milestone_id));
-}
-
-/**
- * Update a milestone's date and propagate to all assigned tasks.
- *
- * Logic:
- * - If milestone date moves earlier, do nothing to tasks (tasks are unchanged)
- * - If milestone date moves later, extend all task due dates proportionally
- *
- * Alternative simpler approach (recommended for v7.0):
- * - Milestone date is DERIVED (always computed from tasks), never set directly
- * - Gantt milestone markers are read-only; only tasks are draggable
- *
- * @param milestoneId - Milestone to update
- * @param newDate - New milestone date (ISO string or null)
- */
-export async function updateMilestoneDate(
-  milestoneId: number,
-  newDate: string | null
-): Promise<void> {
-  // OPTION A: Milestone date is derived (recommended)
-  // Do nothing — milestone date is computed from tasks
-  // Throw error or no-op if user tries to drag milestone marker
-
-  // OPTION B: Milestone date is settable (complex)
-  // Requires proportional adjustment of all task dates
-  // Deferred to v7.1 if needed
-
-  await db
-    .update(milestones)
-    .set({ date: newDate })
-    .where(eq(milestones.id, milestoneId));
-}
-```
-
-**2. Route Handler Extension**
-
-Modified: `PATCH /api/tasks/[id]/route.ts`
-
-```typescript
-import { updateTaskDates } from "@/lib/gantt-sync";
-
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { session, redirectResponse } = await requireSession();
-  if (redirectResponse) return redirectResponse;
-
-  const { id } = await params;
-  const taskId = parseInt(id, 10);
-  const body = await request.json();
-
-  // If dates are changing, use sync utility
-  if (body.start_date !== undefined || body.due !== undefined) {
-    await updateTaskDates(taskId, body.start_date, body.due);
-    return NextResponse.json({ success: true });
-  }
-
-  // Otherwise, standard PATCH logic
-  const updated = await db
-    .update(tasks)
-    .set(body)
-    .where(eq(tasks.id, taskId))
-    .returning();
-
-  return NextResponse.json(updated[0]);
-}
-```
-
-#### Modified Components
-
-**Client Component: `components/GanttChart.tsx`**
-
-```typescript
-// In handleTaskDragEnd callback:
-async function handleTaskDragEnd(taskId: string, newStart: string, newEnd: string) {
-  const res = await fetch(`/api/tasks/${taskId}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ start_date: newStart, due: newEnd }),
-  });
-
-  if (res.ok) {
-    // Refetch both tasks AND milestones to reflect propagated changes
-    await Promise.all([
-      fetchTasks(),
-      fetchMilestones(),
-    ]);
-    toast.success('Task date updated');
-  }
-}
-```
-
-### Data Flow
-
-```
-User drags Task on Gantt (client)
-    ↓
-PATCH /api/tasks/[id] { start_date, due }
-    ↓
-updateTaskDates(taskId, start, due)
-    ↓ (atomic transaction)
-    ├─ UPDATE tasks SET start_date, due
-    └─ UPDATE milestones SET date = MAX(task.due) WHERE milestone_id = ...
-    ↓
-Client refetches tasks + milestones
-    ↓
-Gantt re-renders with synced dates
-```
-
-### Architectural Decision: Milestone Date as Derived Value
-
-**Recommended pattern for v7.0:**
-- Milestone `date` column is **always computed** from assigned tasks
-- Gantt milestone markers are **read-only** (not draggable)
-- Only task drag actions update dates
-- Milestone dates automatically update via `updateTaskDates()`
-
-**Rationale:**
-- Simpler logic: single source of truth (task dates)
-- No conflicts: milestone cannot drift out of sync
-- Aligns with PM best practice: milestones mark task completion, not arbitrary dates
-
-**Deferred to v7.1+ if needed:** Draggable milestones that proportionally adjust task dates
-
----
-
-## Feature 4: Project-Scoped BullMQ Scheduling
-
-### Current State
-- `scheduled_jobs` table: global jobs (no project_id column)
-- Worker polls `scheduled_jobs`, registers cron patterns with BullMQ
-- Job execution: `worker/scheduler.ts` → `worker/jobs/[skillName].ts`
-- No per-project job filtering: weekly-briefing runs for all projects, not specific projects
-
-### Integration Architecture
-
-#### Pattern: Metadata Tagging (Not Separate Queues)
-
-**Rationale:**
-- BullMQ queue-per-project approach = Redis key explosion (1 queue = 5+ keys per queue)
-- Metadata tagging = single queue, filter jobs by `project_id` in worker
-- Simpler Redis topology, easier to debug, no queue management overhead
-
-**Alternative rejected:** Separate queue per project (`scheduled-jobs-project-123`) scales poorly beyond 100 projects
-
-#### New Components
-
-**1. Schema Migration**
+**Schema change:**
 
 ```sql
--- Add project_id column to scheduled_jobs
-ALTER TABLE scheduled_jobs ADD COLUMN project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE;
-
--- Index for project-scoped queries
-CREATE INDEX idx_scheduled_jobs_project ON scheduled_jobs(project_id);
-
--- Null project_id = global job (runs for all projects or no specific project)
+ALTER TABLE projects ADD COLUMN active_tracks JSONB NOT NULL DEFAULT '{"ADR": true, "Biggy": true}';
 ```
 
-**Drizzle schema update (db/schema.ts):**
-```typescript
-export const scheduledJobs = pgTable('scheduled_jobs', {
-  // ... existing fields ...
-  project_id: integer('project_id').references(() => projects.id, { onDelete: 'cascade' }),
-  // null project_id = global job
-});
-```
-
-**2. Worker Job Registration Logic**
-
-Modified: `worker/scheduler.ts`
+**Drizzle schema addition on `projects` table:**
 
 ```typescript
-/**
- * registerDbSchedulers() — Modified to include project_id in job data
- */
-export async function registerDbSchedulers(): Promise<void> {
-  const enabledJobs = await db
-    .select()
-    .from(scheduledJobs)
-    .where(eq(scheduledJobs.enabled, true));
-
-  for (const job of enabledJobs) {
-    if (!job.cron_expression) continue;
-
-    await jobQueue.upsertJobScheduler(
-      `db-job-${job.id}`,
-      {
-        pattern: job.cron_expression,
-        ...(job.timezone ? { tz: job.timezone } : {}),
-      },
-      {
-        name: job.skill_name,
-        data: {
-          triggeredBy: 'scheduled',
-          jobId: job.id,
-          projectId: job.project_id,  // ← NEW: pass project_id to worker
-        },
-        opts: { removeOnComplete: 100, removeOnFail: 50 },
-      }
-    );
-    console.log(`[scheduler] registered db-job-${job.id} (${job.name}) → ${job.cron_expression}${job.project_id ? ` [project ${job.project_id}]` : ''}`);
-  }
-}
+active_tracks: jsonb('active_tracks').$type<{ ADR: boolean; Biggy: boolean }>().notNull().default({ ADR: true, Biggy: true }),
 ```
 
-**3. Job Execution Filter**
-
-Modified: `worker/jobs/weekly_briefing.ts` (example skill)
-
-```typescript
-/**
- * weekly_briefing skill — now project-scoped
- */
-import { Job } from 'bullmq';
-
-export async function weeklyBriefing(job: Job) {
-  const { projectId } = job.data;
-
-  if (!projectId) {
-    // Global job: run for all active projects
-    const projects = await getActiveProjects();
-    for (const project of projects) {
-      await generateBriefing(project.id);
-    }
-  } else {
-    // Project-scoped job: run for specific project
-    await generateBriefing(projectId);
-  }
-}
-```
-
-#### Modified Components
-
-**UI: Scheduler Configuration (`app/scheduler/page.tsx`)**
-
-Add project selector dropdown when creating/editing scheduled jobs:
-
-```typescript
-<Select
-  label="Project Scope"
-  value={formData.project_id ?? 'global'}
-  onChange={(val) => setFormData({ ...formData, project_id: val === 'global' ? null : parseInt(val) })}
->
-  <option value="global">All Projects (Global)</option>
-  {projects.map((p) => (
-    <option key={p.id} value={p.id}>{p.name}</option>
-  ))}
-</Select>
-```
-
-**Route Handler: `POST /api/jobs/route.ts`**
-
-Add `project_id` to job creation schema:
-
-```typescript
-const CreateJobSchema = z.object({
-  name: z.string(),
-  skill_name: z.string(),
-  cron_expression: z.string(),
-  project_id: z.number().nullable(),  // ← NEW
-  // ... other fields
-});
-```
-
-### Data Flow
+**Settings tab data flow:**
 
 ```
-Admin creates project-scoped job (UI)
+settings/page.tsx (Server Component)
+    → getProjectWithHealth(projectId)  [already fetches project row]
     ↓
-POST /api/jobs { name, skill_name, cron_expression, project_id: 123 }
+<ProjectSettingsForm project={project} isProjectAdmin={isProjectAdmin} />
+    (new client component — replaces the current DangerZoneSection-only layout)
+    → Fields: name input, description textarea, go_live_target DatePicker
+    → Toggles: ADR active (boolean), Biggy active (boolean)
+    → PATCH /api/projects/[projectId] { name, description, go_live_target, active_tracks }
     ↓
-INSERT INTO scheduled_jobs (project_id = 123)
-    ↓
-Worker polls scheduled_jobs table (60s interval)
-    ↓
-registerDbSchedulers() reads new job
-    ↓
-upsertJobScheduler() registers cron with BullMQ
-    ↓ (at scheduled time)
-Job executes with projectId in job.data
-    ↓
-Skill runs for specific project only
+<DangerZoneSection ... />   [existing — remains as-is below settings form]
 ```
 
-### Backward Compatibility
+**Track hiding in WBS and Gantt:**
+- `wbs/page.tsx`: Filter `getWbsItems()` calls — skip the track if `active_tracks[track] === false`
+- `gantt/page.tsx`: Filter `adrWbs`/`biggyWbs` before `mapDataToWbsRows()` if track disabled
+- `active_tracks` must be fetched in these Server Components and used to conditionally skip
+  the `getWbsItems()` call for disabled tracks
 
-**Existing global jobs:** `project_id = NULL` → job runs for all projects (preserve current behavior)
+**PATCH route extension:** `app/api/projects/[projectId]/route.ts` — add `active_tracks` to
+the project PATCH Zod schema.
 
-**Migration strategy:**
-1. Add `project_id` column (nullable)
-2. Existing jobs remain global (NULL)
-3. New jobs can opt into project scoping via UI
-4. No breaking changes to existing skills (they check `job.data.projectId` and fall back to all-projects behavior)
+**Migration:** `0041_active_tracks.sql`
 
 ---
 
-## Feature 5: Note Entity Reclassification
+### Feature 10: Meeting Prep Skill
 
-### Current State
-- ExtractionPreview displays 21 entity types in tabs
-- Entity type is determined by Claude during extraction (`entityType: 'note'` for unclassifiable items)
-- Once staged, entity type is immutable (no UI to change it before approval)
-- Approved entities route to DB tables based on `entityType` field
+**Decision: New `SKILL.md` file in the skills directory. Uses the existing skill execution
+infrastructure end-to-end. No inline AI call in a modal.**
 
-### Integration Architecture
+**Rationale:** The `SkillOrchestrator` → `skill_runs` → `skill_run_chunks` → SSE polling
+pipeline is already fully operational across 15 skills. Adding a 16th skill requires only:
+1. A new `SKILL.md` file in the skills directory
+2. That file satisfies the Phase 63 Skills Design Standard YAML front-matter schema
 
-#### Pattern: Pre-Approval Entity Type Override
+`lib/skill-path.ts` resolves the skills directory at runtime via `resolveSkillsDir()`. The
+skills page (`app/customer/[id]/skills/page.tsx`) discovers skills via `readdir()` + YAML
+front-matter parsing — no code changes needed to surface a new skill in the UI.
 
-**User flow:**
-1. Claude extracts document → stages items with best-guess `entityType`
-2. User reviews in ExtractionPreview modal
-3. User notices "note" entity is actually a "risk" or "action"
-4. User changes entity type via dropdown in ExtractionItemRow
-5. User approves → entity routes to correct table
+An inline AI modal approach would bypass `skill_runs` history, Output Library storage,
+streaming UI, cancel button, progress indicator, and the Skills Design Standard compliance
+check. These are regressions, not simplifications.
 
-#### New Components
+**Implementation:**
 
-**1. UI Enhancement: Entity Type Dropdown**
+New file: `[skills_dir]/meeting-prep/SKILL.md`
 
-Modified component: `components/ExtractionItemRow.tsx`
+Required YAML front-matter (must be Phase 63 compliant):
 
-```typescript
-/**
- * ExtractionItemRow.tsx — Add entity type selector
- */
-import { Select } from '@/components/ui/select';
-import { TAB_LABELS, ENTITY_ORDER } from './ExtractionPreview';
-
-interface ExtractionItemRowProps {
-  item: ReviewItem;
-  globalIndex: number;
-  isExpanded: boolean;
-  onToggleExpand: () => void;
-  onChange: (changes: Partial<ReviewItem>) => void;
-}
-
-export function ExtractionItemRow({ item, onChange, ...props }: ExtractionItemRowProps) {
-  return (
-    <div className="p-3 border-b">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-3">
-          {/* Entity type selector */}
-          <Select
-            value={item.entityType}
-            onChange={(val) => onChange({ entityType: val })}
-            className="text-sm"
-          >
-            {ENTITY_ORDER.map((type) => (
-              <option key={type} value={type}>
-                {TAB_LABELS[type] ?? type}
-              </option>
-            ))}
-          </Select>
-
-          {/* Existing approve checkbox */}
-          <Checkbox
-            checked={item.approved}
-            onChange={(checked) => onChange({ approved: checked })}
-          />
-        </div>
-
-        {/* Expand/collapse toggle */}
-        <Button variant="ghost" size="sm" onClick={props.onToggleExpand}>
-          {props.isExpanded ? 'Collapse' : 'Expand'}
-        </Button>
-      </div>
-
-      {/* Item fields preview */}
-      {props.isExpanded && (
-        <div className="mt-2 space-y-1 text-sm text-zinc-600">
-          {Object.entries(item.fields).map(([key, value]) => (
-            <div key={key}>
-              <strong>{key}:</strong> {String(value)}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
+```yaml
+---
+name: meeting-prep
+label: Meeting Prep
+description: Generates a structured meeting brief with open actions, upcoming milestones, recent decisions, and stakeholder context for an upcoming customer meeting.
+inputRequired: true
+inputLabel: Meeting agenda or attendees (optional — leave blank for a general brief)
+schedulable: false
+errorBehavior: retry
+---
 ```
 
-**2. Approval Route Handler Logic**
+**Context builder:** `buildSkillContext()` in `lib/skill-context.ts` already assembles project
+context (actions, risks, milestones, stakeholders, engagement history). Meeting Prep can use the
+same context builder with no changes. The prompt body in `SKILL.md` directs which sections to
+emphasize.
 
-Modified: `app/api/ingestion/approve/route.ts`
-
-**Current behavior:** Routes entity to DB table based on `item.entityType`
-
-**New behavior:** Allow `entityType` to differ from Claude's original classification; route based on user-selected type
-
-**No changes needed** — existing switch/case in `approve/route.ts` already routes by `entityType`. UI change automatically flows through because `ReviewItem.entityType` is mutable before approval.
-
-```typescript
-// In approve/route.ts (pseudo-code of existing logic):
-for (const item of approvedItems) {
-  switch (item.entityType) {
-    case 'action':
-      await insertAction(item.fields);
-      break;
-    case 'risk':
-      await insertRisk(item.fields);
-      break;
-    case 'note':
-      await insertNote(item.fields);  // or skip if no notes table
-      break;
-    // ... other cases
-  }
-}
-```
-
-#### Modified Components
-
-**Client state management:** `components/IngestionModal.tsx`
-
-```typescript
-// onItemChange already supports partial updates:
-function handleItemChange(index: number, changes: Partial<ReviewItem>) {
-  setStagedItems((prev) =>
-    prev.map((item, i) => (i === index ? { ...item, ...changes } : item))
-  );
-}
-```
-
-**No other changes needed** — entity type change propagates through existing approval flow.
-
-### Data Flow
+**Skill invocation chain (unchanged):**
 
 ```
-Claude extracts document → entityType: 'note'
+Skills tab → SkillsTabClient → POST /api/projects/[projectId]/runs
     ↓
-ExtractionPreview renders item in "Notes" tab
+BullMQ job → SkillOrchestrator.run(params)
+    → reads SKILL.md from disk via resolveSkillsDir() + readFile()
+    → builds context via buildSkillContext()
+    → calls Anthropic API with streaming
+    → writes chunks to skill_run_chunks table
     ↓
-User selects item, changes entityType → 'risk'
-    ↓
-Item moves to "Risks" tab (UI auto-groups by entityType)
-    ↓
-User approves item
-    ↓
-POST /api/ingestion/approve { items: [{ entityType: 'risk', fields: {...} }] }
-    ↓
-Approval handler routes to risks table
-    ↓
-INSERT INTO risks (...)
+Client polls /api/projects/[projectId]/runs/[runId]
+    → streams chunks to SkillOutput display
+    → on complete: saves to Output Library
 ```
 
-### Edge Cases
-
-**Field schema mismatch:** If user changes `note` → `action`, but note fields don't match action schema (e.g., no `external_id`), approval will fail validation.
-
-**Mitigation:**
-- Show warning in UI if required fields for target entity type are missing
-- Auto-generate missing required fields (e.g., `external_id` for actions)
-- Fallback: reject approval with clear error message listing missing fields
-
-**Recommendation for v7.0:** Add client-side validation in `ExtractionItemRow` that checks if item fields satisfy target entity schema before allowing type change. Display warning icon if fields are incomplete.
+**Schema impact:** None.
 
 ---
 
-## Feature 6: Completeness Analysis Enhancement
+## New Schema Elements — Complete Reference
 
-### Current State
-- `GET /api/projects/[projectId]/completeness` returns simple table count score (0-100%)
-- `POST /api/projects/[projectId]/completeness` calls Claude with structured outputs for detailed gap analysis
-- **Known bug:** Completeness score is table count heuristic, not actual data quality assessment
-- No distinction between "has records" vs "records have meaningful data"
+| Change | Type | Purpose | Migration |
+|--------|------|---------|-----------|
+| `gantt_baselines` table | New table | Gantt snapshot for ghost bar comparison | `0038_gantt_baseline.sql` |
+| `chat_messages` table | New table | Chat persistence + pin flag | `0039_chat_messages.sql` |
+| `tasks.owner_stakeholder_id` | New FK column | Stakeholder picker saves resolved ID | `0040_owner_stakeholder_id.sql` |
+| `actions.owner_stakeholder_id` | New FK column | Same | same migration |
+| `risks.owner_stakeholder_id` | New FK column | Same | same migration |
+| `milestones.owner_stakeholder_id` | New FK column | Same | same migration |
+| `risks.likelihood` | New integer column | Risk score input (1–5) | `0041_risk_fields.sql` |
+| `risks.impact` | New integer column | Risk score input (1–5) | same migration |
+| `risks.target_date` | New TEXT column | Target resolution date | same migration |
+| `projects.active_tracks` | New JSONB column | Track enable/disable per project | `0042_active_tracks.sql` |
 
-### Integration Architecture
-
-#### Pattern: Structured Claude Analysis with Schema-Aware Prompts
-
-**Current implementation already correct** — POST endpoint uses Claude Opus 4.6 with `output_config.format: json_schema` to return structured gap descriptions.
-
-**Enhancement for v7.0:** Improve prompt to include:
-1. Project type awareness (ADR vs Biggy workstream patterns)
-2. Template vs real data distinction (already excludes `source='template'` records)
-3. Field-level completeness (e.g., "3 actions have status='open' but no owner")
-
-#### Modified Components
-
-**1. Completeness Context Builder**
-
-Modified: `lib/completeness-context-builder.ts`
-
-```typescript
-/**
- * buildCompletenessContext() — Enhanced with project type awareness
- */
-export async function buildCompletenessContext(projectId: number): Promise<string> {
-  const project = await db.query.projects.findFirst({
-    where: eq(projects.id, projectId),
-  });
-
-  // Determine project type from workstreams
-  const workstreams = await db
-    .select()
-    .from(workstreamsTable)
-    .where(eq(workstreamsTable.project_id, projectId));
-
-  const hasADR = workstreams.some((w) => w.track === 'ADR');
-  const hasBiggy = workstreams.some((w) => w.track === 'Biggy');
-  const projectType = hasADR && hasBiggy ? 'dual-track' : hasADR ? 'ADR-only' : 'Biggy-only';
-
-  // Fetch all workspace tab data (exclude source='template')
-  const [
-    actionsData,
-    risksData,
-    milestonesData,
-    // ... other tables
-  ] = await Promise.all([
-    db.select().from(actions).where(and(eq(actions.project_id, projectId), ne(actions.source, 'template'))),
-    db.select().from(risks).where(and(eq(risks.project_id, projectId), ne(risks.source, 'template'))),
-    // ...
-  ]);
-
-  // Build context payload with project type hint
-  return JSON.stringify({
-    projectType,  // ← NEW: helps Claude understand expected data model
-    project: {
-      id: project.id,
-      name: project.name,
-      customer: project.customer,
-    },
-    actions: actionsData,
-    risks: risksData,
-    milestones: milestonesData,
-    // ... other tabs
-  }, null, 2);
-}
-```
-
-**2. Enhanced Completeness Prompt**
-
-Modified: `app/api/projects/[projectId]/completeness/route.ts`
-
-```typescript
-const COMPLETENESS_SYSTEM = `You are a project data quality analyst. Given a project's current workspace data, identify specific quality gaps per workspace tab.
-
-Project type awareness:
-- ADR-only: Expect heavy architecture/integration data, onboarding phases focused on data ingestion
-- Biggy-only: Expect focus on AI/correlation features, onboarding phases focused on Biggy AI setup
-- Dual-track: Both ADR and Biggy data expected; check both workstream branches
-
-Tab template requirements (what "complete" looks like per tab):
-${JSON.stringify(TAB_TEMPLATE_REGISTRY, null, 2)}
-
-Quality assessment criteria:
-- "complete" = all required fields present for all records; no placeholder values (TBD, N/A, template text); meaningful content; field values align with project type
-- "partial" = some real data present but missing required fields, or has placeholder/TBD values, or data inconsistent with project type
-- "empty" = no records at all (after template records are excluded) OR only records with placeholder text
-
-Gap specificity requirements:
-- Reference actual record IDs like [A-KAISER-003]
-- Count records with specific issues (e.g., "5 actions missing owner")
-- Identify exact missing fields per record
-- For empty tabs, suggest what data should be present based on project type
-
-Return exactly 11 entries: overview, actions, risks, milestones, teams, architecture, decisions, history, stakeholders, plan, skills`;
-```
-
-#### New Components
-
-**3. Completeness Score Calculation (Replacement)**
-
-New utility: `lib/completeness-score.ts`
-
-```typescript
-/**
- * lib/completeness-score.ts — Compute quality-based completeness score
- *
- * Replaces simple table count heuristic with Claude-analyzed quality score.
- */
-import type { CompletenessEntry } from '@/app/api/projects/[projectId]/completeness/route';
-
-/**
- * Compute overall completeness score from Claude analysis results.
- *
- * Scoring:
- * - complete = 10 points
- * - partial = 5 points
- * - empty = 0 points
- *
- * Max score: 11 tabs * 10 = 110 points
- * Normalized to 0-100% scale
- */
-export function computeQualityScore(entries: CompletenessEntry[]): number {
-  let totalPoints = 0;
-  for (const entry of entries) {
-    if (entry.status === 'complete') totalPoints += 10;
-    else if (entry.status === 'partial') totalPoints += 5;
-  }
-  return Math.round((totalPoints / 110) * 100);
-}
-```
-
-### Data Flow: Enhanced Completeness Analysis
-
-```
-User clicks "Analyze Completeness" (Context Hub)
-    ↓
-POST /api/projects/[projectId]/completeness
-    ↓
-buildCompletenessContext(projectId)  ← includes project type
-    ↓
-Claude Opus 4.6 structured output request
-    ↓ (returns JSON array of 11 CompletenessEntry objects)
-computeQualityScore(entries)
-    ↓
-Return { score: 72, entries: [...] }
-    ↓
-UI displays:
-  - Overall score badge (72%)
-  - Per-tab status indicators (complete/partial/empty)
-  - Expandable gap descriptions per tab
-```
-
-### UI Integration
-
-Modified: `app/customer/[id]/context/page.tsx`
-
-```typescript
-// Replace simple GET /completeness with POST /completeness
-const analyzeCompleteness = async () => {
-  setLoading(true);
-  const res = await fetch(`/api/projects/${projectId}/completeness`, {
-    method: 'POST',
-  });
-  const data = await res.json();
-  setCompletenessScore(data.score);
-  setCompletenessDetails(data.entries);  // ← NEW: detailed per-tab results
-  setLoading(false);
-};
-```
-
-**Display enhancements:**
-- Show per-tab traffic light indicators (🟢 complete, 🟡 partial, 🔴 empty)
-- Expandable accordion per tab showing specific gap descriptions
-- "Fix Gaps" CTA buttons that link to relevant workspace tabs
+**Migration numbering:** Current highest is `0037_entity_lifecycle.sql`. Confirm before writing.
 
 ---
 
-## Integration Points Summary
+## Component Change Map
 
-### New Database Tables
-| Table | Purpose | FK Constraints |
-|-------|---------|----------------|
-| `project_members` | Per-project role assignments | `project_id → projects.id`, `user_id → users.id` |
+### Modified Existing Components
 
-### New Database Columns
-| Table | Column | Type | Purpose |
-|-------|--------|------|---------|
-| `projects` | `archived_at` | TIMESTAMP | Soft-delete timestamp |
-| `projects` | `deleted_at` | TIMESTAMP | Hard-delete grace period |
-| `scheduled_jobs` | `project_id` | INTEGER | Project-scoped job filter |
+| Component | Nature of Change |
+|-----------|-----------------|
+| `components/GanttChart.tsx` | Add `baseline?: BaselineRow[]` prop; render ghost bars alongside active bars |
+| `components/GanttChart.tsx` | Extend `GanttWbsRow` interface with `phaseStart?`, `phaseEnd?` |
+| `app/customer/[id]/gantt/page.tsx` | Fetch latest baseline row; pass to GanttChart; compute phase date ranges in `mapDataToWbsRows()` |
+| `components/chat/ChatPanel.tsx` | Accept `initialMessages` prop; add persist-on-send/finish behavior |
+| `components/chat/ChatMessage.tsx` | Add pin icon button; PATCH pin route on click |
+| `app/customer/[id]/chat/page.tsx` | Fetch last 50 messages server-side; pass as `initialMessages` |
+| `components/OwnerCell.tsx` | Return `{ id, name }` from autocomplete; include `owner_stakeholder_id` in PATCH payload |
+| `components/RisksTableClient.tsx` | Add Risk Score badge column (computed client-side) |
+| `components/RiskEditModal.tsx` | Add likelihood/impact selects + target_date DatePicker |
+| `components/AddRiskModal.tsx` | Same new fields as RiskEditModal |
+| `app/customer/[id]/settings/page.tsx` | Replace DangerZoneSection-only layout with full settings form |
+| `app/customer/[id]/wbs/page.tsx` | Read `active_tracks` from project; skip disabled track queries |
+| `app/customer/[id]/gantt/page.tsx` | Read `active_tracks` from project; filter wbs items before mapping |
+| `db/schema.ts` | Add all new table and column definitions |
 
-### New Library Functions
-| File | Function | Purpose |
-|------|----------|---------|
-| `lib/auth-project.ts` | `requireProjectSession()` | RBAC: return project-level role |
-| `lib/auth-project.ts` | `requireProjectAdmin()` | RBAC: enforce admin role |
-| `lib/project-lifecycle.ts` | `archiveProject()` | Set archived_at timestamp |
-| `lib/project-lifecycle.ts` | `restoreProject()` | Clear archived_at timestamp |
-| `lib/project-lifecycle.ts` | `deleteProject()` | Set deleted_at timestamp |
-| `lib/gantt-sync.ts` | `updateTaskDates()` | Propagate task date change to milestone |
-| `lib/gantt-sync.ts` | `updateMilestoneDate()` | (Optional) Propagate milestone change to tasks |
-| `lib/completeness-score.ts` | `computeQualityScore()` | Quality-based score from Claude analysis |
+### New Components
 
-### Modified Route Handlers
-| Endpoint | Change | Why |
-|----------|--------|-----|
-| `DELETE /api/projects/[projectId]` | Add `requireProjectAdmin()` | Enforce project-level RBAC |
-| `PATCH /api/projects/[projectId]` | Add restore action | Allow unarchiving |
-| `GET /api/projects` | Add `?status=archived` filter | List archived projects |
-| `PATCH /api/tasks/[id]` | Call `updateTaskDates()` when dates change | Gantt bi-directional sync |
-| `POST /api/jobs` | Add `project_id` to schema | Project-scoped scheduling |
-| `POST /api/projects/[projectId]/completeness` | Enhanced prompt with project type | Quality-based completeness |
+| Component | Purpose |
+|-----------|---------|
+| `components/ProjectSettingsForm.tsx` | Project rename, go-live date, description, active tracks toggles |
+| `components/GanttBaselineCapture.tsx` | Label input + Capture button; POSTs to gantt-baseline route |
+| `components/ProjectExceptionsPanel.tsx` | Per-project exceptions: pure computation over workspace data |
+| `lib/risk-score.ts` | Pure `computeRiskScore(likelihood, impact)` function |
 
-### Modified Client Components
-| Component | Change | Why |
-|-----------|--------|-----|
-| `components/GanttChart.tsx` | Refetch milestones after task drag | Reflect propagated date changes |
-| `components/ExtractionItemRow.tsx` | Add entity type dropdown | Allow reclassification before approval |
-| `app/customer/[id]/context/page.tsx` | Display detailed completeness results | Show per-tab gaps |
-| `app/scheduler/page.tsx` | Add project selector | Allow project-scoped job creation |
+### New Route Handlers
 
-### New Pages
-| Page | Purpose |
+| Route | Methods | Purpose |
+|-------|---------|---------|
+| `app/api/projects/[projectId]/gantt-baseline/route.ts` | GET, POST | Fetch latest baseline; capture new snapshot |
+| `app/api/projects/[projectId]/chat-messages/route.ts` | GET, POST | List last N messages; persist message |
+| `app/api/projects/[projectId]/chat-messages/[messageId]/route.ts` | PATCH | Toggle `pinned` flag |
+
+### New Files (non-component)
+
+| File | Purpose |
 |------|---------|
-| `app/archived/page.tsx` | List archived projects (read-only) |
-| `app/projects/[projectId]/members/page.tsx` | Manage project membership (admin only) |
+| `[skills_dir]/meeting-prep/SKILL.md` | Meeting Prep skill definition (read at runtime) |
+| `db/migrations/0038_gantt_baseline.sql` | `gantt_baselines` table |
+| `db/migrations/0039_chat_messages.sql` | `chat_messages` table + index |
+| `db/migrations/0040_owner_stakeholder_id.sql` | FK columns on tasks/actions/risks/milestones |
+| `db/migrations/0041_risk_fields.sql` | `likelihood`, `impact`, `target_date` on risks |
+| `db/migrations/0042_active_tracks.sql` | `active_tracks` JSONB on projects |
 
 ---
 
-## Build Order & Dependencies
+## Build Order — Dependency-Aware
 
-### Phase Dependency Graph
+Schema must exist before UI that depends on it. Migrations must be applied before any
+route handlers reference the new columns/tables.
+
+### Wave 1 — Schema Foundation (all 5 migrations as one batch)
+
+Build these first, together, with no UI:
+
+1. `0038_gantt_baseline.sql` — `gantt_baselines` table
+2. `0039_chat_messages.sql` — `chat_messages` table + index
+3. `0040_owner_stakeholder_id.sql` — FK columns on 4 tables
+4. `0041_risk_fields.sql` — `likelihood`, `impact`, `target_date` on `risks`
+5. `0042_active_tracks.sql` — `active_tracks` JSONB on `projects`
+
+**And update `db/schema.ts` with all new Drizzle definitions in the same commit.**
+
+### Wave 2 — Independent Features (no cross-feature dependencies, parallelizable)
+
+6. **Risk Score** — `lib/risk-score.ts` + `RisksTableClient` + `RiskEditModal` + `AddRiskModal`
+   + risks PATCH route extension *(depends on Wave 1 migration 0041)*
+
+7. **Gantt ↔ Task Dates** — Extend `GanttWbsRow` interface + `mapDataToWbsRows()` computation
+   *(no new schema — pure data transformation of existing tasks)*
+
+8. **Meeting Prep Skill** — New `SKILL.md` file only
+   *(no schema — uses existing skill_runs infrastructure; zero code changes)*
+
+9. **Exceptions Panel** — `ProjectExceptionsPanel.tsx` + integrate into `overview/page.tsx`
+   *(no new schema — pure computation over existing workspace data)*
+
+### Wave 3 — Features With Wave 1 Schema
+
+10. **Owner Picker with ID** — Upgrade `OwnerCell.tsx` + extend Zod schemas on PATCH routes
+    *(depends on Wave 1 migration 0040)*
+
+11. **Active Tracks Config** — `ProjectSettingsForm.tsx` (tracks toggles) + filter WBS/Gantt
+    *(depends on Wave 1 migration 0042)*
+
+### Wave 4 — Chat Features (build together — table + routes + UI)
+
+12. **Chat Persistence** — New routes + ChatPanel `initialMessages` change + chat/page.tsx fetch
+    *(depends on Wave 1 migration 0039)*
+
+13. **Pinned Answers** — `ChatMessage.tsx` pin button + PATCH route
+    *(depends on Feature 12 being complete; `chat_messages.pinned` column exists from Wave 1)*
+
+### Wave 5 — Gantt Baseline (most complex — benefits from Wave 2 Gantt date work)
+
+14. **Gantt Baseline** — `GanttBaselineCapture.tsx` + gantt-baseline routes + `GanttChart.tsx`
+    ghost bar rendering *(depends on Wave 1 migration 0038; benefits from Wave 2 phase date
+    aggregation being done first so the baseline snapshot captures phase-level dates)*
+
+### Wave 6 — Settings Tab (consolidates multiple fields)
+
+15. **Project Settings Form** — `ProjectSettingsForm.tsx` full form (rename + go-live +
+    description + active tracks) + PATCH route extension
+    *(depends on Wave 3 active tracks work being complete; rename/go-live/description pre-exist)*
+
+---
+
+## Data Flow Summaries
+
+### Chat Tab — Before and After
 
 ```
-Foundation (Parallel)
-├─ [AUTH-DB] Create project_members table + indexes
-├─ [PROJ-DB] Add archived_at, deleted_at columns to projects
-└─ [SCHED-DB] Add project_id column to scheduled_jobs
+BEFORE: ChatPanel mounts → useChat initialMessages=[] → messages lost on tab navigate
 
-    ↓
-
-Layer 1: Library Functions (Parallel)
-├─ [AUTH-LIB] lib/auth-project.ts (requireProjectSession, requireProjectAdmin)
-├─ [PROJ-LIB] lib/project-lifecycle.ts (archiveProject, restoreProject, deleteProject)
-├─ [GANTT-LIB] lib/gantt-sync.ts (updateTaskDates)
-└─ [COMP-LIB] lib/completeness-score.ts (computeQualityScore)
-
-    ↓
-
-Layer 2: Route Handlers (Sequential by dependency)
-├─ [AUTH-API] Modified Route Handlers using requireProjectAdmin
-├─ [PROJ-API] Project archive/restore/delete endpoints
-├─ [GANTT-API] Task PATCH handler with updateTaskDates
-├─ [SCHED-API] Jobs POST handler with project_id
-└─ [COMP-API] Enhanced completeness POST handler
-
-    ↓
-
-Layer 3: UI Components (Parallel)
-├─ [AUTH-UI] Project members management page
-├─ [PROJ-UI] Archived projects view + restore button
-├─ [GANTT-UI] GanttChart refetch after task drag
-├─ [EXTR-UI] ExtractionItemRow entity type dropdown
-├─ [SCHED-UI] Scheduler project selector
-└─ [COMP-UI] Context Hub detailed completeness display
-
-    ↓
-
-Integration Testing
-└─ E2E tests for each feature in isolation
+AFTER:  chat/page.tsx (Server Component)
+            → SELECT * FROM chat_messages WHERE project_id=X ORDER BY created_at DESC LIMIT 50
+            → reverse to chronological order
+            → <ChatPanel initialMessages={restoredMessages} ... />
+        ChatPanel mounts with pre-seeded messages
+        On user send: POST /chat-messages { role: 'user', content, message_id }
+        On useChat onFinish: POST /chat-messages { role: 'assistant', content, message_id }
 ```
 
-### Recommended Build Order (Sequential)
+### Gantt Tab — Before and After
 
-**Week 1: Foundation + RBAC**
-1. AUTH-DB → AUTH-LIB → AUTH-API → AUTH-UI (project members table + requireProjectSession pattern)
-2. Test: Create project membership, verify 403 for non-members
+```
+BEFORE: page.tsx → wbs_items + tasks → mapDataToWbsRows() → GanttChart(active bars only)
 
-**Week 2: Project Lifecycle**
-3. PROJ-DB → PROJ-LIB → PROJ-API → PROJ-UI (archive/restore/delete flow)
-4. Test: Archive project, verify read-only, restore project
+AFTER:  page.tsx → wbs_items + tasks + gantt_baselines (latest) →
+            mapDataToWbsRows() [extended with phaseStart/phaseEnd computation] →
+            GanttChart(
+              wbsRows=[...with phaseStart/phaseEnd],
+              baseline=[...baseline snapshot],
+            )
+        GanttChart renders: active bars + phase-span bars + optional ghost bars
+```
 
-**Week 3: Gantt Sync + Scheduling**
-5. GANTT-LIB → GANTT-API → GANTT-UI (bi-directional date propagation)
-6. SCHED-DB → SCHED-API → SCHED-UI (project-scoped jobs)
-7. Test: Drag task on Gantt, verify milestone date updates; create project-scoped job, verify it runs only for that project
+### Risks Tab — Before and After
 
-**Week 4: Extraction + Completeness**
-8. EXTR-UI (entity type reclassification dropdown)
-9. COMP-LIB → COMP-API → COMP-UI (quality-based completeness)
-10. Test: Reclassify note → action in ExtractionPreview; run completeness analysis, verify quality score
+```
+BEFORE: risks (severity, status, owner text) → RisksTableClient → severity badge
 
-**Week 5: Integration + Polish**
-11. Cross-feature integration testing (e.g., archived project + scheduled jobs)
-12. UI polish, error handling, edge cases
+AFTER:  risks (+ likelihood, impact, target_date, owner_stakeholder_id) →
+            RisksTableClient → severity badge + computeRiskScore() → Risk Score badge
+```
 
----
+### Settings Tab — Before and After
 
-## Architectural Anti-Patterns to Avoid
+```
+BEFORE: settings/page.tsx → DangerZoneSection only (archive/delete)
 
-### Anti-Pattern 1: Global requireProjectSession() Migration
+AFTER:  settings/page.tsx → ProjectSettingsForm (name, go_live_target, description, active_tracks)
+                           + DangerZoneSection (archive/delete, unchanged)
+```
 
-**What people do:** Try to replace all 40+ `requireSession()` calls with `requireProjectSession()` in one go
+### WBS and Gantt — Track Filtering
 
-**Why it's wrong:** High risk of breaking existing functionality; project membership table may not be fully populated during migration; users locked out
+```
+BEFORE: All tracks always fetched and rendered
 
-**Do this instead:** Incremental migration — guard only new destructive actions (archive, delete, membership management) in v7.0; expand to other handlers in v7.1+
-
-### Anti-Pattern 2: Separate Archived Projects Table
-
-**What people do:** Create `archived_projects` table and COPY data on archive
-
-**Why it's wrong:** Data duplication; FK integrity lost; JOINs become complex; restore requires reverse COPY
-
-**Do this instead:** Use `archived_at` timestamp column; filter with `WHERE archived_at IS NULL` for active projects
-
-### Anti-Pattern 3: Immediate CASCADE Deletion
-
-**What people do:** `DELETE FROM projects WHERE id = X` → immediate CASCADE removal of all related records
-
-**Why it's wrong:** No undo; accidental deletions are catastrophic; no grace period
-
-**Do this instead:** Use `deleted_at` timestamp; background job purges after 30 days; admin can restore within grace period
-
-### Anti-Pattern 4: Bi-Directional Gantt Sync with Circular Updates
-
-**What people do:** Task drag updates milestone → milestone update triggers task recalculation → infinite loop
-
-**Why it's wrong:** Race conditions; database thrashing; UI flickers
-
-**Do this instead:** Milestone date is **derived** (always computed from tasks, never set directly); only task drag actions trigger updates; milestone markers are read-only on Gantt
-
-### Anti-Pattern 5: BullMQ Queue-Per-Project
-
-**What people do:** Create separate BullMQ queue for each project (`scheduled-jobs-project-123`)
-
-**Why it's wrong:** Redis key explosion (each queue = 5+ keys); queue management overhead; worker complexity
-
-**Do this instead:** Single queue with `projectId` metadata in job data; filter at execution time
-
-### Anti-Pattern 6: Completeness Score as Table Count Heuristic
-
-**What people do:** `score = (populatedTables / totalTables) * 100`
-
-**Why it's wrong:** Doesn't measure data quality; table with 1 placeholder record = 100% complete; no actionable gaps
-
-**Do this instead:** Use Claude structured outputs to analyze actual record quality; return specific gaps per tab
+AFTER:  page.tsx reads project.active_tracks
+        → If active_tracks.ADR === false: skip getWbsItems(projectId, 'ADR')
+        → If active_tracks.Biggy === false: skip getWbsItems(projectId, 'Biggy')
+        → Only enabled tracks reach GanttChart/WbsTree
+```
 
 ---
 
-## Scaling Considerations
+## Anti-Patterns to Avoid
 
-| Feature | At 10 projects | At 100 projects | At 1000 projects |
-|---------|---------------|-----------------|------------------|
-| **Project Members** | Direct query OK | Add `user_id` index | Consider caching user memberships in Redis |
-| **Archived Projects** | Direct query OK | Paginate archived list | Partition `projects` table by `archived_at` year |
-| **Gantt Sync** | No issues | Watch for milestone with 100+ tasks (recalc can be slow) | Debounce task drag events; batch milestone recalc |
-| **Scheduled Jobs** | Direct query OK | Worker filters 100 jobs in <1ms | Consider separate scheduler instance; shard by project_id |
-| **Completeness** | Claude call per project = expensive | Cache results for 24h in Redis | Pre-compute nightly; store in DB column |
+### Anti-Pattern 1: Inline AI Call for Meeting Prep
 
-### Scaling Priorities
+**What people do:** Create a `MeetingPrepModal` that calls `anthropic.messages.create()` directly
+inside a React component or a standalone route handler.
 
-**First bottleneck:** Completeness analysis (Claude API cost at scale)
-- **Solution:** Cache POST /completeness results for 24h; only re-run on-demand or when data changes significantly
+**Why it's wrong:** Bypasses `skill_runs` history, Output Library storage, streaming UI,
+cancel button, progress indicator, and the Skills Design Standard compliance check. Creates
+a second AI invocation pattern with different UX and no observability.
 
-**Second bottleneck:** Gantt bi-directional sync with 500+ tasks
-- **Solution:** Debounce drag events (wait 300ms after last drag before updating DB); batch milestone recalculations
+**Do this instead:** New `SKILL.md` file + existing skill run infrastructure. Zero code changes,
+full feature parity with all other skills.
 
-**Third bottleneck:** Project membership lookups (1000+ projects, 100+ users)
-- **Solution:** Redis cache of user membership list; TTL = 5 minutes; invalidate on membership change
+---
+
+### Anti-Pattern 2: Replacing `owner` Text With FK Only
+
+**What people do:** Drop the `owner` text column and add only `owner_stakeholder_id` FK.
+
+**Why it's wrong:** The extraction pipeline (`lib/document-extractor.ts`) writes free text to
+`owner`. YAML export reads `owner`. Skill context builders read `owner`. Audit log stores
+`owner` as string in before/after JSON. Replacing the column breaks all four without touching any.
+
+**Do this instead:** Dual-write `owner` text AND `owner_stakeholder_id` FK. Remove `owner` in
+a later cleanup milestone once all write paths are audited and migrated.
+
+---
+
+### Anti-Pattern 3: Client-Side Exception Data Fetching
+
+**What people do:** Add `useEffect` fetches in `ProjectExceptionsPanel` to independently load
+tasks, risks, and milestones to compute exceptions.
+
+**Why it's wrong:** 3–5 additional API calls on tab load. The Server Component data fetch
+pattern already returns all required data via `getWorkspaceData()`. The `PortfolioExceptionsPanel`
+precedent is correct: receive pre-fetched data as props, compute rules in-memory.
+
+**Do this instead:** Pass workspace data from Server Component → pure `computeProjectExceptions()`
+function in the client component.
+
+---
+
+### Anti-Pattern 4: Storing Gantt Baseline on `projects` Table
+
+**What people do:** Add `baseline_json JSONB` directly to the `projects` table row.
+
+**Why it's wrong:** One baseline per project. No history. Cannot compare two baselines.
+Bloats every `SELECT *` on the projects table with potentially large JSONB payloads.
+
+**Do this instead:** Dedicated `gantt_baselines` table with `project_id` FK. Supports named
+baselines, history, and future diff UIs.
+
+---
+
+### Anti-Pattern 5: BullMQ Job for Exceptions Computation
+
+**What people do:** Schedule a BullMQ job to precompute exceptions and cache in Redis.
+
+**Why it's wrong:** Exceptions are stateless rule evaluations over data already loaded for the
+Overview tab. A job adds staleness (cached results may be minutes old), Redis dependency, and
+job management complexity for what is a sub-millisecond in-memory computation.
+
+**Do this instead:** Pure synchronous computation in the client component over Server Component
+data. Only consider BullMQ if exception rules require cross-project aggregation queries.
 
 ---
 
 ## Sources
 
-**Existing codebase analysis:**
-- `bigpanda-app/db/schema.ts` — Current schema (67 tables, better-auth integration)
-- `bigpanda-app/lib/auth-server.ts` — requireSession() pattern (40+ handlers)
-- `bigpanda-app/worker/scheduler.ts` — BullMQ global job registration
-- `bigpanda-app/components/GanttChart.tsx` — Custom Gantt implementation
-- `bigpanda-app/app/api/ingestion/approve/route.ts` — Extraction approval flow
-- `bigpanda-app/app/api/projects/[projectId]/completeness/route.ts` — Current completeness analysis
+All findings are HIGH confidence — derived from direct codebase inspection:
 
-**Architecture patterns:**
-- Better-auth documentation — Global roles vs custom role patterns
-- Drizzle ORM documentation — Soft-delete patterns, FK cascade behavior
-- BullMQ documentation — Job metadata, queue management, scheduling patterns
-- PostgreSQL best practices — Soft-delete indexing, timestamp-based filtering
-
-**Confidence assessment:**
-- **Per-project RBAC:** HIGH (pattern verified in better-auth docs, Drizzle FK constraints well-understood)
-- **Archive/delete:** HIGH (soft-delete with timestamp is standard PostgreSQL pattern)
-- **Gantt sync:** HIGH (FK-based propagation is straightforward; tested in similar apps)
-- **Scheduler scoping:** HIGH (BullMQ metadata pattern is documented, Redis key count validated)
-- **Entity reclassification:** HIGH (UI change only, no backend logic needed)
-- **Completeness:** HIGH (Claude structured outputs already implemented in v6.0)
+- `components/TaskBoard.tsx` — Kanban DnD: already implemented (lines 290–327)
+- `components/GanttChart.tsx` — GanttChartProps, GanttWbsRow, bar rendering structure
+- `app/customer/[id]/gantt/page.tsx` — mapDataToWbsRows() data flow
+- `components/chat/ChatPanel.tsx` — current useChat pattern (stateless, no persistence)
+- `app/api/projects/[projectId]/chat/route.ts` — chat route handler pattern
+- `components/PortfolioExceptionsPanel.tsx` — exceptions panel pattern to replicate
+- `components/OwnerCell.tsx` — current owner save pattern and autocomplete fetch
+- `components/HealthDashboard.tsx` — computeOverallHealth pure function pattern to follow
+- `db/schema.ts` — full schema inventory confirming absent tables/columns
+- `app/api/tasks/[id]/route.ts` — PATCH pattern with audit_log (dual-write reference)
+- `lib/skill-path.ts`, `lib/skill-orchestrator.ts` — skill execution infrastructure
+- `app/customer/[id]/settings/page.tsx` — current settings page structure
+- `app/customer/[id]/skills/page.tsx` — skill discovery via readdir() + parseSkillMeta()
 
 ---
 
-*Architecture research for: v7.0 Governance & Operational Maturity*
-*Researched: 2026-04-13*
+*Architecture research for: BigPanda Project Assistant v9.0 UX Maturity & Intelligence*
+*Researched: 2026-04-22*

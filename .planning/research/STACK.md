@@ -1,396 +1,285 @@
-# Technology Stack — v7.0 Additions
+# Technology Stack — v9.0 Additions
 
 **Project:** BigPanda AI Project Management App
-**Milestone:** v7.0 — Governance & Operational Maturity
-**Researched:** 2026-04-13
+**Milestone:** v9.0 — UX Maturity & Intelligence
+**Researched:** 2026-04-22
 **Confidence:** HIGH
 
 ## Executive Summary
 
-v7.0 requires **minimal new dependencies**. The existing stack (Next.js 16, PostgreSQL, Drizzle, better-auth@1.5.6, Redis/BullMQ) handles most new features. Only addition needed: a lightweight code editor for prompt editing UI. Per-project RBAC requires a new `project_members` table (better-auth doesn't support per-resource roles). Soft-delete uses existing Drizzle patterns with timestamp columns.
+v9.0 requires **minimal new dependencies**. The existing stack handles nearly all new features. Key findings:
 
-## Stack Additions for v7.0
+1. **Kanban DnD between columns:** `@dnd-kit` is already installed and sufficient. The existing `TaskBoard.tsx` has a partial implementation — it uses `DndContext` + `SortableContext` per column but is missing `onDragOver` for real-time cross-column movement and `useDroppable` on empty columns. No new package is needed — only code corrections to the existing component.
 
-### Code Editor for Prompt Editing (SKILL-03)
+2. **Outputs Library inline preview:** Different strategies for different content types. Markdown/text content (stored in `outputs.content`) can use the already-installed `react-markdown@10.1.0`. HTML outputs already use `<iframe sandbox>` in the existing page. PPTX files require server-side slide → slide-image conversion or client-side rendering via `docx-preview`-equivalent. **`docx-preview@0.3.7`** is the right addition for DOCX preview; PPTX preview requires a distinct approach (see below).
+
+3. **Markdown rendering safety:** `react-markdown@10.1.0` is already installed and safe by default. No new library needed; `rehype-sanitize@6.0.0` is available if additional HTML sanitization is needed, but is not required for AI-generated content rendered in a sandboxed context.
+
+4. **Chat conversation persistence:** Pure DB schema addition (new `chat_messages` table) + Vercel AI SDK's `initialMessages` prop. No new packages.
+
+5. **Week view grouping:** ISO week computation is achievable with native `Date` APIs or `date-fns@4.1.0`. `date-fns` is not currently in the project. For 1-2 week grouping functions, native JS is preferred to avoid adding a dependency.
+
+6. **Stakeholder email/Slack extraction:** Extension of the existing multi-pass extraction pipeline + DB schema column additions. No new packages.
+
+7. **AI Meeting Prep skill:** New SKILL.md file + existing Vercel AI SDK streaming pattern. No new packages.
+
+---
+
+## Stack Additions for v9.0
+
+### 1. Outputs Library: DOCX Inline Preview
 
 | Technology | Version | Purpose | Why Recommended |
 |------------|---------|---------|-----------------|
-| **@uiw/react-codemirror** | ^4.25.9 | Editable prompt text UI with syntax highlighting | Lightweight (~80KB gzipped), React 18 native, SSR-compatible, actively maintained (1.8M weekly downloads), CodeMirror 6 foundation |
+| **docx-preview** | ^0.3.7 | Render `.docx` files to HTML in-browser | Browser-native rendering; renders to DOM container via `renderAsync()`; ES module + CommonJS dual exports; actively maintained (v0.3.7 shipped Sept 2025); only dependency is jszip (already implicit via other packages); Apache-2.0 license |
 
-**Rationale:** Prompts are plain text with occasional markdown formatting. CodeMirror 6 via @uiw/react-codemirror is the right choice because:
-- **Size matters:** ~80KB vs Monaco's ~300KB — prompt editing is auxiliary, not core IDE work
-- **React 18 native:** Works cleanly with Next.js 16 client components
-- **SSR-friendly:** Unlike Monaco (requires `ssr: false` dynamic import), CodeMirror handles SSR gracefully
-- **Sufficient features:** Syntax highlighting, line numbers, search/replace — everything needed for prompt editing
+**Rationale:** The outputs library currently only expands HTML outputs in an iframe. Skills generate `.pptx` files stored on disk (via `filepath`) and text/HTML stored in the `content` column. DOCX is a valid future upload/output format given `mammoth@1.12.0` is already installed (used in ingestion). `docx-preview` renders directly to a DOM container without server round-trips and supports fonts, page breaks, headers/footers.
 
-**Installation:**
-```bash
-npm install @uiw/react-codemirror
-```
+**Important:** `docx-preview` uses DOM APIs and requires `dynamic import` with `ssr: false` — same pattern already established for `@xyflow/react` and CodeMirror.
 
-**Usage Pattern:**
+**Usage pattern:**
 ```typescript
-'use client';
-import CodeMirror from '@uiw/react-codemirror';
-import { markdown } from '@codemirror/lang-markdown';
+// components/DocxPreview.tsx (dynamic-loaded, ssr: false)
+'use client'
+import { useEffect, useRef } from 'react'
+import { renderAsync } from 'docx-preview'
 
-<CodeMirror
-  value={promptText}
-  height="400px"
-  extensions={[markdown()]}
-  onChange={(value) => setPromptText(value)}
-/>
-```
-
-### Alternative Considered: Monaco Editor
-
-| Alternative | Version | When to Use | Why Not v7.0 |
-|-------------|---------|-------------|--------------|
-| @monaco-editor/react | ^4.7.0 | Full IDE-like editing, complex syntax (TypeScript, JSON schemas) | Overkill for prompt text; 3-4x larger bundle; requires `ssr: false` dynamic import pattern (adds complexity) |
-
-**Monaco is NOT needed** — prompts are plain text/markdown, not code. CodeMirror provides sufficient highlighting and editing capabilities at 1/4 the bundle size.
-
-## Existing Stack — No Changes Required
-
-### Per-Project RBAC (AUTH-02 through AUTH-05)
-
-**Question:** Does better-auth@1.5.6 support per-project roles?
-**Answer:** NO. better-auth has a global `role` field on the user (admin/user), but does NOT support per-resource or per-organization role mappings out of the box.
-
-**Solution:** Custom `project_members` table using existing Drizzle patterns.
-
-**Implementation:**
-```typescript
-// Add to db/schema.ts
-export const projectRoleEnum = pgEnum('project_role', ['admin', 'user']);
-
-export const projectMembers = pgTable('project_members', {
-  id: serial('id').primaryKey(),
-  projectId: integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
-  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  role: projectRoleEnum('role').notNull().default('user'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-}, (table) => ({
-  uniqueProjectUser: uniqueIndex('project_members_project_user_idx').on(table.projectId, table.userId),
-}));
-```
-
-**Rationale:**
-- better-auth's "organization" plugin (if it exists in v1.5.6) is not designed for multi-project SaaS with per-project roles
-- Custom table gives full control over role definitions and query patterns
-- Follows existing schema conventions (snake_case, serial IDs, FK constraints)
-- Unique index prevents duplicate memberships
-- Cascade delete ensures orphaned memberships don't persist
-
-**Route Handler Pattern:**
-```typescript
-// lib/auth-helpers.ts
-export async function requireProjectAdmin(projectId: number, session: Session) {
-  const membership = await db.query.projectMembers.findFirst({
-    where: and(
-      eq(projectMembers.projectId, projectId),
-      eq(projectMembers.userId, session.user.id),
-    ),
-  });
-
-  if (!membership || membership.role !== 'admin') {
-    throw new Error('Forbidden: Admin role required');
-  }
-
-  return membership;
+export function DocxPreview({ fileUrl }: { fileUrl: string }) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!containerRef.current) return
+    fetch(fileUrl)
+      .then(r => r.blob())
+      .then(blob => renderAsync(blob, containerRef.current!))
+  }, [fileUrl])
+  return <div ref={containerRef} className="overflow-auto max-h-[600px]" />
 }
 ```
 
-**Confidence:** HIGH — better-auth documentation reviewed; no per-resource role support found.
+**PPTX Preview:** The installed `pptxgenjs@4.0.1` is a **generator** (creates PPTX), NOT a renderer. There is no viable browser-side PPTX renderer that doesn't depend on D3/jQuery legacy stacks (e.g. `pptx2html@0.3.4` depends on jQuery/D3). For PPTX outputs in the Outputs Library, use a **"slide count + download" approach**: display slide count and a download link rather than inline rendering. This is the pragmatic choice — PPTX outputs are presentation files meant to be opened in PowerPoint/Slides, not web-previewed.
 
-### Soft-Delete Pattern (PROJ-01, PROJ-02, PROJ-03, PROJ-04)
-
-**Current State:** Projects table has `status: projectStatusEnum` with 'archived' value, but no timestamp tracking for archive/delete lifecycle.
-
-**Required Changes:**
-```typescript
-// Extend projects table in db/schema.ts
-export const projects = pgTable('projects', {
-  // ... existing columns ...
-  archivedAt: timestamp('archived_at', { withTimezone: true }),
-  deletedAt: timestamp('deleted_at', { withTimezone: true }),
-});
+**Installation:**
+```bash
+npm install docx-preview
 ```
 
-**Pattern:**
-- **Active project:** `status = 'active'`, `archivedAt = null`, `deletedAt = null`
-- **Archived project (PROJ-01):** `status = 'archived'`, `archivedAt = NOW()`, `deletedAt = null` → read-only, preserved
-- **Permanently deleted (PROJ-02):** `deletedAt = NOW()` → hard delete OR soft-delete with hidden status
-- **Restored project (PROJ-04):** `status = 'active'`, `archivedAt = null`, `deletedAt = null`
+### 2. Markdown Rendering (already installed — NO new package)
 
-**Query Helpers:**
+`react-markdown@10.1.0` is already in `package.json` and is the current stable version. It is safe by default (HTML is escaped unless `rehype-raw` is explicitly added). For AI-generated skill output content stored in `outputs.content`, this is sufficient.
+
+**No new package needed.** Pattern:
 ```typescript
-// lib/db-filters.ts
-export const activeProjects = eq(projects.status, 'active');
-export const archivedProjects = and(
-  eq(projects.status, 'archived'),
-  isNull(projects.deletedAt)
-);
-export const notDeleted = isNull(projects.deletedAt);
+import ReactMarkdown from 'react-markdown'
+// AI-generated content is safe by default (no raw HTML injection)
+<ReactMarkdown className="prose prose-sm max-w-none">{output.content}</ReactMarkdown>
 ```
 
-**Rationale:**
-- Timestamps provide audit trail (when archived, when deleted)
-- `deletedAt` separates "archived" (reversible) from "deleted" (permanent/hidden)
-- Follows PostgreSQL best practices for soft-delete
-- Compatible with existing Drizzle query patterns
+`@tailwindcss/typography` is already installed (`^0.5.19`) — use the `prose` class for styled markdown rendering.
 
-**Confidence:** HIGH — Standard soft-delete pattern; Drizzle ORM fully supports timestamp filtering.
+If untrusted HTML is ever rendered (e.g. user-uploaded content rendered inline), add `rehype-sanitize@^6.0.0` at that point. Not needed for v9.0.
 
-### Health Dashboard Redesign (HLTH-01, HLTH-02)
+---
 
-**Current Stack:** Recharts ^3.8.1 (already installed)
+## No New Packages Needed For These Features
 
-**Assessment:** NO new packages needed. Recharts is already used for Overview metrics visualization (v4.0 Phase 34). Same library handles Health Dashboard redesign.
+### Task Board Kanban DnD Between Columns
 
-**Existing Components Available:**
-- `<ProgressRing />` (custom, already built)
-- `<BarChart />`, `<LineChart />`, `<PieChart />` (Recharts primitives)
-- Responsive design built-in
-- No SSR issues (renders client-side)
+`@dnd-kit/core@^6.3.1`, `@dnd-kit/sortable@^10.0.0`, and `@dnd-kit/utilities@^3.2.2` are all already installed. The existing `TaskBoard.tsx` is structurally correct but incomplete:
 
-**Rationale:** Health Dashboard metrics are derivable from existing DB data (project counts, milestone dates, risk severity). Recharts is sufficient for executive-level visualizations (status distribution, trend lines, progress indicators).
+**What exists:**
+- `DndContext` wrapping all columns
+- `SortableContext` per column with `verticalListSortingStrategy`
+- `useSortable` on each card
+- `DragOverlay` imported but partially wired
+- `onDragEnd` that attempts to find the target column from `over.id`
 
-**Confidence:** HIGH — Recharts already validated in v4.0 Phase 34; no new capabilities needed.
+**What is missing (code-only fixes, no new packages):**
+- `onDragOver` handler for real-time cross-column item movement (cards must visually move as you drag across columns, not just on drop)
+- `useDroppable` on each column container div so empty columns accept drops
+- `DragOverlay` rendering the ghost card while dragging
 
-### Gantt Bi-Directional Date Propagation (DLVRY-04)
+The `@dnd-kit` multi-container pattern (confirmed via official GitHub story `MultipleContainers.tsx`) uses exactly these primitives. No new library is needed. The fix is extending the existing `handleDragEnd` with an `onDragOver` handler that moves items between container state arrays in real-time.
 
-**Current Stack:** Custom `GanttChart.tsx` component (v5.0 Phase 38)
+**Key pattern (code guidance for implementer):**
+```typescript
+// onDragOver: move item to new column in real-time as user drags
+function handleDragOver(event: DragOverEvent) {
+  const { active, over } = event
+  if (!over) return
+  const activeColumn = tasks.find(t => t.id === Number(active.id))?.status
+  const overColumn = COLUMNS.find(c => c.id === String(over.id))?.id
+    ?? tasks.find(t => t.id === Number(over.id))?.status
+  if (!activeColumn || !overColumn || activeColumn === overColumn) return
+  setTasks(prev => prev.map(t =>
+    t.id === Number(active.id) ? { ...t, status: overColumn } : t
+  ))
+}
+// Add <DndContext onDragOver={handleDragOver} ...>
+// Add useDroppable({ id: col.id }) on each column container
+```
 
-**Assessment:** NO new packages needed. Date propagation is application logic, not a library concern.
+### Gantt Baseline Tracking (snapshot + ghost bars)
 
-**Implementation:**
-- Server-side transaction ensures atomic updates across related entities (tasks, milestones, WBS items)
-- Drizzle ORM `db.transaction()` already used throughout app
-- CustomEvent (`'gantt:refresh'`) already implemented for client-side sync
+Custom `GanttChart.tsx` already handles all rendering. Baseline tracking is a **data model extension** (new `task_baselines` table) plus a UI addition (ghost bars rendered alongside real bars). No new library needed — the existing SVG/canvas rendering in `GanttChart.tsx` supports adding translucent baseline bars.
 
-**Confidence:** HIGH — Pure logic layer; no new dependencies required.
+### Chat Conversation Persistence
 
-### Project-Scoped Scheduling (SCHED-01 through SCHED-05)
+Vercel AI SDK (`ai@^6.0.142`) already supports `initialMessages` prop on `useChat`. Persistence is a DB schema addition (`chat_messages` table with `project_id`, `role`, `content`, `created_at`) plus:
+1. A GET route to load last 50 messages from DB → passed as `initialMessages`
+2. A POST hook on the chat API to persist user + assistant turns after streaming completes
 
-**Current Stack:** BullMQ ^5.71.0, Redis, advisory locks (already implemented)
+No new packages. Pattern uses existing `drizzle-orm` insert/select.
 
-**Assessment:** NO new packages needed. Project-scoped scheduling is configuration data (job schedules stored per project), not a framework change.
+### AI Meeting Prep Skill
 
-**Implementation:**
-- Add `scheduled_jobs.project_id` FK (if not already present)
-- UI for configuring cron expressions per project per skill
-- BullMQ worker reads `project_id` from job data payload
+New `skills/meeting-prep.md` SKILL.md file following the established SKILLS-DESIGN-STANDARD.md YAML front-matter schema. Uses existing `skill-orchestrator.ts` + Vercel AI SDK streaming. No new library.
 
-**Confidence:** HIGH — BullMQ job metadata already supports arbitrary JSON payloads; scheduler infrastructure exists from v2.0 Phase 24.
+### Task Board Week View
 
-## Installation Summary
+Group tasks by ISO week of their `due` date. ISO week computation:
+```typescript
+function getISOWeekLabel(dateStr: string): string {
+  const d = new Date(dateStr + 'T00:00:00')
+  const dayOfWeek = d.getDay() || 7  // Mon=1 ... Sun=7
+  d.setDate(d.getDate() + 4 - dayOfWeek)
+  const yearStart = new Date(d.getFullYear(), 0, 1)
+  const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7)
+  return `Week ${weekNo} (${d.getFullYear()})`
+}
+```
+
+`date-fns` is NOT needed for this feature — the native ISO week algorithm above is 10 lines. Adding a 400KB utility library for 2 date functions violates the "no redundant libraries" constraint.
+
+### Stakeholder Email + Slack Handle Extraction
+
+Extension of the existing multi-pass extraction pipeline (`document-extractor.ts`) + DB column additions (`stakeholders.email`, `stakeholders.slack_handle`). The `@anthropic-ai/sdk` tool-use API (`record_entities` pattern) already handles structured extraction. No new library.
+
+### Owner Fields: Stakeholder Picker
+
+Uses existing `@radix-ui/react-popover@^1.1.15` + `@radix-ui/react-select@^2.2.6` (both installed). Searchable dropdown with free-text fallback. No new library.
+
+### Task Dependency + Milestone Link Pickers
+
+Same pattern as stakeholder picker — uses installed Radix UI primitives + existing `tasks` and `milestones` queries. No new library.
+
+---
+
+## Updated Full Dependency Matrix
+
+### Existing Dependencies — Confirmed Still Valid for v9.0
+
+| Library | Version | v9.0 Usage |
+|---------|---------|-----------|
+| @dnd-kit/core | ^6.3.1 | Kanban cross-column DnD (extended) |
+| @dnd-kit/sortable | ^10.0.0 | SortableContext per column + useSortable per card |
+| @dnd-kit/utilities | ^3.2.2 | CSS.Transform.toString for card transform |
+| react-markdown | ^10.1.0 | Outputs Library: inline markdown rendering |
+| @tailwindcss/typography | ^0.5.19 | `prose` class for markdown output styling |
+| ai (Vercel AI SDK) | ^6.0.142 | Chat persistence via initialMessages prop |
+| @anthropic-ai/sdk | ^0.80.0 | Meeting Prep skill + stakeholder extraction |
+| drizzle-orm | ^0.45.1 | chat_messages table, stakeholder column additions |
+| mammoth | ^1.12.0 | Already installed; DOCX → HTML for ingestion (not outputs preview) |
+| @radix-ui/react-popover | ^1.1.15 | Stakeholder/dependency picker UI |
+| @radix-ui/react-select | ^2.2.6 | Owner field dropdowns |
+
+### New Dependency for v9.0
+
+| Library | Version | Purpose | Confidence |
+|---------|---------|---------|-----------|
+| **docx-preview** | ^0.3.7 | DOCX inline preview in Outputs Library | HIGH — confirmed browser-compatible, ES module, active maintenance (Sept 2025 release) |
+
+---
+
+## Installation
 
 ```bash
-# New dependency for v7.0
-npm install @uiw/react-codemirror
-
-# Supporting extensions (if syntax highlighting needed)
-npm install @codemirror/lang-markdown  # For markdown highlighting in prompts
+# New dependency
+npm install docx-preview
 ```
 
-**No other packages required.**
+---
 
-## Database Migrations
+## Alternatives Considered
 
-```sql
--- Migration: v7.0 RBAC and Lifecycle Management
+| Recommended | Alternative | Why Not |
+|-------------|-------------|---------|
+| docx-preview (DOCX) | mammoth (already installed) | mammoth converts DOCX → simplified HTML (lossy, no layout fidelity); docx-preview preserves visual document structure. Use mammoth for extraction, docx-preview for preview |
+| docx-preview (DOCX) | Office Online viewer (embed URL) | Requires file to be publicly accessible online; files are stored locally on disk; privacy concern |
+| Native ISO week calc (Week view) | date-fns@4.1.0 | 400KB+ dependency for 2 functions; native Date arithmetic is 10 lines and sufficient |
+| Existing @dnd-kit (Kanban) | react-beautiful-dnd | Unmaintained (Atlassian deprecated in 2022); @dnd-kit is the current standard |
+| Existing @dnd-kit (Kanban) | dnd-kit @dnd-kit/dom | @dnd-kit/dom is the new v2 API (breaking change from current @dnd-kit/core v6); migration not worth it for this milestone |
+| "Slide count + download" (PPTX preview) | pptx2html@0.3.4 | Depends on jQuery + D3; legacy stack; v0.3.4 is last update; incompatible with modern bundlers cleanly |
+| No addition (markdown) | rehype-sanitize | react-markdown is safe by default; AI-generated content does not introduce raw HTML; unnecessary for this milestone |
 
--- 1. Create project_role enum
-CREATE TYPE project_role AS ENUM ('admin', 'user');
-
--- 2. Create project_members table
-CREATE TABLE project_members (
-  id SERIAL PRIMARY KEY,
-  project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  role project_role NOT NULL DEFAULT 'user',
-  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-);
-
-CREATE UNIQUE INDEX project_members_project_user_idx ON project_members(project_id, user_id);
-
--- 3. Add soft-delete timestamps to projects
-ALTER TABLE projects
-  ADD COLUMN archived_at TIMESTAMPTZ,
-  ADD COLUMN deleted_at TIMESTAMPTZ;
-
--- 4. Backfill archived_at for existing archived projects
-UPDATE projects
-SET archived_at = updated_at
-WHERE status = 'archived' AND archived_at IS NULL;
-```
+---
 
 ## What NOT to Add
 
 | Avoid | Why | Use Instead |
 |-------|-----|-------------|
-| better-auth "organization" plugin | Not designed for per-project roles; adds unnecessary abstraction | Custom `project_members` table with explicit project_id FK |
-| Monaco Editor | 3-4x larger than CodeMirror; requires SSR workaround; overkill for plain text | @uiw/react-codemirror (CodeMirror 6) |
-| react-ace | Unmaintained (last publish 2 years ago); Ace Editor is legacy | @uiw/react-codemirror (modern, actively maintained) |
-| Draft.js, Slate, Lexical | Rich text editors for WYSIWYG editing; prompts are plain text/markdown | @uiw/react-codemirror with markdown extension |
-| New chart library (Chart.js, Victory, Nivo) | Recharts already installed and working; switching adds risk | Recharts ^3.8.1 (already in package.json) |
-| Separate soft-delete library (drizzle-soft-delete) | Adds dependency for trivial pattern; Drizzle's `isNull()` is sufficient | Custom `deletedAt` timestamp + query helpers |
-
-## Version Compatibility
-
-| Package | Current Version | v7.0 Compatibility | Notes |
-|---------|-----------------|-------------------|-------|
-| better-auth | 1.5.6 | ✓ Compatible | No upgrade needed; custom project_members table supplements global role |
-| drizzle-orm | 0.45.1 | ✓ Compatible | Timestamp filtering fully supported; no schema limitations |
-| Next.js | 16.2.0 | ✓ Compatible | @uiw/react-codemirror works in client components |
-| React | 19.2.4 | ✓ Compatible | @uiw/react-codemirror supports React 18+ (19 is backward compatible) |
-| Recharts | 3.8.1 | ✓ Compatible | No new chart types needed for Health Dashboard |
-| BullMQ | 5.71.0 | ✓ Compatible | Project-scoped scheduling uses existing job metadata patterns |
-
-## Stack Patterns for v7.0 Features
-
-### Pattern 1: Per-Project Authorization Check
-
-**Where:** All Route Handlers modifying project data (archive, delete, member management, scheduler config)
-
-**Pattern:**
-```typescript
-import { requireSession } from '@/lib/session';
-import { requireProjectAdmin } from '@/lib/auth-helpers';
-
-export async function POST(req: Request) {
-  const session = await requireSession();  // CVE-2025-29927 defense
-  const { projectId } = await req.json();
-
-  await requireProjectAdmin(projectId, session);  // NEW: per-project role check
-
-  // Authorized: proceed with operation
-}
-```
-
-**When:** AUTH-03, AUTH-04, AUTH-05 — all admin-restricted actions
-
-### Pattern 2: Soft-Delete Query Scope
-
-**Where:** All project list queries (portfolio, dropdown selectors, search)
-
-**Pattern:**
-```typescript
-// Active projects only (default view)
-const activeProjects = await db.query.projects.findMany({
-  where: and(
-    eq(projects.status, 'active'),
-    isNull(projects.deletedAt)
-  ),
-});
-
-// Archived projects view (PROJ-03)
-const archivedProjects = await db.query.projects.findMany({
-  where: and(
-    eq(projects.status, 'archived'),
-    isNull(projects.deletedAt)  // Exclude permanently deleted
-  ),
-});
-```
-
-**When:** PROJ-01, PROJ-02, PROJ-03 — all project queries must filter `deletedAt`
-
-### Pattern 3: CodeMirror in Client Component
-
-**Where:** Skills tab prompt editing UI (SKILL-03)
-
-**Pattern:**
-```typescript
-'use client';
-import { useState } from 'react';
-import CodeMirror from '@uiw/react-codemirror';
-import { markdown } from '@codemirror/lang-markdown';
-
-export default function PromptEditor({ initialValue, onSave }: Props) {
-  const [value, setValue] = useState(initialValue);
-
-  return (
-    <div>
-      <CodeMirror
-        value={value}
-        height="500px"
-        extensions={[markdown()]}
-        onChange={setValue}
-        theme="light"  // or "dark" based on app theme
-        basicSetup={{
-          lineNumbers: true,
-          highlightActiveLineGutter: true,
-          foldGutter: false,  // Prompts are typically < 100 lines
-        }}
-      />
-      <button onClick={() => onSave(value)}>Save Prompt</button>
-    </div>
-  );
-}
-```
-
-**When:** SKILL-03 — editable prompt UI
-
-## Integration Points with Existing Stack
-
-### 1. better-auth + project_members
-
-**Bridge:** Session user ID joins to `project_members.user_id`
-
-**Query Pattern:**
-```typescript
-const userProjects = await db.query.projectMembers.findMany({
-  where: eq(projectMembers.userId, session.user.id),
-  with: { project: true },
-});
-```
-
-**Enforcement:** Route handler level (post-session check, pre-business logic)
-
-### 2. Drizzle Soft-Delete + BullMQ Scheduler
-
-**Integration:** Scheduled jobs must skip archived/deleted projects
-
-**Pattern:**
-```typescript
-// worker/scheduled-job.ts
-const eligibleProjects = await db.query.projects.findMany({
-  where: and(
-    eq(projects.status, 'active'),
-    isNull(projects.deletedAt)  // NEW: exclude deleted
-  ),
-});
-
-for (const project of eligibleProjects) {
-  await queue.add(`weekly-focus-${project.id}`, { projectId: project.id });
-}
-```
-
-### 3. CodeMirror + Existing Skill Engine
-
-**Integration:** Edited prompt text replaces SKILL.md content at runtime
-
-**Data Flow:**
-1. User edits prompt in CodeMirror → saves to DB (`skill_prompts` table or `jsonb` column)
-2. Skill runner checks DB for overrides before reading SKILL.md from disk
-3. If override exists, use DB content; else, fall back to SKILL.md file
-
-**Constraint Preservation:** "SKILL.md files read from disk at runtime" — still true for non-overridden skills; DB stores exceptions only
-
-## Sources
-
-- **better-auth@1.5.6 documentation** (reviewed via WebFetch) — MEDIUM confidence (plugin capabilities not fully documented; negative finding: no per-resource roles mentioned)
-- **@monaco-editor/react npm page** (WebFetch) — HIGH confidence (version 4.7.0, bundle size ~300KB, SSR considerations documented)
-- **@uiw/react-codemirror npm page** (WebFetch) — HIGH confidence (version 4.25.9, 1.8M weekly downloads, React 18+ support confirmed)
-- **Drizzle ORM soft-delete patterns** — HIGH confidence (standard PostgreSQL pattern; timestamp filtering is core Drizzle functionality)
-- **Existing codebase** (`package.json`, `db/schema.ts`, `lib/auth.ts`) — HIGH confidence (direct file reads)
-- **PROJECT.md milestone context** — HIGH confidence (v7.0 requirements AUTH-01 through SKILL-04)
+| date-fns | 400KB for 2 functions (ISO week, start-of-week); native Date is sufficient | Native `Date` arithmetic (10-line ISO week function) |
+| react-beautiful-dnd | Deprecated by Atlassian in 2022; no longer maintained | @dnd-kit (already installed) |
+| pptx2html | Legacy jQuery/D3 dependencies; last updated years ago; PPTX preview in browser is a poor UX anyway | "Slide count + download" fallback for PPTX outputs |
+| rehype-raw + rehype-sanitize | react-markdown is already safe by default; raw HTML rendering not needed for AI outputs | react-markdown without plugins (already installed) |
+| @dnd-kit/dom | v2 breaking API change from current @dnd-kit/core@6; forces full rewrite of WbsTree + TaskBoard | @dnd-kit/core@6 (already installed) |
+| Monaco Editor | Already resolved in v7.0; CodeMirror in use for prompt editing | @uiw/react-codemirror (already installed) |
+| New chart library | Recharts already handles all visualization needs | recharts@^3.8.1 (already installed) |
 
 ---
 
-*Stack research for: BigPanda AI Project Management App v7.0*
-*Researched: 2026-04-13*
+## Version Compatibility
+
+| Package | Installed | v9.0 Compatibility | Notes |
+|---------|-----------|-------------------|-------|
+| docx-preview | NEW — ^0.3.7 | ✓ Compatible | Requires `dynamic import` + `ssr: false`; same pattern as @xyflow/react |
+| @dnd-kit/core | ^6.3.1 | ✓ Compatible | Multi-container (Kanban) is a core supported pattern per official MultipleContainers.tsx story |
+| @dnd-kit/sortable | ^10.0.0 | ✓ Compatible | `SortableContext` per column + `useDroppable` per column is the correct multi-container pattern |
+| react-markdown | ^10.1.0 | ✓ Compatible | Latest stable (as of March 2025); safe by default; no breaking changes expected |
+| ai (Vercel AI SDK) | ^6.0.142 | ✓ Compatible | `useChat` `initialMessages` prop supports chat history hydration |
+| drizzle-orm | ^0.45.1 | ✓ Compatible | Schema additions (chat_messages, stakeholder columns) use existing patterns |
+| mammoth | ^1.12.0 | ✓ Not changed | Already used for document ingestion; do NOT use for inline preview |
+
+---
+
+## Key Integration Notes
+
+### docx-preview + Next.js SSR
+
+`docx-preview` uses DOM APIs unavailable in Node.js SSR. Import pattern:
+```typescript
+// components/DocxPreviewPanel.tsx
+// In parent: dynamic(() => import('./DocxPreviewPanel'), { ssr: false })
+```
+This is the **established pattern** already used for `@xyflow/react` (org charts) and CodeMirror — no new complexity introduced.
+
+### @dnd-kit Cross-Column DnD: onDragOver is Required
+
+The current `TaskBoard.tsx` only has `onDragEnd`. For smooth Kanban cross-column movement, `onDragOver` must also be wired. Without it, cards only "snap" to new columns on release (poor UX). The `DragOverlay` import already exists in the file — it just needs to be rendered with the active card's content.
+
+### Chat Persistence + Vercel AI SDK
+
+`useChat` accepts `initialMessages` to seed conversation history. The pattern:
+1. Server Component loads last 50 `chat_messages` rows for the project
+2. Passes them as `initialMessages` to `<ChatPanel>`
+3. After each exchange, the chat API route persists both `user` and `assistant` turns to DB
+4. `setMessages` hook handles local state; DB is source of truth on next load
+
+No changes to `@ai-sdk/react` or `ai` packages — this is configuration and data flow, not API surface changes.
+
+---
+
+## Sources
+
+- **@dnd-kit GitHub** (`clauderic/dnd-kit`) — MultipleContainers.tsx official story confirming `onDragOver` + `useDroppable` pattern; HIGH confidence
+- **docx-preview npm registry** (registry.npmjs.org) — v0.3.7 confirmed latest; browser-compatible confirmed; active maintenance confirmed; HIGH confidence
+- **react-markdown npm registry** (registry.npmjs.org) — v10.1.0 confirmed latest stable; safe-by-default behavior confirmed; HIGH confidence
+- **rehype-sanitize npm registry** — v6.0.0 latest; unnecessary for this use case; HIGH confidence
+- **Existing codebase** (`/Users/jmiloslavsky/Documents/Panda-Manager`) — `package.json`, `components/TaskBoard.tsx`, `components/chat/ChatPanel.tsx`, `app/outputs/page.tsx`, `db/schema.ts`, `lib/file-gen/index.ts` — direct inspection; HIGH confidence
+- **pptxgenjs npm registry** — confirmed generator-only (not renderer); HIGH confidence
+- **pptx2html npm registry** — v0.3.4 latest; jQuery/D3 legacy dependencies confirmed; rejected; HIGH confidence
+
+---
+
+*Stack research for: BigPanda AI Project Management App v9.0*
+*Researched: 2026-04-22*
 *Confidence: HIGH*
