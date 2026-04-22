@@ -111,6 +111,7 @@ export const projects = pgTable('projects', {
   end_date: text('end_date'),
   seeded: boolean('seeded').default(false).notNull(),
   exec_action_required: boolean('exec_action_required').default(false).notNull(),
+  active_tracks: jsonb('active_tracks').$type<{ adr: boolean; biggy: boolean }>().default({ adr: true, biggy: true }),
 });
 
 export type Project = typeof projects.$inferSelect;
@@ -164,6 +165,7 @@ export const actions = pgTable('actions', {
   last_updated: text('last_updated'),
   notes: text('notes'),
   type: text('type').default('action').notNull(), // 'action' | 'question' (Q-NNN IDs)
+  owner_id: integer('owner_id').references(() => stakeholders.id, { onDelete: 'set null' }),
   source: text('source').notNull(),
   source_artifact_id: integer('source_artifact_id').references((): AnyPgColumn => artifacts.id, { onDelete: 'set null' }),
   discovery_source: text('discovery_source'),
@@ -183,6 +185,10 @@ export const risks = pgTable('risks', {
   severity: severityEnum('severity'),
   owner: text('owner'),
   mitigation: text('mitigation'),
+  likelihood: text('likelihood'),
+  impact: text('impact'),
+  target_date: text('target_date'),
+  owner_id: integer('owner_id').references(() => stakeholders.id, { onDelete: 'set null' }),
   status: riskStatusEnum('status'),
   last_updated: text('last_updated'),
   source: text('source').notNull(),
@@ -206,6 +212,7 @@ export const milestones = pgTable('milestones', {
   date: text('date'), // TEXT — 'TBD', '2026-Q3', ISO date
   notes: text('notes'),
   owner: text('owner'),
+  owner_id: integer('owner_id').references(() => stakeholders.id, { onDelete: 'set null' }),
   source: text('source').notNull(),
   source_artifact_id: integer('source_artifact_id').references((): AnyPgColumn => artifacts.id, { onDelete: 'set null' }),
   discovery_source: text('discovery_source'),
@@ -304,6 +311,7 @@ export const tasks = pgTable('tasks', {
   workstream_id: integer('workstream_id').references(() => workstreams.id),
   blocked_by: integer('blocked_by').references((): AnyPgColumn => tasks.id), // self-referential FK, nullable
   milestone_id: integer('milestone_id').references(() => milestones.id),      // nullable FK to milestones
+  owner_id: integer('owner_id').references(() => stakeholders.id, { onDelete: 'set null' }),
   start_date: text('start_date'),                                              // TEXT — same as 'due' (can be TBD, ISO date)
   status: text('status').default('todo').notNull(),
   source: text('source'),
@@ -892,3 +900,31 @@ export const projectDependencies = pgTable('project_dependencies', {
 });
 
 export type ProjectDependency = typeof projectDependencies.$inferSelect;
+
+// ─── v9.0 Tables ─────────────────────────────────────────────────────────────
+
+// ─── Chat Messages (Phase 75) ─────────────────────────────────────────────────
+
+export const chatMessages = pgTable('chat_messages', {
+  id: serial('id').primaryKey(),
+  project_id: integer('project_id').references(() => projects.id, { onDelete: 'cascade' }),
+  role: text('role').notNull(),
+  content: text('content').notNull(),
+  created_at: timestamp('created_at').notNull().defaultNow(),
+});
+
+export type ChatMessage = typeof chatMessages.$inferSelect;
+export type ChatMessageInsert = typeof chatMessages.$inferInsert;
+
+// ─── Gantt Baselines (Phase 75) ───────────────────────────────────────────────
+
+export const ganttBaselines = pgTable('gantt_baselines', {
+  id: serial('id').primaryKey(),
+  project_id: integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  snapshot_json: jsonb('snapshot_json').notNull(),
+  created_at: timestamp('created_at').notNull().defaultNow(),
+});
+
+export type GanttBaseline = typeof ganttBaselines.$inferSelect;
+export type GanttBaselineInsert = typeof ganttBaselines.$inferInsert;
