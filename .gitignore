@@ -40,3 +40,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# dev/test artifacts — not needed for app install
+/__tests__/
+/tests/
+/skills/
+/test-ingestion-doc.md
+/vitest.config.ts
