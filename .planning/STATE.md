@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v9.0
 milestone_name: — UX Maturity & Intelligence
 status: executing
-stopped_at: Completed 75-schema-quick-wins-admin/75-02-PLAN.md
-last_updated: "2026-04-22T20:09:04.606Z"
-last_activity: "2026-04-22 — 75-01 complete: five DB migrations (0038–0042) + schema.ts updates applied"
+stopped_at: Completed 75-schema-quick-wins-admin/75-03-PLAN.md
+last_updated: "2026-04-22T20:30:00.000Z"
+last_activity: "2026-04-22 — 75-03 complete: DroppableColumn fixes empty-column dnd-kit drop targets; DELETE /api/tasks-bulk + BulkToolbar Delete Selected button"
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 5
-  completed_plans: 2
-  percent: 20
+  completed_plans: 3
+  percent: 60
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-22 after v9.0 milestone start)
 ## Current Position
 
 Phase: 75 of 78 (Schema + Quick Wins + Admin)
-Plan: 2 of 5 complete
+Plan: 3 of 5 complete
 Status: In Progress
-Last activity: 2026-04-22 — 75-02 complete: milestone_status enum rebuilt (on_track/at_risk/complete/missed); MilestoneEditModal dropdown; portfolio overdue milestones counter
+Last activity: 2026-04-22 — 75-03 complete: DroppableColumn fixes empty-column dnd-kit drop targets; DELETE /api/tasks-bulk + BulkToolbar Delete Selected button
 
-Progress: [██░░░░░░░░] 40%
+Progress: [███░░░░░░░] 60%
 
 ## Milestone History
 
@@ -91,6 +91,9 @@ Progress: [██░░░░░░░░] 40%
 - (75-02) milestone_status enum rebuilt via DROP+CREATE (column was already TEXT — prior setup did not create a typed enum); values: on_track/at_risk/complete/missed
 - (75-02) coerceMilestoneStatus maps blocked/stuck/at-risk → at_risk, missed/overdue/late → missed, completed/done → complete, all else → on_track
 - (75-02) overdueMilestones computed in getPortfolioData from existing milestoneData fetch (no extra DB query)
+- (75-03) DroppableColumn placed inside SortableContext so SortableContext owns sort logic while DroppableColumn provides droppable identity for empty-column resolution via over.id
+- (75-03) tasks-bulk DELETE uses first task's project_id for requireProjectRole; full per-task validation deferred to Phase 76's multi-tenant gap fix
+- (75-03) No delete confirmation dialog in BulkToolbar per design intent
 
 ### Blockers/Concerns
 
@@ -101,6 +104,6 @@ Progress: [██░░░░░░░░] 40%
 
 ## Session Continuity
 
-Last session: 2026-04-22T20:09:04.604Z
-Stopped at: Completed 75-schema-quick-wins-admin/75-02-PLAN.md
+Last session: 2026-04-22T20:30:00.000Z
+Stopped at: Completed 75-schema-quick-wins-admin/75-03-PLAN.md
 Resume file: None

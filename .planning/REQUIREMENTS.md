@@ -7,9 +7,9 @@
 
 ### Task Board
 
-- [ ] **TASK-01**: User can drag task cards between Kanban columns to update task status
-- [ ] **TASK-02**: User can select multiple task cards and change status in bulk
-- [ ] **TASK-03**: User can bulk delete selected task cards
+- [x] **TASK-01**: User can drag task cards between Kanban columns to update task status
+- [x] **TASK-02**: User can select multiple task cards and change status in bulk
+- [x] **TASK-03**: User can bulk delete selected task cards
 - [ ] **TASK-04**: User can toggle to Week view to see tasks grouped by due-date week
 - [ ] **TASK-05**: Tasks with no due date appear in an "Unscheduled" group in Week view
 
@@ -96,9 +96,9 @@
 |-------------|-------|--------|
 | MILE-01 | Phase 75 | Complete |
 | MILE-02 | Phase 75 | Complete |
-| TASK-01 | Phase 75 | Pending |
-| TASK-02 | Phase 75 | Pending |
-| TASK-03 | Phase 75 | Pending |
+| TASK-01 | Phase 75 | Complete |
+| TASK-02 | Phase 75 | Complete |
+| TASK-03 | Phase 75 | Complete |
 | TASK-04 | Phase 75 | Pending |
 | TASK-05 | Phase 75 | Pending |
 | ADMIN-01 | Phase 75 | Pending |
