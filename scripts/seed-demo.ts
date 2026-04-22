@@ -90,11 +90,11 @@ async function seed() {
       aggregation_hub_name: 'Splunk ITSI',
       alert_to_ticket_problem: 'NOC receives 25,000+ raw alerts per day across 14 monitoring tools. Operators manually correlate related alerts and create SNOW tickets by hand — taking 35-50 minutes per P1 incident. Alert storms during peak trading hours overwhelm the team and cause P1 escalation delays.',
       pain_points_json: [
-        { id: 1, text: 'Manual alert triage takes 35-50 min per P1 — MTTA target is <8 min' },
-        { id: 2, text: 'SNOW tickets created manually for every alert — ~120 tickets/day with no correlation' },
-        { id: 3, text: 'No cross-tool correlation: Dynatrace, Nagios, and Splunk alerts treated independently' },
-        { id: 4, text: 'Alert fatigue causing NOC to miss genuine P1s in noise — 3 SLA breaches in Q1 2026' },
-        { id: 5, text: 'Tier 2 escalations at 41% — NOC lacks context to resolve independently' },
+        'Manual alert triage takes 35-50 min per P1 — MTTA target is <8 min',
+        'SNOW tickets created manually for every alert — ~120 tickets/day with no correlation',
+        'No cross-tool correlation: Dynatrace, Nagios, and Splunk alerts treated independently',
+        'Alert fatigue causing NOC to miss genuine P1s in noise — 3 SLA breaches in Q1 2026',
+        'Tier 2 escalations at 41% — NOC lacks context to resolve independently',
       ],
       source: 'manual',
     });
