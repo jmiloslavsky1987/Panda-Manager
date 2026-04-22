@@ -47,3 +47,4 @@ next-env.d.ts
 /skills/
 /test-ingestion-doc.md
 /vitest.config.ts
+/.planning/
