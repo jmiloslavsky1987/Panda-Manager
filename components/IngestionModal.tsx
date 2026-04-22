@@ -400,12 +400,6 @@ export function IngestionModal({
     }
   }, [open, initialStage, initialReviewItems, initialFilteredCount])
 
-  // Sync stage immediately when modal opens at 'extracting' — useState only reads initialStage once
-  useEffect(() => {
-    if (open && initialStage === 'extracting') {
-      setStage('extracting')
-    }
-  }, [open, initialStage])
 
   // Resume in-progress extraction when modal is opened at 'extracting' stage after a page refresh
   useEffect(() => {

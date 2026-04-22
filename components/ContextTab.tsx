@@ -57,6 +57,7 @@ export function ContextTab({ projectId }: ContextTabProps) {
   const [initialReviewItems, setInitialReviewItems] = useState<ExtractionItem[]>([])
   const [initialArtifactId, setInitialArtifactId] = useState<number | undefined>(undefined)
   const [initialFilteredCount, setInitialFilteredCount] = useState<number>(0)
+  const [modalKey, setModalKey] = useState(0)
 
   function toggleTab(tabId: string) {
     setExpandedTabs(prev => {
@@ -78,7 +79,7 @@ export function ContextTab({ projectId }: ContextTabProps) {
     setInitialFilteredCount(totalFiltered)
     setInitialArtifactId(firstArtifactId)
     setInitialStage('reviewing')
-    setIngestionModalOpen(true)
+    setModalKey(k => k + 1); setIngestionModalOpen(true)
   }
 
   const cancelExtraction = async () => {
@@ -211,7 +212,7 @@ export function ContextTab({ projectId }: ContextTabProps) {
               <h3 className="text-sm font-medium text-blue-900">Extraction in Progress</h3>
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() => { setInitialStage('extracting'); setIngestionModalOpen(true); }}
+                  onClick={() => { setInitialStage('extracting'); setModalKey(k => k + 1); setIngestionModalOpen(true); }}
                   className="text-xs text-blue-700 hover:text-blue-900 underline underline-offset-2 transition-colors"
                 >
                   View Progress
@@ -266,7 +267,7 @@ export function ContextTab({ projectId }: ContextTabProps) {
             onClick={() => {
               setInitialStage('uploading')
               setInitialReviewItems([])
-              setIngestionModalOpen(true)
+              setModalKey(k => k + 1); setIngestionModalOpen(true)
             }}
             className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
           >
@@ -378,6 +379,7 @@ export function ContextTab({ projectId }: ContextTabProps) {
       </section>
 
       <IngestionModal
+        key={modalKey}
         projectId={typeof projectId === 'string' ? parseInt(projectId, 10) : projectId}
         open={isIngestionModalOpen}
         onOpenChange={handleModalClose}
