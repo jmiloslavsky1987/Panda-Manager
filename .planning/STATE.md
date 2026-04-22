@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v9.0
 milestone_name: — UX Maturity & Intelligence
 status: planning
-stopped_at: Phase 75 context gathered
-last_updated: "2026-04-22T19:21:15.670Z"
+stopped_at: Completed 75-schema-quick-wins-admin/75-01-PLAN.md
+last_updated: "2026-04-22T19:57:31.017Z"
 last_activity: 2026-04-22 — v9.0 roadmap revised to 4 phases (75–78), 33 requirements mapped
 progress:
   total_phases: 4
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 5
+  completed_plans: 1
   percent: 0
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-22 after v9.0 milestone start)
 ## Current Position
 
 Phase: 75 of 78 (Schema + Quick Wins + Admin)
-Plan: —
-Status: Ready to plan
-Last activity: 2026-04-22 — v9.0 roadmap revised to 4 phases (75–78), 33 requirements mapped
+Plan: 1 of 5 complete
+Status: In Progress
+Last activity: 2026-04-22 — 75-01 complete: five DB migrations (0038–0042) + schema.ts updates applied
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█░░░░░░░░░] 20%
 
 ## Milestone History
 
@@ -83,15 +83,21 @@ Progress: [░░░░░░░░░░] 0%
 - react-markdown XSS gap: ChatMessage.tsx renders without rehype-sanitize — fix in Phase 78
 - Meeting Prep prompt injection risk: escape user-controlled strings before interpolation — enforce in Phase 78
 
+### v9.0 Phase 75 Decisions
+
+- Applied 0038–0042 migrations via psql directly and seeded _migrations tracking table (DB was previously managed by drizzle-kit with __drizzle_migrations, not _migrations)
+- chat_messages migration uses CREATE TABLE IF NOT EXISTS + ALTER TABLE ADD COLUMN IF NOT EXISTS for safe handling of both fresh and existing DB states
+- owner_id FK columns are nullable (ON DELETE SET NULL) so existing rows are unaffected
+
 ### Blockers/Concerns
 
-- Migration number must be verified against live db/migrations/ before Phase 75 starts (current highest known: 0037_entity_lifecycle.sql — verify before writing migrations 0038–0042)
+- Migration number confirmed: 0037 was highest before Phase 75; 0038–0042 applied cleanly
 - Owner picker dual-write: audit all tables with owner text column against db/schema.ts before writing PATCH handlers in Phase 76 (known candidates: tasks, actions, risks, milestones, artifacts, wbs_items)
 - docx-preview SSR: validate dynamic import + ssr:false is compatible with Outputs Library page before Phase 78 implementation
 - Active tracks filter: WBS expandedIds must be reset in useEffect when active_tracks config changes (stale Set can reveal hidden rows)
 
 ## Session Continuity
 
-Last session: 2026-04-22T19:21:15.661Z
-Stopped at: Phase 75 context gathered
-Resume file: .planning/phases/75-schema-quick-wins-admin/75-CONTEXT.md
+Last session: 2026-04-22T19:57:31.015Z
+Stopped at: Completed 75-schema-quick-wins-admin/75-01-PLAN.md
+Resume file: None
