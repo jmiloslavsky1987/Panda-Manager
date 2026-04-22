@@ -10,7 +10,7 @@ import { requireSession } from "@/lib/auth-server";
 const BulkUpdateSchema = z.object({
   milestone_ids: z.array(z.number()).min(1, 'At least one milestone ID required'),
   patch: z.object({
-    status: z.enum(['not_started', 'in_progress', 'completed', 'blocked']).optional(),
+    status: z.enum(['on_track', 'at_risk', 'complete', 'missed']).optional(),
   }),
 })
 

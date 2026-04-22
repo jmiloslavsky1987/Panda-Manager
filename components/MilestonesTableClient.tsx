@@ -22,32 +22,32 @@ import { EmptyState } from '@/components/EmptyState'
 import { AddMilestoneModal } from '@/components/AddMilestoneModal'
 import type { Milestone, Artifact } from '@/lib/queries'
 
-const MILESTONE_STATUS_OPTIONS: { value: 'not_started' | 'in_progress' | 'completed' | 'blocked'; label: string }[] = [
-  { value: 'not_started', label: 'Not Started' },
-  { value: 'in_progress', label: 'In Progress' },
-  { value: 'completed', label: 'Completed' },
-  { value: 'blocked', label: 'Blocked' },
+const MILESTONE_STATUS_OPTIONS: { value: 'on_track' | 'at_risk' | 'complete' | 'missed'; label: string }[] = [
+  { value: 'on_track', label: 'On Track' },
+  { value: 'at_risk', label: 'At Risk' },
+  { value: 'complete', label: 'Complete' },
+  { value: 'missed', label: 'Missed' },
 ]
 
-const MILESTONE_STATUS_VALUES = ['not_started', 'in_progress', 'completed', 'blocked'] as const
+const MILESTONE_STATUS_VALUES = ['on_track', 'at_risk', 'complete', 'missed'] as const
 type MilestoneStatus = typeof MILESTONE_STATUS_VALUES[number]
 
 function normaliseMilestoneStatus(s: string | null | undefined): MilestoneStatus {
   const normalized = (s ?? '').toLowerCase().replace(/\s+/g, '_')
-  return MILESTONE_STATUS_VALUES.includes(normalized as MilestoneStatus) ? (normalized as MilestoneStatus) : 'not_started'
+  return MILESTONE_STATUS_VALUES.includes(normalized as MilestoneStatus) ? (normalized as MilestoneStatus) : 'on_track'
 }
 
 const statusBadgeColors: Record<string, string> = {
-  completed: 'bg-green-100 text-green-800',
-  in_progress: 'bg-blue-100 text-blue-800',
-  not_started: 'bg-zinc-100 text-zinc-700',
-  blocked: 'bg-red-100 text-red-800',
+  complete: 'bg-green-100 text-green-800',
+  on_track: 'bg-blue-100 text-blue-800',
+  at_risk: 'bg-amber-100 text-amber-800',
+  missed: 'bg-red-100 text-red-800',
 }
 
 function isOverdueMilestone(date: string | null | undefined, status: string | null | undefined): boolean {
   if (!date || !date.trim()) return false
   if (!/^\d{4}-\d{2}-\d{2}/.test(date)) return false
-  if ((status ?? '').toLowerCase() === 'completed') return false
+  if ((status ?? '').toLowerCase() === 'complete') return false
   const d = new Date(date)
   if (isNaN(d.getTime())) return false
   return d < new Date()
@@ -200,8 +200,8 @@ export function MilestonesTableClient({ milestones, artifacts, projectId }: Mile
     }
 
     // Preserve incomplete-first order (split, sort each half, concat)
-    const incomplete = result.filter(m => normaliseMilestoneStatus(m.status) !== 'completed')
-    const complete = result.filter(m => normaliseMilestoneStatus(m.status) === 'completed')
+    const incomplete = result.filter(m => normaliseMilestoneStatus(m.status) !== 'complete')
+    const complete = result.filter(m => normaliseMilestoneStatus(m.status) === 'complete')
     return [...incomplete.sort(sortByDate), ...complete.sort(sortByDate)]
   }, [milestones, q, statusFilter, ownerFilter, fromDate, toDate])
 

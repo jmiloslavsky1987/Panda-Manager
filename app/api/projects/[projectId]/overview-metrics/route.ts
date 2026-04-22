@@ -201,7 +201,7 @@ export async function GET(
         SELECT COUNT(*) as count
         FROM milestones
         WHERE project_id = ${numericId}
-          AND (status IS NULL OR status != 'completed')
+          AND (status IS NULL OR status != 'complete')
           AND date ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
           AND date::date < CURRENT_DATE
       `)

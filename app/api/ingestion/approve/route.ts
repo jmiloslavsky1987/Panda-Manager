@@ -1436,7 +1436,7 @@ async function closeItemLifecycle(
   const closeStatusMap: Record<string, Record<string, unknown>> = {
     action: { status: 'closed' },
     risk: { status: 'resolved' },
-    milestone: { status: 'completed' },
+    milestone: { status: 'complete' },
     workstream: { current_status: 'complete' },
     task: { status: 'completed' },
     focus_area: { status: 'completed' },
