@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v9.0
 milestone_name: — UX Maturity & Intelligence
-status: planning
-stopped_at: Completed 75-schema-quick-wins-admin/75-01-PLAN.md
-last_updated: "2026-04-22T19:57:31.017Z"
-last_activity: 2026-04-22 — v9.0 roadmap revised to 4 phases (75–78), 33 requirements mapped
+status: executing
+stopped_at: Completed 75-schema-quick-wins-admin/75-02-PLAN.md
+last_updated: "2026-04-22T20:09:04.606Z"
+last_activity: "2026-04-22 — 75-01 complete: five DB migrations (0038–0042) + schema.ts updates applied"
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 5
-  completed_plans: 1
-  percent: 0
+  completed_plans: 2
+  percent: 20
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-22 after v9.0 milestone start)
 ## Current Position
 
 Phase: 75 of 78 (Schema + Quick Wins + Admin)
-Plan: 1 of 5 complete
+Plan: 2 of 5 complete
 Status: In Progress
-Last activity: 2026-04-22 — 75-01 complete: five DB migrations (0038–0042) + schema.ts updates applied
+Last activity: 2026-04-22 — 75-02 complete: milestone_status enum rebuilt (on_track/at_risk/complete/missed); MilestoneEditModal dropdown; portfolio overdue milestones counter
 
-Progress: [█░░░░░░░░░] 20%
+Progress: [██░░░░░░░░] 40%
 
 ## Milestone History
 
@@ -88,6 +88,9 @@ Progress: [█░░░░░░░░░] 20%
 - Applied 0038–0042 migrations via psql directly and seeded _migrations tracking table (DB was previously managed by drizzle-kit with __drizzle_migrations, not _migrations)
 - chat_messages migration uses CREATE TABLE IF NOT EXISTS + ALTER TABLE ADD COLUMN IF NOT EXISTS for safe handling of both fresh and existing DB states
 - owner_id FK columns are nullable (ON DELETE SET NULL) so existing rows are unaffected
+- (75-02) milestone_status enum rebuilt via DROP+CREATE (column was already TEXT — prior setup did not create a typed enum); values: on_track/at_risk/complete/missed
+- (75-02) coerceMilestoneStatus maps blocked/stuck/at-risk → at_risk, missed/overdue/late → missed, completed/done → complete, all else → on_track
+- (75-02) overdueMilestones computed in getPortfolioData from existing milestoneData fetch (no extra DB query)
 
 ### Blockers/Concerns
 
@@ -98,6 +101,6 @@ Progress: [█░░░░░░░░░] 20%
 
 ## Session Continuity
 
-Last session: 2026-04-22T19:57:31.015Z
-Stopped at: Completed 75-schema-quick-wins-admin/75-01-PLAN.md
+Last session: 2026-04-22T20:09:04.604Z
+Stopped at: Completed 75-schema-quick-wins-admin/75-02-PLAN.md
 Resume file: None

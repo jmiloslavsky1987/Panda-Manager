@@ -37,8 +37,8 @@
 
 ### Milestones
 
-- [ ] **MILE-01**: User can set Status on a milestone (On Track / At Risk / Complete / Missed)
-- [ ] **MILE-02**: Portfolio "Overdue Milestones" counter reflects live data (target_date < today AND status != Complete)
+- [x] **MILE-01**: User can set Status on a milestone (On Track / At Risk / Complete / Missed)
+- [x] **MILE-02**: Portfolio "Overdue Milestones" counter reflects live data (target_date < today AND status != Complete)
 
 ### Admin Settings
 
@@ -94,8 +94,8 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| MILE-01 | Phase 75 | Pending |
-| MILE-02 | Phase 75 | Pending |
+| MILE-01 | Phase 75 | Complete |
+| MILE-02 | Phase 75 | Complete |
 | TASK-01 | Phase 75 | Pending |
 | TASK-02 | Phase 75 | Pending |
 | TASK-03 | Phase 75 | Pending |
