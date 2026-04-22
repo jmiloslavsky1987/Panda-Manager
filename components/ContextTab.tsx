@@ -53,7 +53,7 @@ export function ContextTab({ projectId }: ContextTabProps) {
   const [activeBatch, setActiveBatch] = useState<ActiveBatch | null>(null)
   const [cancelling, setCancelling] = useState(false)
   const toastFiredRef = useRef<Set<string>>(new Set())
-  const [initialStage, setInitialStage] = useState<'uploading' | 'reviewing'>('uploading')
+  const [initialStage, setInitialStage] = useState<'uploading' | 'extracting' | 'reviewing'>('uploading')
   const [initialReviewItems, setInitialReviewItems] = useState<ExtractionItem[]>([])
   const [initialArtifactId, setInitialArtifactId] = useState<number | undefined>(undefined)
   const [initialFilteredCount, setInitialFilteredCount] = useState<number>(0)
@@ -211,7 +211,7 @@ export function ContextTab({ projectId }: ContextTabProps) {
               <h3 className="text-sm font-medium text-blue-900">Extraction in Progress</h3>
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() => { setInitialStage('uploading'); setIngestionModalOpen(true); }}
+                  onClick={() => { setInitialStage('extracting'); setIngestionModalOpen(true); }}
                   className="text-xs text-blue-700 hover:text-blue-900 underline underline-offset-2 transition-colors"
                 >
                   View Progress

@@ -80,6 +80,14 @@ interface ProposedChange {
 }
 
 type Stage = 'uploading' | 'extracting' | 'reviewing' | 'submitting' | 'done'
+type InitialStage = 'uploading' | 'extracting' | 'reviewing'
+
+interface ExtractionJob {
+  id: number
+  status: string
+  filename?: string
+  artifact_id?: number
+}
 
 interface FileStatus {
   name: string
@@ -94,8 +102,8 @@ interface IngestionModalProps {
   artifactId?: number
   /** Pre-populate the upload queue with files (e.g. from drag-and-drop on the Artifacts tab) */
   initialFiles?: File[]
-  /** Initial stage for modal (default: 'uploading') — use 'reviewing' to reopen at review stage */
-  initialStage?: Stage
+  /** Initial stage for modal (default: 'uploading') — use 'reviewing' or 'extracting' to reopen at those stages */
+  initialStage?: InitialStage
   /** Pre-loaded review items when opening at review stage (e.g. from Context Hub) */
   initialReviewItems?: ExtractionItem[]
   /** Artifact ID to use for approval when reopening from Context Hub (first job's artifact_id) */
@@ -391,6 +399,45 @@ export function IngestionModal({
       if (initialFilteredCount !== undefined) setFilteredCount(initialFilteredCount)
     }
   }, [open, initialStage, initialReviewItems, initialFilteredCount])
+
+  // Resume in-progress extraction when modal is opened at 'extracting' stage after a page refresh
+  useEffect(() => {
+    if (!open || initialStage !== 'extracting' || isPollingRef.current) return
+
+    const resume = async () => {
+      try {
+        const res = await fetch(`/api/projects/${projectId}/extraction-status`)
+        if (!res.ok) return
+        const data = await res.json()
+
+        const batchEntries = Object.entries(data.batches ?? {})
+        if (batchEntries.length === 0) return
+        const [, batch] = batchEntries[batchEntries.length - 1] as [string, { jobs: ExtractionJob[], batch_complete: boolean }]
+
+        if (batch.batch_complete) return // already done — ContextTab will show "Review Items" instead
+
+        const activeJobs: ExtractionJob[] = batch.jobs.filter(j => j.status !== 'failed')
+        if (activeJobs.length === 0) return
+
+        const resumedStatuses: FileStatus[] = activeJobs.map(j => ({
+          name: j.filename ?? `File ${j.id}`,
+          status: 'extracting' as const,
+          fileId: j.artifact_id != null ? String(j.artifact_id) : undefined,
+        }))
+        const resumedIds = activeJobs.map(j => j.id)
+
+        setFileStatuses(resumedStatuses)
+        setJobIds(resumedIds)
+        setStage('extracting')
+        startPolling(resumedIds, resumedStatuses)
+      } catch (err) {
+        console.error('Failed to resume extraction status:', err)
+      }
+    }
+
+    resume()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialStage, projectId])
 
   // Auto-start upload when modal opens with initialFiles from ArtifactsDropZone
   useEffect(() => {
