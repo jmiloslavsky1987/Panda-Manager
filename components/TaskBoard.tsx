@@ -9,6 +9,7 @@ import {
   useSensors,
   DragEndEvent,
   DragOverlay,
+  useDroppable,
 } from '@dnd-kit/core'
 import {
   SortableContext,
@@ -115,6 +116,23 @@ function TaskCard({ task, projectId, selected, onSelect }: TaskCardProps) {
           }
         />
       </div>
+    </div>
+  )
+}
+
+// ─── Droppable Column ─────────────────────────────────────────────────────────
+
+function DroppableColumn({ columnId, children }: { columnId: string; children: React.ReactNode }) {
+  const { setNodeRef, isOver } = useDroppable({ id: columnId })
+  return (
+    <div
+      ref={setNodeRef}
+      data-column-id={columnId}
+      className={`flex flex-col gap-2 min-h-[120px] rounded-lg p-2 border transition-colors ${
+        isOver ? 'border-blue-400 bg-blue-50' : 'bg-zinc-50 border-zinc-200'
+      }`}
+    >
+      {children}
     </div>
   )
 }
@@ -382,10 +400,7 @@ export function TaskBoard({ tasks: initialTasks, projectId }: TaskBoardProps) {
                   items={colTasks.map((t) => t.id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  <div
-                    data-column-id={col.id}
-                    className="flex flex-col gap-2 min-h-[120px] bg-zinc-50 rounded-lg p-2 border border-zinc-200"
-                  >
+                  <DroppableColumn columnId={col.id}>
                     {colTasks.map((task) => (
                       <TaskCard
                         key={task.id}
@@ -398,7 +413,7 @@ export function TaskBoard({ tasks: initialTasks, projectId }: TaskBoardProps) {
                     {colTasks.length === 0 && (
                       <p className="text-xs text-zinc-400 text-center py-4">No tasks</p>
                     )}
-                  </div>
+                  </DroppableColumn>
                 </SortableContext>
               </div>
             )
