@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 milestone: v8.0
 milestone_name: Codebase Refactor & Multi-Tenant Deployment
-current_plan: 2 of 4
+current_plan: 4 of 4
 status: completed
-stopped_at: Completed 074-02-PLAN.md
-last_updated: "2026-04-21T04:14:23.155Z"
-last_activity: "2026-04-21 — Plan 074-01 complete: Removed localhost fallbacks and enabled standalone output"
+stopped_at: Completed 074-03-PLAN.md
+last_updated: "2026-04-22T16:35:18Z"
+last_activity: "2026-04-22 — Plan 074-03 complete: DEPLOYMENT.md deployment guide (540 lines)"
 progress:
   total_phases: 18
-  completed_phases: 13
+  completed_phases: 14
   total_plans: 63
-  completed_plans: 59
-  percent: 98
+  completed_plans: 63
+  percent: 100
 ---
 
 # Project State
@@ -26,12 +26,12 @@ See: .planning/PROJECT.md (updated 2026-04-16 after v7.0 milestone close)
 
 ## Current Position
 
-Phase: 074 of 75 — IN PROGRESS (Deployment Readiness)
-Current Plan: 3 of 4
-Status: Plans 074-00, 074-01, and 074-02 complete. Plan 074-03 pending.
-Last activity: 2026-04-21 — Plan 074-02 complete: Deployment infrastructure files (env template, Docker, PM2)
+Phase: 074 of 75 — COMPLETE (Deployment Readiness)
+Current Plan: 4 of 4
+Status: All 4 plans complete. v8.0 milestone COMPLETE.
+Last activity: 2026-04-22 — Plan 074-03 complete: DEPLOYMENT.md deployment guide (540 lines, 12 env vars, Docker + PM2)
 
-Progress: [██████████] 98% (58 of 59 plans complete in v8.0)
+Progress: [██████████] 100% (63 of 63 plans complete in v8.0)
 
 ## Milestone History
 
@@ -135,6 +135,9 @@ Progress: [██████████] 98% (58 of 59 plans complete in v8.0)
 - Used Node.js 24.13.0-slim for glibc compatibility (not Alpine's musl) - can break native binaries per 074-RESEARCH.md
 - PM2 fork mode for both apps (not cluster) per 074-RESEARCH.md Pattern 2 - BullMQ handles concurrency internally
 - docker-compose for local development only (production uses Dockerfile with external services) - RDS, ElastiCache, etc.
+- DEPLOYMENT.md placed at repo root (not bigpanda-app/ subdir) - code root migrated to Panda-Manager so repo root IS the app root
+- NEXT_PUBLIC_BASE_URL documented as optional - 074-01 implemented window.location.origin fallback for client pages
+- Multi-tenant isolation verification included as production checklist item 8 - ensures Phase 73 guarantees tested at deployment time
 
 ## Accumulated Context
 
@@ -158,6 +161,6 @@ The following were implemented directly without GSD plans — already committed 
 
 ## Session Continuity
 
-Last session: 2026-04-22T00:00:00.000Z
-Stopped at: Completed 074-02-PLAN.md (074-03 pending — DEPLOYMENT.md docs only)
+Last session: 2026-04-22T16:35:18Z
+Stopped at: Completed 074-03-PLAN.md — v8.0 milestone COMPLETE
 Resume file: None

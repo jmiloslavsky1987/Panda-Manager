@@ -147,10 +147,10 @@ Full details: `.planning/milestones/v7.0-ROADMAP.md` (archived)
 
 - [x] **Phase 70: AI Usage Audit** — Written report categorizing every Claude API call; no code changes (completed 2026-04-20)
 - [x] **Phase 71: Feature Consistency Audit** — Written report identifying duplicate features and inconsistent UX patterns; no code changes (completed 2026-04-20)
-- [ ] **Phase 72: Feature Unification** — Eliminate identified duplicates; unify to single consistent implementation
-- [ ] **Phase 73: Multi-Tenant Isolation** — Enforce project ownership at all API/UI layers; prevent cross-user state bleed
+- [x] **Phase 72: Feature Unification** — Eliminate identified duplicates; unify to single consistent implementation (completed 2026-04-21)
+- [x] **Phase 73: Multi-Tenant Isolation** — Enforce project ownership at all API/UI layers; prevent cross-user state bleed (completed 2026-04-21)
 - [x] **Phase 73.1: Entity Lifecycle Management** — Document-driven updates (Pass 5 change detection) + manual edit/delete for all entity types [INSERTED] (completed 2026-04-21)
-- [ ] **Phase 74: Deployment Readiness** — Env-var-only configuration; deployment guide
+- [x] **Phase 74: Deployment Readiness** — Env-var-only configuration; deployment guide (completed 2026-04-22)
 
 ## Phase Details
 
@@ -251,10 +251,10 @@ Plans:
 Plans: 4 plans (Wave 0: 1, Wave 1: 2 parallel, Wave 2: 1)
 
 Plans:
-- [ ] 074-00-PLAN.md — Create Wave 0 test infrastructure (env-config.test.ts, no-hardcoded-urls.test.ts)
-- [ ] 074-01-PLAN.md — Remove localhost fallbacks + enable standalone output
-- [ ] 074-02-PLAN.md — Create deployment infrastructure (.env.example, Dockerfile, docker-compose.yml, PM2 config)
-- [ ] 074-03-PLAN.md — Create DEPLOYMENT.md guide + human verification gate
+- [x] 074-00-PLAN.md — Create Wave 0 test infrastructure (env-config.test.ts, no-hardcoded-urls.test.ts)
+- [x] 074-01-PLAN.md — Remove localhost fallbacks + enable standalone output
+- [x] 074-02-PLAN.md — Create deployment infrastructure (.env.example, Dockerfile, docker-compose.yml, PM2 config)
+- [x] 074-03-PLAN.md — Create DEPLOYMENT.md guide + human verification gate
 
 ## Progress
 
@@ -267,7 +267,7 @@ Plans:
 | v5.0 | 37–42 | 29/29 | Complete | 2026-04-07 |
 | v6.0 | 43–57 | 45/45 | Complete | 2026-04-14 |
 | v7.0 | 58–69 | 41/41 | Complete | 2026-04-16 |
-| v8.0 | 70–75 | 0/TBD | In progress | - |
+| v8.0 | 70–74 | 63/63 | Complete | 2026-04-22 |
 
 ---
 *Last updated: 2026-04-20 — Phase 73.1 plans created*
