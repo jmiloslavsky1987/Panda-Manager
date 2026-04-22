@@ -151,15 +151,16 @@ function coerceRiskStatus(raw: string | undefined | null): RiskStatus | null {
   return null; // unrecognized — caller will use null (un-triaged state)
 }
 
-type MilestoneStatus = 'not_started' | 'in_progress' | 'completed' | 'blocked';
+type MilestoneStatus = 'on_track' | 'at_risk' | 'complete' | 'missed';
 function coerceMilestoneStatus(raw: string | undefined | null): MilestoneStatus {
-  if (!raw) return 'not_started';
+  if (!raw) return 'on_track';
   const v = raw.toLowerCase().trim();
-  if (['completed', 'complete', 'done', 'finished'].includes(v)) return 'completed';
-  if (['in_progress', 'in progress', 'in-progress', 'ongoing', 'active'].includes(v)) return 'in_progress';
-  if (['blocked', 'stuck', 'on-hold', 'on hold'].includes(v)) return 'blocked';
-  if (['not_started', 'not started', 'pending', 'planned', 'upcoming'].includes(v)) return 'not_started';
-  return 'not_started'; // unrecognized — default to not_started (safe fallback)
+  if (['completed', 'complete', 'done', 'finished'].includes(v)) return 'complete';
+  if (['at_risk', 'at risk', 'blocked', 'stuck', 'on-hold', 'on hold'].includes(v)) return 'at_risk';
+  if (['missed', 'overdue', 'late', 'failed'].includes(v)) return 'missed';
+  if (['on_track', 'on track', 'not_started', 'not started', 'in_progress', 'in progress',
+       'in-progress', 'ongoing', 'active', 'pending', 'planned', 'upcoming'].includes(v)) return 'on_track';
+  return 'on_track'; // unrecognized — default to on_track (safe fallback)
 }
 
 async function resolveEntityRef(

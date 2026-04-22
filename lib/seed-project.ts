@@ -53,7 +53,7 @@ export async function seedProjectFromRegistry(projectId: number): Promise<void> 
       project_id: projectId,
       external_id: `TEMPLATE-MILESTONE-${String(i + 1).padStart(3, '0')}`,
       name: section.placeholderText,
-      status: 'not_started',
+      status: 'on_track',
       target: 'TBD',
       source: 'template',
     })

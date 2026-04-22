@@ -228,7 +228,7 @@ async function computeHealth(projectId: number): Promise<{
     .where(
       and(
         eq(milestones.project_id, projectId),
-        ne(milestones.status, 'completed'),
+        ne(milestones.status, 'complete'),
         lt(milestones.created_at, fourteenDaysAgo),
       )
     );
@@ -1383,10 +1383,10 @@ export async function getPortfolioData(opts?: ProjectQueryOpts): Promise<Portfol
           )
         : null;
 
-      // Derive next milestone: nearest upcoming milestone (date >= today, status !== 'completed')
+      // Derive next milestone: nearest upcoming milestone (date >= today, status !== 'complete')
       const today = new Date().toISOString().split('T')[0];
       const upcomingMilestones = milestoneData.filter(m => {
-        if (m.status === 'completed') return false;
+        if (m.status === 'complete') return false;
         if (!m.date) return false;
         // Only consider ISO-ish dates (YYYY-MM-DD format)
         if (!/^\d{4}-\d{2}-\d{2}/.test(m.date)) return false;

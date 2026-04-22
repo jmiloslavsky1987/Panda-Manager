@@ -9,7 +9,7 @@ const postSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   target: z.string().optional(),
   owner: z.string().optional(),
-  status: z.enum(['not_started', 'in_progress', 'completed', 'blocked']).optional(),
+  status: z.enum(['on_track', 'at_risk', 'complete', 'missed']).optional(),
   notes: z.string().optional(),
 })
 
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     name: name.trim(),
     target: target?.trim() ?? null,
     owner: owner?.trim() ?? null,
-    status: status ?? 'not_started',
+    status: status ?? 'on_track',
     notes: notes?.trim() ?? null,
     source: 'manual_entry',
     external_id: `MAN-MST-${Date.now()}`,

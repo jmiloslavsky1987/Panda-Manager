@@ -50,7 +50,7 @@ export const severityEnum = pgEnum('severity', [
 
 export const riskStatusEnum = pgEnum('risk_status', ['open', 'mitigated', 'resolved', 'accepted']);
 
-export const milestoneStatusEnum = pgEnum('milestone_status', ['not_started', 'in_progress', 'completed', 'blocked']);
+export const milestoneStatusEnum = pgEnum('milestone_status', ['on_track', 'at_risk', 'complete', 'missed']);
 
 export const outputStatusEnum = pgEnum('output_status', [
   'running',

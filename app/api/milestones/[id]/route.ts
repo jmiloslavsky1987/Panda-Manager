@@ -6,7 +6,7 @@ import { eq, sql } from 'drizzle-orm'
 import { requireProjectRole } from "@/lib/auth-server";
 
 const patchSchema = z.object({
-  status: z.enum(['not_started', 'in_progress', 'completed', 'blocked']).optional(),
+  status: z.enum(['on_track', 'at_risk', 'complete', 'missed']).optional(),
   target: z.string().optional(),
   owner: z.string().optional(),
   notes: z.string().optional(),
