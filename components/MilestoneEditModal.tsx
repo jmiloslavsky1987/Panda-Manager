@@ -72,14 +72,18 @@ export function MilestoneEditModal({ milestone, trigger }: MilestoneEditModalPro
               <label className="text-sm font-medium text-zinc-700" htmlFor="milestone-status">
                 Status
               </label>
-              <input
+              <select
                 id="milestone-status"
-                type="text"
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
-                placeholder="e.g. completed, in_progress, blocked..."
                 className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-400"
-              />
+              >
+                <option value="">— Select status —</option>
+                <option value="on_track">On Track</option>
+                <option value="at_risk">At Risk</option>
+                <option value="complete">Complete</option>
+                <option value="missed">Missed</option>
+              </select>
             </div>
 
             <div className="space-y-1">

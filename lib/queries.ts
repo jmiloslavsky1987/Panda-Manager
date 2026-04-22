@@ -1302,6 +1302,7 @@ export interface PortfolioProject extends ProjectWithHealth {
   nextMilestoneDate: string | null;
   riskLevel: 'None' | 'Medium' | 'High';
   dependencyStatus: 'Clear' | 'Blocked';
+  overdueMilestones: number;
 }
 
 /**
@@ -1406,6 +1407,14 @@ export async function getPortfolioData(opts?: ProjectQueryOpts): Promise<Portfol
       const blockedCount = blockedTaskData[0]?.count ?? 0;
       const dependencyStatus: 'Clear' | 'Blocked' = blockedCount > 0 ? 'Blocked' : 'Clear';
 
+      // Derive overdue milestones: date < today AND status !== 'complete'
+      const overdueMilestones = milestoneData.filter(m => {
+        if (m.status === 'complete') return false;
+        if (!m.date) return false;
+        if (!/^\d{4}-\d{2}-\d{2}/.test(m.date)) return false;
+        return m.date < today;
+      }).length;
+
       return {
         ...project,
         owner,
@@ -1416,6 +1425,7 @@ export async function getPortfolioData(opts?: ProjectQueryOpts): Promise<Portfol
         nextMilestoneDate,
         riskLevel,
         dependencyStatus,
+        overdueMilestones,
       };
     })
   );

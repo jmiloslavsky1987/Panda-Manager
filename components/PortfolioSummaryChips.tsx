@@ -13,7 +13,7 @@ export function PortfolioSummaryChips({ projects }: PortfolioSummaryChipsProps) 
   const atRisk = projects.filter(p => p.health === 'yellow').length
   const offTrack = projects.filter(p => p.health === 'red').length
   const blocked = projects.filter(p => p.dependencyStatus === 'Blocked').length
-  const overdueCount = projects.reduce((sum, p) => sum + p.overdueActions, 0)
+  const overdueMilestonesCount = projects.reduce((sum, p) => sum + (p.overdueMilestones ?? 0), 0)
 
   const chips = [
     {
@@ -43,7 +43,7 @@ export function PortfolioSummaryChips({ projects }: PortfolioSummaryChipsProps) 
     },
     {
       label: 'Overdue Milestones',
-      count: overdueCount,
+      count: overdueMilestonesCount,
       colorClasses: 'bg-red-100 text-red-800 border-red-200',
     },
   ]
