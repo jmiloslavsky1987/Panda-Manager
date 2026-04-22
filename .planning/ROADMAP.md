@@ -226,7 +226,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 75. Schema + Quick Wins + Admin | 5/5 | Complete   | 2026-04-22 |
+| 75. Schema + Quick Wins + Admin | 5/5 | Complete    | 2026-04-22 |
 | 76. Pickers & Risk Fields | 0/TBD | Not started | - |
 | 77. Intelligence & Gantt | 0/TBD | Not started | - |
 | 78. AI & Content | 0/TBD | Not started | - |
