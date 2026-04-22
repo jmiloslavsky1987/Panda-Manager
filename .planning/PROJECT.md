@@ -125,9 +125,26 @@ Known tech debt entering next milestone:
 
 This is a full rewrite of a previous Claude Code project assistant build (8 phases, React/Vite/Express/Google Drive architecture). SKILL.md files read from disk at runtime (not bundled). All data model patterns (archive-on-replace, dual-write atomicity, append-only history, source tracing, ID conventions) preserved from the original skill ecosystem.
 
-## Current Milestone
+## Current Milestone: v9.0 UX Maturity & Intelligence
 
-None — v8.0 archived 2026-04-22. Start next milestone with `/gsd:new-milestone`.
+**Goal:** Elevate data quality, interaction polish, and AI-powered intelligence across the workspace — fixing data model gaps, wiring unbuilt UX interactions, and adding proactive exception surfacing + meeting prep.
+
+**Target features:**
+- Portfolio overdue milestones counter fix (live query)
+- Task Board drag-and-drop + working bulk actions
+- Gantt ↔ task date connection (phase dates computed from tasks)
+- Owner fields: stakeholder picker (saves ID, free-text fallback)
+- Task dependency + milestone link pickers (searchable dropdowns)
+- Risks: Likelihood, Impact, Target Date, Status fields + Risk Score
+- Milestones: Status field (On Track / At Risk / Complete / Missed)
+- Admin > Project Settings: rename, go-live date, description, active tracks
+- Outputs Library: inline preview / render panel
+- Chat: conversation persistence + pin AI responses
+- Stakeholder ingestion: extract email + Slack handle from docs
+- Health Dashboard: proactive exceptions panel (rule-based, replaces manual health field)
+- AI Meeting Prep skill/entry point
+- Task Board: Week view toggle
+- Gantt Baseline Tracking (snapshot + ghost bars)
 
 ## Constraints
 
@@ -182,4 +199,4 @@ None — v8.0 archived 2026-04-22. Start next milestone with `/gsd:new-milestone
 | Knowledge Base retained as cross-project institutional knowledge capture (v7.0) | Audited and confirmed distinct use case from document ingestion — freeform entries linkable to risks/engagement history | ✓ Correct — ~1,408 LOC fully functional; no deprecation needed |
 
 ---
-*Last updated: 2026-04-16 after v7.0 milestone close*
+*Last updated: 2026-04-22 after v9.0 milestone start*
