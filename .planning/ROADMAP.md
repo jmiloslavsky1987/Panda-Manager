@@ -177,7 +177,14 @@ Full details: `.planning/milestones/v8.0-ROADMAP.md` (archived)
   3. User can toggle Task Board to Week view and see tasks grouped by due-date week; tasks with no due date appear in an Unscheduled group
   4. User can set a milestone status (On Track / At Risk / Complete / Missed) from the milestone edit surface; the Portfolio overdue milestones counter reflects live data (target_date < today AND status != Complete)
   5. User can rename a project, set a go-live date, add a description, and toggle ADR Track / Biggy Track per project from Admin > Settings; disabled tracks are hidden from WBS, Gantt, and Overview at the render layer (skill context always receives full data)
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 75-01-PLAN.md — DB Migrations 0038–0042 (schema foundation)
+- [ ] 75-02-PLAN.md — Milestone status enum + edit surface + portfolio counter (MILE-01, MILE-02)
+- [ ] 75-03-PLAN.md — Task Board DnD fix + bulk delete (TASK-01, TASK-02, TASK-03)
+- [ ] 75-04-PLAN.md — Task Board Week view (TASK-04, TASK-05)
+- [ ] 75-05-PLAN.md — Admin settings form + PATCH route + active_tracks WBS filter (ADMIN-01–04)
 
 ### Phase 76: Pickers & Risk Fields
 **Goal**: Owner fields across all entity types save a stakeholder FK rather than plain text; tasks have searchable dependency and milestone link pickers with a visible blocked indicator; risks expose structured likelihood/impact/target-date fields with an auto-computed score; the confirmed tasks-bulk multi-tenant security gap is closed
@@ -219,10 +226,10 @@ Full details: `.planning/milestones/v8.0-ROADMAP.md` (archived)
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 75. Schema + Quick Wins + Admin | 0/TBD | Not started | - |
+| 75. Schema + Quick Wins + Admin | 0/5 | Not started | - |
 | 76. Pickers & Risk Fields | 0/TBD | Not started | - |
 | 77. Intelligence & Gantt | 0/TBD | Not started | - |
 | 78. AI & Content | 0/TBD | Not started | - |
 
 ---
-*Last updated: 2026-04-22 — v9.0 roadmap revised to 4 phases (75–78), 33 requirements mapped*
+*Last updated: 2026-04-22 — Phase 75 planned: 5 plans in 2 waves*
