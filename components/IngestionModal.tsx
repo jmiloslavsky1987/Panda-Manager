@@ -400,6 +400,13 @@ export function IngestionModal({
     }
   }, [open, initialStage, initialReviewItems, initialFilteredCount])
 
+  // Sync stage immediately when modal opens at 'extracting' — useState only reads initialStage once
+  useEffect(() => {
+    if (open && initialStage === 'extracting') {
+      setStage('extracting')
+    }
+  }, [open, initialStage])
+
   // Resume in-progress extraction when modal is opened at 'extracting' stage after a page refresh
   useEffect(() => {
     if (!open || initialStage !== 'extracting' || isPollingRef.current) return
@@ -606,7 +613,7 @@ export function IngestionModal({
         )}
 
         {/* Main layout: sidebar + content */}
-        {(fileStatuses.length > 0 || stage === 'reviewing' || stage === 'submitting' || stage === 'done') && (
+        {(fileStatuses.length > 0 || stage === 'extracting' || stage === 'reviewing' || stage === 'submitting' || stage === 'done') && (
           <div className="flex-1 flex overflow-hidden">
             {/* Sidebar — file stepper */}
             <div className="w-64 border-r bg-zinc-50 overflow-y-auto shrink-0">
