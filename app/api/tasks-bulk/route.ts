@@ -1,9 +1,10 @@
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { sql } from 'drizzle-orm'
 import { db } from '../../../db'
 import { tasks } from '../../../db/schema'
-import { inArray } from 'drizzle-orm'
-import { requireSession } from "@/lib/auth-server";
+import { eq, inArray } from 'drizzle-orm'
+import { requireSession, requireProjectRole } from "@/lib/auth-server";
 
 // ─── Validation Schema ────────────────────────────────────────────────────────
 
@@ -59,4 +60,46 @@ export async function POST(request: NextRequest) {
     const message = err instanceof Error ? err.message : 'Bulk update failed'
     return Response.json({ error: message }, { status: 500 })
   }
+}
+
+// ─── DELETE /api/tasks-bulk ───────────────────────────────────────────────────
+
+export async function DELETE(request: NextRequest) {
+  const { session, redirectResponse } = await requireSession();
+  if (redirectResponse) return redirectResponse;
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+  }
+
+  const parsed = z.object({ task_ids: z.array(z.number()).min(1) }).safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
+
+  const { task_ids } = parsed.data;
+
+  // Verify all tasks belong to a project the user can access
+  const [firstTask] = await db
+    .select({ project_id: tasks.project_id })
+    .from(tasks)
+    .where(eq(tasks.id, task_ids[0]));
+
+  if (!firstTask) {
+    return NextResponse.json({ error: 'Task not found' }, { status: 404 });
+  }
+
+  const { redirectResponse: authRedirect } = await requireProjectRole(firstTask.project_id, 'user');
+  if (authRedirect) return authRedirect;
+
+  await db.transaction(async (tx) => {
+    await tx.execute(sql.raw(`SET LOCAL app.current_project_id = ${firstTask.project_id}`));
+    await tx.delete(tasks).where(inArray(tasks.id, task_ids));
+  });
+
+  void session; // session is validated via requireSession; requireProjectRole re-checks membership
+  return NextResponse.json({ ok: true, deleted: task_ids.length });
 }

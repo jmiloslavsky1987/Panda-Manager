@@ -162,6 +162,15 @@ function BulkToolbar({ selectedIds, onClear, onComplete }: BulkToolbarProps) {
     onComplete()
   }
 
+  async function handleBulkDelete() {
+    await fetch('/api/tasks-bulk', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ task_ids: selectedIds }),
+    })
+    onComplete()
+  }
+
   return (
     <div
       data-testid="bulk-toolbar"
@@ -194,6 +203,12 @@ function BulkToolbar({ selectedIds, onClear, onComplete }: BulkToolbarProps) {
             className="px-2.5 py-1 text-xs border border-zinc-300 rounded hover:bg-zinc-100"
           >
             Change Status
+          </button>
+          <button
+            onClick={handleBulkDelete}
+            className="px-2.5 py-1 text-xs border border-red-300 text-red-700 rounded hover:bg-red-50"
+          >
+            Delete Selected
           </button>
         </>
       ) : mode === 'owner' ? (
