@@ -642,14 +642,14 @@ async function runClaudeToolUseCall(
   // Use streaming to avoid the 10-minute non-streaming timeout on large documents
   const stream = client.messages.stream({
     model: 'claude-sonnet-4-6',
-    max_tokens: 32768,
+    max_tokens: 16000,
     system: systemPrompt,
     messages: [{ role: 'user', content }],
     tools: [RECORD_ENTITIES_TOOL],
     tool_choice: { type: 'tool', name: 'record_entities' },
   });
 
-  const TIMEOUT_MS = 3 * 60 * 1000; // 3 minutes
+  const TIMEOUT_MS = 8 * 60 * 1000; // 8 minutes
   const response = await Promise.race([
     stream.finalMessage(),
     new Promise<never>((_, reject) =>
