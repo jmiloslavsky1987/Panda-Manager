@@ -37,6 +37,7 @@ interface GanttChartProps {
   unassignedTasks?: GanttTask[]
   milestones?: GanttMilestone[]
   viewMode?: ViewMode
+  projectId?: number
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -197,11 +198,14 @@ export function computeEdgeDrag(
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
+type BaselineMeta = { id: number; name: string; createdAt: string }
+
 export default function GanttChart({
   wbsRows,
   unassignedTasks = [],
   viewMode: initVM = 'Month',
   milestones = [],
+  projectId,
 }: GanttChartProps) {
   const [viewMode, setViewMode] = useState<ViewMode>(initVM)
   // Start with all WBS groups collapsed
@@ -211,6 +215,62 @@ export default function GanttChart({
   const [leftWidth, setLeftWidth] = useState(LEFT_W_DEFAULT)
   const [containerWidth, setContainerWidth] = useState(1200)
   const [labelTip, setLabelTip] = useState<{ text: string; x: number; y: number } | null>(null)
+
+  // ── Baseline state ────────────────────────────────────────────────────────
+  const [baselines, setBaselines] = useState<BaselineMeta[]>([])
+  const [activeBaselineId, setActiveBaselineId] = useState<number | null>(null)
+  const [activeBaselineSnapshot, setActiveBaselineSnapshot] = useState<Record<string, { start: string; end: string }> | null>(null)
+  const [saveMode, setSaveMode] = useState(false)
+  const [baselineName, setBaselineName] = useState('')
+  const [savingBaseline, setSavingBaseline] = useState(false)
+
+  // ── Fetch baselines on mount ──────────────────────────────────────────────
+
+  useEffect(() => {
+    if (!projectId) return
+    fetch(`/api/projects/${projectId}/gantt-baselines`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data?.baselines) setBaselines(data.baselines) })
+      .catch(() => {})
+  }, [projectId])
+
+  // ── Baseline handlers ─────────────────────────────────────────────────────
+
+  async function handleSelectBaseline(id: number | null) {
+    setActiveBaselineId(id)
+    if (id === null) { setActiveBaselineSnapshot(null); return }
+    try {
+      const res = await fetch(`/api/projects/${projectId}/gantt-baselines/${id}`)
+      if (!res.ok) return
+      const data = await res.json()
+      setActiveBaselineSnapshot(data.snapshot ?? null)
+    } catch {}
+  }
+
+  async function handleSaveBaseline() {
+    if (!baselineName.trim() || savingBaseline) return
+    setSavingBaseline(true)
+    const snapshot: Record<string, { start: string; end: string }> = {}
+    const allTasks = [...wbsRows.flatMap(r => r.tasks), ...unassignedTasks]
+    allTasks.forEach(t => { snapshot[t.id] = { start: t.start, end: t.end } })
+    try {
+      const res = await fetch(`/api/projects/${projectId}/gantt-baselines`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: baselineName.trim(), snapshot }),
+      })
+      if (res.ok) {
+        const created = await res.json()
+        setBaselines(prev => [created, ...prev])
+        toast.success(`Baseline "${created.name}" saved`)
+        setBaselineName('')
+        setSaveMode(false)
+      } else {
+        toast.error('Failed to save baseline')
+      }
+    } catch { toast.error('Failed to save baseline') }
+    finally { setSavingBaseline(false) }
+  }
 
   // ── Build WBS summary rows ────────────────────────────────────────────────
 
@@ -659,6 +719,50 @@ export default function GanttChart({
       {/* Toolbar */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200 bg-zinc-50 shrink-0">
         <span className="text-xs text-zinc-500">{allTaskCount} tasks · {wbsRows.length} phases · {milestones.length} milestones</span>
+
+        {/* Save Baseline + Compare */}
+        <div className="flex items-center gap-2">
+          {saveMode ? (
+            <>
+              <input
+                autoFocus
+                type="text"
+                placeholder="Baseline name…"
+                value={baselineName}
+                onChange={e => setBaselineName(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleSaveBaseline(); if (e.key === 'Escape') { setSaveMode(false); setBaselineName('') } }}
+                className="text-xs border border-zinc-300 rounded px-2 py-1 w-40 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                disabled={savingBaseline}
+              />
+              <button onClick={handleSaveBaseline} disabled={savingBaseline || !baselineName.trim()}
+                className="text-xs px-2 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-40">
+                {savingBaseline ? '…' : 'Save'}
+              </button>
+              <button onClick={() => { setSaveMode(false); setBaselineName('') }}
+                className="text-xs px-2 py-1 border border-zinc-200 rounded hover:bg-zinc-50 text-zinc-600">
+                Cancel
+              </button>
+            </>
+          ) : (
+            <button onClick={() => setSaveMode(true)}
+              className="text-xs px-2 py-1 border border-zinc-200 rounded hover:bg-zinc-50 text-zinc-600">
+              Save Baseline
+            </button>
+          )}
+
+          {baselines.length > 0 && (
+            <select
+              value={activeBaselineId ?? ''}
+              onChange={e => handleSelectBaseline(e.target.value === '' ? null : Number(e.target.value))}
+              className="text-xs border border-zinc-200 rounded px-2 py-1 bg-white text-zinc-700 focus:outline-none focus:ring-1 focus:ring-indigo-400">
+              <option value="">Compare: None</option>
+              {baselines.map(b => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </select>
+          )}
+        </div>
+
         <div className="flex rounded border border-zinc-200 overflow-hidden">
           {VIEW_MODES.map(m => (
             <button key={m} onClick={() => setViewMode(m)}

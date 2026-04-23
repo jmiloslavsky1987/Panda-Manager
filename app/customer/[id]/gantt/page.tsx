@@ -208,6 +208,7 @@ export default async function GanttPage({
           unassignedTasks={unassignedTasks}
           viewMode="Month"
           milestones={milestones}
+          projectId={projectId}
         />
       </div>
     </div>
