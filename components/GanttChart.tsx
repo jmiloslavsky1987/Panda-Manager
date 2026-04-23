@@ -1,7 +1,6 @@
 'use client'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import { DatePickerCell } from '@/components/DatePickerCell'
 
 // ── Public types (consumed by gantt/page.tsx) ─────────────────────────────────
 
@@ -879,10 +878,11 @@ export default function GanttChart({
                 style={{ height: ROW_H }}>
                 <div className="w-7 pl-2 shrink-0 text-[10px] text-zinc-300">{row.rowNum}</div>
                 <div className="flex-1 pl-2 pr-1 truncate text-xs text-zinc-700" title={row.task.name}>{row.task.name}</div>
-                <div className="w-[52px] shrink-0 flex items-center justify-end">
-                  <DatePickerCell
-                    value={isUndatedLeft ? null : fmtISO(start)}
-                    onSave={async (v) => {
+                <div className="w-[52px] shrink-0 flex items-center justify-end pr-1">
+                  <input type="date"
+                    value={isUndatedLeft ? '' : fmtISO(start)}
+                    onChange={async (e) => {
+                      const v = e.target.value || null
                       await fetch(`/api/tasks/${row.task.id}`, {
                         method: 'PATCH',
                         headers: { 'Content-Type': 'application/json' },
@@ -891,12 +891,14 @@ export default function GanttChart({
                       if (v) setDragOverride(prev => new Map(prev).set(row.task.id, { start: parseDate(v), end }))
                       else setDragOverride(prev => { const m = new Map(prev); m.delete(row.task.id); return m })
                     }}
+                    className="w-full text-xs text-zinc-500 border-0 bg-transparent cursor-pointer focus:outline-none"
                   />
                 </div>
-                <div className="w-[52px] shrink-0 flex items-center justify-end">
-                  <DatePickerCell
-                    value={isUndatedLeft ? null : fmtISO(end)}
-                    onSave={async (v) => {
+                <div className="w-[52px] shrink-0 flex items-center justify-end pr-1">
+                  <input type="date"
+                    value={isUndatedLeft ? '' : fmtISO(end)}
+                    onChange={async (e) => {
+                      const v = e.target.value || null
                       await fetch(`/api/tasks/${row.task.id}`, {
                         method: 'PATCH',
                         headers: { 'Content-Type': 'application/json' },
@@ -905,6 +907,7 @@ export default function GanttChart({
                       if (v) setDragOverride(prev => new Map(prev).set(row.task.id, { start, end: parseDate(v) }))
                       else setDragOverride(prev => { const m = new Map(prev); m.delete(row.task.id); return m })
                     }}
+                    className="w-full text-xs text-zinc-500 border-0 bg-transparent cursor-pointer focus:outline-none"
                   />
                 </div>
                 <div className="w-10 text-right shrink-0 pr-3 text-xs text-zinc-400">{fmtDuration(start, end)}</div>
