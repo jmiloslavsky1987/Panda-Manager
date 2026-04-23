@@ -57,7 +57,7 @@ export function WbsTree({ adrItems, biggyItems, projectId, showGeneratePlan, act
     if (!tasks) return new Set<string>()
     return new Set(
       tasks
-        .filter(t => t.is_blocked && t.phase)
+        .filter(t => (t.is_blocked || t.status === 'blocked') && t.phase)
         .map(t => t.phase!.toLowerCase())
     )
   }, [tasks])
