@@ -214,7 +214,12 @@ Plans:
   3. Each exception entry is a clickable link that navigates directly to the relevant record or tab
   4. WBS phase rows in the Gantt automatically display a date bar spanning the earliest task start to the latest task due date across all tasks assigned to that phase — no manual phase date entry required
   5. User can save a named Gantt baseline snapshot, toggle a ghost bar overlay showing the baseline schedule behind the current bars, and read a Variance column displaying the numeric difference (in days) between baseline and current end dates for each row
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 77-01-PLAN.md — Exceptions API + ExceptionsPanel component (HLTH-01, HLTH-02, HLTH-03)
+- [ ] 77-02-PLAN.md — Gantt baselines API + Save Baseline toolbar UX (GANTT-01, GANTT-02)
+- [ ] 77-03-PLAN.md — Ghost bars + Variance column in GanttChart (GANTT-03, GANTT-04)
 
 ### Phase 78: AI & Content
 **Goal**: Users can generate a structured Meeting Prep brief from the Skills tab using the existing skill infrastructure; the output renders inline with a copy button; Outputs Library supports inline preview of markdown and DOCX outputs; all react-markdown rendering surfaces are XSS-hardened
@@ -234,8 +239,8 @@ Plans:
 |-------|----------------|--------|-----------|
 | 75. Schema + Quick Wins + Admin | 5/5 | Complete    | 2026-04-22 |
 | 76. Pickers & Risk Fields | 4/4 | Complete    | 2026-04-23 |
-| 77. Intelligence & Gantt | 0/TBD | Not started | - |
+| 77. Intelligence & Gantt | 0/3 | Not started | - |
 | 78. AI & Content | 0/TBD | Not started | - |
 
 ---
-*Last updated: 2026-04-23 — Phase 76 planned: 4 plans in 1 wave (all parallel)*
+*Last updated: 2026-04-23 — Phase 77 planned: 3 plans in 2 waves (77-01 + 77-02 parallel Wave 1; 77-03 Wave 2)*
