@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import type { WbsItem } from '@/lib/queries'
+import type { WbsItem, TaskWithBlockedStatus } from '@/lib/queries'
 
 interface WbsNodeProps {
   node: WbsItem
@@ -26,6 +26,8 @@ interface WbsNodeProps {
   track: 'ADR' | 'Biggy'
   blockedPhases?: Set<string>
   isNodeBlocked?: (nodeName: string) => boolean
+  nodeTasks?: TaskWithBlockedStatus[]
+  nodeTasksMap?: Map<number, TaskWithBlockedStatus[]>
 }
 
 const STATUS_CLASSES = {
@@ -50,6 +52,8 @@ function WbsNodeComponent({
   track,
   blockedPhases,
   isNodeBlocked,
+  nodeTasks = [],
+  nodeTasksMap,
 }: WbsNodeProps) {
   const router = useRouter()
   const [isEditing, setIsEditing] = useState(false)
@@ -58,6 +62,27 @@ function WbsNodeComponent({
   const [hovering, setHovering] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const [taskDates, setTaskDates] = useState<Map<number, { start: string | null; due: string | null }>>(new Map())
+
+  const getTaskDate = (taskId: number, field: 'start' | 'due', fallback: string | null) => {
+    const override = taskDates.get(taskId)
+    if (override && field in override) return override[field] ?? ''
+    return fallback ?? ''
+  }
+
+  const saveTaskDate = async (taskId: number, field: 'start_date' | 'due', value: string | null) => {
+    setTaskDates(prev => {
+      const m = new Map(prev)
+      const cur = m.get(taskId) ?? { start: null, due: null }
+      m.set(taskId, { ...cur, [field === 'start_date' ? 'start' : 'due']: value })
+      return m
+    })
+    await fetch(`/api/tasks/${taskId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ [field]: value }),
+    })
+  }
 
   const locked = node.level === 1
   const hasChildren = childrenMap.has(node.id)
@@ -351,8 +376,39 @@ function WbsNodeComponent({
             track={track}
             blockedPhases={blockedPhases}
             isNodeBlocked={isNodeBlocked}
+            nodeTasks={nodeTasksMap?.get(child.id) ?? []}
+            nodeTasksMap={nodeTasksMap}
           />
         ))}
+
+      {/* Task rows — shown when expanded and tasks exist */}
+      {isExpanded && nodeTasks.length > 0 && (
+        <div className="ml-8 mt-0.5 mb-1 border-l-2 border-zinc-100 pl-3 space-y-0.5">
+          {/* Column headers */}
+          <div className="flex items-center gap-2 px-2 py-0.5 text-[10px] font-medium text-zinc-400 uppercase tracking-wide">
+            <span className="flex-1">Task</span>
+            <span className="w-[90px] text-center">Start</span>
+            <span className="w-[90px] text-center">Due</span>
+          </div>
+          {nodeTasks.map(task => (
+            <div key={task.id} className="flex items-center gap-2 px-2 py-1 rounded hover:bg-zinc-50 text-xs">
+              <span className="flex-1 truncate text-zinc-700" title={task.title}>{task.title}</span>
+              <input
+                type="date"
+                value={getTaskDate(task.id, 'start', task.start_date)}
+                onChange={e => saveTaskDate(task.id, 'start_date', e.target.value || null)}
+                className="w-[90px] text-xs text-zinc-500 border border-zinc-200 rounded px-1 py-0.5 bg-white cursor-pointer focus:outline-none focus:ring-1 focus:ring-indigo-400"
+              />
+              <input
+                type="date"
+                value={getTaskDate(task.id, 'due', task.due)}
+                onChange={e => saveTaskDate(task.id, 'due', e.target.value || null)}
+                className="w-[90px] text-xs text-zinc-500 border border-zinc-200 rounded px-1 py-0.5 bg-white cursor-pointer focus:outline-none focus:ring-1 focus:ring-indigo-400"
+              />
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Delete confirmation dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

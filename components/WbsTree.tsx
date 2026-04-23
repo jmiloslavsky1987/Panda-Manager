@@ -62,6 +62,21 @@ export function WbsTree({ adrItems, biggyItems, projectId, showGeneratePlan, act
     )
   }, [tasks])
 
+  // Build wbs item id → tasks[] map using the same matching logic as the Gantt page
+  const nodeTasksMap = useMemo(() => {
+    const map = new Map<number, TaskWithBlockedStatus[]>()
+    if (!tasks) return map
+    items.forEach(item => map.set(item.id, []))
+    const nameToId = new Map<string, number>()
+    items.slice().sort((a, b) => a.level - b.level).forEach(item => nameToId.set(item.name.toLowerCase(), item.id))
+    tasks.forEach(task => {
+      if (!task.phase) return
+      const id = nameToId.get(task.phase.toLowerCase())
+      if (id !== undefined && map.has(id)) map.get(id)!.push(task)
+    })
+    return map
+  }, [tasks, items])
+
   // Returns true if a WBS node name is associated with any blocked phase
   const isNodeBlocked = (nodeName: string): boolean => {
     const lower = nodeName.toLowerCase()
@@ -231,6 +246,8 @@ export function WbsTree({ adrItems, biggyItems, projectId, showGeneratePlan, act
               track={activeTrack}
               blockedPhases={blockedPhases}
               isNodeBlocked={isNodeBlocked}
+              nodeTasks={nodeTasksMap.get(node.id) ?? []}
+              nodeTasksMap={nodeTasksMap}
             />
           ))}
         </div>
