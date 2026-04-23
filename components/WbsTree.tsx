@@ -62,20 +62,22 @@ export function WbsTree({ adrItems, biggyItems, projectId, showGeneratePlan, act
     )
   }, [tasks])
 
-  // Build wbs item id → tasks[] map using the same matching logic as the Gantt page
-  const nodeTasksMap = useMemo(() => {
-    const map = new Map<number, TaskWithBlockedStatus[]>()
-    if (!tasks) return map
-    items.forEach(item => map.set(item.id, []))
-    const nameToId = new Map<string, number>()
-    items.slice().sort((a, b) => a.level - b.level).forEach(item => nameToId.set(item.name.toLowerCase(), item.id))
-    tasks.forEach(task => {
-      if (!task.phase) return
-      const id = nameToId.get(task.phase.toLowerCase())
-      if (id !== undefined && map.has(id)) map.get(id)!.push(task)
+  const [taskDates, setTaskDates] = useState<Map<number, { start: string; due: string }>>(new Map())
+  const [tasksPanelOpen, setTasksPanelOpen] = useState(true)
+
+  const saveTaskDate = async (taskId: number, field: 'start_date' | 'due', value: string) => {
+    setTaskDates(prev => {
+      const m = new Map(prev)
+      const cur = m.get(taskId) ?? { start: '', due: '' }
+      m.set(taskId, { ...cur, [field === 'start_date' ? 'start' : 'due']: value })
+      return m
     })
-    return map
-  }, [tasks, items])
+    await fetch(`/api/tasks/${taskId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ [field]: value || null }),
+    })
+  }
 
   // Returns true if a WBS node name is associated with any blocked phase
   const isNodeBlocked = (nodeName: string): boolean => {
@@ -246,8 +248,6 @@ export function WbsTree({ adrItems, biggyItems, projectId, showGeneratePlan, act
               track={activeTrack}
               blockedPhases={blockedPhases}
               isNodeBlocked={isNodeBlocked}
-              nodeTasks={nodeTasksMap.get(node.id) ?? []}
-              nodeTasksMap={nodeTasksMap}
             />
           ))}
         </div>
@@ -259,6 +259,53 @@ export function WbsTree({ adrItems, biggyItems, projectId, showGeneratePlan, act
           ) : null}
         </DragOverlay>
       </DndContext>
+
+      {/* Task date panel — all project tasks */}
+      {tasks && tasks.length > 0 && (
+        <div className="mt-6 border border-zinc-200 rounded-lg overflow-hidden">
+          <button
+            onClick={() => setTasksPanelOpen(p => !p)}
+            className="w-full flex items-center justify-between px-4 py-3 bg-zinc-50 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+          >
+            <span>Tasks — Set Dates ({tasks.length})</span>
+            <span className="text-zinc-400 text-xs">{tasksPanelOpen ? '▲ collapse' : '▼ expand'}</span>
+          </button>
+          {tasksPanelOpen && (
+            <div className="divide-y divide-zinc-100">
+              <div className="flex items-center gap-2 px-4 py-2 bg-zinc-50 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
+                <span className="flex-1">Task</span>
+                <span className="w-[100px] text-center">Start</span>
+                <span className="w-[100px] text-center">Due</span>
+              </div>
+              {tasks.map(task => {
+                const override = taskDates.get(task.id)
+                const startVal = override?.start ?? task.start_date ?? ''
+                const dueVal = override?.due ?? task.due ?? ''
+                return (
+                  <div key={task.id} className="flex items-center gap-2 px-4 py-2 hover:bg-zinc-50 text-xs">
+                    <span className="flex-1 truncate text-zinc-700" title={task.title}>
+                      {task.title}
+                      {task.phase && <span className="ml-1 text-zinc-400">· {task.phase}</span>}
+                    </span>
+                    <input
+                      type="date"
+                      value={startVal}
+                      onChange={e => saveTaskDate(task.id, 'start_date', e.target.value)}
+                      className="w-[100px] text-xs text-zinc-500 border border-zinc-200 rounded px-1.5 py-1 bg-white cursor-pointer focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                    />
+                    <input
+                      type="date"
+                      value={dueVal}
+                      onChange={e => saveTaskDate(task.id, 'due', e.target.value)}
+                      className="w-[100px] text-xs text-zinc-500 border border-zinc-200 rounded px-1.5 py-1 bg-white cursor-pointer focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                    />
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
