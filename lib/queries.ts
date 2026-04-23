@@ -466,12 +466,32 @@ export async function getWorkspaceData(projectId: number): Promise<WorkspaceData
 }
 
 /**
+ * Extends Task with a computed is_blocked flag.
+ * is_blocked is true when blocked_by != null AND the blocking task's status != 'done'.
+ * Computed in-memory after fetching all project tasks — no extra DB query.
+ */
+export interface TaskWithBlockedStatus extends Task {
+  is_blocked: boolean
+}
+
+/**
  * Returns all tasks for a project, ordered by created_at.
  * Includes blocked_by, milestone_id, start_date from Phase 3 migration.
+ * Each task has a computed is_blocked field: true when blocked_by != null
+ * and the blocking task's status != 'done'.
  */
-export async function getTasksForProject(projectId: number): Promise<Task[]> {
-  return db.select().from(tasks).where(eq(tasks.project_id, projectId))
+export async function getTasksForProject(projectId: number): Promise<TaskWithBlockedStatus[]> {
+  const rows = await db.select().from(tasks).where(eq(tasks.project_id, projectId))
     .orderBy(tasks.created_at)
+
+  // Build id→status map for blocked_by resolution
+  const statusMap = new Map(rows.map(t => [t.id, t.status]))
+
+  return rows.map(t => ({
+    ...t,
+    is_blocked: t.blocked_by !== null &&
+      (statusMap.get(t.blocked_by) ?? 'done') !== 'done',
+  }))
 }
 
 /**
