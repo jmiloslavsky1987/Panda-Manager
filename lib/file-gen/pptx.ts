@@ -167,7 +167,7 @@ function buildBulletsSlide(
   customer: string,
   period: string,
   status?: 'green' | 'amber' | 'red',
-) {
+): PptxGenJS.Slide {
   const s = pres.addSlide();
   addBackground(s, BP.white);
   addHeader(s, heading, { accent: BP.blue, sub: period });
@@ -190,6 +190,7 @@ function buildBulletsSlide(
     x: 0.45, y: 1.0, w: W - 0.85, h: H - 1.5,
     valign: 'top', fontFace: 'Arial',
   });
+  return s;
 }
 
 function buildTwoColSlide(
@@ -202,7 +203,7 @@ function buildTwoColSlide(
   customer: string,
   period: string,
   status?: 'green' | 'amber' | 'red',
-) {
+): PptxGenJS.Slide {
   const s = pres.addSlide();
   addBackground(s, BP.white);
   addHeader(s, heading, { accent: BP.blue, sub: period });
@@ -250,6 +251,7 @@ function buildTwoColSlide(
     x: rx + 0.08, y: colY + (rightHeading ? 0.38 : 0.1), w: colW - 0.16, h: colH - (rightHeading ? 0.48 : 0.2),
     valign: 'top', fontFace: 'Arial',
   });
+  return s;
 }
 
 function buildMetricsSlide(
@@ -259,7 +261,7 @@ function buildMetricsSlide(
   bullets: string[],
   customer: string,
   period: string,
-) {
+): PptxGenJS.Slide {
   const s = pres.addSlide();
   addBackground(s, BP.white);
   addHeader(s, heading, { accent: BP.blue, sub: period });
@@ -312,6 +314,7 @@ function buildMetricsSlide(
       valign: 'top', fontFace: 'Arial',
     });
   }
+  return s;
 }
 
 // ─── Main export ─────────────────────────────────────────────────────────────
@@ -338,7 +341,7 @@ export async function generatePptx(data: EltSlideJson, outputPath: string): Prom
     }
 
     if (layout === 'two-col') {
-      buildTwoColSlide(
+      const s = buildTwoColSlide(
         pres,
         slide.heading,
         slide.left_heading ?? 'Progress',
@@ -349,19 +352,19 @@ export async function generatePptx(data: EltSlideJson, outputPath: string): Prom
         data.period,
         slide.status,
       );
-      if (slide.notes) pres.slides[pres.slides.length - 1].addNotes(slide.notes);
+      if (slide.notes) s.addNotes(slide.notes);
       continue;
     }
 
     if (layout === 'metrics' && slide.metrics?.length) {
-      buildMetricsSlide(pres, slide.heading, slide.metrics, bullets, data.customer, data.period);
-      if (slide.notes) pres.slides[pres.slides.length - 1].addNotes(slide.notes);
+      const s = buildMetricsSlide(pres, slide.heading, slide.metrics, bullets, data.customer, data.period);
+      if (slide.notes) s.addNotes(slide.notes);
       continue;
     }
 
     // Default: bullets
-    buildBulletsSlide(pres, slide.heading, bullets, data.customer, data.period, slide.status);
-    if (slide.notes) pres.slides[pres.slides.length - 1].addNotes(slide.notes);
+    const s = buildBulletsSlide(pres, slide.heading, bullets, data.customer, data.period, slide.status);
+    if (slide.notes) s.addNotes(slide.notes);
   }
 
   await pres.writeFile({ fileName: outputPath });

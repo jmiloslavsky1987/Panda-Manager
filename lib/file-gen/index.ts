@@ -29,11 +29,12 @@ async function buildOutputPath(skillName: string, customer: string): Promise<Fil
   let base: string;
   if (wp.startsWith('~/') || wp === '~') {
     base = wp.replace(/^~/, os.homedir());
-  } else if (wp.startsWith('/') && !wp.startsWith('/Users') && !wp.startsWith('/home')) {
-    // Relative-to-homedir form: e.g. '/Documents/PM Application'
-    base = path.join(os.homedir(), wp);
-  } else {
+  } else if (wp.startsWith('/')) {
+    // Absolute path — use as-is (covers /app/workspace in Docker and /Users/... on macOS)
     base = wp;
+  } else {
+    // Relative path — resolve from homedir
+    base = path.join(os.homedir(), wp);
   }
 
   const safeCustomer = customer.replace(/[^a-zA-Z0-9 _-]/g, '_');
