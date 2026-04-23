@@ -30,7 +30,7 @@ const RAG: Record<string, string> = {
   red:   BP.redDark,
 };
 
-// Slide dimensions (16:9 in inches)
+// Slide dimensions — must match pres.layout below (10" x 5.625" = 16:9)
 const W = 10;
 const H = 5.625;
 
@@ -323,7 +323,7 @@ export async function generatePptx(data: EltSlideJson, outputPath: string): Prom
   mkdirSync(path.dirname(outputPath), { recursive: true });
 
   const pres = new PptxGenJS();
-  pres.layout = 'LAYOUT_WIDE';
+  pres.layout = 'LAYOUT_16x9';
   pres.author = 'BigPanda';
   pres.company = 'BigPanda';
   pres.subject = data.title;
