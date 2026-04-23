@@ -187,15 +187,16 @@ export default function SkillRunPage() {
         </p>
       )}
 
-      {/* Open in app button — shown when run is done and a file artifact was produced */}
+      {/* Download button — shown when run is done and a file artifact was produced */}
       {status === 'done' && outputFilepath && outputId && (
-        <button
-          onClick={() => fetch(`/api/outputs/${outputId}/open`)}
-          className="mt-4 px-4 py-2 text-sm bg-zinc-900 text-white rounded hover:bg-zinc-700"
+        <a
+          href={`/api/outputs/${outputId}/download`}
+          download
+          className="mt-4 inline-block px-4 py-2 text-sm bg-zinc-900 text-white rounded hover:bg-zinc-700"
           data-testid="open-in-app-btn"
         >
-          Open in {getAppLabel(skillName)}
-        </button>
+          ↓ Download {getAppLabel(skillName)}
+        </a>
       )}
     </div>
   );
