@@ -163,7 +163,7 @@ Full details: `.planning/milestones/v8.0-ROADMAP.md` (archived)
 - [x] **Phase 75: Schema + Quick Wins + Admin** — All 5 DB migrations, milestone status enum fix (+ portfolio counter), Task Board DnD cross-column, Task Board week view, bulk actions, admin project settings form (completed 2026-04-22)
 - [x] **Phase 76: Pickers & Risk Fields** — Owner stakeholder picker (FK + free-text fallback), task dependency/milestone pickers, blocked indicator, risk Likelihood/Impact/Target Date with auto-computed Risk Score; closes tasks-bulk multi-tenant security gap (completed 2026-04-23)
 - [x] **Phase 77: Intelligence & Gantt** — Per-project exceptions panel with auto-computed health status and deep-links; Gantt phase dates derived from tasks; Gantt baseline snapshot + ghost bar overlay + variance column (completed 2026-04-23)
-- [ ] **Phase 78: AI & Content** — Meeting Prep skill via existing BullMQ/skill infrastructure; inline output rendering with copy-to-clipboard; Outputs Library inline preview (markdown + DOCX via docx-preview, PPTX as slide count + download); XSS hardening for all react-markdown instances
+- [x] **Phase 78: AI & Content** — Meeting Prep skill via existing BullMQ/skill infrastructure; inline output rendering with copy-to-clipboard; Outputs Library inline preview (markdown + DOCX via docx-preview, PPTX as slide count + download); XSS hardening for all react-markdown instances (completed 2026-04-23)
 
 ## Phase Details
 
@@ -244,7 +244,7 @@ Plans:
 | 75. Schema + Quick Wins + Admin | 5/5 | Complete    | 2026-04-22 |
 | 76. Pickers & Risk Fields | 4/4 | Complete    | 2026-04-23 |
 | 77. Intelligence & Gantt | 3/3 | Complete    | 2026-04-23 |
-| 78. AI & Content | 1/2 | In Progress|  |
+| 78. AI & Content | 2/2 | Complete   | 2026-04-23 |
 
 ---
 *Last updated: 2026-04-23 — Phase 78 planned: 2 plans in 1 wave (78-01 + 78-02 parallel Wave 1)*

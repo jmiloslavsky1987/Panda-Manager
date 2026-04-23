@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v9.0
 milestone_name: — UX Maturity & Intelligence
-status: completed
-stopped_at: Completed 78-ai-content 78-01-PLAN.md
-last_updated: "2026-04-23T16:22:02.569Z"
+status: executing
+stopped_at: Completed 78-ai-content 78-02-PLAN.md
+last_updated: "2026-04-23T16:33:19.430Z"
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 14
-  completed_plans: 13
+  completed_plans: 14
   percent: 100
 ---
 
@@ -24,9 +24,9 @@ See: .planning/PROJECT.md (updated 2026-04-22 after v9.0 milestone start)
 
 ## Current Position
 
-Phase: 78 of 78 (AI & Content) — in progress
-Plan: 78-01 complete (Meeting Prep skill). 78-02 (Outputs Library) is next.
-Status: v9.0 milestone in progress — Phase 78 Plan 01 shipped
+Phase: 78 of 78 (AI & Content) — COMPLETE
+Plan: 78-02 complete (Outputs Library inline previews + XSS hardening). All plans complete.
+Status: v9.0 milestone COMPLETE — all phases shipped
 
 Progress: [██████████] 100%
 
@@ -43,9 +43,9 @@ Progress: [██████████] 100%
 
 ## Tech Stack
 
-- Next.js 16 (Turbopack), PostgreSQL, Redis/BullMQ, better-auth, Drizzle ORM, Vercel AI SDK, @xyflow/react, @anthropic-ai/sdk, Recharts
+- Next.js 16 (Turbopack), PostgreSQL, Redis/BullMQ, better-auth, Drizzle ORM, Vercel AI SDK, @xyflow/react, @anthropic-ai/sdk, Recharts, docx-preview
 - ~75,894 LOC TypeScript (v8.0 shipped)
-- 148 test files passing
+- 157 test files passing (9 new in Phase 78)
 - Production build clean
 - Code root: `/Users/jmiloslavsky/Documents/Panda-Manager`
 
@@ -78,8 +78,8 @@ Progress: [██████████] 100%
 ### Security Flags for v9.0
 
 - tasks-bulk multi-tenant gap: RESOLVED in 76-04 — POST /api/tasks-bulk now enforces requireProjectRole before update
-- react-markdown XSS gap: ChatMessage.tsx renders without rehype-sanitize — fix in Phase 78
-- Meeting Prep prompt injection risk: escape user-controlled strings before interpolation — enforce in Phase 78
+- react-markdown XSS gap: RESOLVED in 78-02 — ChatMessage.tsx and all Outputs Library ReactMarkdown now use rehype-sanitize
+- Meeting Prep prompt injection risk: RESOLVED in 78-01 — user-controlled strings escaped before interpolation in meeting-prep context builder
 
 ### v9.0 Phase 75 Decisions
 
@@ -147,6 +147,14 @@ Progress: [██████████] 100%
 - (78-01) stripMarkdown lives in lib/strip-markdown.ts (not inline in page.tsx) for testability without DOM dependency
 - (78-01) rehype-sanitize applied to SkillRunPage ReactMarkdown; ChatMessage.tsx hardening deferred to 78-02
 
+### v9.0 Phase 78 Decisions (78-02)
+
+- (78-02) docx-preview: dynamic import inside useEffect only (never at module level) — SSR-safe per locked CONTEXT.md decision
+- (78-02) PPTX outputs show slide count badge + Download link; no inline render — per locked CONTEXT.md decision
+- (78-02) getOutputType extracted to lib/output-utils.ts (no use client) — isolates pure logic from Client Component for Vitest safety
+- (78-02) Slide count fetch is non-blocking — errors silently swallowed; badge only appears when count is known
+- (78-02) rehype-sanitize applied to all ReactMarkdown instances — closes confirmed XSS gap from STATE.md security flags
+
 ### Blockers/Concerns
 
 - Migration number confirmed: 0037 was highest before Phase 75; 0038–0042 applied cleanly
@@ -156,6 +164,6 @@ Progress: [██████████] 100%
 
 ## Session Continuity
 
-Last session: 2026-04-23T16:22:02.567Z
-Stopped at: Completed 78-ai-content 78-01-PLAN.md
+Last session: 2026-04-23T16:33:19.428Z
+Stopped at: Completed 78-ai-content 78-02-PLAN.md
 Resume file: None

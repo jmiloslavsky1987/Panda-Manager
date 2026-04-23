@@ -49,8 +49,8 @@
 
 ### Outputs Library
 
-- [ ] **OUT-01**: User can view an inline preview of a skill output (markdown outputs rendered as formatted text; DOCX outputs rendered via docx-preview)
-- [ ] **OUT-02**: PPTX outputs show slide count and a download link (no inline render)
+- [x] **OUT-01**: User can view an inline preview of a skill output (markdown outputs rendered as formatted text; DOCX outputs rendered via docx-preview)
+- [x] **OUT-02**: PPTX outputs show slide count and a download link (no inline render)
 
 ### Health Dashboard
 
@@ -125,8 +125,8 @@
 | SKILL-02 | Phase 78 | Complete |
 | SKILL-03 | Phase 78 | Complete |
 | SKILL-04 | Phase 78 | Complete |
-| OUT-01 | Phase 78 | Pending |
-| OUT-02 | Phase 78 | Pending |
+| OUT-01 | Phase 78 | Complete |
+| OUT-02 | Phase 78 | Complete |
 
 **Coverage:**
 - v9.0 requirements: 33 total
