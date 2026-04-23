@@ -8,6 +8,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
+import rehypeSanitize from 'rehype-sanitize';
+import { stripMarkdown } from '@/lib/strip-markdown';
 
 type RunStatus = 'loading' | 'streaming' | 'done' | 'failed';
 
@@ -30,6 +32,7 @@ export default function SkillRunPage() {
   const [skillName, setSkillName] = useState('');
   const [outputId, setOutputId] = useState<number | null>(null);
   const [outputFilepath, setOutputFilepath] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const esRef = useRef<EventSource | null>(null);
 
   // Fetch the corresponding outputs row for this run to surface the "Open in app" button
@@ -141,8 +144,24 @@ export default function SkillRunPage() {
       {/* Output area */}
       <div
         data-testid="skill-output"
-        className="bg-white border border-zinc-200 rounded-lg p-6 min-h-32"
+        className="relative bg-white border border-zinc-200 rounded-lg p-6 min-h-32"
       >
+        {/* Copy button — visible only when status is done */}
+        {status === 'done' && output && (
+          <button
+            onClick={() =>
+              navigator.clipboard.writeText(stripMarkdown(output)).then(() => {
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+              })
+            }
+            className="absolute top-2 right-2 px-3 py-1 text-xs bg-zinc-100 hover:bg-zinc-200 text-zinc-600 rounded border border-zinc-200"
+            data-testid="copy-btn"
+          >
+            {copied ? 'Copied!' : 'Copy'}
+          </button>
+        )}
+
         {status === 'loading' && (
           <p className="text-zinc-400 text-sm">Loading output...</p>
         )}
@@ -154,9 +173,9 @@ export default function SkillRunPage() {
           <pre className="font-mono text-sm whitespace-pre-wrap text-zinc-800">{output}</pre>
         )}
         {(status === 'done' || status === 'failed') && output && (
-          // Completed: render markdown
+          // Completed: render markdown with XSS hardening
           <div className="prose prose-zinc prose-sm max-w-none">
-            <ReactMarkdown>{output}</ReactMarkdown>
+            <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{output}</ReactMarkdown>
           </div>
         )}
       </div>

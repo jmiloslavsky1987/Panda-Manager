@@ -13,6 +13,7 @@ import { eq, sql } from 'drizzle-orm';
 import { buildSkillContext } from './skill-context';
 import { buildTeamsSkillContext } from './skill-context-teams';
 import { buildArchSkillContext } from './skill-context-arch';
+import { buildMeetingPrepContext } from './meeting-prep-context';
 import type { MCPServerConfig } from './settings-core';
 
 const TOKEN_BUDGET = 80_000;
@@ -70,6 +71,8 @@ export class SkillOrchestrator {
       skillSpecificContext = await buildTeamsSkillContext(params.projectId);
     } else if (params.skillName === 'workflow-diagram') {
       skillSpecificContext = await buildArchSkillContext(params.projectId);
+    } else if (params.skillName === 'meeting-prep') {
+      skillSpecificContext = await buildMeetingPrepContext(params.projectId, params.input?.notes);
     }
 
     const context = await buildSkillContext(
