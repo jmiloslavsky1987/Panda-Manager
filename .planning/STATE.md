@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v9.0
 milestone_name: — UX Maturity & Intelligence
 status: executing
-stopped_at: Completed 76-01-PLAN.md
-last_updated: "2026-04-23T01:14:17.945Z"
+stopped_at: Completed 76-03-PLAN.md
+last_updated: "2026-04-23T01:20:26.999Z"
 last_activity: "2026-04-23 — 76-01 complete: OwnerCell FK-based stakeholder picker with auto-create + PATCH schemas for tasks, actions, milestones"
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 9
-  completed_plans: 7
+  completed_plans: 8
   percent: 99
 ---
 
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-04-22 after v9.0 milestone start)
 ## Current Position
 
 Phase: 76 of 78 (Pickers & Risk Fields)
-Plan: 1 of 5 complete — 76-01 DONE (OwnerCell FK picker + dual-write for tasks/actions/risks/milestones)
+Plan: 3 of 5 complete — 76-03 DONE (Risk Score pure function + Likelihood/Impact/Target Date fields in RiskEditModal)
 Status: In Progress
-Last activity: 2026-04-23 — 76-01 complete: OwnerCell FK-based stakeholder picker with auto-create + PATCH schemas for tasks, actions, milestones
+Last activity: 2026-04-22 — 76-03 complete: Risk Score badge column; computeRiskScore TDD; likelihood/impact/target_date editable fields + PATCH schema
 
 Progress: [██████████] 99%
 
@@ -108,6 +108,9 @@ Progress: [██████████] 99%
 - (76-01) Blur handler resolves: empty->null, case-insensitive match->existing FK, no match->POST auto-create
 - (76-01) risks PATCH schema owner_id excluded from 76-01 — handled by 76-03 to avoid parallel file conflict
 - (76-01) Dual-write: both owner text and owner_id sent on save for backwards compatibility with display consumers
+- (76-03) computeRiskScore returns N/A result when either likelihood or impact is null/undefined/invalid — avoids misleading scores for partially-configured risks
+- (76-03) Risk Score is computed via IIFE in table cell JSX; no separate component needed for single-use render pattern
+- (76-03) owner_id + owner added to risks PATCH schema in 76-03 (deferred from 76-01 to avoid parallel file conflict)
 - (76-04) POST /api/tasks-bulk uses first task's project_id to gate entire batch via requireProjectRole — mirrors DELETE handler pattern
 - (76-04) Update wrapped in transaction with SET LOCAL app.current_project_id for DB-level RLS enforcement
 - (76-04) 404 returned when task_ids[0] not found (previously fell through to 500)
@@ -121,6 +124,6 @@ Progress: [██████████] 99%
 
 ## Session Continuity
 
-Last session: 2026-04-23T01:14:17.943Z
-Stopped at: Completed 76-01-PLAN.md
+Last session: 2026-04-23T01:20:26.997Z
+Stopped at: Completed 76-03-PLAN.md
 Resume file: None

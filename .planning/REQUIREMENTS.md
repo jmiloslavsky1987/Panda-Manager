@@ -30,10 +30,10 @@
 
 ### Risk Register
 
-- [ ] **RISK-01**: User can set Likelihood (Low / Medium / High) on a risk
-- [ ] **RISK-02**: User can set Impact (Low / Medium / High) on a risk
-- [ ] **RISK-03**: User can set Target Date on a risk
-- [ ] **RISK-04**: Risk list displays auto-computed Risk Score derived from Likelihood × Impact
+- [x] **RISK-01**: User can set Likelihood (Low / Medium / High) on a risk
+- [x] **RISK-02**: User can set Impact (Low / Medium / High) on a risk
+- [x] **RISK-03**: User can set Target Date on a risk
+- [x] **RISK-04**: Risk list displays auto-computed Risk Score derived from Likelihood × Impact
 
 ### Milestones
 
@@ -110,10 +110,10 @@
 | PICK-03 | Phase 76 | Pending |
 | PICK-04 | Phase 76 | Pending |
 | PICK-05 | Phase 76 | Complete |
-| RISK-01 | Phase 76 | Pending |
-| RISK-02 | Phase 76 | Pending |
-| RISK-03 | Phase 76 | Pending |
-| RISK-04 | Phase 76 | Pending |
+| RISK-01 | Phase 76 | Complete |
+| RISK-02 | Phase 76 | Complete |
+| RISK-03 | Phase 76 | Complete |
+| RISK-04 | Phase 76 | Complete |
 | HLTH-01 | Phase 77 | Pending |
 | HLTH-02 | Phase 77 | Pending |
 | HLTH-03 | Phase 77 | Pending |
