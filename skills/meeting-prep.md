@@ -1,7 +1,7 @@
 ---
 label: Meeting Prep
 description: Generate a structured meeting brief from open items and recent activity
-input_required: false
+input_required: true
 input_label: "Meeting focus or attendees"
 schedulable: false
 error_behavior: retry
