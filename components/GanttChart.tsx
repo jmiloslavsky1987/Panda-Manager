@@ -1080,6 +1080,7 @@ export default function GanttChart({
                 const left  = barLeft(start)
                 const width = barWidth(start, end)
                 const isDragging = dragOverride.has(row.task.id)
+                const isUndated = row.task.custom_class?.includes('gantt-undated') ?? false
 
                 return (
                   <div key={`rt-${row.task.id}-${i}`} className="relative border-b border-zinc-100 hover:bg-zinc-50/30"
@@ -1115,12 +1116,14 @@ export default function GanttChart({
                         top: '50%',
                         transform: 'translateY(-50%)',
                         height: ROW_H - 10,
-                        background: color.bar,
-                        color: '#fff',
+                        background: isUndated ? 'transparent' : color.bar,
+                        border: isUndated ? `2px dashed ${color.bar}` : 'none',
+                        color: isUndated ? color.bar : '#fff',
                         fontSize: 11,
                         fontWeight: 500,
+                        opacity: isUndated ? 0.6 : 1,
                         cursor: isDragging ? 'grabbing' : 'grab',
-                        boxShadow: isDragging ? '0 4px 14px rgba(0,0,0,0.18)' : '0 1px 3px rgba(0,0,0,0.1)',
+                        boxShadow: isDragging ? '0 4px 14px rgba(0,0,0,0.18)' : isUndated ? 'none' : '0 1px 3px rgba(0,0,0,0.1)',
                         userSelect: 'none',
                         zIndex: isDragging ? 30 : 5,
                       }}

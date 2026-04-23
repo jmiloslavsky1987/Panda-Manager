@@ -83,16 +83,11 @@ function mapDataToWbsRows(
     let targetId: number | null = null
 
     if (wbsId !== undefined) {
-      // Primary: junction table — walk up to level-1 ancestor
-      targetId = level1AncestorOf(wbsId)
+      // Primary: junction table — assign to directly-matched item so buildWbsRows bottom-up propagation works
+      targetId = wbsId
     } else if (task.phase) {
       // Fallback: match task.phase against any WBS item name (case-insensitive)
       targetId = wbsNameToId.get(task.phase.toLowerCase()) ?? null
-      // If matched item is not level-1, walk up to its level-1 ancestor for grouping
-      if (targetId !== null) {
-        const matchedLevel = allWbsItems.find(i => i.id === targetId)?.level ?? 1
-        if (matchedLevel > 1) targetId = level1AncestorOf(targetId)
-      }
     }
 
     if (targetId !== null && wbsToTasks.has(targetId)) {
@@ -104,8 +99,8 @@ function mapDataToWbsRows(
   // Build milestone index for custom_class (keep priority coloring)
   const milestoneIndexMap = new Map(milestoneList.map((m, i) => [m.id, i]))
 
-  function toGanttTask(task: (typeof tasks)[0]): GanttTask | null {
-    if (!task.due && !task.start_date) return null  // skip undated tasks
+  function toGanttTask(task: (typeof tasks)[0]): GanttTask {
+    // Undated tasks get a placeholder starting today — drag to set real dates
     const start = toGanttDate(task.start_date, toGanttDate(task.due, today))
     const end = toGanttDate(task.due, addDays(start, 7))
     const safeEnd = end < start ? addDays(start, 1) : end
@@ -114,7 +109,8 @@ function mapDataToWbsRows(
     const msIndex = task.milestone_id ? milestoneIndexMap.get(task.milestone_id) : undefined
     const msClass = msIndex !== undefined ? `gantt-ms-${task.milestone_id} gantt-milestone-${msIndex % 6}` : ''
     const priorityClass = task.priority === 'high' ? 'gantt-high-priority' : task.priority === 'low' ? 'gantt-low-priority' : ''
-    return { id: String(task.id), name: task.title, start, end: safeEnd, progress, dependencies, custom_class: [msClass, priorityClass].filter(Boolean).join(' ') || undefined }
+    const undatedClass = (!task.due && !task.start_date) ? 'gantt-undated' : ''
+    return { id: String(task.id), name: task.title, start, end: safeEnd, progress, dependencies, custom_class: [msClass, priorityClass, undatedClass].filter(Boolean).join(' ') || undefined }
   }
 
   // Return ALL WBS levels — GanttChart renders the full hierarchy
@@ -172,8 +168,8 @@ export default async function GanttPage({
     wbsRows.forEach(row => row.tasks.forEach(t => assignedTaskIds.add(Number(t.id))))
     const milestoneIndexMap = new Map(milestones.map((m, i) => [m.id, i]))
 
-    function toGanttTask(task: (typeof tasks)[0]): GanttTask | null {
-      if (!task.due && !task.start_date) return null
+    function toGanttTask(task: (typeof tasks)[0]): GanttTask {
+      // Undated tasks get a placeholder starting today — drag to set real dates
       const start = toGanttDate(task.start_date, toGanttDate(task.due, today))
       const end = toGanttDate(task.due, addDays(start, 7))
       const safeEnd = end < start ? addDays(start, 1) : end
@@ -182,13 +178,13 @@ export default async function GanttPage({
       const msIndex = task.milestone_id ? milestoneIndexMap.get(task.milestone_id) : undefined
       const msClass = msIndex !== undefined ? `gantt-ms-${task.milestone_id} gantt-milestone-${msIndex % 6}` : ''
       const priorityClass = task.priority === 'high' ? 'gantt-high-priority' : task.priority === 'low' ? 'gantt-low-priority' : ''
-      return { id: String(task.id), name: task.title, start, end: safeEnd, progress, dependencies, custom_class: [msClass, priorityClass].filter(Boolean).join(' ') || undefined }
+      const undatedClass = (!task.due && !task.start_date) ? 'gantt-undated' : ''
+      return { id: String(task.id), name: task.title, start, end: safeEnd, progress, dependencies, custom_class: [msClass, priorityClass, undatedClass].filter(Boolean).join(' ') || undefined }
     }
 
     unassignedTasks = tasks
-      .filter(t => !assignedTaskIds.has(t.id) && (t.due || t.start_date))
+      .filter(t => !assignedTaskIds.has(t.id))
       .map(toGanttTask)
-      .filter((t): t is GanttTask => t !== null)
   } catch {
     // DB not available — render empty gantt
   }
