@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v9.0
 milestone_name: — UX Maturity & Intelligence
-status: "Executing Phase 77"
-stopped_at: "Completed 77-01-PLAN.md (Exceptions Panel)"
-last_updated: "2026-04-23T03:52:00Z"
+status: executing
+stopped_at: Completed 77-intelligence-gantt-02-PLAN.md
+last_updated: "2026-04-23T03:47:34.462Z"
 progress:
   total_phases: 4
   completed_phases: 2
@@ -24,11 +24,11 @@ See: .planning/PROJECT.md (updated 2026-04-22 after v9.0 milestone start)
 
 ## Current Position
 
-Phase: 77 of 78 (Intelligence & Gantt) — executing
-Plan: 77-01 complete (Exceptions Panel) — next: 77-02
+Phase: 77 of 78 (Intelligence & Gantt) — in progress
+Plan: 77-02 complete (Gantt Baseline API + Toolbar) — next: 77-03
 Status: Executing Phase 77
 
-Progress: [██████████] 98%
+Progress: [██████████] 99%
 
 ## Milestone History
 
@@ -108,6 +108,13 @@ Progress: [██████████] 98%
 - (77-01) actions stale: status != 'closed' (actionStatusEnum: open/in_progress/completed/cancelled — 'closed' not in enum but safe as catch-all)
 - (77-01) risks stale: NOT IN ('closed', 'resolved', 'mitigated', 'accepted') — 'closed' included defensively
 
+### v9.0 Phase 77 Decisions (77-02)
+
+- (77-02) activeBaselineSnapshot stored in GanttChart state but not yet consumed — Plan 03 will read it for ghost bar rendering
+- (77-02) Snapshot captures t.start/t.end directly (not drag-in-flight dragOverride state) — baseline reflects saved DB state
+- (77-02) Compare dropdown hidden when no baselines exist — cleaner first-time UX, no empty dropdown shown
+- (77-02) baselineId route returns 404 when baseline not found OR belongs to different project (prevents cross-project access)
+
 ### v9.0 Phase 76 Decisions
 
 - (76-01) OwnerCell datalist preserved for native browser autocomplete UX while tracking stakeholder by id internally
@@ -134,6 +141,6 @@ Progress: [██████████] 98%
 
 ## Session Continuity
 
-Last session: 2026-04-23T03:52:00Z
-Stopped at: Completed 77-01-PLAN.md (Exceptions Panel)
-Resume file: .planning/phases/77-intelligence-gantt/77-02-PLAN.md
+Last session: 2026-04-23T03:47:34.460Z
+Stopped at: Completed 77-intelligence-gantt-02-PLAN.md
+Resume file: None

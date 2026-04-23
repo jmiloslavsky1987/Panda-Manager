@@ -16,7 +16,7 @@
 ### Gantt
 
 - [ ] **GANTT-01**: WBS phase date range is derived from earliest task start / latest task due date across all tasks assigned to that phase
-- [ ] **GANTT-02**: User can save a Gantt baseline (snapshot of current phase and task dates)
+- [x] **GANTT-02**: User can save a Gantt baseline (snapshot of current phase and task dates)
 - [ ] **GANTT-03**: User can toggle a ghost bar overlay showing baseline vs current schedule
 - [ ] **GANTT-04**: User can see a Variance column (+/- days from baseline) for each Gantt row
 
@@ -118,7 +118,7 @@
 | HLTH-02 | Phase 77 | Complete |
 | HLTH-03 | Phase 77 | Complete |
 | GANTT-01 | Phase 77 | Pending |
-| GANTT-02 | Phase 77 | Pending |
+| GANTT-02 | Phase 77 | Complete |
 | GANTT-03 | Phase 77 | Pending |
 | GANTT-04 | Phase 77 | Pending |
 | SKILL-01 | Phase 78 | Pending |
