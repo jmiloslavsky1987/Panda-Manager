@@ -53,19 +53,20 @@ export function TaskEditModal({ task, projectId, trigger, onSaved }: TaskEditMod
   const [form, setForm] = useState(emptyForm(task))
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [projectTasks, setProjectTasks] = useState<{ id: number; title: string }[]>([])
+  const [projectTasks, setProjectTasks] = useState<{ id: number; title: string; status: string }[]>([])
   const [projectMilestones, setProjectMilestones] = useState<{ id: number; name: string }[]>([])
+  const [loadingPickers, setLoadingPickers] = useState(false)
 
   const isEdit = task !== undefined
 
   // Fetch task and milestone lists for picker dropdowns when modal opens
   useEffect(() => {
     if (!open) return
+    setLoadingPickers(true)
     Promise.all([
-      fetch(`/api/tasks?projectId=${projectId}`).then(r => r.json()),
-      fetch(`/api/projects/${projectId}/milestones`).then(r => r.json()),
-    ]).then(([taskData, milestoneData]) => {
-      // Blocked-by: filter out current task and done tasks
+      fetch(`/api/tasks?projectId=${projectId}`).then(r => r.ok ? r.json() : []),
+      fetch(`/api/projects/${projectId}/milestones`).then(r => r.ok ? r.json() : { milestones: [] }),
+    ]).then(([taskData, milestoneData]: [{ id: number; title: string; status: string }[], { milestones?: { id: number; name: string }[] }]) => {
       const eligible = (Array.isArray(taskData) ? taskData : []).filter(
         (t: { id: number; status: string }) => t.id !== task?.id && t.status !== 'done'
       )
@@ -73,7 +74,7 @@ export function TaskEditModal({ task, projectId, trigger, onSaved }: TaskEditMod
       setProjectMilestones(
         Array.isArray(milestoneData?.milestones) ? milestoneData.milestones : []
       )
-    }).catch(() => {})
+    }).catch(() => {}).finally(() => setLoadingPickers(false))
   }, [open, projectId, task?.id])
 
   function handleChange(
@@ -294,9 +295,10 @@ export function TaskEditModal({ task, projectId, trigger, onSaved }: TaskEditMod
                 name="blocked_by"
                 value={form.blocked_by}
                 onChange={handleChange}
-                className="w-full border border-zinc-300 rounded px-3 py-1.5 text-sm"
+                disabled={loadingPickers}
+                className="w-full border border-zinc-300 rounded px-3 py-1.5 text-sm disabled:opacity-60"
               >
-                <option value="">— none —</option>
+                <option value="">{loadingPickers ? 'Loading…' : '— none —'}</option>
                 {projectTasks.map(t => (
                   <option key={t.id} value={String(t.id)}>{t.title}</option>
                 ))}

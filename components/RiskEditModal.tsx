@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, cloneElement, isValidElement } from 'react'
+import { useState, useEffect, cloneElement, isValidElement } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Dialog,
@@ -20,14 +20,30 @@ interface RiskEditModalProps {
 export function RiskEditModal({ risk, trigger }: RiskEditModalProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
+  const [description, setDescription] = useState(risk.description ?? '')
   const [severity, setSeverity] = useState<'low' | 'medium' | 'high' | 'critical'>(risk.severity ?? 'medium')
-  const [status, setStatus] = useState(risk.status ?? '')
+  const [status, setStatus] = useState<'open' | 'mitigated' | 'resolved' | 'accepted'>(
+    (['open', 'mitigated', 'resolved', 'accepted'].includes(risk.status ?? '') ? risk.status : 'open') as 'open' | 'mitigated' | 'resolved' | 'accepted'
+  )
   const [mitigationAppend, setMitigationAppend] = useState('')
   const [likelihood, setLikelihood] = useState(risk.likelihood ?? '')
   const [impact, setImpact] = useState(risk.impact ?? '')
   const [targetDate, setTargetDate] = useState(risk.target_date ?? '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Sync state when modal opens (risk prop may have updated after a previous save + router.refresh())
+  useEffect(() => {
+    if (!open) return
+    setDescription(risk.description ?? '')
+    setSeverity(risk.severity ?? 'medium')
+    setStatus((['open', 'mitigated', 'resolved', 'accepted'].includes(risk.status ?? '') ? risk.status : 'open') as 'open' | 'mitigated' | 'resolved' | 'accepted')
+    setLikelihood(risk.likelihood ?? '')
+    setImpact(risk.impact ?? '')
+    setTargetDate(risk.target_date ?? '')
+    setMitigationAppend('')
+    setError(null)
+  }, [open, risk])
 
   async function handleSave() {
     setSaving(true)
@@ -37,9 +53,10 @@ export function RiskEditModal({ risk, trigger }: RiskEditModalProps) {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          description: description.trim() || undefined,
           severity,
           status,
-          mitigation_append: mitigationAppend,
+          mitigation_append: mitigationAppend || undefined,
           likelihood: likelihood || null,
           impact: impact || null,
           target_date: targetDate || null,
@@ -67,76 +84,86 @@ export function RiskEditModal({ risk, trigger }: RiskEditModalProps) {
         ? cloneElement(trigger as React.ReactElement<any>, { onClick: () => setOpen(true), className: ['cursor-pointer', (trigger as React.ReactElement<any>).props.className].filter(Boolean).join(' ') })
         : <div onClick={() => setOpen(true)} className="cursor-pointer">{trigger}</div>}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent data-testid="risk-edit-modal">
+        <DialogContent data-testid="risk-edit-modal" className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Risk</DialogTitle>
             <p className="text-xs text-zinc-500 font-mono">{risk.external_id}</p>
           </DialogHeader>
 
           <div className="space-y-4">
-            <div>
-              <p className="text-sm text-zinc-700 mb-2">{risk.description}</p>
-            </div>
-
             <div className="space-y-1">
-              <label className="text-sm font-medium text-zinc-700" htmlFor="risk-severity">
-                Severity
-              </label>
-              <select
-                id="risk-severity"
-                value={severity}
-                onChange={(e) => setSeverity(e.target.value as 'low' | 'medium' | 'high' | 'critical')}
-                className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-400"
-              >
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="critical">Critical</option>
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-zinc-700" htmlFor="risk-status">
-                Status
-              </label>
-              <input
-                id="risk-status"
-                type="text"
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                placeholder="open, mitigated, resolved, closed, accepted..."
-                className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-400"
+              <label className="text-sm font-medium text-zinc-700" htmlFor="risk-description">Description</label>
+              <textarea
+                id="risk-description"
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                rows={3}
+                className="w-full border rounded px-3 py-2 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-zinc-400"
               />
             </div>
 
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-zinc-700" htmlFor="risk-likelihood">Likelihood</label>
-              <select
-                id="risk-likelihood"
-                value={likelihood}
-                onChange={e => setLikelihood(e.target.value)}
-                className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-400"
-              >
-                <option value="">— select —</option>
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-              </select>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-zinc-700" htmlFor="risk-severity">Severity</label>
+                <select
+                  id="risk-severity"
+                  value={severity}
+                  onChange={(e) => setSeverity(e.target.value as 'low' | 'medium' | 'high' | 'critical')}
+                  className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-400"
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="critical">Critical</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-zinc-700" htmlFor="risk-status">Status</label>
+                <select
+                  id="risk-status"
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value as 'open' | 'mitigated' | 'resolved' | 'accepted')}
+                  className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-400"
+                >
+                  <option value="open">Open</option>
+                  <option value="mitigated">Mitigated</option>
+                  <option value="resolved">Resolved</option>
+                  <option value="accepted">Accepted</option>
+                </select>
+              </div>
             </div>
 
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-zinc-700" htmlFor="risk-impact">Impact</label>
-              <select
-                id="risk-impact"
-                value={impact}
-                onChange={e => setImpact(e.target.value)}
-                className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-400"
-              >
-                <option value="">— select —</option>
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-              </select>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-zinc-700" htmlFor="risk-likelihood">Likelihood</label>
+                <select
+                  id="risk-likelihood"
+                  value={likelihood}
+                  onChange={e => setLikelihood(e.target.value)}
+                  className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-400"
+                >
+                  <option value="">— select —</option>
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-zinc-700" htmlFor="risk-impact">Impact</label>
+                <select
+                  id="risk-impact"
+                  value={impact}
+                  onChange={e => setImpact(e.target.value)}
+                  className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-400"
+                >
+                  <option value="">— select —</option>
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
             </div>
 
             <div className="space-y-1">

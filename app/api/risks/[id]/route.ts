@@ -14,6 +14,7 @@ const patchSchema = z.object({
   target_date: z.string().nullable().optional(),
   owner: z.string().nullable().optional(),
   owner_id: z.number().nullable().optional(),
+  description: z.string().optional(),
 })
 
 export async function PATCH(
@@ -48,7 +49,7 @@ export async function PATCH(
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
   }
 
-  const { severity, status, mitigation_append, likelihood, impact, target_date, owner, owner_id } = parsed.data
+  const { severity, status, mitigation_append, likelihood, impact, target_date, owner, owner_id, description } = parsed.data
   const today = new Date().toISOString().split('T')[0]
 
   // Read before-state (always, to capture for audit)
@@ -61,6 +62,7 @@ export async function PATCH(
   const patch: {
     severity?: typeof severity
     status?: typeof status
+    description?: string
     mitigation?: string
     likelihood?: string | null
     impact?: string | null
@@ -72,6 +74,7 @@ export async function PATCH(
 
   if (severity !== undefined) patch.severity = severity
   if (status !== undefined) patch.status = status
+  if (description !== undefined) patch.description = description
   if (likelihood !== undefined) patch.likelihood = likelihood
   if (impact !== undefined) patch.impact = impact
   if (target_date !== undefined) patch.target_date = target_date

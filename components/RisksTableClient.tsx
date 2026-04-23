@@ -372,10 +372,7 @@ export function RisksTableClient({ risks, artifacts, projectId }: RisksTableClie
                     </TableCell>
                     <TableCell className="text-sm">
                       <div className="space-y-1">
-                        <span>{risk.description.length > 100
-                          ? risk.description.slice(0, 100) + '…'
-                          : risk.description}
-                        </span>
+                        <span>{risk.description}</span>
                         <div>
                           <SourceBadge
                             source={risk.source}
