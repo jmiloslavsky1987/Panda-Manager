@@ -26,7 +26,7 @@
 - [ ] **PICK-02**: Owner picker allows free-text fallback for assignees not in the stakeholder list
 - [ ] **PICK-03**: User can set "Blocked By" tasks via a searchable multi-select dropdown showing task titles (with chip display)
 - [ ] **PICK-04**: User can link a task to a milestone via a searchable dropdown showing milestone names
-- [ ] **PICK-05**: Tasks with unresolved blockers (blocking task not yet Done) display a blocked indicator on Task Board and WBS views
+- [x] **PICK-05**: Tasks with unresolved blockers (blocking task not yet Done) display a blocked indicator on Task Board and WBS views
 
 ### Risk Register
 
@@ -109,7 +109,7 @@
 | PICK-02 | Phase 76 | Pending |
 | PICK-03 | Phase 76 | Pending |
 | PICK-04 | Phase 76 | Pending |
-| PICK-05 | Phase 76 | Pending |
+| PICK-05 | Phase 76 | Complete |
 | RISK-01 | Phase 76 | Pending |
 | RISK-02 | Phase 76 | Pending |
 | RISK-03 | Phase 76 | Pending |

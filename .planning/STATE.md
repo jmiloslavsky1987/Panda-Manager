@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v9.0
 milestone_name: — UX Maturity & Intelligence
 status: executing
-stopped_at: Phase 76 context gathered
-last_updated: "2026-04-23T00:30:55.233Z"
+stopped_at: Completed 76-04-PLAN.md
+last_updated: "2026-04-23T01:12:39.108Z"
 last_activity: "2026-04-22 — 75-05 complete: ProjectSettingsForm + PATCH /settings route + active_tracks WbsTree filter + WBS page activeTracks prop wiring"
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 9
+  completed_plans: 6
   percent: 99
 ---
 
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-04-22 after v9.0 milestone start)
 
 ## Current Position
 
-Phase: 75 of 78 (Schema + Quick Wins + Admin)
-Plan: 5 of 5 complete — Phase 75 DONE
+Phase: 76 of 78 (Pickers & Risk Fields)
+Plan: 4 of 5 complete — 76-04 DONE (tasks-bulk POST security gap closed)
 Status: In Progress
-Last activity: 2026-04-22 — 75-05 complete: ProjectSettingsForm + PATCH /settings route + active_tracks WbsTree filter + WBS page activeTracks prop wiring
+Last activity: 2026-04-23 — 76-04 complete: POST /api/tasks-bulk hardened with requireProjectRole + RLS transaction
 
 Progress: [██████████] 99%
 
@@ -79,7 +79,7 @@ Progress: [██████████] 99%
 
 ### Security Flags for v9.0
 
-- tasks-bulk multi-tenant gap: confirmed in app/api/tasks-bulk/route.ts — fix in Phase 76
+- tasks-bulk multi-tenant gap: RESOLVED in 76-04 — POST /api/tasks-bulk now enforces requireProjectRole before update
 - react-markdown XSS gap: ChatMessage.tsx renders without rehype-sanitize — fix in Phase 78
 - Meeting Prep prompt injection risk: escape user-controlled strings before interpolation — enforce in Phase 78
 
@@ -102,6 +102,12 @@ Progress: [██████████] 99%
 - (75-05) WBS page wraps getProjectWithHealth in .catch(() => null) so missing project degrades to showing both tracks
 - (75-05) visibleTracks recomputed each render; useEffect resets expandedIds + activeTrack on activeTracks prop change
 
+### v9.0 Phase 76 Decisions
+
+- (76-04) POST /api/tasks-bulk uses first task's project_id to gate entire batch via requireProjectRole — mirrors DELETE handler pattern
+- (76-04) Update wrapped in transaction with SET LOCAL app.current_project_id for DB-level RLS enforcement
+- (76-04) 404 returned when task_ids[0] not found (previously fell through to 500)
+
 ### Blockers/Concerns
 
 - Migration number confirmed: 0037 was highest before Phase 75; 0038–0042 applied cleanly
@@ -111,6 +117,6 @@ Progress: [██████████] 99%
 
 ## Session Continuity
 
-Last session: 2026-04-23T00:30:55.228Z
-Stopped at: Phase 76 context gathered
-Resume file: .planning/phases/76-pickers-risk-fields/76-CONTEXT.md
+Last session: 2026-04-23T01:12:39.107Z
+Stopped at: Completed 76-04-PLAN.md
+Resume file: None
