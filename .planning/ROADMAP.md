@@ -231,7 +231,11 @@ Plans:
   3. The Meeting Prep prompt is editable via Admin > Prompts using the existing editable-prompts UI (inherited from skill infrastructure — no separate implementation required)
   4. Markdown skill outputs in the Outputs Library render as formatted text inline; DOCX outputs render via docx-preview (dynamic import + ssr:false); PPTX outputs show slide count and a download link with no inline render
   5. All react-markdown instances — Outputs Library preview and ChatMessage — include rehype-sanitize, closing the existing XSS gap confirmed in ChatMessage.tsx
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 78-01-PLAN.md — Meeting Prep skill + context builder + Copy button + SkillRunPage XSS hardening (SKILL-01, SKILL-02, SKILL-03, SKILL-04)
+- [ ] 78-02-PLAN.md — Outputs Library preview extension (markdown/DOCX/PPTX) + ChatMessage XSS hardening (OUT-01, OUT-02)
 
 ## Progress
 
@@ -240,7 +244,7 @@ Plans:
 | 75. Schema + Quick Wins + Admin | 5/5 | Complete    | 2026-04-22 |
 | 76. Pickers & Risk Fields | 4/4 | Complete    | 2026-04-23 |
 | 77. Intelligence & Gantt | 3/3 | Complete    | 2026-04-23 |
-| 78. AI & Content | 0/TBD | Not started | - |
+| 78. AI & Content | 0/2 | Not started | - |
 
 ---
-*Last updated: 2026-04-23 — Phase 77 planned: 3 plans in 2 waves (77-01 + 77-02 parallel Wave 1; 77-03 Wave 2)*
+*Last updated: 2026-04-23 — Phase 78 planned: 2 plans in 1 wave (78-01 + 78-02 parallel Wave 1)*
