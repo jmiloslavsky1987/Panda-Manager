@@ -880,7 +880,7 @@ export default function GanttChart({
                 <div className="flex-1 pl-2 pr-1 truncate text-xs text-zinc-700" title={row.task.name}>{row.task.name}</div>
                 <div className="w-[52px] shrink-0 flex items-center justify-end">
                   <DatePickerCell
-                    value={fmtISO(start)}
+                    value={isUndated && !dragOverride.has(row.task.id) ? null : fmtISO(start)}
                     onSave={async (v) => {
                       await fetch(`/api/tasks/${row.task.id}`, {
                         method: 'PATCH',
@@ -888,12 +888,13 @@ export default function GanttChart({
                         body: JSON.stringify({ start_date: v }),
                       })
                       if (v) setDragOverride(prev => new Map(prev).set(row.task.id, { start: parseDate(v), end }))
+                      else setDragOverride(prev => { const m = new Map(prev); m.delete(row.task.id); return m })
                     }}
                   />
                 </div>
                 <div className="w-[52px] shrink-0 flex items-center justify-end">
                   <DatePickerCell
-                    value={fmtISO(end)}
+                    value={isUndated && !dragOverride.has(row.task.id) ? null : fmtISO(end)}
                     onSave={async (v) => {
                       await fetch(`/api/tasks/${row.task.id}`, {
                         method: 'PATCH',
@@ -901,6 +902,7 @@ export default function GanttChart({
                         body: JSON.stringify({ due: v }),
                       })
                       if (v) setDragOverride(prev => new Map(prev).set(row.task.id, { start, end: parseDate(v) }))
+                      else setDragOverride(prev => { const m = new Map(prev); m.delete(row.task.id); return m })
                     }}
                   />
                 </div>
