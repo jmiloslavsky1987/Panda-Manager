@@ -29,6 +29,8 @@ export interface GanttWbsRow {
   parentId: number | null
   track?: 'ADR' | 'Biggy'
   tasks: GanttTask[]
+  startDate?: string | null
+  dueDate?: string | null
 }
 
 interface GanttChartProps {
@@ -213,6 +215,13 @@ export default function GanttChart({
   )
   const [popup, setPopup] = useState<{ name: string; date: string; status: string | null } | null>(null)
   const [dragOverride, setDragOverride] = useState<Map<string, { start: Date; end: Date }>>(new Map())
+  const [wbsDateOverride, setWbsDateOverride] = useState<Map<number, { start: string; end: string }>>(() => {
+    const m = new Map<number, { start: string; end: string }>()
+    wbsRows.forEach(r => {
+      if (r.startDate || r.dueDate) m.set(r.id, { start: r.startDate ?? '', end: r.dueDate ?? '' })
+    })
+    return m
+  })
   const [leftWidth, setLeftWidth] = useState(LEFT_W_DEFAULT)
   const [containerWidth, setContainerWidth] = useState(1200)
   const [labelTip, setLabelTip] = useState<{ text: string; x: number; y: number } | null>(null)
@@ -336,9 +345,12 @@ export default function GanttChart({
 
   const { timelineStart, totalDays } = useMemo(() => {
     const allTasks = [...wbsRows.flatMap(r => r.tasks), ...unassignedTasks]
+    const wbsDateEntries = [...wbsDateOverride.values()]
     const allDates: Date[] = [
       ...allTasks.flatMap(t => [parseDate(t.start), parseDate(t.end)]),
       ...milestones.filter(m => m.date && /^\d{4}-\d{2}-\d{2}/.test(m.date!)).map(m => parseDate(m.date!)),
+      ...wbsRows.flatMap(r => [r.startDate, r.dueDate]).filter((d): d is string => !!d && /^\d{4}-\d{2}-\d{2}/.test(d)).map(parseDate),
+      ...wbsDateEntries.flatMap(e => [e.start, e.end]).filter((d): d is string => !!d && /^\d{4}-\d{2}-\d{2}/.test(d)).map(parseDate),
     ]
     if (!allDates.length) {
       return { timelineStart: addDays(new Date(), -14), totalDays: 120 }
@@ -819,12 +831,35 @@ export default function GanttChart({
 
             if (row.kind === 'wbs') {
               const isExp = expanded.has(String(row.wbsId))
+              const wbsNumId = row.wbsId !== 'unassigned' ? (row.wbsId as number) : null
+              const dateOverride = wbsNumId !== null ? wbsDateOverride.get(wbsNumId) : undefined
+              // Prefer task-derived span; fall back to manually-set WBS dates
+              const displayStart = row.spanStart ?? (dateOverride?.start ? parseDate(dateOverride.start) : null)
+              const displayEnd   = row.spanEnd   ?? (dateOverride?.end   ? parseDate(dateOverride.end)   : null)
+              const startVal = dateOverride?.start ?? (row.spanStart ? fmtISO(row.spanStart) : '')
+              const endVal   = dateOverride?.end   ?? (row.spanEnd   ? fmtISO(row.spanEnd)   : '')
+
+              const saveWbsDate = (field: 'start_date' | 'due_date', value: string) => {
+                if (wbsNumId === null) return
+                const cur = wbsDateOverride.get(wbsNumId) ?? { start: startVal, end: endVal }
+                setWbsDateOverride(prev => new Map(prev).set(wbsNumId, {
+                  start: field === 'start_date' ? value : cur.start,
+                  end:   field === 'due_date'   ? value : cur.end,
+                }))
+                fetch(`/api/projects/${projectId}/wbs/${wbsNumId}`, {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ [field]: value || null }),
+                })
+              }
+
               return (
                 <div key={`lwbs-${row.wbsId}-${i}`}
-                  className="flex items-center shrink-0 border-b border-zinc-100 cursor-pointer hover:bg-zinc-100/60 font-medium"
-                  style={{ height: ROW_H, background: '#f9f9f9' }}
-                  onClick={() => setExpanded(p => { const n = new Set(p); isExp ? n.delete(String(row.wbsId)) : n.add(String(row.wbsId)); return n })}>
-                  <div className="flex items-center min-w-0 flex-1" style={{ paddingLeft: 8 + (row.level - 1) * 20 }}>
+                  className="flex items-center shrink-0 border-b border-zinc-100 font-medium hover:bg-zinc-100/60"
+                  style={{ height: ROW_H, background: '#f9f9f9' }}>
+                  <div className="flex items-center min-w-0 flex-1 cursor-pointer"
+                    style={{ paddingLeft: 8 + (row.level - 1) * 20 }}
+                    onClick={() => setExpanded(p => { const n = new Set(p); isExp ? n.delete(String(row.wbsId)) : n.add(String(row.wbsId)); return n })}>
                     <div className="w-5 shrink-0 text-base" style={{ color: color.bar }}>
                       {(row.hasChildren || row.tasks.length > 0) ? (isExp ? '▾' : '▸') : <span className="text-zinc-300">–</span>}
                     </div>
@@ -836,14 +871,33 @@ export default function GanttChart({
                       {row.label}
                     </div>
                   </div>
-                  <div className="w-[100px] text-right shrink-0 pr-1 text-xs text-zinc-400">
-                    {row.spanStart ? fmtShort(row.spanStart) : '—'}
+                  {/* Editable date inputs for WBS rows */}
+                  <div className="w-[100px] shrink-0 flex items-center justify-end pr-1">
+                    {wbsNumId !== null ? (
+                      <input type="date"
+                        value={startVal}
+                        onClick={e => e.stopPropagation()}
+                        onChange={e => saveWbsDate('start_date', e.target.value)}
+                        className="w-full text-xs text-zinc-500 border-0 bg-transparent cursor-pointer focus:outline-none"
+                      />
+                    ) : (
+                      <span className="text-xs text-zinc-400">{displayStart ? fmtShort(displayStart) : '—'}</span>
+                    )}
                   </div>
-                  <div className="w-[100px] text-right shrink-0 pr-1 text-xs text-zinc-400">
-                    {row.spanEnd ? fmtShort(row.spanEnd) : '—'}
+                  <div className="w-[100px] shrink-0 flex items-center justify-end pr-1">
+                    {wbsNumId !== null ? (
+                      <input type="date"
+                        value={endVal}
+                        onClick={e => e.stopPropagation()}
+                        onChange={e => saveWbsDate('due_date', e.target.value)}
+                        className="w-full text-xs text-zinc-500 border-0 bg-transparent cursor-pointer focus:outline-none"
+                      />
+                    ) : (
+                      <span className="text-xs text-zinc-400">{displayEnd ? fmtShort(displayEnd) : '—'}</span>
+                    )}
                   </div>
                   <div className="w-10 text-right shrink-0 pr-3 text-xs text-zinc-400">
-                    {row.spanStart && row.spanEnd ? fmtDuration(row.spanStart, row.spanEnd) : '—'}
+                    {displayStart && displayEnd ? fmtDuration(displayStart, displayEnd) : '—'}
                   </div>
                   {activeBaselineSnapshot && (() => {
                     const baselineEnds = row.tasks
@@ -853,8 +907,8 @@ export default function GanttChart({
                     const baselineSpanEnd = baselineEnds.length
                       ? new Date(Math.max(...baselineEnds.map(d => d.getTime())))
                       : null
-                    const varianceDays = baselineSpanEnd && row.spanEnd
-                      ? daysBetween(baselineSpanEnd, row.spanEnd)
+                    const varianceDays = baselineSpanEnd && displayEnd
+                      ? daysBetween(baselineSpanEnd, displayEnd)
                       : null
                     return (
                       <div className={`w-14 text-right shrink-0 pr-3 text-xs font-medium ${
@@ -1008,24 +1062,22 @@ export default function GanttChart({
                 const color = row.colorIdx === -1 ? UNASSIGNED_COLOR : COLORS[row.colorIdx]
 
                 if (row.kind === 'wbs') {
-                  // WBS summary row with placeholder or span bar
-                  if (row.spanStart === null || row.spanEnd === null) {
-                    // Placeholder bar for empty WBS rows
-                    const placeholderStart = addDays(timelineStart, 7)
-                    const placeholderEnd = addDays(placeholderStart, 28)
-                    const left  = barLeft(placeholderStart)
-                    const width = barWidth(placeholderStart, placeholderEnd)
+                  // Use task-derived span OR manually-set WBS dates OR override
+                  const wbsNumId2 = row.wbsId !== 'unassigned' ? (row.wbsId as number) : null
+                  const dateOverride2 = wbsNumId2 !== null ? wbsDateOverride.get(wbsNumId2) : undefined
+                  const effectiveStart = row.spanStart ?? (dateOverride2?.start ? parseDate(dateOverride2.start) : null)
+                  const effectiveEnd   = row.spanEnd   ?? (dateOverride2?.end   ? parseDate(dateOverride2.end)   : null)
+
+                  if (effectiveStart === null || effectiveEnd === null) {
+                    // No dates at all — empty row
                     return (
                       <div key={`rwbs-${row.wbsId}-${i}`} className="relative border-b border-zinc-100"
-                        style={{ height: ROW_H, background: '#fafafa' }}>
-                        <div className="absolute rounded pointer-events-none"
-                          style={{ left, width, top: '50%', transform: 'translateY(-50%)', height: 8, background: color.bar, opacity: 0.3, border: '1px dashed rgba(0,0,0,0.2)' }} />
-                      </div>
+                        style={{ height: ROW_H, background: '#fafafa' }} />
                     )
                   } else {
-                    // Span bar showing actual task range (draggable with edge handles)
-                    const left  = barLeft(row.spanStart)
-                    const width = barWidth(row.spanStart, row.spanEnd)
+                    // Span bar showing date range
+                    const left  = barLeft(effectiveStart)
+                    const width = barWidth(effectiveStart, effectiveEnd)
                     const childOriginals = row.tasks
                       .filter(t => t.start && t.end)
                       .map(t => ({ taskId: t.id, origStart: parseDate(t.start), origEnd: parseDate(t.end) }))
@@ -1066,18 +1118,18 @@ export default function GanttChart({
                         <div
                           className="absolute rounded flex items-center cursor-grab"
                           style={{ left, width, top: '50%', transform: 'translateY(-50%)', height: 8, background: color.bar, opacity: 0.25, zIndex: 5 }}
-                          onMouseDown={e => onBarMouseDown(e, `wbs-${row.wbsId}`, row.spanStart!, row.spanEnd!, childOriginals)}>
+                          onMouseDown={e => onBarMouseDown(e, `wbs-${row.wbsId}`, effectiveStart, effectiveEnd, childOriginals)}>
                           {/* Left edge handle */}
                           <div
                             className="absolute top-0 bottom-0 w-1.5 rounded-l cursor-ew-resize hover:bg-black/20 z-20"
                             style={{ left: 0 }}
-                            onMouseDown={e => onEdgeMouseDown(e, `wbs-${row.wbsId}`, row.spanStart!, row.spanEnd!, 'left', childOriginals)}
+                            onMouseDown={e => onEdgeMouseDown(e, `wbs-${row.wbsId}`, effectiveStart, effectiveEnd, 'left', childOriginals)}
                           />
                           {/* Right edge handle */}
                           <div
                             className="absolute top-0 bottom-0 w-1.5 rounded-r cursor-ew-resize hover:bg-black/20 z-20"
                             style={{ right: 0 }}
-                            onMouseDown={e => onEdgeMouseDown(e, `wbs-${row.wbsId}`, row.spanStart!, row.spanEnd!, 'right', childOriginals)}
+                            onMouseDown={e => onEdgeMouseDown(e, `wbs-${row.wbsId}`, effectiveStart, effectiveEnd, 'right', childOriginals)}
                           />
                         </div>
                       </div>

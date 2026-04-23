@@ -125,6 +125,8 @@ function mapDataToWbsRows(
       parentId: item.parent_id ?? null,
       track: item.level === 1 ? (adrItemIds.has(item.id) ? 'ADR' : 'Biggy') : undefined,
       tasks: ganttTasks,
+      startDate: item.start_date ?? null,
+      dueDate: item.due_date ?? null,
     }
   })
 }
