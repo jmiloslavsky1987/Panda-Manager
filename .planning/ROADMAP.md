@@ -196,7 +196,13 @@ Plans:
   3. User can link a task to a milestone via a searchable dropdown; the linked milestone name is visible on the task
   4. User can set Likelihood (Low / Medium / High), Impact (Low / Medium / High), and Target Date on a risk; the risk list displays an auto-computed Risk Score (Likelihood x Impact) — the score is never stored as a DB column
   5. Cross-project task bulk updates are scoped to the current project; no route returns or modifies tasks outside the authenticated user's project membership (tasks-bulk multi-tenant gap resolved)
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 76-01-PLAN.md — OwnerCell FK upgrade + stakeholder auto-create (PICK-01, PICK-02)
+- [ ] 76-02-PLAN.md — Task blocked-by + milestone pickers + blocked indicator (PICK-03, PICK-04, PICK-05)
+- [ ] 76-03-PLAN.md — Risk Likelihood/Impact/Target Date + Risk Score badge (RISK-01, RISK-02, RISK-03, RISK-04)
+- [ ] 76-04-PLAN.md — tasks-bulk multi-tenant security fix (PICK-05 security)
 
 ### Phase 77: Intelligence & Gantt
 **Goal**: The project Overview tab surfaces a live exceptions panel listing specific actionable issues with direct navigation links and an auto-computed health badge; the Gantt derives phase date ranges from child tasks and supports baseline snapshot capture with ghost bar comparison and a numeric variance column
@@ -227,9 +233,9 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 75. Schema + Quick Wins + Admin | 5/5 | Complete    | 2026-04-22 |
-| 76. Pickers & Risk Fields | 0/TBD | Not started | - |
+| 76. Pickers & Risk Fields | 0/4 | Not started | - |
 | 77. Intelligence & Gantt | 0/TBD | Not started | - |
 | 78. AI & Content | 0/TBD | Not started | - |
 
 ---
-*Last updated: 2026-04-22 — Phase 75 planned: 5 plans in 2 waves*
+*Last updated: 2026-04-23 — Phase 76 planned: 4 plans in 1 wave (all parallel)*
