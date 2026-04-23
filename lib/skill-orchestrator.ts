@@ -72,7 +72,7 @@ export class SkillOrchestrator {
     } else if (params.skillName === 'workflow-diagram') {
       skillSpecificContext = await buildArchSkillContext(params.projectId);
     } else if (params.skillName === 'meeting-prep') {
-      skillSpecificContext = await buildMeetingPrepContext(params.projectId, params.input?.notes);
+      skillSpecificContext = await buildMeetingPrepContext(params.projectId, params.input?.transcript);
     }
 
     const context = await buildSkillContext(
