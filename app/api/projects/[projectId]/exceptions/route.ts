@@ -201,7 +201,7 @@ export async function GET(
           (CURRENT_DATE - created_at::date) AS days_stale
         FROM risks
         WHERE project_id = ${numericId}
-          AND status NOT IN ('closed', 'resolved', 'mitigated', 'accepted')
+          AND status = 'open'
           AND created_at < NOW() - INTERVAL '14 days'
         ORDER BY days_stale DESC
       `)
