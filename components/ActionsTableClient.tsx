@@ -353,8 +353,11 @@ export function ActionsTableClient({ actions, projectId }: ActionsTableClientPro
                     <TableCell>
                       <OwnerCell
                         value={action.owner}
+                        ownerId={action.owner_id}
                         projectId={projectId}
-                        onSave={async v => patchAction(action.id, { owner: v })}
+                        onSave={async ({ ownerId, ownerName }) =>
+                          patchAction(action.id, { owner: ownerName || null, owner_id: ownerId })
+                        }
                       />
                     </TableCell>
 

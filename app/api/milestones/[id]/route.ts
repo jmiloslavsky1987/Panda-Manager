@@ -8,7 +8,8 @@ import { requireProjectRole } from "@/lib/auth-server";
 const patchSchema = z.object({
   status: z.enum(['on_track', 'at_risk', 'complete', 'missed']).optional(),
   target: z.string().optional(),
-  owner: z.string().optional(),
+  owner: z.string().nullable().optional(),
+  owner_id: z.number().nullable().optional(),
   notes: z.string().optional(),
   date: z.string().nullable().optional(),
 })

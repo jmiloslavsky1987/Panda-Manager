@@ -394,8 +394,11 @@ export function RisksTableClient({ risks, artifacts, projectId }: RisksTableClie
                     <TableCell className="text-sm text-zinc-600">
                       <OwnerCell
                         value={risk.owner}
+                        ownerId={risk.owner_id}
                         projectId={projectId}
-                        onSave={(v) => patchRisk(risk.id, { owner: v })}
+                        onSave={async ({ ownerId, ownerName }) =>
+                          patchRisk(risk.id, { owner: ownerName || null, owner_id: ownerId })
+                        }
                       />
                     </TableCell>
                     <TableCell className="text-sm text-zinc-600">

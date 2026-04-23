@@ -12,7 +12,8 @@ import { requireProjectRole } from "@/lib/auth-server";
 
 const ActionPatchSchema = z.object({
   description: z.string().min(1).optional(),
-  owner: z.string().optional(),
+  owner: z.string().nullable().optional(),
+  owner_id: z.number().nullable().optional(),
   due: z.string().optional(),
   status: z.enum(['open', 'in_progress', 'completed', 'cancelled']).optional(),
   notes: z.string().optional(),

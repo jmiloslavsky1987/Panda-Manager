@@ -12,6 +12,7 @@ const TaskPatchSchema = z.object({
   title: z.string().min(1).optional(),
   description: z.string().nullable().optional(),
   owner: z.string().nullable().optional(),
+  owner_id: z.number().nullable().optional(),
   due: z.string().nullable().optional(),
   priority: z.string().nullable().optional(),
   type: z.string().nullable().optional(),

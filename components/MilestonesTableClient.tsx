@@ -399,8 +399,11 @@ export function MilestonesTableClient({ milestones, artifacts, projectId }: Mile
                     <TableCell className="text-sm text-zinc-600">
                       <OwnerCell
                         value={m.owner}
+                        ownerId={m.owner_id}
                         projectId={projectId}
-                        onSave={(v) => patchMilestone(m.id, { owner: v })}
+                        onSave={async ({ ownerId, ownerName }) =>
+                          patchMilestone(m.id, { owner: ownerName || null, owner_id: ownerId })
+                        }
                       />
                     </TableCell>
                     <TableCell className="text-sm text-zinc-400">

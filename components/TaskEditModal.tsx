@@ -29,6 +29,7 @@ function emptyForm(task?: Task) {
     title: task?.title ?? '',
     description: task?.description ?? '',
     owner: task?.owner ?? '',
+    owner_id: task?.owner_id ?? null,
     due: task?.due ?? null,
     start_date: task?.start_date ?? null,
     priority: task?.priority ?? '',
@@ -71,6 +72,7 @@ export function TaskEditModal({ task, projectId, trigger, onSaved }: TaskEditMod
       title: form.title,
       description: form.description || null,
       owner: form.owner || null,
+      owner_id: form.owner_id,
       due: form.due || null,
       start_date: form.start_date || null,
       priority: form.priority || null,
@@ -163,8 +165,11 @@ export function TaskEditModal({ task, projectId, trigger, onSaved }: TaskEditMod
               <OwnerCell
                 key={`owner-${form.owner}-${open}`}
                 value={form.owner}
+                ownerId={form.owner_id}
                 projectId={projectId}
-                onSave={async (v) => setForm((prev) => ({ ...prev, owner: v }))}
+                onSave={async ({ ownerId, ownerName }) =>
+                  setForm(prev => ({ ...prev, owner: ownerName, owner_id: ownerId ?? null }))
+                }
               />
             </div>
 
