@@ -62,6 +62,15 @@ export function WbsTree({ adrItems, biggyItems, projectId, showGeneratePlan, act
     )
   }, [tasks])
 
+  // Returns true if a WBS node name is associated with any blocked phase
+  const isNodeBlocked = (nodeName: string): boolean => {
+    const lower = nodeName.toLowerCase()
+    for (const phase of blockedPhases) {
+      if (lower.includes(phase) || phase.includes(lower)) return true
+    }
+    return false
+  }
+
   // Initialize expandedIds with all Level 1 nodes
   const [expandedIds, setExpandedIds] = useState<Set<number>>(() => {
     return new Set(items.filter(item => item.level === 1).map(item => item.id))
@@ -221,6 +230,7 @@ export function WbsTree({ adrItems, biggyItems, projectId, showGeneratePlan, act
               projectId={projectId}
               track={activeTrack}
               blockedPhases={blockedPhases}
+              isNodeBlocked={isNodeBlocked}
             />
           ))}
         </div>

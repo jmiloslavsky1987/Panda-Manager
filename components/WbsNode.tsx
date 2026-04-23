@@ -25,6 +25,7 @@ interface WbsNodeProps {
   projectId: number
   track: 'ADR' | 'Biggy'
   blockedPhases?: Set<string>
+  isNodeBlocked?: (nodeName: string) => boolean
 }
 
 const STATUS_CLASSES = {
@@ -48,6 +49,7 @@ function WbsNodeComponent({
   projectId,
   track,
   blockedPhases,
+  isNodeBlocked,
 }: WbsNodeProps) {
   const router = useRouter()
   const [isEditing, setIsEditing] = useState(false)
@@ -60,7 +62,9 @@ function WbsNodeComponent({
   const locked = node.level === 1
   const hasChildren = childrenMap.has(node.id)
   const isExpanded = expandedIds.has(node.id)
-  const hasBlockedTask = blockedPhases?.has((node.name ?? '').toLowerCase()) ?? false
+  const hasBlockedTask = isNodeBlocked
+    ? isNodeBlocked(node.name ?? '')
+    : (blockedPhases?.has((node.name ?? '').toLowerCase()) ?? false)
   const indentPx = (node.level - 1) * 16
 
   // Drag and drop
@@ -346,6 +350,7 @@ function WbsNodeComponent({
             projectId={projectId}
             track={track}
             blockedPhases={blockedPhases}
+            isNodeBlocked={isNodeBlocked}
           />
         ))}
 
