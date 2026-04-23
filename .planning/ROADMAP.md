@@ -161,7 +161,7 @@ Full details: `.planning/milestones/v8.0-ROADMAP.md` (archived)
 **Milestone Goal:** Elevate data quality, interaction polish, and AI-powered intelligence across the workspace — fixing data model gaps, wiring unbuilt UX interactions, and adding proactive exception surfacing and meeting prep.
 
 - [x] **Phase 75: Schema + Quick Wins + Admin** — All 5 DB migrations, milestone status enum fix (+ portfolio counter), Task Board DnD cross-column, Task Board week view, bulk actions, admin project settings form (completed 2026-04-22)
-- [ ] **Phase 76: Pickers & Risk Fields** — Owner stakeholder picker (FK + free-text fallback), task dependency/milestone pickers, blocked indicator, risk Likelihood/Impact/Target Date with auto-computed Risk Score; closes tasks-bulk multi-tenant security gap
+- [x] **Phase 76: Pickers & Risk Fields** — Owner stakeholder picker (FK + free-text fallback), task dependency/milestone pickers, blocked indicator, risk Likelihood/Impact/Target Date with auto-computed Risk Score; closes tasks-bulk multi-tenant security gap (completed 2026-04-23)
 - [ ] **Phase 77: Intelligence & Gantt** — Per-project exceptions panel with auto-computed health status and deep-links; Gantt phase dates derived from tasks; Gantt baseline snapshot + ghost bar overlay + variance column
 - [ ] **Phase 78: AI & Content** — Meeting Prep skill via existing BullMQ/skill infrastructure; inline output rendering with copy-to-clipboard; Outputs Library inline preview (markdown + DOCX via docx-preview, PPTX as slide count + download); XSS hardening for all react-markdown instances
 
@@ -233,7 +233,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 75. Schema + Quick Wins + Admin | 5/5 | Complete    | 2026-04-22 |
-| 76. Pickers & Risk Fields | 3/4 | In Progress|  |
+| 76. Pickers & Risk Fields | 4/4 | Complete   | 2026-04-23 |
 | 77. Intelligence & Gantt | 0/TBD | Not started | - |
 | 78. AI & Content | 0/TBD | Not started | - |
 

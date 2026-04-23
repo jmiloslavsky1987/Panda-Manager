@@ -4,13 +4,13 @@ milestone: v9.0
 milestone_name: — UX Maturity & Intelligence
 status: executing
 stopped_at: Completed 76-03-PLAN.md
-last_updated: "2026-04-23T01:20:26.999Z"
-last_activity: "2026-04-23 — 76-01 complete: OwnerCell FK-based stakeholder picker with auto-create + PATCH schemas for tasks, actions, milestones"
+last_updated: "2026-04-23T01:23:07.389Z"
+last_activity: "2026-04-22 — 76-03 complete: Risk Score badge column; computeRiskScore TDD; likelihood/impact/target_date editable fields + PATCH schema"
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 9
-  completed_plans: 8
+  completed_plans: 9
   percent: 99
 ---
 
@@ -111,6 +111,10 @@ Progress: [██████████] 99%
 - (76-03) computeRiskScore returns N/A result when either likelihood or impact is null/undefined/invalid — avoids misleading scores for partially-configured risks
 - (76-03) Risk Score is computed via IIFE in table cell JSX; no separate component needed for single-use render pattern
 - (76-03) owner_id + owner added to risks PATCH schema in 76-03 (deferred from 76-01 to avoid parallel file conflict)
+- (76-02) Left join milestones in getTasksForProject for milestone_name — avoids TaskBoard prop drilling; TaskWithBlockedStatus extends Task with is_blocked + milestone_name
+- (76-02) Tasks API uses ?projectId=N (camelCase); milestones fetched via /api/projects/{id}/milestones returning {milestones:[...]}
+- (76-02) Blocked-by is single-select only — PICK-03 multi-select text superseded by locked CONTEXT.md decision
+- (76-02) blockedPhases Set<string> computed in WbsTree useMemo; propagated to WbsNode via prop for recursive blocked badge rendering
 - (76-04) POST /api/tasks-bulk uses first task's project_id to gate entire batch via requireProjectRole — mirrors DELETE handler pattern
 - (76-04) Update wrapped in transaction with SET LOCAL app.current_project_id for DB-level RLS enforcement
 - (76-04) 404 returned when task_ids[0] not found (previously fell through to 500)
@@ -124,6 +128,6 @@ Progress: [██████████] 99%
 
 ## Session Continuity
 
-Last session: 2026-04-23T01:20:26.997Z
-Stopped at: Completed 76-03-PLAN.md
+Last session: 2026-04-23T01:22:02Z
+Stopped at: Completed 76-02-PLAN.md
 Resume file: None
