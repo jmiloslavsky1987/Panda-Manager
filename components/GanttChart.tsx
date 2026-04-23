@@ -883,15 +883,16 @@ export default function GanttChart({
                 <div className="w-[100px] shrink-0 flex items-center justify-end pr-1">
                   <input type="date"
                     value={isUndatedLeft ? '' : fmtISO(start)}
-                    onChange={async (e) => {
+                    onChange={(e) => {
                       const v = e.target.value || null
-                      await fetch(`/api/tasks/${row.task.id}`, {
+                      // Update state immediately so controlled input reflects change
+                      if (v) setDragOverride(prev => new Map(prev).set(row.task.id, { start: parseDate(v), end }))
+                      else setDragOverride(prev => { const m = new Map(prev); m.delete(row.task.id); return m })
+                      fetch(`/api/tasks/${row.task.id}`, {
                         method: 'PATCH',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ start_date: v }),
                       })
-                      if (v) setDragOverride(prev => new Map(prev).set(row.task.id, { start: parseDate(v), end }))
-                      else setDragOverride(prev => { const m = new Map(prev); m.delete(row.task.id); return m })
                     }}
                     className="w-full text-xs text-zinc-500 border-0 bg-transparent cursor-pointer focus:outline-none"
                   />
@@ -899,15 +900,16 @@ export default function GanttChart({
                 <div className="w-[100px] shrink-0 flex items-center justify-end pr-1">
                   <input type="date"
                     value={isUndatedLeft ? '' : fmtISO(end)}
-                    onChange={async (e) => {
+                    onChange={(e) => {
                       const v = e.target.value || null
-                      await fetch(`/api/tasks/${row.task.id}`, {
+                      // Update state immediately so controlled input reflects change
+                      if (v) setDragOverride(prev => new Map(prev).set(row.task.id, { start, end: parseDate(v) }))
+                      else setDragOverride(prev => { const m = new Map(prev); m.delete(row.task.id); return m })
+                      fetch(`/api/tasks/${row.task.id}`, {
                         method: 'PATCH',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ due: v }),
                       })
-                      if (v) setDragOverride(prev => new Map(prev).set(row.task.id, { start, end: parseDate(v) }))
-                      else setDragOverride(prev => { const m = new Map(prev); m.delete(row.task.id); return m })
                     }}
                     className="w-full text-xs text-zinc-500 border-0 bg-transparent cursor-pointer focus:outline-none"
                   />

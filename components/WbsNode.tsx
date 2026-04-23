@@ -57,7 +57,19 @@ function WbsNodeComponent({
   const [saving, setSaving] = useState(false)
   const [hovering, setHovering] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [startDate, setStartDate] = useState(node.start_date ?? '')
+  const [dueDate, setDueDate] = useState(node.due_date ?? '')
   const inputRef = useRef<HTMLInputElement>(null)
+
+  const saveDate = async (field: 'start_date' | 'due_date', value: string) => {
+    if (field === 'start_date') setStartDate(value)
+    else setDueDate(value)
+    await fetch(`/api/projects/${projectId}/wbs/${node.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ [field]: value || null }),
+    })
+  }
 
   const locked = node.level === 1
   const hasChildren = childrenMap.has(node.id)
@@ -290,6 +302,24 @@ function WbsNodeComponent({
 
         {/* Saving indicator */}
         {saving && <span className="text-xs text-zinc-500">Saving...</span>}
+
+        {/* Date inputs — inline Start / Due */}
+        <input
+          type="date"
+          value={startDate}
+          onChange={e => saveDate('start_date', e.target.value)}
+          onClick={e => e.stopPropagation()}
+          title="Start date"
+          className="w-[110px] text-xs text-zinc-500 border border-zinc-200 rounded px-1.5 py-0.5 bg-white cursor-pointer focus:outline-none focus:ring-1 focus:ring-indigo-400 shrink-0"
+        />
+        <input
+          type="date"
+          value={dueDate}
+          onChange={e => saveDate('due_date', e.target.value)}
+          onClick={e => e.stopPropagation()}
+          title="Due date"
+          className="w-[110px] text-xs text-zinc-500 border border-zinc-200 rounded px-1.5 py-0.5 bg-white cursor-pointer focus:outline-none focus:ring-1 focus:ring-indigo-400 shrink-0"
+        />
 
         {/* Status badge/select */}
         {locked ? (

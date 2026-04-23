@@ -817,6 +817,8 @@ export const wbsItems = pgTable('wbs_items', {
   status: wbsItemStatusEnum('status').default('not_started').notNull(),
   display_order: integer('display_order').default(0).notNull(),
   source_trace: text('source_trace'),
+  start_date: text('start_date'),
+  due_date: text('due_date'),
   created_at: timestamp('created_at').defaultNow().notNull(),
 });
 

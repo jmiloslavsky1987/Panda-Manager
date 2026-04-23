@@ -12,9 +12,11 @@ const UpdateWbsItemSchema = z
   .object({
     name: z.string().min(1).optional(),
     status: z.enum(['not_started', 'in_progress', 'complete']).optional(),
+    start_date: z.string().nullable().optional(),
+    due_date: z.string().nullable().optional(),
   })
-  .refine((data) => data.name !== undefined || data.status !== undefined, {
-    message: 'At least one field (name or status) is required',
+  .refine((data) => Object.keys(data).length > 0, {
+    message: 'At least one field is required',
   })
 
 // ─── PATCH /api/projects/[projectId]/wbs/[itemId] ─────────────────────────────
@@ -46,7 +48,7 @@ export async function PATCH(
     return Response.json({ error: parsed.error.flatten() }, { status: 400 })
   }
 
-  const { name, status } = parsed.data
+  const { name, status, start_date, due_date } = parsed.data
 
   try {
     // Fetch the item to check its level
@@ -66,9 +68,11 @@ export async function PATCH(
     }
 
     // Build update object with only provided fields
-    const updateFields: { name?: string; status?: 'not_started' | 'in_progress' | 'complete' } = {}
+    const updateFields: { name?: string; status?: 'not_started' | 'in_progress' | 'complete'; start_date?: string | null; due_date?: string | null } = {}
     if (name !== undefined) updateFields.name = name
     if (status !== undefined) updateFields.status = status
+    if (start_date !== undefined) updateFields.start_date = start_date
+    if (due_date !== undefined) updateFields.due_date = due_date
 
     // Perform update
     const [updatedItem] = await db
