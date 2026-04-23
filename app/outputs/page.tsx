@@ -50,9 +50,11 @@ export default function OutputLibraryPage() {
     });
   }, [outputs]);
 
-  const openFile = async (id: number) => {
-    const res = await fetch(`/api/outputs/${id}/open`);
-    if (!res.ok) toast.error('Could not open file');
+  const downloadFile = (id: number, filename?: string | null) => {
+    const a = document.createElement('a');
+    a.href = `/api/outputs/${id}/download`;
+    if (filename) a.download = filename;
+    a.click();
   };
 
   const regenerate = async (output: OutputRow) => {
@@ -165,16 +167,16 @@ export default function OutputLibraryPage() {
                     )}
                     {type === 'pptx' && output.filepath && (
                       <button
-                        onClick={e => { e.stopPropagation(); openFile(output.id); }}
+                        onClick={e => { e.stopPropagation(); downloadFile(output.id, output.filename); }}
                         className="text-xs px-2 py-1 border border-zinc-200 rounded hover:bg-zinc-50"
-                      >Download</button>
+                      >↓ Download</button>
                     )}
-                    {/* Non-PPTX binary file: show Open button */}
+                    {/* Non-PPTX binary file: download */}
                     {output.filepath && type !== 'pptx' && type !== 'html' && (
                       <button
-                        onClick={e => { e.stopPropagation(); openFile(output.id); }}
+                        onClick={e => { e.stopPropagation(); downloadFile(output.id, output.filename); }}
                         className="text-xs px-2 py-1 border border-zinc-200 rounded hover:bg-zinc-50"
-                      >Open</button>
+                      >↓ Download</button>
                     )}
                     {!output.archived && (
                       <button
