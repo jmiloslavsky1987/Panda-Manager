@@ -49,17 +49,33 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: 'No fields to update in patch' }, { status: 400 })
   }
 
-  try {
-    await db
-      .update(tasks)
-      .set(updateFields)
-      .where(inArray(tasks.id, task_ids))
+  // Look up first task to get project_id for membership check
+  const [firstTask] = await db
+    .select({ project_id: tasks.project_id })
+    .from(tasks)
+    .where(eq(tasks.id, task_ids[0]))
 
+  if (!firstTask) {
+    return Response.json({ error: 'Task not found' }, { status: 404 })
+  }
+
+  // Verify user is a member of this project
+  const { redirectResponse: authRedirect } = await requireProjectRole(firstTask.project_id, 'user')
+  if (authRedirect) return authRedirect
+
+  // Run update inside transaction with RLS session variable
+  try {
+    await db.transaction(async (tx) => {
+      await tx.execute(sql.raw(`SET LOCAL app.current_project_id = ${firstTask.project_id}`))
+      await tx.update(tasks).set(updateFields).where(inArray(tasks.id, task_ids))
+    })
     return Response.json({ ok: true, count: task_ids.length })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Bulk update failed'
     return Response.json({ error: message }, { status: 500 })
   }
+
+  void session; // session is validated via requireSession; requireProjectRole re-checks membership
 }
 
 // ─── DELETE /api/tasks-bulk ───────────────────────────────────────────────────

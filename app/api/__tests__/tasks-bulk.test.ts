@@ -105,9 +105,9 @@ describe('POST /api/tasks-bulk', () => {
     await POST(req as any)
 
     expect(txExecuteMock).toHaveBeenCalledOnce()
-    // SET LOCAL call should include the project_id (1)
+    // SET LOCAL call should include the project_id (1) — sql.raw() returns a Drizzle SQL object
     const setLocalArg = txExecuteMock.mock.calls[0][0]
-    expect(String(setLocalArg)).toContain('1')
+    expect(JSON.stringify(setLocalArg)).toContain('1')
 
     expect(txUpdate).toHaveBeenCalledOnce()
   })
