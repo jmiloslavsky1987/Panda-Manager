@@ -351,8 +351,6 @@ function WbsNodeComponent({
             track={track}
             blockedPhases={blockedPhases}
             isNodeBlocked={isNodeBlocked}
-            nodeTasks={nodeTasksMap?.get(child.id) ?? []}
-            nodeTasksMap={nodeTasksMap}
           />
         ))}
 
