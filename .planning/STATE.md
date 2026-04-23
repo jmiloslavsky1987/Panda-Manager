@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v9.0
 milestone_name: — UX Maturity & Intelligence
 status: executing
-stopped_at: Completed 76-04-PLAN.md
-last_updated: "2026-04-23T01:12:39.108Z"
-last_activity: "2026-04-22 — 75-05 complete: ProjectSettingsForm + PATCH /settings route + active_tracks WbsTree filter + WBS page activeTracks prop wiring"
+stopped_at: Completed 76-01-PLAN.md
+last_updated: "2026-04-23T01:14:17.945Z"
+last_activity: "2026-04-23 — 76-01 complete: OwnerCell FK-based stakeholder picker with auto-create + PATCH schemas for tasks, actions, milestones"
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 9
-  completed_plans: 6
+  completed_plans: 7
   percent: 99
 ---
 
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-04-22 after v9.0 milestone start)
 ## Current Position
 
 Phase: 76 of 78 (Pickers & Risk Fields)
-Plan: 4 of 5 complete — 76-04 DONE (tasks-bulk POST security gap closed)
+Plan: 1 of 5 complete — 76-01 DONE (OwnerCell FK picker + dual-write for tasks/actions/risks/milestones)
 Status: In Progress
-Last activity: 2026-04-23 — 76-04 complete: POST /api/tasks-bulk hardened with requireProjectRole + RLS transaction
+Last activity: 2026-04-23 — 76-01 complete: OwnerCell FK-based stakeholder picker with auto-create + PATCH schemas for tasks, actions, milestones
 
 Progress: [██████████] 99%
 
@@ -104,6 +104,10 @@ Progress: [██████████] 99%
 
 ### v9.0 Phase 76 Decisions
 
+- (76-01) OwnerCell datalist preserved for native browser autocomplete UX while tracking stakeholder by id internally
+- (76-01) Blur handler resolves: empty->null, case-insensitive match->existing FK, no match->POST auto-create
+- (76-01) risks PATCH schema owner_id excluded from 76-01 — handled by 76-03 to avoid parallel file conflict
+- (76-01) Dual-write: both owner text and owner_id sent on save for backwards compatibility with display consumers
 - (76-04) POST /api/tasks-bulk uses first task's project_id to gate entire batch via requireProjectRole — mirrors DELETE handler pattern
 - (76-04) Update wrapped in transaction with SET LOCAL app.current_project_id for DB-level RLS enforcement
 - (76-04) 404 returned when task_ids[0] not found (previously fell through to 500)
@@ -117,6 +121,6 @@ Progress: [██████████] 99%
 
 ## Session Continuity
 
-Last session: 2026-04-23T01:12:39.107Z
-Stopped at: Completed 76-04-PLAN.md
+Last session: 2026-04-23T01:14:17.943Z
+Stopped at: Completed 76-01-PLAN.md
 Resume file: None
