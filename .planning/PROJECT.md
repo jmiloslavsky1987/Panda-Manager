@@ -92,6 +92,20 @@ Every PS delivery intelligence the team has built — 15 AI skills, all project 
 - ✓ Wizard extraction fix: AiPreviewStep.tsx rewritten from broken SSE contract to BullMQ polling pattern — v8.0 out-of-band
 - ✓ Weekly focus fix: milestone status enum typo ('complete' → 'completed') + polling loop in WeeklyFocus.tsx — v8.0 out-of-band
 
+<!-- v9.0 — UX Maturity & Intelligence (2026-04-23) -->
+- ✓ Schema foundation: 5 DB migrations (gantt_baselines, chat_messages table, owner_id FKs on all entity tables, risk likelihood/impact/target_date, active_tracks JSONB on projects) — v9.0 Phase 75 (75-01)
+- ✓ Task Board DnD cross-column drag, bulk status change + bulk delete, Week view with unscheduled group — v9.0 Phase 75 (TASK-01–05)
+- ✓ Milestone status enum (on_track/at_risk/complete/missed) with coercion map; Portfolio overdue counter live query — v9.0 Phase 75 (MILE-01–02)
+- ✓ Admin > Settings form: project rename, go-live date, description/notes, ADR/Biggy track toggle (render-layer only) — v9.0 Phase 75 (ADMIN-01–04)
+- ✓ FK-based owner picker (OwnerCell) with stakeholder auto-create and free-text fallback across Tasks/Actions/Risks/Milestones — v9.0 Phase 76 (PICK-01–02)
+- ✓ Task blocked-by picker (single-select), task→milestone link picker; blocked indicator on Task Board and WBS — v9.0 Phase 76 (PICK-03–05)
+- ✓ Risk structured fields: Likelihood/Impact/Target Date; auto-computed Risk Score via pure function (never stored); tasks-bulk multi-tenant POST security gap closed — v9.0 Phase 76 (RISK-01–04)
+- ✓ Exceptions panel on Overview: live rule-based detection of overdue tasks / at-risk milestones / stale items; auto-computed health status (Healthy/At Risk/Red); deep-link navigation per exception — v9.0 Phase 77 (HLTH-01–03)
+- ✓ Gantt phase date bars derived from earliest task start / latest task due date across all assigned tasks — v9.0 Phase 77 (GANTT-01)
+- ✓ Gantt baseline: save named snapshot, ghost bar overlay, Variance column (+/- days from baseline end per row) — v9.0 Phase 77 (GANTT-02–04)
+- ✓ Meeting Prep skill: full SKILL.md + context builder + BullMQ orchestrator branch; output renders inline with Copy to Clipboard; prompt editable via Admin > Prompts — v9.0 Phase 78 (SKILL-01–04)
+- ✓ Outputs Library inline preview: markdown rendered as formatted text, DOCX via docx-preview (dynamic import, ssr:false), PPTX slide count + download; rehype-sanitize XSS hardening on all ReactMarkdown instances — v9.0 Phase 78 (OUT-01–02)
+
 <!-- v6.0 — Dashboard, Navigation & Intelligence (2026-04-14) -->
 - ✓ Skills portability: lib/skill-path.ts resolves SKILL.md dynamically at runtime — no hardcoded paths — v6.0 Phase 43 (SKILL-01)
 - ✓ Navigation restructure: Plan first in Delivery, WBS/Task Board/Gantt promoted to top level, Swimlane removed, Decisions → Delivery, Intel → Context tab, Engagement History → Admin — v6.0 Phase 44 (NAV-01–05)
@@ -110,41 +124,21 @@ Every PS delivery intelligence the team has built — 15 AI skills, all project 
 
 ## Context
 
-v8.0 shipped 2026-04-22. Full stack: Next.js 16 (Turbopack), PostgreSQL, Redis/BullMQ, better-auth, Drizzle ORM, Vercel AI SDK, @xyflow/react, @anthropic-ai/sdk, Recharts. 75 phases (including inserted phases), ~382 plans completed across v1.0–v8.0. ~75,894+ LOC TypeScript. Test suite: 148+ files passing. Production build clean.
+v9.0 shipped 2026-04-23. Full stack: Next.js 16 (Turbopack), PostgreSQL, Redis/BullMQ, better-auth, Drizzle ORM, Vercel AI SDK, @xyflow/react, @anthropic-ai/sdk, Recharts, docx-preview. 78 phases (including inserted phases), ~396 plans completed across v1.0–v9.0. ~75,894+ LOC TypeScript (v8.0 baseline; v9.0 adds ~1,800 LOC net). Test suite: 157+ files passing (9 new in Phase 78). Production build clean.
 
-v8.0 delivered: AI usage audit (91% genuine AI), feature consistency audit (13 findings resolved), DB enums for risk/milestone status, multi-tenant isolation at all route handlers + cache + BullMQ, Pass 5 entity lifecycle management (pg_trgm + Claude change detection), DELETE handlers for all entity types, deployment-ready env-var configuration with DEPLOYMENT.md guide, Dockerfile + PM2 production configs, AiPreviewStep.tsx wizard extraction fixed (BullMQ polling pattern), weekly focus job fixed.
+v9.0 delivered: schema foundation (5 migrations), Task Board DnD + bulk + week view, FK-based owner/dependency/milestone pickers with auto-create stakeholder, structured risk fields + computed Risk Score, Exceptions panel with auto-computed health + deep-links, Gantt phase date aggregation + baseline snapshot + ghost bars + variance column, Meeting Prep skill, Outputs Library inline preview (md/DOCX/PPTX), XSS hardening (rehype-sanitize on all ReactMarkdown).
 
-Code root migrated 2026-04-22: application code lives at `/Users/jmiloslavsky/Documents/Panda-Manager` (git: github.com/jmiloslavsky1987/Panda-Manager). GSD planning root remains at `/Users/jmiloslavsky/Documents/Project Assistant Code`.
+Code root: `/Users/jmiloslavsky/Documents/Panda-Manager` (git: github.com/jmiloslavsky1987/Panda-Manager). GSD planning root: `/Users/jmiloslavsky/Documents/Project Assistant Code`.
 
 Known tech debt entering next milestone:
 - RFCTR-02: Replace deterministic Claude calls with hardcode — deferred (weekly-focus.ts identified as candidate)
 - INGEST-02: Move approved ingested item to different section — deferred
 - TEST-01: 4 portfolio TDD RED stubs — accepted as known gap (stubs remain but not blocking)
-- Nyquist validation incomplete: most v7.0–v8.0 phases at `nyquist_compliant: false` (draft status)
+- STKHLD-01–03: Stakeholder contact extraction (email/Slack handle) — deferred to future milestone
+- CHAT-01–03: Chat persistence + pinned answers — deferred to future milestone
 - Empty state CTA onClick handlers are `() => {}` placeholders (wiring to creation modals deferred)
 
 This is a full rewrite of a previous Claude Code project assistant build (8 phases, React/Vite/Express/Google Drive architecture). SKILL.md files read from disk at runtime (not bundled). All data model patterns (archive-on-replace, dual-write atomicity, append-only history, source tracing, ID conventions) preserved from the original skill ecosystem.
-
-## Current Milestone: v9.0 UX Maturity & Intelligence
-
-**Goal:** Elevate data quality, interaction polish, and AI-powered intelligence across the workspace — fixing data model gaps, wiring unbuilt UX interactions, and adding proactive exception surfacing + meeting prep.
-
-**Target features:**
-- Portfolio overdue milestones counter fix (live query)
-- Task Board drag-and-drop + working bulk actions
-- Gantt ↔ task date connection (phase dates computed from tasks)
-- Owner fields: stakeholder picker (saves ID, free-text fallback)
-- Task dependency + milestone link pickers (searchable dropdowns)
-- Risks: Likelihood, Impact, Target Date, Status fields + Risk Score
-- Milestones: Status field (On Track / At Risk / Complete / Missed)
-- Admin > Project Settings: rename, go-live date, description, active tracks
-- Outputs Library: inline preview / render panel
-- Chat: conversation persistence + pin AI responses
-- Stakeholder ingestion: extract email + Slack handle from docs
-- Health Dashboard: proactive exceptions panel (rule-based, replaces manual health field)
-- AI Meeting Prep skill/entry point
-- Task Board: Week view toggle
-- Gantt Baseline Tracking (snapshot + ghost bars)
 
 ## Constraints
 
@@ -197,6 +191,13 @@ This is a full rewrite of a previous Claude Code project assistant build (8 phas
 | Weekly-focus job registration on project create is best-effort (v7.0) | Redis unavailability should not fail project creation; job registration is a convenience feature | ✓ Correct — graceful degradation; job auto-schedules on next Redis reconnect |
 | Static track config constants define phase names (v7.0) | Phase names must not drift as DB data changes; hardcoded config + DB match-by-name keeps display stable | ✓ Correct — static tracks always render even before DB phases are created |
 | Knowledge Base retained as cross-project institutional knowledge capture (v7.0) | Audited and confirmed distinct use case from document ingestion — freeform entries linkable to risks/engagement history | ✓ Correct — ~1,408 LOC fully functional; no deprecation needed |
+| Risk Score computed as pure function, never stored (v9.0) | Storing derived values creates sync drift risk; computed at render from likelihood × impact lookup table | ✓ Correct — lib/risk-score.ts; zero DB write, instant updates |
+| OwnerCell dual-write: owner text + owner_id FK (v9.0) | Display consumers still read text column; FK enables stakeholder-linked queries; backwards compatible without migration of existing data | ✓ Correct — both fields sent in PATCH; no downstream breakage |
+| Active tracks filter is render-layer only (v9.0) | Skill context, extraction pipelines, and Gantt baselines require full WBS dataset regardless of display preference; filtering only at UI layer prevents data loss | ✓ Correct — ADMIN-04 render filter; pipelines unaffected |
+| Stale detection uses created_at not updated_at for tasks/actions/risks (v9.0) | tasks has no updated_at; last_updated on actions/risks is unreliable TEXT field — created_at is the only trustworthy timestamp | ✓ Correct — consistent stale detection without schema changes |
+| Ghost bars + Variance use baseline snapshot JSONB, not live join (v9.0) | Baselines must be immutable point-in-time records; live join would mutate "baseline" as tasks change — defeating the purpose | ✓ Correct — gantt_baselines.snapshot_json captures full task date state at save time |
+| Meeting Prep prompt force-added to git via `git add -f` (v9.0) | `/skills/` directory is root-anchored gitignored; meeting-prep.md must be version-controlled for Admin > Prompts editing and Docker deployment | ✓ Correct — force-add pattern consistent with other SKILL.md handling |
+| docx-preview dynamic import inside useEffect only (v9.0) | docx-preview uses DOM APIs unavailable in Node.js SSR; same ssr:false pattern as React Flow and CodeMirror | ✓ Correct — no hydration errors; preview renders after mount |
 
 ---
-*Last updated: 2026-04-22 after v9.0 milestone start*
+*Last updated: 2026-04-23 after v9.0 milestone*

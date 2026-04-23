@@ -1,5 +1,14 @@
 # Milestones
 
+## v9.0 UX Maturity & Intelligence (Shipped: 2026-04-23)
+
+**Phases completed:** 4 phases, 14 plans, 0 tasks
+
+**Key accomplishments:**
+- (none recorded)
+
+---
+
 ## v8.0 Codebase Refactor & Multi-Tenant Deployment (Shipped: 2026-04-22)
 
 **Phases completed:** 17 phases, 63 plans, 59 tasks

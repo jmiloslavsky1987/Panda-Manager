@@ -318,6 +318,55 @@
 
 ---
 
+## Milestone: v9.0 — UX Maturity & Intelligence
+
+**Shipped:** 2026-04-23
+**Phases:** 4 (75–78) | **Plans:** 14 | **Duration:** 2 days (2026-04-22 → 2026-04-23)
+**Code delta:** ~+1,800 LOC TypeScript net; 9 new test files; 157+ test files passing
+
+### What Was Built
+
+- **Schema foundation (Phase 75):** 5 DB migrations (gantt_baselines, chat_messages, owner_id FKs on tasks/actions/risks/milestones, risk likelihood/impact/target_date, active_tracks JSONB); Task Board DnD cross-column + bulk status change + bulk delete; Task Board Week view with Unscheduled group; milestone status enum; Portfolio overdue milestones live query; Admin > Settings form (rename, go-live, description, active tracks toggle — render-layer only)
+- **Pickers & risk fields (Phase 76):** FK-based OwnerCell with stakeholder auto-create and free-text fallback across all entity types (dual-write for backwards compat); task blocked-by picker + blocked indicator on Task Board and WBS; task→milestone link picker; risk Likelihood/Impact/Target Date with auto-computed Risk Score (pure function, never stored); tasks-bulk POST multi-tenant security gap closed with requireProjectRole + DB-level RLS transaction
+- **Intelligence & Gantt (Phase 77):** Exceptions API returning typed ExceptionRecord array (overdue tasks, at-risk milestones, stale items); ExceptionsPanel with auto-computed health status (Healthy/At Risk/Red) and deep-link navigation; Overview left column shows HealthDashboard + ExceptionsPanel stacked; Gantt WBS phase bars derived from earliest task start / latest task due across all assigned tasks; Save Baseline snapshot (JSONB), ghost bar overlay at 0.3 opacity, Variance column (positive = behind = red; negative = ahead = green)
+- **AI & content (Phase 78):** Meeting Prep skill (SKILL.md + context builder + BullMQ orchestrator branch); inline output rendering with Copy to Clipboard (stripMarkdown utility); prompt editable via existing Admin > Prompts; Outputs Library inline preview (markdown formatted, DOCX via docx-preview dynamic import, PPTX slide count + download); rehype-sanitize applied to all ReactMarkdown instances closing confirmed XSS gap; 11 new passing tests (6 context builder + 2 orchestrator + 3 stripMarkdown)
+
+### What Worked
+
+- **Tight scope with locked CONTEXT.md decisions:** Having locked decisions in CONTEXT.md before planning (blocked-by single-select, PPTX no inline render, docx-preview SSR pattern) prevented mid-execution scope creep. Decisions made once applied cleanly across all 14 plans.
+- **Co-located work eliminates tiny phases:** ADMIN-04 moved into Phase 75 (admin settings form already there), tasks-bulk security gap moved into Phase 76 (bulk action UI already there), XSS hardening moved into Phase 78 (new ReactMarkdown surface introduced there). Zero extra phases needed for co-located work.
+- **Pure function Risk Score:** lib/risk-score.ts as a standalone pure function made the implementation trivially simple — computed in IIFE at render, no state management, no DB write. Zero sync drift possible.
+- **Stale detection with created_at:** Accepting that tasks/actions/risks have unreliable updated_at and designing stale detection around created_at was the right pragmatic call — worked cleanly without schema changes or backfill.
+- **TDD Red-Green for Meeting Prep:** vi.useFakeTimers() for date-window filtering tests gave deterministic coverage; 11 tests green before implementation started — caught a context builder edge case early.
+
+### What Was Inefficient
+
+- **Migration management friction:** DB was previously managed by drizzle-kit (__drizzle_migrations) but run-migrations.ts uses a different _migrations table — required manual psql + seeding of tracking table as a one-time reconciliation. Ideally documented in DEPLOYMENT.md for fresh installs.
+- **Parallel file conflict on risks PATCH schema:** 76-01 and 76-03 both needed to modify the risks PATCH handler (owner_id vs likelihood/impact fields). Solved by explicitly deferring risks owner_id to 76-03, but required pre-planning of file ownership across waves.
+- **git add -f for skills:** Meeting Prep SKILL.md required `git add -f` because `/skills/` is root-gitignored. This works but is invisible to standard git status. Should be documented in CLAUDE.md so future skill additions don't require rediscovery.
+
+### Patterns Established
+
+- **OwnerCell blur-based auto-create:** POST /api/stakeholders on unknown name → save returned FK + toast; clear owner_id on empty; dual-write text + FK. Reusable for any entity with owner assignment.
+- **docx-preview SSR-safe pattern:** `dynamic(() => import(...), { ssr: false })` inside useEffect only (never at module level) — same as React Flow / CodeMirror; now a standard for DOM-dependent preview libraries.
+- **Exceptions panel architecture:** Server-side typed ExceptionRecord array → Client component with cap at 10; type-sorted (overdue_task → at_risk_milestone → stale_item); metrics:invalidate event for cross-tab refresh. Reusable for any "live issue detection" surface.
+- **Ghost bar + variance pattern:** Baseline stored as JSONB snapshot; ghost bar at 0.3 opacity over current bar; variance = daysBetween(baselineEnd, currentEnd) positive=red/negative=green. Generalizes to any comparison timeline view.
+
+### Key Lessons
+
+1. **Lock CONTEXT.md decisions before parallel wave planning** — 14 plans executed in 2 days; decisions like blocked-by cardinality, PPTX render strategy, and docx-preview SSR approach were made once in CONTEXT.md and applied without deviation across all waves. Without pre-lock, parallel plan checkers would re-litigate these decisions.
+2. **Dual-write is the right backwards-compat pattern for FK upgrades** — adding owner_id alongside owner text (not replacing it) meant zero display breakage; all read-paths continued working; FK adoption gradual. Use this pattern for any FK enrichment of an existing text column.
+3. **Co-locate security fixes with the feature that introduces the surface** — tasks-bulk POST security gap was fixed in Phase 76 (bulk actions) and XSS hardening in Phase 78 (ReactMarkdown surface). Co-location ensures the fix is tested alongside the feature and never orphaned.
+4. **Document force-add patterns in CLAUDE.md** — `git add -f` for gitignored operational files (SKILL.md, config) is invisible to standard git status; must be documented at discovery time or it will be rediscovered with confusion next session.
+
+### Cost Observations
+
+- Model: Claude Sonnet 4.6 throughout
+- Sessions: ~4 sessions across 2 days
+- Notable: 4 phases in 2 days with 14 plans — fastest milestone per-plan rate. Tight scope, locked decisions, and co-located work made parallel wave execution near-frictionless.
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -332,6 +381,7 @@
 | v6.0 | 16 | 7 days | Dashboard + WBS + Architecture + extraction pipeline maturity; gap-closure phase pattern introduced |
 | v7.0 | 12 | 3 days | Governance & operational maturity; RBAC, lifecycle, Skills Design Standard, Gantt sync |
 | v8.0 | 6 | 6 days | Codebase refactor; AI usage audit, feature unification, multi-tenant isolation, entity lifecycle, deployment readiness |
+| v9.0 | 4 | 2 days | UX maturity; schema foundation, FK pickers, risk fields, exceptions panel, Gantt baselines, Meeting Prep skill, Outputs Library preview |
 
 ### Cumulative Quality
 
@@ -345,6 +395,7 @@
 | v6.0 | 148 files passing | Portfolio, WBS, Architecture, extraction pipeline (21 entity types); 15 pre-existing failures fixed; 4 intentional RED portfolio stubs |
 | v7.0 | 148+ files passing | RBAC, lifecycle, Health Dashboard, ingestion edit, Skills Standard, Gantt hierarchy; 4 RED stubs accepted as known gap |
 | v8.0 | 148+ files passing | Feature unification (DB enums, component renames), multi-tenant isolation, Pass 5 entity lifecycle; RFCTR-02 deferred |
+| v9.0 | 157+ files passing (9 new) | Schema foundation, FK pickers, risk fields, exceptions panel, Gantt baselines + ghost bars, Meeting Prep skill, Outputs Library inline preview, XSS hardening |
 
 ### Top Lessons (Verified Across Milestones)
 
