@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v9.0
 milestone_name: — UX Maturity & Intelligence
 status: executing
-stopped_at: Completed 77-intelligence-gantt-02-PLAN.md
-last_updated: "2026-04-23T03:47:34.462Z"
+stopped_at: Completed 77-intelligence-gantt-03-PLAN.md
+last_updated: "2026-04-23T03:53:29.788Z"
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 12
-  completed_plans: 11
-  percent: 98
+  completed_plans: 12
+  percent: 99
 ---
 
 # Project State
@@ -24,9 +24,9 @@ See: .planning/PROJECT.md (updated 2026-04-22 after v9.0 milestone start)
 
 ## Current Position
 
-Phase: 77 of 78 (Intelligence & Gantt) — in progress
-Plan: 77-02 complete (Gantt Baseline API + Toolbar) — next: 77-03
-Status: Executing Phase 77
+Phase: 77 of 78 (Intelligence & Gantt) — complete
+Plan: 77-03 complete (Ghost Bars + Variance Column) — Phase 77 all plans done
+Status: Phase 77 complete, ready for Phase 78
 
 Progress: [██████████] 99%
 
@@ -115,6 +115,14 @@ Progress: [██████████] 99%
 - (77-02) Compare dropdown hidden when no baselines exist — cleaner first-time UX, no empty dropdown shown
 - (77-02) baselineId route returns 404 when baseline not found OR belongs to different project (prevents cross-project access)
 
+### v9.0 Phase 77 Decisions (77-03)
+
+- (77-03) Ghost bars use color.bar at 0.3 opacity for visual consistency with the current bar
+- (77-03) WBS ghost span computed from min baseline start + max baseline end across all child tasks with snapshot entries
+- (77-03) Variance sign: daysBetween(baselineEnd, currentEnd) — positive = behind schedule = red; negative = ahead = green
+- (77-03) WBS aggregate variance uses max baseline spanEnd vs current spanEnd (consistent with span bar logic)
+- (77-03) Section-header rows include w-14 spacer div for Variance column alignment — no value shown in separator rows
+
 ### v9.0 Phase 76 Decisions
 
 - (76-01) OwnerCell datalist preserved for native browser autocomplete UX while tracking stakeholder by id internally
@@ -141,6 +149,6 @@ Progress: [██████████] 99%
 
 ## Session Continuity
 
-Last session: 2026-04-23T03:47:34.460Z
-Stopped at: Completed 77-intelligence-gantt-02-PLAN.md
+Last session: 2026-04-23T03:53:29.787Z
+Stopped at: Completed 77-intelligence-gantt-03-PLAN.md
 Resume file: None
