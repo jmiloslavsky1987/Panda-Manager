@@ -23,6 +23,9 @@ export function RiskEditModal({ risk, trigger }: RiskEditModalProps) {
   const [severity, setSeverity] = useState<'low' | 'medium' | 'high' | 'critical'>(risk.severity ?? 'medium')
   const [status, setStatus] = useState(risk.status ?? '')
   const [mitigationAppend, setMitigationAppend] = useState('')
+  const [likelihood, setLikelihood] = useState(risk.likelihood ?? '')
+  const [impact, setImpact] = useState(risk.impact ?? '')
+  const [targetDate, setTargetDate] = useState(risk.target_date ?? '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -33,7 +36,14 @@ export function RiskEditModal({ risk, trigger }: RiskEditModalProps) {
       const res = await fetch(`/api/risks/${risk.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ severity, status, mitigation_append: mitigationAppend }),
+        body: JSON.stringify({
+          severity,
+          status,
+          mitigation_append: mitigationAppend,
+          likelihood: likelihood || null,
+          impact: impact || null,
+          target_date: targetDate || null,
+        }),
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
@@ -95,6 +105,47 @@ export function RiskEditModal({ risk, trigger }: RiskEditModalProps) {
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
                 placeholder="open, mitigated, resolved, closed, accepted..."
+                className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-400"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-zinc-700" htmlFor="risk-likelihood">Likelihood</label>
+              <select
+                id="risk-likelihood"
+                value={likelihood}
+                onChange={e => setLikelihood(e.target.value)}
+                className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-400"
+              >
+                <option value="">— select —</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-zinc-700" htmlFor="risk-impact">Impact</label>
+              <select
+                id="risk-impact"
+                value={impact}
+                onChange={e => setImpact(e.target.value)}
+                className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-400"
+              >
+                <option value="">— select —</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-zinc-700" htmlFor="risk-target-date">Target Date</label>
+              <input
+                id="risk-target-date"
+                type="date"
+                value={targetDate}
+                onChange={e => setTargetDate(e.target.value)}
                 className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-400"
               />
             </div>

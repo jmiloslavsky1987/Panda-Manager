@@ -9,6 +9,11 @@ const patchSchema = z.object({
   severity: z.enum(['low', 'medium', 'high', 'critical']).optional(),
   status: z.enum(['open', 'mitigated', 'resolved', 'accepted']).optional(),
   mitigation_append: z.string().optional(),
+  likelihood: z.string().nullable().optional(),
+  impact: z.string().nullable().optional(),
+  target_date: z.string().nullable().optional(),
+  owner: z.string().nullable().optional(),
+  owner_id: z.number().nullable().optional(),
 })
 
 export async function PATCH(
@@ -43,7 +48,7 @@ export async function PATCH(
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
   }
 
-  const { severity, status, mitigation_append } = parsed.data
+  const { severity, status, mitigation_append, likelihood, impact, target_date, owner, owner_id } = parsed.data
   const today = new Date().toISOString().split('T')[0]
 
   // Read before-state (always, to capture for audit)
@@ -57,11 +62,21 @@ export async function PATCH(
     severity?: typeof severity
     status?: typeof status
     mitigation?: string
+    likelihood?: string | null
+    impact?: string | null
+    target_date?: string | null
+    owner?: string | null
+    owner_id?: number | null
     last_updated?: string
   } = {}
 
   if (severity !== undefined) patch.severity = severity
   if (status !== undefined) patch.status = status
+  if (likelihood !== undefined) patch.likelihood = likelihood
+  if (impact !== undefined) patch.impact = impact
+  if (target_date !== undefined) patch.target_date = target_date
+  if (owner !== undefined) patch.owner = owner
+  if (owner_id !== undefined) patch.owner_id = owner_id
 
   if (mitigation_append && mitigation_append.trim()) {
     const existingMitigation = before.mitigation ?? ''

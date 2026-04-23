@@ -19,6 +19,7 @@ import { EmptyState } from '@/components/EmptyState'
 import { AddRiskModal } from '@/components/AddRiskModal'
 import { Checkbox } from '@/components/ui/checkbox'
 import type { Risk, Artifact } from '@/lib/queries'
+import { computeRiskScore } from '@/lib/risk-score'
 
 const RISK_STATUS_OPTIONS: { value: 'open' | 'mitigated' | 'resolved' | 'accepted'; label: string }[] = [
   { value: 'open', label: 'Open' },
@@ -338,6 +339,7 @@ export function RisksTableClient({ risks, artifacts, projectId }: RisksTableClie
               </TableHead>
               <TableHead>Description</TableHead>
               <TableHead className="w-[110px]">Severity</TableHead>
+              <TableHead className="w-[100px]">Risk Score</TableHead>
               <TableHead className="w-[120px]">Owner</TableHead>
               <TableHead className="w-[110px]">Status</TableHead>
               <TableHead>Mitigation</TableHead>
@@ -347,7 +349,7 @@ export function RisksTableClient({ risks, artifacts, projectId }: RisksTableClie
           <TableBody>
             {filteredRisks.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-zinc-400 py-8">
+                <TableCell colSpan={8} className="text-center text-zinc-400 py-8">
                   No risks found.
                 </TableCell>
               </TableRow>
@@ -390,6 +392,18 @@ export function RisksTableClient({ risks, artifacts, projectId }: RisksTableClie
                         onSave={(v) => patchRisk(risk.id, { severity: v })}
                         className={`text-xs font-medium ${badgeClass} px-2 py-0.5 rounded-full`}
                       />
+                    </TableCell>
+                    <TableCell>
+                      {(() => {
+                        const { score, label, colorClass } = computeRiskScore(risk.likelihood, risk.impact)
+                        return score !== null ? (
+                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${colorClass}`}>
+                            {score} — {label}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-zinc-400">—</span>
+                        )
+                      })()}
                     </TableCell>
                     <TableCell className="text-sm text-zinc-600">
                       <OwnerCell
