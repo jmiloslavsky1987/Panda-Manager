@@ -121,7 +121,7 @@ export async function GET(
           id: Number(row.id),
           name: row.name,
           reason,
-          link: `/customer/${numericId}/delivery/milestones`,
+          link: `/customer/${numericId}/milestones`,
         })
       }
 
@@ -215,7 +215,7 @@ export async function GET(
           id: Number(row.id),
           name,
           reason: `Stale ${daysStale} day${daysStale !== 1 ? 's' : ''}`,
-          link: `/customer/${numericId}/delivery/risks`,
+          link: `/customer/${numericId}/risks`,
         })
       }
 
