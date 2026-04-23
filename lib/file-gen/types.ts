@@ -1,23 +1,39 @@
 // bigpanda-app/lib/file-gen/types.ts
+
+export type SlideLayout = 'bullets' | 'two-col' | 'metrics' | 'section';
+
+export interface MetricItem {
+  value: string;   // e.g. "93.6%"
+  label: string;   // e.g. "Noise Reduction"
+  sub?: string;    // e.g. "vs 89% last period"
+}
+
 export interface EltSlideJson {
   title: string;
   customer: string;
-  period: string;       // e.g. "March 2026"
+  period: string;
   slides: Array<{
     heading: string;
-    bullets: string[];
-    notes?: string;     // presenter notes
+    layout?: SlideLayout;         // defaults to 'bullets'
+    bullets?: string[];
+    left?: string[];              // two-col: left column bullets
+    right?: string[];             // two-col: right column bullets
+    left_heading?: string;        // two-col: optional column heading
+    right_heading?: string;
+    metrics?: MetricItem[];       // metrics layout: up to 4 stat callouts
+    status?: 'green' | 'amber' | 'red';  // optional RAG indicator in header
+    notes?: string;
   }>;
 }
 
 export interface HtmlSkillJson {
   title: string;
-  html: string;         // self-contained HTML string with inline CSS
+  html: string;
 }
 
 export interface FileGenParams {
   skillName: string;
-  outputText: string;   // raw full_output from skill_runs — may have markdown fences
+  outputText: string;
   project: { id: number; customer: string; name: string };
 }
 
