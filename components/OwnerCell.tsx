@@ -4,15 +4,22 @@ import { useState, useEffect, useId } from 'react'
 import { toast } from 'sonner'
 
 interface OwnerCellProps {
-  value: string | null
+  value: string | null          // display text (owner column)
+  ownerId?: number | null       // current FK (owner_id column)
   projectId: number
-  onSave: (owner: string) => Promise<void>
+  onSave: (result: { ownerId: number | null; ownerName: string }) => Promise<void>
 }
 
-export function OwnerCell({ value, projectId, onSave }: OwnerCellProps) {
+interface StakeholderOption {
+  id: number
+  name: string
+  role: string | null
+}
+
+export function OwnerCell({ value, ownerId: _ownerId, projectId, onSave }: OwnerCellProps) {
   const [editing, setEditing] = useState(false)
   const [optimisticValue, setOptimisticValue] = useState(value ?? '')
-  const [stakeholders, setStakeholders] = useState<string[]>([])
+  const [stakeholders, setStakeholders] = useState<StakeholderOption[]>([])
   const [saving, setSaving] = useState(false)
   const datalistId = useId()
 
@@ -28,22 +35,72 @@ export function OwnerCell({ value, projectId, onSave }: OwnerCellProps) {
 
     fetch(`/api/stakeholders?project_id=${projectId}`)
       .then(r => r.json())
-      .then(data => setStakeholders((data ?? []).map((s: { name: string }) => s.name)))
+      .then(data => setStakeholders(data ?? []))
       .catch(() => {})  // Empty datalist is acceptable fallback
   }, [editing, projectId])
 
   async function handleBlur(e: React.FocusEvent<HTMLInputElement>) {
     if (saving) return
 
-    const newValue = e.target.value
+    const typedValue = e.target.value.trim()
     const prev = optimisticValue
 
-    setOptimisticValue(newValue)
+    setOptimisticValue(typedValue)
     setEditing(false)
-    setSaving(true)
 
+    // Case 1: empty string — clear owner
+    if (!typedValue) {
+      setSaving(true)
+      try {
+        await onSave({ ownerId: null, ownerName: '' })
+      } catch {
+        setOptimisticValue(prev)
+        toast.error('Save failed — please try again')
+      } finally {
+        setSaving(false)
+      }
+      return
+    }
+
+    // Case 2: exact case-insensitive match in stakeholders list
+    const match = stakeholders.find(
+      s => s.name.toLowerCase() === typedValue.toLowerCase()
+    )
+    if (match) {
+      setSaving(true)
+      try {
+        await onSave({ ownerId: match.id, ownerName: match.name })
+      } catch {
+        setOptimisticValue(prev)
+        toast.error('Save failed — please try again')
+      } finally {
+        setSaving(false)
+      }
+      return
+    }
+
+    // Case 3: no match — auto-create new stakeholder
+    setSaving(true)
     try {
-      await onSave(newValue)
+      const res = await fetch('/api/stakeholders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          project_id: projectId,
+          name: typedValue,
+          role: '',
+          company: '',
+          source: 'manual',
+        }),
+      })
+
+      if (!res.ok) {
+        throw new Error('Failed to create stakeholder')
+      }
+
+      const newRow: StakeholderOption = await res.json()
+      toast.success(`New stakeholder '${typedValue}' created`)
+      await onSave({ ownerId: newRow.id, ownerName: newRow.name })
     } catch {
       setOptimisticValue(prev)
       toast.error('Save failed — please try again')
@@ -56,8 +113,8 @@ export function OwnerCell({ value, projectId, onSave }: OwnerCellProps) {
     return (
       <>
         <datalist id={datalistId}>
-          {stakeholders.map(name => (
-            <option key={name} value={name} />
+          {stakeholders.map(s => (
+            <option key={s.id} value={s.name} />
           ))}
         </datalist>
         <input
