@@ -794,6 +794,9 @@ export default function GanttChart({
             <div className="w-[52px] text-right shrink-0 pr-1">Start</div>
             <div className="w-[52px] text-right shrink-0 pr-1">Due</div>
             <div className="w-10 text-right shrink-0 pr-3">Dur.</div>
+            {activeBaselineSnapshot && (
+              <div className="w-14 text-right shrink-0 pr-3 text-zinc-500">Var.</div>
+            )}
           </div>
 
           {/* Left rows */}
@@ -806,6 +809,7 @@ export default function GanttChart({
                   <div className="h-px flex-1 bg-zinc-300" />
                   <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 shrink-0">{row.label}</span>
                   <div className="h-px flex-1 bg-zinc-300" />
+                  {activeBaselineSnapshot && <div className="w-14 shrink-0" />}
                 </div>
               )
             }
@@ -840,6 +844,28 @@ export default function GanttChart({
                   <div className="w-10 text-right shrink-0 pr-3 text-xs text-zinc-400">
                     {row.spanStart && row.spanEnd ? fmtDuration(row.spanStart, row.spanEnd) : '—'}
                   </div>
+                  {activeBaselineSnapshot && (() => {
+                    const baselineEnds = row.tasks
+                      .map(t => activeBaselineSnapshot[t.id]?.end)
+                      .filter((e): e is string => Boolean(e))
+                      .map(e => parseDate(e))
+                    const baselineSpanEnd = baselineEnds.length
+                      ? new Date(Math.max(...baselineEnds.map(d => d.getTime())))
+                      : null
+                    const varianceDays = baselineSpanEnd && row.spanEnd
+                      ? daysBetween(baselineSpanEnd, row.spanEnd)
+                      : null
+                    return (
+                      <div className={`w-14 text-right shrink-0 pr-3 text-xs font-medium ${
+                        varianceDays === null ? 'text-zinc-300'
+                        : varianceDays > 0 ? 'text-red-500'
+                        : varianceDays < 0 ? 'text-green-600'
+                        : 'text-zinc-400'
+                      }`}>
+                        {varianceDays === null ? '—' : varianceDays > 0 ? `+${varianceDays}d` : `${varianceDays}d`}
+                      </div>
+                    )
+                  })()}
                 </div>
               )
             }
@@ -879,6 +905,21 @@ export default function GanttChart({
                   />
                 </div>
                 <div className="w-10 text-right shrink-0 pr-3 text-xs text-zinc-400">{fmtDuration(start, end)}</div>
+                {activeBaselineSnapshot && (() => {
+                  const entry = activeBaselineSnapshot[row.task.id]
+                  const baselineEnd = entry ? parseDate(entry.end) : null
+                  const varianceDays = baselineEnd ? daysBetween(baselineEnd, end) : null
+                  return (
+                    <div className={`w-14 text-right shrink-0 pr-3 text-xs font-medium ${
+                      varianceDays === null ? 'text-zinc-300'
+                      : varianceDays > 0 ? 'text-red-500'
+                      : varianceDays < 0 ? 'text-green-600'
+                      : 'text-zinc-400'
+                    }`}>
+                      {varianceDays === null ? '—' : varianceDays > 0 ? `+${varianceDays}d` : `${varianceDays}d`}
+                    </div>
+                  )
+                })()}
               </div>
             )
           })}
@@ -978,12 +1019,43 @@ export default function GanttChart({
                     const childOriginals = row.tasks
                       .filter(t => t.start && t.end)
                       .map(t => ({ taskId: t.id, origStart: parseDate(t.start), origEnd: parseDate(t.end) }))
+                    // Ghost WBS span bar
+                    const ghostWbsBar = (() => {
+                      if (!activeBaselineSnapshot) return null
+                      const baselineStarts = row.tasks
+                        .map(t => activeBaselineSnapshot[t.id]?.start)
+                        .filter((s): s is string => Boolean(s))
+                        .map(s => parseDate(s))
+                      const baselineEnds = row.tasks
+                        .map(t => activeBaselineSnapshot[t.id]?.end)
+                        .filter((e): e is string => Boolean(e))
+                        .map(e => parseDate(e))
+                      if (!baselineStarts.length || !baselineEnds.length) return null
+                      const ghostStart = new Date(Math.min(...baselineStarts.map(d => d.getTime())))
+                      const ghostEnd = new Date(Math.max(...baselineEnds.map(d => d.getTime())))
+                      return (
+                        <div
+                          className="absolute rounded pointer-events-none"
+                          style={{
+                            left: barLeft(ghostStart),
+                            width: barWidth(ghostStart, ghostEnd),
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            height: 8,
+                            background: color.bar,
+                            opacity: 0.3,
+                            zIndex: 3,
+                          }}
+                        />
+                      )
+                    })()
                     return (
                       <div key={`rwbs-${row.wbsId}-${i}`} className="relative border-b border-zinc-100"
                         style={{ height: ROW_H, background: '#fafafa' }}>
+                        {ghostWbsBar}
                         <div
                           className="absolute rounded flex items-center cursor-grab"
-                          style={{ left, width, top: '50%', transform: 'translateY(-50%)', height: 8, background: color.bar, opacity: 0.25 }}
+                          style={{ left, width, top: '50%', transform: 'translateY(-50%)', height: 8, background: color.bar, opacity: 0.25, zIndex: 5 }}
                           onMouseDown={e => onBarMouseDown(e, `wbs-${row.wbsId}`, row.spanStart!, row.spanEnd!, childOriginals)}>
                           {/* Left edge handle */}
                           <div
@@ -1012,6 +1084,29 @@ export default function GanttChart({
                 return (
                   <div key={`rt-${row.task.id}-${i}`} className="relative border-b border-zinc-100 hover:bg-zinc-50/30"
                     style={{ height: ROW_H }}>
+                    {/* Ghost bar — only when baseline active and this task has a baseline entry */}
+                    {(() => {
+                      if (!activeBaselineSnapshot) return null
+                      const entry = activeBaselineSnapshot[row.task.id]
+                      if (!entry) return null
+                      const ghostStart = parseDate(entry.start)
+                      const ghostEnd = parseDate(entry.end)
+                      return (
+                        <div
+                          className="absolute rounded pointer-events-none"
+                          style={{
+                            left: barLeft(ghostStart),
+                            width: barWidth(ghostStart, ghostEnd),
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            height: ROW_H - 10,
+                            background: color.bar,
+                            opacity: 0.3,
+                            zIndex: 3,
+                          }}
+                        />
+                      )
+                    })()}
                     <div
                       className="absolute rounded flex items-center px-2 overflow-hidden"
                       style={{
