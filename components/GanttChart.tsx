@@ -45,7 +45,7 @@ type ViewMode = 'Day' | 'Week' | 'Month' | 'Quarter Year'
 const VIEW_MODES: ViewMode[] = ['Day', 'Week', 'Month', 'Quarter Year']
 const ROW_H = 36        // px per data row
 const HEADER_H = 44     // px for timeline column header
-const LEFT_W_DEFAULT = 380  // initial px for left task-list panel
+const LEFT_W_DEFAULT = 480  // initial px for left task-list panel
 
 // Pixels per day at each view zoom level
 const PX_PER_DAY: Record<ViewMode, number> = {
@@ -777,7 +777,7 @@ export default function GanttChart({
 
         {/* ── Left panel ── */}
         <div ref={leftRef} onScroll={syncFromLeft}
-          className="shrink-0 flex flex-col overflow-y-auto overflow-x-hidden border-r border-zinc-200"
+          className="shrink-0 flex flex-col overflow-y-auto border-r border-zinc-200"
           style={{ width: leftWidth }}>
 
           {/* Left header */}
@@ -790,8 +790,8 @@ export default function GanttChart({
               onMouseDown={e => { e.preventDefault(); resizeRef.current = { startX: e.clientX, startW: leftWidth } }}>
               <div className="w-0.5 h-5 rounded-full bg-zinc-300 group-hover/grip:bg-indigo-400 transition-colors" />
             </div>
-            <div className="w-[52px] text-right shrink-0 pr-1">Start</div>
-            <div className="w-[52px] text-right shrink-0 pr-1">Due</div>
+            <div className="w-[100px] text-right shrink-0 pr-1">Start</div>
+            <div className="w-[100px] text-right shrink-0 pr-1">Due</div>
             <div className="w-10 text-right shrink-0 pr-3">Dur.</div>
             {activeBaselineSnapshot && (
               <div className="w-14 text-right shrink-0 pr-3 text-zinc-500">Var.</div>
@@ -834,10 +834,10 @@ export default function GanttChart({
                       {row.label}
                     </div>
                   </div>
-                  <div className="w-[52px] text-right shrink-0 pr-1 text-xs text-zinc-400">
+                  <div className="w-[100px] text-right shrink-0 pr-1 text-xs text-zinc-400">
                     {row.spanStart ? fmtShort(row.spanStart) : '—'}
                   </div>
-                  <div className="w-[52px] text-right shrink-0 pr-1 text-xs text-zinc-400">
+                  <div className="w-[100px] text-right shrink-0 pr-1 text-xs text-zinc-400">
                     {row.spanEnd ? fmtShort(row.spanEnd) : '—'}
                   </div>
                   <div className="w-10 text-right shrink-0 pr-3 text-xs text-zinc-400">
@@ -878,7 +878,7 @@ export default function GanttChart({
                 style={{ height: ROW_H }}>
                 <div className="w-7 pl-2 shrink-0 text-[10px] text-zinc-300">{row.rowNum}</div>
                 <div className="flex-1 pl-2 pr-1 truncate text-xs text-zinc-700" title={row.task.name}>{row.task.name}</div>
-                <div className="w-[52px] shrink-0 flex items-center justify-end pr-1">
+                <div className="w-[100px] shrink-0 flex items-center justify-end pr-1">
                   <input type="date"
                     value={isUndatedLeft ? '' : fmtISO(start)}
                     onChange={async (e) => {
@@ -894,7 +894,7 @@ export default function GanttChart({
                     className="w-full text-xs text-zinc-500 border-0 bg-transparent cursor-pointer focus:outline-none"
                   />
                 </div>
-                <div className="w-[52px] shrink-0 flex items-center justify-end pr-1">
+                <div className="w-[100px] shrink-0 flex items-center justify-end pr-1">
                   <input type="date"
                     value={isUndatedLeft ? '' : fmtISO(end)}
                     onChange={async (e) => {

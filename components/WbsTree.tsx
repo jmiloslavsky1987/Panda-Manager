@@ -260,49 +260,56 @@ export function WbsTree({ adrItems, biggyItems, projectId, showGeneratePlan, act
         </DragOverlay>
       </DndContext>
 
-      {/* Task date panel — all project tasks */}
+      {/* Task date table — all project tasks with inline editable dates */}
       {tasks && tasks.length > 0 && (
         <div className="mt-6 border border-zinc-200 rounded-lg overflow-hidden">
           <button
             onClick={() => setTasksPanelOpen(p => !p)}
-            className="w-full flex items-center justify-between px-4 py-3 bg-zinc-50 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+            className="w-full flex items-center justify-between px-4 py-3 bg-zinc-50 border-b border-zinc-200 text-sm font-semibold text-zinc-700 hover:bg-zinc-100"
           >
-            <span>Tasks — Set Dates ({tasks.length})</span>
-            <span className="text-zinc-400 text-xs">{tasksPanelOpen ? '▲ collapse' : '▼ expand'}</span>
+            <span>Task Dates</span>
+            <span className="text-zinc-400 text-xs">{tasksPanelOpen ? '▲' : '▼'} {tasks.length} tasks</span>
           </button>
           {tasksPanelOpen && (
-            <div className="divide-y divide-zinc-100">
-              <div className="flex items-center gap-2 px-4 py-2 bg-zinc-50 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
-                <span className="flex-1">Task</span>
-                <span className="w-[100px] text-center">Start</span>
-                <span className="w-[100px] text-center">Due</span>
-              </div>
-              {tasks.map(task => {
-                const override = taskDates.get(task.id)
-                const startVal = override?.start ?? task.start_date ?? ''
-                const dueVal = override?.due ?? task.due ?? ''
-                return (
-                  <div key={task.id} className="flex items-center gap-2 px-4 py-2 hover:bg-zinc-50 text-xs">
-                    <span className="flex-1 truncate text-zinc-700" title={task.title}>
-                      {task.title}
-                      {task.phase && <span className="ml-1 text-zinc-400">· {task.phase}</span>}
-                    </span>
-                    <input
-                      type="date"
-                      value={startVal}
-                      onChange={e => saveTaskDate(task.id, 'start_date', e.target.value)}
-                      className="w-[100px] text-xs text-zinc-500 border border-zinc-200 rounded px-1.5 py-1 bg-white cursor-pointer focus:outline-none focus:ring-1 focus:ring-indigo-400"
-                    />
-                    <input
-                      type="date"
-                      value={dueVal}
-                      onChange={e => saveTaskDate(task.id, 'due', e.target.value)}
-                      className="w-[100px] text-xs text-zinc-500 border border-zinc-200 rounded px-1.5 py-1 bg-white cursor-pointer focus:outline-none focus:ring-1 focus:ring-indigo-400"
-                    />
-                  </div>
-                )
-              })}
-            </div>
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="bg-zinc-50 border-b border-zinc-200 text-zinc-500 font-medium">
+                  <th className="text-left px-4 py-2">Task</th>
+                  <th className="text-left px-2 py-2 w-[120px]">Phase</th>
+                  <th className="text-center px-2 py-2 w-[130px]">Start</th>
+                  <th className="text-center px-2 py-2 w-[130px]">Due</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {tasks.map(task => {
+                  const override = taskDates.get(task.id)
+                  const startVal = override?.start ?? task.start_date ?? ''
+                  const dueVal = override?.due ?? task.due ?? ''
+                  return (
+                    <tr key={task.id} className="hover:bg-zinc-50">
+                      <td className="px-4 py-1.5 text-zinc-700 truncate max-w-[200px]" title={task.title}>{task.title}</td>
+                      <td className="px-2 py-1.5 text-zinc-400 truncate">{task.phase ?? '—'}</td>
+                      <td className="px-2 py-1.5">
+                        <input
+                          type="date"
+                          value={startVal}
+                          onChange={e => saveTaskDate(task.id, 'start_date', e.target.value)}
+                          className="w-full text-xs text-zinc-600 border border-zinc-200 rounded px-1.5 py-1 bg-white cursor-pointer focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                        />
+                      </td>
+                      <td className="px-2 py-1.5">
+                        <input
+                          type="date"
+                          value={dueVal}
+                          onChange={e => saveTaskDate(task.id, 'due', e.target.value)}
+                          className="w-full text-xs text-zinc-600 border border-zinc-200 rounded px-1.5 py-1 bg-white cursor-pointer focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                        />
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
           )}
         </div>
       )}
