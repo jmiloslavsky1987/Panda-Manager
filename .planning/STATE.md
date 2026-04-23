@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v9.0
 milestone_name: — UX Maturity & Intelligence
-status: "Awaiting /gsd:plan-phase 77"
-stopped_at: Phase 77 context gathered
-last_updated: "2026-04-23T03:27:28.385Z"
+status: "Executing Phase 77"
+stopped_at: "Completed 77-01-PLAN.md (Exceptions Panel)"
+last_updated: "2026-04-23T03:52:00Z"
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 9
-  completed_plans: 9
-  percent: 50
+  total_plans: 12
+  completed_plans: 11
+  percent: 98
 ---
 
 # Project State
@@ -24,11 +24,11 @@ See: .planning/PROJECT.md (updated 2026-04-22 after v9.0 milestone start)
 
 ## Current Position
 
-Phase: 77 of 78 (Intelligence & Gantt) — ready to plan
-Plan: Phase 76 complete and human-approved 2026-04-23
-Status: Awaiting /gsd:plan-phase 77
+Phase: 77 of 78 (Intelligence & Gantt) — executing
+Plan: 77-01 complete (Exceptions Panel) — next: 77-02
+Status: Executing Phase 77
 
-Progress: [█████░░░░░] 50%
+Progress: [██████████] 98%
 
 ## Milestone History
 
@@ -100,6 +100,14 @@ Progress: [█████░░░░░] 50%
 - (75-05) WBS page wraps getProjectWithHealth in .catch(() => null) so missing project degrades to showing both tracks
 - (75-05) visibleTracks recomputed each render; useEffect resets expandedIds + activeTrack on activeTracks prop change
 
+### v9.0 Phase 77 Decisions (77-01)
+
+- (77-01) Exceptions API returns full array; cap at 10 enforced in ExceptionsPanel component only (not API layer)
+- (77-01) Stale detection uses created_at for tasks/actions/risks — tasks have no updated_at; last_updated on actions/risks is unreliable TEXT field
+- (77-01) Milestones excluded from stale check (no updated_at column per schema)
+- (77-01) actions stale: status != 'closed' (actionStatusEnum: open/in_progress/completed/cancelled — 'closed' not in enum but safe as catch-all)
+- (77-01) risks stale: NOT IN ('closed', 'resolved', 'mitigated', 'accepted') — 'closed' included defensively
+
 ### v9.0 Phase 76 Decisions
 
 - (76-01) OwnerCell datalist preserved for native browser autocomplete UX while tracking stakeholder by id internally
@@ -126,6 +134,6 @@ Progress: [█████░░░░░] 50%
 
 ## Session Continuity
 
-Last session: 2026-04-23T03:27:28.379Z
-Stopped at: Phase 77 context gathered
-Resume file: .planning/phases/77-intelligence-gantt/77-CONTEXT.md
+Last session: 2026-04-23T03:52:00Z
+Stopped at: Completed 77-01-PLAN.md (Exceptions Panel)
+Resume file: .planning/phases/77-intelligence-gantt/77-02-PLAN.md

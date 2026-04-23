@@ -54,9 +54,9 @@
 
 ### Health Dashboard
 
-- [ ] **HLTH-01**: Project Overview displays an Exceptions panel listing specific, actionable issues detected in project data
-- [ ] **HLTH-02**: Project health status (Healthy / At Risk / Red) is auto-computed from exception count and severity, replacing the manual health field
-- [ ] **HLTH-03**: Each exception in the panel links directly to the relevant record or tab
+- [x] **HLTH-01**: Project Overview displays an Exceptions panel listing specific, actionable issues detected in project data
+- [x] **HLTH-02**: Project health status (Healthy / At Risk / Red) is auto-computed from exception count and severity, replacing the manual health field
+- [x] **HLTH-03**: Each exception in the panel links directly to the relevant record or tab
 
 ### AI Skills
 
@@ -114,9 +114,9 @@
 | RISK-02 | Phase 76 | Complete |
 | RISK-03 | Phase 76 | Complete |
 | RISK-04 | Phase 76 | Complete |
-| HLTH-01 | Phase 77 | Pending |
-| HLTH-02 | Phase 77 | Pending |
-| HLTH-03 | Phase 77 | Pending |
+| HLTH-01 | Phase 77 | Complete |
+| HLTH-02 | Phase 77 | Complete |
+| HLTH-03 | Phase 77 | Complete |
 | GANTT-01 | Phase 77 | Pending |
 | GANTT-02 | Phase 77 | Pending |
 | GANTT-03 | Phase 77 | Pending |
