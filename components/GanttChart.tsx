@@ -207,8 +207,10 @@ export default function GanttChart({
   projectId,
 }: GanttChartProps) {
   const [viewMode, setViewMode] = useState<ViewMode>(initVM)
-  // Start with all WBS groups collapsed
-  const [expanded, setExpanded] = useState<Set<string>>(() => new Set())
+  // Start with all WBS groups expanded so task date inputs are immediately visible
+  const [expanded, setExpanded] = useState<Set<string>>(() =>
+    new Set([...wbsRows.map(r => String(r.id)), 'unassigned'])
+  )
   const [popup, setPopup] = useState<{ name: string; date: string; status: string | null } | null>(null)
   const [dragOverride, setDragOverride] = useState<Map<string, { start: Date; end: Date }>>(new Map())
   const [leftWidth, setLeftWidth] = useState(LEFT_W_DEFAULT)
