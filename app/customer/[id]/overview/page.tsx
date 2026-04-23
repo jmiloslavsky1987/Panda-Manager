@@ -2,6 +2,7 @@ import { WeeklyFocus } from '../../../../components/WeeklyFocus'
 import { OnboardingDashboard } from '../../../../components/OnboardingDashboard'
 import { OverviewMetrics } from '../../../../components/OverviewMetrics'
 import { HealthDashboard } from '../../../../components/HealthDashboard'
+import { ExceptionsPanel } from '../../../../components/ExceptionsPanel'
 
 export default async function OverviewPage({
   params,
@@ -16,6 +17,7 @@ export default async function OverviewPage({
       <div className="flex gap-4">
         <div className="w-[30%]">
           <HealthDashboard projectId={projectId} />
+          <ExceptionsPanel projectId={projectId} />
         </div>
         <div className="w-[70%]">
           <WeeklyFocus projectId={projectId} />
