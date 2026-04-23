@@ -1,4 +1,5 @@
 import ReactMarkdown from 'react-markdown'
+import rehypeSanitize from 'rehype-sanitize'
 
 interface ChatMessageProps {
   message: {
@@ -32,7 +33,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
     <div className="flex justify-start">
       <div className="bg-white border border-zinc-200 rounded-lg px-4 py-2 max-w-2xl">
         <div className="prose prose-sm max-w-none">
-          <ReactMarkdown>{textContent}</ReactMarkdown>
+          <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{textContent}</ReactMarkdown>
         </div>
       </div>
     </div>

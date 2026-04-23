@@ -2,19 +2,15 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import ReactMarkdown from 'react-markdown';
+import rehypeSanitize from 'rehype-sanitize';
+import dynamic from 'next/dynamic';
+import { getOutputType, type OutputRow } from '@/lib/output-utils';
 
-interface OutputRow {
-  id: number;
-  skill_name: string;
-  project_id: number | null;
-  project_name: string | null;
-  filename: string | null;
-  filepath: string | null;
-  content: string | null;
-  status: string;
-  archived: boolean;
-  created_at: string;
-}
+const DocxPreview = dynamic(() => import('@/components/DocxPreview'), {
+  ssr: false,
+  loading: () => <div className="h-[500px] bg-zinc-50 animate-pulse rounded" />,
+});
 
 export default function OutputLibraryPage() {
   const router = useRouter();
@@ -23,6 +19,7 @@ export default function OutputLibraryPage() {
   const [filterSkill, setFilterSkill] = useState('');
   const [showArchived, setShowArchived] = useState(false);
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [slideCounts, setSlideCounts] = useState<Record<number, number | null>>({});
 
   const loadOutputs = async () => {
     const params = new URLSearchParams();
@@ -34,6 +31,24 @@ export default function OutputLibraryPage() {
   };
 
   useEffect(() => { loadOutputs(); }, [filterProject, filterSkill, showArchived]);
+
+  // Fetch slide counts for all PPTX outputs on mount (after outputs load)
+  useEffect(() => {
+    const pptxOutputs = outputs.filter(o => getOutputType(o) === 'pptx');
+    if (pptxOutputs.length === 0) return;
+    pptxOutputs.forEach(async (output) => {
+      if (slideCounts[output.id] !== undefined) return; // already fetched
+      try {
+        const res = await fetch(`/api/outputs/${output.id}/slide-count`);
+        if (res.ok) {
+          const { slideCount } = await res.json();
+          setSlideCounts(prev => ({ ...prev, [output.id]: slideCount }));
+        }
+      } catch {
+        // non-blocking — slide count is informational only
+      }
+    });
+  }, [outputs]);
 
   const openFile = async (id: number) => {
     const res = await fetch(`/api/outputs/${id}/open`);
@@ -63,9 +78,6 @@ export default function OutputLibraryPage() {
 
   const allSkillTypes = [...new Set(outputs.map(o => o.skill_name))];
   const allProjects = [...new Set(outputs.filter(o => o.project_id).map(o => `${o.project_id}:${o.project_name ?? o.project_id}`))];
-
-  const isHtmlOutput = (o: OutputRow) =>
-    o.skill_name.includes('html') || o.filename?.endsWith('.html') || false;
 
   return (
     <div className="p-6 max-w-5xl mx-auto" data-testid="output-library">
@@ -116,58 +128,98 @@ export default function OutputLibraryPage() {
         <p className="text-sm text-zinc-500">No outputs found. Run a skill to generate your first output.</p>
       ) : (
         <div className="space-y-2">
-          {outputs.map(output => (
-            <div key={output.id} className="border border-zinc-200 rounded-lg bg-white">
-              <div
-                data-output-type={isHtmlOutput(output) ? 'html' : 'file'}
-                className="flex items-center justify-between p-3 cursor-pointer hover:bg-zinc-50"
-                onClick={() => isHtmlOutput(output) && setExpandedId(expandedId === output.id ? null : output.id)}
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <span className="text-sm font-medium text-zinc-800 capitalize">
-                    {output.skill_name.replace(/-/g, ' ')}
-                  </span>
-                  {output.project_name && (
-                    <span className="text-xs text-zinc-400">{output.project_name}</span>
-                  )}
-                  {output.filename && (
-                    <span className="text-xs text-zinc-500 font-mono truncate">{output.filename}</span>
-                  )}
-                  {output.archived && (
-                    <span data-testid="output-archived-badge" className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500">Archived</span>
-                  )}
+          {outputs.map(output => {
+            const type = getOutputType(output);
+            return (
+              <div key={output.id} className="border border-zinc-200 rounded-lg bg-white">
+                <div
+                  data-output-type={type}
+                  className="flex items-center justify-between p-3 cursor-pointer hover:bg-zinc-50"
+                  onClick={() => {
+                    if (type !== 'file' && type !== 'pptx') {
+                      setExpandedId(expandedId === output.id ? null : output.id);
+                    }
+                  }}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="text-sm font-medium text-zinc-800 capitalize">
+                      {output.skill_name.replace(/-/g, ' ')}
+                    </span>
+                    {output.project_name && (
+                      <span className="text-xs text-zinc-400">{output.project_name}</span>
+                    )}
+                    {output.filename && (
+                      <span className="text-xs text-zinc-500 font-mono truncate">{output.filename}</span>
+                    )}
+                    {output.archived && (
+                      <span data-testid="output-archived-badge" className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500">Archived</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-xs text-zinc-400">
+                      {new Date(output.created_at).toLocaleDateString()}
+                    </span>
+                    {/* PPTX: show slide count badge + Download */}
+                    {type === 'pptx' && slideCounts[output.id] != null && (
+                      <span className="text-xs text-zinc-500">{slideCounts[output.id]} slides</span>
+                    )}
+                    {type === 'pptx' && output.filepath && (
+                      <button
+                        onClick={e => { e.stopPropagation(); openFile(output.id); }}
+                        className="text-xs px-2 py-1 border border-zinc-200 rounded hover:bg-zinc-50"
+                      >Download</button>
+                    )}
+                    {/* Non-PPTX binary file: show Open button */}
+                    {output.filepath && type !== 'pptx' && type !== 'html' && (
+                      <button
+                        onClick={e => { e.stopPropagation(); openFile(output.id); }}
+                        className="text-xs px-2 py-1 border border-zinc-200 rounded hover:bg-zinc-50"
+                      >Open</button>
+                    )}
+                    {!output.archived && (
+                      <button
+                        data-testid="regenerate-btn"
+                        onClick={e => { e.stopPropagation(); regenerate(output); }}
+                        className="text-xs px-2 py-1 border border-zinc-200 rounded hover:bg-zinc-50"
+                      >Regenerate</button>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-xs text-zinc-400">
-                    {new Date(output.created_at).toLocaleDateString()}
-                  </span>
-                  {output.filepath && !isHtmlOutput(output) && (
-                    <button
-                      onClick={e => { e.stopPropagation(); openFile(output.id); }}
-                      className="text-xs px-2 py-1 border border-zinc-200 rounded hover:bg-zinc-50"
-                    >Open</button>
-                  )}
-                  {!output.archived && (
-                    <button
-                      data-testid="regenerate-btn"
-                      onClick={e => { e.stopPropagation(); regenerate(output); }}
-                      className="text-xs px-2 py-1 border border-zinc-200 rounded hover:bg-zinc-50"
-                    >Regenerate</button>
-                  )}
-                </div>
+                {/* Expand panel — type-aware */}
+                {expandedId === output.id && (() => {
+                  if (type === 'html' && output.content) {
+                    return (
+                      <div className="border-t border-zinc-100">
+                        <iframe
+                          sandbox="allow-same-origin"
+                          srcDoc={output.content}
+                          className="w-full h-96"
+                          title={`${output.skill_name} output`}
+                        />
+                      </div>
+                    );
+                  }
+                  if (type === 'markdown' && output.content) {
+                    return (
+                      <div className="border-t border-zinc-100 px-4 pb-4 pt-3">
+                        <div className="prose prose-zinc prose-sm max-w-none">
+                          <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{output.content}</ReactMarkdown>
+                        </div>
+                      </div>
+                    );
+                  }
+                  if (type === 'docx' && output.filepath) {
+                    return (
+                      <div className="border-t border-zinc-100 px-4 pb-4 h-[500px] overflow-y-auto">
+                        <DocxPreview url={`/api/outputs/${output.id}/open`} />
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
               </div>
-              {expandedId === output.id && isHtmlOutput(output) && output.content && (
-                <div className="border-t border-zinc-100">
-                  <iframe
-                    sandbox="allow-same-origin"
-                    srcDoc={output.content}
-                    className="w-full h-96"
-                    title={`${output.skill_name} output`}
-                  />
-                </div>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
