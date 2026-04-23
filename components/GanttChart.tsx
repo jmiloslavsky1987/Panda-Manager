@@ -872,6 +872,7 @@ export default function GanttChart({
 
             // task row
             const { start, end } = resolvedDates(row.task)
+            const isUndatedLeft = (row.task.custom_class?.includes('gantt-undated') ?? false) && !dragOverride.has(row.task.id)
             return (
               <div key={`lt-${row.task.id}-${i}`}
                 className="flex items-center shrink-0 border-b border-zinc-100 hover:bg-zinc-50"
@@ -880,7 +881,7 @@ export default function GanttChart({
                 <div className="flex-1 pl-2 pr-1 truncate text-xs text-zinc-700" title={row.task.name}>{row.task.name}</div>
                 <div className="w-[52px] shrink-0 flex items-center justify-end">
                   <DatePickerCell
-                    value={isUndated && !dragOverride.has(row.task.id) ? null : fmtISO(start)}
+                    value={isUndatedLeft ? null : fmtISO(start)}
                     onSave={async (v) => {
                       await fetch(`/api/tasks/${row.task.id}`, {
                         method: 'PATCH',
@@ -894,7 +895,7 @@ export default function GanttChart({
                 </div>
                 <div className="w-[52px] shrink-0 flex items-center justify-end">
                   <DatePickerCell
-                    value={isUndated && !dragOverride.has(row.task.id) ? null : fmtISO(end)}
+                    value={isUndatedLeft ? null : fmtISO(end)}
                     onSave={async (v) => {
                       await fetch(`/api/tasks/${row.task.id}`, {
                         method: 'PATCH',
