@@ -180,11 +180,11 @@ Full details: `.planning/milestones/v8.0-ROADMAP.md` (archived)
 **Plans**: 5 plans
 
 Plans:
-- [ ] 75-01-PLAN.md — DB Migrations 0038–0042 (schema foundation)
-- [ ] 75-02-PLAN.md — Milestone status enum + edit surface + portfolio counter (MILE-01, MILE-02)
-- [ ] 75-03-PLAN.md — Task Board DnD fix + bulk delete (TASK-01, TASK-02, TASK-03)
-- [ ] 75-04-PLAN.md — Task Board Week view (TASK-04, TASK-05)
-- [ ] 75-05-PLAN.md — Admin settings form + PATCH route + active_tracks WBS filter (ADMIN-01–04)
+- [x] 75-01-PLAN.md — DB Migrations 0038–0042 (schema foundation)
+- [x] 75-02-PLAN.md — Milestone status enum + edit surface + portfolio counter (MILE-01, MILE-02)
+- [x] 75-03-PLAN.md — Task Board DnD fix + bulk delete (TASK-01, TASK-02, TASK-03)
+- [x] 75-04-PLAN.md — Task Board Week view (TASK-04, TASK-05)
+- [x] 75-05-PLAN.md — Admin settings form + PATCH route + active_tracks WBS filter (ADMIN-01–04)
 
 ### Phase 76: Pickers & Risk Fields
 **Goal**: Owner fields across all entity types save a stakeholder FK rather than plain text; tasks have searchable dependency and milestone link pickers with a visible blocked indicator; risks expose structured likelihood/impact/target-date fields with an auto-computed score; the confirmed tasks-bulk multi-tenant security gap is closed
@@ -199,10 +199,10 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
-- [ ] 76-01-PLAN.md — OwnerCell FK upgrade + stakeholder auto-create (PICK-01, PICK-02)
-- [ ] 76-02-PLAN.md — Task blocked-by + milestone pickers + blocked indicator (PICK-03, PICK-04, PICK-05)
-- [ ] 76-03-PLAN.md — Risk Likelihood/Impact/Target Date + Risk Score badge (RISK-01, RISK-02, RISK-03, RISK-04)
-- [ ] 76-04-PLAN.md — tasks-bulk multi-tenant security fix (PICK-05 security)
+- [x] 76-01-PLAN.md — OwnerCell FK upgrade + stakeholder auto-create (PICK-01, PICK-02)
+- [x] 76-02-PLAN.md — Task blocked-by + milestone pickers + blocked indicator (PICK-03, PICK-04, PICK-05)
+- [x] 76-03-PLAN.md — Risk Likelihood/Impact/Target Date + Risk Score badge (RISK-01, RISK-02, RISK-03, RISK-04)
+- [x] 76-04-PLAN.md — tasks-bulk multi-tenant security fix (PICK-05 security)
 
 ### Phase 77: Intelligence & Gantt
 **Goal**: The project Overview tab surfaces a live exceptions panel listing specific actionable issues with direct navigation links and an auto-computed health badge; the Gantt derives phase date ranges from child tasks and supports baseline snapshot capture with ghost bar comparison and a numeric variance column
