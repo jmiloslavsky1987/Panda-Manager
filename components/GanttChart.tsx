@@ -714,7 +714,7 @@ export default function GanttChart({
   const allTaskCount = wbsRows.reduce((sum, r) => sum + r.tasks.length, 0) + unassignedTasks.length
 
   return (
-    <div className="flex flex-col border border-zinc-200 rounded-lg overflow-hidden bg-white select-none">
+    <div className="flex flex-col border border-zinc-200 rounded-lg overflow-hidden bg-white">
 
       {/* Toolbar */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200 bg-zinc-50 shrink-0">
@@ -930,7 +930,7 @@ export default function GanttChart({
 
         {/* ── Right panel ── */}
         <div ref={rightRef} onScroll={syncFromRight}
-          className="flex-1 overflow-auto relative">
+          className="flex-1 overflow-auto relative select-none">
           <div key={viewMode} style={{ width: Math.max(totalWidth, 800), minHeight: '100%', position: 'relative' }}>
 
             {/* Timeline header */}
