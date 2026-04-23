@@ -60,10 +60,10 @@
 
 ### AI Skills
 
-- [ ] **SKILL-01**: User can trigger Meeting Prep from the Skills tab (as a standard skill entry, using the existing skill execution infrastructure)
-- [ ] **SKILL-02**: Meeting Prep brief includes open items, recent activity, and a suggested agenda derived from live project data
-- [ ] **SKILL-03**: Meeting Prep output is rendered inline and copyable to clipboard
-- [ ] **SKILL-04**: Meeting Prep prompt is editable via the existing Admin > Prompts UI (inherited from skill infrastructure)
+- [x] **SKILL-01**: User can trigger Meeting Prep from the Skills tab (as a standard skill entry, using the existing skill execution infrastructure)
+- [x] **SKILL-02**: Meeting Prep brief includes open items, recent activity, and a suggested agenda derived from live project data
+- [x] **SKILL-03**: Meeting Prep output is rendered inline and copyable to clipboard
+- [x] **SKILL-04**: Meeting Prep prompt is editable via the existing Admin > Prompts UI (inherited from skill infrastructure)
 
 ## Future Requirements
 
@@ -121,10 +121,10 @@
 | GANTT-02 | Phase 77 | Complete |
 | GANTT-03 | Phase 77 | Complete |
 | GANTT-04 | Phase 77 | Complete |
-| SKILL-01 | Phase 78 | Pending |
-| SKILL-02 | Phase 78 | Pending |
-| SKILL-03 | Phase 78 | Pending |
-| SKILL-04 | Phase 78 | Pending |
+| SKILL-01 | Phase 78 | Complete |
+| SKILL-02 | Phase 78 | Complete |
+| SKILL-03 | Phase 78 | Complete |
+| SKILL-04 | Phase 78 | Complete |
 | OUT-01 | Phase 78 | Pending |
 | OUT-02 | Phase 78 | Pending |
 

@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v9.0
 milestone_name: — UX Maturity & Intelligence
 status: completed
-stopped_at: Phase 78 context gathered
-last_updated: "2026-04-23T15:07:37.207Z"
+stopped_at: Completed 78-ai-content 78-01-PLAN.md
+last_updated: "2026-04-23T16:22:02.569Z"
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 12
-  completed_plans: 12
+  total_plans: 14
+  completed_plans: 13
   percent: 100
 ---
 
@@ -24,9 +24,9 @@ See: .planning/PROJECT.md (updated 2026-04-22 after v9.0 milestone start)
 
 ## Current Position
 
-Phase: 77 of 78 (Intelligence & Gantt) — complete + UAT fixes shipped
-Plan: All plans complete. Post-UAT: exceptions API enum fixes, deep-link routing, WBS + Gantt inline date editing
-Status: v9.0 milestone complete, ready for Phase 78
+Phase: 78 of 78 (AI & Content) — in progress
+Plan: 78-01 complete (Meeting Prep skill). 78-02 (Outputs Library) is next.
+Status: v9.0 milestone in progress — Phase 78 Plan 01 shipped
 
 Progress: [██████████] 100%
 
@@ -140,6 +140,13 @@ Progress: [██████████] 100%
 - (76-04) Update wrapped in transaction with SET LOCAL app.current_project_id for DB-level RLS enforcement
 - (76-04) 404 returned when task_ids[0] not found (previously fell through to 500)
 
+### v9.0 Phase 78 Decisions (78-01)
+
+- (78-01) skills/meeting-prep.md force-added via `git add -f` — `/skills/` is root-anchored gitignored; plan requires file in version control
+- (78-01) params.input?.notes used for optional meeting notes (input_required:false → SkillsTabClient sends undefined; Record<string,string> key is 'notes' by convention)
+- (78-01) stripMarkdown lives in lib/strip-markdown.ts (not inline in page.tsx) for testability without DOM dependency
+- (78-01) rehype-sanitize applied to SkillRunPage ReactMarkdown; ChatMessage.tsx hardening deferred to 78-02
+
 ### Blockers/Concerns
 
 - Migration number confirmed: 0037 was highest before Phase 75; 0038–0042 applied cleanly
@@ -149,6 +156,6 @@ Progress: [██████████] 100%
 
 ## Session Continuity
 
-Last session: 2026-04-23T15:07:37.197Z
-Stopped at: Phase 78 context gathered
-Resume file: .planning/phases/78-ai-content/78-CONTEXT.md
+Last session: 2026-04-23T16:22:02.567Z
+Stopped at: Completed 78-ai-content 78-01-PLAN.md
+Resume file: None
