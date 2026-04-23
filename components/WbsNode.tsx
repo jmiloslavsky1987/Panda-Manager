@@ -24,6 +24,7 @@ interface WbsNodeProps {
   onExpandedIdsChange: (updater: (prev: Set<number>) => Set<number>) => void
   projectId: number
   track: 'ADR' | 'Biggy'
+  blockedPhases?: Set<string>
 }
 
 const STATUS_CLASSES = {
@@ -46,6 +47,7 @@ function WbsNodeComponent({
   onExpandedIdsChange,
   projectId,
   track,
+  blockedPhases,
 }: WbsNodeProps) {
   const router = useRouter()
   const [isEditing, setIsEditing] = useState(false)
@@ -58,6 +60,7 @@ function WbsNodeComponent({
   const locked = node.level === 1
   const hasChildren = childrenMap.has(node.id)
   const isExpanded = expandedIds.has(node.id)
+  const hasBlockedTask = blockedPhases?.has((node.name ?? '').toLowerCase()) ?? false
   const indentPx = (node.level - 1) * 16
 
   // Drag and drop
@@ -273,6 +276,11 @@ function WbsNodeComponent({
             }`}
           >
             {node.name}
+            {hasBlockedTask && (
+              <span className="text-xs font-medium bg-red-100 text-red-700 px-1 py-0.5 rounded ml-1">
+                Blocked
+              </span>
+            )}
           </span>
         )}
 
@@ -337,6 +345,7 @@ function WbsNodeComponent({
             onExpandedIdsChange={onExpandedIdsChange}
             projectId={projectId}
             track={track}
+            blockedPhases={blockedPhases}
           />
         ))}
 

@@ -466,22 +466,51 @@ export async function getWorkspaceData(projectId: number): Promise<WorkspaceData
 }
 
 /**
- * Extends Task with a computed is_blocked flag.
- * is_blocked is true when blocked_by != null AND the blocking task's status != 'done'.
- * Computed in-memory after fetching all project tasks — no extra DB query.
+ * Extends Task with computed fields:
+ * - is_blocked: true when blocked_by != null AND the blocking task's status != 'done'
+ * - milestone_name: the linked milestone's name, or null if no milestone is set
  */
 export interface TaskWithBlockedStatus extends Task {
   is_blocked: boolean
+  milestone_name: string | null
 }
 
 /**
  * Returns all tasks for a project, ordered by created_at.
  * Includes blocked_by, milestone_id, start_date from Phase 3 migration.
- * Each task has a computed is_blocked field: true when blocked_by != null
- * and the blocking task's status != 'done'.
+ * Each task has:
+ *   - is_blocked: true when blocked_by != null and the blocking task's status != 'done'
+ *   - milestone_name: left-joined from milestones table (null when milestone_id is null)
  */
 export async function getTasksForProject(projectId: number): Promise<TaskWithBlockedStatus[]> {
-  const rows = await db.select().from(tasks).where(eq(tasks.project_id, projectId))
+  const rows = await db
+    .select({
+      // All task columns
+      id: tasks.id,
+      project_id: tasks.project_id,
+      workstream_id: tasks.workstream_id,
+      title: tasks.title,
+      description: tasks.description,
+      owner: tasks.owner,
+      owner_id: tasks.owner_id,
+      due: tasks.due,
+      start_date: tasks.start_date,
+      priority: tasks.priority,
+      type: tasks.type,
+      phase: tasks.phase,
+      status: tasks.status,
+      blocked_by: tasks.blocked_by,
+      milestone_id: tasks.milestone_id,
+      source: tasks.source,
+      source_artifact_id: tasks.source_artifact_id,
+      ingested_at: tasks.ingested_at,
+      created_at: tasks.created_at,
+      // Left-joined milestone name
+      milestone_name: milestones.name,
+    })
+    .from(tasks)
+    .leftJoin(milestones, eq(tasks.milestone_id, milestones.id))
+    .where(eq(tasks.project_id, projectId))
     .orderBy(tasks.created_at)
 
   // Build id→status map for blocked_by resolution
@@ -489,6 +518,7 @@ export async function getTasksForProject(projectId: number): Promise<TaskWithBlo
 
   return rows.map(t => ({
     ...t,
+    milestone_name: t.milestone_name ?? null,
     is_blocked: t.blocked_by !== null &&
       (statusMap.get(t.blocked_by) ?? 'done') !== 'done',
   }))

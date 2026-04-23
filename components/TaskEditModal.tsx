@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Dialog,
@@ -53,8 +53,28 @@ export function TaskEditModal({ task, projectId, trigger, onSaved }: TaskEditMod
   const [form, setForm] = useState(emptyForm(task))
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [projectTasks, setProjectTasks] = useState<{ id: number; title: string }[]>([])
+  const [projectMilestones, setProjectMilestones] = useState<{ id: number; name: string }[]>([])
 
   const isEdit = task !== undefined
+
+  // Fetch task and milestone lists for picker dropdowns when modal opens
+  useEffect(() => {
+    if (!open) return
+    Promise.all([
+      fetch(`/api/tasks?projectId=${projectId}`).then(r => r.json()),
+      fetch(`/api/projects/${projectId}/milestones`).then(r => r.json()),
+    ]).then(([taskData, milestoneData]) => {
+      // Blocked-by: filter out current task and done tasks
+      const eligible = (Array.isArray(taskData) ? taskData : []).filter(
+        (t: { id: number; status: string }) => t.id !== task?.id && t.status !== 'done'
+      )
+      setProjectTasks(eligible)
+      setProjectMilestones(
+        Array.isArray(milestoneData?.milestones) ? milestoneData.milestones : []
+      )
+    }).catch(() => {})
+  }, [open, projectId, task?.id])
 
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -265,34 +285,40 @@ export function TaskEditModal({ task, projectId, trigger, onSaved }: TaskEditMod
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            {/* Blocked By Task ID */}
+            {/* Blocked By */}
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">
-                Blocked By Task ID
+                Blocked By
               </label>
-              <input
+              <select
                 name="blocked_by"
-                type="number"
                 value={form.blocked_by}
                 onChange={handleChange}
                 className="w-full border border-zinc-300 rounded px-3 py-1.5 text-sm"
-                placeholder="Optional task ID"
-              />
+              >
+                <option value="">— none —</option>
+                {projectTasks.map(t => (
+                  <option key={t.id} value={String(t.id)}>{t.title}</option>
+                ))}
+              </select>
             </div>
 
-            {/* Linked Milestone ID */}
+            {/* Linked Milestone */}
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">
-                Linked Milestone ID
+                Linked Milestone
               </label>
-              <input
+              <select
                 name="milestone_id"
-                type="number"
                 value={form.milestone_id}
                 onChange={handleChange}
                 className="w-full border border-zinc-300 rounded px-3 py-1.5 text-sm"
-                placeholder="Optional milestone ID"
-              />
+              >
+                <option value="">— none —</option>
+                {projectMilestones.map(m => (
+                  <option key={m.id} value={String(m.id)}>{m.name}</option>
+                ))}
+              </select>
             </div>
           </div>
 

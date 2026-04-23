@@ -11,7 +11,7 @@ import {
   DragEndEvent,
   DragStartEvent,
 } from '@dnd-kit/core'
-import type { WbsItem } from '@/lib/queries'
+import type { WbsItem, TaskWithBlockedStatus } from '@/lib/queries'
 import { WbsNode } from './WbsNode'
 import { WbsGeneratePlanModal } from './WbsGeneratePlanModal'
 import { toast } from 'sonner'
@@ -22,9 +22,10 @@ interface WbsTreeProps {
   projectId: number
   showGeneratePlan?: boolean
   activeTracks?: { adr: boolean; biggy: boolean }
+  tasks?: TaskWithBlockedStatus[]
 }
 
-export function WbsTree({ adrItems, biggyItems, projectId, showGeneratePlan, activeTracks }: WbsTreeProps) {
+export function WbsTree({ adrItems, biggyItems, projectId, showGeneratePlan, activeTracks, tasks }: WbsTreeProps) {
   const router = useRouter()
 
   const tracks = activeTracks ?? { adr: true, biggy: true }
@@ -50,6 +51,16 @@ export function WbsTree({ adrItems, biggyItems, projectId, showGeneratePlan, act
     map.forEach(children => children.sort((a, b) => a.display_order - b.display_order))
     return map
   }, [items])
+
+  // Build set of phase names that have at least one blocked task
+  const blockedPhases = useMemo(() => {
+    if (!tasks) return new Set<string>()
+    return new Set(
+      tasks
+        .filter(t => t.is_blocked && t.phase)
+        .map(t => t.phase!.toLowerCase())
+    )
+  }, [tasks])
 
   // Initialize expandedIds with all Level 1 nodes
   const [expandedIds, setExpandedIds] = useState<Set<number>>(() => {
@@ -209,6 +220,7 @@ export function WbsTree({ adrItems, biggyItems, projectId, showGeneratePlan, act
               onExpandedIdsChange={handleExpandedIdsChange}
               projectId={projectId}
               track={activeTrack}
+              blockedPhases={blockedPhases}
             />
           ))}
         </div>

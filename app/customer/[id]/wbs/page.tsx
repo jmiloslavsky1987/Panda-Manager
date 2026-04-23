@@ -1,4 +1,4 @@
-import { getWbsItems, getProjectWithHealth } from '@/lib/queries'
+import { getWbsItems, getProjectWithHealth, getTasksForProject } from '@/lib/queries'
 import { WbsTree } from '@/components/WbsTree'
 import { auth } from '@/lib/auth'
 import { headers } from 'next/headers'
@@ -13,10 +13,11 @@ export default async function WbsPage({ params }: { params: Promise<{ id: string
   const { id } = await params
   const projectId = parseInt(id, 10)
 
-  const [adrItems, biggyItems, project] = await Promise.all([
+  const [adrItems, biggyItems, project, tasks] = await Promise.all([
     getWbsItems(projectId, 'ADR'),
     getWbsItems(projectId, 'Biggy'),
     getProjectWithHealth(projectId).catch(() => null),
+    getTasksForProject(projectId).catch(() => []),
   ])
 
   const activeTracks = (project?.active_tracks as { adr: boolean; biggy: boolean } | null) ?? { adr: true, biggy: true }
@@ -28,6 +29,7 @@ export default async function WbsPage({ params }: { params: Promise<{ id: string
         biggyItems={biggyItems}
         projectId={projectId}
         activeTracks={activeTracks}
+        tasks={tasks}
       />
     </div>
   )

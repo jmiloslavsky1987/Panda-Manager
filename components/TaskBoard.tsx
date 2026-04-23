@@ -17,13 +17,13 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import type { Task } from '@/lib/queries'
+import type { TaskWithBlockedStatus } from '@/lib/queries'
 import { TaskEditModal } from './TaskEditModal'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface TaskBoardProps {
-  tasks: Task[]
+  tasks: TaskWithBlockedStatus[]
   projectId: number
 }
 
@@ -73,7 +73,7 @@ function getWeekBuckets(referenceDate: Date): { label: string; start: string; en
 
 // ─── Week Task Card ───────────────────────────────────────────────────────────
 
-function WeekTaskCard({ task }: { task: Task }) {
+function WeekTaskCard({ task }: { task: TaskWithBlockedStatus }) {
   return (
     <div className="bg-white border border-zinc-200 rounded-lg px-3 py-2 flex items-center gap-3 shadow-sm">
       <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${STATUS_BADGE_COLORS[task.status] ?? 'bg-zinc-100 text-zinc-600'}`}>
@@ -93,7 +93,7 @@ function WeekTaskCard({ task }: { task: Task }) {
 
 // ─── Week View ────────────────────────────────────────────────────────────────
 
-function WeekView({ tasks }: { tasks: Task[] }) {
+function WeekView({ tasks }: { tasks: TaskWithBlockedStatus[] }) {
   const buckets = getWeekBuckets(new Date())
   const isIsoDate = (d: string | null) => !!d && /^\d{4}-\d{2}-\d{2}/.test(d)
 
@@ -148,7 +148,7 @@ function WeekView({ tasks }: { tasks: Task[] }) {
 // ─── Sortable Task Card ───────────────────────────────────────────────────────
 
 interface TaskCardProps {
-  task: Task
+  task: TaskWithBlockedStatus
   projectId: number
   selected: boolean
   onSelect: (id: number, checked: boolean) => void
@@ -190,6 +190,10 @@ function TaskCard({ task, projectId, selected, onSelect }: TaskCardProps) {
         </div>
       </div>
 
+      {task.milestone_name && (
+        <span className="text-xs text-zinc-500 mt-0.5 block pl-6">{task.milestone_name}</span>
+      )}
+
       <div className="flex items-center gap-1.5 flex-wrap pl-6">
         {task.owner && (
           <span className="text-xs text-zinc-500">{task.owner}</span>
@@ -202,8 +206,10 @@ function TaskCard({ task, projectId, selected, onSelect }: TaskCardProps) {
             {task.priority}
           </span>
         )}
-        {task.blocked_by && (
-          <span className="text-xs text-orange-600">⚠ blocked by #{task.blocked_by}</span>
+        {task.is_blocked && (
+          <span className="text-xs font-medium bg-red-100 text-red-700 px-1.5 py-0.5 rounded">
+            Blocked
+          </span>
         )}
       </div>
 
@@ -394,7 +400,7 @@ function BulkToolbar({ selectedIds, onClear, onComplete }: BulkToolbarProps) {
 
 export function TaskBoard({ tasks: initialTasks, projectId }: TaskBoardProps) {
   const router = useRouter()
-  const [tasks, setTasks] = useState<Task[]>(initialTasks)
+  const [tasks, setTasks] = useState<TaskWithBlockedStatus[]>(initialTasks)
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [activeId, setActiveId] = useState<number | null>(null)
   const [viewMode, setViewMode] = useState<'board' | 'week'>('board')
