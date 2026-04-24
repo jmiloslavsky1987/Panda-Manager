@@ -31,18 +31,20 @@ export interface ProposedChange {
  * Get the primary text field for an extraction item based on entity type.
  * This is used for fuzzy matching queries.
  */
+// Only entity types where lifecycle changes (close/update/remove) are meaningful.
+// Stakeholders and focus_areas are mentioned in every doc with no status transitions.
+const LIFECYCLE_ENTITY_TYPES = new Set(['action', 'risk', 'milestone', 'workstream', 'businessOutcome', 'team_pathway']);
+
 function getPrimaryText(item: ExtractionItem): string | null {
+  if (!LIFECYCLE_ENTITY_TYPES.has(item.entityType)) return null;
   const f = item.fields;
   switch (item.entityType) {
     case 'action': return String(f.description ?? '');
     case 'risk': return String(f.description ?? '');
     case 'milestone': return String(f.name ?? '');
-    case 'stakeholder': return String(f.name ?? '');
     case 'workstream': return String(f.name ?? '');
-    case 'focus_area': return String(f.title ?? '');
     case 'businessOutcome': return String(f.title ?? '');
-    case 'e2e_workflow': return String(f.workflow_name ?? '');
-    case 'task': return String(f.title ?? '');
+    case 'team_pathway': return String(f.team_name ?? '');
     default: return null;
   }
 }
@@ -75,6 +77,27 @@ export async function runPass5ChangeDetection(
     const candidates = await findSimilarEntities(item.entityType, primaryText, projectId);
     if (candidates.length === 0) continue;
 
+    // Short-circuit: if direct-intent pre-pass already determined the intent, skip LLM call
+    const directIntent = item.fields._direct_intent as string | undefined;
+    if (directIntent && ['update', 'close', 'remove'].includes(directIntent)) {
+      // Use the highest-similarity candidate as the match
+      const topCandidate = candidates.reduce((best, c) => c.similarity > best.similarity ? c : best, candidates[0]);
+      if (topCandidate && topCandidate.similarity >= 0.5) {
+        changes.push({
+          intent: directIntent as ProposedChange['intent'],
+          entityType: item.entityType,
+          existingId: topCandidate.id,
+          existingRecord: topCandidate as Record<string, unknown>,
+          proposedFields: directIntent === 'update'
+            ? Object.fromEntries(Object.entries(item.fields).filter(([k]) => k !== '_direct_intent'))
+            : undefined,
+          confidence: Math.min(0.95, topCandidate.similarity + 0.2),
+          reasoning: `Direct intent extraction identified this as "${directIntent}" based on explicit lifecycle language in the document.`,
+        });
+        continue;
+      }
+    }
+
     const prompt = `You are reviewing an entity extracted from a document against existing database records.
 
 Extracted entity:
@@ -84,21 +107,51 @@ Extracted entity:
 Existing records that may match:
 ${candidates.map((c, i) => `[${i}] ID=${c.id}: ${JSON.stringify(c)}`).join('\n')}
 
-Does this extracted entity represent an UPDATE, CLOSURE (status changed to completed/closed/resolved), REMOVAL (entity no longer exists), or is it a NEW entity?
+TASK: Determine if this extracted entity represents a MEANINGFUL change to an existing record.
+
+INTENT CLASSIFICATION RULES — read carefully:
+
+"close" intent — use this when the document states the item is FINISHED or NO LONGER ACTIVE:
+  - Actions/tasks: "completed", "done", "finished", "closed", "is now COMPLETED", "was completed"
+  - Risks: "mitigated", "resolved", "is now MITIGATED", "risk has been mitigated", "accepted"
+  - Milestones: "complete", "completed", "done", "achieved"
+  - Workstreams: "complete", "closed", "finished"
+  ★ IMPORTANT: If the sourceExcerpt or fields contain words like "COMPLETED", "MITIGATED", "RESOLVED",
+    "is closed", "is done", "now complete" — this is ALWAYS "close" intent, not "update".
+
+"update" intent — use ONLY when a specific field value changed but the item is still ACTIVE:
+  - Status changed to at_risk, in_progress, blocked (not to closed/done/mitigated states)
+  - Target date changed (milestone pushed or pulled)
+  - Owner reassigned
+  - New notes or mitigation steps added
+  ★ Do NOT use "update" if the change is a closure. Closure words always map to "close".
+
+"remove" intent — use ONLY when the document EXPLICITLY states the item is cancelled or no longer exists.
+
+"new" intent — use when:
+  - The document merely MENTIONS the existing item without changing it
+  - You cannot match this to an existing record with >= 0.85 confidence
+  - The change is ambiguous
+
+STRICT RULES:
+1. Confidence >= 0.85 required for any intent other than "new"
+2. The entity must be the SAME logical item — same description, same name — not just related
+3. If unsure whether it is "close" or "update": if the item reached its end-state, choose "close"
 
 Respond with valid JSON only:
 {
   "intent": "update" | "close" | "remove" | "new",
-  "matchedId": <existing entity ID if not new, else null>,
+  "matchedId": <existing entity ID if match found, else null>,
   "confidence": <0.0 to 1.0>,
-  "reasoning": "<1-2 sentence explanation>",
-  "proposedFields": <object with changed fields if intent is "update", else null>
+  "reasoning": "<1-2 sentence explanation citing specific evidence from the extracted fields>",
+  "proposedFields": <object with only the changed field names and their new values if intent is "update", else null>
 }`;
 
     try {
       const response = await client.messages.create({
         model: 'claude-sonnet-4-6',
         max_tokens: 500,
+        temperature: 0,
         messages: [{ role: 'user', content: prompt }],
       });
 
@@ -115,7 +168,7 @@ Respond with valid JSON only:
       };
 
       if (result.intent === 'new' || !result.matchedId) continue;
-      if (result.confidence < 0.75) continue;
+      if (result.confidence < 0.85) continue;
 
       const existing = candidates.find(c => c.id === result.matchedId);
       if (!existing) continue;

@@ -182,19 +182,19 @@ export function HealthDashboard({ projectId }: HealthDashboardProps) {
         {/* Reason chips (only non-zero signals) */}
         <div className="flex flex-wrap items-center justify-center gap-2 text-sm">
           {criticalRisks > 0 && (
-            <Link href={`/customer/${projectId}/delivery/risks`}
+            <Link href={`/customer/${projectId}/risks`}
               className="text-red-700 bg-red-50 border border-red-200 rounded-full px-3 py-0.5 hover:bg-red-100 transition-colors">
               {criticalRisks} critical risk{criticalRisks !== 1 ? 's' : ''}
             </Link>
           )}
           {highRisks > 0 && (
-            <Link href={`/customer/${projectId}/delivery/risks`}
+            <Link href={`/customer/${projectId}/risks`}
               className="text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-full px-3 py-0.5 hover:bg-yellow-100 transition-colors">
               {highRisks} high risk{highRisks !== 1 ? 's' : ''}
             </Link>
           )}
           {overdueMilestones > 0 && (
-            <Link href={`/customer/${projectId}/delivery/milestones`}
+            <Link href={`/customer/${projectId}/milestones`}
               className="text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-full px-3 py-0.5 hover:bg-yellow-100 transition-colors">
               {overdueMilestones} overdue milestone{overdueMilestones !== 1 ? 's' : ''}
             </Link>

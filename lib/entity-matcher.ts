@@ -126,9 +126,9 @@ export async function findSimilarEntities(
         `);
         return rows.map(r => ({ ...r as Record<string, unknown>, entityType } as MatchCandidate));
       }
-      case 'business_outcome': {
+      case 'businessOutcome': {
         const rows = await db.execute(sql`
-          SELECT id, title, outcome_text, track,
+          SELECT id, title, description, track,
             similarity(title, ${primaryText}) AS similarity
           FROM business_outcomes
           WHERE project_id = ${projectId}
@@ -144,6 +144,17 @@ export async function findSimilarEntities(
           FROM tasks
           WHERE project_id = ${projectId}
             AND similarity(title, ${primaryText}) > ${threshold}
+          ORDER BY similarity DESC LIMIT 3
+        `);
+        return rows.map(r => ({ ...r as Record<string, unknown>, entityType } as MatchCandidate));
+      }
+      case 'team_pathway': {
+        const rows = await db.execute(sql`
+          SELECT id, team_name, status,
+            similarity(team_name, ${primaryText}) AS similarity
+          FROM team_pathways
+          WHERE project_id = ${projectId}
+            AND similarity(team_name, ${primaryText}) > ${threshold}
           ORDER BY similarity DESC LIMIT 3
         `);
         return rows.map(r => ({ ...r as Record<string, unknown>, entityType } as MatchCandidate));

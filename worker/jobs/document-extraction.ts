@@ -639,23 +639,30 @@ async function runClaudeToolUseCall(
   content: Anthropic.MessageParam['content'],
   systemPrompt: string,
 ): Promise<{ items: ExtractionItem[]; coverage: string }> {
-  // Use streaming to avoid the 10-minute non-streaming timeout on large documents
-  const stream = client.messages.stream({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 32768,
-    system: systemPrompt,
-    messages: [{ role: 'user', content }],
-    tools: [RECORD_ENTITIES_TOOL],
-    tool_choice: { type: 'tool', name: 'record_entities' },
-  });
-
   const TIMEOUT_MS = 8 * 60 * 1000; // 8 minutes
-  const response = await Promise.race([
-    stream.finalMessage(),
-    new Promise<never>((_, reject) =>
-      setTimeout(() => { stream.abort(); reject(new Error('Claude API call timed out after 3 minutes')); }, TIMEOUT_MS)
-    ),
-  ]);
+  const MAX_RETRIES = 3;
+  const OVERLOAD_BASE_DELAY_MS = 30_000; // 30s, doubles each retry
+
+  let lastErr: unknown;
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      // Use streaming to avoid the 10-minute non-streaming timeout on large documents
+      const stream = client.messages.stream({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 32768,
+        temperature: 0,
+        system: systemPrompt,
+        messages: [{ role: 'user', content }],
+        tools: [RECORD_ENTITIES_TOOL],
+        tool_choice: { type: 'tool', name: 'record_entities' },
+      });
+
+      const response = await Promise.race([
+        stream.finalMessage(),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => { stream.abort(); reject(new Error('Claude API call timed out after 8 minutes')); }, TIMEOUT_MS)
+        ),
+      ]);
 
   if (response.stop_reason === 'max_tokens') {
     console.warn('[extraction] max_tokens hit — response truncated. Entities from this chunk may be incomplete.');
@@ -687,10 +694,28 @@ async function runClaudeToolUseCall(
     }
   }
 
-  return {
-    items: entities,
-    coverage: input.coverage ?? '',
-  };
+      return {
+        items: entities,
+        coverage: input.coverage ?? '',
+      };
+    } catch (err) {
+      lastErr = err;
+      // Retry on overload only
+      const isOverload =
+        (err instanceof Error && err.message.toLowerCase().includes('overloaded')) ||
+        // Anthropic SDK wraps HTTP errors — check status if available
+        (typeof err === 'object' && err !== null && 'status' in err && (err as { status: number }).status === 529);
+      if (isOverload && attempt < MAX_RETRIES) {
+        const delay = OVERLOAD_BASE_DELAY_MS * Math.pow(2, attempt);
+        console.warn(`[extraction] Anthropic overloaded (attempt ${attempt + 1}/${MAX_RETRIES + 1}), retrying in ${delay / 1000}s...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+      throw err;
+    }
+  }
+  // Should not reach here — loop always returns or throws
+  throw lastErr;
 }
 
 // ─── Architecture Phase Context ───────────────────────────────────────────────
@@ -819,6 +844,7 @@ export default async function documentExtractionJob(job: Job): Promise<{ status:
       const pass0Response = await client.messages.create({
         model: 'claude-sonnet-4-6',
         max_tokens: 4096, // Pre-analysis is concise — 4k sufficient
+        temperature: 0,
         system: 'You are a document pre-analyzer. Extract key sections only.',
         messages: [{ role: 'user', content: pass0Content }],
       });
@@ -1022,9 +1048,16 @@ export default async function documentExtractionJob(job: Job): Promise<{ status:
       }),
     );
 
+    // These types generate noise in update documents and should never appear in the review UI:
+    // - note: unstructured prose, every sentence gets extracted
+    // - focus_area: extracted from section headings, not real focus areas
+    // - history: auto-ingested silently; prose always differs run-to-run so dedup never catches it
+    const REVIEW_SUPPRESSED_TYPES = new Set(['note', 'focus_area', 'history']);
+
     const newItems = dedupResults
       .filter(r => !r.alreadyIngested)
       .filter(r => r.item !== null && typeof r.item === 'object' && typeof (r.item as ExtractionItem).entityType === 'string')
+      .filter(r => !REVIEW_SUPPRESSED_TYPES.has((r.item as ExtractionItem).entityType))
       .map(r => {
         const item = r.item;
         const cleanedFields = item.fields && typeof item.fields === 'object'

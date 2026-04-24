@@ -69,7 +69,7 @@ export interface ReviewItem extends ExtractionItem {
   }
 }
 
-interface ProposedChange {
+export interface ProposedChange {
   intent: 'update' | 'close' | 'remove'
   entityType: string
   existingId: number
@@ -110,6 +110,8 @@ interface IngestionModalProps {
   initialArtifactId?: number
   /** Pre-computed dedup filtered count when reopening from Context Hub */
   initialFilteredCount?: number
+  /** Pre-loaded proposed changes from Pass 5 when opening at review stage */
+  initialProposedChanges?: ProposedChange[]
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -124,6 +126,7 @@ export function IngestionModal({
   initialReviewItems = [],
   initialArtifactId,
   initialFilteredCount,
+  initialProposedChanges = [],
 }: IngestionModalProps) {
   const router = useRouter()
   const [stage, setStage] = useState<Stage>(initialStage)
@@ -397,8 +400,9 @@ export function IngestionModal({
       setReviewItems(deduplicateCrossJob(mapped))
       setStage('reviewing')
       if (initialFilteredCount !== undefined) setFilteredCount(initialFilteredCount)
+      if (initialProposedChanges.length > 0) setProposedChanges(initialProposedChanges)
     }
-  }, [open, initialStage, initialReviewItems, initialFilteredCount])
+  }, [open, initialStage, initialReviewItems, initialFilteredCount, initialProposedChanges])
 
 
   // Resume in-progress extraction when modal is opened at 'extracting' stage after a page refresh

@@ -86,14 +86,14 @@ export async function GET(
         count: Number(row.count),
       }))
 
-      // 2. riskCounts: count risks per severity
+      // 2. riskCounts: count open risks per severity (exclude mitigated/resolved/accepted)
       const riskCountsRaw = await tx
         .select({
           severity: risks.severity,
           count: count(),
         })
         .from(risks)
-        .where(eq(risks.project_id, numericId))
+        .where(and(eq(risks.project_id, numericId), eq(risks.status, 'open')))
         .groupBy(risks.severity)
 
       const riskCounts = riskCountsRaw.map(row => ({

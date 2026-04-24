@@ -200,74 +200,48 @@ async function computeHealth(projectId: number): Promise<{
   stalledMilestones: number;
   stalledWorkstreams: number;
 }> {
-  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+  // Mirror the HealthDashboard formula exactly so sidebar dot and dashboard always agree.
+  // Formula: any open critical risk → red; any open high risk OR overdue milestone → yellow; else green.
 
-  // Count overdue actions: open or in_progress with a real due date that is past today
-  // Exclude 'TBD', 'N/A', and other non-date strings by checking format
-  const overdueResult = await db
+  // Open critical risks
+  const criticalResult = await db
     .select({ count: sql<number>`count(*)::int` })
-    .from(actions)
-    .where(
-      and(
-        eq(actions.project_id, projectId),
-        inArray(actions.status, ['open', 'in_progress']),
-        // Only real ISO-ish dates: must look like YYYY-MM-DD (10 chars starting with digit)
-        sql`length(${actions.due}) >= 10 AND ${actions.due} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}'`,
-        lt(actions.due, today),
-      )
-    );
-  const overdueActions = overdueResult[0]?.count ?? 0;
+    .from(risks)
+    .where(and(
+      eq(risks.project_id, projectId),
+      eq(risks.severity, 'critical'),
+      eq(risks.status, 'open'),
+    ));
+  const criticalRisks = criticalResult[0]?.count ?? 0;
 
-  // Count stalled milestones: not completed, created 14+ days ago (no last_updated col)
-  const fourteenDaysAgo = new Date();
-  fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
-
-  const stalledResult = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(milestones)
-    .where(
-      and(
-        eq(milestones.project_id, projectId),
-        ne(milestones.status, 'complete'),
-        lt(milestones.created_at, fourteenDaysAgo),
-      )
-    );
-  const stalledMilestones = stalledResult[0]?.count ?? 0;
-
-  // Count unresolved high/critical risks
+  // Open high risks
   const highRisksResult = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(risks)
-    .where(
-      and(
-        eq(risks.project_id, projectId),
-        inArray(risks.severity, ['high', 'critical']),
-        sql`${risks.status} NOT IN ('resolved', 'accepted')`,
-      )
-    );
+    .where(and(
+      eq(risks.project_id, projectId),
+      eq(risks.severity, 'high'),
+      eq(risks.status, 'open'),
+    ));
   const highRisks = highRisksResult[0]?.count ?? 0;
 
-  // Count workstreams with tracked progress that are critically behind (< 30%)
-  // Only workstreams that have had tasks assigned (percent_complete IS NOT NULL) contribute.
-  const stalledWorkstreamsResult = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(workstreams)
-    .where(
-      and(
-        eq(workstreams.project_id, projectId),
-        sql`${workstreams.percent_complete} IS NOT NULL`,
-        sql`${workstreams.percent_complete} < 30`,
-      )
-    );
-  const stalledWorkstreams = stalledWorkstreamsResult[0]?.count ?? 0;
-  // Contribute at most 1 point so a single behind team doesn't push to red alone
-  const workstreamSignal = stalledWorkstreams > 0 ? 1 : 0;
+  // Overdue milestones: not complete, parseable ISO date in the past
+  const overdueMilestonesResult = await db.execute<{ count: string | number }>(sql`
+    SELECT COUNT(*)::int AS count
+    FROM milestones
+    WHERE project_id = ${projectId}
+      AND (status IS NULL OR status != 'complete')
+      AND date ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+      AND date::date < CURRENT_DATE
+  `);
+  const overdueMilestones = Number(Array.from(overdueMilestonesResult)[0]?.count ?? 0);
 
-  const score = overdueActions + stalledMilestones + highRisks + workstreamSignal;
   const health: 'green' | 'yellow' | 'red' =
-    score >= 2 ? 'red' : score === 1 ? 'yellow' : 'green';
+    criticalRisks > 0 ? 'red'
+    : (highRisks > 0 || overdueMilestones > 0) ? 'yellow'
+    : 'green';
 
-  return { health, overdueActions, highRisks, stalledMilestones, stalledWorkstreams };
+  return { health, overdueActions: 0, highRisks: highRisks + criticalRisks, stalledMilestones: overdueMilestones, stalledWorkstreams: 0 };
 }
 
 // ─── Query Functions ──────────────────────────────────────────────────────────

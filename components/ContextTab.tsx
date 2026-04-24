@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 import { IngestionModal } from './IngestionModal'
+import type { ProposedChange } from './IngestionModal'
 import { ScanForUpdatesButton } from './ScanForUpdatesButton'
 import type { ExtractionItem } from '@/lib/extraction-types'
 
@@ -32,6 +33,7 @@ interface ExtractionJob {
   total_chunks: number
   filename?: string
   staged_items_json?: unknown
+  proposed_changes_json?: unknown
   filtered_count?: number
   artifact_id?: number
 }
@@ -57,6 +59,7 @@ export function ContextTab({ projectId }: ContextTabProps) {
   const [initialReviewItems, setInitialReviewItems] = useState<ExtractionItem[]>([])
   const [initialArtifactId, setInitialArtifactId] = useState<number | undefined>(undefined)
   const [initialFilteredCount, setInitialFilteredCount] = useState<number>(0)
+  const [initialProposedChanges, setInitialProposedChanges] = useState<ProposedChange[]>([])
   const [modalKey, setModalKey] = useState(0)
 
   function toggleTab(tabId: string) {
@@ -73,9 +76,13 @@ export function ContextTab({ projectId }: ContextTabProps) {
     const allItems = jobs.flatMap(j =>
       Array.isArray(j.staged_items_json) ? j.staged_items_json : []
     )
+    const allChanges = jobs.flatMap(j =>
+      Array.isArray(j.proposed_changes_json) ? j.proposed_changes_json as ProposedChange[] : []
+    )
     const totalFiltered = jobs.reduce((sum, j) => sum + (j.filtered_count ?? 0), 0)
     const firstArtifactId = jobs[0]?.artifact_id
     setInitialReviewItems(allItems as ExtractionItem[])
+    setInitialProposedChanges(allChanges)
     setInitialFilteredCount(totalFiltered)
     setInitialArtifactId(firstArtifactId)
     setInitialStage('reviewing')
@@ -173,6 +180,7 @@ export function ContextTab({ projectId }: ContextTabProps) {
       setInitialReviewItems([])
       setInitialArtifactId(undefined)
       setInitialFilteredCount(0)
+      setInitialProposedChanges([])
       // If batch was completed and reviewed, clear it
       if (activeBatch?.batch_complete) {
         setActiveBatch(null)
@@ -387,6 +395,7 @@ export function ContextTab({ projectId }: ContextTabProps) {
         initialReviewItems={initialReviewItems}
         initialArtifactId={initialArtifactId}
         initialFilteredCount={initialFilteredCount}
+        initialProposedChanges={initialProposedChanges}
       />
     </div>
   )

@@ -189,7 +189,11 @@ async function resolveEntityRef(
 
 function normalize(value: string | undefined | null): string {
   if (!value) return '';
-  return value.toLowerCase().trim().slice(0, 120);
+  return value.toLowerCase().trim().slice(0, 40);
+}
+
+function dedupePattern(key: string): string {
+  return `%${key}%`;
 }
 
 /**
@@ -209,7 +213,7 @@ async function findConflict(
       const rows = await db
         .select({ id: actions.id })
         .from(actions)
-        .where(and(eq(actions.project_id, projectId), ilike(actions.description, `${key}%`)));
+        .where(and(eq(actions.project_id, projectId), ilike(actions.description, dedupePattern(key))));
       return rows[0] ?? null;
     }
     case 'risk': {
@@ -218,7 +222,7 @@ async function findConflict(
       const rows = await db
         .select({ id: risks.id })
         .from(risks)
-        .where(and(eq(risks.project_id, projectId), ilike(risks.description, `${key}%`)));
+        .where(and(eq(risks.project_id, projectId), ilike(risks.description, dedupePattern(key))));
       return rows[0] ?? null;
     }
     case 'milestone': {
@@ -227,7 +231,7 @@ async function findConflict(
       const rows = await db
         .select({ id: milestones.id })
         .from(milestones)
-        .where(and(eq(milestones.project_id, projectId), ilike(milestones.name, `${key}%`)));
+        .where(and(eq(milestones.project_id, projectId), ilike(milestones.name, dedupePattern(key))));
       return rows[0] ?? null;
     }
     case 'decision': {
@@ -236,16 +240,17 @@ async function findConflict(
       const rows = await db
         .select({ id: keyDecisions.id })
         .from(keyDecisions)
-        .where(and(eq(keyDecisions.project_id, projectId), ilike(keyDecisions.decision, `${key}%`)));
+        .where(and(eq(keyDecisions.project_id, projectId), ilike(keyDecisions.decision, dedupePattern(key))));
       return rows[0] ?? null;
     }
-    case 'history': {
-      const key = normalize(f.content);
+    case 'history':
+    case 'note': {
+      const key = normalize(f.content ?? f.context);
       if (!key) return null;
       const rows = await db
         .select({ id: engagementHistory.id })
         .from(engagementHistory)
-        .where(and(eq(engagementHistory.project_id, projectId), ilike(engagementHistory.content, `${key}%`)));
+        .where(and(eq(engagementHistory.project_id, projectId), ilike(engagementHistory.content, dedupePattern(key))));
       return rows[0] ?? null;
     }
     case 'stakeholder': {
@@ -261,7 +266,7 @@ async function findConflict(
       const rows = await db
         .select({ id: stakeholders.id })
         .from(stakeholders)
-        .where(and(eq(stakeholders.project_id, projectId), ilike(stakeholders.name, `${key}%`)));
+        .where(and(eq(stakeholders.project_id, projectId), ilike(stakeholders.name, dedupePattern(key))));
       return rows[0] ?? null;
     }
     case 'task': {
@@ -270,7 +275,7 @@ async function findConflict(
       const rows = await db
         .select({ id: tasks.id })
         .from(tasks)
-        .where(and(eq(tasks.project_id, projectId), ilike(tasks.title, `${key}%`)));
+        .where(and(eq(tasks.project_id, projectId), ilike(tasks.title, dedupePattern(key))));
       return rows[0] ?? null;
     }
     case 'businessOutcome': {
@@ -279,7 +284,7 @@ async function findConflict(
       const rows = await db
         .select({ id: businessOutcomes.id })
         .from(businessOutcomes)
-        .where(and(eq(businessOutcomes.project_id, projectId), ilike(businessOutcomes.title, `${key}%`)));
+        .where(and(eq(businessOutcomes.project_id, projectId), ilike(businessOutcomes.title, dedupePattern(key))));
       return rows[0] ?? null;
     }
     case 'team': {
@@ -288,7 +293,7 @@ async function findConflict(
       const rows = await db
         .select({ id: teamOnboardingStatus.id })
         .from(teamOnboardingStatus)
-        .where(and(eq(teamOnboardingStatus.project_id, projectId), ilike(teamOnboardingStatus.team_name, `${key}%`)));
+        .where(and(eq(teamOnboardingStatus.project_id, projectId), ilike(teamOnboardingStatus.team_name, dedupePattern(key))));
       return rows[0] ?? null;
     }
     case 'architecture': {
@@ -297,7 +302,7 @@ async function findConflict(
       const rows = await db
         .select({ id: architectureIntegrations.id })
         .from(architectureIntegrations)
-        .where(and(eq(architectureIntegrations.project_id, projectId), ilike(architectureIntegrations.tool_name, `${toolKey}%`)));
+        .where(and(eq(architectureIntegrations.project_id, projectId), ilike(architectureIntegrations.tool_name, dedupePattern(toolKey))));
       return rows[0] ?? null;
     }
     case 'team_pathway': {
@@ -306,7 +311,7 @@ async function findConflict(
       const rows = await db
         .select({ id: teamPathways.id })
         .from(teamPathways)
-        .where(and(eq(teamPathways.project_id, projectId), ilike(teamPathways.team_name, `${key}%`)));
+        .where(and(eq(teamPathways.project_id, projectId), ilike(teamPathways.team_name, dedupePattern(key))));
       return rows[0] ?? null;
     }
     case 'workstream': {
@@ -315,7 +320,7 @@ async function findConflict(
       const rows = await db
         .select({ id: workstreams.id })
         .from(workstreams)
-        .where(and(eq(workstreams.project_id, projectId), ilike(workstreams.name, `${key}%`)));
+        .where(and(eq(workstreams.project_id, projectId), ilike(workstreams.name, dedupePattern(key))));
       return rows[0] ?? null;
     }
     case 'onboarding_step': {
@@ -324,7 +329,7 @@ async function findConflict(
       const rows = await db
         .select({ id: onboardingSteps.id })
         .from(onboardingSteps)
-        .where(and(eq(onboardingSteps.project_id, projectId), ilike(onboardingSteps.name, `${key}%`)));
+        .where(and(eq(onboardingSteps.project_id, projectId), ilike(onboardingSteps.name, dedupePattern(key))));
       return rows[0] ?? null;
     }
     case 'integration': {
@@ -333,7 +338,7 @@ async function findConflict(
       const rows = await db
         .select({ id: integrations.id })
         .from(integrations)
-        .where(and(eq(integrations.project_id, projectId), ilike(integrations.tool, `${key}%`)));
+        .where(and(eq(integrations.project_id, projectId), ilike(integrations.tool, dedupePattern(key))));
       return rows[0] ?? null;
     }
     case 'focus_area': {
@@ -342,16 +347,34 @@ async function findConflict(
       const rows = await db
         .select({ id: focusAreas.id })
         .from(focusAreas)
-        .where(and(eq(focusAreas.project_id, projectId), ilike(focusAreas.title, `${key}%`)));
+        .where(and(eq(focusAreas.project_id, projectId), ilike(focusAreas.title, dedupePattern(key))));
       return rows[0] ?? null;
     }
     case 'e2e_workflow': {
-      const key = normalize(f.workflow_name);
-      if (!key) return null;
+      const workflowKey = normalize(f.workflow_name);
+      const teamKey = normalize(f.team_name);
+      if (!workflowKey || !teamKey) return null;
       const rows = await db
         .select({ id: e2eWorkflows.id })
         .from(e2eWorkflows)
-        .where(and(eq(e2eWorkflows.project_id, projectId), ilike(e2eWorkflows.workflow_name, `${key}%`)));
+        .where(and(
+          eq(e2eWorkflows.project_id, projectId),
+          ilike(e2eWorkflows.workflow_name, dedupePattern(workflowKey)),
+          ilike(e2eWorkflows.team_name, dedupePattern(teamKey)),
+        ));
+      return rows[0] ?? null;
+    }
+    case 'wbs_task': {
+      const key = normalize(f.title);
+      if (!key) return null;
+      const rows = await db
+        .select({ id: wbsItems.id })
+        .from(wbsItems)
+        .where(and(
+          eq(wbsItems.project_id, projectId),
+          eq(wbsItems.track, f.track ?? 'ADR'),
+          ilike(wbsItems.name, dedupePattern(key)),
+        ));
       return rows[0] ?? null;
     }
     default:
@@ -1386,9 +1409,36 @@ async function mergeItem(
 
 // ─── Entity lifecycle handlers for Pillar 1 (document-driven changes) ───────
 
-/**
- * Update an existing entity with proposed fields from document analysis
- */
+// Maps extraction field names to DB column names for entities where they diverge.
+const LIFECYCLE_FIELD_MAP: Record<string, Record<string, string>> = {
+  action: { due_date: 'due' },
+  milestone: { target_date: 'target', name: 'name', status: 'status', owner: 'owner', notes: 'notes' },
+  risk: { target_date: 'target_date' }, // risk uses same names — listed for completeness
+};
+
+// Valid status enum values per entity type — reject anything not in list to avoid DB errors.
+const LIFECYCLE_STATUS_ENUMS: Record<string, Set<string>> = {
+  action: new Set(['open', 'in_progress', 'completed', 'cancelled']),
+  risk: new Set(['open', 'mitigated', 'resolved', 'accepted']),
+  milestone: new Set(['on_track', 'at_risk', 'complete', 'missed']),
+};
+
+function normalizeLifecycleFields(entityType: string, fields: Record<string, unknown>): Record<string, unknown> {
+  const fieldMap = LIFECYCLE_FIELD_MAP[entityType] ?? {};
+  const enumSet = LIFECYCLE_STATUS_ENUMS[entityType];
+  const result: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(fields)) {
+    const dbKey = fieldMap[k] ?? k;
+    // Validate status enum values to prevent DB constraint violations
+    if (dbKey === 'status' && enumSet && typeof v === 'string' && !enumSet.has(v)) {
+      console.warn(`[lifecycle] Skipping invalid status '${v}' for ${entityType}`);
+      continue;
+    }
+    result[dbKey] = v;
+  }
+  return result;
+}
+
 async function updateItemLifecycle(
   entityType: string,
   entityId: number,
@@ -1410,16 +1460,19 @@ async function updateItemLifecycle(
   const [before] = await db.select().from(table).where(eq((table as any).id, entityId));
   if (!before) return;
 
+  const normalizedFields = normalizeLifecycleFields(entityType, fields);
+  if (Object.keys(normalizedFields).length === 0) return;
+
   await db.transaction(async (tx) => {
     await tx.execute(sql.raw(`SET LOCAL app.current_project_id = ${projectId}`));
-    await tx.update(table).set(fields as any).where(eq((table as any).id, entityId));
+    await tx.update(table).set(normalizedFields as any).where(eq((table as any).id, entityId));
     await tx.insert(auditLog).values({
       entity_type: entityType,
       entity_id: entityId,
       action: 'update',
       actor_id: actorId,
       before_json: before as Record<string, unknown>,
-      after_json: { ...before, ...fields } as Record<string, unknown>,
+      after_json: { ...before, ...normalizedFields } as Record<string, unknown>,
     });
   });
 }
@@ -1434,7 +1487,7 @@ async function closeItemLifecycle(
   actorId: string
 ): Promise<void> {
   const closeStatusMap: Record<string, Record<string, unknown>> = {
-    action: { status: 'closed' },
+    action: { status: 'completed' },
     risk: { status: 'resolved' },
     milestone: { status: 'complete' },
     workstream: { current_status: 'complete' },
@@ -1691,6 +1744,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   const { artifactId, projectId, items, totalExtracted, approvedChanges } = parsed.data;
+  console.log(`[approve] projectId=${projectId} items=${items.length} approvedChanges=${approvedChanges?.length ?? 0}`, approvedChanges?.map(c => `${c.intent}:${c.entityType}:${c.existingId}`));
 
   // 2. Check project membership
   const { redirectResponse, session } = await requireProjectRole(projectId);
@@ -1809,8 +1863,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   // Process approved changes (Pillar 1 — document-driven lifecycle events)
+  console.log(`[approve] processing ${approvedChanges?.length ?? 0} approvedChanges`);
   if (approvedChanges && approvedChanges.length > 0) {
     for (const change of approvedChanges) {
+      console.log(`[approve] change: intent=${change.intent} type=${change.entityType} id=${change.existingId} fields=${JSON.stringify(change.proposedFields)}`);
       try {
         if (change.intent === 'update' && change.proposedFields) {
           await updateItemLifecycle(
