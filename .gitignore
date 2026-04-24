@@ -58,3 +58,4 @@ next-env.d.ts
 /scripts/import-onboarding.ts
 /scripts/query-*.ts
 /scripts/*.docx
+/test-docs/
