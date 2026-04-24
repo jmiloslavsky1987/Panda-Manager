@@ -49,7 +49,12 @@ next-env.d.ts
 /vitest.config.ts
 /.planning/
 
-# demo seeds and customer-specific test content
+# demo/customer-specific content — not needed for app install
 /scripts/seed-*.ts
+/scripts/reseed-*.ts
+/scripts/run-seed.ts
 /scripts/create-*-doc.ts
+/scripts/migrate-local.ts
+/scripts/import-onboarding.ts
+/scripts/query-*.ts
 /scripts/*.docx
