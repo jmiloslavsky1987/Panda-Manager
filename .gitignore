@@ -48,3 +48,8 @@ next-env.d.ts
 /test-ingestion-doc.md
 /vitest.config.ts
 /.planning/
+
+# demo seeds and customer-specific test content
+/scripts/seed-*.ts
+/scripts/create-*-doc.ts
+/scripts/*.docx
