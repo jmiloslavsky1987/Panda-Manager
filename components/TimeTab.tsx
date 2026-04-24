@@ -292,6 +292,129 @@ function SubmitWeekDialog({ projectId, role, entries, onClose, onSuccess }: Subm
   )
 }
 
+// ─── Entry row (shared by flat and grouped table views) ───────────────────────
+
+interface TimeEntryRowProps {
+  entry: TimeEntry
+  projectId: number
+  role: string
+  isApprover: boolean
+  selectedIds: Set<number>
+  savingEntry: Record<number, string>
+  showCheckbox: boolean
+  onToggleSelect: (id: number) => void
+  onApprove: (id: number) => void
+  onReject: (id: number) => void
+  onOverrideLock: (id: number) => void
+  onDelete: (id: number) => Promise<void>
+  onRefresh: () => void
+}
+
+function TimeEntryRow({
+  entry,
+  projectId,
+  role,
+  isApprover,
+  selectedIds,
+  savingEntry,
+  showCheckbox,
+  onToggleSelect,
+  onApprove,
+  onReject,
+  onOverrideLock,
+  onDelete,
+  onRefresh,
+}: TimeEntryRowProps) {
+  const status = getEntryStatus(entry)
+  const editable = canEdit(entry)
+  const submittable = canSubmit(entry)
+  const locked = entry.locked
+  const isSaving = savingEntry[entry.id]
+
+  return (
+    <tr
+      data-testid="time-entry-row"
+      className={`border-b border-zinc-100 hover:bg-zinc-50 transition-colors${selectedIds.has(entry.id) ? ' bg-blue-50' : ''}`}
+    >
+      {showCheckbox && (
+        <td className="py-2 px-2 w-8">
+          <input
+            type="checkbox"
+            checked={selectedIds.has(entry.id)}
+            onChange={() => onToggleSelect(entry.id)}
+            aria-label={`Select entry ${entry.id}`}
+            className="rounded border-zinc-300"
+            data-testid="entry-checkbox"
+          />
+        </td>
+      )}
+      <td className="py-2 px-3 text-zinc-700 whitespace-nowrap">{entry.date}</td>
+      <td className="py-2 px-3 text-zinc-700 whitespace-nowrap">{entry.hours}</td>
+      <td className="py-2 px-3 text-zinc-900">{entry.description}</td>
+      <td className="py-2 px-3 whitespace-nowrap">
+        <StatusBadge status={status} />
+      </td>
+      <td className="py-2 px-3 text-right whitespace-nowrap">
+        <div className="inline-flex items-center gap-1.5">
+          {isSaving && <span className="text-xs text-zinc-400">Saving...</span>}
+          {isApprover && status === 'submitted' && !isSaving && (
+            <button onClick={() => onApprove(entry.id)} className="px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200" title="Approve entry" aria-label="Approve entry" data-testid="approve-btn">Approve</button>
+          )}
+          {isApprover && status === 'submitted' && !isSaving && (
+            <button onClick={() => onReject(entry.id)} className="px-2 py-0.5 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200" title="Reject entry" aria-label="Reject entry" data-testid="reject-btn">Reject</button>
+          )}
+          {locked && canOverrideLock(role) && !isSaving && (
+            <button onClick={() => onOverrideLock(entry.id)} className="px-2 py-0.5 text-xs bg-amber-100 text-amber-700 rounded hover:bg-amber-200" title="Override lock" aria-label="Override lock" data-testid="override-lock-btn">Unlock</button>
+          )}
+          {editable && !isSaving && (
+            <TimeEntryModal
+              projectId={projectId}
+              entry={entry}
+              trigger={
+                <button className="p-1 rounded hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900" title="Edit entry" aria-label="Edit entry">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                </button>
+              }
+              onSuccess={onRefresh}
+            />
+          )}
+          {locked && !canOverrideLock(role) && (
+            <span className="p-1 text-amber-500" title="Entry is locked" aria-label="Entry is locked" data-testid="lock-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            </span>
+          )}
+          {editable && !isSaving && (
+            <DeleteConfirmDialog
+              entityLabel="this time entry"
+              onConfirm={() => onDelete(entry.id)}
+              trigger={
+                <button className="p-1 rounded hover:bg-red-50 text-zinc-500 hover:text-red-600" title="Delete entry" aria-label="Delete entry">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                    <path d="M10 11v6" />
+                    <path d="M14 11v6" />
+                    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                  </svg>
+                </button>
+              }
+            />
+          )}
+          {!isApprover && submittable && !editable && (
+            <span className="text-xs text-zinc-400 italic">ready</span>
+          )}
+        </div>
+      </td>
+    </tr>
+  )
+}
+
 // ─── Main TimeTab ──────────────────────────────────────────────────────────────
 
 export function TimeTab({ projectId }: TimeTabProps) {
@@ -1170,92 +1293,24 @@ export function TimeTab({ projectId }: TimeTabProps) {
                         </tr>
                       </thead>
                       <tbody>
-                        {groupEntryList.map((entry) => {
-                          const status = getEntryStatus(entry)
-                          const editable = canEdit(entry)
-                          const locked = entry.locked
-                          const isSaving = savingEntry[entry.id]
-                          return (
-                            <tr
-                              key={entry.id}
-                              data-testid="time-entry-row"
-                              className={`border-b border-zinc-100 hover:bg-zinc-50 transition-colors${selectedIds.has(entry.id) ? ' bg-blue-50' : ''}`}
-                            >
-                              {isApprover && (
-                                <td className="py-2 px-2 w-8">
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedIds.has(entry.id)}
-                                    onChange={() => toggleEntrySelect(entry.id)}
-                                    aria-label={`Select entry ${entry.id}`}
-                                    className="rounded border-zinc-300"
-                                    data-testid="entry-checkbox"
-                                  />
-                                </td>
-                              )}
-                              <td className="py-2 px-3 text-zinc-700 whitespace-nowrap">{entry.date}</td>
-                              <td className="py-2 px-3 text-zinc-700 whitespace-nowrap">{entry.hours}</td>
-                              <td className="py-2 px-3 text-zinc-900">{entry.description}</td>
-                              <td className="py-2 px-3 whitespace-nowrap">
-                                <StatusBadge status={status} />
-                              </td>
-                              <td className="py-2 px-3 text-right whitespace-nowrap">
-                                <div className="inline-flex items-center gap-1.5">
-                                  {isSaving && <span className="text-xs text-zinc-400">Saving...</span>}
-                                  {isApprover && status === 'submitted' && !isSaving && (
-                                    <button onClick={() => handleApprove(entry.id)} className="px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200" data-testid="approve-btn">Approve</button>
-                                  )}
-                                  {isApprover && status === 'submitted' && !isSaving && (
-                                    <button onClick={() => handleReject(entry.id)} className="px-2 py-0.5 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200" data-testid="reject-btn">Reject</button>
-                                  )}
-                                  {locked && canOverrideLock(role) && !isSaving && (
-                                    <button onClick={() => handleOverrideLock(entry.id)} className="px-2 py-0.5 text-xs bg-amber-100 text-amber-700 rounded hover:bg-amber-200" data-testid="override-lock-btn">Unlock</button>
-                                  )}
-                                  {editable && !isSaving && (
-                                    <TimeEntryModal
-                                      projectId={projectId}
-                                      entry={entry}
-                                      trigger={
-                                        <button className="p-1 rounded hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900" title="Edit entry" aria-label="Edit entry">
-                                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                                          </svg>
-                                        </button>
-                                      }
-                                      onSuccess={refresh}
-                                    />
-                                  )}
-                                  {locked && !canOverrideLock(role) && (
-                                    <span className="p-1 text-amber-500" title="Entry is locked" aria-label="Entry is locked" data-testid="lock-icon">
-                                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                                      </svg>
-                                    </span>
-                                  )}
-                                  {editable && !isSaving && (
-                                    <DeleteConfirmDialog
-                                      entityLabel="this time entry"
-                                      onConfirm={() => handleDelete(entry.id)}
-                                      trigger={
-                                        <button className="p-1 rounded hover:bg-red-50 text-zinc-500 hover:text-red-600" title="Delete entry" aria-label="Delete entry">
-                                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                            <polyline points="3 6 5 6 21 6" />
-                                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                                            <path d="M10 11v6" />
-                                            <path d="M14 11v6" />
-                                            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                                          </svg>
-                                        </button>
-                                      }
-                                    />
-                                  )}
-                                </div>
-                              </td>
-                            </tr>
-                          )
-                        })}
+                        {groupEntryList.map((entry) => (
+                          <TimeEntryRow
+                            key={entry.id}
+                            entry={entry}
+                            projectId={projectId}
+                            role={role}
+                            isApprover={isApprover}
+                            selectedIds={selectedIds}
+                            savingEntry={savingEntry}
+                            showCheckbox={isApprover}
+                            onToggleSelect={toggleEntrySelect}
+                            onApprove={handleApprove}
+                            onReject={handleReject}
+                            onOverrideLock={handleOverrideLock}
+                            onDelete={handleDelete}
+                            onRefresh={refresh}
+                          />
+                        ))}
                       </tbody>
                     </table>
                   </div>
@@ -1299,182 +1354,24 @@ export function TimeTab({ projectId }: TimeTabProps) {
               </tr>
             </thead>
             <tbody>
-              {entries.map((entry) => {
-                const status = getEntryStatus(entry)
-                const editable = canEdit(entry)
-                const submittable = canSubmit(entry)
-                const locked = entry.locked
-                const isSaving = savingEntry[entry.id]
-
-                return (
-                  <tr
-                    key={entry.id}
-                    data-testid="time-entry-row"
-                    className={`border-b border-zinc-100 hover:bg-zinc-50 transition-colors${selectedIds.has(entry.id) ? ' bg-blue-50' : ''}`}
-                  >
-                    {/* Checkbox cell — approver/admin only */}
-                    {isApprover && (
-                      <td className="py-2 px-2 w-8">
-                        <input
-                          type="checkbox"
-                          checked={selectedIds.has(entry.id)}
-                          onChange={() => toggleEntrySelect(entry.id)}
-                          aria-label={`Select entry ${entry.id}`}
-                          className="rounded border-zinc-300"
-                          data-testid="entry-checkbox"
-                        />
-                      </td>
-                    )}
-                    <td className="py-2 px-3 text-zinc-700 whitespace-nowrap">{entry.date}</td>
-                    <td className="py-2 px-3 text-zinc-700 whitespace-nowrap">{entry.hours}</td>
-                    <td className="py-2 px-3 text-zinc-900">{entry.description}</td>
-                    <td className="py-2 px-3 whitespace-nowrap">
-                      <StatusBadge status={status} />
-                    </td>
-                    <td className="py-2 px-3 text-right whitespace-nowrap">
-                      <div className="inline-flex items-center gap-1.5">
-                        {/* Saving indicator */}
-                        {isSaving && (
-                          <span className="text-xs text-zinc-400">Saving...</span>
-                        )}
-
-                        {/* Approve button — shown to approver/admin when entry is submitted */}
-                        {isApprover && status === 'submitted' && !isSaving && (
-                          <button
-                            onClick={() => handleApprove(entry.id)}
-                            className="px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200"
-                            title="Approve entry"
-                            aria-label="Approve entry"
-                            data-testid="approve-btn"
-                          >
-                            Approve
-                          </button>
-                        )}
-
-                        {/* Reject button — shown to approver/admin when entry is submitted */}
-                        {isApprover && status === 'submitted' && !isSaving && (
-                          <button
-                            onClick={() => handleReject(entry.id)}
-                            className="px-2 py-0.5 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200"
-                            title="Reject entry"
-                            aria-label="Reject entry"
-                            data-testid="reject-btn"
-                          >
-                            Reject
-                          </button>
-                        )}
-
-                        {/* Override Lock button — admin/approver when entry is locked */}
-                        {locked && canOverrideLock(role) && !isSaving && (
-                          <button
-                            onClick={() => handleOverrideLock(entry.id)}
-                            className="px-2 py-0.5 text-xs bg-amber-100 text-amber-700 rounded hover:bg-amber-200"
-                            title="Override lock"
-                            aria-label="Override lock"
-                            data-testid="override-lock-btn"
-                          >
-                            Unlock
-                          </button>
-                        )}
-
-                        {/* Edit — only when canEdit */}
-                        {editable && !isSaving && (
-                          <TimeEntryModal
-                            projectId={projectId}
-                            entry={entry}
-                            trigger={
-                              <button
-                                className="p-1 rounded hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900"
-                                title="Edit entry"
-                                aria-label="Edit entry"
-                              >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="14"
-                                  height="14"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                                </svg>
-                              </button>
-                            }
-                            onSuccess={refresh}
-                          />
-                        )}
-
-                        {/* Lock icon when entry is locked (non-override users) */}
-                        {locked && !canOverrideLock(role) && (
-                          <span
-                            className="p-1 text-amber-500"
-                            title="Entry is locked"
-                            aria-label="Entry is locked"
-                            data-testid="lock-icon"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="13"
-                              height="13"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                            </svg>
-                          </span>
-                        )}
-
-                        {/* Delete — only when canEdit and not locked */}
-                        {editable && !isSaving && (
-                          <DeleteConfirmDialog
-                            entityLabel="this time entry"
-                            onConfirm={() => handleDelete(entry.id)}
-                            trigger={
-                              <button
-                                className="p-1 rounded hover:bg-red-50 text-zinc-500 hover:text-red-600"
-                                title="Delete entry"
-                                aria-label="Delete entry"
-                              >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="14"
-                                  height="14"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <polyline points="3 6 5 6 21 6" />
-                                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                                  <path d="M10 11v6" />
-                                  <path d="M14 11v6" />
-                                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                                </svg>
-                              </button>
-                            }
-                          />
-                        )}
-
-                        {/* Submittable indicator — shown for user role when canSubmit */}
-                        {!isApprover && submittable && !editable && (
-                          <span className="text-xs text-zinc-400 italic">ready</span>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                )
-              })}
+              {entries.map((entry) => (
+                <TimeEntryRow
+                  key={entry.id}
+                  entry={entry}
+                  projectId={projectId}
+                  role={role}
+                  isApprover={isApprover}
+                  selectedIds={selectedIds}
+                  savingEntry={savingEntry}
+                  showCheckbox={isApprover}
+                  onToggleSelect={toggleEntrySelect}
+                  onApprove={handleApprove}
+                  onReject={handleReject}
+                  onOverrideLock={handleOverrideLock}
+                  onDelete={handleDelete}
+                  onRefresh={refresh}
+                />
+              ))}
             </tbody>
           </table>
         </div>

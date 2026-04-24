@@ -197,6 +197,88 @@ export function computeEdgeDrag(
   }
 }
 
+// ── Toolbar sub-component ─────────────────────────────────────────────────────
+
+interface GanttToolbarProps {
+  taskCount: number
+  phaseCount: number
+  milestoneCount: number
+  saveMode: boolean
+  baselineName: string
+  savingBaseline: boolean
+  baselines: { id: number; name: string; createdAt: string }[]
+  activeBaselineId: number | null
+  viewMode: ViewMode
+  onSaveModeToggle: (on: boolean) => void
+  onBaselineNameChange: (name: string) => void
+  onSaveBaseline: () => void
+  onSelectBaseline: (id: number | null) => void
+  onViewModeChange: (mode: ViewMode) => void
+}
+
+function GanttToolbar({
+  taskCount, phaseCount, milestoneCount,
+  saveMode, baselineName, savingBaseline, baselines, activeBaselineId, viewMode,
+  onSaveModeToggle, onBaselineNameChange, onSaveBaseline, onSelectBaseline, onViewModeChange,
+}: GanttToolbarProps) {
+  return (
+    <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200 bg-zinc-50 shrink-0">
+      <span className="text-xs text-zinc-500">{taskCount} tasks · {phaseCount} phases · {milestoneCount} milestones</span>
+
+      <div className="flex items-center gap-2">
+        {saveMode ? (
+          <>
+            <input
+              autoFocus
+              type="text"
+              placeholder="Baseline name…"
+              value={baselineName}
+              onChange={e => onBaselineNameChange(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') onSaveBaseline(); if (e.key === 'Escape') { onSaveModeToggle(false); onBaselineNameChange('') } }}
+              className="text-xs border border-zinc-300 rounded px-2 py-1 w-40 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+              disabled={savingBaseline}
+            />
+            <button onClick={onSaveBaseline} disabled={savingBaseline || !baselineName.trim()}
+              className="text-xs px-2 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-40">
+              {savingBaseline ? '…' : 'Save'}
+            </button>
+            <button onClick={() => { onSaveModeToggle(false); onBaselineNameChange('') }}
+              className="text-xs px-2 py-1 border border-zinc-200 rounded hover:bg-zinc-50 text-zinc-600">
+              Cancel
+            </button>
+          </>
+        ) : (
+          <button onClick={() => onSaveModeToggle(true)}
+            className="text-xs px-2 py-1 border border-zinc-200 rounded hover:bg-zinc-50 text-zinc-600">
+            Save Baseline
+          </button>
+        )}
+
+        {baselines.length > 0 && (
+          <select
+            value={activeBaselineId ?? ''}
+            onChange={e => onSelectBaseline(e.target.value === '' ? null : Number(e.target.value))}
+            className="text-xs border border-zinc-200 rounded px-2 py-1 bg-white text-zinc-700 focus:outline-none focus:ring-1 focus:ring-indigo-400">
+            <option value="">Compare: None</option>
+            {baselines.map(b => (
+              <option key={b.id} value={b.id}>{b.name}</option>
+            ))}
+          </select>
+        )}
+      </div>
+
+      <div className="flex rounded border border-zinc-200 overflow-hidden">
+        {VIEW_MODES.map(m => (
+          <button key={m} onClick={() => onViewModeChange(m)}
+            className={`px-3 py-1 text-xs font-medium transition-colors ${viewMode === m ? 'bg-zinc-800 text-white' : 'bg-white text-zinc-600 hover:bg-zinc-50'}`}>
+            {m}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 type BaselineMeta = { id: number; name: string; createdAt: string }
@@ -730,61 +812,22 @@ export default function GanttChart({
     <div className="flex flex-col border border-zinc-200 rounded-lg overflow-hidden bg-white">
 
       {/* Toolbar */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200 bg-zinc-50 shrink-0">
-        <span className="text-xs text-zinc-500">{allTaskCount} tasks · {wbsRows.length} phases · {milestones.length} milestones</span>
-
-        {/* Save Baseline + Compare */}
-        <div className="flex items-center gap-2">
-          {saveMode ? (
-            <>
-              <input
-                autoFocus
-                type="text"
-                placeholder="Baseline name…"
-                value={baselineName}
-                onChange={e => setBaselineName(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') handleSaveBaseline(); if (e.key === 'Escape') { setSaveMode(false); setBaselineName('') } }}
-                className="text-xs border border-zinc-300 rounded px-2 py-1 w-40 focus:outline-none focus:ring-1 focus:ring-indigo-400"
-                disabled={savingBaseline}
-              />
-              <button onClick={handleSaveBaseline} disabled={savingBaseline || !baselineName.trim()}
-                className="text-xs px-2 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-40">
-                {savingBaseline ? '…' : 'Save'}
-              </button>
-              <button onClick={() => { setSaveMode(false); setBaselineName('') }}
-                className="text-xs px-2 py-1 border border-zinc-200 rounded hover:bg-zinc-50 text-zinc-600">
-                Cancel
-              </button>
-            </>
-          ) : (
-            <button onClick={() => setSaveMode(true)}
-              className="text-xs px-2 py-1 border border-zinc-200 rounded hover:bg-zinc-50 text-zinc-600">
-              Save Baseline
-            </button>
-          )}
-
-          {baselines.length > 0 && (
-            <select
-              value={activeBaselineId ?? ''}
-              onChange={e => handleSelectBaseline(e.target.value === '' ? null : Number(e.target.value))}
-              className="text-xs border border-zinc-200 rounded px-2 py-1 bg-white text-zinc-700 focus:outline-none focus:ring-1 focus:ring-indigo-400">
-              <option value="">Compare: None</option>
-              {baselines.map(b => (
-                <option key={b.id} value={b.id}>{b.name}</option>
-              ))}
-            </select>
-          )}
-        </div>
-
-        <div className="flex rounded border border-zinc-200 overflow-hidden">
-          {VIEW_MODES.map(m => (
-            <button key={m} onClick={() => setViewMode(m)}
-              className={`px-3 py-1 text-xs font-medium transition-colors ${viewMode === m ? 'bg-zinc-800 text-white' : 'bg-white text-zinc-600 hover:bg-zinc-50'}`}>
-              {m}
-            </button>
-          ))}
-        </div>
-      </div>
+      <GanttToolbar
+        taskCount={allTaskCount}
+        phaseCount={wbsRows.length}
+        milestoneCount={milestones.length}
+        saveMode={saveMode}
+        baselineName={baselineName}
+        savingBaseline={savingBaseline}
+        baselines={baselines}
+        activeBaselineId={activeBaselineId}
+        viewMode={viewMode}
+        onSaveModeToggle={setSaveMode}
+        onBaselineNameChange={setBaselineName}
+        onSaveBaseline={handleSaveBaseline}
+        onSelectBaseline={handleSelectBaseline}
+        onViewModeChange={setViewMode}
+      />
 
       {/* Body */}
       <div className="flex overflow-hidden" style={{ height: 560 }}>

@@ -277,13 +277,12 @@ export async function getActiveProjects(opts?: ProjectQueryOpts): Promise<Projec
       );
   }
 
-  const projectsWithHealth = await Promise.all(
-    activeProjects.map(async (p) => {
-      const healthData = await computeHealth(p.id);
-      const analyticsData = await computeProjectAnalytics(p.id);
-      return { ...p, ...healthData, ...analyticsData };
-    })
-  );
+  const projectsWithHealth = [];
+  for (const p of activeProjects) {
+    const healthData = await computeHealth(p.id);
+    const analyticsData = await computeProjectAnalytics(p.id);
+    projectsWithHealth.push({ ...p, ...healthData, ...analyticsData });
+  }
 
   return projectsWithHealth;
 }
@@ -1346,15 +1345,15 @@ export async function getPortfolioData(opts?: ProjectQueryOpts): Promise<Portfol
   // Fetch all active projects with health data first
   const projectsWithHealth = await getActiveProjects(opts);
 
-  // Enrich each project in parallel
-  const portfolioProjects = await Promise.all(
-    projectsWithHealth.map(async (project) => {
-      const [
-        workstreamData,
-        onboardingData,
-        milestoneData,
-        blockedTaskData,
-      ] = await Promise.all([
+  // Enrich each project sequentially to avoid connection pool exhaustion
+  const portfolioProjects = [];
+  for (const project of projectsWithHealth) {
+    const [
+      workstreamData,
+      onboardingData,
+      milestoneData,
+      blockedTaskData,
+    ] = await Promise.all([
         // Query 1: Workstreams for owner and tracks
         db
           .select()
@@ -1439,20 +1438,20 @@ export async function getPortfolioData(opts?: ProjectQueryOpts): Promise<Portfol
         return m.date < today;
       }).length;
 
-      return {
-        ...project,
-        owner,
-        tracks,
-        currentPhase,
-        percentComplete,
-        nextMilestone,
-        nextMilestoneDate,
-        riskLevel,
-        dependencyStatus,
-        overdueMilestones,
-      };
-    })
-  );
+    const enriched = {
+      ...project,
+      owner,
+      tracks,
+      currentPhase,
+      percentComplete,
+      nextMilestone,
+      nextMilestoneDate,
+      riskLevel,
+      dependencyStatus,
+      overdueMilestones,
+    };
+    portfolioProjects.push(enriched);
+  }
 
   return portfolioProjects;
 }
