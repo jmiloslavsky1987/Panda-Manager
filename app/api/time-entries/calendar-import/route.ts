@@ -78,10 +78,21 @@ export async function GET(request: NextRequest): Promise<Response> {
 
   const { searchParams } = new URL(request.url);
   const weekStartParam = searchParams.get('week_start');
+  const dateParam = searchParams.get('date'); // e.g. '2026-04-27' — single-day filter
 
-  // Default to current Monday
+  // Compute weekStart: prefer explicit week_start param, then derive from ?date=, then default to current Monday
   const weekStart = weekStartParam
     ? new Date(weekStartParam + 'T00:00:00Z')
+    : dateParam
+    ? (() => {
+        // Compute the Monday of the week containing dateParam
+        const d = new Date(dateParam + 'T00:00:00Z');
+        const day = d.getUTCDay();
+        const diff = day === 0 ? -6 : 1 - day;
+        d.setUTCDate(d.getUTCDate() + diff);
+        d.setUTCHours(0, 0, 0, 0);
+        return d;
+      })()
     : (() => {
         const d = new Date();
         const day = d.getUTCDay();
@@ -193,7 +204,10 @@ export async function GET(request: NextRequest): Promise<Response> {
       };
     });
 
-    return NextResponse.json(items);
+    // If ?date= provided, filter to only events on that specific date
+    const result = dateParam ? items.filter((item) => item.date === dateParam) : items;
+
+    return NextResponse.json(result);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     if (message === 'Calendar not connected') {
