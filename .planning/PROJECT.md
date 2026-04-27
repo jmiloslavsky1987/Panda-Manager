@@ -200,4 +200,26 @@ This is a full rewrite of a previous Claude Code project assistant build (8 phas
 | docx-preview dynamic import inside useEffect only (v9.0) | docx-preview uses DOM APIs unavailable in Node.js SSR; same ssr:false pattern as React Flow and CodeMirror | ✓ Correct — no hydration errors; preview renders after mount |
 
 ---
-*Last updated: 2026-04-23 after v9.0 milestone*
+*Last updated: 2026-04-27 after v10.0 milestone scoping*
+
+## v10.0 Milestone Goals (in planning)
+
+**Theme:** Calendar Integration & Daily Prep
+
+**What we're building:**
+1. **Calendar → Time Entry Import** — Wire the already-built `CalendarImportModal` into `GlobalTimeView`; auto-populate duration/project/task from calendar events with confidence badges
+2. **Daily Prep page** (`/daily-prep`) — Sidebar link below Dashboard; event cards for today's meetings; multi-select + generate Meeting Prep briefs inline; copy to clipboard; date picker for other days; manual project assignment for unmatched events
+3. **Meeting Prep skill enhancements** — Inject calendar metadata (attendees, duration, recurrence) into skill context; enforce structured output (Context / Desired Outcome / Agenda)
+4. **Recurring meeting templates** — Detect meeting series, save and reuse prep templates
+5. **PDF export** — Export day's prep briefs as PDF
+6. **Team availability view** — Show stakeholder free/busy context around meetings
+7. **Auto-scheduling prep** — User-configured job to auto-generate prep N hours before each meeting
+
+**Key existing infrastructure to leverage:**
+- Google Calendar OAuth fully implemented (`app/api/oauth/calendar/`, `lib/calendar-client.ts`)
+- `CalendarImportModal.tsx` fully built (commented out of `GlobalTimeView.tsx`)
+- `app/api/time-entries/calendar-import/route.ts` exists with project matching logic
+- Meeting Prep skill fully shipped (Phase 78): `skills/meeting-prep.md`, `lib/meeting-prep-context.ts`, BullMQ orchestrator
+- BullMQ + polling pattern already established for all long-running AI operations
+
+**Phases:** TBD starting at Phase 79 (roadmap pending)
