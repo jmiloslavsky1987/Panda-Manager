@@ -39,7 +39,7 @@ export async function GET(
   const contentType = MIME[ext] ?? 'application/octet-stream';
   const filename = output.filename ?? path.basename(output.filepath);
 
-  return new Response(buffer, {
+  return new Response(buffer as unknown as BodyInit, {
     headers: {
       'Content-Type': contentType,
       'Content-Disposition': `attachment; filename="${filename}"`,
