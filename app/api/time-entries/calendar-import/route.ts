@@ -67,6 +67,9 @@ export interface CalendarEventItem {
   matched_project_id: number | null;
   matched_project_name: string | null;
   match_confidence: 'high' | 'low' | 'none';
+  attendee_names: string[];           // displayName ?? email for each attendee
+  recurrence_flag: boolean;           // !!e.recurringEventId
+  event_description: string | null;   // e.description ?? null
 }
 
 export async function GET(request: NextRequest): Promise<Response> {
@@ -145,28 +148,31 @@ export async function GET(request: NextRequest): Promise<Response> {
         (new Date(endDT).getTime() - new Date(startDT).getTime()) / 3_600_000;
       const duration_hours = durationHours.toFixed(2);
 
-      // Attendee-based project matching
+      // Title + attendee hybrid project matching (CAL-03)
+      let bestScore = 0;
+      let bestProjectId: number | null = null;
+      const summaryLower = (e.summary ?? '').toLowerCase();
       const attendeeEmails = new Set(
         (e.attendees ?? []).map((a) => (a.email ?? '').toLowerCase()).filter(Boolean),
       );
 
-      let bestProjectId: number | null = null;
-      let bestOverlap = 0;
-
-      for (const [projectId, emails] of projectEmailMap) {
-        let overlap = 0;
+      for (const [pid, emails] of projectEmailMap) {
+        const projectName = (projectNameMap.get(pid) ?? '').toLowerCase();
+        let score = 0;
+        // Title match (primary) — guard: only match project names > 3 chars
+        if (projectName.length > 3 &&
+            (summaryLower.includes(projectName) || projectName.includes(summaryLower))) {
+          score += 2;
+        }
+        // Attendee match (tiebreaker)
         for (const email of attendeeEmails) {
-          if (emails.has(email)) overlap++;
+          if (emails.has(email)) score++;
         }
-        if (overlap > bestOverlap) {
-          bestOverlap = overlap;
-          bestProjectId = projectId;
-        }
+        if (score > bestScore) { bestScore = score; bestProjectId = pid; }
       }
 
       const match_confidence: 'high' | 'low' | 'none' =
-        bestOverlap >= 2 ? 'high' : bestOverlap === 1 ? 'low' : 'none';
-
+        bestScore >= 2 ? 'high' : bestScore === 1 ? 'low' : 'none';
       if (match_confidence === 'none') bestProjectId = null;
 
       return {
@@ -179,6 +185,11 @@ export async function GET(request: NextRequest): Promise<Response> {
         matched_project_id: bestProjectId,
         matched_project_name: bestProjectId ? (projectNameMap.get(bestProjectId) ?? null) : null,
         match_confidence,
+        attendee_names: (e.attendees ?? [])
+          .map((a) => a.displayName ?? a.email ?? '')
+          .filter(Boolean),
+        recurrence_flag: !!e.recurringEventId,
+        event_description: e.description ?? null,
       };
     });
 
