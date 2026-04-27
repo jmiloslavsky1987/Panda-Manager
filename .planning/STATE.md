@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: completed
-stopped_at: Completed 79-03-PLAN.md (/daily-prep page, DailyPrepCard, calendar-import ?date= filter)
-last_updated: "2026-04-27T21:05:00Z"
-last_activity: 2026-04-27 — Phase 79 plan 03 complete (PREP-01, PREP-02, PREP-03, PREP-07 all GREEN)
+stopped_at: Completed 79-04-PLAN.md (Daily Prep generation pipeline — SSE endpoint, parallel generation, brief rendering)
+last_updated: "2026-04-27T21:11:24Z"
+last_activity: 2026-04-27 — Phase 79 plan 04 complete (PREP-04, PREP-05, PREP-06 all GREEN)
 progress:
   total_phases: 6
   completed_phases: 4
   total_plans: 20
-  completed_plans: 18
-  percent: 98
+  completed_plans: 19
+  percent: 99
 ---
 
 # Project State
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 79 of 80 (Core Calendar + Daily Prep — in progress, plan 03 complete)
-Status: 79-03 complete — /daily-prep page, DailyPrepCard component, calendar-import ?date= filter; ready for 79-04 (Generate Prep SSE logic)
-Last activity: 2026-04-27 — Phase 79 plan 03 complete (PREP-01, PREP-02, PREP-03, PREP-07 all GREEN)
+Phase: 79 of 80 (Core Calendar + Daily Prep — in progress, plan 04 complete)
+Status: 79-04 complete — /api/daily-prep/generate SSE endpoint, parallel generation wiring, DailyPrepCard brief rendering; ready for 79-05 (final plan in phase 79)
+Last activity: 2026-04-27 — Phase 79 plan 04 complete (PREP-04, PREP-05, PREP-06 all GREEN)
 
-Progress: [██████████] 98%
+Progress: [██████████] 99%
 
 ## v10.0 Roadmap Summary
 
@@ -80,6 +80,10 @@ Progress: [██████████] 98%
 - [79-03] EventCardState and Project interfaces exported from DailyPrepCard.tsx — page imports from component to avoid duplication
 - [79-03] ?date= calendar-import filter fetches full week then filters server-side — reuses existing infrastructure, avoids narrow time range edge cases
 - [79-03] Generate Prep button scaffolded as disabled placeholder — plan 79-04 fills in SSE streaming
+- [79-04] POST SSE endpoint uses fetch+ReadableStream on client — EventSource only supports GET and silently ignores POST body
+- [79-04] No BullMQ, no skill_runs row for daily-prep generation — direct lightweight Claude call
+- [79-04] resolveSkillsDir requires settings.skill_path param (not zero-arg) — readSettings() called inside handler for Docker compatibility
+- [79-04] forEach parallel fire-and-forget pattern for multi-card parallel generation
 
 ### Blockers/Concerns
 
@@ -88,6 +92,6 @@ Progress: [██████████] 98%
 
 ## Session Continuity
 
-Last session: 2026-04-27T21:05:00Z
-Stopped at: Completed 79-03-PLAN.md (/daily-prep page, DailyPrepCard, calendar-import ?date= filter)
+Last session: 2026-04-27T21:11:24Z
+Stopped at: Completed 79-04-PLAN.md (Daily Prep generation pipeline — SSE endpoint, parallel generation, brief rendering)
 Resume file: None
