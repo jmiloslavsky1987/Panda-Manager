@@ -1,5 +1,8 @@
 'use client'
 
+import { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import rehypeSanitize from 'rehype-sanitize';
 import { ConfidenceBadge } from './ConfidenceBadge';
 import { CalendarEventItem } from '@/app/api/time-entries/calendar-import/route';
 
@@ -39,6 +42,7 @@ export function DailyPrepCard({
   onCopy,
 }: DailyPrepCardProps) {
   const { event } = card;
+  const [copied, setCopied] = useState(false);
 
   // Attendee display: up to 3 names, "+N more" overflow
   const displayAttendees = event.attendee_names.slice(0, 3);
@@ -132,27 +136,40 @@ export function DailyPrepCard({
         </button>
       </div>
 
-      {/* Brief section — rendered when expanded (plan 79-04 fills in generation logic) */}
-      {card.expanded && (
+      {/* Brief section */}
+      {(card.briefStatus === 'loading' || card.briefStatus === 'done' || card.briefStatus === 'error') && (
         <div className="mt-3 border-t border-zinc-100 pt-3" data-testid="brief-section">
           {card.briefStatus === 'loading' && (
-            <p className="text-sm text-zinc-400">Generating...</p>
-          )}
-          {card.briefStatus === 'done' && card.briefContent && (
-            <div className="flex items-start justify-between gap-2">
-              <div className="prose prose-sm max-w-none text-zinc-700 whitespace-pre-wrap">
-                {card.briefContent}
-              </div>
-              <button
-                onClick={() => onCopy(event.event_id)}
-                className="text-xs text-zinc-400 hover:text-zinc-600 shrink-0"
-              >
-                Copy
-              </button>
-            </div>
+            <div className="text-sm text-zinc-500 animate-pulse">Generating brief…</div>
           )}
           {card.briefStatus === 'error' && (
-            <p className="text-sm text-red-500">Failed to generate brief.</p>
+            <div className="text-sm text-red-500">Generation failed. Try again.</div>
+          )}
+          {card.briefStatus === 'done' && card.expanded && card.briefContent && (
+            <>
+              <div className="prose prose-zinc prose-sm max-w-none">
+                <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{card.briefContent}</ReactMarkdown>
+              </div>
+              <div className="flex gap-2 mt-2">
+                <button
+                  onClick={() => {
+                    onCopy(event.event_id);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                  className="text-xs px-2 py-1 rounded bg-zinc-100 hover:bg-zinc-200 text-zinc-600"
+                  data-testid="copy-brief-button"
+                >
+                  {copied ? 'Copied!' : 'Copy'}
+                </button>
+                <button
+                  onClick={() => onToggleExpand(event.event_id)}
+                  className="text-xs px-2 py-1 rounded bg-zinc-100 hover:bg-zinc-200 text-zinc-600"
+                >
+                  Collapse
+                </button>
+              </div>
+            </>
           )}
         </div>
       )}

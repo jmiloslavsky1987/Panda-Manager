@@ -70,17 +70,6 @@ export default function DailyPrepPage() {
       .finally(() => setLoading(false));
   }, [selectedDate, connected]);
 
-  // ── Brief persistence (scaffold — plan 79-04 fills in save on generation) ─
-  function saveBrief(eventId: string, content: string) {
-    const storageKey = `daily-prep-briefs:${selectedDate}`;
-    let stored: StoredBriefs = {};
-    try {
-      stored = JSON.parse(localStorage.getItem(storageKey) ?? '{}');
-    } catch {/* ignore */}
-    stored[eventId] = { content, generatedAt: new Date().toISOString() };
-    localStorage.setItem(storageKey, JSON.stringify(stored));
-  }
-
   // ── Handlers ──────────────────────────────────────────────────────────────
 
   function handleToggleSelect(eventId: string) {
@@ -113,19 +102,106 @@ export default function DailyPrepPage() {
   }
 
   function handleCopy(eventId: string) {
-    // Plan 79-04 fills in clipboard copy from briefContent
     const card = cards.find((c) => c.event.event_id === eventId);
     if (card?.briefContent) {
       navigator.clipboard.writeText(card.briefContent).catch(() => {/* ignore */});
     }
   }
 
-  function handleGenerate() {
-    // Plan 79-04 fills in SSE generation logic
-    console.log('[DailyPrep] Generate Prep clicked — plan 79-04 will implement this');
+  async function handleGenerate() {
+    const selectedCards = cards.filter((c) => c.selected);
+    if (!selectedCards.length) return;
+
+    // Fire all requests in parallel — do NOT await one before starting the next
+    selectedCards.forEach(async (card) => {
+      const eventId = card.event.event_id;
+      const projectId = card.selectedProjectId;
+
+      // Set loading state
+      setCards((prev) =>
+        prev.map((c) =>
+          c.event.event_id === eventId
+            ? { ...c, briefStatus: 'loading', briefContent: '' }
+            : c,
+        ),
+      );
+
+      try {
+        const response = await fetch('/api/daily-prep/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            eventId,
+            eventTitle: card.event.summary,
+            projectId,
+            attendees: card.event.attendee_names,
+            durationHours: card.event.duration_hours,
+            recurrenceFlag: card.event.recurrence_flag,
+            eventDescription: card.event.event_description,
+          }),
+        });
+
+        const reader = response.body!.getReader();
+        const decoder = new TextDecoder();
+        let accumulated = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          for (const line of chunk.split('\n')) {
+            if (line.startsWith('data: ')) {
+              try {
+                const parsed = JSON.parse(line.slice(6));
+                if (parsed.text) {
+                  accumulated += parsed.text;
+                  setCards((prev) =>
+                    prev.map((c) =>
+                      c.event.event_id === eventId
+                        ? { ...c, briefContent: accumulated }
+                        : c,
+                    ),
+                  );
+                }
+              } catch {
+                /* incomplete SSE chunk — skip */
+              }
+            }
+            if (line.startsWith('event: done')) {
+              setCards((prev) =>
+                prev.map((c) =>
+                  c.event.event_id === eventId
+                    ? { ...c, briefStatus: 'done', selected: false, expanded: true }
+                    : c,
+                ),
+              );
+              // Persist to LocalStorage keyed by selectedDate
+              const storageKey = `daily-prep-briefs:${selectedDate}`;
+              const existing: StoredBriefs = JSON.parse(
+                localStorage.getItem(storageKey) ?? '{}',
+              );
+              existing[eventId] = {
+                content: accumulated,
+                generatedAt: new Date().toISOString(),
+              };
+              localStorage.setItem(storageKey, JSON.stringify(existing));
+            }
+          }
+        }
+      } catch {
+        setCards((prev) =>
+          prev.map((c) =>
+            c.event.event_id === eventId
+              ? { ...c, briefStatus: 'error' }
+              : c,
+          ),
+        );
+      }
+    });
   }
 
   const anySelected = cards.some((c) => c.selected);
+  const anyLoading = cards.some((c) => c.briefStatus === 'loading');
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -166,7 +242,7 @@ export default function DailyPrepPage() {
           </label>
           <button
             onClick={handleGenerate}
-            disabled={!anySelected}
+            disabled={!anySelected || anyLoading}
             className="text-sm px-3 py-1.5 rounded bg-blue-600 text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-blue-700"
           >
             Generate Prep
