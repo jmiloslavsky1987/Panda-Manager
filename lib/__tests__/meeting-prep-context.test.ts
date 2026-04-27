@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import * as fs from 'fs';
+import * as path from 'path';
 
 // ---------------------------------------------------------------------------
 // Mocks — must be declared before imports that load the modules
@@ -172,5 +174,80 @@ describe('buildMeetingPrepContext', () => {
     expect(result).not.toContain('</script>');
     expect(result).toContain('script');
     expect(result).toContain('Meeting about');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// CalendarMetadata parameter (SKILL-01, SKILL-02)
+// ---------------------------------------------------------------------------
+// SKILL-01: buildMeetingPrepContext must accept a third param (calendarMeta)
+//           and include attendees, event description, recurrence info in the
+//           returned context string.
+// SKILL-02: meeting-prep.md skill file must use updated section headers:
+//           "## Context", "## Desired Outcome", "## Agenda"
+//           (replacing the old "## Open Items", "## Suggested Agenda" headers)
+// ---------------------------------------------------------------------------
+
+interface CalendarMeta {
+  attendees?: string[];
+  durationHours?: string;
+  recurrenceFlag?: boolean;
+  eventDescription?: string;
+}
+
+describe('CalendarMetadata parameter (SKILL-01, SKILL-02)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(getTasksForProject).mockResolvedValue([]);
+    vi.mocked(getWorkspaceData).mockResolvedValue({ actions: [] } as any);
+  });
+
+  // SKILL-01 Tests — these FAIL because buildMeetingPrepContext does not yet
+  // accept a third calendarMeta parameter.
+
+  it('SKILL-01 Test 1: calendarMeta with attendees → "Attendees:" appears in context string', async () => {
+    const calendarMeta: CalendarMeta = {
+      attendees: ['Alice', 'Bob'],
+      durationHours: '1.00',
+      recurrenceFlag: true,
+    };
+    // Third param not in current signature — TypeScript will error on real call,
+    // so we cast to any to let the test run and produce a runtime failure.
+    const result = await (buildMeetingPrepContext as any)(1, undefined, calendarMeta);
+    expect(result).toContain('Attendees:'); // FAILS — param not accepted yet
+  });
+
+  it('SKILL-01 Test 2: calendarMeta with eventDescription → description text appears in context string', async () => {
+    const calendarMeta: CalendarMeta = { eventDescription: 'Q1 review meeting' };
+    const result = await (buildMeetingPrepContext as any)(1, undefined, calendarMeta);
+    expect(result).toContain('Q1 review meeting'); // FAILS — param not accepted yet
+  });
+
+  it('SKILL-01 Test 3: omitting calendarMeta (backward compat) still returns valid context string', async () => {
+    // This test PASSES already (the existing two-param call still works).
+    // It will remain green after the third param is added as optional.
+    const result = await buildMeetingPrepContext(1);
+    expect(typeof result).toBe('string');
+    expect(result.length).toBeGreaterThan(0);
+  });
+
+  // SKILL-02 Tests — these FAIL because meeting-prep.md still has old headers.
+
+  it('SKILL-02 Test 4: meeting-prep.md skill file contains the header "## Context"', () => {
+    const skillPath = path.join(process.cwd(), 'skills', 'meeting-prep.md');
+    const content = fs.readFileSync(skillPath, 'utf-8');
+    expect(content).toContain('## Context'); // FAILS — current header is "## Open Items"
+  });
+
+  it('SKILL-02 Test 5: meeting-prep.md skill file contains "## Desired Outcome" header', () => {
+    const skillPath = path.join(process.cwd(), 'skills', 'meeting-prep.md');
+    const content = fs.readFileSync(skillPath, 'utf-8');
+    expect(content).toContain('## Desired Outcome'); // FAILS — header does not exist yet
+  });
+
+  it('SKILL-02 Test 6: meeting-prep.md skill file contains "## Agenda" header', () => {
+    const skillPath = path.join(process.cwd(), 'skills', 'meeting-prep.md');
+    const content = fs.readFileSync(skillPath, 'utf-8');
+    expect(content).toContain('## Agenda'); // FAILS — current header is "## Suggested Agenda"
   });
 });
