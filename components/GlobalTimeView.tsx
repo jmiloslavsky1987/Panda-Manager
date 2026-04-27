@@ -4,9 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { TimeEntryModal } from './TimeEntryModal'
 import { DeleteConfirmDialog } from './DeleteConfirmDialog'
-// NOTE: CalendarImportModal not added yet - will be implemented in future plan
-// import { CalendarImportModal } from './CalendarImportModal'
-import { Clock, Download, Calendar, Trash2, CheckCircle, XCircle, Plus } from 'lucide-react'
+import { CalendarImportModal } from './CalendarImportModal'
+import { Clock, Download, Trash2, CheckCircle, XCircle, Plus } from 'lucide-react'
 import { Button } from './ui/button'
 import type { TimeEntry } from '@/db/schema'
 import { getEntryStatus, canEdit, canSubmit, canOverrideLock, computeSubtotals } from '@/lib/time-tracking'
@@ -359,12 +358,7 @@ export function GlobalTimeView() {
             Export XLSX
           </Button>
 
-          {/* Calendar import button - to be implemented in future plan
-          <Button variant="outline" size="sm">
-            <Calendar className="w-4 h-4 mr-1" />
-            Import
-          </Button>
-          */}
+          <CalendarImportModal onSuccess={fetchEntries} />
         </div>
       </div>
 
