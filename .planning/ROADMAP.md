@@ -256,7 +256,15 @@ Plans:
   3. `/daily-prep` shows event cards for today: time, title, duration, matched project, attendees; unmatched events have a project assignment dropdown; a date picker allows navigation to other days
   4. User can multi-select event cards and trigger Meeting Prep generation; output expands inline per card with Context, Desired Outcome, and 2–3 bullet Agenda sections; each card has a Copy to Clipboard button
   5. The Meeting Prep skill context builder receives calendar event metadata (attendees, duration, recurrence flag); output uses consistent structured section headers from both Daily Prep page and Skills tab
-**Plans**: TBD
+**Plans**: 6 plans
+
+Plans:
+- [ ] 79-00-PLAN.md — Wave 0 test scaffolds (all req IDs)
+- [ ] 79-01-PLAN.md — CalendarImportModal global wiring + calendar-import route extension (CAL-01, CAL-02, CAL-03)
+- [ ] 79-02-PLAN.md — Sidebar Daily Prep link + Meeting Prep skill enhancement (NAV-01, SKILL-01, SKILL-02)
+- [ ] 79-03-PLAN.md — /daily-prep page + DailyPrepCard + date picker (PREP-01, PREP-02, PREP-03, PREP-07)
+- [ ] 79-04-PLAN.md — SSE generate endpoint + inline output + copy + LocalStorage (PREP-04, PREP-05, PREP-06)
+- [ ] 79-05-PLAN.md — Human verification checkpoint
 
 ### Phase 80: Advanced Features
 **Goal**: Power users can save and reuse prep templates for recurring meetings, export day briefs as PDF, view stakeholder availability around each meeting, and configure auto-generation of prep N hours before meetings
@@ -277,8 +285,8 @@ Plans:
 | 76. Pickers & Risk Fields | 4/4 | Complete    | 2026-04-23 |
 | 77. Intelligence & Gantt | 3/3 | Complete    | 2026-04-23 |
 | 78. AI & Content | 2/2 | Complete    | 2026-04-23 |
-| 79. Core Calendar + Daily Prep | 0/TBD | Not started | - |
+| 79. Core Calendar + Daily Prep | 0/6 | Not started | - |
 | 80. Advanced Features | 0/TBD | Not started | - |
 
 ---
-*Last updated: 2026-04-27 — v10.0 roadmap collapsed to 2 phases: 79–80 (17 requirements mapped)*
+*Last updated: 2026-04-27 — Phase 79 planned: 6 plans across 4 waves*
