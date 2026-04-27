@@ -1,6 +1,18 @@
 import { getTasksForProject, getWorkspaceData } from './queries';
 
 /**
+ * Optional calendar event metadata passed from /daily-prep or the skill runner
+ * to enrich the meeting-prep context with event-specific information.
+ */
+export interface CalendarMetadata {
+  eventTitle?: string;
+  attendees?: string[];
+  durationHours?: string;
+  recurrenceFlag?: boolean;
+  eventDescription?: string | null;
+}
+
+/**
  * Assembles a markdown-formatted context string for the meeting-prep skill.
  * Queries tasks via getTasksForProject and actions via getWorkspaceData.
  * Filters:
@@ -9,8 +21,13 @@ import { getTasksForProject, getWorkspaceData } from './queries';
  *   - recentCompletedTasks:   status === 'done' AND created_at >= 7 days ago
  *   - recentClosedActions:    status === 'completed' AND created_at >= 7 days ago
  * User input is escaped (< > stripped) before interpolation to prevent prompt injection.
+ * Optional calendarMeta enriches the context with attendees, duration, recurrence, and event description.
  */
-export async function buildMeetingPrepContext(projectId: number, input?: string): Promise<string> {
+export async function buildMeetingPrepContext(
+  projectId: number,
+  input?: string,
+  calendarMeta?: CalendarMetadata
+): Promise<string> {
   const [taskRows, workspaceData] = await Promise.all([
     getTasksForProject(projectId),
     getWorkspaceData(projectId),
@@ -92,6 +109,23 @@ export async function buildMeetingPrepContext(projectId: number, input?: string)
   if (safeInput) {
     sections.push('## Meeting Notes (optional)');
     sections.push(safeInput);
+  }
+
+  // --- Calendar Event Metadata (optional, from daily-prep or skill runner) ---
+  if (calendarMeta) {
+    sections.push('## Meeting Context');
+    if (calendarMeta.durationHours) {
+      sections.push(`**Duration:** ${calendarMeta.durationHours} hours${calendarMeta.recurrenceFlag ? ' (Recurring meeting)' : ''}`);
+    }
+    if (calendarMeta.attendees?.length) {
+      sections.push('### Attendees:');
+      calendarMeta.attendees.forEach(a => sections.push(`- ${a}`));
+    }
+    if (calendarMeta.eventDescription) {
+      const safeDesc = calendarMeta.eventDescription.replace(/[<>]/g, '');
+      sections.push('### Meeting Description');
+      sections.push(safeDesc);
+    }
   }
 
   return sections.join('\n');
