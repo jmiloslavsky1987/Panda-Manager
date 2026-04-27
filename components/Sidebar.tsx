@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { BookOpen, CalendarClock, Clock, Library, Settings } from 'lucide-react';
+import { BookOpen, CalendarClock, Clock, Library, Settings, CalendarDays } from 'lucide-react';
 import { getActiveProjects, getArchivedProjects } from '../lib/queries';
 import { SidebarProjectItem } from './SidebarProjectItem';
 import { SidebarUserIsland } from './SidebarUserIsland';
@@ -29,6 +29,16 @@ export async function Sidebar() {
             className="block text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 rounded px-2 py-1.5 text-sm transition-colors"
           >
             Dashboard
+          </Link>
+        </div>
+        <div className="px-4 mb-1">
+          <Link
+            href="/daily-prep"
+            className="flex items-center gap-2 text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 rounded px-2 py-1.5 text-sm transition-colors"
+            data-testid="sidebar-daily-prep-link"
+          >
+            <CalendarDays className="w-4 h-4" />
+            Daily Prep
           </Link>
         </div>
         <div className="px-4 mt-4 mb-2">
