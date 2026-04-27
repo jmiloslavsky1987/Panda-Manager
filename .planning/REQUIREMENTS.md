@@ -77,33 +77,31 @@ Deferred to future milestone. Tracked but not in current roadmap.
 
 ## Traceability
 
-Phases TBD — populated by roadmapper.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CAL-01 | TBD | Pending |
-| CAL-02 | TBD | Pending |
-| CAL-03 | TBD | Pending |
-| PREP-01 | TBD | Pending |
-| PREP-02 | TBD | Pending |
-| PREP-03 | TBD | Pending |
-| PREP-04 | TBD | Pending |
-| PREP-05 | TBD | Pending |
-| PREP-06 | TBD | Pending |
-| PREP-07 | TBD | Pending |
-| SKILL-01 | TBD | Pending |
-| SKILL-02 | TBD | Pending |
-| NAV-01 | TBD | Pending |
-| RECUR-01 | TBD | Pending |
-| OUT-01 | TBD | Pending |
-| AVAIL-01 | TBD | Pending |
-| SCHED-01 | TBD | Pending |
+| CAL-01 | Phase 79 | Pending |
+| CAL-02 | Phase 79 | Pending |
+| CAL-03 | Phase 79 | Pending |
+| PREP-01 | Phase 80 | Pending |
+| PREP-02 | Phase 80 | Pending |
+| PREP-03 | Phase 80 | Pending |
+| PREP-04 | Phase 81 | Pending |
+| PREP-05 | Phase 81 | Pending |
+| PREP-06 | Phase 81 | Pending |
+| PREP-07 | Phase 80 | Pending |
+| SKILL-01 | Phase 81 | Pending |
+| SKILL-02 | Phase 81 | Pending |
+| NAV-01 | Phase 80 | Pending |
+| RECUR-01 | Phase 82 | Pending |
+| OUT-01 | Phase 82 | Pending |
+| AVAIL-01 | Phase 82 | Pending |
+| SCHED-01 | Phase 82 | Pending |
 
 **Coverage:**
 - v10 requirements: 17 total
-- Mapped to phases: 0 (roadmap pending)
-- Unmapped: 17 ⚠️
+- Mapped to phases: 17 (100%)
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-27*
-*Last updated: 2026-04-27 after v10.0 milestone scoping*
+*Last updated: 2026-04-27 — traceability populated after v10.0 roadmap creation*
