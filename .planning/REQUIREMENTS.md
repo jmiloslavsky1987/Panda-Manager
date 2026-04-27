@@ -82,20 +82,20 @@ Deferred to future milestone. Tracked but not in current roadmap.
 | CAL-01 | Phase 79 | Pending |
 | CAL-02 | Phase 79 | Pending |
 | CAL-03 | Phase 79 | Pending |
-| PREP-01 | Phase 80 | Pending |
-| PREP-02 | Phase 80 | Pending |
-| PREP-03 | Phase 80 | Pending |
-| PREP-04 | Phase 81 | Pending |
-| PREP-05 | Phase 81 | Pending |
-| PREP-06 | Phase 81 | Pending |
-| PREP-07 | Phase 80 | Pending |
-| SKILL-01 | Phase 81 | Pending |
-| SKILL-02 | Phase 81 | Pending |
-| NAV-01 | Phase 80 | Pending |
-| RECUR-01 | Phase 82 | Pending |
-| OUT-01 | Phase 82 | Pending |
-| AVAIL-01 | Phase 82 | Pending |
-| SCHED-01 | Phase 82 | Pending |
+| PREP-01 | Phase 79 | Pending |
+| PREP-02 | Phase 79 | Pending |
+| PREP-03 | Phase 79 | Pending |
+| PREP-04 | Phase 79 | Pending |
+| PREP-05 | Phase 79 | Pending |
+| PREP-06 | Phase 79 | Pending |
+| PREP-07 | Phase 79 | Pending |
+| SKILL-01 | Phase 79 | Pending |
+| SKILL-02 | Phase 79 | Pending |
+| NAV-01 | Phase 79 | Pending |
+| RECUR-01 | Phase 80 | Pending |
+| OUT-01 | Phase 80 | Pending |
+| AVAIL-01 | Phase 80 | Pending |
+| SCHED-01 | Phase 80 | Pending |
 
 **Coverage:**
 - v10 requirements: 17 total
@@ -104,4 +104,4 @@ Deferred to future milestone. Tracked but not in current roadmap.
 
 ---
 *Requirements defined: 2026-04-27*
-*Last updated: 2026-04-27 — traceability populated after v10.0 roadmap creation*
+*Last updated: 2026-04-27 — roadmap collapsed to 2 phases (79–80)*

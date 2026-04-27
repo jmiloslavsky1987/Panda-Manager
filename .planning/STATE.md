@@ -6,7 +6,7 @@ status: planning
 stopped_at: Roadmap created. Phase 79 ready to plan.
 last_updated: "2026-04-27T00:00:00.000Z"
 progress:
-  total_phases: 4
+  total_phases: 2
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -24,20 +24,18 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 79 of 82 (Calendar Import Wiring — not started)
+Phase: 79 of 80 (Core Calendar + Daily Prep — not started)
 Status: Roadmap created — ready to plan Phase 79
-Last activity: 2026-04-27 — v10.0 roadmap created (4 phases, 17 requirements mapped)
+Last activity: 2026-04-27 — v10.0 roadmap collapsed to 2 phases (17 requirements mapped)
 
 Progress: [░░░░░░░░░░] 0%
 
 ## v10.0 Roadmap Summary
 
-**4 phases (79–82) covering 17 requirements:**
+**2 phases (79–80) covering 17 requirements:**
 
-- **Phase 79:** Calendar Import Wiring (CAL-01–03) — wire CalendarImportModal into GlobalTimeView; confidence badges; auto-populated fields
-- **Phase 80:** Daily Prep Foundation (PREP-01–03, PREP-07, NAV-01) — /daily-prep route + sidebar nav + event cards + date picker + manual project assignment
-- **Phase 81:** Prep Generation & Skill Enhancements (PREP-04–06, SKILL-01–02) — multi-select + BullMQ generation + inline output + copy button + calendar metadata in skill context
-- **Phase 82:** Advanced Features (RECUR-01, OUT-01, AVAIL-01, SCHED-01) — recurring templates, PDF export, stakeholder availability, auto-scheduling job
+- **Phase 79:** Core Calendar + Daily Prep (CAL-01–03, PREP-01–07, SKILL-01–02, NAV-01) — full end-to-end: calendar import wiring + /daily-prep page + Meeting Prep generation inline + skill enhancements
+- **Phase 80:** Advanced Features (RECUR-01, OUT-01, AVAIL-01, SCHED-01) — recurring templates, PDF export, stakeholder availability, auto-scheduling job
 
 ## Milestone History
 

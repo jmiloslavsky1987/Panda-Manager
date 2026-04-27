@@ -11,7 +11,7 @@
 - ✅ **v7.0** — Governance & Operational Maturity — Phases 58–69 (shipped 2026-04-16)
 - ✅ **v8.0** — Codebase Refactor & Multi-Tenant Deployment — Phases 70–74 (shipped 2026-04-22)
 - ✅ **v9.0** — UX Maturity & Intelligence — Phases 75–78 (shipped 2026-04-23)
-- 🚧 **v10.0** — Calendar Integration & Daily Prep — Phases 79–82 (in progress)
+- 🚧 **v10.0** — Calendar Integration & Daily Prep — Phases 79–80 (in progress)
 
 ## Phases
 
@@ -171,10 +171,8 @@ Full details: `.planning/milestones/v9.0-ROADMAP.md` (archived)
 
 ### v10.0 — Calendar Integration & Daily Prep (In Progress)
 
-- [ ] **Phase 79: Calendar Import Wiring** — Wire CalendarImportModal into GlobalTimeView with confidence badges and auto-populated fields
-- [ ] **Phase 80: Daily Prep Foundation** — /daily-prep route, event cards, manual project assignment, date picker, sidebar navigation
-- [ ] **Phase 81: Prep Generation & Skill Enhancements** — Multi-select + AI generation, inline output, copy button, calendar metadata injected into Meeting Prep skill
-- [ ] **Phase 82: Advanced Features** — Recurring meeting templates, PDF export, team availability view, auto-scheduling prep job
+- [ ] **Phase 79: Core Calendar + Daily Prep** — Wire CalendarImportModal into GlobalTimeView; full /daily-prep page with event cards, project matching, multi-select + Meeting Prep generation, inline output, skill enhancements, sidebar nav
+- [ ] **Phase 80: Advanced Features** — Recurring meeting templates, PDF export, team availability view, auto-scheduling prep job
 
 ## Phase Details
 
@@ -248,48 +246,27 @@ Plans:
 - [ ] 78-01-PLAN.md — Meeting Prep skill + context builder + Copy button + SkillRunPage XSS hardening (SKILL-01, SKILL-02, SKILL-03, SKILL-04)
 - [ ] 78-02-PLAN.md — Outputs Library preview extension (markdown/DOCX/PPTX) + ChatMessage XSS hardening (OUT-01, OUT-02)
 
-### Phase 79: Calendar Import Wiring
-**Goal**: Users can import Google Calendar events directly into the time tracking view; imported events auto-populate fields based on project matching and each event carries a visual confidence signal
-**Depends on**: Phase 78 (stable v9.0 baseline; Google Calendar OAuth and CalendarImportModal already implemented)
-**Requirements**: CAL-01, CAL-02, CAL-03
+### Phase 79: Core Calendar + Daily Prep
+**Goal**: The full calendar + daily prep experience is delivered end-to-end — users can import calendar events as time entries with confidence badges, navigate to `/daily-prep` to browse today's meetings with project context, multi-select events to generate structured Meeting Prep briefs inline, and copy briefs to clipboard; the Meeting Prep skill is enhanced with calendar metadata and structured output
+**Depends on**: Phase 78 (stable v9.0 baseline; Google Calendar OAuth, CalendarImportModal, and Meeting Prep skill already implemented)
+**Requirements**: CAL-01, CAL-02, CAL-03, PREP-01, PREP-02, PREP-03, PREP-04, PREP-05, PREP-06, PREP-07, SKILL-01, SKILL-02, NAV-01
 **Success Criteria** (what must be TRUE):
-  1. User can open the CalendarImportModal from GlobalTimeView via a visible Import from Calendar action; the modal loads and displays calendar events from the connected Google Calendar account
-  2. Each event in the import modal shows a pre-populated duration, matched project, and matched task; events with no project match show blank task and project fields that the user can fill manually before importing
-  3. Each event displays a confidence badge (High / Low / None) that accurately reflects the certainty of the project match — High when a strong keyword/title match is found, Low for a partial match, None when no match exists
+  1. User can open `CalendarImportModal` from `GlobalTimeView`; each event shows pre-populated duration, matched project, and task (blank if no match); a High/Low/None confidence badge is displayed per event
+  2. "Daily Prep" sidebar link appears directly below Dashboard (above project list) and navigates to `/daily-prep`
+  3. `/daily-prep` shows event cards for today: time, title, duration, matched project, attendees; unmatched events have a project assignment dropdown; a date picker allows navigation to other days
+  4. User can multi-select event cards and trigger Meeting Prep generation; output expands inline per card with Context, Desired Outcome, and 2–3 bullet Agenda sections; each card has a Copy to Clipboard button
+  5. The Meeting Prep skill context builder receives calendar event metadata (attendees, duration, recurrence flag); output uses consistent structured section headers from both Daily Prep page and Skills tab
 **Plans**: TBD
 
-### Phase 80: Daily Prep Foundation
-**Goal**: The Daily Prep page exists as a navigable section of the app, showing today's calendar events as structured cards with project context and date navigation — no AI generation yet, but the full browsable skeleton is complete
-**Depends on**: Phase 79 (calendar OAuth + project matching proven; same matching logic reused for event cards)
-**Requirements**: PREP-01, PREP-02, PREP-03, PREP-07, NAV-01
-**Success Criteria** (what must be TRUE):
-  1. A "Daily Prep" link appears in the sidebar directly below Dashboard in the upper navigation section (above the project list); clicking it navigates to /daily-prep
-  2. The /daily-prep page loads showing event cards for today's calendar meetings; each card displays the meeting time, title, duration, matched project name, and list of attendees
-  3. Event cards for unmatched meetings display a project assignment dropdown allowing the user to manually select a project from the list of their active projects
-  4. A date picker on the page allows the user to navigate to a different day and see that day's event cards with the same project-matching and manual assignment behavior
-**Plans**: TBD
-
-### Phase 81: Prep Generation & Skill Enhancements
-**Goal**: Users can select one or more event cards on the Daily Prep page and generate structured Meeting Prep briefs that render inline per card; the Meeting Prep skill receives full calendar event metadata to produce richer output
-**Depends on**: Phase 80 (Daily Prep page with event cards must exist); Phase 79 (calendar event data including attendees, duration, recurrence available)
-**Requirements**: PREP-04, PREP-05, PREP-06, SKILL-01, SKILL-02
-**Success Criteria** (what must be TRUE):
-  1. User can select one or more event cards via checkbox or multi-select and trigger a single "Generate Prep" action; a BullMQ job is dispatched per selected event using the existing Meeting Prep skill pipeline
-  2. Once generation completes, the relevant event card expands inline to show three distinct sections: Context, Desired Outcome, and a 2–3 bullet Agenda — without navigating away from the Daily Prep page
-  3. Each expanded prep card has a functional Copy to Clipboard button that copies the full brief as plain text
-  4. The Meeting Prep skill context builder receives calendar event metadata — attendees, duration, and recurrence flag — and this data appears in the generated output (e.g., attendees listed in context, duration acknowledged in agenda scope)
-  5. Meeting Prep skill output consistently uses a structured format with explicit Context, Desired Outcome, and Agenda section headers — both when triggered from the Daily Prep page and from the project Skills tab
-**Plans**: TBD
-
-### Phase 82: Advanced Features
-**Goal**: Power users can save and reuse prep templates for recurring meeting series, export day briefs as PDF, view stakeholder availability around each meeting, and configure auto-generation of prep before meetings
-**Depends on**: Phase 81 (prep generation must be working end-to-end before templates, export, and automation are layered on)
+### Phase 80: Advanced Features
+**Goal**: Power users can save and reuse prep templates for recurring meetings, export day briefs as PDF, view stakeholder availability around each meeting, and configure auto-generation of prep N hours before meetings
+**Depends on**: Phase 79 (prep generation must be working end-to-end before templates, export, and automation are layered on)
 **Requirements**: RECUR-01, OUT-01, AVAIL-01, SCHED-01
 **Success Criteria** (what must be TRUE):
-  1. The Daily Prep page detects recurring meetings (by series ID or repeating title pattern) and indicates them visually; user can save the generated prep for a recurring meeting as a reusable template; on future runs of the same meeting series, the saved template pre-populates the prep card before generation
-  2. User can export the prep brief for a single meeting — or all prep briefs for the day — as a PDF file that downloads to their browser
-  3. Each event card on the Daily Prep page shows a free/busy indicator for the project stakeholders linked to the matched project, giving the user immediate context on who is available around the meeting time
-  4. User can configure an auto-prep job that generates Meeting Prep briefs N hours before each meeting; the job appears in the existing scheduler UI and can be enabled, disabled, and reconfigured from there
+  1. Recurring meetings are detected (by series ID or repeating title pattern) and indicated visually; user can save a prep template for a meeting series that pre-populates future prep runs for the same series
+  2. User can export a single prep brief or all briefs for the day as a downloaded PDF
+  3. Each event card shows a free/busy indicator for matched project stakeholders, giving immediate context on who is available around the meeting time
+  4. User can configure an auto-prep job that generates Meeting Prep briefs N hours before each meeting; job appears in the existing scheduler UI and can be enabled, disabled, and reconfigured
 **Plans**: TBD
 
 ## Progress
@@ -300,10 +277,8 @@ Plans:
 | 76. Pickers & Risk Fields | 4/4 | Complete    | 2026-04-23 |
 | 77. Intelligence & Gantt | 3/3 | Complete    | 2026-04-23 |
 | 78. AI & Content | 2/2 | Complete    | 2026-04-23 |
-| 79. Calendar Import Wiring | 0/TBD | Not started | - |
-| 80. Daily Prep Foundation | 0/TBD | Not started | - |
-| 81. Prep Generation & Skill Enhancements | 0/TBD | Not started | - |
-| 82. Advanced Features | 0/TBD | Not started | - |
+| 79. Core Calendar + Daily Prep | 0/TBD | Not started | - |
+| 80. Advanced Features | 0/TBD | Not started | - |
 
 ---
-*Last updated: 2026-04-27 — v10.0 roadmap created: Phases 79–82 (17 requirements mapped, 4 phases)*
+*Last updated: 2026-04-27 — v10.0 roadmap collapsed to 2 phases: 79–80 (17 requirements mapped)*
