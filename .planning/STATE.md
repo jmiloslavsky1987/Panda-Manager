@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
-status: planning
-stopped_at: Phase 79 context gathered
-last_updated: "2026-04-27T19:52:21.015Z"
-last_activity: 2026-04-27 — v10.0 roadmap collapsed to 2 phases (17 requirements mapped)
+status: executing
+stopped_at: "79-00-PLAN.md complete — Wave 0 test scaffolds done"
+last_updated: "2026-04-27T20:39:00Z"
+last_activity: 2026-04-27 — Phase 79 plan 00 complete (Wave 0 test scaffolds)
 progress:
   total_phases: 6
   completed_phases: 4
-  total_plans: 14
-  completed_plans: 14
-  percent: 0
+  total_plans: 20
+  completed_plans: 15
+  percent: 97
 ---
 
 # Project State
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 79 of 80 (Core Calendar + Daily Prep — not started)
-Status: Roadmap created — ready to plan Phase 79
-Last activity: 2026-04-27 — v10.0 roadmap collapsed to 2 phases (17 requirements mapped)
+Phase: 79 of 80 (Core Calendar + Daily Prep — in progress, plan 00 complete)
+Status: 79-00 complete — Wave 0 test scaffolds in place; ready for 79-01 (implementation)
+Last activity: 2026-04-27 — Phase 79 plan 00 complete (6 test files, RED stubs for all 12 requirements)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██████████] 97%
 
 ## v10.0 Roadmap Summary
 
@@ -68,6 +68,8 @@ Progress: [░░░░░░░░░░] 0%
 - Calendar OAuth already implemented (app/api/oauth/calendar/, lib/calendar-client.ts, userSourceTokens table)
 - CalendarImportModal.tsx fully built but commented out of GlobalTimeView.tsx
 - Meeting Prep skill fully shipped (skills/meeting-prep.md, lib/meeting-prep-context.ts, BullMQ orchestrator)
+- [79-00] tests/ dir gitignored by project design (commit 166d7604) — test files exist on-disk only; lib/__tests__/ tracked in git
+- [79-00] Stub pattern (wrong return values) for Wave 0 RED tests — gives precise assertion failure messages
 
 ### Blockers/Concerns
 
@@ -76,6 +78,6 @@ Progress: [░░░░░░░░░░] 0%
 
 ## Session Continuity
 
-Last session: 2026-04-27T19:52:21.007Z
-Stopped at: Phase 79 context gathered
-Resume file: .planning/phases/79-core-calendar-daily-prep/79-CONTEXT.md
+Last session: 2026-04-27T20:39:00Z
+Stopped at: Completed 79-00-PLAN.md (Wave 0 test scaffolds)
+Resume file: .planning/phases/79-core-calendar-daily-prep/79-01-PLAN.md

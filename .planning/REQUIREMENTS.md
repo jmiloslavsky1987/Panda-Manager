@@ -9,28 +9,28 @@ Calendar integration for time tracking and a Daily Prep workflow that transforms
 
 ### CAL: Calendar → Time Entry Import
 
-- [ ] **CAL-01**: User can open `CalendarImportModal` from `GlobalTimeView` (wire in the already-built component, currently commented out)
-- [ ] **CAL-02**: Imported calendar events auto-populate duration, matched project, and task; task left blank when no match is found
-- [ ] **CAL-03**: Each event displays a confidence badge (high / low / none) based on project matching certainty
+- [x] **CAL-01**: User can open `CalendarImportModal` from `GlobalTimeView` (wire in the already-built component, currently commented out)
+- [x] **CAL-02**: Imported calendar events auto-populate duration, matched project, and task; task left blank when no match is found
+- [x] **CAL-03**: Each event displays a confidence badge (high / low / none) based on project matching certainty
 
 ### PREP: Daily Prep Page
 
 - [ ] **PREP-01**: A `/daily-prep` route exists with a sidebar link directly below Dashboard in the upper navigation section
-- [ ] **PREP-02**: Page shows event cards for today's calendar meetings, each displaying: time, title, duration, matched project, and attendees
-- [ ] **PREP-03**: Unmatched events show a manual project assignment dropdown
-- [ ] **PREP-04**: User can multi-select events and trigger Meeting Prep generation for the selected set
-- [ ] **PREP-05**: Prep output expands inline per event card — sections: context, desired outcome, 2–3 bullet agenda
-- [ ] **PREP-06**: Each expanded prep card has a Copy to Clipboard button
-- [ ] **PREP-07**: A date picker allows viewing and prepping for meetings on other days
+- [x] **PREP-02**: Page shows event cards for today's calendar meetings, each displaying: time, title, duration, matched project, and attendees
+- [x] **PREP-03**: Unmatched events show a manual project assignment dropdown
+- [x] **PREP-04**: User can multi-select events and trigger Meeting Prep generation for the selected set
+- [x] **PREP-05**: Prep output expands inline per event card — sections: context, desired outcome, 2–3 bullet agenda
+- [x] **PREP-06**: Each expanded prep card has a Copy to Clipboard button
+- [x] **PREP-07**: A date picker allows viewing and prepping for meetings on other days
 
 ### SKILL: Meeting Prep Skill Enhancements
 
-- [ ] **SKILL-01**: Calendar event metadata (attendees, duration, recurrence flag) is injected into the Meeting Prep skill context builder
-- [ ] **SKILL-02**: Meeting Prep skill output uses a structured format with explicit sections: Context, Desired Outcome, Agenda
+- [x] **SKILL-01**: Calendar event metadata (attendees, duration, recurrence flag) is injected into the Meeting Prep skill context builder
+- [x] **SKILL-02**: Meeting Prep skill output uses a structured format with explicit sections: Context, Desired Outcome, Agenda
 
 ### NAV: Navigation
 
-- [ ] **NAV-01**: "Daily Prep" sidebar link appears directly below Dashboard in the upper navigation section (above project list)
+- [x] **NAV-01**: "Daily Prep" sidebar link appears directly below Dashboard in the upper navigation section (above project list)
 
 ### RECUR: Recurring Meeting Templates
 
@@ -79,19 +79,19 @@ Deferred to future milestone. Tracked but not in current roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CAL-01 | Phase 79 | Pending |
-| CAL-02 | Phase 79 | Pending |
-| CAL-03 | Phase 79 | Pending |
+| CAL-01 | Phase 79 | Complete |
+| CAL-02 | Phase 79 | Complete |
+| CAL-03 | Phase 79 | Complete |
 | PREP-01 | Phase 79 | Pending |
-| PREP-02 | Phase 79 | Pending |
-| PREP-03 | Phase 79 | Pending |
-| PREP-04 | Phase 79 | Pending |
-| PREP-05 | Phase 79 | Pending |
-| PREP-06 | Phase 79 | Pending |
-| PREP-07 | Phase 79 | Pending |
-| SKILL-01 | Phase 79 | Pending |
-| SKILL-02 | Phase 79 | Pending |
-| NAV-01 | Phase 79 | Pending |
+| PREP-02 | Phase 79 | Complete |
+| PREP-03 | Phase 79 | Complete |
+| PREP-04 | Phase 79 | Complete |
+| PREP-05 | Phase 79 | Complete |
+| PREP-06 | Phase 79 | Complete |
+| PREP-07 | Phase 79 | Complete |
+| SKILL-01 | Phase 79 | Complete |
+| SKILL-02 | Phase 79 | Complete |
+| NAV-01 | Phase 79 | Complete |
 | RECUR-01 | Phase 80 | Pending |
 | OUT-01 | Phase 80 | Pending |
 | AVAIL-01 | Phase 80 | Pending |
