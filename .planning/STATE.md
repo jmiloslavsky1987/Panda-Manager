@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
-status: executing
-stopped_at: "79-00-PLAN.md complete — Wave 0 test scaffolds done"
-last_updated: "2026-04-27T20:39:00Z"
-last_activity: 2026-04-27 — Phase 79 plan 00 complete (Wave 0 test scaffolds)
+status: completed
+stopped_at: Completed 79-01-PLAN.md (CalendarImportModal global mode, ConfidenceBadge, route extension)
+last_updated: "2026-04-27T20:47:14.218Z"
+last_activity: 2026-04-27 — Phase 79 plan 01 complete (CAL-01, CAL-02, CAL-03 all GREEN)
 progress:
   total_phases: 6
   completed_phases: 4
   total_plans: 20
-  completed_plans: 15
-  percent: 97
+  completed_plans: 16
+  percent: 98
 ---
 
 # Project State
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 79 of 80 (Core Calendar + Daily Prep — in progress, plan 00 complete)
-Status: 79-00 complete — Wave 0 test scaffolds in place; ready for 79-01 (implementation)
-Last activity: 2026-04-27 — Phase 79 plan 00 complete (6 test files, RED stubs for all 12 requirements)
+Phase: 79 of 80 (Core Calendar + Daily Prep — in progress, plan 01 complete)
+Status: 79-01 complete — CalendarImportModal global-mode wired, ConfidenceBadge extracted, route extended with hybrid scoring; ready for 79-02 (daily-prep page)
+Last activity: 2026-04-27 — Phase 79 plan 01 complete (CAL-01, CAL-02, CAL-03 all GREEN)
 
-Progress: [██████████] 97%
+Progress: [██████████] 98%
 
 ## v10.0 Roadmap Summary
 
@@ -70,6 +70,10 @@ Progress: [██████████] 97%
 - Meeting Prep skill fully shipped (skills/meeting-prep.md, lib/meeting-prep-context.ts, BullMQ orchestrator)
 - [79-00] tests/ dir gitignored by project design (commit 166d7604) — test files exist on-disk only; lib/__tests__/ tracked in git
 - [79-00] Stub pattern (wrong return values) for Wave 0 RED tests — gives precise assertion failure messages
+- [79-01] ConfidenceBadge extracted to shared component (components/ConfidenceBadge.tsx) — reusable across daily-prep, meeting-prep, and time views
+- [79-01] CalendarImportModal manages its own trigger button — consumers render it without external open state
+- [79-01] Title match guarded at >3 chars in hybrid scoring to prevent false positives for short project acronyms
+- [79-01] CalendarImportModal commented-out block in GlobalTimeView now replaced with real import (CAL-01 delivered)
 
 ### Blockers/Concerns
 
@@ -78,6 +82,6 @@ Progress: [██████████] 97%
 
 ## Session Continuity
 
-Last session: 2026-04-27T20:39:00Z
-Stopped at: Completed 79-00-PLAN.md (Wave 0 test scaffolds)
-Resume file: .planning/phases/79-core-calendar-daily-prep/79-01-PLAN.md
+Last session: 2026-04-27T20:47:14.216Z
+Stopped at: Completed 79-01-PLAN.md (CalendarImportModal global mode, ConfidenceBadge, route extension)
+Resume file: .planning/phases/79-core-calendar-daily-prep/79-02-PLAN.md
