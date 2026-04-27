@@ -15,7 +15,7 @@ Calendar integration for time tracking and a Daily Prep workflow that transforms
 
 ### PREP: Daily Prep Page
 
-- [ ] **PREP-01**: A `/daily-prep` route exists with a sidebar link directly below Dashboard in the upper navigation section
+- [x] **PREP-01**: A `/daily-prep` route exists with a sidebar link directly below Dashboard in the upper navigation section
 - [x] **PREP-02**: Page shows event cards for today's calendar meetings, each displaying: time, title, duration, matched project, and attendees
 - [x] **PREP-03**: Unmatched events show a manual project assignment dropdown
 - [x] **PREP-04**: User can multi-select events and trigger Meeting Prep generation for the selected set
@@ -82,7 +82,7 @@ Deferred to future milestone. Tracked but not in current roadmap.
 | CAL-01 | Phase 79 | Complete |
 | CAL-02 | Phase 79 | Complete |
 | CAL-03 | Phase 79 | Complete |
-| PREP-01 | Phase 79 | Pending |
+| PREP-01 | Phase 79 | Complete |
 | PREP-02 | Phase 79 | Complete |
 | PREP-03 | Phase 79 | Complete |
 | PREP-04 | Phase 79 | Complete |
