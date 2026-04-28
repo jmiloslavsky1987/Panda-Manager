@@ -69,6 +69,9 @@ export interface CalendarEventItem {
   match_confidence: 'high' | 'low' | 'none';
   attendee_names: string[];           // displayName ?? email for each attendee
   recurrence_flag: boolean;           // !!e.recurringEventId
+  recurring_event_id: string | null;  // e.recurringEventId ?? null
+  start_datetime: string;             // e.start.dateTime (raw RFC3339 — e.g. "2026-04-28T09:00:00+02:00")
+  end_datetime: string;               // e.end.dateTime (raw RFC3339)
   event_description: string | null;   // e.description ?? null
 }
 
@@ -200,6 +203,9 @@ export async function GET(request: NextRequest): Promise<Response> {
           .map((a) => a.displayName ?? a.email ?? '')
           .filter(Boolean),
         recurrence_flag: !!e.recurringEventId,
+        recurring_event_id: e.recurringEventId ?? null,
+        start_datetime: e.start?.dateTime ?? '',
+        end_datetime: e.end?.dateTime ?? '',
         event_description: e.description ?? null,
       };
     });
