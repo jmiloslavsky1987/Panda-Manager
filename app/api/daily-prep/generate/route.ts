@@ -12,6 +12,8 @@ import { requireSession } from '@/lib/auth-server';
 import { buildMeetingPrepContext } from '@/lib/meeting-prep-context';
 import { resolveSkillsDir } from '@/lib/skill-path';
 import { readSettings } from '@/lib/settings';
+import db from '@/db';
+import { dailyPrepBriefs } from '@/db/schema';
 
 // Strip YAML front-matter (--- ... ---) from skill file
 function stripFrontMatter(content: string): string {
@@ -33,6 +35,9 @@ export async function POST(request: NextRequest): Promise<Response> {
     recurrenceFlag,
     eventDescription,
   } = await request.json();
+
+  const userId = session.user.id;
+  const today = new Date().toISOString().slice(0, 10);
 
   // Build context — if no project assigned, generate a brief without project data
   const calendarMeta = { eventTitle, attendees, durationHours, recurrenceFlag, eventDescription };
@@ -60,11 +65,33 @@ export async function POST(request: NextRequest): Promise<Response> {
             messages: [{ role: 'user', content: userContext }],
           });
 
+          let finalText = '';
           msgStream.on('text', (text: string) => {
+            finalText += text;
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text })}\n\n`));
           });
 
           await msgStream.finalMessage();
+
+          // Persist brief to DB — failure must NOT break streaming
+          if (finalText) {
+            try {
+              await db.insert(dailyPrepBriefs)
+                .values({
+                  user_id: userId,
+                  event_id: eventId,
+                  date: today,
+                  brief_content: finalText,
+                })
+                .onConflictDoUpdate({
+                  target: [dailyPrepBriefs.user_id, dailyPrepBriefs.event_id, dailyPrepBriefs.date],
+                  set: { brief_content: finalText, generated_at: new Date() },
+                });
+            } catch (persistErr) {
+              console.error('[daily-prep/generate] DB persist error:', persistErr instanceof Error ? persistErr.message : String(persistErr));
+            }
+          }
+
           controller.enqueue(encoder.encode(`event: done\ndata: {}\n\n`));
           controller.close();
         } catch (err) {
