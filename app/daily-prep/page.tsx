@@ -11,14 +11,7 @@ interface DbBriefs {
   [eventId: string]: { content: string; generatedAt: string; };
 }
 
-interface StakeholderRecord {
-  id: number;
-  name: string;
-  role: string | null;
-  email: string | null;
-}
-
-// matchedStakeholders per event: attendees who are also project stakeholders
+// matchedStakeholders per event: attendees with their freebusy status
 type MatchedStakeholderMap = Record<string, Array<{ email: string; name: string }>>;
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -129,86 +122,44 @@ export default function DailyPrepPage() {
   useEffect(() => {
     if (cards.length === 0) return;
 
-    // Collect events with datetime info
+    // Collect timed events (all-day events have no dateTime)
     const eventsForFreebusy = cards
       .filter((c) => c.event.start_datetime && c.event.end_datetime)
       .map((c) => ({
         event_id: c.event.event_id,
         start_datetime: c.event.start_datetime,
         end_datetime: c.event.end_datetime,
-        matched_project_id: c.event.matched_project_id,
-        attendee_emails: c.event.attendee_emails ?? [],
+        // Use all attendees directly, capped at 10 to stay within Google API limits
+        attendee_emails: (c.event.attendee_emails ?? []).slice(0, 10),
+        attendee_names: c.event.attendee_names ?? [],
       }));
 
     if (eventsForFreebusy.length === 0) return;
 
-    // Collect unique matched project IDs to fetch their stakeholders
-    const matchedProjectIds = [
-      ...new Set(
-        eventsForFreebusy
-          .map((e) => e.matched_project_id)
-          .filter((id): id is number => id !== null),
-      ),
-    ];
+    // Build per-event matched map: all attendees with name fallback to email prefix
+    const newMatchedMap: MatchedStakeholderMap = {};
+    const allAttendeeEmails = new Set<string>();
 
-    if (matchedProjectIds.length === 0) return;
+    for (const ev of eventsForFreebusy) {
+      const matched: Array<{ email: string; name: string }> = [];
+      ev.attendee_emails.forEach((email, idx) => {
+        const lower = email.toLowerCase();
+        const name = ev.attendee_names[idx] ?? lower.split('@')[0];
+        matched.push({ email: lower, name });
+        allAttendeeEmails.add(lower);
+      });
+      newMatchedMap[ev.event_id] = matched;
+    }
+
+    if (allAttendeeEmails.size === 0) return;
 
     let cancelled = false;
 
     async function runFreebusy() {
       try {
-        // Fetch stakeholders (with emails) for all matched projects in parallel
-        const stakeholderResults = await Promise.all(
-          matchedProjectIds.map((pid) =>
-            fetch(`/api/stakeholders?project_id=${pid}`)
-              .then((r) => r.ok ? r.json() : [])
-              .then((rows: StakeholderRecord[]) => ({ pid, rows }))
-              .catch(() => ({ pid, rows: [] as StakeholderRecord[] })),
-          ),
-        );
-
-        // Build projectId → Set<email> for cross-referencing
-        const projectEmailMap = new Map<number, Map<string, string>>(); // email → name
-        for (const { pid, rows } of stakeholderResults) {
-          const emailNameMap = new Map<string, string>();
-          for (const s of rows) {
-            if (s.email) emailNameMap.set(s.email.toLowerCase(), s.name);
-          }
-          projectEmailMap.set(pid, emailNameMap);
-        }
-
-        // Build per-event matched stakeholders: attendees who are project stakeholders
-        const newMatchedMap: MatchedStakeholderMap = {};
-        const allStakeholderEmails = new Set<string>();
-
-        for (const ev of eventsForFreebusy) {
-          if (!ev.matched_project_id) {
-            newMatchedMap[ev.event_id] = [];
-            continue;
-          }
-          const stakeholderEmailNames = projectEmailMap.get(ev.matched_project_id) ?? new Map();
-          const matched: Array<{ email: string; name: string }> = [];
-          for (const attendeeEmail of ev.attendee_emails) {
-            const lower = attendeeEmail.toLowerCase();
-            if (stakeholderEmailNames.has(lower)) {
-              matched.push({ email: lower, name: stakeholderEmailNames.get(lower)! });
-              allStakeholderEmails.add(lower);
-            }
-          }
-          newMatchedMap[ev.event_id] = matched;
-        }
-
-        if (cancelled) return;
-
-        if (allStakeholderEmails.size === 0) {
-          // No matched stakeholders — skip freebusy fetch
-          setMatchedStakeholderMap(newMatchedMap);
-          return;
-        }
-
         setMatchedStakeholderMap(newMatchedMap);
 
-        // Set availability to 'loading' for all relevant events + stakeholders
+        // Set availability to 'loading' for all attendees
         setCards((prev) =>
           prev.map((c) => {
             const matched = newMatchedMap[c.event.event_id] ?? [];
@@ -229,7 +180,7 @@ export default function DailyPrepPage() {
               start_datetime: e.start_datetime,
               end_datetime: e.end_datetime,
             })),
-            stakeholder_emails: [...allStakeholderEmails],
+            stakeholder_emails: [...allAttendeeEmails],
           }),
         });
 
@@ -238,19 +189,13 @@ export default function DailyPrepPage() {
         const data = await res.json();
 
         if (data.error === 'scope_insufficient') {
-          // Degrade gracefully — show banner, remove loading states
           setScopeBanner(true);
-          setCards((prev) =>
-            prev.map((c) => ({ ...c, availability: {} })),
-          );
+          setCards((prev) => prev.map((c) => ({ ...c, availability: {} })));
           return;
         }
 
         if (data.error === 'not_connected') {
-          // No calendar connection — silently degrade
-          setCards((prev) =>
-            prev.map((c) => ({ ...c, availability: {} })),
-          );
+          setCards((prev) => prev.map((c) => ({ ...c, availability: {} })));
           return;
         }
 
@@ -269,11 +214,8 @@ export default function DailyPrepPage() {
           );
         }
       } catch {
-        /* non-critical — freebusy failure degrades silently */
         if (!cancelled) {
-          setCards((prev) =>
-            prev.map((c) => ({ ...c, availability: {} })),
-          );
+          setCards((prev) => prev.map((c) => ({ ...c, availability: {} })));
         }
       }
     }
