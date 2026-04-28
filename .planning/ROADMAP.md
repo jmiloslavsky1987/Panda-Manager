@@ -11,7 +11,7 @@
 - ✅ **v7.0** — Governance & Operational Maturity — Phases 58–69 (shipped 2026-04-16)
 - ✅ **v8.0** — Codebase Refactor & Multi-Tenant Deployment — Phases 70–74 (shipped 2026-04-22)
 - ✅ **v9.0** — UX Maturity & Intelligence — Phases 75–78 (shipped 2026-04-23)
-- ✅ **v10.0** — Calendar Integration & Daily Prep — Phases 79–80 (in progress)
+- ✅ **v10.0** — Calendar Integration & Daily Prep — Phases 79–80 (shipped 2026-04-28)
 - 🚧 **v11.0** — Kata Design System Visual Overhaul — Phase 81 (planned)
 
 ## Phases
@@ -170,10 +170,10 @@ Full details: `.planning/milestones/v9.0-ROADMAP.md` (archived)
 
 </details>
 
-### v10.0 — Calendar Integration & Daily Prep (In Progress)
+### v10.0 — Calendar Integration & Daily Prep (Complete)
 
 - [x] **Phase 79: Core Calendar + Daily Prep** — Wire CalendarImportModal into GlobalTimeView; full /daily-prep page with event cards, project matching, multi-select + Meeting Prep generation, inline output, skill enhancements, sidebar nav (completed 2026-04-28)
-- [ ] **Phase 80: Advanced Features** — Recurring meeting templates, PDF export, team availability view, auto-scheduling prep job
+- [x] **Phase 80: Advanced Features** — Recurring meeting templates, PDF export, team availability view, auto-scheduling prep job (completed 2026-04-28)
 
 ## Phase Details
 
@@ -279,13 +279,13 @@ Plans:
 **Plans**: 7 plans
 
 Plans:
-- [ ] 80-00-PLAN.md — Wave 0 test scaffolds (all requirements)
-- [ ] 80-01-PLAN.md — DB migrations 0045 + schema + CalendarEventItem extension (RECUR-01, AVAIL-01, SCHED-01)
-- [ ] 80-02-PLAN.md — Recurring templates API + DailyPrepCard template UX (RECUR-01)
-- [ ] 80-03-PLAN.md — Freebusy proxy route + OAuth scope + availability chips (AVAIL-01)
-- [ ] 80-04-PLAN.md — Auto-prep BullMQ worker + briefs DB persistence + LocalStorage removal (SCHED-01)
-- [ ] 80-05-PLAN.md — PDF export via window.print() + print CSS (OUT-01)
-- [ ] 80-06-PLAN.md — Human verification checkpoint (all requirements)
+- [x] 80-00-PLAN.md — Wave 0 test scaffolds (all requirements)
+- [x] 80-01-PLAN.md — DB migrations 0045 + schema + CalendarEventItem extension (RECUR-01, AVAIL-01, SCHED-01)
+- [x] 80-02-PLAN.md — Recurring templates API + DailyPrepCard template UX (RECUR-01)
+- [x] 80-03-PLAN.md — Freebusy proxy route + OAuth scope + availability chips (AVAIL-01)
+- [x] 80-04-PLAN.md — Auto-prep BullMQ worker + briefs DB persistence + LocalStorage removal (SCHED-01)
+- [x] 80-05-PLAN.md — PDF export via window.print() + print CSS (OUT-01)
+- [x] 80-06-PLAN.md — Human verification checkpoint (all requirements)
 
 ### Phase 81: Kata Design System Visual Overhaul
 **Goal**: The entire app is visually rebuilt on the Kata Design System (Direction 3 — Command Workspace): Kata tokens replace the current Tailwind palette, Inter + JetBrains Mono replace system-ui, the left sidebar becomes a 240px dark Command Rail, the Portfolio Dashboard and Project Workspace surfaces are redesigned to spec, and Material Symbols replace lucide-react icons — all without touching data-fetching logic, API routes, or functional behavior
@@ -319,7 +319,7 @@ Plans:
 | 77. Intelligence & Gantt | 3/3 | Complete    | 2026-04-23 |
 | 78. AI & Content | 2/2 | Complete    | 2026-04-23 |
 | 79. Core Calendar + Daily Prep | 6/6 | Complete    | 2026-04-28 |
-| 80. Advanced Features | 6/7 | In Progress|  |
+| 80. Advanced Features | 7/7 | Complete    | 2026-04-28 |
 | 81. Kata Design System Visual Overhaul | 0/6 | Not started | - |
 
 ---
