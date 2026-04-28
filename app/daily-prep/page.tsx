@@ -7,9 +7,19 @@ import { CalendarEventItem } from '@/app/api/time-entries/calendar-import/route'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface StoredBriefs {
+interface DbBriefs {
   [eventId: string]: { content: string; generatedAt: string; };
 }
+
+interface StakeholderRecord {
+  id: number;
+  name: string;
+  role: string | null;
+  email: string | null;
+}
+
+// matchedStakeholders per event: attendees who are also project stakeholders
+type MatchedStakeholderMap = Record<string, Array<{ email: string; name: string }>>;
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -21,6 +31,8 @@ export default function DailyPrepPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [connected, setConnected] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
+  const [matchedStakeholderMap, setMatchedStakeholderMap] = useState<MatchedStakeholderMap>({});
+  const [scopeBanner, setScopeBanner] = useState(false);
 
   // ── Calendar connection status (once on mount) ────────────────────────────
   useEffect(() => {
@@ -50,17 +62,16 @@ export default function DailyPrepPage() {
 
     async function loadEvents() {
       try {
-        const r = await fetch(`/api/time-entries/calendar-import?date=${selectedDate}`);
-        const events: CalendarEventItem[] = await r.json();
+        const [eventsData, storedBriefs] = await Promise.all([
+          fetch(`/api/time-entries/calendar-import?date=${selectedDate}`).then((r) => r.json()),
+          fetch(`/api/daily-prep/briefs?date=${selectedDate}`)
+            .then((r) => r.json())
+            .catch(() => ({} as DbBriefs)),
+        ]);
+        const events: CalendarEventItem[] = eventsData;
+        const stored: DbBriefs = storedBriefs;
 
         if (cancelled) return;
-
-        // Load stored briefs from localStorage
-        const storageKey = `daily-prep-briefs:${selectedDate}`;
-        let stored: StoredBriefs = {};
-        try {
-          stored = JSON.parse(localStorage.getItem(storageKey) ?? '{}');
-        } catch {/* ignore parse errors */}
 
         // Build initial card state (hasTemplate/templateContent will be filled below)
         const initialCards: EventCardState[] = events.map((event) => ({
@@ -113,6 +124,164 @@ export default function DailyPrepPage() {
     loadEvents();
     return () => { cancelled = true; };
   }, [selectedDate, connected]);
+
+  // ── Freebusy fetch — runs after events are loaded ──────────────────────────
+  useEffect(() => {
+    if (cards.length === 0) return;
+
+    // Collect events with datetime info
+    const eventsForFreebusy = cards
+      .filter((c) => c.event.start_datetime && c.event.end_datetime)
+      .map((c) => ({
+        event_id: c.event.event_id,
+        start_datetime: c.event.start_datetime,
+        end_datetime: c.event.end_datetime,
+        matched_project_id: c.event.matched_project_id,
+        attendee_emails: c.event.attendee_emails ?? [],
+      }));
+
+    if (eventsForFreebusy.length === 0) return;
+
+    // Collect unique matched project IDs to fetch their stakeholders
+    const matchedProjectIds = [
+      ...new Set(
+        eventsForFreebusy
+          .map((e) => e.matched_project_id)
+          .filter((id): id is number => id !== null),
+      ),
+    ];
+
+    if (matchedProjectIds.length === 0) return;
+
+    let cancelled = false;
+
+    async function runFreebusy() {
+      try {
+        // Fetch stakeholders (with emails) for all matched projects in parallel
+        const stakeholderResults = await Promise.all(
+          matchedProjectIds.map((pid) =>
+            fetch(`/api/stakeholders?project_id=${pid}`)
+              .then((r) => r.ok ? r.json() : [])
+              .then((rows: StakeholderRecord[]) => ({ pid, rows }))
+              .catch(() => ({ pid, rows: [] as StakeholderRecord[] })),
+          ),
+        );
+
+        // Build projectId → Set<email> for cross-referencing
+        const projectEmailMap = new Map<number, Map<string, string>>(); // email → name
+        for (const { pid, rows } of stakeholderResults) {
+          const emailNameMap = new Map<string, string>();
+          for (const s of rows) {
+            if (s.email) emailNameMap.set(s.email.toLowerCase(), s.name);
+          }
+          projectEmailMap.set(pid, emailNameMap);
+        }
+
+        // Build per-event matched stakeholders: attendees who are project stakeholders
+        const newMatchedMap: MatchedStakeholderMap = {};
+        const allStakeholderEmails = new Set<string>();
+
+        for (const ev of eventsForFreebusy) {
+          if (!ev.matched_project_id) {
+            newMatchedMap[ev.event_id] = [];
+            continue;
+          }
+          const stakeholderEmailNames = projectEmailMap.get(ev.matched_project_id) ?? new Map();
+          const matched: Array<{ email: string; name: string }> = [];
+          for (const attendeeEmail of ev.attendee_emails) {
+            const lower = attendeeEmail.toLowerCase();
+            if (stakeholderEmailNames.has(lower)) {
+              matched.push({ email: lower, name: stakeholderEmailNames.get(lower)! });
+              allStakeholderEmails.add(lower);
+            }
+          }
+          newMatchedMap[ev.event_id] = matched;
+        }
+
+        if (cancelled) return;
+
+        if (allStakeholderEmails.size === 0) {
+          // No matched stakeholders — skip freebusy fetch
+          setMatchedStakeholderMap(newMatchedMap);
+          return;
+        }
+
+        setMatchedStakeholderMap(newMatchedMap);
+
+        // Set availability to 'loading' for all relevant events + stakeholders
+        setCards((prev) =>
+          prev.map((c) => {
+            const matched = newMatchedMap[c.event.event_id] ?? [];
+            if (matched.length === 0) return c;
+            const loadingMap: Record<string, 'free' | 'busy' | 'loading' | 'unknown'> = {};
+            for (const { email } of matched) loadingMap[email] = 'loading';
+            return { ...c, availability: loadingMap };
+          }),
+        );
+
+        // POST to freebusy API
+        const res = await fetch('/api/calendar/freebusy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            events: eventsForFreebusy.map((e) => ({
+              event_id: e.event_id,
+              start_datetime: e.start_datetime,
+              end_datetime: e.end_datetime,
+            })),
+            stakeholder_emails: [...allStakeholderEmails],
+          }),
+        });
+
+        if (cancelled) return;
+
+        const data = await res.json();
+
+        if (data.error === 'scope_insufficient') {
+          // Degrade gracefully — show banner, remove loading states
+          setScopeBanner(true);
+          setCards((prev) =>
+            prev.map((c) => ({ ...c, availability: {} })),
+          );
+          return;
+        }
+
+        if (data.error === 'not_connected') {
+          // No calendar connection — silently degrade
+          setCards((prev) =>
+            prev.map((c) => ({ ...c, availability: {} })),
+          );
+          return;
+        }
+
+        // Success — update per-card availability maps
+        if (!cancelled) {
+          setCards((prev) =>
+            prev.map((c) => {
+              const eventResult = data[c.event.event_id];
+              if (!eventResult) return c;
+              const newAvail: Record<string, 'free' | 'busy' | 'loading' | 'unknown'> = { ...c.availability };
+              for (const [email, status] of Object.entries(eventResult)) {
+                newAvail[email] = status as 'free' | 'busy';
+              }
+              return { ...c, availability: newAvail };
+            }),
+          );
+        }
+      } catch {
+        /* non-critical — freebusy failure degrades silently */
+        if (!cancelled) {
+          setCards((prev) =>
+            prev.map((c) => ({ ...c, availability: {} })),
+          );
+        }
+      }
+    }
+
+    runFreebusy();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cards.length, selectedDate]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
@@ -256,16 +425,7 @@ export default function DailyPrepPage() {
                     : c,
                 ),
               );
-              // Persist to LocalStorage keyed by selectedDate
-              const storageKey = `daily-prep-briefs:${selectedDate}`;
-              const existing: StoredBriefs = JSON.parse(
-                localStorage.getItem(storageKey) ?? '{}',
-              );
-              existing[eventId] = {
-                content: accumulated,
-                generatedAt: new Date().toISOString(),
-              };
-              localStorage.setItem(storageKey, JSON.stringify(existing));
+              // Brief is now persisted to DB by the generate route — no localStorage write needed
             }
           }
         }
@@ -308,6 +468,19 @@ export default function DailyPrepPage() {
             className="px-4 py-2 rounded bg-blue-600 text-white text-sm hover:bg-blue-700"
           >
             Connect Google Calendar
+          </a>
+        </div>
+      )}
+
+      {/* Soft banner: scope insufficient for freebusy */}
+      {scopeBanner && (
+        <div className="flex items-center justify-between gap-2 px-3 py-2 rounded bg-amber-50 border border-amber-200 text-sm text-amber-800">
+          <span>Reconnect your Google Calendar to enable availability view.</span>
+          <a
+            href="/api/oauth/calendar"
+            className="underline font-medium shrink-0 hover:text-amber-900"
+          >
+            Reconnect
           </a>
         </div>
       )}
@@ -357,6 +530,7 @@ export default function DailyPrepPage() {
             onCopy={handleCopy}
             onSaveTemplate={handleSaveTemplate}
             onLoadTemplate={handleLoadTemplate}
+            matchedStakeholders={matchedStakeholderMap[card.event.event_id]}
           />
         ))}
       </div>
