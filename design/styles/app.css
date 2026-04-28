@@ -1,0 +1,195 @@
+/* App-specific styles on top of kata-tokens.css */
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-default);
+  color: var(--color-on-canvas);
+  background: var(--color-surface-canvas);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Material Symbols sizing ─────────────────────────────────── */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+  font-size: 20px;
+  line-height: 1;
+  vertical-align: middle;
+  user-select: none;
+}
+.ms-16 { font-size: 16px; }
+.ms-18 { font-size: 18px; }
+.ms-20 { font-size: 20px; }
+.ms-24 { font-size: 24px; }
+.ms-32 { font-size: 32px; }
+
+/* ── Numerals ────────────────────────────────────────────────── */
+.tnum { font-variant-numeric: tabular-nums; }
+.mono { font-family: var(--font-code); }
+
+/* ── Generic helpers ─────────────────────────────────────────── */
+.row { display: flex; align-items: center; }
+.col { display: flex; flex-direction: column; }
+.gap-2 { gap: 4px; }
+.gap-4 { gap: 8px; }
+.gap-6 { gap: 12px; }
+.gap-8 { gap: 16px; }
+.gap-12 { gap: 24px; }
+
+/* ── RAG dot ─────────────────────────────────────────────────── */
+.rag-dot {
+  width: 8px; height: 8px; border-radius: 9999px; flex: none;
+}
+.rag-dot.green  { background: var(--color-green-400); }
+.rag-dot.yellow { background: var(--color-orange-300); }
+.rag-dot.red    { background: var(--color-red-500); }
+.rag-dot.gray   { background: var(--color-gray-400); }
+
+/* ── Badge primitives ────────────────────────────────────────── */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 1px 8px; border-radius: 9999px;
+  font: var(--fw-medium) 11px/1.4 var(--font-default);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.badge.success { background: var(--color-surface-success-subtle); color: var(--color-on-success-subtle); }
+.badge.warning { background: var(--color-surface-warning-subtle); color: var(--color-on-warning-subtle); }
+.badge.error   { background: var(--color-surface-error-subtle);   color: var(--color-on-error-subtle); }
+.badge.info    { background: var(--color-surface-primary-subtle); color: var(--color-on-primary-subtle); }
+.badge.neutral { background: var(--color-gray-100);               color: var(--color-gray-700); }
+.badge.ai      { background: var(--color-surface-ai-subtle);      color: var(--color-on-ai-subtle); }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 8px; border-radius: 6px;
+  font: var(--fw-medium) 12px/1.25 var(--font-default);
+  background: var(--color-gray-100); color: var(--color-gray-700);
+  border: 1px solid var(--color-gray-200);
+}
+
+/* ── Buttons ────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 32px; padding: 0 12px; border-radius: 6px;
+  font: var(--fw-medium) 13px/1 var(--font-default);
+  border: 1px solid transparent;
+  cursor: pointer; user-select: none; white-space: nowrap;
+  transition: background-color 120ms, border-color 120ms;
+}
+.btn-primary { background: var(--color-surface-primary); color: var(--color-on-primary); }
+.btn-secondary {
+  background: var(--color-surface-container); color: var(--color-on-container);
+  border-color: var(--color-stroke-subtle);
+}
+.btn-ghost { background: transparent; color: var(--color-on-container-as-secondary); }
+.btn-icon {
+  width: 32px; height: 32px; padding: 0;
+  background: var(--color-surface-container); color: var(--color-icon-secondary);
+  border: 1px solid var(--color-stroke-subtle); border-radius: 6px;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+
+/* ── Cards ────────────────────────────────────────────────── */
+.card {
+  background: var(--color-surface-container);
+  border: 1px solid var(--color-stroke-subtle);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+.card-field {
+  background: var(--color-surface-field);
+  border: 1px solid var(--color-stroke-subtle);
+  border-radius: 12px;
+}
+
+/* ── Tables ─────────────────────────────────────────────────── */
+.k-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.k-table thead th {
+  text-align: left;
+  font: var(--fw-medium) 11px/1.25 var(--font-default);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--color-on-container-as-tertiary);
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--color-stroke-subtle);
+  background: var(--color-surface-field);
+}
+.k-table tbody td {
+  padding: 0 14px;
+  height: 44px;
+  border-bottom: 1px solid var(--color-stroke-subtle);
+  vertical-align: middle;
+  color: var(--color-on-container);
+}
+.k-table tbody tr:last-child td { border-bottom: none; }
+.k-table tbody tr:hover td { background: var(--color-surface-secondary-subtle); }
+
+/* ── Topbar ─────────────────────────────────────────────────── */
+.topbar {
+  height: 48px; background: var(--color-topbar-container); color: var(--color-topbar-on-container);
+  display: flex; align-items: center; padding: 0 12px; gap: 12px;
+  border-bottom: 1px solid var(--color-topbar-stroke);
+}
+.topbar .brand { display: flex; align-items: center; gap: 8px; padding-right: 12px; border-right: 1px solid var(--color-topbar-stroke); }
+.topbar .brand-mark { width: 24px; height: 24px; }
+.topbar .brand-text { font: var(--fw-semibold) 13px/1 var(--font-default); letter-spacing: -0.01em; }
+.topbar .nav-item {
+  display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px;
+  border-radius: 6px; color: var(--color-topbar-on-container-as-muted);
+  font: var(--fw-medium) 13px/1 var(--font-default);
+}
+.topbar .nav-item.active { background: var(--color-topbar-accent); color: var(--color-topbar-on-container); }
+.topbar .spacer { flex: 1; }
+.topbar .search {
+  display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 10px;
+  background: var(--color-topbar-accent); color: var(--color-topbar-on-container-as-muted);
+  border-radius: 6px; min-width: 280px;
+  font-size: 12px;
+}
+.topbar .icon-btn {
+  width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 6px; color: var(--color-topbar-on-container-as-muted);
+}
+.topbar .avatar {
+  width: 28px; height: 28px; border-radius: 9999px; background: var(--color-topbar-avatar);
+  color: white; display: inline-flex; align-items: center; justify-content: center;
+  font: var(--fw-semibold) 11px/1 var(--font-default);
+}
+
+/* ── Sidebar (light, slim) ──────────────────────────────────── */
+.k-sidebar {
+  width: 248px; background: var(--color-surface-container);
+  border-right: 1px solid var(--color-stroke-subtle);
+  display: flex; flex-direction: column;
+}
+.k-sidebar .section-label {
+  font: var(--fw-medium) 11px/1.25 var(--font-default);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--color-on-container-as-tertiary);
+  padding: 12px 16px 6px;
+}
+.k-sidebar .nav-link {
+  display: flex; align-items: center; gap: 10px;
+  height: 30px; padding: 0 12px; margin: 0 8px; border-radius: 6px;
+  color: var(--color-on-container-as-secondary);
+  font: var(--fw-medium) 13px/1 var(--font-default);
+  text-decoration: none;
+}
+.k-sidebar .nav-link:hover { background: var(--color-surface-secondary-subtle-hover); color: var(--color-on-container); }
+.k-sidebar .nav-link.active { background: var(--color-surface-primary-subtle); color: var(--color-on-primary-subtle); }
+
+/* ── Progress ────────────────────────────────────────────────── */
+.progress { height: 6px; background: var(--color-gray-100); border-radius: 9999px; overflow: hidden; }
+.progress > i { display: block; height: 100%; background: var(--color-blue-500); border-radius: 9999px; }
+
+/* ── Spark ──────────────────────────────────────────────────── */
+.spark { display: inline-flex; align-items: end; gap: 2px; height: 18px; }
+.spark > i { width: 4px; background: var(--color-gray-300); border-radius: 1px; }
+.spark.blue > i { background: var(--color-blue-300); }
+.spark.green > i { background: var(--color-green-300); }
+
+/* Reset some defaults inside artboards */
+.artboard-body, .artboard-body * { box-sizing: border-box; }
+.artboard-body button { font-family: inherit; }
