@@ -46,6 +46,7 @@ import workflowDiagramJob           from './jobs/workflow-diagram';
 import biggyWeeklyBriefingJob       from './jobs/biggy-weekly-briefing';
 import riskAssessmentJob            from './jobs/risk-assessment';
 import qbrPrepJob                   from './jobs/qbr-prep';
+import meetingPrepDailyJob          from './jobs/meeting-prep-daily';
 
 const JOB_HANDLERS: Record<string, (job: Parameters<typeof actionSync>[0]) => Promise<{ status: string }>> = {
   'action-sync':            actionSync,
@@ -70,6 +71,7 @@ const JOB_HANDLERS: Record<string, (job: Parameters<typeof actionSync>[0]) => Pr
   'biggy-weekly-briefing':        biggyWeeklyBriefingJob,
   'risk-assessment':              riskAssessmentJob,
   'qbr-prep':                     qbrPrepJob,
+  'meeting-prep-daily':           meetingPrepDailyJob,
 };
 
 // Worker needs its own connection — NEVER share with Queue (BullMQ requirement)

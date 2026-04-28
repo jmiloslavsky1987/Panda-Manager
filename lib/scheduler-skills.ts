@@ -89,6 +89,12 @@ export const SKILL_LIST: SkillDef[] = [
     description: 'Sends scheduled reminders to PS team members to submit timesheets.',
     hasParams: false,
   },
+  {
+    id: 'meeting-prep-daily',
+    label: 'Meeting Prep (Daily)',
+    description: 'Auto-generates prep briefs for all meetings of the day at a configured time.',
+    hasParams: true,
+  },
 ];
 
 /**
@@ -100,6 +106,7 @@ export const SKILLS_WITH_PARAMS: string[] = [
   'customer-project-tracker',
   'weekly-customer-status',
   'context-updater',
+  'meeting-prep-daily',
 ];
 
 /**

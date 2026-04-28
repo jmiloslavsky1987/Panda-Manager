@@ -145,8 +145,18 @@ export function JobParamsStep({ skillId, params, projects, onChange, lockedProje
         </div>
       )}
 
+      {skillId === 'meeting-prep-daily' && (
+        <div className="space-y-2">
+          <p className="text-sm text-gray-700">
+            This job runs daily at the configured time and auto-generates prep briefs for all your
+            meetings of that day. No project selection needed &mdash; it covers all your connected
+            calendar events.
+          </p>
+        </div>
+      )}
+
       {/* Fallback for unknown skill */}
-      {!['customer-project-tracker', 'weekly-customer-status', 'context-updater', 'discovery-scan'].includes(skillId) && (
+      {!['customer-project-tracker', 'weekly-customer-status', 'context-updater', 'discovery-scan', 'meeting-prep-daily'].includes(skillId) && (
         <div className="text-sm text-gray-500">No additional configuration required.</div>
       )}
     </div>
