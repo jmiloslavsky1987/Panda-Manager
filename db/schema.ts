@@ -930,3 +930,36 @@ export const ganttBaselines = pgTable('gantt_baselines', {
 
 export type GanttBaseline = typeof ganttBaselines.$inferSelect;
 export type GanttBaselineInsert = typeof ganttBaselines.$inferInsert;
+
+// ─── v10.0 Tables (Phase 80) ──────────────────────────────────────────────────
+
+// ─── Daily Prep Briefs (Phase 80 — RECUR-01, AVAIL-01, SCHED-01) ─────────────
+
+export const dailyPrepBriefs = pgTable('daily_prep_briefs', {
+  id:            serial('id').primaryKey(),
+  user_id:       text('user_id').notNull(),
+  event_id:      text('event_id').notNull(),
+  date:          text('date').notNull(),              // YYYY-MM-DD
+  brief_content: text('brief_content').notNull(),
+  generated_at:  timestamp('generated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (t) => ({
+  uniq: uniqueIndex('daily_prep_briefs_user_event_date').on(t.user_id, t.event_id, t.date),
+}));
+
+export type DailyPrepBrief = typeof dailyPrepBriefs.$inferSelect;
+export type DailyPrepBriefInsert = typeof dailyPrepBriefs.$inferInsert;
+
+// ─── Meeting Prep Templates (Phase 80 — RECUR-01) ────────────────────────────
+
+export const meetingPrepTemplates = pgTable('meeting_prep_templates', {
+  id:                 serial('id').primaryKey(),
+  user_id:            text('user_id').notNull(),
+  recurring_event_id: text('recurring_event_id').notNull(),
+  brief_content:      text('brief_content').notNull(),
+  saved_at:           timestamp('saved_at', { withTimezone: true }).defaultNow().notNull(),
+}, (t) => ({
+  uniq: uniqueIndex('meeting_prep_templates_user_series').on(t.user_id, t.recurring_event_id),
+}));
+
+export type MeetingPrepTemplate = typeof meetingPrepTemplates.$inferSelect;
+export type MeetingPrepTemplateInsert = typeof meetingPrepTemplates.$inferInsert;
