@@ -441,8 +441,40 @@ export default function DailyPrepPage() {
     });
   }
 
+  // ── Export handlers ──────────────────────────────────────────────────────
+
+  function handleExportCard(eventId: string) {
+    if (typeof window === 'undefined') return;
+    const cardEl = document.querySelector(`[data-event-id="${eventId}"]`);
+    if (cardEl) cardEl.classList.add('print-target');
+    document.body.classList.add('print-single');
+    window.print();
+    window.addEventListener(
+      'afterprint',
+      () => {
+        document.body.classList.remove('print-single');
+        if (cardEl) cardEl.classList.remove('print-target');
+      },
+      { once: true },
+    );
+  }
+
+  function handleExportAll() {
+    if (typeof window === 'undefined') return;
+    document.body.classList.add('printing-all');
+    window.print();
+    window.addEventListener(
+      'afterprint',
+      () => {
+        document.body.classList.remove('printing-all');
+      },
+      { once: true },
+    );
+  }
+
   const anySelected = cards.some((c) => c.selected);
   const anyLoading = cards.some((c) => c.briefStatus === 'loading');
+  const anyDone = cards.some((c) => c.briefStatus === 'done');
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -485,7 +517,7 @@ export default function DailyPrepPage() {
         </div>
       )}
 
-      {/* Select All + Generate Prep bar */}
+      {/* Select All + Generate Prep + Export All bar */}
       {connected && cards.length > 0 && (
         <div className="flex items-center justify-between">
           <label className="flex items-center gap-2 text-sm text-zinc-700 cursor-pointer">
@@ -497,13 +529,23 @@ export default function DailyPrepPage() {
             />
             Select All
           </label>
-          <button
-            onClick={handleGenerate}
-            disabled={!anySelected || anyLoading}
-            className="text-sm px-3 py-1.5 rounded bg-blue-600 text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-blue-700"
-          >
-            Generate Prep
-          </button>
+          <div className="flex items-center gap-2">
+            {anyDone && (
+              <button
+                onClick={handleExportAll}
+                className="no-print text-sm px-3 py-1.5 rounded border border-zinc-300 hover:bg-zinc-50 text-zinc-700"
+              >
+                Export All
+              </button>
+            )}
+            <button
+              onClick={handleGenerate}
+              disabled={!anySelected || anyLoading}
+              className="no-print text-sm px-3 py-1.5 rounded bg-blue-600 text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-blue-700"
+            >
+              Generate Prep
+            </button>
+          </div>
         </div>
       )}
 
@@ -530,6 +572,7 @@ export default function DailyPrepPage() {
             onCopy={handleCopy}
             onSaveTemplate={handleSaveTemplate}
             onLoadTemplate={handleLoadTemplate}
+            onExport={handleExportCard}
             matchedStakeholders={matchedStakeholderMap[card.event.event_id]}
           />
         ))}
