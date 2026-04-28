@@ -11,7 +11,8 @@
 - ✅ **v7.0** — Governance & Operational Maturity — Phases 58–69 (shipped 2026-04-16)
 - ✅ **v8.0** — Codebase Refactor & Multi-Tenant Deployment — Phases 70–74 (shipped 2026-04-22)
 - ✅ **v9.0** — UX Maturity & Intelligence — Phases 75–78 (shipped 2026-04-23)
-- 🚧 **v10.0** — Calendar Integration & Daily Prep — Phases 79–80 (in progress)
+- ✅ **v10.0** — Calendar Integration & Daily Prep — Phases 79–80 (in progress)
+- 🚧 **v11.0** — Kata Design System Visual Overhaul — Phase 81 (planned)
 
 ## Phases
 
@@ -275,7 +276,39 @@ Plans:
   2. User can export a single prep brief or all briefs for the day as a downloaded PDF
   3. Each event card shows a free/busy indicator for matched project stakeholders, giving immediate context on who is available around the meeting time
   4. User can configure an auto-prep job that generates Meeting Prep briefs N hours before each meeting; job appears in the existing scheduler UI and can be enabled, disabled, and reconfigured
-**Plans**: TBD
+**Plans**: 7 plans
+
+Plans:
+- [ ] 80-00-PLAN.md — Wave 0 test scaffolds (all requirements)
+- [ ] 80-01-PLAN.md — DB migrations 0045 + schema + CalendarEventItem extension (RECUR-01, AVAIL-01, SCHED-01)
+- [ ] 80-02-PLAN.md — Recurring templates API + DailyPrepCard template UX (RECUR-01)
+- [ ] 80-03-PLAN.md — Freebusy proxy route + OAuth scope + availability chips (AVAIL-01)
+- [ ] 80-04-PLAN.md — Auto-prep BullMQ worker + briefs DB persistence + LocalStorage removal (SCHED-01)
+- [ ] 80-05-PLAN.md — PDF export via window.print() + print CSS (OUT-01)
+- [ ] 80-06-PLAN.md — Human verification checkpoint (all requirements)
+
+### Phase 81: Kata Design System Visual Overhaul
+**Goal**: The entire app is visually rebuilt on the Kata Design System (Direction 3 — Command Workspace): Kata tokens replace the current Tailwind palette, Inter + JetBrains Mono replace system-ui, the left sidebar becomes a 240px dark Command Rail, the Portfolio Dashboard and Project Workspace surfaces are redesigned to spec, and Material Symbols replace lucide-react icons — all without touching data-fetching logic, API routes, or functional behavior
+**Depends on**: Phase 79 (stable v10.0 baseline; all core features working before the visual layer changes)
+**Requirements**: KDS-01, KDS-02, KDS-03, KDS-04, KDS-05, KDS-06, KDS-07, KDS-08
+**Success Criteria** (what must be TRUE):
+  1. Kata token CSS variables are in effect across the entire app; shadcn component tokens are aliased to Kata equivalents; no Tailwind default palette colors remain in primary UI surfaces
+  2. Inter is the body typeface; JetBrains Mono is used for all numerals, IDs, dates, and durations; lucide-react is fully replaced with Material Symbols Outlined 400
+  3. The left sidebar is rebuilt as a 240px dark Command Rail (gray-950 bg, always dark regardless of theme); it contains: logo + "Panda Manager" header, ⌘K search pill, top nav (Portfolio / Today / Daily Prep), live project list with RAG dot + go-live date, and user footer with settings
+  4. A 44px page-bar appears at the top of every page with breadcrumb on the left and contextual CTAs on the right; command rail stays dark when light mode is toggled (main canvas inverts, rail does not)
+  5. Portfolio Dashboard is rebuilt to spec: hero stat band (project count in JBM 64px, health breakdown, week metrics), AI briefing strip (3-column card grid), project grid (2-column, health-accented cards with progress bar)
+  6. Project Workspace is rebuilt to spec: 44px page-bar with project name + health badge, tabs row, 5-column KPI strip with JBM 28px numerals, and 2-column focus/risks grid
+  7. All existing tabs and functionality (Overview, Plan, Gantt, Stakeholders, Risks, Decisions, Artifacts, Skills, Time, Daily Prep, Settings) work identically after the visual rebuild; no regressions in data display, form submission, or navigation
+  8. Theme toggle persists to localStorage and switches `<html class="dark">` on the main canvas only; accent set to Indigo (#5B5BFF) as default
+**Plans**: TBD — to be planned before execution; recommended 5 waves matching the migration order: tokens → type/icons → chrome → screens → polish
+
+Plans:
+- [ ] 81-00-PLAN.md — Token layer: kata-tokens.css import, shadcn token aliasing, Tailwind palette override (KDS-01)
+- [ ] 81-01-PLAN.md — Type & icons: Inter + JBM fonts, lucide-react → Material Symbols replacement (KDS-02)
+- [ ] 81-02-PLAN.md — Chrome rebuild: Command Rail, page-bar, theme toggle, light/dark behavior (KDS-03, KDS-04)
+- [ ] 81-03-PLAN.md — Portfolio Dashboard rebuild: hero band, AI briefing strip, project grid (KDS-05)
+- [ ] 81-04-PLAN.md — Project Workspace rebuild: page-bar, tabs, KPI strip, focus/risks grid (KDS-06)
+- [ ] 81-05-PLAN.md — Regression verification: all existing features smoke-tested after visual rebuild (KDS-07, KDS-08)
 
 ## Progress
 
@@ -287,6 +320,7 @@ Plans:
 | 78. AI & Content | 2/2 | Complete    | 2026-04-23 |
 | 79. Core Calendar + Daily Prep | 6/6 | Complete    | 2026-04-28 |
 | 80. Advanced Features | 0/TBD | Not started | - |
+| 81. Kata Design System Visual Overhaul | 0/6 | Not started | - |
 
 ---
-*Last updated: 2026-04-27 — Phase 79 planned: 6 plans across 4 waves*
+*Last updated: 2026-04-28 — Phase 81 added: Kata Design System visual overhaul, 6 plans across 5 waves*
