@@ -53,9 +53,10 @@ created: 2026-04-28
 
 ## Wave 0 Requirements
 
-- [ ] `bigpanda-app/__tests__/phase80/recurrence.test.ts` — stubs for RECUR-01 (series detection, template save/load)
-- [ ] `bigpanda-app/__tests__/phase80/freebusy.test.ts` — stubs for AVAIL-01 (freebusy API call, degradation on 403)
-- [ ] `bigpanda-app/__tests__/phase80/auto-prep-job.test.ts` — stubs for SCHED-01 (BullMQ job enqueue, worker execution)
+- [ ] `lib/__tests__/recur-template.test.ts` — stubs for RECUR-01 (series detection, template save/load)
+- [ ] `lib/__tests__/pdf-export.test.ts` — stubs for OUT-01 (print CSS presence, Export button, Export All)
+- [ ] `lib/__tests__/availability.test.ts` — stubs for AVAIL-01 (freebusy API call, degradation on 403)
+- [ ] `lib/__tests__/meeting-prep-daily.test.ts` — stubs for SCHED-01 (BullMQ job enqueue, worker execution)
 
 ---
 
