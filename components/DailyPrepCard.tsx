@@ -20,6 +20,9 @@ export interface EventCardState {
   briefStatus: 'idle' | 'loading' | 'done' | 'error';
   briefContent: string | null;
   expanded: boolean;
+  hasTemplate: boolean;
+  templateContent: string | null;
+  availability: Record<string, 'free' | 'busy' | 'loading' | 'unknown'>;
 }
 
 export interface DailyPrepCardProps {
@@ -29,6 +32,9 @@ export interface DailyPrepCardProps {
   onProjectChange: (eventId: string, projectId: number | null) => void;
   onToggleExpand: (eventId: string) => void;
   onCopy: (eventId: string) => void;
+  onSaveTemplate?: (seriesId: string, content: string) => void;
+  onLoadTemplate?: (eventId: string) => void;
+  matchedStakeholders?: Array<{ email: string; name: string }>;
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -40,6 +46,9 @@ export function DailyPrepCard({
   onProjectChange,
   onToggleExpand,
   onCopy,
+  onSaveTemplate,
+  onLoadTemplate,
+  matchedStakeholders,
 }: DailyPrepCardProps) {
   const { event } = card;
   const [copied, setCopied] = useState(false);
@@ -125,6 +134,31 @@ export function DailyPrepCard({
               </span>
             )}
           </div>
+
+          {/* Availability chips — only when matchedStakeholders non-empty and availability map populated */}
+          {matchedStakeholders && matchedStakeholders.length > 0 && Object.keys(card.availability).length > 0 && (
+            <div className="mt-2 flex flex-wrap items-center gap-1.5" data-testid="availability-chips">
+              {matchedStakeholders.map(({ email, name }) => {
+                const status = card.availability[email] ?? 'unknown';
+                const dotColor =
+                  status === 'free'
+                    ? 'bg-green-500'
+                    : status === 'busy'
+                    ? 'bg-red-500'
+                    : 'bg-zinc-400';
+                return (
+                  <span
+                    key={email}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-zinc-50 border border-zinc-200 text-zinc-700"
+                    title={`${name} — ${status}`}
+                  >
+                    <span className={`inline-block w-2 h-2 rounded-full ${dotColor}`} />
+                    {name}
+                  </span>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Expand/collapse button */}
@@ -135,6 +169,24 @@ export function DailyPrepCard({
           {card.expanded ? 'Collapse' : 'Expand'}
         </button>
       </div>
+
+      {/* Template controls for recurring events (idle/collapsed state) */}
+      {event.recurring_event_id !== null && card.hasTemplate && card.briefStatus === 'idle' && (
+        <div className="mt-3 border-t border-zinc-100 pt-3" data-testid="brief-section">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-zinc-100 text-zinc-600">
+              Template saved
+            </span>
+            <button
+              onClick={() => onLoadTemplate?.(event.event_id)}
+              className="text-xs px-2 py-1 rounded bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200"
+              data-testid="load-template-button"
+            >
+              Load template
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Brief section */}
       {(card.briefStatus === 'loading' || card.briefStatus === 'done' || card.briefStatus === 'error') && (
@@ -147,6 +199,14 @@ export function DailyPrepCard({
           )}
           {card.briefStatus === 'done' && card.expanded && card.briefContent && (
             <>
+              {/* Template saved badge (recurring events with saved template) */}
+              {event.recurring_event_id !== null && card.hasTemplate && (
+                <div className="mb-2">
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-zinc-100 text-zinc-600">
+                    Template saved
+                  </span>
+                </div>
+              )}
               <div className="prose prose-zinc prose-sm max-w-none">
                 <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{card.briefContent}</ReactMarkdown>
               </div>
@@ -168,6 +228,16 @@ export function DailyPrepCard({
                 >
                   Collapse
                 </button>
+                {/* Save as template — only for recurring events that don't yet have a template */}
+                {event.recurring_event_id !== null && !card.hasTemplate && (
+                  <button
+                    onClick={() => onSaveTemplate?.(event.recurring_event_id!, card.briefContent!)}
+                    className="text-xs px-2 py-1 rounded bg-green-50 hover:bg-green-100 text-green-700 border border-green-200"
+                    data-testid="save-template-button"
+                  >
+                    Save as template
+                  </button>
+                )}
               </div>
             </>
           )}

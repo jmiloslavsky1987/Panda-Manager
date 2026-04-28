@@ -35,7 +35,8 @@ export default function DailyPrepPage() {
     fetch('/api/projects')
       .then((r) => r.json())
       .then((data) => {
-        if (Array.isArray(data)) setProjects(data);
+        const list = Array.isArray(data) ? data : (data?.projects ?? []);
+        setProjects(list);
       })
       .catch(() => {/* non-critical */});
   }, []);
@@ -44,10 +45,16 @@ export default function DailyPrepPage() {
   useEffect(() => {
     if (connected === null || connected === false) return;
 
+    let cancelled = false;
     setLoading(true);
-    fetch(`/api/time-entries/calendar-import?date=${selectedDate}`)
-      .then((r) => r.json())
-      .then((events: CalendarEventItem[]) => {
+
+    async function loadEvents() {
+      try {
+        const r = await fetch(`/api/time-entries/calendar-import?date=${selectedDate}`);
+        const events: CalendarEventItem[] = await r.json();
+
+        if (cancelled) return;
+
         // Load stored briefs from localStorage
         const storageKey = `daily-prep-briefs:${selectedDate}`;
         let stored: StoredBriefs = {};
@@ -55,22 +62,96 @@ export default function DailyPrepPage() {
           stored = JSON.parse(localStorage.getItem(storageKey) ?? '{}');
         } catch {/* ignore parse errors */}
 
-        setCards(
-          events.map((event) => ({
-            event,
-            selectedProjectId: event.matched_project_id,
-            selected: false,
-            briefStatus: stored[event.event_id] ? 'done' : 'idle',
-            briefContent: stored[event.event_id]?.content ?? null,
-            expanded: !!stored[event.event_id],
-          })),
-        );
-      })
-      .catch(() => setCards([]))
-      .finally(() => setLoading(false));
+        // Build initial card state (hasTemplate/templateContent will be filled below)
+        const initialCards: EventCardState[] = events.map((event) => ({
+          event,
+          selectedProjectId: event.matched_project_id,
+          selected: false,
+          briefStatus: stored[event.event_id] ? 'done' : 'idle',
+          briefContent: stored[event.event_id]?.content ?? null,
+          expanded: !!stored[event.event_id],
+          hasTemplate: false,
+          templateContent: null,
+          availability: {},
+        }));
+
+        // Batch fetch templates for recurring events
+        const recurringIds = events
+          .map((e) => e.recurring_event_id)
+          .filter((id): id is string => id !== null);
+
+        if (recurringIds.length > 0) {
+          try {
+            const templatesRes = await fetch(
+              `/api/daily-prep/templates?series_ids=${encodeURIComponent(recurringIds.join(','))}`,
+            );
+            if (templatesRes.ok) {
+              const templateMap: Record<string, { brief_content: string; saved_at: string }> =
+                await templatesRes.json();
+              // Merge template data into cards
+              for (const card of initialCards) {
+                const seriesId = card.event.recurring_event_id;
+                if (seriesId && templateMap[seriesId]) {
+                  card.hasTemplate = true;
+                  card.templateContent = templateMap[seriesId].brief_content;
+                }
+              }
+            }
+          } catch {
+            /* non-critical — template load failure doesn't block the page */
+          }
+        }
+
+        if (!cancelled) setCards(initialCards);
+      } catch {
+        if (!cancelled) setCards([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    loadEvents();
+    return () => { cancelled = true; };
   }, [selectedDate, connected]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
+
+  async function handleSaveTemplate(seriesId: string, content: string) {
+    try {
+      const res = await fetch('/api/daily-prep/templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recurring_event_id: seriesId, brief_content: content }),
+      });
+      if (res.ok) {
+        // Update state: mark cards with this series ID as having a template
+        setCards((prev) =>
+          prev.map((c) =>
+            c.event.recurring_event_id === seriesId
+              ? { ...c, hasTemplate: true, templateContent: content }
+              : c,
+          ),
+        );
+      }
+    } catch {
+      /* non-critical — save failure is silent */
+    }
+  }
+
+  function handleLoadTemplate(eventId: string) {
+    setCards((prev) =>
+      prev.map((c) =>
+        c.event.event_id === eventId && c.templateContent
+          ? {
+              ...c,
+              briefContent: c.templateContent,
+              briefStatus: 'done',
+              expanded: true,
+            }
+          : c,
+      ),
+    );
+  }
 
   function handleToggleSelect(eventId: string) {
     setCards((prev) =>
@@ -220,12 +301,15 @@ export default function DailyPrepPage() {
 
       {/* Not connected state */}
       {connected === false && (
-        <p className="text-sm text-zinc-500">
-          Connect your Google Calendar to use Daily Prep.{' '}
-          <a href="/settings" className="text-blue-600 underline">
-            Settings
+        <div className="flex flex-col items-center gap-3 py-12 text-center">
+          <p className="text-sm text-zinc-500">Connect your Google Calendar to use Daily Prep.</p>
+          <a
+            href="/api/oauth/calendar"
+            className="px-4 py-2 rounded bg-blue-600 text-white text-sm hover:bg-blue-700"
+          >
+            Connect Google Calendar
           </a>
-        </p>
+        </div>
       )}
 
       {/* Select All + Generate Prep bar */}
@@ -271,6 +355,8 @@ export default function DailyPrepPage() {
             onProjectChange={handleProjectChange}
             onToggleExpand={handleToggleExpand}
             onCopy={handleCopy}
+            onSaveTemplate={handleSaveTemplate}
+            onLoadTemplate={handleLoadTemplate}
           />
         ))}
       </div>
