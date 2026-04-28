@@ -34,6 +34,7 @@ export interface DailyPrepCardProps {
   onCopy: (eventId: string) => void;
   onSaveTemplate?: (seriesId: string, content: string) => void;
   onLoadTemplate?: (eventId: string) => void;
+  onExport?: (eventId: string) => void;
   matchedStakeholders?: Array<{ email: string; name: string }>;
 }
 
@@ -48,6 +49,7 @@ export function DailyPrepCard({
   onCopy,
   onSaveTemplate,
   onLoadTemplate,
+  onExport,
   matchedStakeholders,
 }: DailyPrepCardProps) {
   const { event } = card;
@@ -61,7 +63,18 @@ export function DailyPrepCard({
     <div
       className="border border-zinc-200 rounded-lg p-4 bg-white"
       data-testid="daily-prep-card"
+      data-event-id={event.event_id}
     >
+      {/* Print-only event header — hidden on screen, visible in print output */}
+      <div className="hidden print:block mb-2 text-sm font-medium">
+        {event.summary} &mdash; {event.start_time}&ndash;{event.end_time} ({event.duration_hours}h)
+        {event.attendee_names.length > 0 && (
+          <div className="text-xs font-normal text-zinc-600 mt-0.5">
+            {event.attendee_names.join(', ')}
+          </div>
+        )}
+      </div>
+
       {/* Top row: checkbox + time/title/duration + badges */}
       <div className="flex items-start gap-3">
         {/* Checkbox */}
@@ -190,7 +203,7 @@ export function DailyPrepCard({
 
       {/* Brief section */}
       {(card.briefStatus === 'loading' || card.briefStatus === 'done' || card.briefStatus === 'error') && (
-        <div className="mt-3 border-t border-zinc-100 pt-3" data-testid="brief-section">
+        <div className="mt-3 border-t border-zinc-100 pt-3" data-testid="brief-section" data-print-visible>
           {card.briefStatus === 'loading' && (
             <div className="text-sm text-zinc-500 animate-pulse">Generating brief…</div>
           )}
@@ -217,22 +230,29 @@ export function DailyPrepCard({
                     setCopied(true);
                     setTimeout(() => setCopied(false), 2000);
                   }}
-                  className="text-xs px-2 py-1 rounded bg-zinc-100 hover:bg-zinc-200 text-zinc-600"
+                  className="no-print text-xs px-2 py-1 rounded bg-zinc-100 hover:bg-zinc-200 text-zinc-600"
                   data-testid="copy-brief-button"
                 >
                   {copied ? 'Copied!' : 'Copy'}
                 </button>
                 <button
                   onClick={() => onToggleExpand(event.event_id)}
-                  className="text-xs px-2 py-1 rounded bg-zinc-100 hover:bg-zinc-200 text-zinc-600"
+                  className="no-print text-xs px-2 py-1 rounded bg-zinc-100 hover:bg-zinc-200 text-zinc-600"
                 >
                   Collapse
+                </button>
+                {/* Export button — hidden in print, triggers per-card print */}
+                <button
+                  onClick={() => onExport?.(event.event_id)}
+                  className="no-print text-xs text-zinc-500 hover:text-zinc-800 underline"
+                >
+                  Export
                 </button>
                 {/* Save as template — only for recurring events that don't yet have a template */}
                 {event.recurring_event_id !== null && !card.hasTemplate && (
                   <button
                     onClick={() => onSaveTemplate?.(event.recurring_event_id!, card.briefContent!)}
-                    className="text-xs px-2 py-1 rounded bg-green-50 hover:bg-green-100 text-green-700 border border-green-200"
+                    className="no-print text-xs px-2 py-1 rounded bg-green-50 hover:bg-green-100 text-green-700 border border-green-200"
                     data-testid="save-template-button"
                   >
                     Save as template
