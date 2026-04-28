@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
-status: in-progress
-stopped_at: Completed 80-01-PLAN.md (DB migration 0045 + CalendarEventItem extension)
-last_updated: "2026-04-28T18:10:00.000Z"
-last_activity: 2026-04-28 — Phase 80 plan 01 complete (daily_prep_briefs + meeting_prep_templates tables + CalendarEventItem extended)
+status: completed
+stopped_at: Completed 80-02-PLAN.md (RECUR-01 recurring template save/load)
+last_updated: "2026-04-28T18:08:00.000Z"
+last_activity: 2026-04-28 — Phase 80 plan 02 complete (RECUR-01: /api/daily-prep/templates route + DailyPrepCard template UX + page batch fetch)
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 27
   completed_plans: 23
-  percent: 97
+  percent: 99
 ---
 
 # Project State
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 80 of 80 (Advanced Features — plan 01 of 6 done)
-Status: 80-01 complete — DB migration 0045 applied; daily_prep_briefs + meeting_prep_templates tables created; CalendarEventItem extended with recurring_event_id, start_datetime, end_datetime; 6 schema/interface tests GREEN
-Last activity: 2026-04-28 — Phase 80 plan 01 complete (DB migration 0045 + CalendarEventItem extension — Wave 1 foundation done)
+Phase: 80 of 80 (Advanced Features — plan 02 of 6 done)
+Status: 80-02 complete — RECUR-01 delivered: /api/daily-prep/templates route (GET/POST/DELETE) + EventCardState template fields + DailyPrepCard template badge/save/load UX + page batch fetch on load; 10 tests GREEN
+Last activity: 2026-04-28 — Phase 80 plan 02 complete (RECUR-01 recurring meeting template save/load)
 
-Progress: [██████████] 99%
+Progress: [██████████] 98%
 
 ## v10.0 Roadmap Summary
 
@@ -89,6 +89,9 @@ Progress: [██████████] 99%
 - [80-00] 3 of 29 stubs pass on pre-existing artifacts (meeting_prep_templates, daily_prep_briefs, 0045 migration) — acceptable; key gating tests are RED
 - [80-01] Migration 0045 applied via direct postgres execution — run-migrations.ts has pre-existing bug filtering SQL statements that start with a comment; migration file itself is correct for Docker
 - [80-01] CalendarEventItem extended additively with recurring_event_id, start_datetime, end_datetime — safe defaults (null / '') prevent consumer breakage
+- [80-02] Template save/load is additive code path — existing brief generation unchanged; templates are a separate state + API path
+- [80-02] loadEvents() converted from .then() chain to async inner function — enables await for template batch fetch on page load
+- [80-02] availability: {} initializer added to card mapper (AVAIL-01 linter pre-added field to EventCardState)
 
 ### Blockers/Concerns
 
@@ -97,6 +100,6 @@ Progress: [██████████] 99%
 
 ## Session Continuity
 
-Last session: 2026-04-28T18:10:00Z
-Stopped at: Completed 80-01-PLAN.md (DB migration 0045 + CalendarEventItem extension)
-Resume file: .planning/phases/80-advanced-features/80-02-PLAN.md
+Last session: 2026-04-28T18:08:00Z
+Stopped at: Completed 80-02-PLAN.md (RECUR-01 recurring template save/load)
+Resume file: .planning/phases/80-advanced-features/80-03-PLAN.md
