@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: completed
-stopped_at: "Completed 80-03-PLAN.md (AVAIL-01: stakeholder availability indicators, freebusy proxy route, OAuth scope upgrade)"
-last_updated: "2026-04-28T18:13:20.248Z"
-last_activity: "2026-04-28 — Phase 80 plan 04 complete (SCHED-01: auto-prep BullMQ worker + DB-backed brief persistence + localStorage removal)"
+stopped_at: "Completed 80-05-PLAN.md (OUT-01: PDF export via window.print() + @media print CSS)"
+last_updated: "2026-04-28T18:19:13.927Z"
+last_activity: "2026-04-28 — Phase 80 plan 05 complete (OUT-01: PDF export via window.print() + @media print CSS)"
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 27
-  completed_plans: 25
-  percent: 98
+  completed_plans: 26
+  percent: 99
 ---
 
 # Project State
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 80 of 80 (Advanced Features — plan 04 of 6 done)
-Status: 80-04 complete — SCHED-01 delivered: meeting-prep-daily BullMQ worker + GET /api/daily-prep/briefs route + generate route DB persistence + localStorage removed from /daily-prep page; 7 tests GREEN
-Last activity: 2026-04-28 — Phase 80 plan 04 complete (SCHED-01: auto-prep BullMQ worker + DB-backed brief persistence + localStorage removal)
+Phase: 80 of 80 (Advanced Features — plan 05 of 6 done)
+Status: 80-05 complete — OUT-01 delivered: @media print CSS + per-card Export button + Export All button on /daily-prep page; 5 pdf-export tests GREEN
+Last activity: 2026-04-28 — Phase 80 plan 05 complete (OUT-01: PDF export via window.print() + @media print CSS)
 
-Progress: [██████████] 98%
+Progress: [██████████] 99%
 
 ## v10.0 Roadmap Summary
 
@@ -101,13 +101,16 @@ Progress: [██████████] 98%
 - [80-04] Non-streaming messages.create in BullMQ worker — no SSE needed; simpler and more reliable in long-running process context
 - [80-04] DB persistence in generate route wrapped in try/catch — stream delivery is highest priority; DB failure is non-fatal and logged
 - [80-04] localStorage removed from /daily-prep page — DB is now the source of truth for brief persistence
+- [80-05] Per-card Export uses CSS class injection (print-single + print-target) rather than React state — avoids re-render lag before print dialog opens
+- [80-05] Export All uses .printing-all CSS class to force brief section visibility — no React state expansion needed before window.print()
+- [80-05] afterprint cleanup uses { once: true } listener — removes body classes after print dialog closes without manual removeEventListener
 
 ### Blockers/Concerns
 
-- OUT-01 (PDF export) — using native window.print() + @media print CSS (no jsPDF/puppeteer needed)
+None
 
 ## Session Continuity
 
-Last session: 2026-04-28T18:13:20.244Z
-Stopped at: Completed 80-03-PLAN.md (AVAIL-01: stakeholder availability indicators, freebusy proxy route, OAuth scope upgrade)
+Last session: 2026-04-28T18:19:13.924Z
+Stopped at: Completed 80-05-PLAN.md (OUT-01: PDF export via window.print() + @media print CSS)
 Resume file: None
