@@ -12,8 +12,6 @@ import { requireSession } from '@/lib/auth-server';
 import { buildMeetingPrepContext } from '@/lib/meeting-prep-context';
 import { resolveSkillsDir } from '@/lib/skill-path';
 import { readSettings } from '@/lib/settings';
-import db from '@/db';
-import { dailyPrepBriefs } from '@/db/schema';
 
 // Strip YAML front-matter (--- ... ---) from skill file
 function stripFrontMatter(content: string): string {
@@ -76,6 +74,8 @@ export async function POST(request: NextRequest): Promise<Response> {
           // Persist brief to DB — failure must NOT break streaming
           if (finalText) {
             try {
+              const db = (await import('@/db')).default;
+              const { dailyPrepBriefs } = await import('@/db/schema');
               await db.insert(dailyPrepBriefs)
                 .values({
                   user_id: userId,

@@ -177,10 +177,13 @@ describe('PREP-06: inline brief rendering, Copy button, LocalStorage', () => {
     expect(source).toContain('onToggleExpand');
   });
 
-  it('PREP-06 Test 8: page persists briefs to LocalStorage keyed by selectedDate', () => {
+  it('PREP-06 Test 8: page loads persisted briefs from DB (localStorage replaced by SCHED-01)', () => {
     const source = readFileSync(pagePath, 'utf-8');
-    expect(source).toContain('daily-prep-briefs:${selectedDate}');
-    expect(source).toContain('localStorage.setItem');
+    // SCHED-01 replaced localStorage with DB-backed persistence; page must NOT have the old key
+    expect(source).not.toContain('daily-prep-briefs:');
+    expect(source).not.toContain('localStorage.setItem');
+    // Page must fetch briefs from the DB-backed briefs route
+    expect(source).toContain('/api/daily-prep/briefs');
   });
 
   it('PREP-06 Test 9: page sets expanded to true after brief generation completes', () => {
