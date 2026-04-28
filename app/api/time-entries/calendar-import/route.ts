@@ -68,6 +68,7 @@ export interface CalendarEventItem {
   matched_project_name: string | null;
   match_confidence: 'high' | 'low' | 'none';
   attendee_names: string[];           // displayName ?? email for each attendee
+  attendee_emails: string[];          // lowercase email for each attendee (for freebusy cross-reference)
   recurrence_flag: boolean;           // !!e.recurringEventId
   recurring_event_id: string | null;  // e.recurringEventId ?? null
   start_datetime: string;             // e.start.dateTime (raw RFC3339 — e.g. "2026-04-28T09:00:00+02:00")
@@ -201,6 +202,9 @@ export async function GET(request: NextRequest): Promise<Response> {
         match_confidence,
         attendee_names: (e.attendees ?? [])
           .map((a) => a.displayName ?? a.email ?? '')
+          .filter(Boolean),
+        attendee_emails: (e.attendees ?? [])
+          .map((a) => (a.email ?? '').toLowerCase())
           .filter(Boolean),
         recurrence_flag: !!e.recurringEventId,
         recurring_event_id: e.recurringEventId ?? null,

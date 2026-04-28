@@ -33,7 +33,10 @@ export async function GET(request: NextRequest): Promise<Response> {
 
   const authUrl = oauth2Client.generateAuthUrl({
     access_type: 'offline',
-    scope: ['https://www.googleapis.com/auth/calendar.events.readonly'],
+    scope: [
+      'https://www.googleapis.com/auth/calendar.events.readonly',
+      'https://www.googleapis.com/auth/calendar.freebusy',
+    ],
     prompt: 'consent', // REQUIRED: ensures refresh_token is always returned
     state,
   });
