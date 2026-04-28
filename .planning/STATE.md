@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: in-progress
-stopped_at: "80-00-PLAN.md complete — Wave 0 test scaffolds done"
-last_updated: "2026-04-28T18:02:00Z"
-last_activity: 2026-04-28 — Phase 80 plan 00 complete (Wave 0 RED test stubs for RECUR-01, OUT-01, AVAIL-01, SCHED-01)
+stopped_at: Completed 80-01-PLAN.md (DB migration 0045 + CalendarEventItem extension)
+last_updated: "2026-04-28T18:10:00.000Z"
+last_activity: 2026-04-28 — Phase 80 plan 01 complete (daily_prep_briefs + meeting_prep_templates tables + CalendarEventItem extended)
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 27
-  completed_plans: 21
+  completed_plans: 23
   percent: 97
 ---
 
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 80 of 80 (Advanced Features — plan 00 of 6 done)
-Status: 80-00 complete — Wave 0 test scaffolds created; 4 stub test files with 26/29 RED tests for RECUR-01, OUT-01, AVAIL-01, SCHED-01
-Last activity: 2026-04-28 — Phase 80 plan 00 complete (Wave 0 RED test stubs committed and pushed)
+Phase: 80 of 80 (Advanced Features — plan 01 of 6 done)
+Status: 80-01 complete — DB migration 0045 applied; daily_prep_briefs + meeting_prep_templates tables created; CalendarEventItem extended with recurring_event_id, start_datetime, end_datetime; 6 schema/interface tests GREEN
+Last activity: 2026-04-28 — Phase 80 plan 01 complete (DB migration 0045 + CalendarEventItem extension — Wave 1 foundation done)
 
 Progress: [██████████] 99%
 
@@ -87,6 +87,8 @@ Progress: [██████████] 99%
 - [80-00] pdf-export Test 5 checks data-print-visible specifically — data-testid='brief-section' already exists; test must be RED for Wave 0
 - [80-00] SCHED-01 Test 7 uses not.toContain('daily-prep-briefs:') — RED now (localStorage code exists); GREEN after SCHED-01 removes it
 - [80-00] 3 of 29 stubs pass on pre-existing artifacts (meeting_prep_templates, daily_prep_briefs, 0045 migration) — acceptable; key gating tests are RED
+- [80-01] Migration 0045 applied via direct postgres execution — run-migrations.ts has pre-existing bug filtering SQL statements that start with a comment; migration file itself is correct for Docker
+- [80-01] CalendarEventItem extended additively with recurring_event_id, start_datetime, end_datetime — safe defaults (null / '') prevent consumer breakage
 
 ### Blockers/Concerns
 
@@ -95,6 +97,6 @@ Progress: [██████████] 99%
 
 ## Session Continuity
 
-Last session: 2026-04-28T18:02:00Z
-Stopped at: Completed 80-00-PLAN.md (Wave 0 test scaffolds)
-Resume file: .planning/phases/80-advanced-features/80-01-PLAN.md
+Last session: 2026-04-28T18:10:00Z
+Stopped at: Completed 80-01-PLAN.md (DB migration 0045 + CalendarEventItem extension)
+Resume file: .planning/phases/80-advanced-features/80-02-PLAN.md
