@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
-status: verifying
-stopped_at: Phase 80 context gathered
-last_updated: "2026-04-28T17:16:25.925Z"
-last_activity: 2026-04-28 — Phase 79 complete (all 13 requirements browser-verified)
+status: in-progress
+stopped_at: "80-00-PLAN.md complete — Wave 0 test scaffolds done"
+last_updated: "2026-04-28T18:02:00Z"
+last_activity: 2026-04-28 — Phase 80 plan 00 complete (Wave 0 RED test stubs for RECUR-01, OUT-01, AVAIL-01, SCHED-01)
 progress:
   total_phases: 7
   completed_phases: 5
-  total_plans: 20
-  completed_plans: 20
-  percent: 99
+  total_plans: 27
+  completed_plans: 21
+  percent: 97
 ---
 
 # Project State
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 79 of 80 (Core Calendar + Daily Prep — COMPLETE, all 6 plans done)
-Status: 79-05 complete — Phase 79 human verification gate passed; all 22 browser checks approved; all 13 requirements verified (CAL-01/02/03, PREP-01–07, SKILL-01/02, NAV-01)
-Last activity: 2026-04-28 — Phase 79 complete (all 13 requirements browser-verified)
+Phase: 80 of 80 (Advanced Features — plan 00 of 6 done)
+Status: 80-00 complete — Wave 0 test scaffolds created; 4 stub test files with 26/29 RED tests for RECUR-01, OUT-01, AVAIL-01, SCHED-01
+Last activity: 2026-04-28 — Phase 80 plan 00 complete (Wave 0 RED test stubs committed and pushed)
 
 Progress: [██████████] 99%
 
@@ -84,14 +84,17 @@ Progress: [██████████] 99%
 - [79-04] No BullMQ, no skill_runs row for daily-prep generation — direct lightweight Claude call
 - [79-04] resolveSkillsDir requires settings.skill_path param (not zero-arg) — readSettings() called inside handler for Docker compatibility
 - [79-04] forEach parallel fire-and-forget pattern for multi-card parallel generation
+- [80-00] pdf-export Test 5 checks data-print-visible specifically — data-testid='brief-section' already exists; test must be RED for Wave 0
+- [80-00] SCHED-01 Test 7 uses not.toContain('daily-prep-briefs:') — RED now (localStorage code exists); GREEN after SCHED-01 removes it
+- [80-00] 3 of 29 stubs pass on pre-existing artifacts (meeting_prep_templates, daily_prep_briefs, 0045 migration) — acceptable; key gating tests are RED
 
 ### Blockers/Concerns
 
-- Phase 82 AVAIL-01 (team availability) requires Google Calendar free/busy API call — verify API scope covers this before implementing (calendar OAuth scope may need extension)
-- Phase 82 OUT-01 (PDF export) — no existing PDF library in stack; confirm jsPDF or puppeteer approach before Phase 82 planning
+- AVAIL-01 (team availability) requires Google Calendar free/busy API call — OAuth scope must be extended to include calendar.freebusy
+- OUT-01 (PDF export) — using native window.print() + @media print CSS (no jsPDF/puppeteer needed)
 
 ## Session Continuity
 
-Last session: 2026-04-28T17:16:25.918Z
-Stopped at: Phase 80 context gathered
-Resume file: .planning/phases/80-advanced-features/80-CONTEXT.md
+Last session: 2026-04-28T18:02:00Z
+Stopped at: Completed 80-00-PLAN.md (Wave 0 test scaffolds)
+Resume file: .planning/phases/80-advanced-features/80-01-PLAN.md

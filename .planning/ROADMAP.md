@@ -319,7 +319,7 @@ Plans:
 | 77. Intelligence & Gantt | 3/3 | Complete    | 2026-04-23 |
 | 78. AI & Content | 2/2 | Complete    | 2026-04-23 |
 | 79. Core Calendar + Daily Prep | 6/6 | Complete    | 2026-04-28 |
-| 80. Advanced Features | 0/TBD | Not started | - |
+| 80. Advanced Features | 1/7 | In Progress|  |
 | 81. Kata Design System Visual Overhaul | 0/6 | Not started | - |
 
 ---
