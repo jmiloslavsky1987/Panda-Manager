@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const rows = await db
-      .select({ id: stakeholders.id, name: stakeholders.name, role: stakeholders.role })
+      .select({ id: stakeholders.id, name: stakeholders.name, role: stakeholders.role, email: stakeholders.email })
       .from(stakeholders)
       .where(eq(stakeholders.project_id, projectId))
 
