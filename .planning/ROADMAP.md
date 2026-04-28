@@ -285,7 +285,7 @@ Plans:
 | 76. Pickers & Risk Fields | 4/4 | Complete    | 2026-04-23 |
 | 77. Intelligence & Gantt | 3/3 | Complete    | 2026-04-23 |
 | 78. AI & Content | 2/2 | Complete    | 2026-04-23 |
-| 79. Core Calendar + Daily Prep | 6/6 | Complete   | 2026-04-28 |
+| 79. Core Calendar + Daily Prep | 6/6 | Complete    | 2026-04-28 |
 | 80. Advanced Features | 0/TBD | Not started | - |
 
 ---
