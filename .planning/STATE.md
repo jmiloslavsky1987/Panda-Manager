@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: completed
-stopped_at: "Completed 80-04-PLAN.md (SCHED-01: auto-prep BullMQ worker + DB-backed brief persistence + localStorage removal)"
-last_updated: "2026-04-28T18:12:18.836Z"
+stopped_at: "Completed 80-03-PLAN.md (AVAIL-01: stakeholder availability indicators, freebusy proxy route, OAuth scope upgrade)"
+last_updated: "2026-04-28T18:13:20.248Z"
 last_activity: "2026-04-28 — Phase 80 plan 04 complete (SCHED-01: auto-prep BullMQ worker + DB-backed brief persistence + localStorage removal)"
 progress:
   total_phases: 7
@@ -104,11 +104,10 @@ Progress: [██████████] 98%
 
 ### Blockers/Concerns
 
-- AVAIL-01 (team availability) requires Google Calendar free/busy API call — OAuth scope must be extended to include calendar.freebusy
 - OUT-01 (PDF export) — using native window.print() + @media print CSS (no jsPDF/puppeteer needed)
 
 ## Session Continuity
 
-Last session: 2026-04-28T18:12:03.598Z
-Stopped at: Completed 80-04-PLAN.md (SCHED-01: auto-prep BullMQ worker + DB-backed brief persistence + localStorage removal)
+Last session: 2026-04-28T18:13:20.244Z
+Stopped at: Completed 80-03-PLAN.md (AVAIL-01: stakeholder availability indicators, freebusy proxy route, OAuth scope upgrade)
 Resume file: None
