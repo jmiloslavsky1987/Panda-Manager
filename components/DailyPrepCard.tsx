@@ -54,6 +54,7 @@ export function DailyPrepCard({
 }: DailyPrepCardProps) {
   const { event } = card;
   const [copied, setCopied] = useState(false);
+  const [templateExpanded, setTemplateExpanded] = useState(false);
 
   // Attendee display: up to 3 names, "+N more" overflow
   const displayAttendees = event.attendee_names.slice(0, 3);
@@ -107,8 +108,8 @@ export function DailyPrepCard({
 
             {/* Recurring badge */}
             {event.recurrence_flag && (
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-zinc-100 text-zinc-600">
-                Recurring
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-violet-100 text-violet-700">
+                ↻ Recurring
               </span>
             )}
           </div>
@@ -186,9 +187,9 @@ export function DailyPrepCard({
       {/* Template controls for recurring events (idle/collapsed state) */}
       {event.recurring_event_id !== null && card.hasTemplate && card.briefStatus === 'idle' && (
         <div className="mt-3 border-t border-zinc-100 pt-3" data-testid="brief-section">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-zinc-100 text-zinc-600">
-              Template saved
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-violet-100 text-violet-700">
+              ✦ Template saved
             </span>
             <button
               onClick={() => onLoadTemplate?.(event.event_id)}
@@ -197,7 +198,18 @@ export function DailyPrepCard({
             >
               Load template
             </button>
+            <button
+              onClick={() => setTemplateExpanded((v) => !v)}
+              className="text-xs text-zinc-400 hover:text-zinc-600 underline"
+            >
+              {templateExpanded ? 'Hide template' : 'Preview template'}
+            </button>
           </div>
+          {templateExpanded && card.templateContent && (
+            <div className="mt-2 p-3 rounded bg-violet-50 border border-violet-100 text-sm text-zinc-700 prose prose-zinc prose-sm max-w-none">
+              <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{card.templateContent}</ReactMarkdown>
+            </div>
+          )}
         </div>
       )}
 
@@ -215,8 +227,8 @@ export function DailyPrepCard({
               {/* Template saved badge (recurring events with saved template) */}
               {event.recurring_event_id !== null && card.hasTemplate && (
                 <div className="mb-2">
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-zinc-100 text-zinc-600">
-                    Template saved
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-violet-100 text-violet-700">
+                    ✦ Template saved
                   </span>
                 </div>
               )}
