@@ -119,3 +119,13 @@ None - no external service configuration required.
 ---
 *Phase: 80-advanced-features*
 *Completed: 2026-04-28*
+
+## Self-Check: PASSED
+
+- FOUND: lib/__tests__/recur-template.test.ts
+- FOUND: lib/__tests__/pdf-export.test.ts
+- FOUND: lib/__tests__/availability.test.ts
+- FOUND: lib/__tests__/meeting-prep-daily.test.ts
+- FOUND: .planning/phases/80-advanced-features/80-00-SUMMARY.md
+- FOUND commit: e67557e3 (Task 1)
+- FOUND commit: d020c9a2 (Task 2)
