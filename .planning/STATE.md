@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: completed
-stopped_at: Completed 80-02-PLAN.md (RECUR-01 recurring template save/load)
-last_updated: "2026-04-28T18:08:00.000Z"
-last_activity: 2026-04-28 — Phase 80 plan 02 complete (RECUR-01: /api/daily-prep/templates route + DailyPrepCard template UX + page batch fetch)
+stopped_at: "Completed 80-04-PLAN.md (SCHED-01: auto-prep BullMQ worker + DB-backed brief persistence + localStorage removal)"
+last_updated: "2026-04-28T18:12:18.836Z"
+last_activity: "2026-04-28 — Phase 80 plan 04 complete (SCHED-01: auto-prep BullMQ worker + DB-backed brief persistence + localStorage removal)"
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 27
-  completed_plans: 23
-  percent: 99
+  completed_plans: 25
+  percent: 98
 ---
 
 # Project State
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 80 of 80 (Advanced Features — plan 02 of 6 done)
-Status: 80-02 complete — RECUR-01 delivered: /api/daily-prep/templates route (GET/POST/DELETE) + EventCardState template fields + DailyPrepCard template badge/save/load UX + page batch fetch on load; 10 tests GREEN
-Last activity: 2026-04-28 — Phase 80 plan 02 complete (RECUR-01 recurring meeting template save/load)
+Phase: 80 of 80 (Advanced Features — plan 04 of 6 done)
+Status: 80-04 complete — SCHED-01 delivered: meeting-prep-daily BullMQ worker + GET /api/daily-prep/briefs route + generate route DB persistence + localStorage removed from /daily-prep page; 7 tests GREEN
+Last activity: 2026-04-28 — Phase 80 plan 04 complete (SCHED-01: auto-prep BullMQ worker + DB-backed brief persistence + localStorage removal)
 
 Progress: [██████████] 98%
 
@@ -92,6 +92,15 @@ Progress: [██████████] 98%
 - [80-02] Template save/load is additive code path — existing brief generation unchanged; templates are a separate state + API path
 - [80-02] loadEvents() converted from .then() chain to async inner function — enables await for template batch fetch on page load
 - [80-02] availability: {} initializer added to card mapper (AVAIL-01 linter pre-added field to EventCardState)
+- [80-03] freebusy route uses lazy dynamic imports inside handler body (import('@/db').default) — Docker build compatibility
+- [80-03] attendee_emails added to CalendarEventItem — page cross-references with project stakeholder emails client-side without extra server round-trips
+- [80-03] Stakeholders GET now returns email field — additive change enabling availability chips
+- [80-03] Freebusy useEffect keyed on [cards.length, selectedDate] — fires once after events load, no infinite loop on availability state updates
+- [80-03] Availability chips only shown when matchedStakeholders non-empty AND availability map non-empty — prevents flash before fetch resolves
+- [80-04] meeting-prep-daily worker uses user_id=default (no session) — matches calendar OAuth token storage pattern for the default user
+- [80-04] Non-streaming messages.create in BullMQ worker — no SSE needed; simpler and more reliable in long-running process context
+- [80-04] DB persistence in generate route wrapped in try/catch — stream delivery is highest priority; DB failure is non-fatal and logged
+- [80-04] localStorage removed from /daily-prep page — DB is now the source of truth for brief persistence
 
 ### Blockers/Concerns
 
@@ -100,6 +109,6 @@ Progress: [██████████] 98%
 
 ## Session Continuity
 
-Last session: 2026-04-28T18:08:00Z
-Stopped at: Completed 80-02-PLAN.md (RECUR-01 recurring template save/load)
-Resume file: .planning/phases/80-advanced-features/80-03-PLAN.md
+Last session: 2026-04-28T18:12:03.598Z
+Stopped at: Completed 80-04-PLAN.md (SCHED-01: auto-prep BullMQ worker + DB-backed brief persistence + localStorage removal)
+Resume file: None
