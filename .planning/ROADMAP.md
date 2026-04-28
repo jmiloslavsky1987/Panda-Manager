@@ -171,7 +171,7 @@ Full details: `.planning/milestones/v9.0-ROADMAP.md` (archived)
 
 ### v10.0 — Calendar Integration & Daily Prep (In Progress)
 
-- [ ] **Phase 79: Core Calendar + Daily Prep** — Wire CalendarImportModal into GlobalTimeView; full /daily-prep page with event cards, project matching, multi-select + Meeting Prep generation, inline output, skill enhancements, sidebar nav
+- [x] **Phase 79: Core Calendar + Daily Prep** — Wire CalendarImportModal into GlobalTimeView; full /daily-prep page with event cards, project matching, multi-select + Meeting Prep generation, inline output, skill enhancements, sidebar nav (completed 2026-04-28)
 - [ ] **Phase 80: Advanced Features** — Recurring meeting templates, PDF export, team availability view, auto-scheduling prep job
 
 ## Phase Details
@@ -285,7 +285,7 @@ Plans:
 | 76. Pickers & Risk Fields | 4/4 | Complete    | 2026-04-23 |
 | 77. Intelligence & Gantt | 3/3 | Complete    | 2026-04-23 |
 | 78. AI & Content | 2/2 | Complete    | 2026-04-23 |
-| 79. Core Calendar + Daily Prep | 5/6 | In Progress|  |
+| 79. Core Calendar + Daily Prep | 6/6 | Complete   | 2026-04-28 |
 | 80. Advanced Features | 0/TBD | Not started | - |
 
 ---
