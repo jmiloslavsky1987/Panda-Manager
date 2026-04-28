@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function WbsPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth.api.getSession({ headers: await headers() })
-  if (!session) redirect('/sign-in')
+  if (!session) redirect('/login')
 
   const { id } = await params
   const projectId = parseInt(id, 10)
