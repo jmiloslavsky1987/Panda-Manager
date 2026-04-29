@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: completed
-stopped_at: Completed 82-01-PLAN.md
-last_updated: "2026-04-29T18:54:57.584Z"
-last_activity: 2026-04-29 — Phase 82 plan 00 complete (Wave 0 test scaffolds + arch-nodes POST/PATCH gap fixes)
+stopped_at: Completed 82-02-PLAN.md
+last_updated: "2026-04-29T19:02:57.577Z"
+last_activity: 2026-04-29 — Phase 82 plan 02 complete (teams and architecture write tool factories)
 progress:
   total_phases: 8
   completed_phases: 7
   total_plans: 40
-  completed_plans: 36
+  completed_plans: 37
   percent: 98
 ---
 
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 82 of 82 (Chat Write Operations — plan 01 of 6 done)
-Status: 82-01 complete — 15 write tool factories across 5 entities (actions, milestones, risks, stakeholders, tasks) with needsApproval: true; allWriteTools(projectId) aggregator in tools/index.ts; chat-tools.test.ts 4/4 GREEN; build clean.
-Last activity: 2026-04-29 — Phase 82 plan 01 complete (write tool factories for 5 project entities)
+Phase: 82 of 82 (Chat Write Operations — plan 02 of 6 done)
+Status: 82-02 complete — 22 write tool factories (16 teams + 6 arch) across teams tab and architecture tab entities; createArchNodeTool resolves track_name→track_id server-side; chat-tools.test.ts 16/16 GREEN; build clean.
+Last activity: 2026-04-29 — Phase 82 plan 02 complete (teams and architecture write tool factories)
 
 Progress: [██████████] 98%
 
@@ -137,6 +137,9 @@ Progress: [██████████] 98%
 - [82-01] actionStatusEnum in DB is 'open|in_progress|completed|cancelled' (plan specified 'closed|overdue') — corrected in actions-tools.ts; always verify enum values against db/schema.ts
 - [82-01] Tool factory pattern: (projectId: number) => tool({ needsApproval: true, execute: async () => { dynamic import('@/db'); ownership check; DB call } }) — established for all 15 write tools
 - [82-01] Stakeholders table has no external_id column; tasks table has no external_id and status is plain text — do not add external_id to insert for these entities
+- [82-02] deliveryStatusEnum is 'planned|in_progress|live|blocked' — plan spec listed 'completed' but DB enum uses 'live'; always verify enum values against db/schema.ts before writing tool zod schemas
+- [82-02] createArchNodeTool accepts track_name string; execute() resolves via AND(eq(archTracks.project_id, projectId), eq(archTracks.name, input.track_name)) — Claude never needs numeric track IDs
+- [82-02] workflowSteps table has no project_id — ownership verified via two-query chain: step.workflow_id → e2eWorkflows.project_id
 
 ### Blockers/Concerns
 
@@ -144,6 +147,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-29T18:54:57.581Z
-Stopped at: Completed 82-01-PLAN.md
+Last session: 2026-04-29T19:02:57.575Z
+Stopped at: Completed 82-02-PLAN.md
 Resume file: None
