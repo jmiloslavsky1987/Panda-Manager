@@ -121,16 +121,21 @@ function Arrow() {
 function ConsoleNode({ track }: { track: string }) {
   const isADR = track.includes('ADR')
   const isAI = track.includes('AI') || track.includes('Biggy')
-  const icon = isADR ? '🐼' : isAI ? '🦉' : '💻'
   const label = isADR ? 'BigPanda Console' : isAI ? 'Biggy AI Console' : 'Console'
   const bgColor = isADR ? 'bg-zinc-900' : isAI ? 'bg-amber-500' : 'bg-zinc-700'
 
   return (
     <div className="flex flex-col items-center justify-start pt-2">
       <div
-        className={`w-[72px] h-[72px] rounded-full flex items-center justify-center shadow-md ${bgColor}`}
+        className={`w-[72px] h-[72px] rounded-full flex items-center justify-center shadow-md overflow-hidden ${bgColor}`}
       >
-        <span className="text-3xl select-none">{icon}</span>
+        {/* BigPanda logo — white version via CSS invert on dark bg */}
+        <img
+          src="/bigpanda-logo.svg"
+          alt="BigPanda"
+          className="w-10 h-10 object-contain"
+          style={{ filter: 'brightness(0) invert(1)' }}
+        />
       </div>
       <div className="text-xs text-zinc-600 mt-2 font-medium text-center leading-tight">
         {label}
