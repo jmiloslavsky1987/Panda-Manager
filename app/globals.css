@@ -48,6 +48,62 @@
 
 body {
   font-family: var(--font-sans, system-ui);
+  background-color: var(--kata-surface-canvas);
+  color: var(--kata-on-canvas);
+}
+
+/* Dark mode overrides for components using hardcoded light colors */
+.dark {
+  color-scheme: dark;
+}
+
+.dark .bg-white {
+  background-color: var(--kata-surface-container) !important;
+}
+
+.dark .bg-zinc-50 {
+  background-color: var(--kata-gray-900) !important;
+}
+
+.dark .bg-zinc-100 {
+  background-color: var(--kata-gray-800) !important;
+}
+
+.dark .border-zinc-200,
+.dark .divide-zinc-100 {
+  border-color: var(--kata-gray-700) !important;
+}
+
+.dark .text-zinc-900 {
+  color: var(--kata-gray-50) !important;
+}
+
+.dark .text-zinc-700 {
+  color: var(--kata-gray-200) !important;
+}
+
+.dark .text-zinc-600 {
+  color: var(--kata-gray-300) !important;
+}
+
+.dark .text-zinc-500 {
+  color: var(--kata-gray-400) !important;
+}
+
+.dark input,
+.dark textarea,
+.dark select {
+  background-color: var(--kata-surface-field);
+  color: var(--kata-on-canvas);
+  border-color: var(--kata-gray-700);
+}
+
+.dark table thead tr {
+  background-color: var(--kata-gray-900);
+}
+
+.dark table tbody tr {
+  border-color: var(--kata-gray-700);
 }
 
 @media print {

@@ -16,7 +16,6 @@
 
 import { usePathname } from 'next/navigation';
 import { usePageBar } from './PageBarContext';
-import { Icon } from './Icon';
 import { useState, useEffect } from 'react';
 
 function toggleTheme() {
@@ -76,7 +75,7 @@ export function PageBar() {
         {ctaSlot}
         <button
           onClick={handleToggle}
-          className="flex items-center justify-center rounded transition-colors"
+          className="flex items-center justify-center rounded text-sm transition-colors hover:opacity-70"
           style={{
             width: 28,
             height: 28,
@@ -86,10 +85,7 @@ export function PageBar() {
           title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
           aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
         >
-          <Icon
-            name={isDark ? 'light_mode' : 'dark_mode'}
-            size={18}
-          />
+          {isDark ? '☀' : '☾'}
         </button>
       </div>
     </div>

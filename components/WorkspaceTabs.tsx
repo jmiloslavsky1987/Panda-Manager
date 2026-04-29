@@ -100,7 +100,7 @@ export function WorkspaceTabs({ projectId }: WorkspaceTabsProps) {
 
   return (
     <>
-      <nav className="sticky top-0 bg-white z-10 border-b border-zinc-200 overflow-x-auto">
+      <nav className="sticky top-0 bg-white dark:bg-zinc-900 z-10 border-b border-zinc-200 dark:border-zinc-700 overflow-x-auto">
         <div className="flex flex-row px-6">
           {TAB_GROUPS.map((group) => {
             const isActive = activeGroup?.id === group.id
@@ -121,8 +121,8 @@ export function WorkspaceTabs({ projectId }: WorkspaceTabsProps) {
                 href={href}
                 className={
                   isActive
-                    ? 'text-zinc-900 border-b-2 border-zinc-900 px-4 py-2 font-medium whitespace-nowrap flex items-center gap-1'
-                    : 'text-zinc-500 hover:text-zinc-900 border-b-2 border-transparent px-4 py-2 whitespace-nowrap flex items-center gap-1'
+                    ? 'text-zinc-900 dark:text-zinc-100 border-b-2 border-zinc-900 dark:border-zinc-100 px-4 py-2 font-medium whitespace-nowrap flex items-center gap-1'
+                    : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 border-b-2 border-transparent px-4 py-2 whitespace-nowrap flex items-center gap-1'
                 }
               >
                 {group.label}

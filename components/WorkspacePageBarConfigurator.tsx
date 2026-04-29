@@ -17,7 +17,7 @@
  *   ctaSlot  — optional ReactNode rendered to the right of the health badge
  */
 
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { usePageBar } from './PageBarContext'
 import { Badge } from './ui/badge'
 
@@ -43,6 +43,22 @@ export function WorkspacePageBarConfigurator({
   ctaSlot?: ReactNode
 }) {
   const { setTitle, setCtaSlot } = usePageBar()
+  const [isDark, setIsDark] = useState(false)
+
+  useEffect(() => {
+    setIsDark(document.documentElement.classList.contains('dark'))
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'))
+    })
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    return () => observer.disconnect()
+  }, [])
+
+  function handleToggle() {
+    const next = document.documentElement.classList.toggle('dark')
+    localStorage.setItem('kata-theme', next ? 'dark' : 'light')
+    setIsDark(next)
+  }
 
   // Inject into PageBarContext (consumed by any context-aware consumer)
   useEffect(() => {
@@ -83,12 +99,19 @@ export function WorkspacePageBarConfigurator({
         <Badge className={RAG_CLASSES[health]}>{RAG_LABELS[health]}</Badge>
       </div>
 
-      {/* Right: ctaSlot */}
-      {ctaSlot && (
-        <div className="flex items-center gap-2">
-          {ctaSlot}
-        </div>
-      )}
+      {/* Right: ctaSlot + theme toggle */}
+      <div className="flex items-center gap-2">
+        {ctaSlot}
+        <button
+          onClick={handleToggle}
+          className="flex items-center justify-center rounded text-sm transition-colors hover:opacity-70"
+          style={{ width: 28, height: 28, color: 'var(--kata-on-canvas)', background: 'transparent' }}
+          title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+          aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {isDark ? '☀' : '☾'}
+        </button>
+      </div>
     </div>
   )
 }

@@ -44,7 +44,7 @@ export async function Sidebar() {
         </div>
       </div>
 
-      {/* Top nav: Portfolio / Today / Daily Prep */}
+      {/* Top nav: Portfolio / Daily Prep */}
       <nav className="px-2 space-y-0.5">
         <Link
           href="/"
@@ -52,13 +52,6 @@ export async function Sidebar() {
         >
           <Icon name="grid_view" size={16} />
           Portfolio
-        </Link>
-        <Link
-          href="/time-tracking"
-          className="flex items-center gap-2 px-2 py-1.5 rounded text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
-        >
-          <Icon name="today" size={16} />
-          Today
         </Link>
         <Link
           href="/daily-prep"
