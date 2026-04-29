@@ -1,6 +1,7 @@
 import { Suspense } from 'react'
 import { getProjectWithHealth } from '../../../lib/queries'
-import { ProjectHeader } from '../../../components/ProjectHeader'
+import { WorkspaceKpiStrip } from '../../../components/WorkspaceKpiStrip'
+import { WorkspacePageBarConfigurator } from '../../../components/WorkspacePageBarConfigurator'
 import { WorkspaceTabs } from '../../../components/WorkspaceTabs'
 import { AddNotesModal } from '../../../components/AddNotesModal'
 import WorkspaceSearchBar from '../../../components/WorkspaceSearchBar'
@@ -52,19 +53,29 @@ export default async function WorkspaceLayout({
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="px-6 pt-6 pb-2 border-b border-zinc-200 bg-white flex items-center justify-between">
-        <div>
-          {project ? (
-            <ProjectHeader project={project} />
-          ) : (
-            <div className="flex items-center gap-3">
-              <h1 className="font-semibold text-xl text-zinc-400">Loading project…</h1>
-            </div>
-          )}
+    <div className="flex flex-col h-full" style={{ background: 'var(--kata-surface-canvas)' }}>
+      {project ? (
+        <WorkspacePageBarConfigurator
+          title={project.customer}
+          health={project.health}
+          ctaSlot={<WorkspaceSearchBar projectId={project.id} />}
+        />
+      ) : (
+        <div
+          className="flex items-center px-4 border-b"
+          style={{
+            height: 44,
+            background: 'var(--kata-surface-container)',
+            borderColor: 'var(--kata-stroke-subtle)',
+            flexShrink: 0,
+          }}
+        >
+          <span className="text-sm font-medium" style={{ color: 'var(--kata-on-container-tertiary)' }}>
+            Loading project…
+          </span>
         </div>
-        {project && <WorkspaceSearchBar projectId={project.id} />}
-      </div>
+      )}
+      {project && <WorkspaceKpiStrip project={project} />}
       {project?.status === 'archived' && (
         <Suspense fallback={null}>
           <ArchivedBanner projectId={projectId} isAdmin={isProjectAdmin} />

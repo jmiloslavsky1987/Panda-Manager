@@ -20,12 +20,14 @@ interface ProjectHeaderProps {
 export function ProjectHeader({ project }: ProjectHeaderProps) {
   return (
     <div className="flex items-center gap-3">
-      <h1 className="font-semibold text-xl text-zinc-900">{project.customer}</h1>
+      <h1 className="font-semibold text-xl" style={{ color: 'var(--kata-on-container)' }}>
+        {project.customer}
+      </h1>
       <Badge className={RAG_CLASSES[project.health]}>
         {RAG_LABELS[project.health]}
       </Badge>
       {project.go_live_target && (
-        <span className="text-sm text-zinc-500">
+        <span className="text-sm" style={{ color: 'var(--kata-on-container-tertiary)' }}>
           Go-live: {project.go_live_target}
         </span>
       )}
