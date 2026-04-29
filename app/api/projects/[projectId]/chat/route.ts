@@ -4,7 +4,7 @@
 
 import { requireProjectRole } from "@/lib/auth-server";
 import { buildChatContext } from "@/lib/chat-context-builder";
-import { streamText, convertToModelMessages } from 'ai';
+import { streamText, convertToModelMessages, stepCountIs } from 'ai';
 import { anthropic } from '@ai-sdk/anthropic';
 import type { UIMessage } from 'ai';
 import { NextRequest } from "next/server";
@@ -85,7 +85,7 @@ Current workspace tab: ${activeTab}`;
     messages: await convertToModelMessages(body.messages),
     temperature: 0.3, // Lower temperature reduces hallucination risk
     tools: allWriteTools(numericId),
-    maxSteps: 3,
+    stopWhen: stepCountIs(3),
   });
 
   // Return UI message stream response (compatible with useChat hook)

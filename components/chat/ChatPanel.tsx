@@ -1,9 +1,11 @@
 'use client'
 
 import { useChat } from '@ai-sdk/react'
-import { DefaultChatTransport } from 'ai'
+import { DefaultChatTransport, isToolUIPart } from 'ai'
 import { useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { ChatMessage } from './ChatMessage'
+import { MutationConfirmCard, MutationConfirmCardComplete } from './MutationConfirmCard'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 
@@ -21,12 +23,16 @@ const STARTER_QUESTIONS = [
 
 export function ChatPanel({ projectId, initialContext }: ChatPanelProps) {
   const [input, setInput] = useState('')
+  const searchParams = useSearchParams()
+  // Read active workspace tab from URL — WorkspaceTabs sets ?tab= in the URL
+  // Also support legacy ?activeTab= for direct navigation
+  const activeTab = searchParams.get('activeTab') ?? searchParams.get('tab') ?? 'unknown'
 
-  const { messages, sendMessage, status, error, setMessages } = useChat({
+  const { messages, sendMessage, status, error, setMessages, addToolApprovalResponse } = useChat({
     transport: new DefaultChatTransport({
       api: `/api/projects/${projectId}/chat`,
       headers: { 'Content-Type': 'application/json' },
-      body: { context: initialContext },
+      body: { context: initialContext, activeTab },
     }),
   })
 
@@ -90,9 +96,61 @@ export function ChatPanel({ projectId, initialContext }: ChatPanelProps) {
           <>
             {messages
               .filter((m) => m.role === 'user' || m.role === 'assistant')
-              .map((message) => (
-                <ChatMessage key={message.id} message={message as any} />
-              ))}
+              .map((message) => {
+                // Check if message has any tool parts
+                const hasParts = Array.isArray((message as any).parts) && (message as any).parts.length > 0
+                if (!hasParts) {
+                  return <ChatMessage key={message.id} message={message as any} />
+                }
+
+                const parts = (message as any).parts as any[]
+                const hasToolParts = parts.some((p: any) => isToolUIPart(p))
+
+                if (!hasToolParts) {
+                  return <ChatMessage key={message.id} message={message as any} />
+                }
+
+                // Render parts individually — text parts via ChatMessage, tool parts via cards
+                return (
+                  <div key={message.id}>
+                    {parts.map((part: any, partIndex: number) => {
+                      if (isToolUIPart(part)) {
+                        if (part.state === 'approval-requested') {
+                          return (
+                            <MutationConfirmCard
+                              key={`${message.id}-${partIndex}`}
+                              part={part as any}
+                              onApprove={() =>
+                                addToolApprovalResponse({ id: (part as any).approval?.id, approved: true })
+                              }
+                              onReject={() =>
+                                addToolApprovalResponse({
+                                  id: (part as any).approval?.id,
+                                  approved: false,
+                                  reason: 'User cancelled',
+                                })
+                              }
+                            />
+                          )
+                        }
+                        // approval-responded, output-available, error
+                        return (
+                          <MutationConfirmCardComplete
+                            key={`${message.id}-${partIndex}`}
+                            state={part.state as any}
+                            approved={(part as any).approval?.approved}
+                          />
+                        )
+                      }
+                      // text parts — render message once per text part
+                      if (part.type === 'text') {
+                        return <ChatMessage key={`${message.id}-${partIndex}`} message={message as any} />
+                      }
+                      return null
+                    })}
+                  </div>
+                )
+              })}
           </>
         )}
 
