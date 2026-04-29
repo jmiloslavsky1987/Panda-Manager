@@ -12,7 +12,8 @@
 - ✅ **v8.0** — Codebase Refactor & Multi-Tenant Deployment — Phases 70–74 (shipped 2026-04-22)
 - ✅ **v9.0** — UX Maturity & Intelligence — Phases 75–78 (shipped 2026-04-23)
 - ✅ **v10.0** — Calendar Integration & Daily Prep — Phases 79–80 (shipped 2026-04-28)
-- 🚧 **v11.0** — Kata Design System Visual Overhaul — Phase 81 (planned)
+- ✅ **v11.0** — Kata Design System + Chat Write Ops — Phases 81–82 (shipped 2026-04-29)
+- 🚧 **v12.0** — Architecture Sub-Capability Columns — Phase 83 (in progress)
 
 ## Phases
 

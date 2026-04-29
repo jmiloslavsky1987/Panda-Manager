@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v10.0
-milestone_name: — Calendar Integration & Daily Prep
-status: completed
-stopped_at: Completed 82-04-PLAN.md
-last_updated: "2026-04-29T19:19:44.565Z"
-last_activity: 2026-04-29 — Phase 82 plan 03 complete (allWriteTools aggregator 36 tools + MutationConfirmCard component)
+milestone: v11.0
+milestone_name: Architecture Sub-Capability Columns
+status: in_progress
+stopped_at: Completed 82-05-PLAN.md — Phase 82 COMPLETE
+last_updated: "2026-04-29T23:30:00.000Z"
+last_activity: 2026-04-29 — Phase 82 complete (chat write ops verified + context builder fixed + arch node tool hardened). Phase 83 planned (architecture sub-capability columns).
 progress:
-  total_phases: 8
-  completed_phases: 7
-  total_plans: 40
-  completed_plans: 39
-  percent: 98
+  total_phases: 9
+  completed_phases: 8
+  total_plans: 45
+  completed_plans: 40
+  percent: 89
 ---
 
 # Project State
@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 82 of 82 (Chat Write Operations — plan 04 of 6 done)
+Phase: 83 of 83 (Architecture Sub-Capability Columns — not started)
 Status: 82-04 complete — allWriteTools wired into streamText with stopWhen: stepCountIs(3); WRITE OPERATIONS system prompt section injecting activeTab; ChatPanel extended with useSearchParams activeTab, addToolApprovalResponse, and parts-based rendering loop for MutationConfirmCard/MutationConfirmCardComplete; 42/42 chat tests GREEN; build clean.
 Last activity: 2026-04-29 — Phase 82 plan 04 complete (chat route tools integration + ChatPanel confirmation card rendering)
 
@@ -147,6 +147,13 @@ Progress: [██████████] 99%
 - [82-04] stopWhen: stepCountIs(3) replaces maxSteps: 3 — AI SDK v6 does not have maxSteps on streamText, uses stopWhen condition API
 - [82-04] ChatPanel reads both ?activeTab= and ?tab= — WorkspaceTabs sets ?tab=; dual-read covers both navigation patterns without URL restructuring
 - [82-04] MutationConfirmCard uses onReject prop (test contract from 82-03); ChatPanel wires cancel to addToolApprovalResponse with approved: false, reason: 'User cancelled'
+
+- [82-05] buildChatContext was missing all Teams/Architecture tab data — fixed by calling getArchTabData + direct queries for businessOutcomes, e2eWorkflows, workflowSteps, focusAreas
+- [82-05] createArchNodeTool inserts with display_order: 999 + onConflictDoUpdate — chat-created nodes never render as pipeline columns; tool description steers Claude to createArchIntegration for tool cards
+- [82-05] getArchNodes filters display_order < 100 — extraction pipeline sentinel nodes (display_order=999) are excluded from column rendering
+- [83-00] parent_id nullable FK on arch_nodes — section nodes (Alert Intelligence, Incident Intelligence, Workflow Automation) have parent_id=NULL; sub-capability nodes have parent_id=<section node id>; Console is parent_id=NULL special node
+- [83-00] ADR track expands to 3 sections × 3–4 sub-columns = 10 sub-columns total; AI Assistant Track unchanged
+- [83-00] architecture_integrations.phase maps to sub-capability column names (Monitoring Integrations, Alert Normalization, etc.) not section names
 
 ### Blockers/Concerns
 
