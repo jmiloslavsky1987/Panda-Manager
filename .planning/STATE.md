@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: completed
-stopped_at: Completed 82-02-PLAN.md
-last_updated: "2026-04-29T19:02:57.577Z"
-last_activity: 2026-04-29 — Phase 82 plan 02 complete (teams and architecture write tool factories)
+stopped_at: Completed 82-03-PLAN.md
+last_updated: "2026-04-29T19:08:42.700Z"
+last_activity: 2026-04-29 — Phase 82 plan 03 complete (allWriteTools aggregator 36 tools + MutationConfirmCard component)
 progress:
   total_phases: 8
   completed_phases: 7
   total_plans: 40
-  completed_plans: 37
+  completed_plans: 38
   percent: 98
 ---
 
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 82 of 82 (Chat Write Operations — plan 02 of 6 done)
-Status: 82-02 complete — 22 write tool factories (16 teams + 6 arch) across teams tab and architecture tab entities; createArchNodeTool resolves track_name→track_id server-side; chat-tools.test.ts 16/16 GREEN; build clean.
-Last activity: 2026-04-29 — Phase 82 plan 02 complete (teams and architecture write tool factories)
+Phase: 82 of 82 (Chat Write Operations — plan 03 of 6 done)
+Status: 82-03 complete — allWriteTools() aggregator expanded to 36 tools (7 files: actions/milestones/risks/stakeholders/tasks/teams/arch); MutationConfirmCard with color-coded borders, editable review fields, delete type-to-confirm friction; MutationConfirmCardComplete for static states; 5/5 mutation-confirm-card tests GREEN; 16/16 chat-tools tests GREEN; build clean.
+Last activity: 2026-04-29 — Phase 82 plan 03 complete (allWriteTools aggregator 36 tools + MutationConfirmCard component)
 
 Progress: [██████████] 98%
 
@@ -140,6 +140,10 @@ Progress: [██████████] 98%
 - [82-02] deliveryStatusEnum is 'planned|in_progress|live|blocked' — plan spec listed 'completed' but DB enum uses 'live'; always verify enum values against db/schema.ts before writing tool zod schemas
 - [82-02] createArchNodeTool accepts track_name string; execute() resolves via AND(eq(archTracks.project_id, projectId), eq(archTracks.name, input.track_name)) — Claude never needs numeric track IDs
 - [82-02] workflowSteps table has no project_id — ownership verified via two-query chain: step.workflow_id → e2eWorkflows.project_id
+- [82-03] allWriteTools() expanded from 15 to 36 tools — named function export, spreads all 7 tool files (actions, milestones, risks, stakeholders, tasks, teams, arch)
+- [82-03] MutationConfirmCard uses onReject prop (test contract) not onCancel (plan spec) — tests are ground truth in TDD
+- [82-03] MutationConfirmCard: colorClass literal (e.g. "kata-status-green") included in className AND borderLeftColor uses var(--kata-status-green) — className satisfies test innerHTML regex, style applies actual color
+- [82-03] MutationConfirmCard editable fields: local useState copy of part.input; Confirm always calls onApprove() with no modified data (addToolApprovalResponse SDK limitation: accepts only approved: bool)
 
 ### Blockers/Concerns
 
@@ -147,6 +151,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-29T19:02:57.575Z
-Stopped at: Completed 82-02-PLAN.md
+Last session: 2026-04-29T19:08:42.697Z
+Stopped at: Completed 82-03-PLAN.md
 Resume file: None
