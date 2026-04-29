@@ -1455,3 +1455,277 @@ export async function getPortfolioData(opts?: ProjectQueryOpts): Promise<Portfol
 
   return portfolioProjects;
 }
+
+// ─── Phase 81: Portfolio Dashboard Rebuild (KDS-05) ──────────────────────────
+
+export interface PortfolioWeekMetrics {
+  tasksClosedThisWeek: number;
+  milestonesHitThisWeek: number;
+  overdueTasks: number;
+  updatesLogged: number;
+}
+
+export interface ProjectGoLive {
+  id: number;
+  customer: string;
+  go_live_target: string;
+}
+
+export interface RiskEntry {
+  id: number;
+  title: string;
+  projectCustomer: string;
+}
+
+export interface AttentionProject {
+  id: number;
+  customer: string;
+  reason: 'red-health' | 'stale';
+}
+
+export interface PortfolioBriefingData {
+  upcomingGoLives: ProjectGoLive[];
+  highSeverityRisks: RiskEntry[];
+  needsAttention: AttentionProject[];
+}
+
+/**
+ * Returns week metrics for the Portfolio hero stat band.
+ * Gracefully returns zeros on any DB error.
+ */
+export async function getPortfolioWeekMetrics(
+  opts?: ProjectQueryOpts
+): Promise<PortfolioWeekMetrics> {
+  try {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    // Determine accessible project ids
+    let accessibleProjectIds: number[] | null = null;
+    if (opts?.userId && !opts.isGlobalAdmin) {
+      const memberRows = await db
+        .select({ id: projectMembers.project_id })
+        .from(projectMembers)
+        .where(eq(projectMembers.user_id, opts.userId));
+      accessibleProjectIds = memberRows.map((r) => r.id);
+    }
+
+    // Tasks closed this week
+    const tasksClosedRows = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(tasks)
+      .innerJoin(projects, eq(tasks.project_id, projects.id))
+      .where(
+        and(
+          eq(tasks.status, 'completed'),
+          gt(tasks.created_at, sevenDaysAgo),
+          inArray(projects.status, ['active', 'draft']),
+          accessibleProjectIds !== null
+            ? inArray(tasks.project_id, accessibleProjectIds)
+            : undefined
+        )
+      );
+    const tasksClosedThisWeek = Number(tasksClosedRows[0]?.count ?? 0);
+
+    // Milestones hit this week (status = 'Complete' and updated within last 7 days)
+    // Milestones use text 'complete' (milestoneStatusEnum), check both casings
+    const milestonesHitRows = await db.execute<{ count: number }>(
+      sql`
+        SELECT count(*)::int AS count
+        FROM milestones m
+        JOIN projects p ON p.id = m.project_id
+        WHERE p.status IN ('active', 'draft')
+          AND m.status = 'complete'
+          AND m.created_at >= ${sevenDaysAgo.toISOString()}
+          ${accessibleProjectIds !== null
+            ? sql`AND m.project_id = ANY(ARRAY[${sql.join(accessibleProjectIds.map(id => sql`${id}`), sql`, `)}]::int[])`
+            : sql``}
+      `
+    );
+    const milestonesHitThisWeek = Number(milestonesHitRows[0]?.count ?? 0);
+
+    // Overdue tasks: due < today and status != 'completed' across user's projects
+    const today = new Date().toISOString().split('T')[0];
+    const overdueTasksRows = await db.execute<{ count: number }>(
+      sql`
+        SELECT count(*)::int AS count
+        FROM tasks t
+        JOIN projects p ON p.id = t.project_id
+        WHERE p.status IN ('active', 'draft')
+          AND t.status != 'completed'
+          AND t.due IS NOT NULL
+          AND t.due ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}'
+          AND t.due < ${today}
+          ${accessibleProjectIds !== null
+            ? sql`AND t.project_id = ANY(ARRAY[${sql.join(accessibleProjectIds.map(id => sql`${id}`), sql`, `)}]::int[])`
+            : sql``}
+      `
+    );
+    const overdueTasks = Number(overdueTasksRows[0]?.count ?? 0);
+
+    // Updates logged: engagement_history entries in last 7 days
+    const updatesLoggedRows = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(engagementHistory)
+      .innerJoin(projects, eq(engagementHistory.project_id, projects.id))
+      .where(
+        and(
+          gt(engagementHistory.created_at, sevenDaysAgo),
+          inArray(projects.status, ['active', 'draft']),
+          accessibleProjectIds !== null
+            ? inArray(engagementHistory.project_id, accessibleProjectIds)
+            : undefined
+        )
+      );
+    const updatesLogged = Number(updatesLoggedRows[0]?.count ?? 0);
+
+    return { tasksClosedThisWeek, milestonesHitThisWeek, overdueTasks, updatesLogged };
+  } catch (err) {
+    console.error('[getPortfolioWeekMetrics] error:', err);
+    return { tasksClosedThisWeek: 0, milestonesHitThisWeek: 0, overdueTasks: 0, updatesLogged: 0 };
+  }
+}
+
+/**
+ * Returns briefing data for the Portfolio 3-column briefing strip.
+ * All data computed from DB — no AI calls.
+ * Gracefully returns empty arrays on any DB error.
+ */
+export async function getPortfolioBriefingData(
+  opts?: ProjectQueryOpts
+): Promise<PortfolioBriefingData> {
+  try {
+    // Determine accessible project ids
+    let accessibleProjectIds: number[] | null = null;
+    if (opts?.userId && !opts.isGlobalAdmin) {
+      const memberRows = await db
+        .select({ id: projectMembers.project_id })
+        .from(projectMembers)
+        .where(eq(projectMembers.user_id, opts.userId));
+      accessibleProjectIds = memberRows.map((r) => r.id);
+    }
+
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    const fourWeeksOut = new Date(today);
+    fourWeeksOut.setDate(today.getDate() + 28);
+    const fourWeeksOutStr = fourWeeksOut.toISOString().split('T')[0];
+
+    // Query 1: Upcoming go-lives (next 28 days)
+    let upcomingGoLives: ProjectGoLive[] = [];
+    try {
+      const goLiveRows = await db.execute<{ id: number; customer: string; go_live_target: string }>(
+        sql`
+          SELECT id, customer, go_live_target
+          FROM projects
+          WHERE status IN ('active', 'draft')
+            AND go_live_target IS NOT NULL
+            AND go_live_target ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}'
+            AND go_live_target >= ${todayStr}
+            AND go_live_target <= ${fourWeeksOutStr}
+            ${accessibleProjectIds !== null
+              ? sql`AND id = ANY(ARRAY[${sql.join(accessibleProjectIds.map(id => sql`${id}`), sql`, `)}]::int[])`
+              : sql``}
+          ORDER BY go_live_target ASC
+        `
+      );
+      upcomingGoLives = goLiveRows.map((r) => ({
+        id: Number(r.id),
+        customer: String(r.customer),
+        go_live_target: String(r.go_live_target),
+      }));
+    } catch (e) {
+      console.error('[getPortfolioBriefingData] upcomingGoLives error:', e);
+    }
+
+    // Query 2: High severity risks (open, high or critical severity)
+    let highSeverityRisks: RiskEntry[] = [];
+    try {
+      const riskRows = await db.execute<{ id: number; description: string; customer: string }>(
+        sql`
+          SELECT r.id, r.description, p.customer
+          FROM risks r
+          JOIN projects p ON p.id = r.project_id
+          WHERE p.status IN ('active', 'draft')
+            AND r.status = 'open'
+            AND r.severity IN ('high', 'critical')
+            ${accessibleProjectIds !== null
+              ? sql`AND r.project_id = ANY(ARRAY[${sql.join(accessibleProjectIds.map(id => sql`${id}`), sql`, `)}]::int[])`
+              : sql``}
+          ORDER BY r.created_at DESC
+        `
+      );
+      highSeverityRisks = riskRows.map((r) => ({
+        id: Number(r.id),
+        title: String(r.description),
+        projectCustomer: String(r.customer),
+      }));
+    } catch (e) {
+      console.error('[getPortfolioBriefingData] highSeverityRisks error:', e);
+    }
+
+    // Query 3: Projects needing attention (red health OR stale — no engagement in last 7 days)
+    let needsAttention: AttentionProject[] = [];
+    try {
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+      // Red health projects
+      const redHealthRows = await db.execute<{ id: number; customer: string; severity: string }>(
+        sql`
+          SELECT DISTINCT p.id, p.customer
+          FROM projects p
+          JOIN risks r ON r.project_id = p.id
+          WHERE p.status IN ('active', 'draft')
+            AND r.status = 'open'
+            AND r.severity = 'critical'
+            ${accessibleProjectIds !== null
+              ? sql`AND p.id = ANY(ARRAY[${sql.join(accessibleProjectIds.map(id => sql`${id}`), sql`, `)}]::int[])`
+              : sql``}
+        `
+      );
+      const redHealthIds = new Set(redHealthRows.map((r) => Number(r.id)));
+
+      // Stale projects: active/draft with no engagement_history entry in last 7 days
+      const staleRows = await db.execute<{ id: number; customer: string }>(
+        sql`
+          SELECT p.id, p.customer
+          FROM projects p
+          WHERE p.status IN ('active', 'draft')
+            ${accessibleProjectIds !== null
+              ? sql`AND p.id = ANY(ARRAY[${sql.join(accessibleProjectIds.map(id => sql`${id}`), sql`, `)}]::int[])`
+              : sql``}
+            AND NOT EXISTS (
+              SELECT 1 FROM engagement_history eh
+              WHERE eh.project_id = p.id
+                AND eh.created_at >= ${sevenDaysAgo.toISOString()}
+            )
+        `
+      );
+
+      // Build combined list, red-health first, de-duplication by id
+      const seen = new Set<number>();
+      for (const r of redHealthRows) {
+        const id = Number(r.id);
+        if (!seen.has(id)) {
+          seen.add(id);
+          needsAttention.push({ id, customer: String(r.customer), reason: 'red-health' });
+        }
+      }
+      for (const r of staleRows) {
+        const id = Number(r.id);
+        if (!seen.has(id)) {
+          seen.add(id);
+          needsAttention.push({ id, customer: String(r.customer), reason: 'stale' });
+        }
+      }
+    } catch (e) {
+      console.error('[getPortfolioBriefingData] needsAttention error:', e);
+    }
+
+    return { upcomingGoLives, highSeverityRisks, needsAttention };
+  } catch (err) {
+    console.error('[getPortfolioBriefingData] error:', err);
+    return { upcomingGoLives: [], highSeverityRisks: [], needsAttention: [] };
+  }
+}
