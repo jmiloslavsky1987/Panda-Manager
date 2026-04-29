@@ -11,7 +11,7 @@ export const createActionTool = (projectId: number) =>
         owner: z.string().optional().describe('Person responsible'),
         due: z.string().optional().describe('Due date (ISO, TBD, or quarter)'),
         status: z
-          .enum(['open', 'in_progress', 'closed', 'overdue'])
+          .enum(['open', 'in_progress', 'completed', 'cancelled'])
           .optional()
           .default('open')
           .describe('Action status'),
@@ -45,7 +45,7 @@ export const updateActionTool = (projectId: number) =>
         owner: z.string().optional().describe('Person responsible'),
         due: z.string().optional().describe('Due date (ISO, TBD, or quarter)'),
         status: z
-          .enum(['open', 'in_progress', 'closed', 'overdue'])
+          .enum(['open', 'in_progress', 'completed', 'cancelled'])
           .optional()
           .describe('Action status'),
         notes: z.string().optional().describe('Additional notes'),
