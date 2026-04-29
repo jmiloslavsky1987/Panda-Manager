@@ -1,11 +1,11 @@
 ---
 gsd_state_version: 1.0
-milestone: v11.0
-milestone_name: Kata Design System Visual Overhaul
-status: in-progress
-stopped_at: Completed 81-kata-design-system-overhaul 81-03-PLAN.md
-last_updated: "2026-04-29T03:44:30Z"
-last_activity: 2026-04-29 — Phase 81 plan 03 complete (lucide→Icon migration for all 20 non-Sidebar components; icon-migration tests 3/3 GREEN)
+milestone: v10.0
+milestone_name: — Calendar Integration & Daily Prep
+status: completed
+stopped_at: Completed 81-kata-design-system-overhaul 81-05-PLAN.md
+last_updated: "2026-04-29T03:52:42.899Z"
+last_activity: 2026-04-29 — Phase 81 plan 05 complete (workspace KPI strip + page-bar with Kata tokens)
 progress:
   total_phases: 7
   completed_phases: 6
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 81 of 81 (Kata Design System Visual Overhaul — plan 03 of 7 done)
-Status: 81-03 complete — lucide-react removed from all 20 non-Sidebar components; <Icon> wrapper used throughout; icon-migration.test.ts 3/3 GREEN. Production build clean.
-Last activity: 2026-04-29 — Phase 81 plan 03 complete (lucide→Icon migration 20 non-Sidebar components)
+Phase: 81 of 81 (Kata Design System Visual Overhaul — plan 05 of 7 done)
+Status: 81-05 complete — workspace layout rebuilt with 44px page-bar + 5-column KPI strip (JBM 28px numerals, Kata status token tinting); WorkspaceKpiStrip.tsx + WorkspacePageBarConfigurator.tsx created; workspace-kpi.test.ts 2/2 GREEN. Production build clean.
+Last activity: 2026-04-29 — Phase 81 plan 05 complete (workspace KPI strip + page-bar wiring)
 
 Progress: [██████████] 98%
 
@@ -120,6 +120,8 @@ Progress: [██████████] 98%
 - [81-03] WbsNode used lucide size prop syntax directly (size={16}) — Icon uses same size prop, direct 1:1 replacement with no className conversion needed
 - [81-03] Icon animate-spin: Tailwind animation class passed via Icon's className prop works on the underlying <span> element
 - [81-03] icon-migration Test 3 now GREEN — lucide-react fully removed from all 22 tracked files (20 from Plan 03 + 2 Sidebar files from Plan 02)
+- [81-05] WorkspacePageBarConfigurator renders visible 44px bar directly — global PageBar suppresses on /customer/ routes; context injection still done for any future consumers
+- [81-05] WorkspaceKpiStrip uses openRiskCount (not openRisks) — actual ProjectWithHealth field name; currentPhase/percentComplete are optional overrides (not on base type)
 
 ### Blockers/Concerns
 
@@ -127,6 +129,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-29T03:44:30Z
-Stopped at: Completed 81-kata-design-system-overhaul 81-03-PLAN.md
+Last session: 2026-04-29T03:52:42.896Z
+Stopped at: Completed 81-kata-design-system-overhaul 81-05-PLAN.md
 Resume file: None
