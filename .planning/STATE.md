@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v11.0
 milestone_name: Kata Design System Visual Overhaul
 status: in-progress
-stopped_at: Completed 81-kata-design-system-overhaul 81-02-PLAN.md
-last_updated: "2026-04-29T03:40:00.000Z"
-last_activity: 2026-04-29 — Phase 81 plan 02 complete (Command Rail, PageBar, PageBarContext)
+stopped_at: Completed 81-kata-design-system-overhaul 81-03-PLAN.md
+last_updated: "2026-04-29T03:44:30Z"
+last_activity: 2026-04-29 — Phase 81 plan 03 complete (lucide→Icon migration for all 20 non-Sidebar components; icon-migration tests 3/3 GREEN)
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 34
-  completed_plans: 31
+  completed_plans: 32
   percent: 98
 ---
 
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 81 of 81 (Kata Design System Visual Overhaul — plan 02 of 7 done)
-Status: 81-02 complete — Command Rail rebuilt (data-theme=dark, ⌘K pill, top nav), PageBarContext + PageBar delivered, layout.tsx wired. All 10 KDS tests GREEN. Production build clean.
-Last activity: 2026-04-29 — Phase 81 plan 02 complete (Command Rail, PageBar, PageBarContext)
+Phase: 81 of 81 (Kata Design System Visual Overhaul — plan 03 of 7 done)
+Status: 81-03 complete — lucide-react removed from all 20 non-Sidebar components; <Icon> wrapper used throughout; icon-migration.test.ts 3/3 GREEN. Production build clean.
+Last activity: 2026-04-29 — Phase 81 plan 03 complete (lucide→Icon migration 20 non-Sidebar components)
 
 Progress: [██████████] 98%
 
@@ -117,6 +117,9 @@ Progress: [██████████] 98%
 - [81-02] PageBar theme toggle uses MutationObserver on html.classList to keep isDark state in sync with external changes (ThemeProvider, flash-prevention script)
 - [81-02] body className simplified from 'h-full flex bg-zinc-50' to 'h-full flex' — background controlled by Kata tokens via bg-background Tailwind alias
 - [81-02] Additional nav links (Knowledge Base, Outputs, Settings, Scheduler, Time Tracking) preserved with data-testid attributes, all icons migrated to <Icon> Material Symbols
+- [81-03] WbsNode used lucide size prop syntax directly (size={16}) — Icon uses same size prop, direct 1:1 replacement with no className conversion needed
+- [81-03] Icon animate-spin: Tailwind animation class passed via Icon's className prop works on the underlying <span> element
+- [81-03] icon-migration Test 3 now GREEN — lucide-react fully removed from all 22 tracked files (20 from Plan 03 + 2 Sidebar files from Plan 02)
 
 ### Blockers/Concerns
 
@@ -124,6 +127,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-29T03:40:00.000Z
-Stopped at: Completed 81-kata-design-system-overhaul 81-02-PLAN.md
+Last session: 2026-04-29T03:44:30Z
+Stopped at: Completed 81-kata-design-system-overhaul 81-03-PLAN.md
 Resume file: None
