@@ -1,0 +1,125 @@
+/*
+ * Kata Design System — Token File
+ * Phase 81: KDS-01 / KDS-08
+ *
+ * Two-layer architecture:
+ *   1. PALETTE LAYER  — raw color steps (--kata-gray-*, --kata-indigo-*, etc.)
+ *   2. SEMANTIC LAYER — intent tokens (--kata-surface-*, --kata-on-*, etc.)
+ *
+ * [data-theme="dark"] isolation ensures the Command Rail <aside> always uses
+ * dark tokens regardless of the <html class="dark"> state on the main canvas.
+ *
+ * Do NOT add @font-face rules here — fonts are loaded via next/font in layout.tsx.
+ * Do NOT add Tailwind-specific syntax here — pure CSS custom properties only.
+ */
+
+/* ============================================================
+   1. PALETTE LAYER
+   ============================================================ */
+
+:root {
+  /* Gray scale — Tailwind zinc/gray steps aliased to Kata names */
+  --kata-gray-50:   #F9FAFB;
+  --kata-gray-100:  #E9EDEE;
+  --kata-gray-200:  #DBE1E3;
+  --kata-gray-300:  #C4CDD0;
+  --kata-gray-400:  #81959C;
+  --kata-gray-500:  #607177;
+  --kata-gray-600:  #49565A;
+  --kata-gray-700:  #384144;
+  --kata-gray-800:  #2B3134;
+  --kata-gray-850:  #2A2D33;
+  --kata-gray-900:  #202627;
+  --kata-gray-925:  #1B1D21;
+  --kata-gray-950:  #161819;
+
+  /* Accent palette */
+  --kata-indigo-500: #5B5BFF;
+  --kata-blue-500:   #0041F5;
+  --kata-green-400:  #27BE69;
+  --kata-orange-300: #FF8E21;
+  --kata-red-500:    #D60028;
+  --kata-purple-500: #9A53E0;
+}
+
+/* ============================================================
+   2. SEMANTIC LAYER — LIGHT
+   ============================================================ */
+
+.light,
+:root:not(.dark) {
+  --kata-surface-canvas:            var(--kata-gray-50);
+  --kata-surface-container:         #FFFFFF;
+  --kata-surface-field:             var(--kata-gray-50);
+
+  --kata-on-canvas:                 #181D1E;
+  --kata-on-container:              #181D1E;
+  --kata-on-container-secondary:    #49565A;
+  --kata-on-container-tertiary:     #607177;
+
+  --kata-stroke-subtle:             #C4CDD0;
+  --kata-stroke-focus:              #528BFF;
+
+  --kata-interactive:               var(--kata-indigo-500);
+
+  --kata-status-green:              var(--kata-green-400);
+  --kata-status-amber:              var(--kata-orange-300);
+  --kata-status-red:                var(--kata-red-500);
+
+  --kata-icon-ai:                   var(--kata-purple-500);
+}
+
+/* ============================================================
+   3. SEMANTIC LAYER — DARK
+   ============================================================ */
+
+.dark {
+  --kata-surface-canvas:            var(--kata-gray-950);
+  --kata-surface-container:         #202627;
+  --kata-surface-field:             var(--kata-gray-950);
+
+  --kata-on-canvas:                 #F9FAFB;
+  --kata-on-container:              #F9FAFB;
+  --kata-on-container-secondary:    #E9EDEE;
+  --kata-on-container-tertiary:     #DBE1E3;
+
+  --kata-stroke-subtle:             #81959C;
+  --kata-stroke-focus:              #528BFF;
+
+  --kata-interactive:               var(--kata-indigo-500);
+
+  --kata-status-green:              #45D985;
+  --kata-status-amber:              #FF8E21;
+  --kata-status-red:                #E65671;
+
+  --kata-icon-ai:                   var(--kata-purple-500);
+}
+
+/* ============================================================
+   4. COMMAND RAIL DARK ISOLATION
+   Applies dark semantic tokens to any element with data-theme="dark"
+   — this makes the Command Rail <aside> always use dark tokens
+   regardless of whether <html class="dark"> is set or not.
+   ============================================================ */
+
+[data-theme="dark"] {
+  --kata-surface-canvas:            var(--kata-gray-950);
+  --kata-surface-container:         #202627;
+  --kata-surface-field:             var(--kata-gray-950);
+
+  --kata-on-canvas:                 #F9FAFB;
+  --kata-on-container:              #F9FAFB;
+  --kata-on-container-secondary:    #E9EDEE;
+  --kata-on-container-tertiary:     #DBE1E3;
+
+  --kata-stroke-subtle:             #81959C;
+  --kata-stroke-focus:              #528BFF;
+
+  --kata-interactive:               var(--kata-indigo-500);
+
+  --kata-status-green:              #45D985;
+  --kata-status-amber:              #FF8E21;
+  --kata-status-red:                #E65671;
+
+  --kata-icon-ai:                   var(--kata-purple-500);
+}

@@ -1,8 +1,8 @@
 ---
 label: Meeting Prep
 description: Generate a structured meeting brief from project data and calendar context
-input_required: false
-input_label: "Additional meeting notes (optional)"
+input_required: true
+input_label: "Meeting details — e.g. attendees, topic, or paste the calendar description"
 schedulable: false
 error_behavior: retry
 ---
@@ -26,4 +26,4 @@ List 2–3 concrete, action-oriented agenda items. Each should be a focused disc
 
 Format as clean markdown. Use the exact section headers (## Context, ## Desired Outcome, ## Agenda) — these headers are parsed by the Daily Prep page for display. Be concise and action-oriented. This brief is scanned quickly before a meeting.
 
-If optional meeting notes are provided, incorporate them into the Context and Agenda sections.
+Use the provided meeting details to focus the brief on this specific meeting — reference attendees by name, tailor the desired outcome to their role, and build agenda items around what matters most to them given the project's current state.
