@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v11.0
 milestone_name: Kata Design System Visual Overhaul
 status: in-progress
-stopped_at: Completed 81-kata-design-system-overhaul 81-01-PLAN.md
-last_updated: "2026-04-29T03:30:08.335Z"
-last_activity: 2026-04-29 — Phase 81 plan 01 complete (token foundation, Icon.tsx, ThemeProvider.tsx)
+stopped_at: Completed 81-kata-design-system-overhaul 81-02-PLAN.md
+last_updated: "2026-04-29T03:40:00.000Z"
+last_activity: 2026-04-29 — Phase 81 plan 02 complete (Command Rail, PageBar, PageBarContext)
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 34
-  completed_plans: 29
-  percent: 100
+  completed_plans: 31
+  percent: 98
 ---
 
 # Project State
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 81 of 81 (Kata Design System Visual Overhaul — plan 01 of 7 done)
-Status: 81-01 complete — Token foundation, Icon.tsx, ThemeProvider.tsx, flash-prevention script delivered. All 3 token-import tests GREEN. All 3 theme-persistence tests GREEN. Production build clean.
-Last activity: 2026-04-29 — Phase 81 plan 01 complete (token foundation, Icon.tsx, ThemeProvider.tsx)
+Phase: 81 of 81 (Kata Design System Visual Overhaul — plan 02 of 7 done)
+Status: 81-02 complete — Command Rail rebuilt (data-theme=dark, ⌘K pill, top nav), PageBarContext + PageBar delivered, layout.tsx wired. All 10 KDS tests GREEN. Production build clean.
+Last activity: 2026-04-29 — Phase 81 plan 02 complete (Command Rail, PageBar, PageBarContext)
 
-Progress: [█████████▓] 97%
+Progress: [██████████] 98%
 
 ## v10.0 Roadmap Summary
 
@@ -113,6 +113,10 @@ Progress: [█████████▓] 97%
 - [81-01] kata-theme localStorage key is the single source of truth for theme preference across ThemeProvider and flash-prevention script
 - [81-01] Icon component API: <Icon name="search" size={16} /> with fontVariationSettings for Material Symbols weight axis; never mix text + icon in same <span>
 - [81-01] icon-migration Test 3 (lucide removal across 22 files) intentionally RED — lucide migration is Plan 03 scope
+- [81-02] PageBarProvider placed outside AppChrome — clean server/client boundary; AppChrome handles async server Sidebar, PageBarProvider is purely client context
+- [81-02] PageBar theme toggle uses MutationObserver on html.classList to keep isDark state in sync with external changes (ThemeProvider, flash-prevention script)
+- [81-02] body className simplified from 'h-full flex bg-zinc-50' to 'h-full flex' — background controlled by Kata tokens via bg-background Tailwind alias
+- [81-02] Additional nav links (Knowledge Base, Outputs, Settings, Scheduler, Time Tracking) preserved with data-testid attributes, all icons migrated to <Icon> Material Symbols
 
 ### Blockers/Concerns
 
@@ -120,6 +124,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-29T03:30:08.333Z
-Stopped at: Completed 81-kata-design-system-overhaul 81-01-PLAN.md
+Last session: 2026-04-29T03:40:00.000Z
+Stopped at: Completed 81-kata-design-system-overhaul 81-02-PLAN.md
 Resume file: None
