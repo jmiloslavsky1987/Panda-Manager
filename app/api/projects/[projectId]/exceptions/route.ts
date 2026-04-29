@@ -8,7 +8,7 @@ import { requireProjectRole } from '@/lib/auth-server'
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type ExceptionRecord = {
-  type: 'overdue_task' | 'at_risk_milestone' | 'stale_item'
+  type: 'overdue_task' | 'at_risk_milestone' | 'stale_item' | 'open_risk'
   id: number
   name: string
   reason: string
@@ -125,7 +125,40 @@ export async function GET(
         })
       }
 
-      // ─── 3. Stale Items ───────────────────────────────────────────────────────
+      // ─── 3. Open Critical / High Risks ───────────────────────────────────────
+      // Matches the HealthDashboard red/yellow formula so both panels reflect the same signals
+
+      interface OpenRiskRow extends Record<string, unknown> {
+        id: number | string
+        description: string
+        severity: string
+      }
+
+      const openRisksRows = await tx.execute<OpenRiskRow>(sql`
+        SELECT id, description, severity
+        FROM risks
+        WHERE project_id = ${numericId}
+          AND status = 'open'
+          AND severity IN ('critical', 'high')
+        ORDER BY
+          CASE severity WHEN 'critical' THEN 0 ELSE 1 END ASC,
+          id ASC
+      `)
+
+      for (const row of openRisksRows) {
+        const desc = row.description ?? ''
+        const name = desc.length > 60 ? desc.slice(0, 60) + '…' : desc
+        const severity = row.severity === 'critical' ? 'Critical' : 'High'
+        results.push({
+          type: 'open_risk',
+          id: Number(row.id),
+          name,
+          reason: `${severity} risk`,
+          link: `/customer/${numericId}/risks`,
+        })
+      }
+
+      // ─── 4. Stale Items ───────────────────────────────────────────────────────
       // created_at < NOW() - INTERVAL '14 days' for tasks, actions, risks (not done/closed)
 
       interface StaleTaskRow extends Record<string, unknown> {

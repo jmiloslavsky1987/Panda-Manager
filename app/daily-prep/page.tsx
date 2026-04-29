@@ -336,12 +336,16 @@ export default function DailyPrepPage() {
         const reader = response.body!.getReader();
         const decoder = new TextDecoder();
         let accumulated = '';
+        let lineBuffer = '';
 
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-          const chunk = decoder.decode(value, { stream: true });
-          for (const line of chunk.split('\n')) {
+          lineBuffer += decoder.decode(value, { stream: true });
+          const lines = lineBuffer.split('\n');
+          // Keep the last (possibly incomplete) line in the buffer
+          lineBuffer = lines.pop() ?? '';
+          for (const line of lines) {
             if (line.startsWith('data: ')) {
               try {
                 const parsed = JSON.parse(line.slice(6));
@@ -480,13 +484,18 @@ export default function DailyPrepPage() {
                 Export All
               </button>
             )}
-            <button
-              onClick={handleGenerate}
-              disabled={!anySelected || anyLoading}
-              className="no-print text-sm px-3 py-1.5 rounded bg-blue-600 text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-blue-700"
-            >
-              Generate Prep
-            </button>
+            <div className="flex flex-col items-end gap-1">
+              <button
+                onClick={handleGenerate}
+                disabled={!anySelected || anyLoading}
+                className="no-print text-sm px-3 py-1.5 rounded bg-blue-600 text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-blue-700"
+              >
+                Generate Prep
+              </button>
+              {!anySelected && cards.length > 0 && (
+                <p className="text-xs text-zinc-400 no-print">Select events above first</p>
+              )}
+            </div>
           </div>
         </div>
       )}

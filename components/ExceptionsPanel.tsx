@@ -11,7 +11,7 @@ interface ExceptionsPanelProps {
 }
 
 type ExceptionRecord = {
-  type: 'overdue_task' | 'at_risk_milestone' | 'stale_item'
+  type: 'overdue_task' | 'at_risk_milestone' | 'stale_item' | 'open_risk'
   id: number
   name: string
   reason: string
@@ -111,6 +111,8 @@ export function ExceptionsPanel({ projectId }: ExceptionsPanelProps) {
             icon = <Icon name="schedule" size={14} className="shrink-0 text-red-500" />
           } else if (record.type === 'at_risk_milestone') {
             icon = <Icon name="warning" size={14} className="shrink-0 text-amber-500" />
+          } else if (record.type === 'open_risk') {
+            icon = <Icon name="error" size={14} className="shrink-0 text-red-500" />
           } else {
             icon = <Icon name="refresh" size={14} className="shrink-0 text-zinc-400" />
           }
