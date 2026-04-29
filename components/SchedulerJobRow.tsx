@@ -10,7 +10,7 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
+import { Icon } from './Icon';
 import { SKILL_LIST } from '../lib/scheduler-skills';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -226,9 +226,9 @@ export function SchedulerJobRow({
         <td className="px-3 py-2 text-sm text-zinc-900 font-medium">
           <span className="inline-flex items-center gap-1">
             {expanded ? (
-              <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
+              <Icon name="expand_more" size={14} className="text-zinc-400" />
             ) : (
-              <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
+              <Icon name="chevron_right" size={14} className="text-zinc-400" />
             )}
             {job.name}
           </span>
@@ -294,7 +294,7 @@ export function SchedulerJobRow({
               className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-zinc-300 text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 disabled:cursor-wait transition-colors"
               data-testid={`trigger-${job.id}`}
             >
-              {triggering ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+              {triggering ? <Icon name="progress_activity" size={12} className="animate-spin" /> : null}
               Run
             </button>
           )}
@@ -373,7 +373,7 @@ export function SchedulerJobRow({
                     className="text-xs text-zinc-400 hover:text-zinc-600 disabled:opacity-50 transition-colors"
                     title="Refresh run history"
                   >
-                    {refreshing ? <Loader2 className="w-3 h-3 animate-spin inline" /> : '↻ Refresh'}
+                    {refreshing ? <Icon name="progress_activity" size={12} className="animate-spin" /> : '↻ Refresh'}
                   </button>
                 </div>
                 {runHistory.length === 0 ? (

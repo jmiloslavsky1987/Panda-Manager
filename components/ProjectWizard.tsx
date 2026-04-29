@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Check } from 'lucide-react'
+import { Icon } from './Icon'
 import {
   Dialog,
   DialogContent,
@@ -161,7 +161,7 @@ export function ProjectWizard({ open, onOpenChange }: ProjectWizardProps) {
                       )}
                       aria-current={isActive ? 'step' : undefined}
                     >
-                      {isCompleted ? <Check className="w-4 h-4" /> : wizStep.num}
+                      {isCompleted ? <Icon name="check" size={16} /> : wizStep.num}
                     </div>
                     <span
                       className={cn(

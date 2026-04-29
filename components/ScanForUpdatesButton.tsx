@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { RefreshCw, ChevronDown } from 'lucide-react'
+import { Icon } from './Icon'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -176,7 +176,7 @@ export function ScanForUpdatesButton({ projectId }: ScanForUpdatesButtonProps) {
   if (scanning) {
     return (
       <div className="flex items-center gap-2 text-sm text-zinc-500">
-        <RefreshCw className="h-4 w-4 animate-spin" />
+        <Icon name="refresh" size={16} className="animate-spin" />
         <span>{scanProgress || 'Scanning…'}</span>
       </div>
     )
@@ -193,9 +193,9 @@ export function ScanForUpdatesButton({ projectId }: ScanForUpdatesButtonProps) {
         onClick={() => setOpen(prev => !prev)}
         disabled={scanning}
       >
-        <RefreshCw className="h-3.5 w-3.5" />
+        <Icon name="refresh" size={14} />
         Scan for Updates
-        <ChevronDown className="h-3 w-3 ml-0.5" />
+        <Icon name="expand_more" size={12} className="ml-0.5" />
       </Button>
 
       {open && (

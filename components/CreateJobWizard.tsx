@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Check } from 'lucide-react'
+import { Icon } from './Icon'
 import { toast } from 'sonner'
 import {
   Dialog,
@@ -273,7 +273,7 @@ export function CreateJobWizard({
                       aria-current={isActive && !isUnavailable ? 'step' : undefined}
                     >
                       {isCompleted && !isUnavailable ? (
-                        <Check className="w-4 h-4" />
+                        <Icon name="check" size={16} />
                       ) : (
                         wizStep.num
                       )}

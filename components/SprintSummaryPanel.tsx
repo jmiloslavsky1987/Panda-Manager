@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { ChevronDown, ChevronRight, RefreshCw } from 'lucide-react';
+import { Icon } from './Icon';
 import { toast } from 'sonner';
 
 interface SprintSummaryPanelProps {
@@ -51,7 +51,7 @@ export function SprintSummaryPanel({ projectId }: SprintSummaryPanelProps) {
           className="flex items-center gap-1.5 text-sm font-medium text-zinc-700 hover:text-zinc-900"
           data-testid="sprint-summary-toggle"
         >
-          {open ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+          {open ? <Icon name="expand_more" size={16} /> : <Icon name="chevron_right" size={16} />}
           Sprint Summary
           {generatedAt && (
             <span className="text-xs text-zinc-400 font-normal ml-1">
@@ -65,7 +65,7 @@ export function SprintSummaryPanel({ projectId }: SprintSummaryPanelProps) {
           className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-800 disabled:opacity-50"
           data-testid="sprint-summary-refresh"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+          <Icon name="refresh" size={14} className={loading ? 'animate-spin' : ''} />
           {loading ? 'Generating...' : 'Refresh'}
         </button>
       </div>

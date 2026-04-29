@@ -1,6 +1,6 @@
 'use client'
 
-import { Loader2, CheckCircle, XCircle, Circle } from 'lucide-react'
+import { Icon } from './Icon'
 
 interface StepperFile {
   name: string
@@ -17,7 +17,7 @@ function StatusBadge({ status }: { status: StepperFile['status'] }) {
   if (status === 'extracting') {
     return (
       <span className="flex items-center gap-1 text-xs text-blue-600 font-medium">
-        <Loader2 className="h-3 w-3 animate-spin" />
+        <Icon name="progress_activity" size={12} className="animate-spin" />
         Extracting
       </span>
     )
@@ -25,7 +25,7 @@ function StatusBadge({ status }: { status: StepperFile['status'] }) {
   if (status === 'done') {
     return (
       <span className="flex items-center gap-1 text-xs text-green-600 font-medium">
-        <CheckCircle className="h-3 w-3" />
+        <Icon name="task_alt" size={12} />
         Done
       </span>
     )
@@ -33,7 +33,7 @@ function StatusBadge({ status }: { status: StepperFile['status'] }) {
   if (status === 'error') {
     return (
       <span className="flex items-center gap-1 text-xs text-red-600 font-medium">
-        <XCircle className="h-3 w-3" />
+        <Icon name="cancel" size={12} />
         Error
       </span>
     )
@@ -41,7 +41,7 @@ function StatusBadge({ status }: { status: StepperFile['status'] }) {
   // pending
   return (
     <span className="flex items-center gap-1 text-xs text-zinc-400 font-medium">
-      <Circle className="h-3 w-3" />
+      <Icon name="radio_button_unchecked" size={12} />
       Pending
     </span>
   )
