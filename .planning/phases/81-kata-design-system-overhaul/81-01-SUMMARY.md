@@ -124,6 +124,18 @@ Each task was committed atomically:
 - Plan 81-02 (Command Rail rebuild) can use `data-theme="dark"` isolation pattern now available in kata-tokens.css
 - Plan 81-03 (lucide → Icon migration) can use Icon.tsx wrapper; icon-migration Test 3 will turn GREEN after Plan 03 completes
 
+## Self-Check: PASSED
+
+- FOUND: components/kata-tokens.css
+- FOUND: app/globals.css (updated with @import kata-tokens.css + @theme inline aliases)
+- FOUND: app/layout.tsx (updated with fonts, CDN link, flash-prevention, ThemeProvider)
+- FOUND: components/Icon.tsx
+- FOUND: components/ThemeProvider.tsx
+- FOUND: 81-01-SUMMARY.md
+- FOUND commit: 716ada15 (feat(81-01): kata token foundation)
+- Tests: token-import 3/3 GREEN, theme-persistence 3/3 GREEN, icon-migration 2/3 GREEN (Test 3 intentionally RED)
+- Build: compiled successfully in 10.1s
+
 ---
 *Phase: 81-kata-design-system-overhaul*
 *Completed: 2026-04-29*
