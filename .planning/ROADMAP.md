@@ -311,6 +311,19 @@ Plans:
 - [ ] 81-05-PLAN.md — Project Workspace rebuild: KPI strip, page-bar wiring (KDS-06)
 - [ ] 81-06-PLAN.md — Human verification checkpoint: all features + regression check (KDS-07, KDS-08)
 
+### Phase 82: Chat Write Operations
+**Goal**: The project chat can perform full CRUD operations on all 13 entity types (actions, milestones, risks, stakeholders, tasks, team pathways, team onboarding status, business outcomes, E2E workflows + steps, focus areas, architecture integrations, architecture nodes) via Vercel AI SDK tool use with an inline confirmation card UX — color-coded by operation type, delete requires type-to-confirm friction, batch mutations produce one card per record, and all writes require user approval before any DB change occurs
+**Depends on**: Phase 81
+**Plans**: 6 plans across 5 waves
+
+Plans:
+- [ ] 82-00-PLAN.md — Wave 0: test scaffolds + arch-nodes POST route + arch-node PATCH schema extension
+- [ ] 82-01-PLAN.md — Project tracking tools: actions, milestones, risks, stakeholders, tasks (Wave 2)
+- [ ] 82-02-PLAN.md — Teams + Architecture tools: all sub-entities (Wave 2, parallel with 82-01)
+- [ ] 82-03-PLAN.md — tools/index.ts aggregator + MutationConfirmCard component (Wave 3)
+- [ ] 82-04-PLAN.md — Chat route extension + ChatPanel tool-part rendering (Wave 4)
+- [ ] 82-05-PLAN.md — Human verification checkpoint (Wave 5)
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -321,17 +334,8 @@ Plans:
 | 78. AI & Content | 2/2 | Complete    | 2026-04-23 |
 | 79. Core Calendar + Daily Prep | 6/6 | Complete    | 2026-04-28 |
 | 80. Advanced Features | 7/7 | Complete    | 2026-04-28 |
-| 81. Kata Design System Visual Overhaul | 6/7 | Complete    | 2026-04-29 |
-
-### Phase 82: Chat write operations — full CRUD for actions, milestones, risks, teams, and architecture nodes with confirmation UX
-
-**Goal:** [To be planned]
-**Requirements**: TBD
-**Depends on:** Phase 81
-**Plans:** 7/7 plans complete
-
-Plans:
-- [ ] TBD (run /gsd:plan-phase 82 to break down)
+| 81. Kata Design System Visual Overhaul | 6/7 | In Progress | — |
+| 82. Chat Write Operations | 0/6 | Planned     | — |
 
 ---
-*Last updated: 2026-04-28 — Phase 81 planned: 7 plans across 5 waves (Wave 0 + token + chrome + icons + screens + verification)*
+*Last updated: 2026-04-29 — Phase 82 planned: 6 plans across 5 waves (Wave 0 scaffolds + 2 parallel tool waves + card + wiring + verification)*
