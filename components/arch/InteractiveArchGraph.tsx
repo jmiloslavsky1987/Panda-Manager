@@ -119,11 +119,11 @@ function Arrow() {
 }
 
 function ConsoleNode({ track }: { track: string }) {
-  const isADR = track === 'ADR'
-  const isBiggy = track.includes('Biggy') || track.includes('AI')
-  const icon = isADR ? '🐼' : isBiggy ? '🦉' : '💻'
-  const label = isADR ? 'BigPanda Console' : isBiggy ? 'Biggy AI Console' : 'Console'
-  const bgColor = isADR ? 'bg-zinc-900' : isBiggy ? 'bg-amber-500' : 'bg-zinc-700'
+  const isADR = track.includes('ADR')
+  const isAI = track.includes('AI') || track.includes('Biggy')
+  const icon = isADR ? '🐼' : isAI ? '🦉' : '💻'
+  const label = isADR ? 'BigPanda Console' : isAI ? 'Biggy AI Console' : 'Console'
+  const bgColor = isADR ? 'bg-zinc-900' : isAI ? 'bg-amber-500' : 'bg-zinc-700'
 
   return (
     <div className="flex flex-col items-center justify-start pt-2">
@@ -191,9 +191,9 @@ function phaseHeaderStyle(phase: string): { wrapper: string; text: string } {
   }
   if (
     phase === 'Incident Intelligence' ||
-    phase === 'Knowledge Sources (Ingested)' ||
-    phase === 'Real-Time Query Sources' ||
-    phase === 'Biggy Capabilities'
+    phase === 'Knowledge Sources' ||
+    phase === 'Real-Time Query' ||
+    phase === 'AI Capabilities'
   ) {
     return { wrapper: 'bg-amber-50 border-amber-200', text: 'text-amber-700' }
   }
@@ -321,8 +321,8 @@ function TrackPipeline({
   onDragEnd: (event: DragEndEvent, trackId: number) => void
   sensors: ReturnType<typeof useSensors>
 }) {
-  const isADR = trackData.name === 'ADR'
-  const isBiggy = trackData.name.includes('Biggy')
+  const isADR = trackData.name.includes('ADR')
+  const isBiggy = trackData.name.includes('Biggy') || trackData.name.includes('AI')
   const borderClass = isADR ? 'border-l-blue-600' : isBiggy ? 'border-l-amber-500' : 'border-l-zinc-400'
   const labelClass = isADR ? 'text-blue-700' : isBiggy ? 'text-amber-700' : 'text-zinc-600'
 
