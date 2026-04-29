@@ -120,6 +120,10 @@ Progress: [██████████] 98%
 - [81-03] WbsNode used lucide size prop syntax directly (size={16}) — Icon uses same size prop, direct 1:1 replacement with no className conversion needed
 - [81-03] Icon animate-spin: Tailwind animation class passed via Icon's className prop works on the underlying <span> element
 - [81-03] icon-migration Test 3 now GREEN — lucide-react fully removed from all 22 tracked files (20 from Plan 03 + 2 Sidebar files from Plan 02)
+- [81-04] PageBarTitleSetter pattern: thin 'use client' island calling usePageBar().setTitle in useEffect — enables server pages to inject title into global PageBar (separate from WorkspacePageBarConfigurator which renders its own visible bar)
+- [81-04] getPortfolioBriefingData uses raw sql`` for multi-table queries with conditional array injection (accessibleProjectIds null for global admin) — Drizzle inArray() not usable when list may be null
+- [81-04] Icon component lacks style prop — color overrides wrapped in parent <span style> rather than adding style to Icon API; same pattern for future components
+- [81-04] needsAttention 'red-health' derived from open critical risks (consistent with computeHealth formula); 'stale' for no engagement in 7 days
 - [81-05] WorkspacePageBarConfigurator renders visible 44px bar directly — global PageBar suppresses on /customer/ routes; context injection still done for any future consumers
 - [81-05] WorkspaceKpiStrip uses openRiskCount (not openRisks) — actual ProjectWithHealth field name; currentPhase/percentComplete are optional overrides (not on base type)
 
