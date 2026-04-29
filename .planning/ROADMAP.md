@@ -300,15 +300,16 @@ Plans:
   6. Project Workspace is rebuilt to spec: 44px page-bar with project name + health badge, tabs row, 5-column KPI strip with JBM 28px numerals, and 2-column focus/risks grid
   7. All existing tabs and functionality (Overview, Plan, Gantt, Stakeholders, Risks, Decisions, Artifacts, Skills, Time, Daily Prep, Settings) work identically after the visual rebuild; no regressions in data display, form submission, or navigation
   8. Theme toggle persists to localStorage and switches `<html class="dark">` on the main canvas only; accent set to Indigo (#5B5BFF) as default
-**Plans**: TBD — to be planned before execution; recommended 5 waves matching the migration order: tokens → type/icons → chrome → screens → polish
+**Plans**: 7 plans across 5 waves
 
 Plans:
-- [ ] 81-00-PLAN.md — Token layer: kata-tokens.css import, shadcn token aliasing, Tailwind palette override (KDS-01)
-- [ ] 81-01-PLAN.md — Type & icons: Inter + JBM fonts, lucide-react → Material Symbols replacement (KDS-02)
-- [ ] 81-02-PLAN.md — Chrome rebuild: Command Rail, page-bar, theme toggle, light/dark behavior (KDS-03, KDS-04)
-- [ ] 81-03-PLAN.md — Portfolio Dashboard rebuild: hero band, AI briefing strip, project grid (KDS-05)
-- [ ] 81-04-PLAN.md — Project Workspace rebuild: page-bar, tabs, KPI strip, focus/risks grid (KDS-06)
-- [ ] 81-05-PLAN.md — Regression verification: all existing features smoke-tested after visual rebuild (KDS-07, KDS-08)
+- [ ] 81-00-PLAN.md — Wave 0 test scaffolds (KDS-01 through KDS-08 automated gates)
+- [ ] 81-01-PLAN.md — Token layer: kata-tokens.css, globals.css aliasing, Icon.tsx, ThemeProvider.tsx (KDS-01, KDS-02, KDS-08)
+- [ ] 81-02-PLAN.md — Chrome rebuild: Command Rail, PageBar, PageBarContext, theme toggle (KDS-03, KDS-04, KDS-08)
+- [ ] 81-03-PLAN.md — Icon migration: lucide-react → Material Symbols across all 22 files (KDS-02, KDS-07)
+- [ ] 81-04-PLAN.md — Portfolio Dashboard rebuild: hero band, briefing strip, project grid (KDS-05)
+- [ ] 81-05-PLAN.md — Project Workspace rebuild: KPI strip, page-bar wiring (KDS-06)
+- [ ] 81-06-PLAN.md — Human verification checkpoint: all features + regression check (KDS-07, KDS-08)
 
 ## Progress
 
@@ -320,7 +321,7 @@ Plans:
 | 78. AI & Content | 2/2 | Complete    | 2026-04-23 |
 | 79. Core Calendar + Daily Prep | 6/6 | Complete    | 2026-04-28 |
 | 80. Advanced Features | 7/7 | Complete    | 2026-04-28 |
-| 81. Kata Design System Visual Overhaul | 0/6 | Not started | - |
+| 81. Kata Design System Visual Overhaul | 0/7 | Not started | - |
 
 ---
-*Last updated: 2026-04-28 — Phase 81 added: Kata Design System visual overhaul, 6 plans across 5 waves*
+*Last updated: 2026-04-28 — Phase 81 planned: 7 plans across 5 waves (Wave 0 + token + chrome + icons + screens + verification)*
