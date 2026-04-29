@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: completed
-stopped_at: Phase 82 plan 00 complete
-last_updated: "2026-04-29T18:55:00.000Z"
+stopped_at: Completed 82-01-PLAN.md
+last_updated: "2026-04-29T18:54:57.584Z"
 last_activity: 2026-04-29 — Phase 82 plan 00 complete (Wave 0 test scaffolds + arch-nodes POST/PATCH gap fixes)
 progress:
   total_phases: 8
   completed_phases: 7
   total_plans: 40
   completed_plans: 36
-  percent: 97
+  percent: 98
 ---
 
 # Project State
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 82 of 82 (Chat Write Operations — plan 00 of 6 done)
-Status: 82-00 complete — Wave 0 RED test scaffolds created (chat-tools.test.ts, mutation-confirm-card.test.tsx, arch-node-post.test.ts); arch-nodes POST route created; PATCH extended to accept name/notes with Zod refine; Tests 8-9 GREEN, Tests 1-7 RED. Build clean.
-Last activity: 2026-04-29 — Phase 82 plan 00 complete (Wave 0 test scaffolds + arch-nodes POST/PATCH gap fixes)
+Phase: 82 of 82 (Chat Write Operations — plan 01 of 6 done)
+Status: 82-01 complete — 15 write tool factories across 5 entities (actions, milestones, risks, stakeholders, tasks) with needsApproval: true; allWriteTools(projectId) aggregator in tools/index.ts; chat-tools.test.ts 4/4 GREEN; build clean.
+Last activity: 2026-04-29 — Phase 82 plan 01 complete (write tool factories for 5 project entities)
 
 Progress: [██████████] 98%
 
@@ -134,6 +134,9 @@ Progress: [██████████] 98%
 - [82-00] POST /arch-nodes validates track ownership with AND(eq(id, track_id), eq(project_id, projectId)) — prevents cross-project node creation
 - [82-00] PATCH /arch-nodes/[nodeId] extended with project ownership check (403 if node.project_id !== route projectId)
 - [82-00] Stub-pattern for Wave 0 RED tests: direct import of not-yet-existing module produces MODULE_NOT_FOUND — clean failure for CI gating
+- [82-01] actionStatusEnum in DB is 'open|in_progress|completed|cancelled' (plan specified 'closed|overdue') — corrected in actions-tools.ts; always verify enum values against db/schema.ts
+- [82-01] Tool factory pattern: (projectId: number) => tool({ needsApproval: true, execute: async () => { dynamic import('@/db'); ownership check; DB call } }) — established for all 15 write tools
+- [82-01] Stakeholders table has no external_id column; tasks table has no external_id and status is plain text — do not add external_id to insert for these entities
 
 ### Blockers/Concerns
 
@@ -141,6 +144,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-29T18:55:00.000Z
-Stopped at: Completed 82-00-PLAN.md
-Resume file: .planning/phases/82-chat-write-operations-tool-use-mutations-for-actions-milestones-risks-teams-and-architecture-nodes-with-confirmation-ux/82-01-PLAN.md
+Last session: 2026-04-29T18:54:57.581Z
+Stopped at: Completed 82-01-PLAN.md
+Resume file: None
