@@ -54,14 +54,14 @@ Kata Design System visual overhaul — Command Workspace direction. All function
 
 ### KDS: Kata Design System
 
-- [ ] **KDS-01**: Kata token CSS variables (`kata-tokens.css`) are imported into the app; shadcn component tokens are aliased to Kata equivalents; no Tailwind default palette colors remain in primary UI surfaces
-- [ ] **KDS-02**: Inter is the app's body typeface; JetBrains Mono is applied to all numerals, IDs, dates, and durations; lucide-react is fully replaced with Material Symbols Outlined 400
-- [ ] **KDS-03**: The left sidebar is rebuilt as a 240px dark Command Rail (always dark, independent of theme): logo + "Panda Manager" header, ⌘K search pill, top nav links (Portfolio / Today / Daily Prep), live project list with RAG dot + go-live date in JBM, user footer with settings icon
-- [ ] **KDS-04**: A 44px page-bar renders at the top of every page with breadcrumb/title on the left and contextual CTAs on the right; theme toggle switches `<html class="dark">` on the main canvas only — the command rail stays dark in light mode
-- [ ] **KDS-05**: Portfolio Dashboard is rebuilt to spec: hero stat band (project count in JBM 64px, health breakdown, this-week metrics), AI briefing strip (3-column card grid with tone-colored borders), 2-column project grid (health-accented cards with 3px left border, metric strip, progress bar)
-- [ ] **KDS-06**: Project Workspace is rebuilt to spec: 44px page-bar with project name + health badge, tab row, 5-column KPI strip with JBM 28px numerals (tone-tinted for risky values), 2-column focus/risks grid
-- [ ] **KDS-07**: All existing tabs and functionality (Overview, Plan, Gantt, Stakeholders, Risks, Decisions, Artifacts, Skills, Time, Daily Prep, Settings) work identically after the visual rebuild; no regressions in data display, forms, or navigation
-- [ ] **KDS-08**: Default accent is Indigo (`#5B5BFF`); theme and accent preferences persist to localStorage; dark mode sets canvas to gray-950, container to gray-900
+- [x] **KDS-01**: Kata token CSS variables (`kata-tokens.css`) are imported into the app; shadcn component tokens are aliased to Kata equivalents; no Tailwind default palette colors remain in primary UI surfaces
+- [x] **KDS-02**: Inter is the app's body typeface; JetBrains Mono is applied to all numerals, IDs, dates, and durations; lucide-react is fully replaced with Material Symbols Outlined 400
+- [x] **KDS-03**: The left sidebar is rebuilt as a 240px dark Command Rail (always dark, independent of theme): logo + "Panda Manager" header, ⌘K search pill, top nav links (Portfolio / Today / Daily Prep), live project list with RAG dot + go-live date in JBM, user footer with settings icon
+- [x] **KDS-04**: A 44px page-bar renders at the top of every page with breadcrumb/title on the left and contextual CTAs on the right; theme toggle switches `<html class="dark">` on the main canvas only — the command rail stays dark in light mode
+- [x] **KDS-05**: Portfolio Dashboard is rebuilt to spec: hero stat band (project count in JBM 64px, health breakdown, this-week metrics), AI briefing strip (3-column card grid with tone-colored borders), 2-column project grid (health-accented cards with 3px left border, metric strip, progress bar)
+- [x] **KDS-06**: Project Workspace is rebuilt to spec: 44px page-bar with project name + health badge, tab row, 5-column KPI strip with JBM 28px numerals (tone-tinted for risky values), 2-column focus/risks grid
+- [x] **KDS-07**: All existing tabs and functionality (Overview, Plan, Gantt, Stakeholders, Risks, Decisions, Artifacts, Skills, Time, Daily Prep, Settings) work identically after the visual rebuild; no regressions in data display, forms, or navigation
+- [x] **KDS-08**: Default accent is Indigo (`#5B5BFF`); theme and accent preferences persist to localStorage; dark mode sets canvas to gray-950, container to gray-900
 
 ## v2 Requirements
 
@@ -111,14 +111,14 @@ Deferred to future milestone. Tracked but not in current roadmap.
 | OUT-01 | Phase 80 | Complete |
 | AVAIL-01 | Phase 80 | Complete |
 | SCHED-01 | Phase 80 | Complete |
-| KDS-01 | Phase 81 | Pending |
-| KDS-02 | Phase 81 | Pending |
-| KDS-03 | Phase 81 | Pending |
-| KDS-04 | Phase 81 | Pending |
-| KDS-05 | Phase 81 | Pending |
-| KDS-06 | Phase 81 | Pending |
-| KDS-07 | Phase 81 | Pending |
-| KDS-08 | Phase 81 | Pending |
+| KDS-01 | Phase 81 | Complete |
+| KDS-02 | Phase 81 | Complete |
+| KDS-03 | Phase 81 | Complete |
+| KDS-04 | Phase 81 | Complete |
+| KDS-05 | Phase 81 | Complete |
+| KDS-06 | Phase 81 | Complete |
+| KDS-07 | Phase 81 | Complete |
+| KDS-08 | Phase 81 | Complete |
 
 **Coverage:**
 - v10 requirements: 17 total (Phases 79–80)

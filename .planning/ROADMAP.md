@@ -321,7 +321,7 @@ Plans:
 | 78. AI & Content | 2/2 | Complete    | 2026-04-23 |
 | 79. Core Calendar + Daily Prep | 6/6 | Complete    | 2026-04-28 |
 | 80. Advanced Features | 7/7 | Complete    | 2026-04-28 |
-| 81. Kata Design System Visual Overhaul | 0/7 | Not started | - |
+| 81. Kata Design System Visual Overhaul | 2/7 | In Progress|  |
 
 ---
 *Last updated: 2026-04-28 — Phase 81 planned: 7 plans across 5 waves (Wave 0 + token + chrome + icons + screens + verification)*

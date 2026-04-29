@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v10.0
-milestone_name: — Calendar Integration & Daily Prep
-status: verifying
-stopped_at: Phase 81 context gathered
-last_updated: "2026-04-29T02:42:11.231Z"
-last_activity: 2026-04-28 — Phase 80 plan 06 complete (human verification — all features approved)
+milestone: v11.0
+milestone_name: Kata Design System Visual Overhaul
+status: in-progress
+stopped_at: Completed 81-kata-design-system-overhaul 81-01-PLAN.md
+last_updated: "2026-04-29T03:30:08.335Z"
+last_activity: 2026-04-29 — Phase 81 plan 01 complete (token foundation, Icon.tsx, ThemeProvider.tsx)
 progress:
   total_phases: 7
   completed_phases: 6
-  total_plans: 27
-  completed_plans: 27
+  total_plans: 34
+  completed_plans: 29
   percent: 100
 ---
 
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 80 of 80 (Advanced Features — plan 06 of 6 done — PHASE COMPLETE)
-Status: 80-06 complete — All four Phase 80 features (RECUR-01, OUT-01, AVAIL-01, SCHED-01) verified by human. v10.0 COMPLETE.
-Last activity: 2026-04-28 — Phase 80 plan 06 complete (human verification — all features approved)
+Phase: 81 of 81 (Kata Design System Visual Overhaul — plan 01 of 7 done)
+Status: 81-01 complete — Token foundation, Icon.tsx, ThemeProvider.tsx, flash-prevention script delivered. All 3 token-import tests GREEN. All 3 theme-persistence tests GREEN. Production build clean.
+Last activity: 2026-04-29 — Phase 81 plan 01 complete (token foundation, Icon.tsx, ThemeProvider.tsx)
 
-Progress: [██████████] 100%
+Progress: [█████████▓] 97%
 
 ## v10.0 Roadmap Summary
 
@@ -105,6 +105,14 @@ Progress: [██████████] 100%
 - [80-05] Export All uses .printing-all CSS class to force brief section visibility — no React state expansion needed before window.print()
 - [80-05] afterprint cleanup uses { once: true } listener — removes body classes after print dialog closes without manual removeEventListener
 - [80-06] All four Phase 80 features (RECUR-01, OUT-01, AVAIL-01, SCHED-01) approved by human in-browser verification — v10.0 Calendar Integration & Daily Prep milestone CLOSED
+- [81-00] Wave 0 KDS test scaffolds created in tests/kds/ (gitignored); source-scan pattern applied from Phase 79; pre-existing implementation stubs (kata-tokens.css, Icon.tsx, ThemeProvider.tsx) committed as 716ada15 — some Wave 0 tests GREEN immediately
+- [81-01] kata-tokens.css two-layer architecture: palette :root vars + semantic .light/:root:not(.dark) + .dark vars; components never reference palette tokens directly
+- [81-01] [data-theme="dark"] CSS attribute selector on Command Rail <aside> provides pure-CSS dark isolation independent of <html class="dark"> page toggle
+- [81-01] ThemeProvider wraps AuthProvider children (not root <html>) — clean client component boundary while AuthProvider remains server-capable
+- [81-01] Flash-prevention inline script placed FIRST in <head> before any <link> tags — guarantees execution before CSS applies, prevents FOUC
+- [81-01] kata-theme localStorage key is the single source of truth for theme preference across ThemeProvider and flash-prevention script
+- [81-01] Icon component API: <Icon name="search" size={16} /> with fontVariationSettings for Material Symbols weight axis; never mix text + icon in same <span>
+- [81-01] icon-migration Test 3 (lucide removal across 22 files) intentionally RED — lucide migration is Plan 03 scope
 
 ### Blockers/Concerns
 
@@ -112,6 +120,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-29T02:42:11.222Z
-Stopped at: Phase 81 context gathered
-Resume file: .planning/phases/81-kata-design-system-overhaul/81-CONTEXT.md
+Last session: 2026-04-29T03:30:08.333Z
+Stopped at: Completed 81-kata-design-system-overhaul 81-01-PLAN.md
+Resume file: None
