@@ -321,7 +321,17 @@ Plans:
 | 78. AI & Content | 2/2 | Complete    | 2026-04-23 |
 | 79. Core Calendar + Daily Prep | 6/6 | Complete    | 2026-04-28 |
 | 80. Advanced Features | 7/7 | Complete    | 2026-04-28 |
-| 81. Kata Design System Visual Overhaul | 6/7 | In Progress|  |
+| 81. Kata Design System Visual Overhaul | 6/7 | Complete    | 2026-04-29 |
+
+### Phase 82: Chat write operations — full CRUD for actions, milestones, risks, teams, and architecture nodes with confirmation UX
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 81
+**Plans:** 7/7 plans complete
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 82 to break down)
 
 ---
 *Last updated: 2026-04-28 — Phase 81 planned: 7 plans across 5 waves (Wave 0 + token + chrome + icons + screens + verification)*

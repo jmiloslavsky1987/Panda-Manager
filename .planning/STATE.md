@@ -4,13 +4,13 @@ milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: completed
 stopped_at: Completed 81-kata-design-system-overhaul 81-05-PLAN.md
-last_updated: "2026-04-29T03:54:39.511Z"
+last_updated: "2026-04-29T16:22:56.955Z"
 last_activity: 2026-04-29 — Phase 81 plan 05 complete (workspace KPI strip + page-bar wiring)
 progress:
-  total_phases: 7
-  completed_phases: 6
+  total_phases: 8
+  completed_phases: 7
   total_plans: 34
-  completed_plans: 33
+  completed_plans: 34
   percent: 98
 ---
 
@@ -59,6 +59,10 @@ Progress: [██████████] 98%
 - Code root: `/Users/jmiloslavsky/Documents/Panda-Manager`
 
 ## Accumulated Context
+
+### Roadmap Evolution
+
+- Phase 82 added: Chat write operations — full CRUD (create, update, delete) for actions, milestones, risks, teams, and architecture nodes with confirmation UX
 
 ### Key Decisions (carry-forward)
 
