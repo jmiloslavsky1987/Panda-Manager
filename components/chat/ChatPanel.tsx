@@ -1,7 +1,7 @@
 'use client'
 
 import { useChat } from '@ai-sdk/react'
-import { DefaultChatTransport, isToolUIPart } from 'ai'
+import { DefaultChatTransport, isToolUIPart, lastAssistantMessageIsCompleteWithApprovalResponses } from 'ai'
 import { useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { ChatMessage } from './ChatMessage'
@@ -34,6 +34,7 @@ export function ChatPanel({ projectId, initialContext }: ChatPanelProps) {
       headers: { 'Content-Type': 'application/json' },
       body: { context: initialContext, activeTab },
     }),
+    sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses,
   })
 
   const handleSend = () => {
