@@ -52,10 +52,13 @@ created: 2026-04-29
 
 ## Wave 0 Requirements
 
-- [ ] `__tests__/api/arch-nodes.test.ts` — stubs for POST arch-node route
-- [ ] `__tests__/chat/tool-definitions.test.ts` — stubs for all write tool schemas
-- [ ] `__tests__/chat/chat-route-tools.test.ts` — stubs for streamText tool integration
-- [ ] `__tests__/chat/confirmation-card.test.tsx` — stubs for ConfirmationCard component
+These paths match exactly what 82-00-PLAN.md creates:
+
+- [ ] `tests/chat/chat-tools.test.ts` — RED stubs for tool definition existence, needsApproval, key names
+- [ ] `tests/chat/mutation-confirm-card.test.tsx` — RED stubs for MutationConfirmCard rendering and delete friction UX
+- [ ] `tests/teams-arch/arch-node-post.test.ts` — stubs for POST arch-node route (GREEN after Steps 4-5) and PATCH name extension
+- [ ] New tests in `tests/chat/chat-route.test.ts` — RED stubs for streamText tools + maxSteps and activeTab injection (written in 82-04 Task 1 Step 1)
+- [ ] New tests in `tests/chat/chat-panel.test.tsx` — RED stubs for MutationConfirmCard rendering when isToolUIPart returns true with state approval-requested (written in 82-04 Task 2 Step 1)
 
 *Existing vitest infrastructure covers the framework; only test stubs need creation.*
 
