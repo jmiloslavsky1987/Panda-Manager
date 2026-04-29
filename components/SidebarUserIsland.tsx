@@ -1,6 +1,6 @@
 'use client';
 import { useSession, signOut } from '@/lib/auth-client';
-import { LogOut } from 'lucide-react';
+import { Icon } from './Icon';
 import { useRouter } from 'next/navigation';
 
 export function SidebarUserIsland() {
@@ -9,16 +9,22 @@ export function SidebarUserIsland() {
   const name = session?.user?.name ?? '...';
 
   return (
-    <div className="px-4 py-3 border-t border-zinc-700 flex items-center justify-between shrink-0">
-      <span className="text-sm text-zinc-300 truncate">{name}</span>
+    <div
+      className="px-4 py-3 border-t flex items-center justify-between shrink-0"
+      style={{ borderColor: 'var(--kata-gray-800)' }}
+    >
+      <span className="text-sm truncate" style={{ color: 'rgba(255,255,255,0.7)' }}>
+        {name}
+      </span>
       <button
         onClick={() =>
           signOut({ fetchOptions: { onSuccess: () => router.push('/login') } })
         }
-        className="text-zinc-400 hover:text-zinc-100 transition-colors"
+        className="transition-colors"
+        style={{ color: 'rgba(255,255,255,0.4)' }}
         title="Log out"
       >
-        <LogOut className="w-4 h-4" />
+        <Icon name="logout" size={16} />
       </button>
     </div>
   );

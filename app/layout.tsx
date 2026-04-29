@@ -2,10 +2,10 @@ import type { Metadata } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { Sidebar } from '../components/Sidebar';
-import { GlobalProjectSearchBar } from '../components/GlobalProjectSearchBar';
 import { AuthProvider } from '../components/AuthProvider';
 import { AppChrome } from '../components/AppChrome';
-import { HeaderBar } from '../components/HeaderBar';
+import { PageBarProvider } from '../components/PageBarContext';
+import { PageBar } from '../components/PageBar';
 import { ThemeProvider } from '../components/ThemeProvider';
 import { Toaster } from 'sonner';
 
@@ -50,7 +50,7 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"
         />
       </head>
-      <body className="h-full flex bg-zinc-50">
+      <body className="h-full flex">
         <AuthProvider>
           <ThemeProvider>
             {/* AppChrome accepts server components as children — composition pattern required
@@ -58,13 +58,12 @@ export default function RootLayout({
             <AppChrome>
               <Sidebar />
             </AppChrome>
-            <main className="ml-60 flex-1 min-h-screen overflow-y-auto">
-              {/* HeaderBar suppresses the search header on /login and /setup routes */}
-              <HeaderBar>
-                <GlobalProjectSearchBar />
-              </HeaderBar>
-              {children}
-            </main>
+            <PageBarProvider>
+              <main className="ml-60 flex-1 min-h-screen overflow-y-auto">
+                <PageBar />
+                {children}
+              </main>
+            </PageBarProvider>
             <Toaster position="bottom-right" richColors />
           </ThemeProvider>
         </AuthProvider>
