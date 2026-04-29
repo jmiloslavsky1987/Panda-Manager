@@ -8,6 +8,7 @@ import { streamText, convertToModelMessages } from 'ai';
 import { anthropic } from '@ai-sdk/anthropic';
 import type { UIMessage } from 'ai';
 import { NextRequest } from "next/server";
+import { allWriteTools } from './tools';
 
 // MANDATORY for SSE streaming in Next.js App Router
 export const dynamic = 'force-dynamic';
@@ -39,12 +40,14 @@ export async function POST(
   if (redirectResponse) return redirectResponse;
 
   // Parse request body
-  let body: { messages: UIMessage[] };
+  let body: { messages: UIMessage[]; activeTab?: string };
   try {
     body = await req.json();
   } catch {
     return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
+
+  const activeTab = body.activeTab ?? 'unknown';
 
   // Build project context snapshot
   const projectContext = await buildChatContext(numericId);
@@ -63,7 +66,17 @@ CRITICAL CONSTRAINTS:
 ${projectContext}
 </project_data>
 
-Answer questions helpfully and conversationally, but always ground your responses in the data above.`;
+Answer questions helpfully and conversationally, but always ground your responses in the data above.
+
+WRITE OPERATIONS:
+You have tools to create, update, and delete project records. Rules:
+1. If the user's intent to mutate is ambiguous, ask ONE clarifying question before proposing a mutation
+2. When the user is on a specific tab, default to that tab's entities if entity type is unspecified
+3. After a confirmed mutation, reply with a short status: "✓ [EntityType] created: [name/description]" or "Cancelled — no changes made."
+4. Never execute a write tool based on implicit assumption — surface a confirmation card first (needsApproval handles this automatically)
+5. Batch mutations are allowed: propose multiple cards in one turn for requests like "mark all Sarah's actions as done"
+
+Current workspace tab: ${activeTab}`;
 
   // Stream response using Vercel AI SDK + Anthropic
   const result = streamText({
@@ -71,6 +84,8 @@ Answer questions helpfully and conversationally, but always ground your response
     system: systemPrompt,
     messages: await convertToModelMessages(body.messages),
     temperature: 0.3, // Lower temperature reduces hallucination risk
+    tools: allWriteTools(numericId),
+    maxSteps: 3,
   });
 
   // Return UI message stream response (compatible with useChat hook)
