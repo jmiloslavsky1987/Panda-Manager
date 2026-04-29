@@ -20,25 +20,34 @@ function getEntityLabel(partType: string): string {
   return toolName.replace(/^(create_|update_|delete_)/, '').replace(/_/g, ' ')
 }
 
-// ─── Color mapping using kata CSS variable names ───────────────────────────────
-// The className literals make the kata token names discoverable in rendered HTML.
+// ─── Color tokens ──────────────────────────────────────────────────────────────
 
-const OP_BADGE: Record<OpType, { label: string; colorClass: string; borderStyle: string }> = {
-  create: {
-    label: 'New',
-    colorClass: 'kata-status-green',
-    borderStyle: 'var(--kata-status-green)',
-  },
-  update: {
-    label: 'Update',
-    colorClass: 'kata-interactive',
-    borderStyle: 'var(--kata-interactive)',
-  },
-  delete: {
-    label: 'Delete',
-    colorClass: 'kata-status-red',
-    borderStyle: 'var(--kata-status-red)',
-  },
+const OP_CONFIG: Record<OpType, { label: string; accent: string }> = {
+  create: { label: 'New',    accent: 'var(--kata-status-green)' },
+  update: { label: 'Update', accent: 'var(--kata-interactive)' },
+  delete: { label: 'Delete', accent: 'var(--kata-status-red)' },
+}
+
+// ─── Field helpers ─────────────────────────────────────────────────────────────
+
+// Fields that are internal/structural — skip them in the display
+const SKIP_FIELDS = new Set(['id'])
+
+function formatKey(key: string): string {
+  return key.replace(/_/g, ' ')
+}
+
+function formatValue(val: unknown): string {
+  if (val === null || val === undefined || val === '') return '—'
+  return String(val)
+}
+
+// For update ops, pull the title from a "description", "name", or "decision" field
+function getEntityTitle(input: Record<string, unknown>): string | null {
+  for (const key of ['description', 'name', 'decision', 'title']) {
+    if (typeof input[key] === 'string' && input[key]) return input[key] as string
+  }
+  return null
 }
 
 // ─── Props ─────────────────────────────────────────────────────────────────────
@@ -50,7 +59,6 @@ interface MutationConfirmCardProps {
     input: unknown
   }
   onApprove: () => void
-  /** onReject / onCancel — called when user cancels the operation */
   onReject: () => void
 }
 
@@ -59,83 +67,69 @@ interface MutationConfirmCardProps {
 export function MutationConfirmCard({ part, onApprove, onReject }: MutationConfirmCardProps) {
   const opType = getOpType(part.type)
   const entityLabel = getEntityLabel(part.type)
-  const { label: opLabel, colorClass, borderStyle } = OP_BADGE[opType]
+  const { label: opLabel, accent } = OP_CONFIG[opType]
+  const input = part.input as Record<string, unknown>
 
-  // Local display state for editable fields (review-only, not transmitted)
-  const [fieldValues, setFieldValues] = useState<Record<string, string>>(() =>
-    Object.fromEntries(
-      Object.entries(part.input as Record<string, unknown>).map(([k, v]) => [k, String(v ?? '')])
-    )
-  )
-
-  // Delete friction state
+  // Delete friction
   const [deletePhrase, setDeletePhrase] = useState('')
-  const deleteConfirmed = deletePhrase.toLowerCase() === 'delete'
-  const confirmDisabled = opType === 'delete' && !deleteConfirmed
+  const confirmDisabled = opType === 'delete' && deletePhrase.toLowerCase() !== 'delete'
+
+  // Rows to display — skip internal fields
+  const displayFields = Object.entries(input).filter(([k]) => !SKIP_FIELDS.has(k))
+
+  const entityTitle = getEntityTitle(input)
 
   return (
     <div
       data-testid="mutation-confirm-card"
-      className={`rounded-md border-l-4 bg-card p-4 shadow-sm ${colorClass}`}
-      style={{ borderLeftColor: borderStyle }}
+      className="rounded-md border bg-card shadow-sm overflow-hidden"
+      style={{ borderLeftColor: accent, borderLeftWidth: 4 }}
     >
       {/* Header */}
-      <div className="mb-3 flex items-center gap-2">
+      <div className="flex items-center gap-2 px-4 py-2.5 border-b">
         <span
-          className={`rounded px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-white ${colorClass}-badge`}
-          style={{ backgroundColor: borderStyle }}
+          className="rounded px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-white shrink-0"
+          style={{ backgroundColor: accent }}
         >
           {opLabel}
         </span>
-        <span className="text-sm font-medium capitalize">{entityLabel}</span>
+        <span className="text-sm font-medium capitalize text-foreground">{entityLabel}</span>
+        {entityTitle && opType !== 'create' && (
+          <span className="ml-1 text-sm text-muted-foreground truncate">— {entityTitle}</span>
+        )}
       </div>
 
-      {/* Proposed values — editable for review */}
-      <div className="mb-3 space-y-2">
-        {Object.entries(fieldValues).map(([key, val]) => (
-          <div key={key}>
-            <label className="text-xs font-medium capitalize text-muted-foreground">
-              {key.replace(/_/g, ' ')}
-            </label>
-            <input
-              className="mt-0.5 w-full rounded border px-2 py-1 text-sm"
-              value={val}
-              onChange={(e) =>
-                setFieldValues((prev) => ({ ...prev, [key]: e.target.value }))
-              }
-            />
+      {/* Field rows */}
+      <div className="divide-y">
+        {displayFields.map(([key, val]) => (
+          <div key={key} className="flex items-baseline gap-3 px-4 py-2">
+            <span className="w-28 shrink-0 text-xs font-medium text-muted-foreground capitalize">
+              {formatKey(key)}
+            </span>
+            <span className="text-sm text-foreground">{formatValue(val)}</span>
           </div>
         ))}
       </div>
 
-      {/* Review note */}
-      <p className="mb-3 text-xs text-muted-foreground">
-        Edits are for review only — to submit different values, cancel and send a corrected
-        message.
-      </p>
-
       {/* Delete friction */}
       {opType === 'delete' && (
-        <div className="mb-3">
+        <div className="px-4 py-3 border-t bg-destructive/5">
           <input
-            className="w-full rounded border border-destructive px-2 py-1 text-sm"
+            className="w-full rounded border border-destructive px-2 py-1.5 text-sm"
             placeholder='Type "delete" to confirm'
             value={deletePhrase}
             onChange={(e) => setDeletePhrase(e.target.value)}
+            autoFocus
           />
         </div>
       )}
 
-      {/* Action buttons */}
-      <div className="flex justify-end gap-2">
+      {/* Actions */}
+      <div className="flex justify-end gap-2 px-4 py-2.5 border-t bg-muted/30">
         <Button variant="outline" size="sm" onClick={onReject}>
           Cancel
         </Button>
-        <Button
-          size="sm"
-          disabled={confirmDisabled}
-          onClick={onApprove}
-        >
+        <Button size="sm" disabled={confirmDisabled} onClick={onApprove}>
           Confirm
         </Button>
       </div>
@@ -150,28 +144,27 @@ interface MutationConfirmCardCompleteProps {
   approved?: boolean
 }
 
-export function MutationConfirmCardComplete({
-  state,
-  approved,
-}: MutationConfirmCardCompleteProps) {
+export function MutationConfirmCardComplete({ state, approved }: MutationConfirmCardCompleteProps) {
   const isFailed = state === 'error'
   const isApproved = !isFailed && approved !== false
 
   const label = isFailed ? 'Failed' : isApproved ? 'Confirmed' : 'Cancelled'
-  const colorStyle = isFailed
+  const accent = isFailed
     ? 'var(--kata-status-red)'
     : isApproved
     ? 'var(--kata-status-green)'
-    : 'var(--kata-neutral-400, #9ca3af)'
+    : 'var(--kata-on-container-tertiary, #9ca3af)'
 
   return (
     <div
       data-testid="mutation-confirm-complete"
-      className="flex items-center gap-2 rounded-md border p-3 text-sm"
-      style={{ borderLeftColor: colorStyle, borderLeftWidth: 4 }}
+      className="flex items-center gap-2 rounded-md border bg-card px-4 py-2.5 text-sm"
+      style={{ borderLeftColor: accent, borderLeftWidth: 4 }}
     >
-      <span style={{ color: colorStyle }}>{isApproved && !isFailed ? '✓' : isFailed ? '✗' : '—'}</span>
-      <span className="font-medium">{label}</span>
+      <span style={{ color: accent }} className="font-semibold">
+        {isFailed ? '✗' : isApproved ? '✓' : '—'}
+      </span>
+      <span className="font-medium text-foreground">{label}</span>
     </div>
   )
 }
