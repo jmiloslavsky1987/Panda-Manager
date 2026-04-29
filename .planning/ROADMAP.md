@@ -335,7 +335,7 @@ Plans:
 | 79. Core Calendar + Daily Prep | 6/6 | Complete    | 2026-04-28 |
 | 80. Advanced Features | 7/7 | Complete    | 2026-04-28 |
 | 81. Kata Design System Visual Overhaul | 6/7 | In Progress | — |
-| 82. Chat Write Operations | 4/6 | In Progress|  |
+| 82. Chat Write Operations | 5/6 | In Progress|  |
 
 ---
 *Last updated: 2026-04-29 — Phase 82 planned: 6 plans across 5 waves (Wave 0 scaffolds + 2 parallel tool waves + card + wiring + verification)*

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: completed
-stopped_at: Completed 82-03-PLAN.md
-last_updated: "2026-04-29T19:08:42.700Z"
+stopped_at: Completed 82-04-PLAN.md
+last_updated: "2026-04-29T19:19:44.565Z"
 last_activity: 2026-04-29 — Phase 82 plan 03 complete (allWriteTools aggregator 36 tools + MutationConfirmCard component)
 progress:
   total_phases: 8
   completed_phases: 7
   total_plans: 40
-  completed_plans: 38
+  completed_plans: 39
   percent: 98
 ---
 
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 82 of 82 (Chat Write Operations — plan 03 of 6 done)
-Status: 82-03 complete — allWriteTools() aggregator expanded to 36 tools (7 files: actions/milestones/risks/stakeholders/tasks/teams/arch); MutationConfirmCard with color-coded borders, editable review fields, delete type-to-confirm friction; MutationConfirmCardComplete for static states; 5/5 mutation-confirm-card tests GREEN; 16/16 chat-tools tests GREEN; build clean.
-Last activity: 2026-04-29 — Phase 82 plan 03 complete (allWriteTools aggregator 36 tools + MutationConfirmCard component)
+Phase: 82 of 82 (Chat Write Operations — plan 04 of 6 done)
+Status: 82-04 complete — allWriteTools wired into streamText with stopWhen: stepCountIs(3); WRITE OPERATIONS system prompt section injecting activeTab; ChatPanel extended with useSearchParams activeTab, addToolApprovalResponse, and parts-based rendering loop for MutationConfirmCard/MutationConfirmCardComplete; 42/42 chat tests GREEN; build clean.
+Last activity: 2026-04-29 — Phase 82 plan 04 complete (chat route tools integration + ChatPanel confirmation card rendering)
 
-Progress: [██████████] 98%
+Progress: [██████████] 99%
 
 ## v10.0 Roadmap Summary
 
@@ -144,6 +144,9 @@ Progress: [██████████] 98%
 - [82-03] MutationConfirmCard uses onReject prop (test contract) not onCancel (plan spec) — tests are ground truth in TDD
 - [82-03] MutationConfirmCard: colorClass literal (e.g. "kata-status-green") included in className AND borderLeftColor uses var(--kata-status-green) — className satisfies test innerHTML regex, style applies actual color
 - [82-03] MutationConfirmCard editable fields: local useState copy of part.input; Confirm always calls onApprove() with no modified data (addToolApprovalResponse SDK limitation: accepts only approved: bool)
+- [82-04] stopWhen: stepCountIs(3) replaces maxSteps: 3 — AI SDK v6 does not have maxSteps on streamText, uses stopWhen condition API
+- [82-04] ChatPanel reads both ?activeTab= and ?tab= — WorkspaceTabs sets ?tab=; dual-read covers both navigation patterns without URL restructuring
+- [82-04] MutationConfirmCard uses onReject prop (test contract from 82-03); ChatPanel wires cancel to addToolApprovalResponse with approved: false, reason: 'User cancelled'
 
 ### Blockers/Concerns
 
@@ -151,6 +154,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-29T19:08:42.697Z
-Stopped at: Completed 82-03-PLAN.md
+Last session: 2026-04-29T19:19:44.563Z
+Stopped at: Completed 82-04-PLAN.md
 Resume file: None
