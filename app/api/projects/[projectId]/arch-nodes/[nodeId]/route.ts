@@ -6,9 +6,16 @@ import { archNodes } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { requireProjectRole } from '@/lib/auth-server'
 
-const UpdateArchNodeSchema = z.object({
-  status: z.enum(['planned', 'in_progress', 'live']),
-})
+const UpdateArchNodeSchema = z
+  .object({
+    status: z.enum(['planned', 'in_progress', 'live']).optional(),
+    name: z.string().min(1).max(200).optional(),
+    notes: z.string().optional(),
+  })
+  .refine(
+    (data) => data.status !== undefined || data.name !== undefined || data.notes !== undefined,
+    { message: 'At least one of status, name, or notes must be provided' }
+  )
 
 export async function PATCH(
   request: NextRequest,
@@ -41,12 +48,12 @@ export async function PATCH(
     return Response.json({ error: parsed.error.flatten() }, { status: 400 })
   }
 
-  const { status } = parsed.data
+  const { status, name, notes } = parsed.data
 
   try {
-    // Check if node exists
+    // Check if node exists and belongs to this project
     const [existingNode] = await db
-      .select({ id: archNodes.id })
+      .select({ id: archNodes.id, project_id: archNodes.project_id })
       .from(archNodes)
       .where(eq(archNodes.id, nodeId))
       .limit(1)
@@ -55,10 +62,20 @@ export async function PATCH(
       return Response.json({ error: 'Node not found' }, { status: 404 })
     }
 
-    // Update status
+    if (existingNode.project_id !== projectId) {
+      return Response.json({ error: 'Node does not belong to this project' }, { status: 403 })
+    }
+
+    // Build update payload with only provided fields
+    const updatePayload: Partial<{ status: 'planned' | 'in_progress' | 'live'; name: string; notes: string }> = {}
+    if (status !== undefined) updatePayload.status = status
+    if (name !== undefined) updatePayload.name = name
+    if (notes !== undefined) updatePayload.notes = notes
+
+    // Update node
     await db
       .update(archNodes)
-      .set({ status })
+      .set(updatePayload)
       .where(eq(archNodes.id, nodeId))
 
     return Response.json({ ok: true })
