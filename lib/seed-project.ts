@@ -92,16 +92,11 @@ export async function seedProjectFromRegistry(projectId: number): Promise<void> 
     })
   }
 
-  // --- teams tab — insert placeholder teamOnboardingStatus rows ---
-  const teamsTemplate = TAB_TEMPLATE_REGISTRY.teams
-  for (const section of teamsTemplate.sections) {
-    await db.insert(teamOnboardingStatus).values({
-      project_id: projectId,
-      team_name: section.placeholderText,
-      track: 'template',
-      source: 'template',
-    })
-  }
+  // --- teams tab — insert placeholder teamOnboardingStatus rows (one per track) ---
+  await db.insert(teamOnboardingStatus).values([
+    { project_id: projectId, team_name: 'Team Alpha', track: 'ADR',   source: 'template' },
+    { project_id: projectId, team_name: 'Team Beta',  track: 'Biggy', source: 'template' },
+  ])
 
   // --- plan tab — insert business_outcomes placeholder (Business Outcomes section) ---
   const planTemplate = TAB_TEMPLATE_REGISTRY.plan
