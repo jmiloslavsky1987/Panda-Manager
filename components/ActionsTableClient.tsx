@@ -305,6 +305,7 @@ export function ActionsTableClient({ actions, projectId }: ActionsTableClientPro
                   onCheckedChange={toggleSelectAll}
                 />
               </TableHead>
+              <TableHead className="w-24">ID</TableHead>
               <TableHead>Description</TableHead>
               <TableHead className="w-40">Owner</TableHead>
               <TableHead className="w-32">Due Date</TableHead>
@@ -335,6 +336,11 @@ export function ActionsTableClient({ actions, projectId }: ActionsTableClientPro
                         checked={selectedIds.has(action.id)}
                         onCheckedChange={() => toggleSelection(action.id)}
                       />
+                    </TableCell>
+
+                    {/* ID */}
+                    <TableCell className="text-xs text-muted-foreground font-mono">
+                      {action.external_id ?? `#${action.id}`}
                     </TableCell>
 
                     {/* Description — opens ActionEditModal */}

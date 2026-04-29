@@ -144,9 +144,14 @@ export default function DecisionsTableClient({ decisions, projectId, artifacts =
               className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm space-y-2"
             >
               <div className="flex items-center justify-between gap-4">
-                <span className="text-xs text-zinc-500">
-                  {decision.date ?? new Date(decision.created_at).toLocaleDateString()}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-zinc-500">
+                    {decision.date ?? new Date(decision.created_at).toLocaleDateString()}
+                  </span>
+                  <span className="text-xs font-mono text-muted-foreground">
+                    #{decision.id}
+                  </span>
+                </div>
                 <SourceBadge
                   source={decision.source}
                   artifactName={decision.source_artifact_id ? (artifactMap.get(decision.source_artifact_id) ?? null) : null}

@@ -337,6 +337,7 @@ export function RisksTableClient({ risks, artifacts, projectId }: RisksTableClie
                   onCheckedChange={toggleSelectAll}
                 />
               </TableHead>
+              <TableHead className="w-24">ID</TableHead>
               <TableHead>Description</TableHead>
               <TableHead className="w-[110px]">Severity</TableHead>
               <TableHead className="w-[100px]">Risk Score</TableHead>
@@ -369,6 +370,9 @@ export function RisksTableClient({ risks, artifacts, projectId }: RisksTableClie
                         checked={selectedIds.has(risk.id)}
                         onCheckedChange={() => toggleSelection(risk.id)}
                       />
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground font-mono">
+                      {risk.external_id ?? `#${risk.id}`}
                     </TableCell>
                     <TableCell className="text-sm">
                       <div className="space-y-1">

@@ -47,7 +47,7 @@ export async function buildChatContext(projectId: number): Promise<string> {
     sections.push('', `## Open Actions (${open.length} of ${workspace.actions.length} total)`);
     if (open.length > 0) {
       open.slice(0, 30).forEach(a => {
-        sections.push(`- [${a.external_id}] ${a.description} | Owner: ${a.owner ?? 'TBD'} | Due: ${a.due ?? 'TBD'} | Status: ${a.status}`);
+        sections.push(`- [${a.external_id}] (db_id:${a.id}) ${a.description} | Owner: ${a.owner ?? 'TBD'} | Due: ${a.due ?? 'TBD'} | Status: ${a.status}`);
       });
     } else {
       sections.push('(No open actions)');
@@ -60,7 +60,7 @@ export async function buildChatContext(projectId: number): Promise<string> {
     sections.push('', `## Open Risks (${open.length})`);
     if (open.length > 0) {
       open.forEach(r => {
-        sections.push(`- [${r.external_id}] ${r.description} | Severity: ${r.severity ?? 'N/A'} | Mitigation: ${r.mitigation ?? 'None'}`);
+        sections.push(`- [${r.external_id}] (db_id:${r.id}) ${r.description} | Severity: ${r.severity ?? 'N/A'} | Mitigation: ${r.mitigation ?? 'None'}`);
       });
     } else {
       sections.push('(No open risks)');
@@ -71,7 +71,7 @@ export async function buildChatContext(projectId: number): Promise<string> {
   if (workspace.milestones?.length) {
     sections.push('', '## Milestones');
     workspace.milestones.forEach(m => {
-      sections.push(`- [${m.external_id}] ${m.name} | Status: ${m.status ?? 'N/A'} | Target: ${m.target ?? m.date ?? 'TBD'}`);
+      sections.push(`- [${m.external_id}] (db_id:${m.id}) ${m.name} | Status: ${m.status ?? 'N/A'} | Target: ${m.target ?? m.date ?? 'TBD'}`);
     });
   }
 
@@ -97,7 +97,7 @@ export async function buildChatContext(projectId: number): Promise<string> {
   if (workspace.keyDecisions?.length) {
     sections.push('', '## Key Decisions');
     workspace.keyDecisions.slice(-15).forEach(d => {
-      sections.push(`- [${d.date ?? 'N/A'}] ${d.decision}`);
+      sections.push(`- [${d.date ?? 'N/A'}] (db_id:${d.id}) ${d.decision}`);
     });
   }
 
