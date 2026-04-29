@@ -1298,7 +1298,7 @@ export async function getArchNodes(projectId: number): Promise<{ tracks: ArchTra
   const nodes = await db
     .select()
     .from(archNodes)
-    .where(eq(archNodes.project_id, projectId))
+    .where(and(eq(archNodes.project_id, projectId), lt(archNodes.display_order, 100)))
     .orderBy(asc(archNodes.display_order));
   return { tracks, nodes };
 }

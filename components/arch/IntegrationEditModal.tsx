@@ -3,7 +3,6 @@ import { useState } from 'react'
 import { ArchitectureIntegration } from '@/lib/queries'
 
 const ADR_PHASES = [
-  'Event Ingest',
   'Alert Intelligence',
   'Incident Intelligence',
   'Console',
@@ -11,9 +10,9 @@ const ADR_PHASES = [
 ]
 
 const BIGGY_PHASES = [
-  'Knowledge Sources (Ingested)',
-  'Real-Time Query Sources',
-  'Biggy Capabilities',
+  'Knowledge Sources',
+  'Real-Time Query',
+  'AI Capabilities',
   'Console',
   'Outputs & Actions',
 ]

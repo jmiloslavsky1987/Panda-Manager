@@ -223,11 +223,10 @@ export async function POST(req: NextRequest) {
     }).returning({ id: archTracks.id });
 
     await tx.insert(archNodes).values([
-      { track_id: adrTrack.id, project_id: inserted.id, name: 'Event Ingest', display_order: 1, status: 'planned' as const, source_trace: 'template' },
-      { track_id: adrTrack.id, project_id: inserted.id, name: 'Alert Intelligence', display_order: 2, status: 'planned' as const, source_trace: 'template' },
-      { track_id: adrTrack.id, project_id: inserted.id, name: 'Incident Intelligence', display_order: 3, status: 'planned' as const, source_trace: 'template' },
-      { track_id: adrTrack.id, project_id: inserted.id, name: 'Console', display_order: 4, status: 'planned' as const, source_trace: 'template' },
-      { track_id: adrTrack.id, project_id: inserted.id, name: 'Workflow Automation', display_order: 5, status: 'planned' as const, source_trace: 'template' },
+      { track_id: adrTrack.id, project_id: inserted.id, name: 'Alert Intelligence', display_order: 1, status: 'planned' as const, source_trace: 'template' },
+      { track_id: adrTrack.id, project_id: inserted.id, name: 'Incident Intelligence', display_order: 2, status: 'planned' as const, source_trace: 'template' },
+      { track_id: adrTrack.id, project_id: inserted.id, name: 'Console', display_order: 3, status: 'planned' as const, source_trace: 'template' },
+      { track_id: adrTrack.id, project_id: inserted.id, name: 'Workflow Automation', display_order: 4, status: 'planned' as const, source_trace: 'template' },
     ]);
 
     // AI Assistant Track

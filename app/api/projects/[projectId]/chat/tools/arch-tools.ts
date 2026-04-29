@@ -123,7 +123,7 @@ export const deleteArchIntegrationTool = (projectId: number) =>
  */
 export const createArchNodeTool = (projectId: number) =>
   tool({
-    description: 'Create a new architecture node in a named track',
+    description: 'Update the status or notes of an existing architecture pipeline stage node (e.g. Alert Intelligence, Incident Intelligence). Do NOT use this to add tools or integrations — use createArchIntegration for that instead.',
     inputSchema: zodSchema(
       z.object({
         name: z.string().min(1).describe('Node name'),
@@ -163,6 +163,15 @@ export const createArchNodeTool = (projectId: number) =>
           ...rest,
           track_id: track.id,
           project_id: projectId,
+          display_order: 999,
+          source_trace: 'chat',
+        })
+        .onConflictDoUpdate({
+          target: [archNodes.project_id, archNodes.track_id, archNodes.name],
+          set: {
+            status: rest.status ?? 'planned',
+            notes: rest.notes ?? null,
+          },
         })
         .returning({ id: archNodes.id })
       return { success: true, id: created.id }

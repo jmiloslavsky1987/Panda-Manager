@@ -127,17 +127,17 @@ function ConsoleNode({ track }: { track: string }) {
   return (
     <div className="flex flex-col items-center justify-start pt-2">
       <div
-        className={`w-[72px] h-[72px] rounded-full flex items-center justify-center shadow-md overflow-hidden ${bgColor}`}
+        className={`w-[52px] h-[52px] rounded-full flex items-center justify-center shadow-md overflow-hidden ${bgColor}`}
       >
         {/* BigPanda logo — white version via CSS invert on dark bg */}
         <img
           src="/bigpanda-logo.svg"
           alt="BigPanda"
-          className="w-10 h-10 object-contain"
+          className="w-7 h-7 object-contain"
           style={{ filter: 'brightness(0) invert(1)' }}
         />
       </div>
-      <div className="text-xs text-zinc-600 mt-2 font-medium text-center leading-tight">
+      <div className="text-[10px] text-zinc-600 mt-1.5 font-medium text-center leading-tight max-w-[80px]">
         {label}
       </div>
     </div>
@@ -191,7 +191,7 @@ function SortablePhaseColumn({
 }
 
 function phaseHeaderStyle(phase: string): { wrapper: string; text: string } {
-  if (phase === 'Event Ingest' || phase === 'Alert Intelligence') {
+  if (phase === 'Alert Intelligence') {
     return { wrapper: 'bg-blue-50 border-blue-200', text: 'text-blue-700' }
   }
   if (
@@ -204,6 +204,9 @@ function phaseHeaderStyle(phase: string): { wrapper: string; text: string } {
   }
   if (phase === 'Workflow Automation' || phase === 'Outputs & Actions') {
     return { wrapper: 'bg-green-50 border-green-200', text: 'text-green-700' }
+  }
+  if (phase === 'Console') {
+    return { wrapper: 'bg-zinc-100 border-zinc-300', text: 'text-zinc-600' }
   }
   return { wrapper: 'bg-zinc-50 border-zinc-200', text: 'text-zinc-500' }
 }
@@ -240,7 +243,7 @@ function PhaseColumn({
   }
 
   return (
-    <div className="flex flex-col w-[220px] flex-shrink-0">
+    <div className={`flex flex-col flex-shrink-0 ${isConsole ? 'w-[120px]' : 'w-[220px]'}`}>
       {/* Header with phase-aware color strip */}
       <div className={`text-center mb-3 min-h-[40px] flex flex-col items-center justify-end px-1 rounded-t border ${headerWrapperClass} py-1`}>
         <Tooltip.Provider>

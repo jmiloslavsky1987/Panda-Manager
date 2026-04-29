@@ -3,7 +3,10 @@
 // Adapted from lib/skill-context.ts but focused on chat requirements.
 // Pure data assembly — no HTTP, no streaming, no BullMQ imports.
 
-import { getWorkspaceData, getProjectById } from './queries';
+import db from '../db';
+import { businessOutcomes, e2eWorkflows, workflowSteps, focusAreas } from '../db/schema';
+import { eq } from 'drizzle-orm';
+import { getWorkspaceData, getProjectById, getArchTabData } from './queries';
 
 /**
  * Build the chat context for a project.
@@ -17,9 +20,16 @@ import { getWorkspaceData, getProjectById } from './queries';
  * @returns Markdown string with all project data
  */
 export async function buildChatContext(projectId: number): Promise<string> {
-  const [project, workspace] = await Promise.all([
+  const [project, workspace, archData, outcomes, workflows, wfSteps, areas] = await Promise.all([
     getProjectById(projectId),
     getWorkspaceData(projectId),
+    getArchTabData(projectId),
+    db.select().from(businessOutcomes).where(eq(businessOutcomes.project_id, projectId)),
+    db.select().from(e2eWorkflows).where(eq(e2eWorkflows.project_id, projectId)),
+    db.select().from(workflowSteps)
+      .innerJoin(e2eWorkflows, eq(workflowSteps.workflow_id, e2eWorkflows.id))
+      .where(eq(e2eWorkflows.project_id, projectId)),
+    db.select().from(focusAreas).where(eq(focusAreas.project_id, projectId)),
   ]);
 
   // Serialize each section as readable markdown
@@ -98,6 +108,68 @@ export async function buildChatContext(projectId: number): Promise<string> {
     sections.push('', '## Key Decisions');
     workspace.keyDecisions.slice(-15).forEach(d => {
       sections.push(`- [${d.date ?? 'N/A'}] (db_id:${d.id}) ${d.decision}`);
+    });
+  }
+
+  // Team Pathways
+  if (archData.teamPathways?.length) {
+    sections.push('', '## Team Pathways');
+    archData.teamPathways.forEach(p => {
+      const steps = Array.isArray(p.route_steps) ? (p.route_steps as { label: string }[]).map(s => s.label).join(' → ') : '';
+      sections.push(`- (db_id:${p.id}) ${p.team_name} | Status: ${p.status} | Route: ${steps || 'N/A'} | Notes: ${p.notes ?? 'None'}`);
+    });
+  }
+
+  // Team Onboarding Status
+  if (archData.teamOnboardingStatus?.length) {
+    sections.push('', '## Team Onboarding Status');
+    archData.teamOnboardingStatus.forEach(t => {
+      sections.push(`- (db_id:${t.id}) ${t.team_name} (${t.track ?? 'N/A'}) | Ingest: ${t.ingest_status ?? '—'} | Correlation: ${t.correlation_status ?? '—'} | Incident Intelligence: ${t.incident_intelligence_status ?? '—'} | SN Automation: ${t.sn_automation_status ?? '—'} | Biggy AI: ${t.biggy_ai_status ?? '—'}`);
+    });
+  }
+
+  // Business Outcomes
+  if (outcomes.length) {
+    sections.push('', '## Business Outcomes');
+    outcomes.forEach(o => {
+      sections.push(`- (db_id:${o.id}) ${o.title} | Track: ${o.track ?? 'N/A'} | Status: ${o.delivery_status ?? 'N/A'}`);
+    });
+  }
+
+  // E2E Workflows
+  if (workflows.length) {
+    // Group steps by workflow_id
+    const stepsMap = new Map<number, typeof wfSteps>();
+    wfSteps.forEach(row => {
+      const wfId = row.workflow_steps.workflow_id;
+      if (!stepsMap.has(wfId)) stepsMap.set(wfId, []);
+      stepsMap.get(wfId)!.push(row);
+    });
+    sections.push('', '## E2E Workflows');
+    workflows.forEach(wf => {
+      sections.push(`- (db_id:${wf.id}) [${wf.team_name}] ${wf.workflow_name}`);
+      const steps = stepsMap.get(wf.id) ?? [];
+      steps.sort((a, b) => (a.workflow_steps.position ?? 0) - (b.workflow_steps.position ?? 0));
+      steps.forEach(row => {
+        const s = row.workflow_steps;
+        sections.push(`  - Step (db_id:${s.id}) pos:${s.position} ${s.label} | Track: ${s.track ?? 'N/A'} | Status: ${s.status ?? 'N/A'}`);
+      });
+    });
+  }
+
+  // Focus Areas
+  if (areas.length) {
+    sections.push('', '## Focus Areas');
+    areas.forEach(f => {
+      sections.push(`- (db_id:${f.id}) ${f.title} | Tracks: ${f.tracks ?? 'N/A'} | Status: ${f.current_status ?? 'N/A'} | Next: ${f.next_step ?? 'N/A'} | BP Owner: ${f.bp_owner ?? 'N/A'} | Customer Owner: ${f.customer_owner ?? 'N/A'}`);
+    });
+  }
+
+  // Architecture Integrations
+  if (archData.architectureIntegrations?.length) {
+    sections.push('', '## Architecture Integrations');
+    archData.architectureIntegrations.forEach(i => {
+      sections.push(`- (db_id:${i.id}) ${i.tool_name} | Track: ${i.track ?? 'N/A'} | Phase: ${i.phase ?? 'N/A'} | Status: ${i.status} | Method: ${i.integration_method ?? 'N/A'}`);
     });
   }
 
