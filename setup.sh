@@ -44,6 +44,9 @@ else
   cat > "$ENV_FILE" <<EOF
 ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
 BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+GOOGLE_CLIENT_ID=265328498348-hjme4n8t186tabkjnt957k871vim46r4.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=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
+GOOGLE_CALENDAR_REDIRECT_URI=http://localhost:3000/api/oauth/calendar/callback
 EOF
 
   echo "Configuration saved to $ENV_FILE"

@@ -58,6 +58,9 @@ if (Test-Path $EnvFile) {
     @"
 ANTHROPIC_API_KEY=$ApiKey
 BETTER_AUTH_SECRET=$AuthSecret
+GOOGLE_CLIENT_ID=265328498348-hjme4n8t186tabkjnt957k871vim46r4.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=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
+GOOGLE_CALENDAR_REDIRECT_URI=http://localhost:3000/api/oauth/calendar/callback
 "@ | Set-Content -Path $EnvFile -Encoding UTF8
 
     Write-Host "Configuration saved to $EnvFile"
