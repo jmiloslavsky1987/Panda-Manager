@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Icon } from './Icon';
 
 interface ProposedTask {
   title: string;
@@ -212,7 +212,7 @@ export function AiPlanPanel({ projectId, existingTasks }: AiPlanPanelProps) {
           className="flex items-center gap-2 px-4 py-2 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50"
           data-testid="generate-plan-btn"
         >
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+          {loading ? <Icon name="progress_activity" size={16} className="animate-spin" /> : <Icon name="auto_awesome" size={16} />}
           {loading ? 'Generating plan...' : 'Generate plan'}
         </button>
       )}
@@ -221,7 +221,7 @@ export function AiPlanPanel({ projectId, existingTasks }: AiPlanPanelProps) {
         <Card className="border-indigo-200">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-indigo-600" />
+              <Icon name="auto_awesome" size={16} className="text-indigo-600" />
               Proposed Tasks ({tasks.length})
             </CardTitle>
           </CardHeader>

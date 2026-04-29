@@ -1,5 +1,5 @@
 'use client'
-import { X } from 'lucide-react'
+import { Icon } from '../Icon'
 
 interface DrawerNode {
   id: string
@@ -33,7 +33,7 @@ export function NodeDetailDrawer({ node, onClose }: Props) {
           className="text-zinc-400 hover:text-zinc-600 p-1 rounded"
           aria-label="Close drawer"
         >
-          <X size={16} />
+          <Icon name="close" size={16} />
         </button>
       </div>
 

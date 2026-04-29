@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Clock, AlertTriangle, RefreshCw, CheckCircle } from 'lucide-react'
+import { Icon } from './Icon'
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -99,7 +99,7 @@ export function ExceptionsPanel({ projectId }: ExceptionsPanelProps) {
         {/* Empty state */}
         {data.length === 0 && (
           <div className="flex items-center gap-2 py-1.5">
-            <CheckCircle className="w-3.5 h-3.5 shrink-0 text-green-500" />
+            <Icon name="task_alt" size={14} className="shrink-0 text-green-500" />
             <span className="text-sm text-zinc-500">No issues detected</span>
           </div>
         )}
@@ -108,11 +108,11 @@ export function ExceptionsPanel({ projectId }: ExceptionsPanelProps) {
         {visibleItems.map((record) => {
           let icon: React.ReactNode
           if (record.type === 'overdue_task') {
-            icon = <Clock className="w-3.5 h-3.5 shrink-0 text-red-500" />
+            icon = <Icon name="schedule" size={14} className="shrink-0 text-red-500" />
           } else if (record.type === 'at_risk_milestone') {
-            icon = <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-amber-500" />
+            icon = <Icon name="warning" size={14} className="shrink-0 text-amber-500" />
           } else {
-            icon = <RefreshCw className="w-3.5 h-3.5 shrink-0 text-zinc-400" />
+            icon = <Icon name="refresh" size={14} className="shrink-0 text-zinc-400" />
           }
 
           return (

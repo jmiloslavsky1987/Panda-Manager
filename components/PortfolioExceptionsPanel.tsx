@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ChevronDown, ChevronUp } from 'lucide-react'
+import { Icon } from './Icon'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import type { PortfolioProject } from '@/lib/queries'
@@ -119,9 +119,9 @@ export function PortfolioExceptionsPanel({ projects }: PortfolioExceptionsPanelP
           Exceptions {exceptions.length > 0 && `(${exceptions.length})`}
         </h2>
         {isExpanded ? (
-          <ChevronUp className="h-5 w-5 text-zinc-500" />
+          <Icon name="expand_less" size={20} className="text-zinc-500" />
         ) : (
-          <ChevronDown className="h-5 w-5 text-zinc-500" />
+          <Icon name="expand_more" size={20} className="text-zinc-500" />
         )}
       </button>
 

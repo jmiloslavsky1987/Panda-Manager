@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { ChevronDown, ChevronUp, AlertCircle } from 'lucide-react'
+import { Icon } from './Icon'
 import type { PortfolioProject } from '@/lib/queries'
 
 interface PortfolioTableClientProps {
@@ -150,7 +150,7 @@ export function PortfolioTableClient({ projects }: PortfolioTableClientProps) {
               {activeFilterCount}
             </Badge>
           )}
-          {filterPanelOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          {filterPanelOpen ? <Icon name="expand_less" size={16} /> : <Icon name="expand_more" size={16} />}
         </button>
       </div>
 
@@ -322,7 +322,7 @@ export function PortfolioTableClient({ projects }: PortfolioTableClientProps) {
                   </TableCell>
                   <TableCell className="text-center">
                     {project.exec_action_required && (
-                      <AlertCircle className="w-4 h-4 text-red-600" />
+                      <Icon name="error" size={16} className="text-red-600" />
                     )}
                   </TableCell>
                 </TableRow>

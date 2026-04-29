@@ -4,7 +4,7 @@ import { useState, useRef, memo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { ChevronRight, ChevronDown, Plus, GripVertical, Trash2 } from 'lucide-react'
+import { Icon } from './Icon'
 import {
   Dialog,
   DialogContent,
@@ -255,7 +255,7 @@ function WbsNodeComponent({
           }`}
           disabled={!hasChildren}
         >
-          {hasChildren && (isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />)}
+          {hasChildren && (isExpanded ? <Icon name="expand_more" size={16} /> : <Icon name="chevron_right" size={16} />)}
         </button>
 
         {/* Drag handle — visible on hover or while dragging */}
@@ -267,7 +267,7 @@ function WbsNodeComponent({
               hovering || isDragging ? 'opacity-100' : 'opacity-0'
             }`}
           >
-            <GripVertical size={16} className="text-zinc-400" />
+            <Icon name="drag_indicator" size={16} className="text-zinc-400" />
           </div>
         )}
 
@@ -354,14 +354,14 @@ function WbsNodeComponent({
               className="p-1 text-zinc-400 hover:text-blue-600 hover:bg-blue-50 rounded"
               title="Add child"
             >
-              <Plus size={16} />
+              <Icon name="add" size={16} />
             </button>
             <button
               onClick={() => setDeleteDialogOpen(true)}
               className="p-1 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded"
               title="Delete"
             >
-              <Trash2 size={16} />
+              <Icon name="delete" size={16} />
             </button>
           </div>
         )}

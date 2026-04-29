@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertTriangle } from 'lucide-react';
+import { Icon } from '../Icon';
 import { Button } from '@/components/ui/button';
 import { DeleteConfirmDialog } from '@/components/DeleteConfirmDialog';
 
@@ -49,7 +49,7 @@ export function DangerZoneSection({ projectId, isArchived }: DangerZoneSectionPr
   return (
     <div className="mt-8 border border-red-200 rounded-lg p-6">
       <div className="flex items-center gap-2 text-base font-semibold text-red-700 mb-4">
-        <AlertTriangle className="w-5 h-5" />
+        <Icon name="warning" size={20} />
         <h3>Danger Zone</h3>
       </div>
 

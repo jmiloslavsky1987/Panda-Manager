@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from './ui/dialog';
 import { Button } from './ui/button';
-import { Lock, Maximize2, Minimize2, Bold, Italic, Code, Heading } from 'lucide-react';
+import { Icon } from './Icon';
 import type { SkillMeta } from '@/types/skills';
 
 const CodeMirrorEditor = dynamic(
@@ -129,7 +129,7 @@ export function PromptEditModal({ skill, trigger, onSaved }: PromptEditModalProp
               onClick={() => setIsFullScreen(!isFullScreen)}
               className="p-2 hover:bg-zinc-100 rounded"
             >
-              {isFullScreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+              {isFullScreen ? <Icon name="close_fullscreen" size={16} /> : <Icon name="open_in_full" size={16} />}
             </button>
           </div>
         </DialogHeader>
@@ -141,7 +141,7 @@ export function PromptEditModal({ skill, trigger, onSaved }: PromptEditModalProp
             {/* Front-matter display (locked, read-only) */}
             <div className="bg-zinc-800 text-zinc-400 rounded p-3 font-mono text-xs">
               <div className="flex items-center gap-2 mb-2">
-                <Lock className="w-3 h-3" />
+                <Icon name="lock" size={12} />
                 <span className="text-zinc-300 font-semibold">Front-matter (read-only)</span>
               </div>
               <pre className="whitespace-pre-wrap">{frontMatter}</pre>
@@ -155,7 +155,7 @@ export function PromptEditModal({ skill, trigger, onSaved }: PromptEditModalProp
                 className="p-2 hover:bg-zinc-100 rounded"
                 title="Bold"
               >
-                <Bold className="w-4 h-4" />
+                <Icon name="format_bold" size={16} />
               </button>
               <button
                 type="button"
@@ -163,7 +163,7 @@ export function PromptEditModal({ skill, trigger, onSaved }: PromptEditModalProp
                 className="p-2 hover:bg-zinc-100 rounded"
                 title="Italic"
               >
-                <Italic className="w-4 h-4" />
+                <Icon name="format_italic" size={16} />
               </button>
               <button
                 type="button"
@@ -171,7 +171,7 @@ export function PromptEditModal({ skill, trigger, onSaved }: PromptEditModalProp
                 className="p-2 hover:bg-zinc-100 rounded"
                 title="Code"
               >
-                <Code className="w-4 h-4" />
+                <Icon name="code" size={16} />
               </button>
               <button
                 type="button"
@@ -179,7 +179,7 @@ export function PromptEditModal({ skill, trigger, onSaved }: PromptEditModalProp
                 className="p-2 hover:bg-zinc-100 rounded"
                 title="Heading"
               >
-                <Heading className="w-4 h-4" />
+                <Icon name="title" size={16} />
               </button>
             </div>
 

@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { TimeEntryModal } from './TimeEntryModal'
 import { DeleteConfirmDialog } from './DeleteConfirmDialog'
 import { CalendarImportModal } from './CalendarImportModal'
-import { Clock, Download, Trash2, CheckCircle, XCircle, Plus } from 'lucide-react'
+import { Icon } from './Icon'
 import { Button } from './ui/button'
 import type { TimeEntry } from '@/db/schema'
 import { getEntryStatus, canEdit, canSubmit, canOverrideLock, computeSubtotals } from '@/lib/time-tracking'
@@ -341,7 +341,7 @@ export function GlobalTimeView() {
             projects={projects}
             trigger={
               <Button variant="outline" size="sm">
-                <Plus className="w-4 h-4 mr-1" />
+                <Icon name="add" size={16} className="mr-1" />
                 Add Entry
               </Button>
             }
@@ -349,12 +349,12 @@ export function GlobalTimeView() {
           />
 
           <Button variant="outline" size="sm" onClick={() => handleExport('csv')}>
-            <Download className="w-4 h-4 mr-1" />
+            <Icon name="download" size={16} className="mr-1" />
             Export CSV
           </Button>
 
           <Button variant="outline" size="sm" onClick={() => handleExport('xlsx')}>
-            <Download className="w-4 h-4 mr-1" />
+            <Icon name="download" size={16} className="mr-1" />
             Export XLSX
           </Button>
 
@@ -377,7 +377,7 @@ export function GlobalTimeView() {
                 onClick={() => handleBulkAction('approve')}
                 disabled={bulkProcessing}
               >
-                <CheckCircle className="w-4 h-4 mr-1" />
+                <Icon name="task_alt" size={16} className="mr-1" />
                 Approve
               </Button>
 
@@ -387,7 +387,7 @@ export function GlobalTimeView() {
                 onClick={() => handleBulkAction('reject')}
                 disabled={bulkProcessing}
               >
-                <XCircle className="w-4 h-4 mr-1" />
+                <Icon name="cancel" size={16} className="mr-1" />
                 Reject
               </Button>
             </>
@@ -399,7 +399,7 @@ export function GlobalTimeView() {
             onClick={() => handleBulkAction('delete')}
             disabled={bulkProcessing}
           >
-            <Trash2 className="w-4 h-4 mr-1" />
+            <Icon name="delete" size={16} className="mr-1" />
             Delete
           </Button>
 
@@ -458,7 +458,7 @@ export function GlobalTimeView() {
       {/* Empty state */}
       {!loading && entries.length === 0 && (
         <div className="text-center py-12 text-zinc-500">
-          <Clock className="w-12 h-12 mx-auto mb-3 opacity-30" />
+          <Icon name="schedule" size={48} className="mx-auto mb-3 opacity-30" />
           <p>No time entries found</p>
           <p className="text-sm mt-1">Try adjusting your filters or add a new entry</p>
         </div>
@@ -522,14 +522,14 @@ export function GlobalTimeView() {
                             variant="ghost"
                             onClick={() => handleApprove(entry)}
                           >
-                            <CheckCircle className="w-4 h-4 text-green-600" />
+                            <Icon name="task_alt" size={16} className="text-green-600" />
                           </Button>
                           <Button
                             size="sm"
                             variant="ghost"
                             onClick={() => handleReject(entry)}
                           >
-                            <XCircle className="w-4 h-4 text-red-600" />
+                            <Icon name="cancel" size={16} className="text-red-600" />
                           </Button>
                         </>
                       )}
@@ -552,7 +552,7 @@ export function GlobalTimeView() {
                           entityLabel="time entry"
                           trigger={
                             <Button size="sm" variant="ghost">
-                              <Trash2 className="w-4 h-4 text-red-600" />
+                              <Icon name="delete" size={16} className="text-red-600" />
                             </Button>
                           }
                           onConfirm={async () => {

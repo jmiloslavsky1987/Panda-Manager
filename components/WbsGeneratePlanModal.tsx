@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import { Loader2, Sparkles } from 'lucide-react'
+import { Icon } from './Icon'
 
 interface WbsProposal {
   parent_section_name: string
@@ -90,12 +90,12 @@ export function WbsGeneratePlanModal({ projectId, onConfirmed }: WbsGeneratePlan
       <Button onClick={handleGenerate} disabled={loading} variant="default" size="sm">
         {loading ? (
           <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <Icon name="progress_activity" size={16} className="mr-2 animate-spin" />
             Generating...
           </>
         ) : (
           <>
-            <Sparkles className="mr-2 h-4 w-4" />
+            <Icon name="auto_awesome" size={16} className="mr-2" />
             Generate Plan
           </>
         )}
@@ -111,7 +111,7 @@ export function WbsGeneratePlanModal({ projectId, onConfirmed }: WbsGeneratePlan
           <div className="py-4">
             {proposals.length === 0 ? (
               <div className="text-center py-8 text-zinc-500">
-                <Sparkles className="mx-auto h-12 w-12 mb-3 text-zinc-300" />
+                <Icon name="auto_awesome" size={48} className="mx-auto mb-3 text-zinc-300" />
                 <p className="text-sm font-medium">No new tasks to suggest</p>
                 <p className="text-xs mt-1">Your WBS is up to date!</p>
               </div>
@@ -150,7 +150,7 @@ export function WbsGeneratePlanModal({ projectId, onConfirmed }: WbsGeneratePlan
             <Button onClick={handleConfirm} disabled={loading || proposals.length === 0}>
               {loading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Icon name="progress_activity" size={16} className="mr-2 animate-spin" />
                   Adding...
                 </>
               ) : (
