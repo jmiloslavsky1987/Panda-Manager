@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: completed
-stopped_at: Phase 82 context gathered
-last_updated: "2026-04-29T16:38:18.234Z"
-last_activity: 2026-04-29 — Phase 81 plan 05 complete (workspace KPI strip + page-bar wiring)
+stopped_at: Phase 82 plan 00 complete
+last_updated: "2026-04-29T18:55:00.000Z"
+last_activity: 2026-04-29 — Phase 82 plan 00 complete (Wave 0 test scaffolds + arch-nodes POST/PATCH gap fixes)
 progress:
   total_phases: 8
   completed_phases: 7
-  total_plans: 34
-  completed_plans: 34
-  percent: 98
+  total_plans: 40
+  completed_plans: 36
+  percent: 97
 ---
 
 # Project State
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 81 of 81 (Kata Design System Visual Overhaul — plan 05 of 7 done)
-Status: 81-05 complete — workspace layout rebuilt with 44px page-bar + 5-column KPI strip (JBM 28px numerals, Kata status token tinting); WorkspaceKpiStrip.tsx + WorkspacePageBarConfigurator.tsx created; workspace-kpi.test.ts 2/2 GREEN. Production build clean.
-Last activity: 2026-04-29 — Phase 81 plan 05 complete (workspace KPI strip + page-bar wiring)
+Phase: 82 of 82 (Chat Write Operations — plan 00 of 6 done)
+Status: 82-00 complete — Wave 0 RED test scaffolds created (chat-tools.test.ts, mutation-confirm-card.test.tsx, arch-node-post.test.ts); arch-nodes POST route created; PATCH extended to accept name/notes with Zod refine; Tests 8-9 GREEN, Tests 1-7 RED. Build clean.
+Last activity: 2026-04-29 — Phase 82 plan 00 complete (Wave 0 test scaffolds + arch-nodes POST/PATCH gap fixes)
 
 Progress: [██████████] 98%
 
@@ -130,6 +130,10 @@ Progress: [██████████] 98%
 - [81-04] needsAttention 'red-health' derived from open critical risks (consistent with computeHealth formula); 'stale' for no engagement in 7 days
 - [81-05] WorkspacePageBarConfigurator renders visible 44px bar directly — global PageBar suppresses on /customer/ routes; context injection still done for any future consumers
 - [81-05] WorkspaceKpiStrip uses openRiskCount (not openRisks) — actual ProjectWithHealth field name; currentPhase/percentComplete are optional overrides (not on base type)
+- [82-00] UpdateArchNodeSchema extended to optional {status, name, notes} with .refine() requiring at least one field — enables chat to update any subset without breaking existing status-only callers
+- [82-00] POST /arch-nodes validates track ownership with AND(eq(id, track_id), eq(project_id, projectId)) — prevents cross-project node creation
+- [82-00] PATCH /arch-nodes/[nodeId] extended with project ownership check (403 if node.project_id !== route projectId)
+- [82-00] Stub-pattern for Wave 0 RED tests: direct import of not-yet-existing module produces MODULE_NOT_FOUND — clean failure for CI gating
 
 ### Blockers/Concerns
 
@@ -137,6 +141,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-29T16:38:18.228Z
-Stopped at: Phase 82 context gathered
-Resume file: .planning/phases/82-chat-write-operations-tool-use-mutations-for-actions-milestones-risks-teams-and-architecture-nodes-with-confirmation-ux/82-CONTEXT.md
+Last session: 2026-04-29T18:55:00.000Z
+Stopped at: Completed 82-00-PLAN.md
+Resume file: .planning/phases/82-chat-write-operations-tool-use-mutations-for-actions-milestones-risks-teams-and-architecture-nodes-with-confirmation-ux/82-01-PLAN.md
