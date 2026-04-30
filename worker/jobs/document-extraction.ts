@@ -724,12 +724,15 @@ async function runClaudeToolUseCall(
 // architecture entities even when documents don't name the stage explicitly.
 
 export async function buildArchPhasesContext(projectId: number): Promise<string> {
-  const rows = await db
-    .select({ trackName: archTracks.name, nodeName: archNodes.name })
+  const allRows = await db
+    .select({ trackName: archTracks.name, nodeName: archNodes.name, nodeType: archNodes.node_type })
     .from(archNodes)
     .innerJoin(archTracks, eq(archNodes.track_id, archTracks.id))
     .where(and(eq(archNodes.project_id, projectId), eq(archNodes.node_type, 'sub-capability')))
     .orderBy(archTracks.display_order, archNodes.display_order);
+
+  // Filter to sub-capability nodes only (guard against mocked or legacy rows)
+  const rows = allRows.filter(r => !r.nodeType || r.nodeType === 'sub-capability');
 
   if (rows.length === 0) return '';
 
