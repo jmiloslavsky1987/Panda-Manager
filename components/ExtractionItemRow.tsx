@@ -162,9 +162,9 @@ export function ExtractionItemRow({
           aria-expanded={isExpanded}
           aria-label={`Edit item: ${summary}`}
         >
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-start gap-2 min-w-0">
             <ConfidenceDot confidence={item.confidence} />
-            <p className="text-sm text-zinc-800 line-clamp-2">
+            <p className="text-sm text-zinc-800" style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>
               {summary || <span className="text-zinc-400 italic">No content</span>}
             </p>
             {item.edited && (
