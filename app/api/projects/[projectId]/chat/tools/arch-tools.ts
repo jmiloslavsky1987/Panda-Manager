@@ -7,12 +7,12 @@ import { z } from 'zod'
 
 export const createArchIntegrationTool = (projectId: number) =>
   tool({
-    description: 'Create a new architecture integration entry for this project',
+    description: 'Add a new tool, integration, tag, or capability card to the architecture diagram. Use this when the user wants to add something UNDER an existing sub-capability column (e.g. "add Automation Incident Tag under Incident Enrichment"). The phase field maps to the sub-capability column name.',
     inputSchema: zodSchema(
       z.object({
-        tool_name: z.string().min(1).describe('Name of the tool or integration'),
-        track: z.string().min(1).describe('Architecture track this integration belongs to'),
-        phase: z.string().optional().describe('Deployment phase'),
+        tool_name: z.string().min(1).describe('Name of the tool, integration, or tag being added'),
+        track: z.string().min(1).describe('Architecture track — exactly "ADR Track" or "AI Assistant Track"'),
+        phase: z.string().optional().describe('Sub-capability column name to place this card under (e.g. "Incident Enrichment", "Monitoring Integrations")'),
         integration_group: z
           .string()
           .optional()
