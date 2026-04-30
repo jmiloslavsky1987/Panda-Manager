@@ -325,6 +325,18 @@ Plans:
 - [ ] 82-04-PLAN.md — Chat route extension + ChatPanel tool-part rendering (Wave 4)
 - [ ] 82-05-PLAN.md — Human verification checkpoint (Wave 5)
 
+### Phase 83: Architecture Sub-Capability Columns
+**Goal**: Replace the current flat per-node column layout in the ADR Track architecture diagram with a grouped sub-capability column structure mirroring the BigPanda Future State Alert Pipeline reference diagram. Each major pipeline section (Alert Intelligence, Incident Intelligence, Workflow Automation) becomes a colored section header containing multiple sub-capability columns. Integration cards route to the correct sub-column. Downstream consumers (extraction pipeline, chat tools, context builder) use sub-capability names.
+**Depends on**: Phase 82
+**Plans**: 5 plans across 4 waves
+
+Plans:
+- [ ] 83-00-PLAN.md — Wave 0: test scaffolds (section-grouping, integration-modal-optgroup, arch-context-builder)
+- [ ] 83-01-PLAN.md — DB migration 0046 + schema.ts update (parent_id, node_type columns + existing project data migration)
+- [ ] 83-02-PLAN.md — InteractiveArchGraph rendering overhaul + IntegrationEditModal optgroup + seed scripts
+- [ ] 83-03-PLAN.md — Downstream consumers: chat-context-builder + createArchNodeTool + document-extraction
+- [ ] 83-04-PLAN.md — Human verification checkpoint
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -336,7 +348,8 @@ Plans:
 | 79. Core Calendar + Daily Prep | 6/6 | Complete    | 2026-04-28 |
 | 80. Advanced Features | 7/7 | Complete    | 2026-04-28 |
 | 81. Kata Design System Visual Overhaul | 6/7 | In Progress | — |
-| 82. Chat Write Operations | 5/6 | In Progress|  |
+| 82. Chat Write Operations | 5/6 | In Progress | — |
+| 83. Architecture Sub-Capability Columns | 0/5 | Not Started | — |
 
 ---
-*Last updated: 2026-04-29 — Phase 82 planned: 6 plans across 5 waves (Wave 0 scaffolds + 2 parallel tool waves + card + wiring + verification)*
+*Last updated: 2026-04-29 — Phase 83 planned: 5 plans across 4 waves (Wave 0 test scaffolds + migration + rendering overhaul + downstream consumers + verification)*
