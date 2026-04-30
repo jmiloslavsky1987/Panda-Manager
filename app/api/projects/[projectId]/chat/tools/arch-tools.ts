@@ -123,19 +123,19 @@ export const deleteArchIntegrationTool = (projectId: number) =>
  */
 export const createArchNodeTool = (projectId: number) =>
   tool({
-    description: 'Update the status or notes of an existing architecture pipeline stage node (e.g. Alert Intelligence, Incident Intelligence). Do NOT use this to add tools or integrations — use createArchIntegration for that instead.',
+    description: 'Create a new architecture pipeline sub-capability node, OR update the status/notes of an existing one. Use this when the user wants to add a new capability, tag, or feature to the architecture diagram. Do NOT use this to add integrations/tools — use createArchIntegration for that.',
     inputSchema: zodSchema(
       z.object({
-        name: z.string().min(1).describe('Node name'),
+        name: z.string().min(1).describe('Node name — the capability or feature being added (e.g. "Automation Incident Tag")'),
         track_name: z
           .string()
           .min(1)
-          .describe('Architecture track name (e.g. "Biggy AI", "Ingest")'),
+          .describe('Architecture track name — must be exactly "ADR Track" or "AI Assistant Track"'),
         parent_node_name: z
           .string()
           .optional()
           .describe(
-            'Name of the parent section node (e.g. "Alert Intelligence") — required when creating a sub-capability node under an ADR Track section'
+            'Name of the parent section node under ADR Track — one of: "Alert Intelligence", "Incident Intelligence", "Workflow Automation". Required when adding a sub-capability to the ADR Track.'
           ),
         status: z
           .enum(['planned', 'in_progress', 'live'])

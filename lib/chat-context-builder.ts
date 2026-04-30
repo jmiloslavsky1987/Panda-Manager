@@ -180,6 +180,7 @@ export async function buildChatContext(projectId: number): Promise<string> {
 
   if (archData.architectureIntegrations?.length || sectionNodes.length) {
     sections.push('', '## Architecture Pipeline')
+    sections.push('<!-- Tool hint: track_name must be "ADR Track" or "AI Assistant Track". To add a sub-capability node, set parent_node_name to the section name (Alert Intelligence / Incident Intelligence / Workflow Automation). -->')
     sectionNodes.forEach(section => {
       sections.push(`\n### ${section.name}`)
       const subCaps = subCapsByParent.get(section.id) ?? []
