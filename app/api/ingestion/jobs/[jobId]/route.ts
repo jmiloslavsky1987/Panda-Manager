@@ -4,7 +4,7 @@
  * GET  returns { status, progress_pct, current_chunk, total_chunks, error_message }
  * DELETE cancels the job: removes from BullMQ queue if pending, marks DB status='failed'
  *
- * Stale detection: if row.status === 'running' AND row.updated_at < now() - 10 minutes,
+ * Stale detection: if row.status === 'running' AND row.updated_at < now() - 20 minutes,
  * update DB row to status='failed', error_message='Job timed out (stale heartbeat)'.
  */
 
@@ -35,9 +35,9 @@ export async function GET(
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  // Stale detection: if running and updated_at > 10 min ago, mark failed
+  // Stale detection: if running and updated_at > 20 min ago, mark failed
   if (row.status === 'running') {
-    const staleThreshold = new Date(Date.now() - 10 * 60 * 1000);
+    const staleThreshold = new Date(Date.now() - 20 * 60 * 1000);
     if (row.updated_at < staleThreshold) {
       await db
         .update(extractionJobs)

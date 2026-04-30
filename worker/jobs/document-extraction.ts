@@ -945,6 +945,8 @@ export default async function documentExtractionJob(job: Job): Promise<{ status:
 
       for (let passIdx = 0; passIdx < contentPasses.length; passIdx++) {
         const pass = contentPasses[passIdx];
+        // Heartbeat before Claude call — prevents stale detection during long API calls
+        await db.update(extractionJobs).set({ updated_at: new Date() }).where(eq(extractionJobs.id, jobId));
         const passSystemPrompt = PASS_PROMPTS[pass.passNumber];
         const archCtxPrefix = pass.passNumber === 2 && archPhasesContext ? `${archPhasesContext}\n\n` : '';
         const passUserText = `${archCtxPrefix}Extract ONLY the following entity types: ${pass.entityTypes.join(', ')}.\nExtract all structured project data from the document above. Output only the JSON array.`;
@@ -1005,6 +1007,8 @@ export default async function documentExtractionJob(job: Job): Promise<{ status:
         const passSystemPrompt = PASS_PROMPTS[pass.passNumber];
 
         for (let i = 0; i < chunks.length; i++) {
+          // Heartbeat before each Claude call — prevents stale detection during long API calls
+          await db.update(extractionJobs).set({ updated_at: new Date() }).where(eq(extractionJobs.id, jobId));
           // Prepend pre-analysis context to user message
           // NOTE: do NOT append passSystemPrompt here — it is already the system param.
           // Appending it after the "Extract ONLY" constraint causes the model to ignore
