@@ -287,9 +287,22 @@ export function ContextTab({ projectId }: ContextTabProps) {
                 Review Items
               </button>
               <button
-                onClick={() => {
+                onClick={async () => {
                   dismissedBatchesRef.current.add(activeBatch.batchId)
                   setActiveBatch(null)
+                  // Mark all artifacts in this batch as approved so the API stops returning them
+                  await Promise.allSettled(
+                    activeBatch.jobs.map(job =>
+                      job.artifact_id
+                        ? fetch(`/api/projects/${projectId}/artifacts`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ artifactId: job.artifact_id, ingestion_status: 'approved' }),
+                          })
+                        : Promise.resolve()
+                    )
+                  )
+                  refreshHistory()
                 }}
                 className="text-sm text-muted-foreground hover:text-foreground underline"
               >
