@@ -6,7 +6,7 @@ import type { ArchitectureIntegration, TeamPathway, ArchTrack, ArchNode } from '
 import { IntegrationDetailDrawer } from './IntegrationDetailDrawer'
 import { TeamPathwayBridge } from './TeamPathwayBridge'
 import { DndContext, PointerSensor, useSensor, useSensors, DragEndEvent, closestCenter } from '@dnd-kit/core'
-import { SortableContext, useSortable, horizontalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
+import { SortableContext, useSortable, horizontalListSortingStrategy, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import * as Tooltip from '@radix-ui/react-tooltip'
 
@@ -370,37 +370,35 @@ function TrackPipeline({
       }
     })
 
-    // Determine console insertion position: after the section with display_order closest below console display_order
-    // Sections are sorted by display_order; console goes between sectionNodes[1] and sectionNodes[2]
-    const renderParts: React.ReactNode[] = []
+    // Build column list: sections interleaved with console after Incident Intelligence (index 1)
+    const columns: React.ReactNode[] = []
     sectionNodes.forEach((section, sectionIdx) => {
       const subCaps = subCapByParent.get(section.id) ?? []
-      renderParts.push(
-        <div key={`section-${section.id}`} className="mb-4">
-          <SectionHeader name={section.name} color={sectionColor(section.name)} />
-          <SortableContext items={subCaps.map(n => n.id)} strategy={horizontalListSortingStrategy}>
-            <div className="flex items-start">
-              {subCaps.map((node, idx) => (
-                <div key={node.id} className="flex items-start">
-                  <SortablePhaseColumn
-                    node={node}
-                    phase={node.name}
-                    integrations={byPhase(node.name)}
-                    track={trackData.name}
-                    onCardClick={onCardClick}
-                    onStatusClick={onStatusClick}
-                  />
-                  {idx < subCaps.length - 1 && <Arrow />}
-                </div>
+      const color = sectionColor(section.name)
+      columns.push(
+        <div key={`section-${section.id}`} className="flex flex-col min-w-0">
+          <SectionHeader name={section.name} color={color} />
+          <SortableContext items={subCaps.map(n => n.id)} strategy={verticalListSortingStrategy}>
+            <div className="flex flex-col gap-2">
+              {subCaps.map((node) => (
+                <SortablePhaseColumn
+                  key={node.id}
+                  node={node}
+                  phase={node.name}
+                  integrations={byPhase(node.name)}
+                  track={trackData.name}
+                  onCardClick={onCardClick}
+                  onStatusClick={onStatusClick}
+                />
               ))}
             </div>
           </SortableContext>
         </div>
       )
-      // Insert Console between Incident Intelligence (index 1) and Workflow Automation (index 2)
+      // Insert Console column between Incident Intelligence (index 1) and Workflow Automation (index 2)
       if (sectionIdx === 1 && consoleNode) {
-        renderParts.push(
-          <div key="console-node" className="flex items-center mb-4 pl-3">
+        columns.push(
+          <div key="console-node" className="flex flex-col items-center justify-start pt-8">
             <ConsoleNode track={trackData.name} />
           </div>
         )
@@ -424,7 +422,9 @@ function TrackPipeline({
           collisionDetection={closestCenter}
           onDragEnd={(e) => onDragEnd(e, trackData.id)}
         >
-          {renderParts}
+          <div className="flex items-start gap-6 overflow-x-auto pb-2">
+            {columns}
+          </div>
         </DndContext>
       </div>
     )
