@@ -873,6 +873,8 @@ export const archNodes = pgTable('arch_nodes', {
   notes: text('notes'),
   source_trace: text('source_trace'),
   created_at: timestamp('created_at').defaultNow().notNull(),
+  parent_id: integer('parent_id').references((): AnyPgColumn => archNodes.id),
+  node_type: text('node_type').notNull().default('sub-capability'),
 }, (t) => [
   uniqueIndex('arch_nodes_project_track_name_idx').on(t.project_id, t.track_id, t.name),
 ]);
