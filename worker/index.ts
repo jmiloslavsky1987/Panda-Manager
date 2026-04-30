@@ -89,6 +89,8 @@ const worker = new Worker(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     connection: createRedisConnection() as any, // fresh connection for Worker
     concurrency: 1,                      // one job at a time per worker process
+    lockDuration: 15 * 60 * 1000,        // 15 min — document extraction takes several minutes across multiple Claude passes
+    lockRenewTime: 5 * 60 * 1000,        // renew lock every 5 min so long jobs don't stall
   }
 );
 
