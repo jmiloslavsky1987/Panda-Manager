@@ -164,7 +164,7 @@ export function ExtractionItemRow({
         >
           <div className="flex items-start gap-2 min-w-0">
             <ConfidenceDot confidence={item.confidence} />
-            <p className="text-sm text-zinc-800" style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>
+            <p className="text-sm text-zinc-800 flex-1 min-w-0" style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>
               {summary || <span className="text-zinc-400 italic">No content</span>}
             </p>
             {item.edited && (
