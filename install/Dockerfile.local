@@ -10,4 +10,10 @@ RUN npm install --no-audit --no-fund
 
 COPY . .
 
+# Build Next.js for production — avoids webpack dev server memory leaks
+# NEXT_PUBLIC_* vars are inlined at build time
+ARG NEXT_PUBLIC_BASE_URL=http://localhost:3000
+ENV NEXT_PUBLIC_BASE_URL=$NEXT_PUBLIC_BASE_URL
+RUN npm run build
+
 # CMD is overridden per-service in docker-compose.local.yml
