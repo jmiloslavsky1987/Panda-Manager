@@ -83,7 +83,7 @@ export function ExtractionItemRow({
 }: ExtractionItemRowProps) {
   const [showSource, setShowSource] = useState(false)
 
-  // Content summary: first 80 chars of the primary field
+  // Content summary: primary field value (display truncation handled by CSS)
   const primaryFieldKeys: Record<string, string> = {
     action: 'description',
     risk: 'description',
@@ -108,7 +108,7 @@ export function ExtractionItemRow({
     weekly_focus: 'bullets',
   }
   const primaryKey = primaryFieldKeys[item.entityType] ?? Object.keys(item.fields)[0] ?? ''
-  const summary = (item.fields[primaryKey] ?? '').slice(0, 80)
+  const summary = String(item.fields[primaryKey] ?? '')
 
   function handleCheckboxChange(checked: boolean | 'indeterminate') {
     onChange({ approved: checked === true })
