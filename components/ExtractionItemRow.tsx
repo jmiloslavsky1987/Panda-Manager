@@ -164,7 +164,7 @@ export function ExtractionItemRow({
         >
           <div className="flex items-center gap-2 min-w-0">
             <ConfidenceDot confidence={item.confidence} />
-            <p className="text-sm text-zinc-800 truncate">
+            <p className="text-sm text-zinc-800 line-clamp-2">
               {summary || <span className="text-zinc-400 italic">No content</span>}
             </p>
             {item.edited && (

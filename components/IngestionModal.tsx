@@ -703,7 +703,7 @@ export function IngestionModal({
                                   {Math.round(change.confidence * 100)}% confidence
                                 </span>
                               </div>
-                              <p className="font-medium truncate text-zinc-800">{entityName}</p>
+                              <p className="font-medium text-zinc-800">{entityName}</p>
                               <p className="text-xs text-zinc-600 mt-1">{change.reasoning}</p>
                               <div className="flex gap-2 mt-2">
                                 {!isRejected ? (
