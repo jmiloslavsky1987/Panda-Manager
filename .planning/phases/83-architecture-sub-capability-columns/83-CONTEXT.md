@@ -40,13 +40,18 @@ The flat 4-node ADR layout (Alert Intelligence → Incident Intelligence → Con
 - Sub-column: Automated Incident Notification — Slack, PagerDuty, Teams routing rules
 - Sub-column: Automated Incident Remediation — runbook automation, EAP, action plans
 
-### Schema Change: `parent_id` on `arch_nodes`
+### Schema Change: `parent_id` + `node_type` on `arch_nodes`
 
-Add nullable `parent_id` (FK → `arch_nodes.id`) to the `arch_nodes` table.
+Add two columns to the `arch_nodes` table:
+- `parent_id` — nullable FK → `arch_nodes.id`
+- `node_type` — enum `'section' | 'sub-capability' | 'console'`
 
-- **Section nodes** (Alert Intelligence, Incident Intelligence, Workflow Automation): `parent_id = NULL`, `display_order` determines left-to-right section order. These render as colored group header bars, NOT as columns.
-- **Sub-capability nodes** (Monitoring Integrations, Alert Normalization, etc.): `parent_id = <section node id>`, `display_order` determines column order within the section.
-- **Console node**: `parent_id = NULL` — special node rendered as narrow circle between sections (unchanged).
+Node classification:
+- **Section nodes** (Alert Intelligence, Incident Intelligence, Workflow Automation): `node_type = 'section'`, `parent_id = NULL`, `display_order` determines left-to-right section order. Render as colored group header bars, NOT as columns.
+- **Sub-capability nodes** (Monitoring Integrations, Alert Normalization, etc.): `node_type = 'sub-capability'`, `parent_id = <section node id>`, `display_order` determines column order within the section.
+- **Console node**: `node_type = 'console'`, `parent_id = NULL` — special node rendered as narrow circle between sections.
+
+`node_type` is the renderer's discriminant — no name-matching or display_order conventions needed.
 
 Migration: `0046_arch_nodes_parent_id.sql`
 
@@ -54,7 +59,12 @@ Migration: `0046_arch_nodes_parent_id.sql`
 
 The `phase` field on `architecture_integrations` previously held section-level names (e.g. `'Alert Intelligence'`). It now holds sub-capability column names (e.g. `'Monitoring Integrations'`, `'Alert Normalization'`). The UI routes cards into columns by matching `integration.phase === node.name`.
 
-Existing `phase = 'Alert Intelligence'` integrations → migrate to `phase = 'Monitoring Integrations'` (best default for monitoring source tools).
+**Migration of existing integrations (all dummy data — no business-logic preservation needed):**
+- `phase = 'Alert Intelligence'` → `'Monitoring Integrations'`
+- `phase = 'Incident Intelligence'` → DELETE (no equivalent sub-capability default needed)
+- `phase = 'Workflow Automation'` → DELETE
+
+Rationale: all existing integration rows are seed/dummy data. User will upload real project data post-migration.
 
 ### Rendering Model
 
@@ -70,7 +80,7 @@ Existing `phase = 'Alert Intelligence'` integrations → migrate to `phase = 'Mo
   [col: Environments] → [col: Automated Incident Creation] → [col: Automated Incident Notification] → [col: Automated Incident Remediation]
 ```
 
-Section headers span their child columns with a colored left-border bar + label. Sub-columns are regular `PhaseColumn` instances with `w-[220px]`. Arrows appear between sub-columns within a section, and a larger section-spanning arrow appears between sections.
+Section headers span their child columns with a colored left-border bar + label. Colors use **Kata design system tokens**: Alert Intelligence → `kata-status-blue`, Incident Intelligence → `kata-status-amber`, Workflow Automation → `kata-status-green`. Sub-columns are regular `PhaseColumn` instances with `w-[220px]`. Arrows appear between sub-columns within a section, and a larger section-spanning arrow appears between sections.
 
 Drag-and-drop reordering: sub-columns are sortable within their section (same DnD Kit pattern). Section headers are not draggable.
 
@@ -138,10 +148,10 @@ From the BigPanda Future State Alert Pipeline diagram:
 ## Files to Touch
 
 ### New
-- `db/migrations/0046_arch_nodes_parent_id.sql` — ADD COLUMN parent_id integer REFERENCES arch_nodes(id)
+- `db/migrations/0046_arch_nodes_parent_id.sql` — ADD COLUMN parent_id integer REFERENCES arch_nodes(id); ADD COLUMN node_type text NOT NULL DEFAULT 'sub-capability'
 
 ### Modified
-- `db/schema.ts` — add `parent_id` to `archNodes` table definition
+- `db/schema.ts` — add `parent_id` and `node_type` to `archNodes` table definition
 - `lib/queries.ts` — `getArchNodes()`: fetch section nodes + sub-capability nodes separately; extend `ArchNode` type
 - `components/arch/InteractiveArchGraph.tsx` — full rendering overhaul: section headers + sub-columns; `PhaseColumn` unchanged, new `SectionHeader` wrapper
 - `components/arch/IntegrationEditModal.tsx` — grouped `<optgroup>` phase picker for ADR
