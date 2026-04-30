@@ -89,6 +89,23 @@ export function ContextTab({ projectId }: ContextTabProps) {
     setModalKey(k => k + 1); setIngestionModalOpen(true)
   }
 
+  const retryExtraction = async (artifactId: number) => {
+    try {
+      const res = await fetch('/api/ingestion/extract', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ artifactIds: [artifactId], projectId: Number(projectId) }),
+      })
+      if (!res.ok) throw new Error('Failed to start extraction')
+      setInitialStage('uploading')
+      setInitialReviewItems([])
+      setModalKey(k => k + 1)
+      setIngestionModalOpen(true)
+    } catch {
+      toast.error('Failed to re-extract document')
+    }
+  }
+
   const cancelExtraction = async () => {
     if (!activeBatch || cancelling) return
     setCancelling(true)
@@ -296,6 +313,7 @@ export function ContextTab({ projectId }: ContextTabProps) {
                 <th className="pb-2 font-medium">Filename</th>
                 <th className="pb-2 font-medium">Uploaded</th>
                 <th className="pb-2 font-medium">Status</th>
+                <th className="pb-2 font-medium"></th>
               </tr>
             </thead>
             <tbody>
@@ -305,10 +323,21 @@ export function ContextTab({ projectId }: ContextTabProps) {
                   <td className="py-2 text-muted-foreground">{new Date(item.createdAt).toLocaleDateString()}</td>
                   <td className="py-2">
                     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      item.status === 'processed' ? 'bg-green-100 text-green-800' :
+                      item.status === 'approved' ? 'bg-green-100 text-green-800' :
                       item.status === 'failed' ? 'bg-red-100 text-red-800' :
-                      'bg-yellow-100 text-yellow-800'
+                      item.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-blue-100 text-blue-800'
                     }`}>{item.status}</span>
+                  </td>
+                  <td className="py-2">
+                    {(item.status === 'pending' || item.status === 'failed') && (
+                      <button
+                        onClick={() => retryExtraction(item.id)}
+                        className="text-xs text-primary hover:underline"
+                      >
+                        Re-extract
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
