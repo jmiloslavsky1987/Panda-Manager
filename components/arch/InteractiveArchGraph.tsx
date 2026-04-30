@@ -261,9 +261,9 @@ function PhaseColumn({
   }
 
   return (
-    <div className={`flex flex-col flex-shrink-0 ${isConsole ? 'w-[120px]' : 'w-[220px]'}`}>
+    <div className={`flex flex-col flex-shrink-0 ${isConsole ? 'w-[120px]' : 'w-[220px]'} border border-dashed border-zinc-300 rounded-lg overflow-hidden`}>
       {/* Header with phase-aware color strip */}
-      <div className={`text-center mb-3 min-h-[40px] flex flex-col items-center justify-end px-1 rounded-t border ${headerWrapperClass} py-1`}>
+      <div className={`text-center mb-3 min-h-[40px] flex flex-col items-center justify-end px-1 border-b ${headerWrapperClass} py-1`}>
         <Tooltip.Provider>
           <Tooltip.Root>
             <Tooltip.Trigger asChild>
@@ -299,9 +299,9 @@ function PhaseColumn({
       {isConsole ? (
         <ConsoleNode track={track} />
       ) : integrations.length === 0 ? (
-        <div className="text-zinc-300 text-sm text-center pt-6">—</div>
+        <div className="text-zinc-300 text-sm text-center pt-6 pb-4">—</div>
       ) : (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 p-2">
           {/* Ungrouped integrations first */}
           {ungrouped.map((int) => (
             <IntegrationCard key={int.id} integration={int} onClick={() => onCardClick(int)} />
