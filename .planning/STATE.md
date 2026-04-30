@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: completed
-stopped_at: Completed 83-01-PLAN.md
-last_updated: "2026-04-30T00:30:13.690Z"
+stopped_at: Completed 83-00-PLAN.md
+last_updated: "2026-04-30T00:36:10.605Z"
 last_activity: 2026-04-30 — Phase 83 plan 01 complete (migration 0046 arch_nodes parent_id + node_type; schema.ts updated; ArchNode type gains hierarchy fields)
 progress:
   total_phases: 9
   completed_phases: 8
   total_plans: 45
-  completed_plans: 41
+  completed_plans: 42
   percent: 99
 ---
 
@@ -152,8 +152,10 @@ Progress: [██████████] 99%
 - [82-05] createArchNodeTool inserts with display_order: 999 + onConflictDoUpdate — chat-created nodes never render as pipeline columns; tool description steers Claude to createArchIntegration for tool cards
 - [82-05] getArchNodes filters display_order < 100 — extraction pipeline sentinel nodes (display_order=999) are excluded from column rendering
 - [83-00] parent_id nullable FK on arch_nodes — section nodes (Alert Intelligence, Incident Intelligence, Workflow Automation) have parent_id=NULL; sub-capability nodes have parent_id=<section node id>; Console is parent_id=NULL special node
-- [83-00] ADR track expands to 3 sections × 3–4 sub-columns = 10 sub-columns total; AI Assistant Track unchanged
+- [83-00] ADR track expands to 3 sections × 3–4 sub-columns = 11 sub-columns total (3+4+4); AI Assistant Track unchanged — plan text said "10" but CONTEXT.md defines 11
 - [83-00] architecture_integrations.phase maps to sub-capability column names (Monitoring Integrations, Alert Normalization, etc.) not section names
+- [83-00] Wave 0 test stubs created after Wave 1 (83-01) was already complete — section-grouping.test.ts is immediately GREEN; integration-modal-optgroup (3 RED) and arch-context-builder (4 RED) gate Waves 2-3
+- [83-00] arch-context-builder Test 3 checks stageGuide section (after "Stage assignment guide" marker) not full output — stageLines always includes node names from mock rows, so full-output check would be false GREEN
 - [83-01] Sub-capability count is 11 total (3+4+4 per CONTEXT.md named sub-caps), not 10 as stated in plan description; migration and tests corrected
 - [83-01] Display order: sections at 10/20/30; Console node_type updated via UPDATE (display_order unchanged); all sub-caps at 1-4 within section; all under display_order < 100 filter
 - [83-01] node_type is text (not pgEnum) — matches migration SQL DEFAULT, avoids enum migration overhead; values: 'section'|'sub-capability'|'console'
@@ -165,6 +167,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-30T00:30:13.687Z
-Stopped at: Completed 83-01-PLAN.md
+Last session: 2026-04-30T00:36:10.602Z
+Stopped at: Completed 83-00-PLAN.md
 Resume file: None
