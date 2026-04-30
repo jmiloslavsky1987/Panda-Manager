@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import type { ArchitectureIntegration, TeamPathway, ArchTrack, ArchNode } from '@/lib/queries'
@@ -190,6 +190,24 @@ function SortablePhaseColumn({
   )
 }
 
+function sectionColor(name: string): string {
+  if (name === 'Alert Intelligence') return 'blue'
+  if (name === 'Incident Intelligence') return 'amber'
+  if (name === 'Workflow Automation') return 'green'
+  return 'zinc'
+}
+
+function SectionHeader({ name, color }: { name: string; color: string }) {
+  return (
+    <div
+      className="flex items-center gap-2 mb-2 pl-3 py-1 border-l-4 font-semibold text-sm"
+      style={{ borderLeftColor: `var(--kata-status-${color})`, color: `var(--kata-status-${color})` }}
+    >
+      {name}
+    </div>
+  )
+}
+
 function phaseHeaderStyle(phase: string): { wrapper: string; text: string } {
   if (phase === 'Alert Intelligence') {
     return { wrapper: 'bg-blue-50 border-blue-200', text: 'text-blue-700' }
@@ -329,14 +347,91 @@ function TrackPipeline({
   onDragEnd: (event: DragEndEvent, trackId: number) => void
   sensors: ReturnType<typeof useSensors>
 }) {
-  const isADR = trackData.name.includes('ADR')
+  const isADR = trackData.name === 'ADR Track'
   const isBiggy = trackData.name.includes('Biggy') || trackData.name.includes('AI')
   const borderClass = isADR ? 'border-l-blue-600' : isBiggy ? 'border-l-amber-500' : 'border-l-zinc-400'
   const labelClass = isADR ? 'text-blue-700' : isBiggy ? 'text-amber-700' : 'text-zinc-600'
 
-  // Sort nodes by display_order
-  const sortedNodes = [...nodes].sort((a, b) => a.display_order - b.display_order)
   const byPhase = (p: string) => integrations.filter((i) => i.phase === p)
+
+  // ADR grouped layout
+  if (isADR) {
+    const sectionNodes = nodes
+      .filter(n => n.node_type === 'section')
+      .sort((a, b) => a.display_order - b.display_order)
+    const consoleNode = nodes.find(n => n.node_type === 'console')
+
+    const subCapByParent = new Map<number, ArchNode[]>()
+    nodes.filter(n => n.node_type === 'sub-capability').forEach(n => {
+      if (n.parent_id != null) {
+        const arr = subCapByParent.get(n.parent_id) ?? []
+        arr.push(n)
+        subCapByParent.set(n.parent_id, arr.sort((a, b) => a.display_order - b.display_order))
+      }
+    })
+
+    // Determine console insertion position: after the section with display_order closest below console display_order
+    // Sections are sorted by display_order; console goes between sectionNodes[1] and sectionNodes[2]
+    const renderParts: React.ReactNode[] = []
+    sectionNodes.forEach((section, sectionIdx) => {
+      const subCaps = subCapByParent.get(section.id) ?? []
+      renderParts.push(
+        <div key={`section-${section.id}`} className="mb-4">
+          <SectionHeader name={section.name} color={sectionColor(section.name)} />
+          <SortableContext items={subCaps.map(n => n.id)} strategy={horizontalListSortingStrategy}>
+            <div className="flex items-start">
+              {subCaps.map((node, idx) => (
+                <div key={node.id} className="flex items-start">
+                  <SortablePhaseColumn
+                    node={node}
+                    phase={node.name}
+                    integrations={byPhase(node.name)}
+                    track={trackData.name}
+                    onCardClick={onCardClick}
+                    onStatusClick={onStatusClick}
+                  />
+                  {idx < subCaps.length - 1 && <Arrow />}
+                </div>
+              ))}
+            </div>
+          </SortableContext>
+        </div>
+      )
+      // Insert Console between Incident Intelligence (index 1) and Workflow Automation (index 2)
+      if (sectionIdx === 1 && consoleNode) {
+        renderParts.push(
+          <div key="console-node" className="flex items-center mb-4 pl-3">
+            <ConsoleNode track={trackData.name} />
+          </div>
+        )
+      }
+    })
+
+    return (
+      <div className={`border-l-4 ${borderClass} pl-4 py-1`}>
+        <div className="flex items-baseline gap-2 mb-5">
+          <span className={`text-[11px] font-bold uppercase tracking-widest ${labelClass}`}>
+            {trackData.name}
+          </span>
+          {teamNames.length > 0 && (
+            <span className="text-[11px] text-zinc-400">
+              {teamNames.join(' · ')}
+            </span>
+          )}
+        </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={(e) => onDragEnd(e, trackData.id)}
+        >
+          {renderParts}
+        </DndContext>
+      </div>
+    )
+  }
+
+  // Non-ADR (AI Assistant Track) flat layout — unchanged
+  const sortedNodes = [...nodes].sort((a, b) => a.display_order - b.display_order)
 
   return (
     <div className={`border-l-4 ${borderClass} pl-4 py-1`}>
@@ -427,15 +522,57 @@ export function InteractiveArchGraph({
     const { active, over } = event
     if (!over || active.id === over.id) return
 
-    const trackNodes = localNodes
-      .filter((n) => n.track_id === trackId)
-      .sort((a, b) => a.display_order - b.display_order)
-    const oldIndex = trackNodes.findIndex((n) => n.id === Number(active.id))
-    const newIndex = trackNodes.findIndex((n) => n.id === Number(over.id))
+    const track = tracks.find(t => t.id === trackId)
+    const isADRTrack = track?.name === 'ADR Track'
 
-    if (oldIndex === -1 || newIndex === -1) return
+    let sectionNodes: ArchNode[]
+    let draggedNode: ArchNode
+    let targetNode: ArchNode
+    let reordered: ArchNode[]
 
-    const reordered = arrayMove(trackNodes, oldIndex, newIndex)
+    if (isADRTrack) {
+      // For ADR track: scope reorder to the section that contains active.id
+      const subCapNodes = localNodes.filter(
+        n => n.track_id === trackId && n.node_type === 'sub-capability'
+      )
+      const subCapByParent = new Map<number, ArchNode[]>()
+      subCapNodes.forEach(n => {
+        if (n.parent_id != null) {
+          const arr = subCapByParent.get(n.parent_id) ?? []
+          arr.push(n)
+          subCapByParent.set(n.parent_id, arr.sort((a, b) => a.display_order - b.display_order))
+        }
+      })
+
+      const activeSection = [...subCapByParent.entries()].find(
+        ([, sNodes]) => sNodes.some(n => n.id === Number(active.id))
+      )
+      if (!activeSection) return
+      const [, sectionSubCaps] = activeSection
+
+      const oldIndex = sectionSubCaps.findIndex(n => n.id === Number(active.id))
+      const newIndex = sectionSubCaps.findIndex(n => n.id === Number(over.id))
+      if (oldIndex === -1 || newIndex === -1) return
+
+      reordered = arrayMove(sectionSubCaps, oldIndex, newIndex)
+      draggedNode = sectionSubCaps[oldIndex]
+      targetNode = sectionSubCaps[newIndex]
+      sectionNodes = sectionSubCaps
+    } else {
+      // Non-ADR track: flat reorder as before
+      const trackNodes = localNodes
+        .filter((n) => n.track_id === trackId)
+        .sort((a, b) => a.display_order - b.display_order)
+      const oldIndex = trackNodes.findIndex((n) => n.id === Number(active.id))
+      const newIndex = trackNodes.findIndex((n) => n.id === Number(over.id))
+      if (oldIndex === -1 || newIndex === -1) return
+
+      reordered = arrayMove(trackNodes, oldIndex, newIndex)
+      draggedNode = trackNodes[oldIndex]
+      targetNode = trackNodes[newIndex]
+      sectionNodes = trackNodes
+    }
+
     // Optimistic: update localNodes with new display_order
     const updatedNodes = localNodes.map((n) => {
       const reorderedNode = reordered.find((r) => r.id === n.id)
@@ -443,8 +580,6 @@ export function InteractiveArchGraph({
     })
     setLocalNodes(updatedNodes)
 
-    const draggedNode = trackNodes[oldIndex]
-    const targetNode = trackNodes[newIndex]
     try {
       const res = await fetch(`/api/projects/${projectId}/arch-nodes/reorder`, {
         method: 'PATCH',
