@@ -277,17 +277,25 @@ export function ContextTab({ projectId }: ContextTabProps) {
             <p className="text-sm text-green-700 mb-3">
               Extraction complete. Review and approve extracted items.
             </p>
-            <button
-              onClick={() => openModalAtReview(activeBatch.jobs)}
-              className="inline-flex items-center gap-2 rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
-            >
-              Review Items
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => openModalAtReview(activeBatch.jobs)}
+                className="inline-flex items-center gap-2 rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
+              >
+                Review Items
+              </button>
+              <button
+                onClick={() => setActiveBatch(null)}
+                className="text-sm text-muted-foreground hover:text-foreground underline"
+              >
+                Dismiss
+              </button>
+            </div>
           </div>
         )}
 
-        {/* Show upload button only if no active batch */}
-        {!activeBatch && (
+        {/* Show upload button if no active batch, or batch is terminal */}
+        {(!activeBatch || activeBatch.all_terminal) && (
           <button
             onClick={() => {
               setInitialStage('uploading')
