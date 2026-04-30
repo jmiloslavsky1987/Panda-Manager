@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v11.0
-milestone_name: Architecture Sub-Capability Columns
-status: in_progress
-stopped_at: Completed 82-05-PLAN.md — Phase 82 COMPLETE
-last_updated: "2026-04-29T23:30:00.000Z"
-last_activity: 2026-04-29 — Phase 82 complete (chat write ops verified + context builder fixed + arch node tool hardened). Phase 83 planned (architecture sub-capability columns).
+milestone: v10.0
+milestone_name: — Calendar Integration & Daily Prep
+status: completed
+stopped_at: Completed 83-01-PLAN.md
+last_updated: "2026-04-30T00:30:13.690Z"
+last_activity: 2026-04-30 — Phase 83 plan 01 complete (migration 0046 arch_nodes parent_id + node_type; schema.ts updated; ArchNode type gains hierarchy fields)
 progress:
   total_phases: 9
   completed_phases: 8
   total_plans: 45
-  completed_plans: 40
-  percent: 89
+  completed_plans: 41
+  percent: 99
 ---
 
 # Project State
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 83 of 83 (Architecture Sub-Capability Columns — not started)
-Status: 82-04 complete — allWriteTools wired into streamText with stopWhen: stepCountIs(3); WRITE OPERATIONS system prompt section injecting activeTab; ChatPanel extended with useSearchParams activeTab, addToolApprovalResponse, and parts-based rendering loop for MutationConfirmCard/MutationConfirmCardComplete; 42/42 chat tests GREEN; build clean.
-Last activity: 2026-04-29 — Phase 82 plan 04 complete (chat route tools integration + ChatPanel confirmation card rendering)
+Phase: 83 of 83 (Architecture Sub-Capability Columns — plan 01 complete, 4 remaining)
+Status: 83-01 complete — migration 0046 adds parent_id (nullable self-FK) and node_type to arch_nodes; schema.ts updated; ArchNode TypeScript type gains hierarchy fields; existing projects migrated to 3 sections + 11 sub-capabilities per ADR Track; architecture_integrations.phase remapped; section-grouping tests 5/5 GREEN.
+Last activity: 2026-04-30 — Phase 83 plan 01 complete (migration 0046 arch_nodes parent_id + node_type; schema.ts updated; ArchNode type gains hierarchy fields)
 
 Progress: [██████████] 99%
 
@@ -154,6 +154,10 @@ Progress: [██████████] 99%
 - [83-00] parent_id nullable FK on arch_nodes — section nodes (Alert Intelligence, Incident Intelligence, Workflow Automation) have parent_id=NULL; sub-capability nodes have parent_id=<section node id>; Console is parent_id=NULL special node
 - [83-00] ADR track expands to 3 sections × 3–4 sub-columns = 10 sub-columns total; AI Assistant Track unchanged
 - [83-00] architecture_integrations.phase maps to sub-capability column names (Monitoring Integrations, Alert Normalization, etc.) not section names
+- [83-01] Sub-capability count is 11 total (3+4+4 per CONTEXT.md named sub-caps), not 10 as stated in plan description; migration and tests corrected
+- [83-01] Display order: sections at 10/20/30; Console node_type updated via UPDATE (display_order unchanged); all sub-caps at 1-4 within section; all under display_order < 100 filter
+- [83-01] node_type is text (not pgEnum) — matches migration SQL DEFAULT, avoids enum migration overhead; values: 'section'|'sub-capability'|'console'
+- [83-01] Self-referential FK in Drizzle: integer('parent_id').references((): AnyPgColumn => archNodes.id) — AnyPgColumn already imported in schema.ts
 
 ### Blockers/Concerns
 
@@ -161,6 +165,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-29T19:19:44.563Z
-Stopped at: Completed 82-04-PLAN.md
+Last session: 2026-04-30T00:30:13.687Z
+Stopped at: Completed 83-01-PLAN.md
 Resume file: None
