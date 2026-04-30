@@ -143,9 +143,9 @@ export function ChatPanel({ projectId, initialContext }: ChatPanelProps) {
                           />
                         )
                       }
-                      // text parts — render message once per text part
+                      // text parts — render only this part's text, not the full message
                       if (part.type === 'text') {
-                        return <ChatMessage key={`${message.id}-${partIndex}`} message={message as any} />
+                        return <ChatMessage key={`${message.id}-${partIndex}`} message={{ ...message, parts: [part] } as any} />
                       }
                       return null
                     })}
