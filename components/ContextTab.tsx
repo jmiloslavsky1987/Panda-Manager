@@ -97,7 +97,7 @@ export function ContextTab({ projectId }: ContextTabProps) {
         body: JSON.stringify({ artifactIds: [artifactId], projectId: Number(projectId) }),
       })
       if (!res.ok) throw new Error('Failed to start extraction')
-      setInitialStage('uploading')
+      setInitialStage('extracting')
       setInitialReviewItems([])
       setModalKey(k => k + 1)
       setIngestionModalOpen(true)
