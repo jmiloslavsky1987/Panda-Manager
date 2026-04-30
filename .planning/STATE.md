@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: completed
-stopped_at: Completed 83-02-PLAN.md
-last_updated: "2026-04-30T00:43:33.952Z"
-last_activity: 2026-04-30 — Phase 83 plan 02 complete (InteractiveArchGraph ADR grouped rendering with SectionHeader + per-section SortableContext; IntegrationEditModal optgroups; route.ts + seed-projects.ts new 3-section + 11-sub-capability structure)
+stopped_at: Completed 83-03-PLAN.md
+last_updated: "2026-04-30T00:57:00.000Z"
+last_activity: 2026-04-30 — Phase 83 plan 03 complete (buildArchPhasesContext sub-capability filter + stage guide; createArchNodeTool parent_node_name + parent_id resolution; chat-context-builder section->sub-column grouping via getArchNodes)
 progress:
   total_phases: 9
   completed_phases: 8
   total_plans: 45
-  completed_plans: 43
+  completed_plans: 44
   percent: 99
 ---
 
@@ -165,6 +165,9 @@ Progress: [██████████] 99%
 - [83-02] renderParts: React.ReactNode[] array accumulates section JSX + console insertion inside single DndContext for ADR track
 - [83-02] seed-projects.ts is gitignored — staged with git add -f; architectureIntegrations seed updated to sub-capability phase names (Monitoring Integrations, Automated Incident Creation) matching post-migration schema
 - [83-02] handleDragEnd ADR path: subCapByParent Map scopes arrayMove to section containing active.id; cross-section DnD impossible by SortableContext scope design
+- [83-03] buildArchPhasesContext uses both DB WHERE node_type='sub-capability' AND in-memory filter — DB filter is production behavior; in-memory filter guards against vitest mocks that cannot filter .where() chains
+- [83-03] createArchNodeTool sets node_type='sub-capability' when parent provided, 'section' otherwise — allows chat to create both section and sub-capability nodes
+- [83-03] archNodesData variable name in chat-context-builder avoids collision with archNodes Drizzle schema import
 
 ### Blockers/Concerns
 
@@ -172,6 +175,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-30T00:43:33.948Z
-Stopped at: Completed 83-02-PLAN.md
+Last session: 2026-04-30T00:57:00.000Z
+Stopped at: Completed 83-03-PLAN.md
 Resume file: None

@@ -349,7 +349,7 @@ Plans:
 | 80. Advanced Features | 7/7 | Complete    | 2026-04-28 |
 | 81. Kata Design System Visual Overhaul | 6/7 | In Progress | — |
 | 82. Chat Write Operations | 5/6 | In Progress | — |
-| 83. Architecture Sub-Capability Columns | 3/5 | In Progress|  |
+| 83. Architecture Sub-Capability Columns | 4/5 | In Progress|  |
 
 ---
 *Last updated: 2026-04-29 — Phase 83 planned: 5 plans across 4 waves (Wave 0 test scaffolds + migration + rendering overhaul + downstream consumers + verification)*
