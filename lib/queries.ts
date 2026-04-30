@@ -32,7 +32,7 @@ import {
   onboardingPhases,
   projectMembers,
 } from '../db/schema';
-import { eq, and, inArray, lt, ne, gt, or, desc, asc } from 'drizzle-orm';
+import { eq, and, inArray, ne, gt, or, desc, asc } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
 import { skillRuns } from '../db/schema';
 
@@ -1298,7 +1298,7 @@ export async function getArchNodes(projectId: number): Promise<{ tracks: ArchTra
   const nodes = await db
     .select()
     .from(archNodes)
-    .where(and(eq(archNodes.project_id, projectId), lt(archNodes.display_order, 100)))
+    .where(eq(archNodes.project_id, projectId))
     .orderBy(asc(archNodes.display_order));
   return { tracks, nodes };
 }
