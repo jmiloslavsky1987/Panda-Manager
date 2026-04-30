@@ -6,7 +6,7 @@
 import db from '../db';
 import { businessOutcomes, e2eWorkflows, workflowSteps, focusAreas } from '../db/schema';
 import { eq } from 'drizzle-orm';
-import { getWorkspaceData, getProjectById, getArchTabData } from './queries';
+import { getWorkspaceData, getProjectById, getArchTabData, getArchNodes } from './queries';
 
 /**
  * Build the chat context for a project.
@@ -20,7 +20,7 @@ import { getWorkspaceData, getProjectById, getArchTabData } from './queries';
  * @returns Markdown string with all project data
  */
 export async function buildChatContext(projectId: number): Promise<string> {
-  const [project, workspace, archData, outcomes, workflows, wfSteps, areas] = await Promise.all([
+  const [project, workspace, archData, outcomes, workflows, wfSteps, areas, archNodesData] = await Promise.all([
     getProjectById(projectId),
     getWorkspaceData(projectId),
     getArchTabData(projectId),
@@ -30,6 +30,7 @@ export async function buildChatContext(projectId: number): Promise<string> {
       .innerJoin(e2eWorkflows, eq(workflowSteps.workflow_id, e2eWorkflows.id))
       .where(eq(e2eWorkflows.project_id, projectId)),
     db.select().from(focusAreas).where(eq(focusAreas.project_id, projectId)),
+    getArchNodes(projectId),
   ]);
 
   // Serialize each section as readable markdown
@@ -165,12 +166,44 @@ export async function buildChatContext(projectId: number): Promise<string> {
     });
   }
 
-  // Architecture Integrations
-  if (archData.architectureIntegrations?.length) {
-    sections.push('', '## Architecture Integrations');
-    archData.architectureIntegrations.forEach(i => {
-      sections.push(`- (db_id:${i.id}) ${i.tool_name} | Track: ${i.track ?? 'N/A'} | Phase: ${i.phase ?? 'N/A'} | Status: ${i.status} | Method: ${i.integration_method ?? 'N/A'}`);
-    });
+  // Architecture — grouped by section → sub-column
+  const { nodes: archNodesList } = archNodesData
+  const sectionNodes = archNodesList.filter(n => n.node_type === 'section').sort((a, b) => a.display_order - b.display_order)
+  const subCapsByParent = new Map<number, typeof archNodesList>()
+  archNodesList.filter(n => n.node_type === 'sub-capability').forEach(n => {
+    if (n.parent_id != null) {
+      const arr = subCapsByParent.get(n.parent_id) ?? []
+      arr.push(n)
+      subCapsByParent.set(n.parent_id, arr)
+    }
+  })
+
+  if (archData.architectureIntegrations?.length || sectionNodes.length) {
+    sections.push('', '## Architecture Pipeline')
+    sectionNodes.forEach(section => {
+      sections.push(`\n### ${section.name}`)
+      const subCaps = subCapsByParent.get(section.id) ?? []
+      subCaps.forEach(subCap => {
+        const integrationsForCol = archData.architectureIntegrations?.filter(i => i.phase === subCap.name) ?? []
+        sections.push(`#### ${subCap.name} (${subCap.status})`)
+        if (integrationsForCol.length) {
+          integrationsForCol.forEach(i => {
+            sections.push(`- (db_id:${i.id}) ${i.tool_name} | Status: ${i.status} | Method: ${i.integration_method ?? 'N/A'}`)
+          })
+        } else {
+          sections.push('- (no integrations configured)')
+        }
+      })
+    })
+    // Flat integrations not under any section (non-ADR track or unmatched)
+    const matchedPhases = new Set(sectionNodes.flatMap(s => (subCapsByParent.get(s.id) ?? []).map(n => n.name)))
+    const unmatched = archData.architectureIntegrations?.filter(i => i.phase && !matchedPhases.has(i.phase)) ?? []
+    if (unmatched.length) {
+      sections.push('\n### Other Integrations')
+      unmatched.forEach(i => {
+        sections.push(`- (db_id:${i.id}) ${i.tool_name} | Track: ${i.track ?? 'N/A'} | Phase: ${i.phase ?? 'N/A'} | Status: ${i.status}`)
+      })
+    }
   }
 
   return sections.join('\n');

@@ -131,6 +131,12 @@ export const createArchNodeTool = (projectId: number) =>
           .string()
           .min(1)
           .describe('Architecture track name (e.g. "Biggy AI", "Ingest")'),
+        parent_node_name: z
+          .string()
+          .optional()
+          .describe(
+            'Name of the parent section node (e.g. "Alert Intelligence") — required when creating a sub-capability node under an ADR Track section'
+          ),
         status: z
           .enum(['planned', 'in_progress', 'live'])
           .optional()
@@ -156,13 +162,32 @@ export const createArchNodeTool = (projectId: number) =>
         )
       }
 
-      const { track_name, ...rest } = input
+      let parentId: number | null = null
+      if (input.parent_node_name) {
+        const [parentNode] = await db
+          .select({ id: archNodes.id })
+          .from(archNodes)
+          .where(and(
+            eq(archNodes.project_id, projectId),
+            eq(archNodes.track_id, track.id),
+            eq(archNodes.name, input.parent_node_name),
+          ))
+          .limit(1)
+        if (!parentNode) {
+          throw new Error(`No parent node named "${input.parent_node_name}" found in this track`)
+        }
+        parentId = parentNode.id
+      }
+
+      const { track_name, parent_node_name, ...rest } = input
       const [created] = await db
         .insert(archNodes)
         .values({
           ...rest,
           track_id: track.id,
           project_id: projectId,
+          parent_id: parentId,
+          node_type: parentId != null ? 'sub-capability' : 'section',
           display_order: 999,
           source_trace: 'chat',
         })
