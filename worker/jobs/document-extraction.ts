@@ -22,7 +22,7 @@ import { runDirectIntentExtraction, type DirectIntentItem } from './direct-inten
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const CHUNK_CHAR_LIMIT = 80_000; // ~20k tokens; leaves headroom for system prompt + JSON output
+const CHUNK_CHAR_LIMIT = 40_000; // ~10k tokens; smaller chunks prevent max_tokens truncation on dense docs
 export const CHUNK_OVERLAP = 2_000; // 2000-char overlap between consecutive chunks (EXTR-09)
 
 // ─── Tool Use Definition (EXTR-08, EXTR-10) ──────────────────────────────────
