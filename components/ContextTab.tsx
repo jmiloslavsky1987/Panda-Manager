@@ -55,6 +55,7 @@ export function ContextTab({ projectId }: ContextTabProps) {
   const [activeBatch, setActiveBatch] = useState<ActiveBatch | null>(null)
   const [cancelling, setCancelling] = useState(false)
   const toastFiredRef = useRef<Set<string>>(new Set())
+  const dismissedBatchesRef = useRef<Set<string>>(new Set())
   const [initialStage, setInitialStage] = useState<'uploading' | 'extracting' | 'reviewing'>('uploading')
   const [initialReviewItems, setInitialReviewItems] = useState<ExtractionItem[]>([])
   const [initialArtifactId, setInitialArtifactId] = useState<number | undefined>(undefined)
@@ -132,6 +133,7 @@ export function ContextTab({ projectId }: ContextTabProps) {
         }
 
         const [batchId, batch] = batchEntries[batchEntries.length - 1] as [string, any]
+        if (dismissedBatchesRef.current.has(batchId)) return
         setActiveBatch({ batchId, ...batch })
 
         // Fire toast ONCE when batch_complete becomes true
@@ -285,7 +287,10 @@ export function ContextTab({ projectId }: ContextTabProps) {
                 Review Items
               </button>
               <button
-                onClick={() => setActiveBatch(null)}
+                onClick={() => {
+                  dismissedBatchesRef.current.add(activeBatch.batchId)
+                  setActiveBatch(null)
+                }}
                 className="text-sm text-muted-foreground hover:text-foreground underline"
               >
                 Dismiss
