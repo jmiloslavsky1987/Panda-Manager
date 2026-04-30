@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: completed
-stopped_at: Completed 83-03-PLAN.md
-last_updated: "2026-04-30T00:57:00.000Z"
-last_activity: 2026-04-30 — Phase 83 plan 03 complete (buildArchPhasesContext sub-capability filter + stage guide; createArchNodeTool parent_node_name + parent_id resolution; chat-context-builder section->sub-column grouping via getArchNodes)
+stopped_at: "Checkpoint: Task 2 human-verify awaiting visual browser verification of ADR Track section headers"
+last_updated: "2026-04-30T00:58:09.893Z"
+last_activity: 2026-04-30 — Phase 83 plan 04 automated gate complete (migration 0046 applied, Phase 83 tests 15/15 GREEN, TypeScript clean, production build succeeds, code already pushed); Task 2 human-verify checkpoint pending
 progress:
   total_phases: 9
-  completed_phases: 8
+  completed_phases: 9
   total_plans: 45
-  completed_plans: 44
+  completed_plans: 45
   percent: 99
 ---
 
@@ -168,6 +168,8 @@ Progress: [██████████] 99%
 - [83-03] buildArchPhasesContext uses both DB WHERE node_type='sub-capability' AND in-memory filter — DB filter is production behavior; in-memory filter guards against vitest mocks that cannot filter .where() chains
 - [83-03] createArchNodeTool sets node_type='sub-capability' when parent provided, 'section' otherwise — allows chat to create both section and sub-capability nodes
 - [83-03] archNodesData variable name in chat-context-builder avoids collision with archNodes Drizzle schema import
+- [83-04] Migration runner invoked as DATABASE_URL=postgresql://localhost/bigpanda_app npx tsx scripts/run-migrations.ts — DATABASE_URL absent from .env in dev env; both 0045 and 0046 were unapplied and applied successfully
+- [83-04] Pre-existing test failures (status-cycle/column-reorder from Phase 48, portfolio/lifecycle, deployment URL scan) confirmed not Phase 83 regressions — Phase 48 tests mock requireSession but not requireProjectRole which was added in Phase 82; out of scope for Phase 83 gate
 
 ### Blockers/Concerns
 
@@ -175,6 +177,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-30T00:57:00.000Z
-Stopped at: Completed 83-03-PLAN.md
+Last session: 2026-04-30T00:58:09.891Z
+Stopped at: Checkpoint: Task 2 human-verify awaiting visual browser verification of ADR Track section headers
 Resume file: None
