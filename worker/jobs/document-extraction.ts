@@ -728,7 +728,7 @@ export async function buildArchPhasesContext(projectId: number): Promise<string>
     .select({ trackName: archTracks.name, nodeName: archNodes.name })
     .from(archNodes)
     .innerJoin(archTracks, eq(archNodes.track_id, archTracks.id))
-    .where(eq(archNodes.project_id, projectId))
+    .where(and(eq(archNodes.project_id, projectId), eq(archNodes.node_type, 'sub-capability')))
     .orderBy(archTracks.display_order, archNodes.display_order);
 
   if (rows.length === 0) return '';
@@ -750,13 +750,21 @@ When extracting "architecture" entities, set the "phase" field to the EXACT stag
 ${stageLines}
 
 Stage assignment guide (infer from tool function, not from document wording):
-- Alert Intelligence stage: monitoring sources, alert ingest connectors, correlation, enrichment, normalization, suppression, filtering, deduplication, tagging, topology (e.g. Dynatrace, Splunk, Datadog, Nagios, custom APIs, Alert Correlation, Mapping & Enrichment, Alert Tags)
-- Incident Intelligence stage: RCA, incident classification, enrichment, change correlation, root cause (e.g. Incident Enrichment, Change Integration, Suggested Root Cause)
-- Workflow Automation stage: ticketing, notifications, runbooks, ITSM actions (e.g. ServiceNow, Slack, PagerDuty triggers, auto-share)
-- Knowledge Sources stage: knowledge bases, documentation feeds, wikis, Confluence, Jira
-- AI Capabilities stage: AI assistant features, query handling, intelligent response
-- Real-Time Query stage: live data lookups, real-time source integrations
-- Outputs & Actions stage: AI-triggered output actions, downstream notifications, integrations
+- Monitoring Integrations: monitoring sources, alert ingest connectors, observability tools (Dynatrace, Splunk, Datadog, Nagios, custom APIs)
+- Alert Normalization: tag maps, normalization rules, mapping configs, Alert Tags, Mapping & Enrichment
+- Alert Enrichment: CMDB mappings, enrichment logic, topology data sources
+- Alert Correlation: correlation patterns, deduplication rules, suppression, filtering
+- Incident Enrichment: incident tag configs, topology integrations, incident enrichment rules
+- Incident Classification: environment classification, incident routing configs
+- Suggested Root Cause: change integrations, RCA configs, SRC rules
+- Environments: customer environment configs, autoshare rules
+- Automated Incident Creation: ITSM ticketing (ServiceNow, Jira), ticket automation rules
+- Automated Incident Notification: Slack, PagerDuty, Teams routing rules, notification configs
+- Automated Incident Remediation: runbook automation, EAP configs, action plans
+- Knowledge Sources: knowledge bases, documentation feeds, wikis, Confluence, Jira
+- AI Capabilities: AI assistant features, query handling, intelligent response
+- Real-Time Query: live data lookups, real-time source integrations
+- Outputs & Actions: AI-triggered output actions, downstream notifications, integrations
 </project_pipeline_stages>`;
 }
 
