@@ -114,6 +114,14 @@ None - no external service configuration required.
 - Wave 3 ready (83-03): arch-context-builder.test.ts has 4 RED tests gating buildArchPhasesContext and chat-context-builder updates
 - section-grouping tests: 5/5 GREEN — confirms Wave 1 contract is met
 
+## Self-Check: PASSED
+
+- tests/arch/section-grouping.test.ts: FOUND, 5/5 GREEN
+- tests/arch/integration-modal-optgroup.test.ts: FOUND, 3 RED + 1 GREEN
+- tests/arch/arch-context-builder.test.ts: FOUND, 4/4 RED
+- 83-00-SUMMARY.md: FOUND (this file)
+- Commit 225c69f: FOUND (docs(83-00) planning commit)
+
 ---
 *Phase: 83-architecture-sub-capability-columns*
 *Completed: 2026-04-30*
