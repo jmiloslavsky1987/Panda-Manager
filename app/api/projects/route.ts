@@ -222,11 +222,41 @@ export async function POST(req: NextRequest) {
       display_order: 1,
     }).returning({ id: archTracks.id });
 
+    // Insert ADR section nodes first (capturing IDs for parent_id references)
+    const [sectionAI] = await tx.insert(archNodes).values({
+      track_id: adrTrack.id, project_id: inserted.id, name: 'Alert Intelligence',
+      display_order: 10, status: 'planned' as const, node_type: 'section', source_trace: 'template',
+    }).returning({ id: archNodes.id });
+
+    const [sectionII] = await tx.insert(archNodes).values({
+      track_id: adrTrack.id, project_id: inserted.id, name: 'Incident Intelligence',
+      display_order: 20, status: 'planned' as const, node_type: 'section', source_trace: 'template',
+    }).returning({ id: archNodes.id });
+
+    const [sectionWA] = await tx.insert(archNodes).values({
+      track_id: adrTrack.id, project_id: inserted.id, name: 'Workflow Automation',
+      display_order: 30, status: 'planned' as const, node_type: 'section', source_trace: 'template',
+    }).returning({ id: archNodes.id });
+
+    // Insert Console node (between II and WA by display_order)
+    await tx.insert(archNodes).values({
+      track_id: adrTrack.id, project_id: inserted.id, name: 'Console',
+      display_order: 25, status: 'planned' as const, node_type: 'console', source_trace: 'template',
+    });
+
+    // Insert all 11 sub-capability nodes with parent_id references
     await tx.insert(archNodes).values([
-      { track_id: adrTrack.id, project_id: inserted.id, name: 'Alert Intelligence', display_order: 1, status: 'planned' as const, source_trace: 'template' },
-      { track_id: adrTrack.id, project_id: inserted.id, name: 'Incident Intelligence', display_order: 2, status: 'planned' as const, source_trace: 'template' },
-      { track_id: adrTrack.id, project_id: inserted.id, name: 'Console', display_order: 3, status: 'planned' as const, source_trace: 'template' },
-      { track_id: adrTrack.id, project_id: inserted.id, name: 'Workflow Automation', display_order: 4, status: 'planned' as const, source_trace: 'template' },
+      { track_id: adrTrack.id, project_id: inserted.id, parent_id: sectionAI.id, name: 'Monitoring Integrations', display_order: 1, status: 'planned' as const, node_type: 'sub-capability', source_trace: 'template' },
+      { track_id: adrTrack.id, project_id: inserted.id, parent_id: sectionAI.id, name: 'Alert Normalization', display_order: 2, status: 'planned' as const, node_type: 'sub-capability', source_trace: 'template' },
+      { track_id: adrTrack.id, project_id: inserted.id, parent_id: sectionAI.id, name: 'Alert Enrichment', display_order: 3, status: 'planned' as const, node_type: 'sub-capability', source_trace: 'template' },
+      { track_id: adrTrack.id, project_id: inserted.id, parent_id: sectionII.id, name: 'Alert Correlation', display_order: 1, status: 'planned' as const, node_type: 'sub-capability', source_trace: 'template' },
+      { track_id: adrTrack.id, project_id: inserted.id, parent_id: sectionII.id, name: 'Incident Enrichment', display_order: 2, status: 'planned' as const, node_type: 'sub-capability', source_trace: 'template' },
+      { track_id: adrTrack.id, project_id: inserted.id, parent_id: sectionII.id, name: 'Incident Classification', display_order: 3, status: 'planned' as const, node_type: 'sub-capability', source_trace: 'template' },
+      { track_id: adrTrack.id, project_id: inserted.id, parent_id: sectionII.id, name: 'Suggested Root Cause', display_order: 4, status: 'planned' as const, node_type: 'sub-capability', source_trace: 'template' },
+      { track_id: adrTrack.id, project_id: inserted.id, parent_id: sectionWA.id, name: 'Environments', display_order: 1, status: 'planned' as const, node_type: 'sub-capability', source_trace: 'template' },
+      { track_id: adrTrack.id, project_id: inserted.id, parent_id: sectionWA.id, name: 'Automated Incident Creation', display_order: 2, status: 'planned' as const, node_type: 'sub-capability', source_trace: 'template' },
+      { track_id: adrTrack.id, project_id: inserted.id, parent_id: sectionWA.id, name: 'Automated Incident Notification', display_order: 3, status: 'planned' as const, node_type: 'sub-capability', source_trace: 'template' },
+      { track_id: adrTrack.id, project_id: inserted.id, parent_id: sectionWA.id, name: 'Automated Incident Remediation', display_order: 4, status: 'planned' as const, node_type: 'sub-capability', source_trace: 'template' },
     ]);
 
     // AI Assistant Track

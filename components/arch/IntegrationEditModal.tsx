@@ -2,13 +2,6 @@
 import { useState } from 'react'
 import { ArchitectureIntegration } from '@/lib/queries'
 
-const ADR_PHASES = [
-  'Alert Intelligence',
-  'Incident Intelligence',
-  'Console',
-  'Workflow Automation',
-]
-
 const BIGGY_PHASES = [
   'Knowledge Sources',
   'Real-Time Query',
@@ -37,7 +30,7 @@ export function IntegrationEditModal({ projectId, integration, defaultTrack, onS
   const [track, setTrack] = useState<'ADR' | 'Biggy'>(
     (integration?.track as 'ADR' | 'Biggy') ?? defaultTrack ?? 'ADR'
   )
-  const [phase, setPhase] = useState(integration?.phase ?? ADR_PHASES[0])
+  const [phase, setPhase] = useState(integration?.phase ?? 'Monitoring Integrations')
   const [group, setGroup] = useState(integration?.integration_group ?? '')
   const [status, setStatus] = useState<string>(integration?.status ?? 'planned')
   const [integrationMethod, setIntegrationMethod] = useState(integration?.integration_method ?? '')
@@ -45,13 +38,12 @@ export function IntegrationEditModal({ projectId, integration, defaultTrack, onS
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const phases = track === 'ADR' ? ADR_PHASES : BIGGY_PHASES
-
   function handleTrackChange(newTrack: 'ADR' | 'Biggy') {
     setTrack(newTrack)
-    const newPhases = newTrack === 'ADR' ? ADR_PHASES : BIGGY_PHASES
-    if (!newPhases.includes(phase)) {
-      setPhase(newPhases[0])
+    if (newTrack === 'ADR') {
+      setPhase('Monitoring Integrations')
+    } else {
+      setPhase(BIGGY_PHASES[0])
     }
   }
 
@@ -148,9 +140,29 @@ export function IntegrationEditModal({ projectId, integration, defaultTrack, onS
               onChange={(e) => setPhase(e.target.value)}
               style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 4, padding: '6px 10px', fontSize: '0.875rem' }}
             >
-              {phases.map((p) => (
-                <option key={p} value={p}>{p}</option>
-              ))}
+              {track === 'ADR' ? (
+                <>
+                  <optgroup label="Alert Intelligence">
+                    <option value="Monitoring Integrations">Monitoring Integrations</option>
+                    <option value="Alert Normalization">Alert Normalization</option>
+                    <option value="Alert Enrichment">Alert Enrichment</option>
+                  </optgroup>
+                  <optgroup label="Incident Intelligence">
+                    <option value="Alert Correlation">Alert Correlation</option>
+                    <option value="Incident Enrichment">Incident Enrichment</option>
+                    <option value="Incident Classification">Incident Classification</option>
+                    <option value="Suggested Root Cause">Suggested Root Cause</option>
+                  </optgroup>
+                  <optgroup label="Workflow Automation">
+                    <option value="Environments">Environments</option>
+                    <option value="Automated Incident Creation">Automated Incident Creation</option>
+                    <option value="Automated Incident Notification">Automated Incident Notification</option>
+                    <option value="Automated Incident Remediation">Automated Incident Remediation</option>
+                  </optgroup>
+                </>
+              ) : (
+                BIGGY_PHASES.map(p => <option key={p} value={p}>{p}</option>)
+              )}
             </select>
           </div>
         </div>
