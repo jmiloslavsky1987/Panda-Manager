@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: completed
-stopped_at: Completed 83-00-PLAN.md
-last_updated: "2026-04-30T00:36:10.605Z"
-last_activity: 2026-04-30 — Phase 83 plan 01 complete (migration 0046 arch_nodes parent_id + node_type; schema.ts updated; ArchNode type gains hierarchy fields)
+stopped_at: Completed 83-02-PLAN.md
+last_updated: "2026-04-30T00:43:33.952Z"
+last_activity: 2026-04-30 — Phase 83 plan 02 complete (InteractiveArchGraph ADR grouped rendering with SectionHeader + per-section SortableContext; IntegrationEditModal optgroups; route.ts + seed-projects.ts new 3-section + 11-sub-capability structure)
 progress:
   total_phases: 9
   completed_phases: 8
   total_plans: 45
-  completed_plans: 42
+  completed_plans: 43
   percent: 99
 ---
 
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 83 of 83 (Architecture Sub-Capability Columns — plan 01 complete, 4 remaining)
-Status: 83-01 complete — migration 0046 adds parent_id (nullable self-FK) and node_type to arch_nodes; schema.ts updated; ArchNode TypeScript type gains hierarchy fields; existing projects migrated to 3 sections + 11 sub-capabilities per ADR Track; architecture_integrations.phase remapped; section-grouping tests 5/5 GREEN.
-Last activity: 2026-04-30 — Phase 83 plan 01 complete (migration 0046 arch_nodes parent_id + node_type; schema.ts updated; ArchNode type gains hierarchy fields)
+Phase: 83 of 83 (Architecture Sub-Capability Columns — plan 02 complete, 3 remaining)
+Status: 83-02 complete — InteractiveArchGraph.tsx ADR Track renders 3 colored SectionHeader components + per-section SortableContext; AI Assistant Track unchanged; IntegrationEditModal uses optgroup grouped ADR phase picker; route.ts + seed-projects.ts seed 3 sections + Console + 11 sub-capabilities for new projects; integration-modal-optgroup tests 4/4 GREEN.
+Last activity: 2026-04-30 — Phase 83 plan 02 complete (InteractiveArchGraph ADR grouped rendering with SectionHeader + per-section SortableContext; IntegrationEditModal optgroups; route.ts + seed-projects.ts new 3-section + 11-sub-capability structure)
 
 Progress: [██████████] 99%
 
@@ -160,6 +160,11 @@ Progress: [██████████] 99%
 - [83-01] Display order: sections at 10/20/30; Console node_type updated via UPDATE (display_order unchanged); all sub-caps at 1-4 within section; all under display_order < 100 filter
 - [83-01] node_type is text (not pgEnum) — matches migration SQL DEFAULT, avoids enum migration overhead; values: 'section'|'sub-capability'|'console'
 - [83-01] Self-referential FK in Drizzle: integer('parent_id').references((): AnyPgColumn => archNodes.id) — AnyPgColumn already imported in schema.ts
+- [83-02] TrackPipeline uses strict equality trackData.name === 'ADR Track' (not .includes('ADR')) to avoid false matches on other track names
+- [83-02] Console node inserted after sectionIdx === 1 (Incident Intelligence) in ordered sections array; sections sorted by display_order 10/20/30 with Console at 25
+- [83-02] renderParts: React.ReactNode[] array accumulates section JSX + console insertion inside single DndContext for ADR track
+- [83-02] seed-projects.ts is gitignored — staged with git add -f; architectureIntegrations seed updated to sub-capability phase names (Monitoring Integrations, Automated Incident Creation) matching post-migration schema
+- [83-02] handleDragEnd ADR path: subCapByParent Map scopes arrayMove to section containing active.id; cross-section DnD impossible by SortableContext scope design
 
 ### Blockers/Concerns
 
@@ -167,6 +172,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-30T00:36:10.602Z
-Stopped at: Completed 83-00-PLAN.md
+Last session: 2026-04-30T00:43:33.948Z
+Stopped at: Completed 83-02-PLAN.md
 Resume file: None
