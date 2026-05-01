@@ -3,7 +3,6 @@ import { getProjectWithHealth } from '../../../lib/queries'
 import { WorkspaceKpiStrip } from '../../../components/WorkspaceKpiStrip'
 import { WorkspacePageBarConfigurator } from '../../../components/WorkspacePageBarConfigurator'
 import { WorkspaceTabs } from '../../../components/WorkspaceTabs'
-import { AddNotesModal } from '../../../components/AddNotesModal'
 import WorkspaceSearchBar from '../../../components/WorkspaceSearchBar'
 import { ArchivedBanner } from '../../../components/ArchivedBanner'
 import { auth } from '@/lib/auth'
@@ -87,7 +86,6 @@ export default async function WorkspaceLayout({
       <div className="flex-1 p-6 overflow-y-auto">
         {children}
       </div>
-      {project && <AddNotesModal projectId={projectId} />}
     </div>
   )
 }

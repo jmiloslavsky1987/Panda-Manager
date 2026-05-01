@@ -15,12 +15,14 @@ type RunStatus = 'loading' | 'streaming' | 'done' | 'failed';
 
 type RunResponse = { status?: string; skill_name?: string; full_output?: string; error_message?: string };
 
-// Extract HTML string from output — handles both raw HTML and JSON envelope {"title":...,"html":...}
+// Extract HTML string from output — handles raw HTML, JSON envelope, and markdown-fenced JSON
 function extractHtml(raw: string): string | null {
-  const trimmed = raw.trim();
-  if (trimmed.startsWith('<')) return trimmed; // already raw HTML
+  let s = raw.trim();
+  // Strip markdown code fence (```json ... ``` or ``` ... ```)
+  s = s.replace(/^```[a-z]*\s*/i, '').replace(/\s*```$/, '').trim();
+  if (s.startsWith('<')) return s; // raw HTML
   try {
-    const parsed = JSON.parse(trimmed);
+    const parsed = JSON.parse(s);
     if (typeof parsed?.html === 'string') return parsed.html;
   } catch { /* not JSON */ }
   return null;

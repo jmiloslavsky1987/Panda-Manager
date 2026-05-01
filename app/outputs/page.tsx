@@ -12,6 +12,14 @@ const DocxPreview = dynamic(() => import('@/components/DocxPreview'), {
   loading: () => <div className="h-[500px] bg-zinc-50 animate-pulse rounded" />,
 });
 
+function extractHtmlFromContent(raw: string): string {
+  let s = raw.trim().replace(/^```[a-z]*\s*/i, '').replace(/\s*```$/, '').trim();
+  if (!s.startsWith('<')) {
+    try { const p = JSON.parse(s); if (typeof p?.html === 'string') return p.html; } catch { /* raw */ }
+  }
+  return s;
+}
+
 export default function OutputLibraryPage() {
   const router = useRouter();
   const [outputs, setOutputs] = useState<OutputRow[]>([]);
@@ -173,11 +181,7 @@ export default function OutputLibraryPage() {
                     )}
                     {/* HTML output: open in new tab + download */}
                     {type === 'html' && output.content && (() => {
-                      // Parse HTML out of JSON envelope if present
-                      let html = output.content.trim();
-                      if (!html.startsWith('<')) {
-                        try { const p = JSON.parse(html); if (typeof p?.html === 'string') html = p.html; } catch { /* raw */ }
-                      }
+                      const html = extractHtmlFromContent(output.content);
                       return (
                         <>
                           <button
@@ -221,10 +225,7 @@ export default function OutputLibraryPage() {
                 {/* Expand panel — type-aware */}
                 {expandedId === output.id && (() => {
                   if (type === 'html' && output.content) {
-                    let htmlSrc = output.content.trim();
-                    if (!htmlSrc.startsWith('<')) {
-                      try { const p = JSON.parse(htmlSrc); if (typeof p?.html === 'string') htmlSrc = p.html; } catch { /* raw */ }
-                    }
+                    const htmlSrc = extractHtmlFromContent(output.content);
                     return (
                       <div className="border-t border-zinc-100">
                         <iframe
