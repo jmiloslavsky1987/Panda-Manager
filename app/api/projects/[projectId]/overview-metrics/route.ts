@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { count, eq, sql, and } from 'drizzle-orm'
+import { count, eq, sql, and, isNull, or, ne } from 'drizzle-orm'
 import db from '@/db'
-import { onboardingSteps, risks, integrations, milestones, projects, timeEntries, tasks } from '@/db/schema'
+import { onboardingSteps, onboardingPhases, risks, integrations, milestones, projects, timeEntries, tasks } from '@/db/schema'
 import { requireProjectRole } from '@/lib/auth-server'
 
 // --- Helper functions (copied from analytics/route.ts) ---
@@ -69,7 +69,7 @@ export async function GET(
     const result = await db.transaction(async (tx) => {
       await tx.execute(sql.raw(`SET LOCAL app.current_project_id = ${numericId}`))
 
-      // 1. stepCounts: count onboarding steps per (track, status) pair
+      // 1. stepCounts: count onboarding steps per (track, status) pair, excluding Go-Live phase
       const stepCountsRaw = await tx
         .select({
           track: onboardingSteps.track,
@@ -77,7 +77,11 @@ export async function GET(
           count: count(),
         })
         .from(onboardingSteps)
-        .where(eq(onboardingSteps.project_id, numericId))
+        .innerJoin(onboardingPhases, eq(onboardingSteps.phase_id, onboardingPhases.id))
+        .where(and(
+          eq(onboardingSteps.project_id, numericId),
+          ne(onboardingPhases.name, 'Go-Live'),
+        ))
         .groupBy(onboardingSteps.track, onboardingSteps.status)
 
       const stepCounts = stepCountsRaw.map(row => ({
@@ -93,7 +97,7 @@ export async function GET(
           count: count(),
         })
         .from(risks)
-        .where(and(eq(risks.project_id, numericId), eq(risks.status, 'open')))
+        .where(and(eq(risks.project_id, numericId), or(eq(risks.status, 'open'), isNull(risks.status))))
         .groupBy(risks.severity)
 
       const riskCounts = riskCountsRaw.map(row => ({
@@ -201,7 +205,7 @@ export async function GET(
         SELECT COUNT(*) as count
         FROM milestones
         WHERE project_id = ${numericId}
-          AND (status IS NULL OR status != 'complete')
+          AND (status IS NULL OR (status != 'complete' AND status != 'missed'))
           AND date ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
           AND date::date < CURRENT_DATE
       `)
