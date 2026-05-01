@@ -64,6 +64,7 @@ export function WeeklyReportClient() {
   const [week, setWeek] = useState(() => isoWeek(new Date()))
   const [rows, setRows] = useState<ReportRow[]>([])
   const [loading, setLoading] = useState(true)
+  const [generating, setGenerating] = useState<Record<number, boolean>>({})
   const [saving, setSaving] = useState<Record<number, boolean>>({})
   const [editingMeta, setEditingMeta] = useState<Record<number, boolean>>({})
   const [metaDraft, setMetaDraft] = useState<Record<number, { project_type: string; budgeted_hours: string; arr: string }>>({})
@@ -152,6 +153,29 @@ export function WeeklyReportClient() {
       }
     }))
     setEditingMeta(prev => ({ ...prev, [row.id]: true }))
+  }
+
+  const generateNotes = async (projectId: number) => {
+    setGenerating(prev => ({ ...prev, [projectId]: true }))
+    try {
+      const res = await fetch('/api/weekly-report/generate-notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ project_id: projectId, week_of: week }),
+      })
+      if (res.ok) {
+        const { notes } = await res.json()
+        setRows(prev => prev.map(r => r.id === projectId ? { ...r, notes } : r))
+        // Auto-save the generated notes
+        await fetch('/api/weekly-report/notes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ project_id: projectId, week_of: week, notes }),
+        })
+      }
+    } finally {
+      setGenerating(prev => ({ ...prev, [projectId]: false }))
+    }
   }
 
   const handleExport = () => {
@@ -299,19 +323,41 @@ export function WeeklyReportClient() {
                     ) : <span className="text-zinc-300 text-xs">—</span>}
                   </td>
 
-                  {/* Notes — editable */}
-                  <td className="px-3 py-2 relative">
-                    <textarea
-                      rows={4}
-                      value={row.notes}
-                      onChange={e => handleNoteChange(row.id, e.target.value)}
-                      placeholder="Add progress & next steps…"
-                      className="w-full text-xs border border-zinc-200 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-400 focus:border-blue-400 transition-colors bg-transparent"
-                      style={{ resize: 'vertical', minHeight: 72 }}
-                    />
-                    {saving[row.id] && (
-                      <span className="absolute bottom-3 right-4 text-[10px] text-zinc-400">saving…</span>
-                    )}
+                  {/* Notes — editable with AI autopopulate */}
+                  <td className="px-3 py-2">
+                    <div className="relative">
+                      <textarea
+                        rows={4}
+                        value={row.notes}
+                        onChange={e => handleNoteChange(row.id, e.target.value)}
+                        placeholder="Add progress & next steps…"
+                        className="w-full text-xs border border-zinc-200 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-400 focus:border-blue-400 transition-colors bg-transparent"
+                        style={{ resize: 'vertical', minHeight: 72 }}
+                      />
+                      <div className="flex items-center justify-between mt-1">
+                        <button
+                          onClick={() => generateNotes(row.id)}
+                          disabled={generating[row.id]}
+                          className="flex items-center gap-1 text-[10px] text-indigo-600 hover:text-indigo-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          title="Auto-generate 3 bullet points from project activity"
+                        >
+                          {generating[row.id] ? (
+                            <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                            </svg>
+                          ) : (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                          )}
+                          {generating[row.id] ? 'Generating…' : 'AI draft'}
+                        </button>
+                        {saving[row.id] && (
+                          <span className="text-[10px] text-zinc-400">saving…</span>
+                        )}
+                      </div>
+                    </div>
                   </td>
 
                   {/* Risks */}
