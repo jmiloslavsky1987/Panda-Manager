@@ -171,22 +171,37 @@ export function WeeklyReportClient() {
 
       {/* Table */}
       <div className="px-6 overflow-x-auto">
-        <table className="w-full text-sm border-collapse min-w-[1200px]">
+        <table className="text-sm border-collapse" style={{ tableLayout: 'fixed', width: '100%', minWidth: 1300 }}>
+          <colgroup>
+            <col style={{ width: 180 }} />
+            <col style={{ width: 110 }} />
+            <col style={{ width: 120 }} />
+            <col style={{ width: 80 }} />
+            <col style={{ width: 340 }} />
+            <col style={{ width: 220 }} />
+            <col style={{ width: 96 }} />
+            <col style={{ width: 110 }} />
+            <col style={{ width: 100 }} />
+            <col style={{ width: 100 }} />
+            <col style={{ width: 88 }} />
+            <col style={{ width: 88 }} />
+            <col style={{ width: 96 }} />
+          </colgroup>
           <thead>
             <tr className="bg-zinc-800 text-white text-xs">
-              <th className="text-left px-3 py-2.5 font-semibold whitespace-nowrap w-44">Project Name</th>
-              <th className="text-left px-3 py-2.5 font-semibold whitespace-nowrap w-28">Type</th>
-              <th className="text-left px-3 py-2.5 font-semibold whitespace-nowrap w-28">Owner</th>
-              <th className="text-left px-3 py-2.5 font-semibold whitespace-nowrap w-20">Health</th>
-              <th className="text-left px-3 py-2.5 font-semibold w-72">Progress & Next Steps</th>
-              <th className="text-left px-3 py-2.5 font-semibold w-52">Risks</th>
-              <th className="text-left px-3 py-2.5 font-semibold whitespace-nowrap w-24">Start Date</th>
-              <th className="text-left px-3 py-2.5 font-semibold whitespace-nowrap w-28">Go-Live</th>
-              <th className="text-right px-3 py-2.5 font-semibold whitespace-nowrap w-24">Budget (hrs)</th>
-              <th className="text-right px-3 py-2.5 font-semibold whitespace-nowrap w-24">Consumed</th>
-              <th className="text-right px-3 py-2.5 font-semibold whitespace-nowrap w-20">Progress</th>
-              <th className="text-right px-3 py-2.5 font-semibold whitespace-nowrap w-20">Budget %</th>
-              <th className="text-right px-3 py-2.5 font-semibold whitespace-nowrap w-24">ARR</th>
+              <th className="text-left px-3 py-2.5 font-semibold whitespace-nowrap overflow-hidden" style={{ resize: 'horizontal' }}>Project Name</th>
+              <th className="text-left px-3 py-2.5 font-semibold whitespace-nowrap overflow-hidden" style={{ resize: 'horizontal' }}>Type</th>
+              <th className="text-left px-3 py-2.5 font-semibold whitespace-nowrap overflow-hidden" style={{ resize: 'horizontal' }}>Owner</th>
+              <th className="text-left px-3 py-2.5 font-semibold whitespace-nowrap overflow-hidden" style={{ resize: 'horizontal' }}>Health</th>
+              <th className="text-left px-3 py-2.5 font-semibold overflow-hidden" style={{ resize: 'horizontal' }}>Progress & Next Steps</th>
+              <th className="text-left px-3 py-2.5 font-semibold overflow-hidden" style={{ resize: 'horizontal' }}>Risks</th>
+              <th className="text-left px-3 py-2.5 font-semibold whitespace-nowrap overflow-hidden" style={{ resize: 'horizontal' }}>Start Date</th>
+              <th className="text-left px-3 py-2.5 font-semibold whitespace-nowrap overflow-hidden" style={{ resize: 'horizontal' }}>Go-Live</th>
+              <th className="text-right px-3 py-2.5 font-semibold whitespace-nowrap overflow-hidden" style={{ resize: 'horizontal' }}>Budget (hrs)</th>
+              <th className="text-right px-3 py-2.5 font-semibold whitespace-nowrap overflow-hidden" style={{ resize: 'horizontal' }}>Consumed</th>
+              <th className="text-right px-3 py-2.5 font-semibold whitespace-nowrap overflow-hidden" style={{ resize: 'horizontal' }}>Progress</th>
+              <th className="text-right px-3 py-2.5 font-semibold whitespace-nowrap overflow-hidden" style={{ resize: 'horizontal' }}>Budget %</th>
+              <th className="text-right px-3 py-2.5 font-semibold whitespace-nowrap overflow-hidden" style={{ resize: 'horizontal' }}>ARR</th>
             </tr>
           </thead>
           <tbody>
@@ -259,11 +274,12 @@ export function WeeklyReportClient() {
                   {/* Notes — editable */}
                   <td className="px-3 py-2 relative">
                     <textarea
-                      rows={3}
+                      rows={4}
                       value={row.notes}
                       onChange={e => handleNoteChange(row.id, e.target.value)}
                       placeholder="Add progress & next steps…"
-                      className="w-full text-xs border border-zinc-200 rounded px-2 py-1.5 resize-none focus:outline-none focus:ring-1 focus:ring-blue-400 focus:border-blue-400 transition-colors bg-transparent"
+                      className="w-full text-xs border border-zinc-200 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-400 focus:border-blue-400 transition-colors bg-transparent"
+                      style={{ resize: 'vertical', minHeight: 72 }}
                     />
                     {saving[row.id] && (
                       <span className="absolute bottom-3 right-4 text-[10px] text-zinc-400">saving…</span>

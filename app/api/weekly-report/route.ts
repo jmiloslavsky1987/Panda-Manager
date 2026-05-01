@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/db'
 import { projects, risks, timeEntries, weeklyReportNotes, projectMembers, users, onboardingSteps, onboardingPhases, integrations, teamOnboardingStatus } from '@/db/schema'
-import { eq, and, or, isNull, sql, count, inArray } from 'drizzle-orm'
+import { eq, and, or, isNull, sql, count, inArray, notInArray } from 'drizzle-orm'
 import { requireSession } from '@/lib/auth-server'
-import { resolveRole } from '@/lib/auth-utils'
 
 function isoWeek(date: Date): string {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
@@ -21,29 +20,12 @@ export async function GET(req: NextRequest) {
   if (redirectResponse) return redirectResponse
 
   const weekOf = req.nextUrl.searchParams.get('week') ?? isoWeek(new Date())
-  const isAdmin = resolveRole(session!) === 'admin'
-  const userId = session!.user.id
 
-  // Determine which project IDs the user can see
-  let visibleProjectIds: number[] | null = null
-  if (!isAdmin) {
-    const memberships = await db
-      .select({ project_id: projectMembers.project_id })
-      .from(projectMembers)
-      .where(eq(projectMembers.user_id, userId))
-    visibleProjectIds = memberships.map(m => m.project_id)
-  }
-
-  // All active projects (filtered by membership for non-admins)
+  // Weekly report is cross-PM: show all non-archived/closed projects to any authenticated user
   const projectRows = await db
     .select()
     .from(projects)
-    .where(
-      and(
-        eq(projects.status, 'active'),
-        visibleProjectIds ? inArray(projects.id, visibleProjectIds) : undefined,
-      )
-    )
+    .where(notInArray(projects.status, ['archived', 'closed']))
     .orderBy(projects.customer)
 
   if (projectRows.length === 0) return NextResponse.json({ rows: [], weekOf })
