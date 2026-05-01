@@ -116,29 +116,23 @@ export function DailyPrepCard({
 
           {/* Second row: project + attendees */}
           <div className="mt-2 flex flex-wrap items-center gap-4">
-            {/* Project: dropdown if unmatched, text if matched */}
-            {event.matched_project_id === null ? (
-              <select
-                data-testid="project-dropdown"
-                value={card.selectedProjectId ?? ''}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  onProjectChange(event.event_id, val ? Number(val) : null);
-                }}
-                className="text-sm border border-zinc-300 rounded px-2 py-1 bg-white text-zinc-700"
-              >
-                <option value="">— assign project —</option>
-                {projects.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <span className="text-sm text-zinc-700 font-medium">
-                {event.matched_project_name}
-              </span>
-            )}
+            {/* Project: always a dropdown, pre-selected to matched project if any */}
+            <select
+              data-testid="project-dropdown"
+              value={card.selectedProjectId ?? ''}
+              onChange={(e) => {
+                const val = e.target.value;
+                onProjectChange(event.event_id, val ? Number(val) : null);
+              }}
+              className="text-sm border border-zinc-300 rounded px-2 py-1 bg-white text-zinc-700"
+            >
+              <option value="">— assign project —</option>
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
 
             {/* Attendees */}
             {event.attendee_names.length > 0 && (
