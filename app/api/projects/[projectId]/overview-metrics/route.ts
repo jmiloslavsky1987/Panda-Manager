@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { count, eq, sql, and, isNull, or, ne } from 'drizzle-orm'
+import { count, eq, sql, and, isNull, or, inArray } from 'drizzle-orm'
 import db from '@/db'
 import { onboardingSteps, onboardingPhases, risks, integrations, milestones, projects, timeEntries, tasks } from '@/db/schema'
 import { requireProjectRole } from '@/lib/auth-server'
@@ -69,7 +69,15 @@ export async function GET(
     const result = await db.transaction(async (tx) => {
       await tx.execute(sql.raw(`SET LOCAL app.current_project_id = ${numericId}`))
 
-      // 1. stepCounts: count onboarding steps per (track, status) pair, excluding Go-Live phase
+      // 1. stepCounts: only count steps from the standard phases shown in the header rings.
+      // ADR: Discovery & Kickoff, Platform Configuration, UAT
+      // Biggy: Discovery & Kickoff, Platform Configuration, Validation
+      const COUNTED_PHASES = [
+        'Discovery & Kickoff',
+        'Platform Configuration',
+        'UAT',
+        'Validation',
+      ]
       const stepCountsRaw = await tx
         .select({
           track: onboardingSteps.track,
@@ -80,7 +88,7 @@ export async function GET(
         .innerJoin(onboardingPhases, eq(onboardingSteps.phase_id, onboardingPhases.id))
         .where(and(
           eq(onboardingSteps.project_id, numericId),
-          ne(onboardingPhases.name, 'Go-Live'),
+          inArray(onboardingPhases.name, COUNTED_PHASES),
         ))
         .groupBy(onboardingSteps.track, onboardingSteps.status)
 
