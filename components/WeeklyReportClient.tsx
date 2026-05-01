@@ -1,6 +1,16 @@
 'use client'
 
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useEffect, useState, useRef, useCallback, MouseEvent as ReactMouseEvent } from 'react'
+
+const COL_LABELS = [
+  'Project Name', 'Type', 'Owner', 'Health',
+  'Progress & Next Steps', 'Risks',
+  'Start Date', 'Go-Live',
+  'Budget (hrs)', 'Consumed', 'Progress', 'Budget %', 'ARR',
+] as const
+
+const COL_DEFAULTS = [180, 110, 120, 80, 340, 220, 96, 110, 100, 100, 88, 88, 96]
+const COL_ALIGN = ['left','left','left','left','left','left','left','left','right','right','right','right','right'] as const
 
 interface ReportRow {
   id: number
@@ -58,6 +68,26 @@ export function WeeklyReportClient() {
   const [editingMeta, setEditingMeta] = useState<Record<number, boolean>>({})
   const [metaDraft, setMetaDraft] = useState<Record<number, { project_type: string; budgeted_hours: string; arr: string }>>({})
   const noteTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({})
+  const [colWidths, setColWidths] = useState<number[]>([...COL_DEFAULTS])
+  const resizingCol = useRef<{ index: number; startX: number; startWidth: number } | null>(null)
+
+  const startResize = (e: ReactMouseEvent, colIndex: number) => {
+    e.preventDefault()
+    resizingCol.current = { index: colIndex, startX: e.clientX, startWidth: colWidths[colIndex] }
+    const onMove = (ev: MouseEvent) => {
+      if (!resizingCol.current) return
+      const delta = ev.clientX - resizingCol.current.startX
+      const newWidth = Math.max(50, resizingCol.current.startWidth + delta)
+      setColWidths(prev => prev.map((w, i) => i === resizingCol.current!.index ? newWidth : w))
+    }
+    const onUp = () => {
+      resizingCol.current = null
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }
 
   const load = useCallback(async (w: string) => {
     setLoading(true)
@@ -171,37 +201,35 @@ export function WeeklyReportClient() {
 
       {/* Table */}
       <div className="px-6 overflow-x-auto">
-        <table className="text-sm border-collapse" style={{ tableLayout: 'fixed', width: '100%', minWidth: 1300 }}>
+        <table
+          className="text-sm border-collapse"
+          style={{ tableLayout: 'fixed', width: colWidths.reduce((a, b) => a + b, 0) }}
+        >
           <colgroup>
-            <col style={{ width: 180 }} />
-            <col style={{ width: 110 }} />
-            <col style={{ width: 120 }} />
-            <col style={{ width: 80 }} />
-            <col style={{ width: 340 }} />
-            <col style={{ width: 220 }} />
-            <col style={{ width: 96 }} />
-            <col style={{ width: 110 }} />
-            <col style={{ width: 100 }} />
-            <col style={{ width: 100 }} />
-            <col style={{ width: 88 }} />
-            <col style={{ width: 88 }} />
-            <col style={{ width: 96 }} />
+            {colWidths.map((w, i) => <col key={i} style={{ width: w }} />)}
           </colgroup>
           <thead>
-            <tr className="bg-zinc-800 text-white text-xs">
-              <th className="text-left px-3 py-2.5 font-semibold whitespace-nowrap overflow-hidden" style={{ resize: 'horizontal' }}>Project Name</th>
-              <th className="text-left px-3 py-2.5 font-semibold whitespace-nowrap overflow-hidden" style={{ resize: 'horizontal' }}>Type</th>
-              <th className="text-left px-3 py-2.5 font-semibold whitespace-nowrap overflow-hidden" style={{ resize: 'horizontal' }}>Owner</th>
-              <th className="text-left px-3 py-2.5 font-semibold whitespace-nowrap overflow-hidden" style={{ resize: 'horizontal' }}>Health</th>
-              <th className="text-left px-3 py-2.5 font-semibold overflow-hidden" style={{ resize: 'horizontal' }}>Progress & Next Steps</th>
-              <th className="text-left px-3 py-2.5 font-semibold overflow-hidden" style={{ resize: 'horizontal' }}>Risks</th>
-              <th className="text-left px-3 py-2.5 font-semibold whitespace-nowrap overflow-hidden" style={{ resize: 'horizontal' }}>Start Date</th>
-              <th className="text-left px-3 py-2.5 font-semibold whitespace-nowrap overflow-hidden" style={{ resize: 'horizontal' }}>Go-Live</th>
-              <th className="text-right px-3 py-2.5 font-semibold whitespace-nowrap overflow-hidden" style={{ resize: 'horizontal' }}>Budget (hrs)</th>
-              <th className="text-right px-3 py-2.5 font-semibold whitespace-nowrap overflow-hidden" style={{ resize: 'horizontal' }}>Consumed</th>
-              <th className="text-right px-3 py-2.5 font-semibold whitespace-nowrap overflow-hidden" style={{ resize: 'horizontal' }}>Progress</th>
-              <th className="text-right px-3 py-2.5 font-semibold whitespace-nowrap overflow-hidden" style={{ resize: 'horizontal' }}>Budget %</th>
-              <th className="text-right px-3 py-2.5 font-semibold whitespace-nowrap overflow-hidden" style={{ resize: 'horizontal' }}>ARR</th>
+            <tr className="bg-zinc-800 text-white text-xs select-none">
+              {COL_LABELS.map((label, i) => (
+                <th
+                  key={label}
+                  className={`${COL_ALIGN[i] === 'right' ? 'text-right' : 'text-left'} py-2.5 font-semibold overflow-hidden whitespace-nowrap`}
+                  style={{ paddingLeft: 12, paddingRight: 20, position: 'relative' }}
+                >
+                  {label}
+                  {/* Drag handle on right edge */}
+                  <span
+                    onMouseDown={e => startResize(e, i)}
+                    style={{
+                      position: 'absolute', right: 0, top: 0, bottom: 0, width: 8,
+                      cursor: 'col-resize', userSelect: 'none',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}
+                  >
+                    <span style={{ width: 2, height: '60%', background: 'rgba(255,255,255,0.25)', borderRadius: 1 }} />
+                  </span>
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
