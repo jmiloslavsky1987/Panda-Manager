@@ -16,10 +16,7 @@ import type { ProjectWithHealth } from '../lib/queries'
  */
 
 interface WorkspaceKpiStripProps {
-  project: ProjectWithHealth & {
-    currentPhase?: string | null
-    percentComplete?: number | null
-  }
+  project: ProjectWithHealth
 }
 
 export function WorkspaceKpiStrip({ project }: WorkspaceKpiStripProps) {

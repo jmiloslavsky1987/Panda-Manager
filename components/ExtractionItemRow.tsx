@@ -14,17 +14,19 @@ function ConfidenceDot({ confidence }: { confidence: number }) {
     '#dc2626'
 
   const label =
-    confidence >= 0.8 ? 'High confidence' :
-    confidence >= 0.5 ? 'Medium confidence' :
-    'Low confidence'
+    confidence >= 0.8 ? 'High' :
+    confidence >= 0.5 ? 'Medium' :
+    'Low'
 
   return (
-    <span
-      className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
-      style={{ backgroundColor: color }}
-      title={`${label} (${Math.round(confidence * 100)}%)`}
-      aria-label={label}
-    />
+    <span className="inline-flex items-center gap-1 shrink-0">
+      <span
+        className="inline-block w-2 h-2 rounded-full"
+        style={{ backgroundColor: color }}
+        aria-hidden="true"
+      />
+      <span className="text-[10px] font-medium" style={{ color }}>{label}</span>
+    </span>
   )
 }
 

@@ -71,6 +71,9 @@ export interface ProjectWithHealth extends Project {
   actionTrend: 'up' | 'flat' | 'down';
   openRiskCount: number;
   riskTrend: 'up' | 'flat' | 'down';
+  // KPI strip fields:
+  currentPhase: string | null;
+  percentComplete: number | null;
 }
 
 export interface ActivityItem {
@@ -321,7 +324,27 @@ export async function getProjectWithHealth(projectId: number): Promise<ProjectWi
   const project = await getProjectById(projectId);
   const healthData = await computeHealth(projectId);
   const analyticsData = await computeProjectAnalytics(projectId);
-  return { ...project, ...healthData, ...analyticsData };
+
+  const [onboardingRows, workstreamRows] = await Promise.all([
+    db.select({ name: onboardingPhases.name })
+      .from(onboardingPhases)
+      .where(eq(onboardingPhases.project_id, projectId))
+      .limit(1),
+    db.select({ percent_complete: workstreams.percent_complete })
+      .from(workstreams)
+      .where(eq(workstreams.project_id, projectId)),
+  ]);
+
+  const currentPhase = onboardingRows[0]?.name ?? null;
+  const workstreamsWithProgress = workstreamRows.filter(w => w.percent_complete !== null);
+  const percentComplete = workstreamsWithProgress.length > 0
+    ? Math.round(
+        workstreamsWithProgress.reduce((sum, w) => sum + (w.percent_complete ?? 0), 0) /
+        workstreamsWithProgress.length
+      )
+    : null;
+
+  return { ...project, ...healthData, ...analyticsData, currentPhase, percentComplete };
 }
 
 /**

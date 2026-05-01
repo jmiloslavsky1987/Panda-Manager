@@ -7,7 +7,7 @@
  * - UI components that preview extracted data
  */
 
-import { eq, and, ilike, ne, or, isNull } from 'drizzle-orm';
+import { eq, and, ilike, ne, or, isNull, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import {
   actions,
@@ -245,7 +245,12 @@ export async function isAlreadyIngested(
       const rows = await db
         .select({ id: archNodes.id })
         .from(archNodes)
-        .where(and(eq(archNodes.project_id, projectId), eq(archNodes.track_id, trackId), ilike(archNodes.name, dedupePattern(key))));
+        .where(and(
+          eq(archNodes.project_id, projectId),
+          eq(archNodes.track_id, trackId),
+          ilike(archNodes.name, dedupePattern(key)),
+          or(isNull(archNodes.source_trace), ne(archNodes.source_trace, 'template')),
+        ));
       return rows.length > 0;
     }
 
