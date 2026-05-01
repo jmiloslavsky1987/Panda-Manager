@@ -66,7 +66,6 @@ export default function DailyPrepPage() {
 
         if (cancelled) return;
 
-        // Build initial card state (hasTemplate/templateContent will be filled below)
         const initialCards: EventCardState[] = events.map((event) => ({
           event,
           selectedProjectId: event.matched_project_id,
@@ -74,37 +73,8 @@ export default function DailyPrepPage() {
           briefStatus: stored[event.event_id] ? 'done' : 'idle',
           briefContent: stored[event.event_id]?.content ?? null,
           expanded: !!stored[event.event_id],
-          hasTemplate: false,
-          templateContent: null,
           availability: {},
         }));
-
-        // Batch fetch templates for recurring events
-        const recurringIds = events
-          .map((e) => e.recurring_event_id)
-          .filter((id): id is string => id !== null);
-
-        if (recurringIds.length > 0) {
-          try {
-            const templatesRes = await fetch(
-              `/api/daily-prep/templates?series_ids=${encodeURIComponent(recurringIds.join(','))}`,
-            );
-            if (templatesRes.ok) {
-              const templateMap: Record<string, { brief_content: string; saved_at: string }> =
-                await templatesRes.json();
-              // Merge template data into cards
-              for (const card of initialCards) {
-                const seriesId = card.event.recurring_event_id;
-                if (seriesId && templateMap[seriesId]) {
-                  card.hasTemplate = true;
-                  card.templateContent = templateMap[seriesId].brief_content;
-                }
-              }
-            }
-          } catch {
-            /* non-critical — template load failure doesn't block the page */
-          }
-        }
 
         if (!cancelled) setCards(initialCards);
       } catch {
@@ -226,43 +196,6 @@ export default function DailyPrepPage() {
   }, [cards.length, selectedDate]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
-
-  async function handleSaveTemplate(seriesId: string, content: string) {
-    try {
-      const res = await fetch('/api/daily-prep/templates', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recurring_event_id: seriesId, brief_content: content }),
-      });
-      if (res.ok) {
-        // Update state: mark cards with this series ID as having a template
-        setCards((prev) =>
-          prev.map((c) =>
-            c.event.recurring_event_id === seriesId
-              ? { ...c, hasTemplate: true, templateContent: content }
-              : c,
-          ),
-        );
-      }
-    } catch {
-      /* non-critical — save failure is silent */
-    }
-  }
-
-  function handleLoadTemplate(eventId: string) {
-    setCards((prev) =>
-      prev.map((c) =>
-        c.event.event_id === eventId && c.templateContent
-          ? {
-              ...c,
-              briefContent: c.templateContent,
-              briefStatus: 'done',
-              expanded: true,
-            }
-          : c,
-      ),
-    );
-  }
 
   function handleToggleSelect(eventId: string) {
     setCards((prev) =>
@@ -521,8 +454,6 @@ export default function DailyPrepPage() {
             onProjectChange={handleProjectChange}
             onToggleExpand={handleToggleExpand}
             onCopy={handleCopy}
-            onSaveTemplate={handleSaveTemplate}
-            onLoadTemplate={handleLoadTemplate}
             onExport={handleExportCard}
             matchedStakeholders={matchedStakeholderMap[card.event.event_id]}
           />

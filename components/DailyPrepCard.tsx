@@ -20,8 +20,6 @@ export interface EventCardState {
   briefStatus: 'idle' | 'loading' | 'done' | 'error';
   briefContent: string | null;
   expanded: boolean;
-  hasTemplate: boolean;
-  templateContent: string | null;
   availability: Record<string, 'free' | 'busy' | 'loading' | 'unknown'>;
 }
 
@@ -32,11 +30,11 @@ export interface DailyPrepCardProps {
   onProjectChange: (eventId: string, projectId: number | null) => void;
   onToggleExpand: (eventId: string) => void;
   onCopy: (eventId: string) => void;
-  onSaveTemplate?: (seriesId: string, content: string) => void;
-  onLoadTemplate?: (eventId: string) => void;
   onExport?: (eventId: string) => void;
   matchedStakeholders?: Array<{ email: string; name: string }>;
 }
+
+const ATTENDEE_DISPLAY_LIMIT = 8;
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -47,26 +45,28 @@ export function DailyPrepCard({
   onProjectChange,
   onToggleExpand,
   onCopy,
-  onSaveTemplate,
-  onLoadTemplate,
   onExport,
   matchedStakeholders,
 }: DailyPrepCardProps) {
   const { event } = card;
   const [copied, setCopied] = useState(false);
-  const [templateExpanded, setTemplateExpanded] = useState(false);
 
-  // Attendee display: up to 3 names, "+N more" overflow
-  const displayAttendees = event.attendee_names.slice(0, 3);
-  const overflow = event.attendee_names.length - 3;
+  // Build attendee list for right column: prefer matchedStakeholders (has emails + availability)
+  const attendeeList: Array<{ name: string; email?: string }> =
+    matchedStakeholders && matchedStakeholders.length > 0
+      ? matchedStakeholders
+      : event.attendee_names.map((name) => ({ name }));
+
+  const displayAttendees = attendeeList.slice(0, ATTENDEE_DISPLAY_LIMIT);
+  const attendeeOverflow = attendeeList.length - ATTENDEE_DISPLAY_LIMIT;
 
   return (
     <div
-      className="border border-zinc-200 rounded-lg p-4 bg-white"
+      className="border border-zinc-200 rounded-lg p-4 bg-white shadow-sm"
       data-testid="daily-prep-card"
       data-event-id={event.event_id}
     >
-      {/* Print-only event header — hidden on screen, visible in print output */}
+      {/* Print-only header */}
       <div className="hidden print:block mb-2 text-sm font-medium">
         {event.summary} &mdash; {event.start_time}&ndash;{event.end_time} ({event.duration_hours}h)
         {event.attendee_names.length > 0 && (
@@ -76,136 +76,98 @@ export function DailyPrepCard({
         )}
       </div>
 
-      {/* Top row: checkbox + time/title/duration + badges */}
-      <div className="flex items-start gap-3">
-        {/* Checkbox */}
-        <input
-          type="checkbox"
-          checked={card.selected}
-          onChange={() => onToggleSelect(event.event_id)}
-          className="mt-1 h-4 w-4 rounded border-zinc-300 text-blue-600"
-        />
+      {/* Main two-column layout */}
+      <div className="flex gap-4">
 
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Time range */}
-            <span className="text-sm text-zinc-500 tabular-nums">
-              {event.start_time}&ndash;{event.end_time}
-            </span>
+        {/* Left: checkbox + event details */}
+        <div className="flex items-start gap-3 flex-1 min-w-0">
+          <input
+            type="checkbox"
+            checked={card.selected}
+            onChange={() => onToggleSelect(event.event_id)}
+            className="mt-1 h-4 w-4 rounded border-zinc-300 text-blue-600 shrink-0"
+          />
 
-            {/* Title */}
-            <span className="text-sm font-medium text-zinc-900 truncate">
-              {event.summary}
-            </span>
-
-            {/* Duration */}
-            <span className="text-xs text-zinc-400">
-              {event.duration_hours}h
-            </span>
-
-            {/* Confidence badge */}
-            <ConfidenceBadge confidence={event.match_confidence} />
-
-            {/* Recurring badge */}
-            {event.recurrence_flag && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-violet-100 text-violet-700">
-                ↻ Recurring
+          <div className="flex-1 min-w-0">
+            {/* Title row: time pill + title + duration + badges */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs tabular-nums px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-mono">
+                {event.start_time}&ndash;{event.end_time}
               </span>
-            )}
+              <span className="text-sm font-semibold text-zinc-900">
+                {event.summary}
+              </span>
+              <span className="text-xs text-zinc-400">{event.duration_hours}h</span>
+              <ConfidenceBadge confidence={event.match_confidence} />
+              {event.recurrence_flag && (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-violet-100 text-violet-700">
+                  ↻ Recurring
+                </span>
+              )}
+            </div>
+
+            {/* Project dropdown */}
+            <div className="mt-2">
+              <select
+                data-testid="project-dropdown"
+                value={card.selectedProjectId ?? ''}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  onProjectChange(event.event_id, val ? Number(val) : null);
+                }}
+                className="text-sm border border-zinc-200 rounded px-2 py-1 bg-white text-zinc-700 hover:border-zinc-300 focus:outline-none focus:ring-1 focus:ring-blue-400"
+              >
+                <option value="">— assign project —</option>
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          {/* Second row: project + attendees */}
-          <div className="mt-2 flex flex-wrap items-center gap-4">
-            {/* Project: always a dropdown, pre-selected to matched project if any */}
-            <select
-              data-testid="project-dropdown"
-              value={card.selectedProjectId ?? ''}
-              onChange={(e) => {
-                const val = e.target.value;
-                onProjectChange(event.event_id, val ? Number(val) : null);
-              }}
-              className="text-sm border border-zinc-300 rounded px-2 py-1 bg-white text-zinc-700"
-            >
-              <option value="">— assign project —</option>
-              {projects.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
+          {/* Expand/collapse */}
+          <button
+            onClick={() => onToggleExpand(event.event_id)}
+            className="text-xs text-zinc-400 hover:text-zinc-600 shrink-0 mt-0.5"
+          >
+            {card.expanded ? 'Collapse' : 'Expand'}
+          </button>
+        </div>
 
-            {/* Attendees */}
-            {event.attendee_names.length > 0 && (
-              <span className="text-xs text-zinc-500">
-                {displayAttendees.join(', ')}
-                {overflow > 0 ? ` +${overflow} more` : ''}
-              </span>
-            )}
-          </div>
-
-          {/* Availability chips — only when matchedStakeholders non-empty and availability map populated */}
-          {matchedStakeholders && matchedStakeholders.length > 0 && Object.keys(card.availability).length > 0 && (
-            <div className="mt-2 flex flex-wrap items-center gap-1.5" data-testid="availability-chips">
-              {matchedStakeholders.map(({ email, name }) => {
-                const status = card.availability[email] ?? 'unknown';
+        {/* Right: attendees column */}
+        {attendeeList.length > 0 && (
+          <div className="shrink-0 w-44 border-l border-zinc-100 pl-3">
+            <div className="text-[10px] uppercase tracking-wider font-medium text-zinc-400 mb-1.5">
+              Attendees
+            </div>
+            <ul className="space-y-1.5">
+              {displayAttendees.map(({ name, email }, idx) => {
+                const status = email ? (card.availability[email] ?? 'unknown') : undefined;
                 const dotColor =
-                  status === 'free'
-                    ? 'bg-green-500'
-                    : status === 'busy'
-                    ? 'bg-red-500'
-                    : 'bg-zinc-400';
+                  status === 'free' ? 'bg-green-500' :
+                  status === 'busy' ? 'bg-red-500' :
+                  status === 'loading' ? 'bg-zinc-300 animate-pulse' :
+                  'bg-zinc-200';
                 return (
-                  <span
-                    key={email}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-zinc-50 border border-zinc-200 text-zinc-700"
-                    title={`${name} — ${status}`}
+                  <li
+                    key={idx}
+                    className="flex items-center gap-1.5 text-xs text-zinc-600"
+                    title={email ? `${name} — ${status}` : name}
                   >
-                    <span className={`inline-block w-2 h-2 rounded-full ${dotColor}`} />
-                    {name}
-                  </span>
+                    <span className={`inline-block w-2 h-2 rounded-full shrink-0 ${status !== undefined ? dotColor : 'bg-zinc-200'}`} />
+                    <span className="truncate">{name}</span>
+                  </li>
                 );
               })}
-            </div>
-          )}
-        </div>
-
-        {/* Expand/collapse button */}
-        <button
-          onClick={() => onToggleExpand(event.event_id)}
-          className="text-xs text-zinc-400 hover:text-zinc-600 shrink-0"
-        >
-          {card.expanded ? 'Collapse' : 'Expand'}
-        </button>
-      </div>
-
-      {/* Template controls for recurring events (idle/collapsed state) */}
-      {event.recurring_event_id !== null && card.hasTemplate && card.briefStatus === 'idle' && (
-        <div className="mt-3 border-t border-zinc-100 pt-3" data-testid="brief-section">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-violet-100 text-violet-700">
-              ✦ Template saved
-            </span>
-            <button
-              onClick={() => onLoadTemplate?.(event.event_id)}
-              className="text-xs px-2 py-1 rounded bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200"
-              data-testid="load-template-button"
-            >
-              Load template
-            </button>
-            <button
-              onClick={() => setTemplateExpanded((v) => !v)}
-              className="text-xs text-zinc-400 hover:text-zinc-600 underline"
-            >
-              {templateExpanded ? 'Hide template' : 'Preview template'}
-            </button>
+              {attendeeOverflow > 0 && (
+                <li className="text-xs text-zinc-400 pl-3.5">+{attendeeOverflow} more</li>
+              )}
+            </ul>
           </div>
-          {templateExpanded && card.templateContent && (
-            <div className="mt-2 p-3 rounded bg-violet-50 border border-violet-100 text-sm text-zinc-700 prose prose-zinc prose-sm max-w-none">
-              <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{card.templateContent}</ReactMarkdown>
-            </div>
-          )}
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Brief section */}
       {(card.briefStatus === 'loading' || card.briefStatus === 'done' || card.briefStatus === 'error') && (
@@ -218,18 +180,10 @@ export function DailyPrepCard({
           )}
           {card.briefStatus === 'done' && card.expanded && card.briefContent && (
             <>
-              {/* Template saved badge (recurring events with saved template) */}
-              {event.recurring_event_id !== null && card.hasTemplate && (
-                <div className="mb-2">
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-violet-100 text-violet-700">
-                    ✦ Template saved
-                  </span>
-                </div>
-              )}
               <div className="prose prose-zinc prose-sm max-w-none">
                 <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{card.briefContent}</ReactMarkdown>
               </div>
-              <div className="flex gap-2 mt-2">
+              <div className="flex gap-2 mt-3">
                 <button
                   onClick={() => {
                     onCopy(event.event_id);
@@ -247,23 +201,12 @@ export function DailyPrepCard({
                 >
                   Collapse
                 </button>
-                {/* Export button — hidden in print, triggers per-card print */}
                 <button
                   onClick={() => onExport?.(event.event_id)}
                   className="no-print text-xs text-zinc-500 hover:text-zinc-800 underline"
                 >
                   Export
                 </button>
-                {/* Save as template — only for recurring events that don't yet have a template */}
-                {event.recurring_event_id !== null && !card.hasTemplate && (
-                  <button
-                    onClick={() => onSaveTemplate?.(event.recurring_event_id!, card.briefContent!)}
-                    className="no-print text-xs px-2 py-1 rounded bg-green-50 hover:bg-green-100 text-green-700 border border-green-200"
-                    data-testid="save-template-button"
-                  >
-                    Save as template
-                  </button>
-                )}
               </div>
             </>
           )}
