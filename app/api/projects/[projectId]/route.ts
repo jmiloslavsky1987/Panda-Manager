@@ -64,8 +64,6 @@ export async function PATCH(
   // Status transitions require admin role
   const { session, redirectResponse } = await requireProjectRole(numericId, 'admin');
   if (redirectResponse) return redirectResponse;
-  const { redirectResponse } = await requireProjectRole(numericId, 'admin');
-  if (redirectResponse) return redirectResponse;
 
   // Archived-project write-block: allow status transitions to 'archived' or 'active',
   // but block all other updates if project is currently archived
