@@ -627,12 +627,12 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
       <div
         key={integ.id}
         data-testid="integration-card"
-        className="border border-zinc-200 rounded-lg p-3 space-y-3 bg-white"
+        className="border border-zinc-200 rounded-lg p-3 space-y-3 bg-white min-w-0 overflow-hidden"
       >
         {/* Tool name + category badge + delete button */}
-        <div className="space-y-1">
-          <div className="flex items-start justify-between">
-            <span className="text-sm font-semibold text-zinc-900 block">{integ.tool}</span>
+        <div className="space-y-1 min-w-0">
+          <div className="flex items-start justify-between gap-1 min-w-0">
+            <span className="text-sm font-semibold text-zinc-900 break-words min-w-0 flex-1">{integ.tool}</span>
             <button
               data-testid="delete-integration-btn"
               onClick={() => deleteIntegration(integ.id)}
@@ -672,14 +672,14 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
         </select>
 
         {/* Track + Type assignment */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 min-w-0">
           <select
             value={integ.track ?? ''}
             onChange={(e) => {
               const newTrack = e.target.value === '' ? null : (e.target.value as 'ADR' | 'Biggy')
               saveIntegTrack(integ.id, newTrack, integ.integration_type)
             }}
-            className="flex-1 text-xs border border-zinc-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+            className="flex-1 min-w-0 text-xs border border-zinc-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-zinc-400"
           >
             <option value="">Unassigned</option>
             <option value="ADR">ADR</option>
@@ -692,7 +692,7 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
                 const newType = e.target.value === '' ? null : e.target.value
                 saveIntegTrack(integ.id, integ.track, newType)
               }}
-              className="flex-1 text-xs border border-zinc-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+              className="flex-1 min-w-0 text-xs border border-zinc-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-zinc-400"
             >
               <option value="">No type</option>
               {typeOptions.map(type => (
