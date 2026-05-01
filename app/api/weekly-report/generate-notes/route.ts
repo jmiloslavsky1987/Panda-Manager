@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { db } from '@/db'
-import { projects, onboardingSteps, onboardingPhases, integrations, teamOnboardingStatus, auditLog, engagementHistory, risks, milestones } from '@/db/schema'
-import { eq, and, gte, inArray, or, isNull, desc } from 'drizzle-orm'
+import { projects, onboardingSteps, onboardingPhases, integrations, teamOnboardingStatus, auditLog, engagementHistory, timeEntries } from '@/db/schema'
+import { eq, and, gte, lte, inArray, desc } from 'drizzle-orm'
 import { sql } from 'drizzle-orm'
 import { requireSession } from '@/lib/auth-server'
 import { z } from 'zod'
@@ -37,128 +37,198 @@ export async function POST(req: NextRequest) {
 
   const { project_id, week_of } = parsed.data
   const { start, end } = isoWeekBounds(week_of)
+  const startISO = start.toISOString().slice(0, 10)
+  const endISO = end.toISOString().slice(0, 10)
 
-  // Fetch project info
   const [project] = await db.select().from(projects).where(eq(projects.id, project_id)).limit(1)
   if (!project) return NextResponse.json({ error: 'Project not found' }, { status: 404 })
 
-  // RLS bypass via SET LOCAL for all queries in a transaction
   const data = await db.transaction(async (tx) => {
     await tx.execute(sql.raw(`SET LOCAL app.current_project_id = ${project_id}`))
 
-    // Audit log changes this week (steps, integrations, teams)
+    // Step update notes added this week (the richest source of "what happened")
+    const stepsWithUpdates = await tx
+      .select({
+        name: onboardingSteps.name,
+        track: onboardingSteps.track,
+        status: onboardingSteps.status,
+        updates: onboardingSteps.updates,
+        phase: onboardingPhases.name,
+      })
+      .from(onboardingSteps)
+      .innerJoin(onboardingPhases, eq(onboardingSteps.phase_id, onboardingPhases.id))
+      .where(eq(onboardingSteps.project_id, project_id))
+      .orderBy(desc(onboardingSteps.updated_at))
+
+    // Time entry descriptions this week
+    const timeRows = await tx
+      .select({ date: timeEntries.date, description: timeEntries.description })
+      .from(timeEntries)
+      .where(and(
+        eq(timeEntries.project_id, project_id),
+        gte(timeEntries.date, startISO),
+        lte(timeEntries.date, endISO),
+      ))
+      .orderBy(desc(timeEntries.date))
+      .limit(20)
+
+    // Engagement history from last 14 days (recent meeting notes, call summaries)
+    const twoWeeksAgo = new Date(start)
+    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14)
+    const historyRows = await tx
+      .select({ content: engagementHistory.content, date: engagementHistory.date })
+      .from(engagementHistory)
+      .where(and(
+        eq(engagementHistory.project_id, project_id),
+        gte(engagementHistory.created_at, twoWeeksAgo),
+      ))
+      .orderBy(desc(engagementHistory.created_at))
+      .limit(8)
+
+    // Audit log: status changes this week
     const auditRows = await tx
       .select()
       .from(auditLog)
       .where(and(
         gte(auditLog.created_at, start),
-        inArray(auditLog.entity_type, ['team_onboarding_status', 'onboarding_step', 'integration']),
+        lte(auditLog.created_at, end),
+        inArray(auditLog.entity_type, ['onboarding_step', 'integration', 'team_onboarding_status']),
       ))
       .orderBy(desc(auditLog.created_at))
-      .limit(40)
+      .limit(30)
 
-    // Recent engagement history (last 30 days for broader context)
-    const thirtyDaysAgo = new Date(start)
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-    const historyRows = await tx
-      .select({ content: engagementHistory.content, date: engagementHistory.date })
-      .from(engagementHistory)
-      .where(eq(engagementHistory.project_id, project_id))
-      .orderBy(desc(engagementHistory.created_at))
-      .limit(10)
-
-    // Current step statuses (standard phases only)
-    const stepRows = await tx
-      .select({
-        phase: onboardingPhases.name,
-        step: onboardingSteps.name,
-        status: onboardingSteps.status,
-        track: onboardingSteps.track,
-      })
-      .from(onboardingSteps)
-      .innerJoin(onboardingPhases, eq(onboardingSteps.phase_id, onboardingPhases.id))
+    // Integration statuses (for in-progress technical work context)
+    const integRows = await tx
+      .select({ tool: integrations.tool, track: integrations.track, status: integrations.status, notes: integrations.notes })
+      .from(integrations)
       .where(and(
-        eq(onboardingSteps.project_id, project_id),
-        inArray(onboardingPhases.name, ['Discovery & Kickoff', 'Platform Configuration', 'UAT', 'Validation']),
+        eq(integrations.project_id, project_id),
+        inArray(integrations.status, ['in-progress', 'blocked']),
       ))
-      .orderBy(onboardingPhases.display_order, onboardingSteps.display_order)
 
-    // Open risks
-    const riskRows = await tx
-      .select({ description: risks.description, severity: risks.severity })
-      .from(risks)
+    // Team statuses
+    const teamRows = await tx
+      .select({ team_name: teamOnboardingStatus.team_name, track: teamOnboardingStatus.track, status: teamOnboardingStatus.status })
+      .from(teamOnboardingStatus)
       .where(and(
-        eq(risks.project_id, project_id),
-        or(eq(risks.status, 'open'), isNull(risks.status)),
+        eq(teamOnboardingStatus.project_id, project_id),
+        inArray(teamOnboardingStatus.status, ['in-progress', 'blocked', 'complete']),
       ))
-      .limit(5)
 
-    // Upcoming milestones
-    const milestoneRows = await tx
-      .select({ name: milestones.name, date: milestones.date, status: milestones.status })
-      .from(milestones)
-      .where(eq(milestones.project_id, project_id))
-      .limit(5)
-
-    return { auditRows, historyRows, stepRows, riskRows, milestoneRows }
+    return { stepsWithUpdates, timeRows, historyRows, auditRows, integRows, teamRows }
   })
 
-  // Build context for Claude
-  const changeLines: string[] = []
-  for (const row of data.auditRows) {
-    const before = row.before_json as any
-    const after = row.after_json as any
-    if (!before || !after) continue
-    if (row.action === 'update') {
-      const changed = Object.keys(after).filter(k => after[k] !== before[k] && k !== 'updated_at')
-      if (changed.includes('status')) {
-        const name = before.name ?? before.team_name ?? before.tool ?? `#${row.entity_id}`
-        changeLines.push(`- ${row.entity_type.replace(/_/g, ' ')}: "${name}" changed status ${before.status} → ${after.status}`)
+  // Extract step update notes added this week
+  const weekStepNotes: string[] = []
+  for (const step of data.stepsWithUpdates) {
+    const updates = (step.updates ?? []) as { timestamp: string; text: string }[]
+    for (const u of updates) {
+      if (u.timestamp >= startISO) {
+        weekStepNotes.push(`[${step.track ?? '?'} / ${step.phase} / ${step.name}] ${u.text}`)
       }
     }
   }
 
-  const stepsSection = data.stepRows
-    .map(s => `  [${s.track}] ${s.phase} / ${s.step}: ${s.status}`)
-    .join('\n')
+  // Status changes this week
+  const statusChanges: string[] = []
+  for (const row of data.auditRows) {
+    const before = row.before_json as any
+    const after = row.after_json as any
+    if (!before || !after) continue
+    const changed = Object.keys(after).filter(k => after[k] !== before[k] && k !== 'updated_at')
+    if (changed.includes('status')) {
+      const name = before.name ?? before.team_name ?? before.tool ?? `#${row.entity_id}`
+      statusChanges.push(`"${name}" (${row.entity_type.replace(/_/g, ' ')}): ${before.status} → ${after.status}`)
+    }
+  }
 
-  const historySection = data.historyRows
-    .map(h => `${h.date ?? ''}: ${h.content}`)
-    .join('\n')
+  // Time entry descriptions
+  const timeDescs = data.timeRows
+    .filter(r => r.description?.trim())
+    .map(r => `${r.date}: ${r.description}`)
 
-  const risksSection = data.riskRows
-    .map(r => `- [${r.severity ?? 'unknown'}] ${r.description}`)
-    .join('\n')
+  // Engagement history
+  const historyLines = data.historyRows
+    .filter(r => r.content?.trim())
+    .map(r => `${r.date ?? ''}: ${r.content}`)
 
-  const prompt = `You are a project manager writing a weekly status update for the project "${project.customer}".
+  // Active integrations (what technical work is ongoing)
+  const activeIntegLines = data.integRows.map(i =>
+    `[${i.track ?? 'unassigned'}] ${i.tool} — ${i.status}${i.notes ? `: ${i.notes}` : ''}`
+  )
 
-## Project Status Summary
-${project.status_summary ?? 'No summary available.'}
+  // Team progress
+  const teamLines = data.teamRows.map(t =>
+    `[${t.track ?? '?'}] Team: ${t.team_name} — ${t.status}`
+  )
 
-## Current Onboarding Steps
-${stepsSection || 'No steps data.'}
+  // In-progress steps (what's actively being worked)
+  const inProgressSteps = data.stepsWithUpdates
+    .filter(s => s.status === 'in-progress')
+    .map(s => `[${s.track ?? '?'}] ${s.phase} / ${s.name}`)
 
-## Status Changes This Week (${week_of})
-${changeLines.length > 0 ? changeLines.join('\n') : 'No tracked changes this week.'}
+  // Build the prompt
+  const sections: string[] = []
 
-## Recent Engagement History
-${historySection || 'No recent history.'}
+  if (project.sprint_summary) {
+    sections.push(`## Most Recent Sprint Summary\n${project.sprint_summary}`)
+  }
+  if (project.status_summary) {
+    sections.push(`## Project Status Summary\n${project.status_summary}`)
+  }
+  if (weekStepNotes.length > 0) {
+    sections.push(`## Notes Logged on Steps This Week\n${weekStepNotes.join('\n')}`)
+  }
+  if (timeDescs.length > 0) {
+    sections.push(`## Time Entry Descriptions This Week\n${timeDescs.join('\n')}`)
+  }
+  if (historyLines.length > 0) {
+    sections.push(`## Recent Meeting Notes / Engagement History\n${historyLines.join('\n')}`)
+  }
+  if (statusChanges.length > 0) {
+    sections.push(`## Status Changes This Week\n${statusChanges.join('\n')}`)
+  }
+  if (activeIntegLines.length > 0) {
+    sections.push(`## Active Integrations Being Worked\n${activeIntegLines.join('\n')}`)
+  }
+  if (inProgressSteps.length > 0) {
+    sections.push(`## Steps Currently In Progress\n${inProgressSteps.join('\n')}`)
+  }
+  if (teamLines.length > 0) {
+    sections.push(`## Team Onboarding Status\n${teamLines.join('\n')}`)
+  }
 
-## Open Risks
-${risksSection || 'None.'}
+  const contextBlock = sections.length > 0
+    ? sections.join('\n\n')
+    : 'No activity data available for this week.'
 
-Write EXACTLY 3 short bullet points (one line each, starting with •) summarizing:
-1. What meaningful progress was made this week
-2. What is actively in progress or the current focus
-3. What the next key step or blocker is
+  const exampleOutput = `Example of the style and tone we want:
+• TOPS correlation baseline live in TOPSAutoCoEDev — 31-min and 60-min windows active; TOPS team reviewing incidents and bringing tuning feedback.
+• Ansible automation path partially unblocked — direct test path works; API Gateway routing blocked on payload handling; validating one end-to-end use case before replicating.
+• Network NOC validation underway — severity/priority mapping tags need fixes; read/write access being enabled via AD group. Prod SNOW planned for 6/19.`
 
-Keep each bullet to 1-2 sentences. Be specific and concrete. Do not use generic filler phrases. Output only the 3 bullets, nothing else.`
+  const prompt = `You are a project manager writing the "Progress & Next Steps" section of a weekly status report for the project "${project.customer}".
+
+${exampleOutput}
+
+Notice the style: bullets describe specific technical work happening right now, name the actual systems and components being worked on, call out specific blockers with their root cause, and note upcoming dates/milestones. They do NOT say things like "Phase X is complete" or list status percentages.
+
+Here is this week's activity data:
+
+${contextBlock}
+
+Write 3-5 bullet points (each starting with •) in that same style — specific, technical, action-oriented. Group ADR and Biggy work naturally if both tracks are active. Focus on:
+- What specific technical work happened or progressed this week (name the systems, integrations, teams involved)
+- What is blocked and exactly why
+- What is planned next or coming up soon
+
+Output only the bullet points, nothing else. If data is sparse, write what you can infer from the available context.`
 
   try {
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
     const message = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 300,
+      max_tokens: 400,
       messages: [{ role: 'user', content: prompt }],
     })
 
