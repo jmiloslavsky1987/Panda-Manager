@@ -29,7 +29,7 @@ interface Integration {
   project_id: number
   tool: string
   category: string | null
-  status: 'not-connected' | 'configured' | 'validated' | 'production' | 'blocked'
+  status: 'not-started' | 'in-progress' | 'complete' | 'blocked'
   color: string | null
   notes: string | null
   display_order: number
@@ -60,6 +60,19 @@ interface ProjectSummary {
   go_live_target: string | null
 }
 
+interface TeamOnboardingRow {
+  id: number
+  project_id: number
+  team_name: string
+  track: string | null
+  status: string
+  ingest_status: string | null
+  correlation_status: string | null
+  incident_intelligence_status: string | null
+  sn_automation_status: string | null
+  biggy_ai_status: string | null
+}
+
 interface OnboardingDashboardProps {
   projectId: number
 }
@@ -67,13 +80,7 @@ interface OnboardingDashboardProps {
 // ─── Status cycles ────────────────────────────────────────────────────────────
 
 const STEP_STATUS_CYCLE = ['not-started', 'in-progress', 'complete', 'blocked'] as const
-const INTEG_STATUS_CYCLE = [
-  'not-connected',
-  'configured',
-  'validated',
-  'production',
-  'blocked',
-] as const
+const INTEG_STATUS_CYCLE = ['not-started', 'in-progress', 'complete', 'blocked'] as const
 
 const ADR_TYPES = ['Inbound', 'Outbound', 'Enrichment'] as const
 const BIGGY_TYPES = ['Real-time', 'Context', 'Knowledge', 'UDC'] as const
@@ -102,10 +109,9 @@ const STEP_STATUS_COLORS: Record<string, string> = {
 }
 
 const INTEG_STATUS_COLORS: Record<string, string> = {
-  'not-connected': 'bg-zinc-100 text-zinc-600',
-  'configured': 'bg-blue-100 text-blue-700',
-  'validated': 'bg-purple-100 text-purple-700',
-  'production': 'bg-green-100 text-green-700',
+  'not-started': 'bg-zinc-100 text-zinc-600',
+  'in-progress': 'bg-blue-100 text-blue-700',
+  'complete': 'bg-green-100 text-green-700',
   'blocked': 'bg-red-100 text-red-700',
 }
 
@@ -118,15 +124,7 @@ const RISK_SEVERITY_COLORS: Record<string, string> = {
 
 // ─── Pipeline stages ──────────────────────────────────────────────────────────
 
-const STAGES = ['Not Connected', 'Configured', 'Validated', 'Production'] as const
-const stageIndex: Record<string, number> = {
-  'not-connected': 0,
-  'configured': 1,
-  'validated': 2,
-  'production': 3,
-  'blocked': -1,
-}
-const stageStatuses = ['not-connected', 'configured', 'validated', 'production'] as const
+const ONBOARDING_STATUSES = ['not-started', 'in-progress', 'complete', 'blocked'] as const
 
 // ─── Progress ring constants ───────────────────────────────────────────────────
 
@@ -247,11 +245,14 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
   const [collapsed, setCollapsed] = useState<Record<string | number, boolean>>({})
   const [noteInputs, setNoteInputs] = useState<Record<number, string>>({})
   const [integNotes, setIntegNotes] = useState<Record<number, string>>({})
+  const [teams, setTeams] = useState<TeamOnboardingRow[]>([])
+  const [addingTeam, setAddingTeam] = useState<{ ADR: boolean; Biggy: boolean }>({ ADR: false, Biggy: false })
+  const [newTeamName, setNewTeamName] = useState<{ ADR: string; Biggy: string }>({ ADR: '', Biggy: '' })
 
   useEffect(() => {
     const load = async () => {
       try {
-    const [ob, ig, rk, ml, ps] = await Promise.all([
+    const [ob, ig, rk, ml, ps, tm] = await Promise.all([
       fetch(`/api/projects/${projectId}/onboarding`).then((r) => r.json()),
       fetch(`/api/projects/${projectId}/integrations`).then((r) => r.json()),
       fetch(`/api/projects/${projectId}/risks`).then((r) => (r.ok ? r.json() : { risks: [] })),
@@ -259,6 +260,7 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
         r.ok ? r.json() : { milestones: [] }
       ),
       fetch(`/api/projects/${projectId}`).then((r) => (r.ok ? r.json() : { project: null })),
+      fetch(`/api/projects/${projectId}/team-onboarding-status`).then((r) => (r.ok ? r.json() : { rows: [] })),
     ])
 
         let fetchedAdr: PhaseWithSteps[] = ob.adr ?? []
@@ -312,6 +314,7 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
         setRisks(Array.isArray(fetchedRisks) ? fetchedRisks : [])
         setMilestones(Array.isArray(fetchedMilestones) ? fetchedMilestones : [])
         setProjectSummary(ps.project ?? null)
+        setTeams(tm.rows ?? [])
 
         // Default: all phases collapsed
         const collapseMap: Record<string | number, boolean> = {}
@@ -391,6 +394,7 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: nextStatus }),
     })
+    window.dispatchEvent(new CustomEvent('metrics:invalidate'))
   }
 
   const cycleIntegStatus = async (integId: number, newStatus: string) => {
@@ -402,6 +406,7 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: newStatus }),
     })
+    window.dispatchEvent(new CustomEvent('metrics:invalidate'))
   }
 
   const updateStepOwner = (phaseId: number, stepId: number, owner: string) => {
@@ -519,6 +524,56 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
     }
   }
 
+  // ─── Team handlers ──────────────────────────────────────────────────────────
+
+  const addTeam = async (track: 'ADR' | 'Biggy') => {
+    const name = newTeamName[track].trim()
+    if (!name) return
+    try {
+      const res = await fetch(`/api/projects/${projectId}/team-onboarding-status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ team_name: name, track }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setTeams(prev => [...prev, data.row])
+        setNewTeamName(prev => ({ ...prev, [track]: '' }))
+        setAddingTeam(prev => ({ ...prev, [track]: false }))
+      }
+    } catch (err) {
+      console.error('Failed to add team:', err)
+    }
+  }
+
+  const updateTeamStatus = async (teamId: number, status: string) => {
+    setTeams(prev => prev.map(t => t.id === teamId ? { ...t, status } : t))
+    try {
+      await fetch(`/api/projects/${projectId}/team-onboarding-status/${teamId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      })
+      window.dispatchEvent(new CustomEvent('metrics:invalidate'))
+    } catch (err) {
+      console.error('Failed to update team status:', err)
+    }
+  }
+
+  const deleteTeam = async (teamId: number) => {
+    setTeams(prev => prev.filter(t => t.id !== teamId))
+    try {
+      await fetch(`/api/projects/${projectId}/team-onboarding-status/${teamId}`, { method: 'DELETE' })
+    } catch (err) {
+      console.error('Failed to delete team:', err)
+      const res = await fetch(`/api/projects/${projectId}/team-onboarding-status`)
+      if (res.ok) {
+        const data = await res.json()
+        setTeams(data.rows ?? [])
+      }
+    }
+  }
+
   // ─── Filter helpers ─────────────────────────────────────────────────────────
 
   const stepMatchesFilter = (step: Step): boolean => {
@@ -539,10 +594,6 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
   // ─── Integration card renderer ──────────────────────────────────────────────
 
   const renderIntegCard = (integ: Integration) => {
-    const sIdx = stageIndex[integ.status] ?? -1
-    const isBlocked = integ.status === 'blocked'
-
-    // Get type options for current track
     const typeOptions = integ.track === 'ADR'
       ? ADR_TYPES
       : integ.track === 'Biggy'
@@ -571,27 +622,31 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
               </svg>
             </button>
           </div>
-          <div className="flex flex-wrap items-center gap-1.5">
-            {integ.category && (
-              <span
-                className="text-xs px-2 py-0.5 rounded-full"
-                style={{
-                  backgroundColor: integ.color ? `${integ.color}20` : '#f4f4f5',
-                  color: integ.color ?? '#52525b',
-                }}
-              >
-                {integ.category}
-              </span>
-            )}
+          {integ.category && (
             <span
-              className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                INTEG_STATUS_COLORS[integ.status] ?? 'bg-zinc-100 text-zinc-600'
-              }`}
+              className="text-xs px-2 py-0.5 rounded-full"
+              style={{
+                backgroundColor: integ.color ? `${integ.color}20` : '#f4f4f5',
+                color: integ.color ?? '#52525b',
+              }}
             >
-              {integ.status.replace('-', ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+              {integ.category}
             </span>
-          </div>
+          )}
         </div>
+
+        {/* Status dropdown */}
+        <select
+          value={integ.status}
+          onChange={(e) => cycleIntegStatus(integ.id, e.target.value)}
+          className={`w-full text-xs border rounded px-2 py-1 font-medium focus:outline-none focus:ring-1 focus:ring-zinc-400 ${
+            INTEG_STATUS_COLORS[integ.status] ?? 'bg-zinc-100 text-zinc-600 border-zinc-200'
+          }`}
+        >
+          {ONBOARDING_STATUSES.map(s => (
+            <option key={s} value={s}>{s.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</option>
+          ))}
+        </select>
 
         {/* Track + Type assignment */}
         <div className="flex gap-2">
@@ -622,37 +677,6 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
               ))}
             </select>
           )}
-        </div>
-
-        {/* Pipeline bar */}
-        <div
-          data-testid="pipeline-bar"
-          className="flex gap-1 cursor-pointer"
-          title="Click a segment to update status"
-        >
-          {STAGES.map((stageName, segIdx) => {
-            const isActive = !isBlocked && sIdx >= segIdx
-            const segStatus = stageStatuses[segIdx]
-            return (
-              <button
-                key={stageName}
-                className={`flex-1 h-2 rounded-full transition-colors ${
-                  isBlocked
-                    ? 'bg-red-300'
-                    : isActive
-                    ? 'bg-green-500'
-                    : 'bg-zinc-200'
-                }`}
-                title={stageName}
-                onClick={() => cycleIntegStatus(integ.id, segStatus)}
-              />
-            )
-          })}
-        </div>
-        <div className="flex gap-1 text-[10px] text-zinc-400 mt-0.5">
-          {STAGES.map((s) => (
-            <span key={s} className="flex-1 text-center leading-tight truncate">{s}</span>
-          ))}
         </div>
 
         {/* Notes textarea */}
@@ -691,13 +715,13 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
         {byType.map(group => (
           <div key={group.type} className="space-y-2">
             <h4 className="text-xs font-medium text-zinc-400 pl-2">{group.type}</h4>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
               {group.items.map(integ => renderIntegCard(integ))}
             </div>
           </div>
         ))}
         {typeless.length > 0 && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             {typeless.map(integ => renderIntegCard(integ))}
           </div>
         )}
@@ -713,8 +737,8 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
     const key = `integrations-${track}`
     const isCollapsed = collapsed[key] ?? true
     const trackIntegrations = integrations.filter(i => i.track === track)
-    const validated = trackIntegrations.filter(i => i.status === 'validated').length
-    const configured = trackIntegrations.filter(i => i.status === 'configured').length
+    const complete = trackIntegrations.filter(i => i.status === 'complete').length
+    const inProgress = trackIntegrations.filter(i => i.status === 'in-progress').length
     const blocked = trackIntegrations.filter(i => i.status === 'blocked').length
     const total = trackIntegrations.length
     const label = track === 'ADR' ? 'Integrations' : 'IT Knowledge Graph'
@@ -726,7 +750,7 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
         >
           <div className="flex items-center gap-3">
             <span className="text-sm font-semibold text-zinc-900">{label}</span>
-            <span className="text-xs text-zinc-500">{validated}/{total} validated</span>
+            <span className="text-xs text-zinc-500">{complete}/{total} complete</span>
           </div>
           <svg className={`w-4 h-4 text-zinc-400 transition-transform ${isCollapsed ? '' : 'rotate-180'}`} viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -738,10 +762,10 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
               <p className="text-xs text-zinc-400">No integrations yet — add from the Integrations tab.</p>
             ) : (
               <>
-                <p className="text-xs text-zinc-700"><span className="font-medium text-green-700">{validated}</span> validated</p>
-                <p className="text-xs text-zinc-700"><span className="font-medium text-blue-700">{configured}</span> configured</p>
+                <p className="text-xs text-zinc-700"><span className="font-medium text-green-700">{complete}</span> complete</p>
+                <p className="text-xs text-zinc-700"><span className="font-medium text-blue-700">{inProgress}</span> in progress</p>
                 {blocked > 0 && <p className="text-xs text-zinc-700"><span className="font-medium text-red-600">{blocked}</span> blocked</p>}
-                <p className="text-xs text-zinc-400 pt-1">{total - validated - configured - blocked} not connected</p>
+                <p className="text-xs text-zinc-400 pt-1">{total - complete - inProgress - blocked} not started</p>
               </>
             )}
           </div>
@@ -753,11 +777,9 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
   const renderTeamsCard = (track: 'ADR' | 'Biggy') => {
     const key = `teams-${track}`
     const isCollapsed = collapsed[key] ?? true
-    const rawPhases = track === 'ADR' ? rawAdrPhases : rawBiggyPhases
-    const teamsPhases = rawPhases.filter(p => p.name.toLowerCase().includes('team'))
-    const allSteps = teamsPhases.flatMap(p => p.steps)
-    const complete = allSteps.filter(s => s.status === 'complete').length
-    const total = allSteps.length
+    const trackTeams = teams.filter(t => t.track === track)
+    const total = trackTeams.length
+    const complete = trackTeams.filter(t => t.status === 'complete').length
     return (
       <div key={key} className="border border-zinc-200 rounded-lg overflow-hidden">
         <button
@@ -766,27 +788,64 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
         >
           <div className="flex items-center gap-3">
             <span className="text-sm font-semibold text-zinc-900">Teams</span>
-            <span className="text-xs text-zinc-500">{complete}/{total} steps</span>
+            <span className="text-xs text-zinc-500">{complete}/{total} complete</span>
           </div>
           <svg className={`w-4 h-4 text-zinc-400 transition-transform ${isCollapsed ? '' : 'rotate-180'}`} viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
           </svg>
         </button>
         {!isCollapsed && (
-          <div className="px-4 py-3">
-            {total === 0 ? (
-              <p className="text-xs text-zinc-400">No team steps yet — add via the Teams tab.</p>
-            ) : (
-              <div className="space-y-1">
-                {allSteps.map(step => (
-                  <div key={step.id} className="flex items-center justify-between">
-                    <span className="text-xs text-zinc-700">{step.name}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STEP_STATUS_COLORS[step.status] ?? 'bg-zinc-100 text-zinc-600'}`}>
-                      {step.status.replace('-', ' ').replace(/\b\w/g, c => c.toUpperCase())}
-                    </span>
-                  </div>
-                ))}
+          <div className="px-4 py-3 space-y-2">
+            {trackTeams.length === 0 && !addingTeam[track] && (
+              <p className="text-xs text-zinc-400">No teams added yet.</p>
+            )}
+            {trackTeams.map(team => (
+              <div key={team.id} className="flex items-center gap-2 py-1">
+                <span className="text-xs text-zinc-700 flex-1 min-w-0 truncate">{team.team_name}</span>
+                <select
+                  value={team.status ?? 'not-started'}
+                  onChange={(e) => updateTeamStatus(team.id, e.target.value)}
+                  className={`text-xs border rounded px-2 py-0.5 font-medium focus:outline-none focus:ring-1 focus:ring-zinc-400 shrink-0 ${
+                    INTEG_STATUS_COLORS[team.status] ?? 'bg-zinc-100 text-zinc-600 border-zinc-200'
+                  }`}
+                >
+                  {ONBOARDING_STATUSES.map(s => (
+                    <option key={s} value={s}>{s.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => deleteTeam(team.id)}
+                  className="p-1 text-zinc-400 hover:text-red-500 transition-colors shrink-0"
+                  title="Remove team"
+                  aria-label={`Remove ${team.team_name}`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
               </div>
+            ))}
+            {addingTeam[track] ? (
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="text"
+                  placeholder="Team name…"
+                  value={newTeamName[track]}
+                  autoFocus
+                  onChange={e => setNewTeamName(prev => ({ ...prev, [track]: e.target.value }))}
+                  onKeyDown={e => { if (e.key === 'Enter') addTeam(track); if (e.key === 'Escape') setAddingTeam(prev => ({ ...prev, [track]: false })) }}
+                  className="flex-1 text-xs border border-zinc-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+                />
+                <button onClick={() => addTeam(track)} className="text-xs px-2 py-1 bg-zinc-900 text-white rounded hover:bg-zinc-700">Add</button>
+                <button onClick={() => setAddingTeam(prev => ({ ...prev, [track]: false }))} className="text-xs px-2 py-1 border border-zinc-200 rounded hover:bg-zinc-50">Cancel</button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setAddingTeam(prev => ({ ...prev, [track]: true }))}
+                className="text-xs text-blue-600 hover:underline pt-1"
+              >
+                + Add team
+              </button>
             )}
           </div>
         )}
