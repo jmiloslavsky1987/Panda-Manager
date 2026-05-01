@@ -221,12 +221,17 @@ export default function OutputLibraryPage() {
                 {/* Expand panel — type-aware */}
                 {expandedId === output.id && (() => {
                   if (type === 'html' && output.content) {
+                    let htmlSrc = output.content.trim();
+                    if (!htmlSrc.startsWith('<')) {
+                      try { const p = JSON.parse(htmlSrc); if (typeof p?.html === 'string') htmlSrc = p.html; } catch { /* raw */ }
+                    }
                     return (
                       <div className="border-t border-zinc-100">
                         <iframe
                           sandbox="allow-same-origin"
-                          srcDoc={output.content}
-                          className="w-full h-96"
+                          srcDoc={htmlSrc}
+                          className="w-full"
+                          style={{ height: '70vh' }}
                           title={`${output.skill_name} output`}
                         />
                       </div>

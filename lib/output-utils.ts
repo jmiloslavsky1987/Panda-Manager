@@ -14,8 +14,10 @@ export interface OutputRow {
   created_at: string;
 }
 
+const HTML_SKILLS = new Set(['team-engagement-map', 'workflow-diagram']);
+
 export function getOutputType(o: OutputRow): 'html' | 'markdown' | 'docx' | 'pptx' | 'file' {
-  if (o.skill_name.includes('html') || o.filename?.endsWith('.html')) return 'html';
+  if (HTML_SKILLS.has(o.skill_name) || o.skill_name.includes('html') || o.filename?.endsWith('.html')) return 'html';
   if (o.filename?.endsWith('.docx')) return 'docx';
   if (o.filename?.endsWith('.pptx')) return 'pptx';
   if (!o.filename || o.content) return 'markdown'; // content-bearing, no binary extension
