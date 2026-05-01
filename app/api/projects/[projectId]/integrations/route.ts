@@ -12,7 +12,7 @@ const BIGGY_TYPES = ['Real-time', 'Context', 'Knowledge', 'UDC'] as const
 const postSchema = z.object({
   tool: z.string().min(1, 'Tool name is required'),
   category: z.string().optional(),
-  status: z.enum(['not-connected', 'configured', 'validated', 'production', 'blocked']).optional(),
+  status: z.enum(['not-started', 'in-progress', 'complete', 'blocked']).optional(),
   color: z.string().optional(),
   notes: z.string().optional(),
   display_order: z.number().optional(),
@@ -89,7 +89,7 @@ export async function POST(
     project_id: numericId,
     tool,
     category: category || null,
-    status: status || 'not-connected',
+    status: status || 'not-started',
     color: color || null,
     notes: notes || null,
     display_order: display_order ?? 0,

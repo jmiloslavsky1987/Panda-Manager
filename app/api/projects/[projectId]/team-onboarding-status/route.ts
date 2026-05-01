@@ -8,9 +8,12 @@ import { requireProjectRole } from "@/lib/auth-server";
 
 const trackStatusEnum = z.enum(['live', 'in_progress', 'pilot', 'planned']).nullable().optional()
 
+const onboardingStatusEnum = z.enum(['not-started', 'in-progress', 'complete', 'blocked']).optional()
+
 const postSchema = z.object({
   team_name: z.string().min(1),
   track: z.string().nullable().optional(),
+  status: onboardingStatusEnum,
   ingest_status: trackStatusEnum,
   correlation_status: trackStatusEnum,
   incident_intelligence_status: trackStatusEnum,
@@ -77,6 +80,7 @@ export async function POST(
   const {
     team_name,
     track,
+    status,
     ingest_status,
     correlation_status,
     incident_intelligence_status,
@@ -94,6 +98,7 @@ export async function POST(
           project_id: numericId,
           team_name,
           track: track ?? null,
+          status: status ?? 'not-started',
           ingest_status: ingest_status ?? null,
           correlation_status: correlation_status ?? null,
           incident_intelligence_status: incident_intelligence_status ?? null,

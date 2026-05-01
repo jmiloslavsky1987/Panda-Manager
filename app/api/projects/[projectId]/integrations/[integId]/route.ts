@@ -10,7 +10,7 @@ const ADR_TYPES = ['Inbound', 'Outbound', 'Enrichment'] as const
 const BIGGY_TYPES = ['Real-time', 'Context', 'Knowledge', 'UDC'] as const
 
 const patchSchema = z.object({
-  status: z.enum(['not-connected', 'configured', 'validated', 'production', 'blocked']).optional(),
+  status: z.enum(['not-started', 'in-progress', 'complete', 'blocked']).optional(),
   notes: z.string().optional(),
   track: z.enum(['ADR', 'Biggy']).nullable().optional(),
   integration_type: z.string().nullable().optional(),

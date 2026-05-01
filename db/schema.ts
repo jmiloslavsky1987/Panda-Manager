@@ -435,9 +435,8 @@ export const onboardingStepStatusEnum = pgEnum('onboarding_step_status', [
   'not-started', 'in-progress', 'complete', 'blocked',
 ])
 
-export const integrationStatusEnum = pgEnum('integration_status', [
-  'not-connected', 'configured', 'validated', 'production', 'blocked',
-])
+// integration_status enum kept for reference but column is now text in DB (0047 migration)
+// export const integrationStatusEnum = pgEnum('integration_status', [...]) — removed
 
 export const onboardingPhases = pgTable('onboarding_phases', {
   id: serial('id').primaryKey(),
@@ -469,7 +468,7 @@ export const integrations = pgTable('integrations', {
   project_id: integer('project_id').notNull().references(() => projects.id),
   tool: text('tool').notNull(),
   category: text('category'),
-  status: integrationStatusEnum('status').default('not-connected').notNull(),
+  status: text('status').default('not-started').notNull(),
   color: text('color'),
   notes: text('notes'),
   display_order: integer('display_order').notNull().default(0),
@@ -661,6 +660,7 @@ export const teamOnboardingStatus = pgTable('team_onboarding_status', {
   incident_intelligence_status:    integrationTrackStatusEnum('incident_intelligence_status'),
   sn_automation_status:            integrationTrackStatusEnum('sn_automation_status'),
   biggy_ai_status:                 integrationTrackStatusEnum('biggy_ai_status'),
+  status:                          text('status').default('not-started').notNull(),
   source:                          text('source').notNull().default('manual'),
   created_at:                      timestamp('created_at').defaultNow().notNull(),
 });

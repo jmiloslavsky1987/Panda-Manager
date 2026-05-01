@@ -8,9 +8,12 @@ import { requireProjectRole } from "@/lib/auth-server";
 
 const trackStatusEnum = z.enum(['live', 'in_progress', 'pilot', 'planned']).nullable().optional()
 
+const onboardingStatusEnum = z.enum(['not-started', 'in-progress', 'complete', 'blocked']).optional()
+
 const patchSchema = z.object({
   team_name: z.string().min(1).optional(),
   track: z.string().nullable().optional(),
+  status: onboardingStatusEnum,
   ingest_status: trackStatusEnum,
   correlation_status: trackStatusEnum,
   incident_intelligence_status: trackStatusEnum,
@@ -52,6 +55,7 @@ export async function PATCH(
   const {
     team_name,
     track,
+    status,
     ingest_status,
     correlation_status,
     incident_intelligence_status,
@@ -61,6 +65,7 @@ export async function PATCH(
 
   if (team_name !== undefined) updateData.team_name = team_name
   if (track !== undefined) updateData.track = track
+  if (status !== undefined) updateData.status = status
   if (ingest_status !== undefined) updateData.ingest_status = ingest_status
   if (correlation_status !== undefined) updateData.correlation_status = correlation_status
   if (incident_intelligence_status !== undefined) updateData.incident_intelligence_status = incident_intelligence_status

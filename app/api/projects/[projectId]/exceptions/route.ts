@@ -138,7 +138,7 @@ export async function GET(
         SELECT id, description, severity
         FROM risks
         WHERE project_id = ${numericId}
-          AND status = 'open'
+          AND (status = 'open' OR status IS NULL)
           AND severity IN ('critical', 'high')
         ORDER BY
           CASE severity WHEN 'critical' THEN 0 ELSE 1 END ASC,
@@ -234,7 +234,7 @@ export async function GET(
           (CURRENT_DATE - created_at::date) AS days_stale
         FROM risks
         WHERE project_id = ${numericId}
-          AND status = 'open'
+          AND (status = 'open' OR status IS NULL)
           AND created_at < NOW() - INTERVAL '14 days'
         ORDER BY days_stale DESC
       `)
