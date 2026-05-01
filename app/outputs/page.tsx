@@ -13,10 +13,11 @@ const DocxPreview = dynamic(() => import('@/components/DocxPreview'), {
 });
 
 function extractHtmlFromContent(raw: string): string {
-  let s = raw.trim().replace(/^```[a-z]*\s*/i, '').replace(/\s*```$/, '').trim();
-  if (!s.startsWith('<')) {
-    try { const p = JSON.parse(s); if (typeof p?.html === 'string') return p.html; } catch { /* raw */ }
-  }
+  let s = raw.trim().replace(/^`{3}[^\n]*\n?/m, '').replace(/\n?`{3}\s*$/m, '').trim();
+  if (s.startsWith('<')) return s;
+  try { const p = JSON.parse(s); if (typeof p?.html === 'string') return p.html; } catch { /* raw */ }
+  const htmlMatch = raw.match(/"html"\s*:\s*"([\s\S]+?)"\s*[},]/);
+  if (htmlMatch) { try { return JSON.parse(`"${htmlMatch[1]}"`); } catch { /* skip */ } }
   return s;
 }
 

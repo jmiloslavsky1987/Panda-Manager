@@ -18,13 +18,18 @@ type RunResponse = { status?: string; skill_name?: string; full_output?: string;
 // Extract HTML string from output — handles raw HTML, JSON envelope, and markdown-fenced JSON
 function extractHtml(raw: string): string | null {
   let s = raw.trim();
-  // Strip markdown code fence (```json ... ``` or ``` ... ```)
-  s = s.replace(/^```[a-z]*\s*/i, '').replace(/\s*```$/, '').trim();
+  // Strip any markdown code fence variant (``` or ```json or ```html etc.)
+  s = s.replace(/^`{3}[^\n]*\n?/m, '').replace(/\n?`{3}\s*$/m, '').trim();
   if (s.startsWith('<')) return s; // raw HTML
   try {
     const parsed = JSON.parse(s);
     if (typeof parsed?.html === 'string') return parsed.html;
   } catch { /* not JSON */ }
+  // Last-resort: find HTML within the raw string
+  const htmlMatch = raw.match(/"html"\s*:\s*"([\s\S]+?)"\s*[},]/);
+  if (htmlMatch) {
+    try { return JSON.parse(`"${htmlMatch[1]}"`); } catch { /* skip */ }
+  }
   return null;
 }
 

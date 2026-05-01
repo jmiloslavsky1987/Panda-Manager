@@ -127,7 +127,7 @@ export class SkillOrchestrator {
       ? this.client.beta.messages.stream(
           {
             model: MODEL,
-            max_tokens: 8192,
+            max_tokens: 16000,
             system: systemPrompt,
             messages,
             mcp_servers: params.mcpServers!.map(s => ({
@@ -153,7 +153,7 @@ export class SkillOrchestrator {
         )
       : this.client.messages.stream({
           model: MODEL,
-          max_tokens: 8192,
+          max_tokens: 16000,
           system: systemPrompt,
           messages,
         });

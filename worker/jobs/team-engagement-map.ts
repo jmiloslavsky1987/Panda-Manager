@@ -9,6 +9,16 @@ import { SkillOrchestrator } from '../../lib/skill-orchestrator';
 import { readSettings } from '../../lib/settings-core';
 import { resolveSkillsDir } from '../../lib/skill-path';
 
+function extractHtmlFromRaw(raw: string): string {
+  let s = raw.trim().replace(/^```[a-z]*\s*/i, '').replace(/\s*```$/, '').trim();
+  if (s.startsWith('<')) return s;
+  try {
+    const parsed = JSON.parse(s);
+    if (typeof parsed?.html === 'string') return parsed.html;
+  } catch { /* not JSON */ }
+  return raw;
+}
+
 const orchestrator = new SkillOrchestrator();
 
 export default async function teamEngagementMapJob(job: Job): Promise<{ status: string }> {
@@ -38,15 +48,21 @@ export default async function teamEngagementMapJob(job: Job): Promise<{ status: 
     });
 
     const [completedRun] = await db.select().from(skillRuns).where(eq(skillRuns.id, runId));
-    const outputText = completedRun?.full_output ?? '';
+    const rawOutput = completedRun?.full_output ?? '';
     const runUuid = completedRun?.run_id ?? randomUUID();
+
+    // Extract raw HTML from JSON envelope so run page and output library render it directly
+    const htmlOutput = extractHtmlFromRaw(rawOutput);
+    if (htmlOutput !== rawOutput) {
+      await db.update(skillRuns).set({ full_output: htmlOutput }).where(eq(skillRuns.id, runId));
+    }
 
     await db.insert(outputs).values({
       project_id: projectId,
       skill_name: 'team-engagement-map',
       idempotency_key: runUuid,
       status: 'complete',
-      content: outputText,
+      content: htmlOutput,
       completed_at: new Date(),
     }).onConflictDoNothing();
 
