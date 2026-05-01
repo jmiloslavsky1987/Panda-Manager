@@ -108,6 +108,14 @@ export async function Sidebar() {
       {/* Additional nav links */}
       <div className="px-2 pb-1 space-y-0.5 border-t" style={{ borderColor: 'var(--kata-gray-800)' }}>
         <Link
+          href="/weekly-report"
+          className="flex items-center gap-2 px-2 py-1.5 rounded text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+          data-testid="sidebar-weekly-report-link"
+        >
+          <Icon name="table_chart" size={16} />
+          Weekly Report
+        </Link>
+        <Link
           href="/knowledge-base"
           className="flex items-center gap-2 px-2 py-1.5 rounded text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
           data-testid="sidebar-knowledge-base-link"

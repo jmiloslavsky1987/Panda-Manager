@@ -46,12 +46,26 @@ export async function PATCH(
     return NextResponse.json({ error: 'Invalid projectId' }, { status: 400 })
   }
 
-  // PATCH requires admin role (upgraded from 'user')
+  const body = await req.json()
+  const { status, project_type, budgeted_hours, arr } = body
+
+  // Weekly-report metadata fields (type, budget, ARR) require only user role
+  if (project_type !== undefined || budgeted_hours !== undefined || arr !== undefined) {
+    const { redirectResponse: userRedirect } = await requireProjectRole(numericId, 'user');
+    if (userRedirect) return userRedirect;
+    const metaUpdate: Record<string, unknown> = { updated_at: new Date() }
+    if (project_type !== undefined) metaUpdate.project_type = project_type
+    if (budgeted_hours !== undefined) metaUpdate.budgeted_hours = budgeted_hours
+    if (arr !== undefined) metaUpdate.arr = arr
+    await db.update(projects).set(metaUpdate as any).where(eq(projects.id, numericId))
+    return NextResponse.json({ ok: true })
+  }
+
+  // Status transitions require admin role
   const { session, redirectResponse } = await requireProjectRole(numericId, 'admin');
   if (redirectResponse) return redirectResponse;
-
-  const body = await req.json()
-  const { status } = body
+  const { redirectResponse } = await requireProjectRole(numericId, 'admin');
+  if (redirectResponse) return redirectResponse;
 
   // Archived-project write-block: allow status transitions to 'archived' or 'active',
   // but block all other updates if project is currently archived

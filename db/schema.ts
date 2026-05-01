@@ -112,6 +112,9 @@ export const projects = pgTable('projects', {
   seeded: boolean('seeded').default(false).notNull(),
   exec_action_required: boolean('exec_action_required').default(false).notNull(),
   active_tracks: jsonb('active_tracks').$type<{ adr: boolean; biggy: boolean }>().default({ adr: true, biggy: true }),
+  project_type: text('project_type'),
+  budgeted_hours: numeric('budgeted_hours', { precision: 8, scale: 2 }),
+  arr: text('arr'),
 });
 
 export type Project = typeof projects.$inferSelect;
@@ -664,6 +667,17 @@ export const teamOnboardingStatus = pgTable('team_onboarding_status', {
   source:                          text('source').notNull().default('manual'),
   created_at:                      timestamp('created_at').defaultNow().notNull(),
 });
+
+export const weeklyReportNotes = pgTable('weekly_report_notes', {
+  id:         serial('id').primaryKey(),
+  project_id: integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  week_of:    text('week_of').notNull(),
+  notes:      text('notes').notNull().default(''),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+  updated_at: timestamp('updated_at').defaultNow().notNull(),
+}, (t) => [
+  uniqueIndex('weekly_report_notes_project_week_idx').on(t.project_id, t.week_of),
+]);
 
 export const scheduledJobs = pgTable('scheduled_jobs', {
   id:                serial('id').primaryKey(),
