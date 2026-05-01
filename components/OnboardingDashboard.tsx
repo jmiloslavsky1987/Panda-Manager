@@ -336,17 +336,44 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
     load()
   }, [projectId])
 
+  // ─── Integration grouping (needed for derived stats below) ────────────────
+
+  const adrIntegrations = integrations.filter(i => i.track === 'ADR')
+  const biggyIntegrations = integrations.filter(i => i.track === 'Biggy')
+  const unassignedIntegrations = integrations.filter(i => !i.track)
+
   // ─── Derived stats ──────────────────────────────────────────────────────────
 
-  // Exclude Go-Live phase from progress rings (it's a milestone, not a step)
+  // Steps (standard phases only, no Go-Live)
   const adrSteps = adrPhases.flatMap((p) => p.steps)
-  const adrTotal = adrSteps.length
-  const adrComplete = adrSteps.filter((s) => s.status === 'complete').length
-  const adrPct = adrTotal > 0 ? (adrComplete / adrTotal) * 100 : 0
+  const adrStepsTotal = adrSteps.length
+  const adrStepsComplete = adrSteps.filter((s) => s.status === 'complete').length
 
   const biggySteps = biggyPhases.flatMap((p) => p.steps)
-  const biggyTotal = biggySteps.length
-  const biggyComplete = biggySteps.filter((s) => s.status === 'complete').length
+  const biggyStepsTotal = biggySteps.length
+  const biggyStepsComplete = biggySteps.filter((s) => s.status === 'complete').length
+
+  // Integrations per track
+  const adrIntegTotal = adrIntegrations.length
+  const adrIntegComplete = adrIntegrations.filter((i) => i.status === 'complete').length
+  const biggyIntegTotal = biggyIntegrations.length
+  const biggyIntegComplete = biggyIntegrations.filter((i) => i.status === 'complete').length
+
+  // Teams per track
+  const adrTeams = teams.filter((t) => t.track === 'ADR')
+  const adrTeamsTotal = adrTeams.length
+  const adrTeamsComplete = adrTeams.filter((t) => t.status === 'complete').length
+  const biggyTeams = teams.filter((t) => t.track === 'Biggy')
+  const biggyTeamsTotal = biggyTeams.length
+  const biggyTeamsComplete = biggyTeams.filter((t) => t.status === 'complete').length
+
+  // Combined per-track totals (steps + integrations + teams)
+  const adrTotal = adrStepsTotal + adrIntegTotal + adrTeamsTotal
+  const adrComplete = adrStepsComplete + adrIntegComplete + adrTeamsComplete
+  const adrPct = adrTotal > 0 ? (adrComplete / adrTotal) * 100 : 0
+
+  const biggyTotal = biggyStepsTotal + biggyIntegTotal + biggyTeamsTotal
+  const biggyComplete = biggyStepsComplete + biggyIntegComplete + biggyTeamsComplete
   const biggyPct = biggyTotal > 0 ? (biggyComplete / biggyTotal) * 100 : 0
 
   const totalSteps = adrTotal + biggyTotal
@@ -585,11 +612,7 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
 
   const visibleSteps = (phase: PhaseWithSteps): Step[] => phase.steps.filter(stepMatchesFilter)
 
-  // ─── Integration grouping ───────────────────────────────────────────────────
 
-  const adrIntegrations = integrations.filter(i => i.track === 'ADR')
-  const biggyIntegrations = integrations.filter(i => i.track === 'Biggy')
-  const unassignedIntegrations = integrations.filter(i => !i.track)
 
   // ─── Integration card renderer ──────────────────────────────────────────────
 

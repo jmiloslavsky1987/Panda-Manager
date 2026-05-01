@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { count, eq, sql, and, isNull, or, inArray } from 'drizzle-orm'
 import db from '@/db'
-import { onboardingSteps, onboardingPhases, risks, integrations, milestones, projects, timeEntries, tasks } from '@/db/schema'
+import { onboardingSteps, onboardingPhases, risks, integrations, teamOnboardingStatus, milestones, projects, timeEntries, tasks } from '@/db/schema'
 import { requireProjectRole } from '@/lib/auth-server'
 
 // --- Helper functions (copied from analytics/route.ts) ---
@@ -113,7 +113,7 @@ export async function GET(
         count: Number(row.count),
       }))
 
-      // 3. integrationCounts: count integrations per status
+      // 3. integrationCounts: count integrations per status (for pie/summary)
       const integrationCountsRaw = await tx
         .select({
           status: integrations.status,
@@ -127,6 +127,44 @@ export async function GET(
         status: row.status,
         count: Number(row.count),
       }))
+
+      // 3b. integrationTrackCounts: per-track totals for progress rings
+      const integrationTrackCountsRaw = await tx
+        .select({
+          track: integrations.track,
+          status: integrations.status,
+          count: count(),
+        })
+        .from(integrations)
+        .where(and(eq(integrations.project_id, numericId), sql`${integrations.track} IS NOT NULL`))
+        .groupBy(integrations.track, integrations.status)
+
+      const integrationTrackCounts = integrationTrackCountsRaw
+        .filter(r => r.track != null)
+        .map(row => ({
+          track: row.track as string,
+          status: row.status,
+          count: Number(row.count),
+        }))
+
+      // 3c. teamCounts: per-track team totals for progress rings
+      const teamCountsRaw = await tx
+        .select({
+          track: teamOnboardingStatus.track,
+          status: teamOnboardingStatus.status,
+          count: count(),
+        })
+        .from(teamOnboardingStatus)
+        .where(eq(teamOnboardingStatus.project_id, numericId))
+        .groupBy(teamOnboardingStatus.track, teamOnboardingStatus.status)
+
+      const teamCounts = teamCountsRaw
+        .filter(r => r.track != null)
+        .map(row => ({
+          track: row.track as string,
+          status: row.status,
+          count: Number(row.count),
+        }))
 
       // 4. milestoneOnTrack: count milestones per status
       const milestoneOnTrackRaw = await tx
@@ -223,6 +261,8 @@ export async function GET(
         stepCounts,
         riskCounts,
         integrationCounts,
+        integrationTrackCounts,
+        teamCounts,
         milestoneOnTrack,
         weeklyRollup,
         weeklyTarget,

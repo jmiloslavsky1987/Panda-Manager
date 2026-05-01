@@ -14,6 +14,8 @@ interface OverviewMetricsData {
   stepCounts: { track: string; status: string; count: number }[]
   riskCounts: { severity: string; count: number }[]
   integrationCounts: { status: string; count: number }[]
+  integrationTrackCounts: { track: string; status: string; count: number }[]
+  teamCounts: { track: string; status: string; count: number }[]
   milestoneOnTrack: { status: string; count: number }[]
   weeklyRollup: { weekLabel: string; hours: number; variance: number | null }[]
   weeklyTarget: number | null
@@ -132,18 +134,30 @@ export function OverviewMetrics({ projectId }: OverviewMetricsProps) {
     )
   }
 
-  // ─── Calculate track completion percentages ─────────────────────────────────
+  // ─── Calculate track completion percentages (steps + integrations + teams) ──
 
-  const adrSteps = data.stepCounts.filter(s => s.track.toLowerCase() === 'adr')
-  const biggySteps = data.stepCounts.filter(s => s.track.toLowerCase() === 'biggy')
+  function trackSum(rows: { track: string; status: string; count: number }[], track: string) {
+    const lc = track.toLowerCase()
+    const matching = rows.filter(r => r.track.toLowerCase() === lc)
+    return {
+      total: matching.reduce((s, r) => s + r.count, 0),
+      complete: matching.filter(r => r.status === 'complete').reduce((s, r) => s + r.count, 0),
+    }
+  }
 
-  const adrComplete = adrSteps.filter(s => s.status === 'complete').reduce((sum, s) => sum + s.count, 0)
-  const adrTotal = adrSteps.reduce((sum, s) => sum + s.count, 0)
-  const adrPct = adrTotal > 0 ? (adrComplete / adrTotal) * 100 : 0
+  const adrStepCounts    = trackSum(data.stepCounts, 'adr')
+  const adrIntegCounts   = trackSum(data.integrationTrackCounts ?? [], 'adr')
+  const adrTeamCounts    = trackSum(data.teamCounts ?? [], 'adr')
+  const adrTotal         = adrStepCounts.total + adrIntegCounts.total + adrTeamCounts.total
+  const adrComplete      = adrStepCounts.complete + adrIntegCounts.complete + adrTeamCounts.complete
+  const adrPct           = adrTotal > 0 ? (adrComplete / adrTotal) * 100 : 0
 
-  const biggyComplete = biggySteps.filter(s => s.status === 'complete').reduce((sum, s) => sum + s.count, 0)
-  const biggyTotal = biggySteps.reduce((sum, s) => sum + s.count, 0)
-  const biggyPct = biggyTotal > 0 ? (biggyComplete / biggyTotal) * 100 : 0
+  const biggyStepCounts  = trackSum(data.stepCounts, 'biggy')
+  const biggyIntegCounts = trackSum(data.integrationTrackCounts ?? [], 'biggy')
+  const biggyTeamCounts  = trackSum(data.teamCounts ?? [], 'biggy')
+  const biggyTotal       = biggyStepCounts.total + biggyIntegCounts.total + biggyTeamCounts.total
+  const biggyComplete    = biggyStepCounts.complete + biggyIntegCounts.complete + biggyTeamCounts.complete
+  const biggyPct         = biggyTotal > 0 ? (biggyComplete / biggyTotal) * 100 : 0
 
   // ─── Prepare risk chart data ─────────────────────────────────────────────────
 
