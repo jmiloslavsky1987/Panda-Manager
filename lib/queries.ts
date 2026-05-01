@@ -30,6 +30,7 @@ import {
   archNodes,
   archTeamStatus,
   onboardingPhases,
+  onboardingSteps,
   projectMembers,
 } from '../db/schema';
 import { eq, and, inArray, ne, gt, or, desc, asc } from 'drizzle-orm';
@@ -325,17 +326,30 @@ export async function getProjectWithHealth(projectId: number): Promise<ProjectWi
   const healthData = await computeHealth(projectId);
   const analyticsData = await computeProjectAnalytics(projectId);
 
-  const [onboardingRows, workstreamRows] = await Promise.all([
-    db.select({ name: onboardingPhases.name })
+  const [onboardingRows, workstreamRows, activePhaseRows] = await Promise.all([
+    db.select({ name: onboardingPhases.name, display_order: onboardingPhases.display_order })
       .from(onboardingPhases)
       .where(eq(onboardingPhases.project_id, projectId))
-      .limit(1),
+      .orderBy(asc(onboardingPhases.display_order)),
     db.select({ percent_complete: workstreams.percent_complete })
       .from(workstreams)
       .where(eq(workstreams.project_id, projectId)),
+    // Find the highest display_order phase with any in-progress or complete step
+    db.select({ name: onboardingPhases.name, display_order: onboardingPhases.display_order })
+      .from(onboardingPhases)
+      .innerJoin(onboardingSteps, eq(onboardingSteps.phase_id, onboardingPhases.id))
+      .where(
+        and(
+          eq(onboardingPhases.project_id, projectId),
+          sql`${onboardingSteps.status} IN ('in-progress', 'complete')`,
+        )
+      )
+      .orderBy(sql`${onboardingPhases.display_order} DESC`)
+      .limit(1),
   ]);
 
-  const currentPhase = onboardingRows[0]?.name ?? null;
+  // Use highest active phase; fall back to first phase if no steps have started yet
+  const currentPhase = activePhaseRows[0]?.name ?? onboardingRows[0]?.name ?? null;
   const workstreamsWithProgress = workstreamRows.filter(w => w.percent_complete !== null);
   const percentComplete = workstreamsWithProgress.length > 0
     ? Math.round(

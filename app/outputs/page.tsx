@@ -171,6 +171,37 @@ export default function OutputLibraryPage() {
                         className="text-xs px-2 py-1 border border-zinc-200 rounded hover:bg-zinc-50"
                       >↓ Download</button>
                     )}
+                    {/* HTML output: open in new tab + download */}
+                    {type === 'html' && output.content && (() => {
+                      // Parse HTML out of JSON envelope if present
+                      let html = output.content.trim();
+                      if (!html.startsWith('<')) {
+                        try { const p = JSON.parse(html); if (typeof p?.html === 'string') html = p.html; } catch { /* raw */ }
+                      }
+                      return (
+                        <>
+                          <button
+                            onClick={e => {
+                              e.stopPropagation();
+                              const blob = new Blob([html], { type: 'text/html' });
+                              window.open(URL.createObjectURL(blob), '_blank');
+                            }}
+                            className="text-xs px-2 py-1 border border-zinc-200 rounded hover:bg-zinc-50"
+                          >↗ Open</button>
+                          <button
+                            onClick={e => {
+                              e.stopPropagation();
+                              const blob = new Blob([html], { type: 'text/html' });
+                              const url = URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = url; a.download = output.filename ?? `${output.skill_name}.html`; a.click();
+                              URL.revokeObjectURL(url);
+                            }}
+                            className="text-xs px-2 py-1 border border-zinc-200 rounded hover:bg-zinc-50"
+                          >↓ Download</button>
+                        </>
+                      );
+                    })()}
                     {/* Non-PPTX binary file: download */}
                     {output.filepath && type !== 'pptx' && type !== 'html' && (
                       <button

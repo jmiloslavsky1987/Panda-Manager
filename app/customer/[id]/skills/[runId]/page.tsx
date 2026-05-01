@@ -15,6 +15,17 @@ type RunStatus = 'loading' | 'streaming' | 'done' | 'failed';
 
 type RunResponse = { status?: string; skill_name?: string; full_output?: string; error_message?: string };
 
+// Extract HTML string from output — handles both raw HTML and JSON envelope {"title":...,"html":...}
+function extractHtml(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (trimmed.startsWith('<')) return trimmed; // already raw HTML
+  try {
+    const parsed = JSON.parse(trimmed);
+    if (typeof parsed?.html === 'string') return parsed.html;
+  } catch { /* not JSON */ }
+  return null;
+}
+
 type OutputRow = { id: number; filepath: string | null };
 
 function getAppLabel(skillName: string): string {
@@ -142,43 +153,56 @@ export default function SkillRunPage() {
       </div>
 
       {/* Output area */}
-      <div
-        data-testid="skill-output"
-        className="relative bg-white border border-zinc-200 rounded-lg p-6 min-h-32"
-      >
-        {/* Copy button — visible only when status is done */}
-        {status === 'done' && output && (
-          <button
-            onClick={() =>
-              navigator.clipboard.writeText(stripMarkdown(output)).then(() => {
-                setCopied(true);
-                setTimeout(() => setCopied(false), 2000);
-              })
-            }
-            className="absolute top-2 right-2 px-3 py-1 text-xs bg-zinc-100 hover:bg-zinc-200 text-zinc-600 rounded border border-zinc-200"
-            data-testid="copy-btn"
+      {(() => {
+        const htmlContent = (status === 'done' || status === 'failed') ? extractHtml(output) : null;
+        return (
+          <div
+            data-testid="skill-output"
+            className="relative bg-white border border-zinc-200 rounded-lg min-h-32 overflow-hidden"
+            style={htmlContent ? { padding: 0 } : { padding: '1.5rem' }}
           >
-            {copied ? 'Copied!' : 'Copy'}
-          </button>
-        )}
+            {/* Copy button — visible only when status is done and NOT html */}
+            {status === 'done' && output && !htmlContent && (
+              <button
+                onClick={() =>
+                  navigator.clipboard.writeText(stripMarkdown(output)).then(() => {
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  })
+                }
+                className="absolute top-2 right-2 px-3 py-1 text-xs bg-zinc-100 hover:bg-zinc-200 text-zinc-600 rounded border border-zinc-200"
+                data-testid="copy-btn"
+              >
+                {copied ? 'Copied!' : 'Copy'}
+              </button>
+            )}
 
-        {status === 'loading' && (
-          <p className="text-zinc-400 text-sm">Loading output...</p>
-        )}
-        {status === 'streaming' && !output && (
-          <p className="text-zinc-400 text-sm">Waiting for output...</p>
-        )}
-        {status === 'streaming' && output && (
-          // During streaming show raw text — markdown rendering on every keystroke is expensive
-          <pre className="font-mono text-sm whitespace-pre-wrap text-zinc-800">{output}</pre>
-        )}
-        {(status === 'done' || status === 'failed') && output && (
-          // Completed: render markdown with XSS hardening
-          <div className="prose prose-zinc prose-sm max-w-none">
-            <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{output}</ReactMarkdown>
+            {status === 'loading' && (
+              <p className="text-zinc-400 text-sm">Loading output...</p>
+            )}
+            {status === 'streaming' && !output && (
+              <p className="text-zinc-400 text-sm">Waiting for output...</p>
+            )}
+            {status === 'streaming' && output && (
+              <pre className="font-mono text-sm whitespace-pre-wrap text-zinc-800">{output}</pre>
+            )}
+            {(status === 'done' || status === 'failed') && output && htmlContent && (
+              <iframe
+                sandbox="allow-same-origin"
+                srcDoc={htmlContent}
+                className="w-full border-0"
+                style={{ height: '70vh' }}
+                title={`${skillName} output`}
+              />
+            )}
+            {(status === 'done' || status === 'failed') && output && !htmlContent && (
+              <div className="prose prose-zinc prose-sm max-w-none">
+                <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{output}</ReactMarkdown>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        );
+      })()}
 
       {/* Streaming hint */}
       {status === 'streaming' && (
@@ -187,16 +211,52 @@ export default function SkillRunPage() {
         </p>
       )}
 
-      {/* Download button — shown when run is done and a file artifact was produced */}
-      {status === 'done' && outputFilepath && outputId && (
-        <a
-          href={`/api/outputs/${outputId}/download`}
-          download
-          className="mt-4 inline-block px-4 py-2 text-sm bg-zinc-900 text-white rounded hover:bg-zinc-700"
-          data-testid="open-in-app-btn"
-        >
-          ↓ Download {getAppLabel(skillName)}
-        </a>
+      {/* Action buttons when done */}
+      {status === 'done' && output && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {/* HTML output: open in new tab + download as .html */}
+          {extractHtml(output) && (
+            <>
+              <button
+                onClick={() => {
+                  const html = extractHtml(output)!;
+                  const blob = new Blob([html], { type: 'text/html' });
+                  const url = URL.createObjectURL(blob);
+                  window.open(url, '_blank');
+                }}
+                className="px-4 py-2 text-sm bg-zinc-900 text-white rounded hover:bg-zinc-700"
+              >
+                ↗ Open in Browser
+              </button>
+              <button
+                onClick={() => {
+                  const html = extractHtml(output)!;
+                  const blob = new Blob([html], { type: 'text/html' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `${skillName}.html`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+                className="px-4 py-2 text-sm bg-white border border-zinc-300 text-zinc-700 rounded hover:bg-zinc-50"
+              >
+                ↓ Download HTML
+              </button>
+            </>
+          )}
+          {/* File artifact download (PPTX etc) */}
+          {outputFilepath && outputId && (
+            <a
+              href={`/api/outputs/${outputId}/download`}
+              download
+              className="px-4 py-2 text-sm bg-zinc-900 text-white rounded hover:bg-zinc-700"
+              data-testid="open-in-app-btn"
+            >
+              ↓ Download {getAppLabel(skillName)}
+            </a>
+          )}
+        </div>
       )}
     </div>
   );
