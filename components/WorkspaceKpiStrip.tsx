@@ -1,30 +1,70 @@
-import type { ProjectWithHealth } from '../lib/queries'
+'use client'
 
-/**
- * WorkspaceKpiStrip
- * Phase 81: KDS-06
- *
- * Server component. Renders a 5-column KPI strip below the workspace page-bar.
- * JBM 28px numerals, Kata status token tinting for risky values.
- *
- * Columns: Phase | Progress | Days to Go-Live | Open Risks | Velocity
- *
- * Note: ProjectWithHealth does not carry currentPhase / percentComplete at the
- * base level — those fields live on PortfolioProject (getPortfolioData).
- * The strip accepts optional overrides for these fields so workspace layout can
- * pass enriched data in future; they default to '—' / 0 when absent.
- */
+import { useEffect, useState } from 'react'
+import type { ProjectWithHealth } from '../lib/queries'
 
 interface WorkspaceKpiStripProps {
   project: ProjectWithHealth
+  projectId: number
 }
 
-export function WorkspaceKpiStrip({ project }: WorkspaceKpiStripProps) {
+interface LiveMetrics {
+  stepCounts: { track: string; status: string; count: number }[]
+  integrationTrackCounts: { track: string; status: string; count: number }[]
+  teamCounts: { track: string; status: string; count: number }[]
+  riskCounts: { severity: string; count: number }[]
+}
+
+function sumTrack(rows: { track: string; status: string; count: number }[], track: string) {
+  const lc = track.toLowerCase()
+  const matching = rows.filter(r => r.track.toLowerCase() === lc)
+  return {
+    total: matching.reduce((s, r) => s + r.count, 0),
+    complete: matching.filter(r => r.status === 'complete').reduce((s, r) => s + r.count, 0),
+  }
+}
+
+export function WorkspaceKpiStrip({ project, projectId }: WorkspaceKpiStripProps) {
+  const [metrics, setMetrics] = useState<LiveMetrics | null>(null)
+
+  const fetchMetrics = async () => {
+    try {
+      const res = await fetch(`/api/projects/${projectId}/overview-metrics`)
+      if (res.ok) setMetrics(await res.json())
+    } catch {}
+  }
+
+  useEffect(() => {
+    fetchMetrics()
+  }, [projectId])
+
+  useEffect(() => {
+    window.addEventListener('metrics:invalidate', fetchMetrics)
+    return () => window.removeEventListener('metrics:invalidate', fetchMetrics)
+  }, [projectId])
+
+  // Compute live percent complete from steps + integrations + teams
+  let percentComplete: number | null = project.percentComplete ?? null
+  let openRisks: number = project.openRiskCount ?? 0
+
+  if (metrics) {
+    const adrSteps  = sumTrack(metrics.stepCounts, 'adr')
+    const adrInteg  = sumTrack(metrics.integrationTrackCounts ?? [], 'adr')
+    const adrTeams  = sumTrack(metrics.teamCounts ?? [], 'adr')
+    const biggySteps = sumTrack(metrics.stepCounts, 'biggy')
+    const biggyInteg = sumTrack(metrics.integrationTrackCounts ?? [], 'biggy')
+    const biggyTeams = sumTrack(metrics.teamCounts ?? [], 'biggy')
+
+    const total    = adrSteps.total + adrInteg.total + adrTeams.total + biggySteps.total + biggyInteg.total + biggyTeams.total
+    const complete = adrSteps.complete + adrInteg.complete + adrTeams.complete + biggySteps.complete + biggyInteg.complete + biggyTeams.complete
+    percentComplete = total > 0 ? Math.round((complete / total) * 100) : 0
+
+    openRisks = metrics.riskCounts.reduce((s, r) => s + r.count, 0)
+  }
+
   const daysToGoLive = project.go_live_target
     ? Math.ceil((new Date(project.go_live_target).getTime() - Date.now()) / 86400000)
     : null
-
-  const openRisks = project.openRiskCount ?? 0
 
   const kpiColumns = [
     {
@@ -35,8 +75,8 @@ export function WorkspaceKpiStrip({ project }: WorkspaceKpiStripProps) {
     },
     {
       label: 'Progress',
-      value: project.percentComplete != null ? `${project.percentComplete}%` : '—',
-      sub: project.percentComplete != null ? 'complete' : '',
+      value: percentComplete != null ? `${percentComplete}%` : '—',
+      sub: percentComplete != null ? 'complete' : '',
       tone: 'neutral' as const,
     },
     {

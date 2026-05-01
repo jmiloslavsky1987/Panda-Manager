@@ -74,7 +74,7 @@ export default async function WorkspaceLayout({
           </span>
         </div>
       )}
-      {project && <WorkspaceKpiStrip project={project} />}
+      {project && <WorkspaceKpiStrip project={project} projectId={projectId} />}
       {project?.status === 'archived' && (
         <Suspense fallback={null}>
           <ArchivedBanner projectId={projectId} isAdmin={isProjectAdmin} />
