@@ -71,9 +71,9 @@ export interface ProjectWithHealth extends Project {
   actionTrend: 'up' | 'flat' | 'down';
   openRiskCount: number;
   riskTrend: 'up' | 'flat' | 'down';
-  // KPI strip fields:
-  currentPhase: string | null;
-  percentComplete: number | null;
+  // KPI strip fields (computed in getProjectWithHealth, optional elsewhere):
+  currentPhase?: string | null;
+  percentComplete?: number | null;
 }
 
 export interface ActivityItem {
