@@ -20,6 +20,22 @@ const SOURCE_LABELS: Record<Source, string> = {
   gong: 'Gong',
 }
 
+type Lookback = '7d' | '14d' | '1m' | '3m'
+
+const LOOKBACK_OPTIONS: Array<{ value: Lookback; label: string }> = [
+  { value: '7d',  label: 'Last 7 days'   },
+  { value: '14d', label: 'Last 14 days'  },
+  { value: '1m',  label: 'Last month'    },
+  { value: '3m',  label: 'Last 3 months' },
+]
+
+function lookbackToMs(lb: Lookback): number {
+  if (lb === '7d')  return 7  * 24 * 60 * 60 * 1000
+  if (lb === '14d') return 14 * 24 * 60 * 60 * 1000
+  if (lb === '1m')  return 30 * 24 * 60 * 60 * 1000
+  return 90 * 24 * 60 * 60 * 1000
+}
+
 interface ScanForUpdatesButtonProps {
   projectId: number
 }
@@ -32,6 +48,7 @@ export function ScanForUpdatesButton({ projectId }: ScanForUpdatesButtonProps) {
   const [scanning, setScanning] = useState(false)
   const [scanProgress, setScanProgress] = useState<string>('')
   const [sources, setSources] = useState<Source[]>(ALL_SOURCES)
+  const [lookback, setLookback] = useState<Lookback>('7d')
   const abortRef = useRef<AbortController | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -41,9 +58,12 @@ export function ScanForUpdatesButton({ projectId }: ScanForUpdatesButtonProps) {
       try {
         const res = await fetch(`/api/discovery/scan-config?projectId=${projectId}`)
         if (res.ok) {
-          const data = await res.json() as { sources?: Source[] }
+          const data = await res.json() as { sources?: Source[]; lookback?: Lookback }
           if (data.sources && data.sources.length > 0) {
             setSources(data.sources as Source[])
+          }
+          if (data.lookback) {
+            setLookback(data.lookback)
           }
         }
       } catch {
@@ -84,12 +104,12 @@ export function ScanForUpdatesButton({ projectId }: ScanForUpdatesButtonProps) {
     setScanning(true)
     setScanProgress('Starting scan…')
 
-    // Save source selection
+    // Save source selection and lookback
     try {
       await fetch('/api/discovery/scan-config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId, sources }),
+        body: JSON.stringify({ projectId, sources, lookback }),
       })
     } catch {
       // Non-fatal — proceed with scan
@@ -99,10 +119,11 @@ export function ScanForUpdatesButton({ projectId }: ScanForUpdatesButtonProps) {
     abortRef.current = new AbortController()
 
     try {
+      const since = new Date(Date.now() - lookbackToMs(lookback)).toISOString()
       const response = await fetch('/api/discovery/scan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId, sources }),
+        body: JSON.stringify({ projectId, sources, since }),
         signal: abortRef.current.signal,
       })
 
@@ -217,6 +238,18 @@ export function ScanForUpdatesButton({ projectId }: ScanForUpdatesButtonProps) {
                 </label>
               </div>
             ))}
+          </div>
+          <div className="mb-4">
+            <p className="text-sm font-medium mb-1.5 text-zinc-700">Timeframe</p>
+            <select
+              value={lookback}
+              onChange={(e) => setLookback(e.target.value as Lookback)}
+              className="w-full rounded-md border border-zinc-200 bg-white px-2 py-1.5 text-sm text-zinc-700 cursor-pointer focus:outline-none focus:ring-1 focus:ring-zinc-400"
+            >
+              {LOOKBACK_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
           </div>
           <Button
             size="sm"
