@@ -337,6 +337,19 @@ Plans:
 - [ ] 83-03-PLAN.md — Downstream consumers: chat-context-builder + createArchNodeTool + document-extraction
 - [ ] 83-04-PLAN.md — Human verification checkpoint
 
+### Phase 84: Discovery Scan Hardening
+**Goal**: Make the Scan for Updates feature fully functional end-to-end for Gmail and Slack, with a scan timeframe selector, expanded entity coverage (~12 types vs 6), context-aware enrichment, and per-source SSE feedback.
+**Depends on**: Phase 83
+**Plans**: 6 plans across 4 waves
+
+Plans:
+- [ ] 84-00-PLAN.md — Wave 0: test scaffolds (slack-oauth, slack-adapter, scan-config, approve extensions, scan sourceSummary)
+- [ ] 84-01-PLAN.md — Slack OAuth infrastructure: initiate + callback + status routes + Settings page UI (Wave 2)
+- [ ] 84-02-PLAN.md — SlackAdapter rewrite to search.messages + resolveAdapter priority update (Wave 2)
+- [ ] 84-03-PLAN.md — Scan timeframe UI (lookback dropdown) + scan-config route extension (Wave 2)
+- [ ] 84-04-PLAN.md — Expanded entity types (~12) + context-aware enrichment + approve FK resolution (Wave 3)
+- [ ] 84-05-PLAN.md — Per-source SSE breakdown + ReviewQueue labels + human verification (Wave 4)
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -350,6 +363,7 @@ Plans:
 | 81. Kata Design System Visual Overhaul | 6/7 | In Progress | — |
 | 82. Chat Write Operations | 5/6 | In Progress | — |
 | 83. Architecture Sub-Capability Columns | 5/5 | Complete    | 2026-04-30 |
+| 84. Discovery Scan Hardening | 0/6 | Planned     | — |
 
 ---
-*Last updated: 2026-04-29 — Phase 83 planned: 5 plans across 4 waves (Wave 0 test scaffolds + migration + rendering overhaul + downstream consumers + verification)*
+*Last updated: 2026-05-04 — Phase 84 planned: 6 plans across 4 waves (Wave 0 scaffolds + Slack OAuth + Adapter rewrite + timeframe UI + entity expansion + SSE feedback + verification)*
