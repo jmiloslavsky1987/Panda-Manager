@@ -32,13 +32,37 @@ export interface DiscoveryItem {
 
 const MODEL = 'claude-sonnet-4-6';
 
-const DISCOVERY_SYSTEM = `You are analyzing communication data for a BigPanda implementation project. \
-Extract structured items that represent: action items, decisions, risks, blockers, or status updates. \
-For each item, return JSON with: source (the communication channel), content (the extracted insight), \
-suggested_field (one of: action|risk|decision|milestone|stakeholder), \
-source_excerpt (verbatim 100-200 char snippet from source), \
-source_url (if available), \
-likely_duplicate (boolean: true if this item appears to already be captured in the existing project data provided, false otherwise). \
+const DISCOVERY_SYSTEM_TEMPLATE = `You are analyzing communication data for a BigPanda implementation project.
+Extract structured items representing project intelligence.
+
+For each item return JSON with fields:
+  source: communication channel name
+  content: extracted insight (plain text for most types; JSON string for arch_node and workflow_step — see below)
+  suggested_field: one of the valid types listed below
+  source_excerpt: verbatim 100-200 char snippet from source
+  source_url: if available
+  likely_duplicate: true if this maps to existing project data, false otherwise
+
+Valid suggested_field values:
+  action — a task or next step someone needs to do
+  risk — a concern, blocker, or potential issue
+  decision — a confirmed choice or direction
+  milestone — a key date or deliverable target
+  stakeholder — a person or team involved
+  history — general status update or context (catch-all)
+  task — a work item to track (title only in content)
+  team_engagement — content for a team engagement section; content must be JSON: {"name":"<section name>","content":"<section text>"}
+  arch_track — a new architecture track to suggest (track name only in content)
+  arch_node — a capability/integration node; content must be JSON: {"name":"<node name>","track_name":"<existing or new track name>"}
+  workflow — a team workflow; content must be JSON: {"team_name":"<team>","workflow_name":"<workflow>"}
+  workflow_step — a step in a workflow; content must be JSON: {"label":"<step label>","workflow_name":"<existing or new workflow name>"}
+  business_outcome — a business objective or desired outcome
+  integration — a system integration or tool connection
+
+Existing project structure (use these names when referencing existing entities):
+{existingStructureBlock}
+
+Prefer enriching/updating existing items over creating new ones when content maps to something already present.
 Return ONLY a JSON array — no prose, no markdown fences.`;
 
 // ─── Params ───────────────────────────────────────────────────────────────────
@@ -52,6 +76,11 @@ export interface DiscoveryScanParams {
   source_credentials: SourceCredentials; // org-level REST credentials from settings.json
   userTokens: UserSourceToken[];         // per-user OAuth tokens from DB (Gmail)
   existingProjectSummary: string;        // compact summary of current project items for dedup context
+  existingStructure?: {                  // enrichment context: existing arch tracks, workflows, engagement sections
+    tracks: string[];
+    workflows: string[];
+    sections: string[];
+  };
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -93,7 +122,18 @@ function parseDiscoveryItems(text: string): DiscoveryItem[] {
  * @returns DiscoveryItem[] extracted and shaped by Claude
  */
 export async function runDiscoveryScan(params: DiscoveryScanParams): Promise<DiscoveryItem[]> {
-  const { projectName, sources, since, mcpServers, source_credentials, userTokens, existingProjectSummary } = params;
+  const { projectName, sources, since, mcpServers, source_credentials, userTokens, existingProjectSummary, existingStructure } = params;
+
+  // Build existing structure block for DISCOVERY_SYSTEM prompt interpolation
+  const existingStructureBlock = existingStructure
+    ? [
+        `Tracks: ${existingStructure.tracks.length > 0 ? existingStructure.tracks.join(', ') : 'none'}`,
+        `Workflows: ${existingStructure.workflows.length > 0 ? existingStructure.workflows.join(', ') : 'none'}`,
+        `Engagement sections: ${existingStructure.sections.length > 0 ? existingStructure.sections.join(', ') : 'none'}`,
+      ].join('\n')
+    : 'Tracks: none\nWorkflows: none\nEngagement sections: none';
+
+  const DISCOVERY_SYSTEM = DISCOVERY_SYSTEM_TEMPLATE.replace('{existingStructureBlock}', existingStructureBlock);
 
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 

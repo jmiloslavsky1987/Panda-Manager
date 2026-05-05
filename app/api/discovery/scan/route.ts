@@ -14,7 +14,7 @@ import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { and, eq, ilike } from 'drizzle-orm';
 import { db } from '@/db';
-import { projects, discoveryItems, userSourceTokens, actions, risks, stakeholders } from '@/db/schema';
+import { projects, discoveryItems, userSourceTokens, actions, risks, stakeholders, archTracks, e2eWorkflows, teamEngagementSections } from '@/db/schema';
 import { MCPClientPool } from '@/lib/mcp-config';
 import { readSettings } from '@/lib/settings-core';
 import { runDiscoveryScan, type DiscoveryItem } from '@/lib/discovery-scanner';
@@ -121,15 +121,29 @@ export async function POST(request: NextRequest): Promise<Response> {
 
           const projectName = project.customer || project.name;
 
-          // 1b. Build compact project context for dedup analysis
+          // 1b. Build compact project context for dedup analysis + enrichment
           // Fetch existing actions, risks, stakeholders (limit 50 each to stay within token budget)
-          const [existingActions, existingRisks, existingStakeholders] = await Promise.all([
+          // Also fetch arch tracks, workflows, and engagement sections for Claude enrichment context
+          const [
+            existingActions,
+            existingRisks,
+            existingStakeholders,
+            existingTracks,
+            existingWorkflows,
+            existingEngagementSections,
+          ] = await Promise.all([
             db.select({ id: actions.id, title: actions.description, status: actions.status })
               .from(actions).where(eq(actions.project_id, projectId)).limit(50),
             db.select({ id: risks.id, title: risks.description, status: risks.status })
               .from(risks).where(eq(risks.project_id, projectId)).limit(50),
             db.select({ id: stakeholders.id, name: stakeholders.name, role: stakeholders.role })
               .from(stakeholders).where(eq(stakeholders.project_id, projectId)).limit(50),
+            db.select({ name: archTracks.name })
+              .from(archTracks).where(eq(archTracks.project_id, projectId)),
+            db.select({ team_name: e2eWorkflows.team_name, workflow_name: e2eWorkflows.workflow_name })
+              .from(e2eWorkflows).where(eq(e2eWorkflows.project_id, projectId)),
+            db.select({ name: teamEngagementSections.name })
+              .from(teamEngagementSections).where(eq(teamEngagementSections.project_id, projectId)),
           ]);
 
           const existingProjectSummary = [
@@ -176,6 +190,11 @@ export async function POST(request: NextRequest): Promise<Response> {
             source_credentials,
             userTokens: dbUserTokens,
             existingProjectSummary,
+            existingStructure: {
+              tracks: existingTracks.map(t => t.name),
+              workflows: existingWorkflows.map(w => `${w.team_name}/${w.workflow_name}`),
+              sections: existingEngagementSections.map(s => s.name),
+            },
           });
 
           sendEvent({ type: 'progress', message: `Processing ${discoveryResults.length} discovered items…` });
