@@ -24,6 +24,31 @@ const SOURCE_COLORS: Record<string, string> = {
   gong: 'bg-green-100 text-green-700',
 }
 
+const TYPE_LABELS: Record<string, string> = {
+  action: 'Action',
+  risk: 'Risk',
+  decision: 'Decision',
+  milestone: 'Milestone',
+  stakeholder: 'Stakeholder',
+  history: 'History',
+  // Phase 84 new types
+  task: 'Task',
+  team_engagement: 'Team Engagement',
+  arch_track: 'Arch Track',
+  arch_node: 'Arch Node',
+  workflow: 'Workflow',
+  workflow_step: 'Workflow Step',
+  business_outcome: 'Business Outcome',
+  integration: 'Integration',
+}
+
+function typeLabel(suggested_field: string): string {
+  return TYPE_LABELS[suggested_field] ??
+    suggested_field
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, c => c.toUpperCase())
+}
+
 function formatDate(iso: string): string {
   try {
     return new Date(iso).toLocaleDateString('en-US', {
@@ -112,7 +137,7 @@ export function QueueItemRow({ item, onApprove, onDismiss, readonly = false }: Q
         </span>
         <span className="text-xs text-zinc-400">{dateLabel}</span>
         <span className="rounded bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600">
-          {item.suggested_field}
+          {typeLabel(item.suggested_field)}
         </span>
       </div>
 

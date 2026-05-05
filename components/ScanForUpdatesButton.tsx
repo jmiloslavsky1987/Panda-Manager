@@ -153,6 +153,7 @@ export function ScanForUpdatesButton({ projectId }: ScanForUpdatesButtonProps) {
               message?: string
               itemCount?: number
               newItems?: number
+              sourceSummary?: Record<string, { fetched: number; skipped: boolean; reason?: string }>
             }
 
             if (payload.type === 'progress' && payload.message) {
@@ -163,12 +164,25 @@ export function ScanForUpdatesButton({ projectId }: ScanForUpdatesButtonProps) {
               setScanning(false)
               setScanProgress('')
               const newItems = payload.newItems ?? payload.itemCount ?? 0
+
+              // Build per-source breakdown description
+              const breakdown = payload.sourceSummary
+                ? Object.entries(payload.sourceSummary)
+                    .map(([src, stat]) =>
+                      stat.skipped
+                        ? `${SOURCE_LABELS[src as Source] ?? src}: no credentials`
+                        : `${SOURCE_LABELS[src as Source] ?? src}: ${stat.fetched} message${stat.fetched === 1 ? '' : 's'}`
+                    )
+                    .join(' · ')
+                : undefined
+
               if (newItems > 0) {
                 toast.success(
-                  `Scan complete — ${newItems} new items ready for review`
+                  `Scan complete — ${newItems} new items ready for review`,
+                  breakdown ? { description: breakdown } : undefined
                 )
               } else {
-                toast.info('Scan complete — no new items found')
+                toast.info('Scan complete — no new items found', breakdown ? { description: breakdown } : undefined)
               }
               router.push(`/customer/${projectId}/queue`)
               return
