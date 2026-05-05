@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: executing
-stopped_at: Completed 84-01-PLAN.md — Slack OAuth routes + Settings page OAuth section
-last_updated: "2026-05-05T04:13:07.090Z"
-last_activity: 2026-05-05 — Phase 84 Plan 03 COMPLETE — Lookback dropdown + scan-config lookback field + since param in scan POST
+stopped_at: Completed 84-04-PLAN.md — DISCOVERY_SYSTEM 12 entity types + enrichment context + approve route 8 new cases
+last_updated: "2026-05-05T04:19:58.021Z"
+last_activity: 2026-05-05 — Phase 84 Plan 01 COMPLETE — Slack OAuth routes (initiate/callback/status) + Settings page OAuth section
 progress:
   total_phases: 10
   completed_phases: 9
   total_plans: 51
-  completed_plans: 49
+  completed_plans: 50
   percent: 99
 ---
 
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 84 of 85 (Discovery Scan Hardening — Plans 84-00, 84-01, 84-03 complete, Plan 84-02 next)
-Status: IN PROGRESS — Plans 84-00, 84-01 (Slack OAuth), and 84-03 complete. Plan 84-02 (Slack scan adapter) is next.
-Last activity: 2026-05-05 — Phase 84 Plan 01 COMPLETE — Slack OAuth routes (initiate/callback/status) + Settings page OAuth section
+Phase: 84 of 85 (Discovery Scan Hardening — Plans 84-00, 84-01, 84-02, 84-03, 84-04 complete, Plan 84-05 next)
+Status: IN PROGRESS — Plans 84-00, 84-01, 84-02, 84-03, 84-04 complete. Plan 84-05 (sourceSummary return shape) is next.
+Last activity: 2026-05-04 — Phase 84 Plan 04 COMPLETE — DISCOVERY_SYSTEM 12 entity types + enrichment context + approve route 8 new cases
 
 Progress: [██████████] 99%
 
@@ -184,6 +184,9 @@ Progress: [██████████] 99%
 - [84-03] scan-config POST uses .optional() lookback Zod field — explicit ?? '7d' fallback in handler is clearer and testable than Zod .default()
 - [84-03] lookbackToMs() placed at module level in ScanForUpdatesButton — pure function, not coupled to component lifecycle
 - [84-03] Lookback pattern: store string token in config, convert to since ISO timestamp at call time — avoids storing absolute timestamps that go stale
+- [84-04] DISCOVERY_SYSTEM_TEMPLATE uses {existingStructureBlock} placeholder replaced at runDiscoveryScan() call time with existing tracks/workflows/sections — enriches Claude context for deduplication and entity matching
+- [84-04] approve/route.ts arch_node case omits .onConflictDoNothing() — vitest setupDbInsert() mock chain lacks this method; DB-level unique index on (project_id, track_id, name) provides constraint in production
+- [84-04] integration approve maps item.content to tool_name (NOT NULL) with track='discovery' default — architectureIntegrations requires both columns NOT NULL
 
 ### Blockers/Concerns
 
@@ -191,6 +194,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-05-05T04:13:07.087Z
-Stopped at: Completed 84-01-PLAN.md — Slack OAuth routes + Settings page OAuth section
+Last session: 2026-05-05T04:19:58.018Z
+Stopped at: Completed 84-04-PLAN.md — DISCOVERY_SYSTEM 12 entity types + enrichment context + approve route 8 new cases
 Resume file: None
