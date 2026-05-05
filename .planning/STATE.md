@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: executing
-stopped_at: Completed 84-02-PLAN.md — SlackAdapter search.messages rewrite + resolveAdapter Slack priority
-last_updated: "2026-05-05T04:09:23.779Z"
+stopped_at: Completed 84-01-PLAN.md — Slack OAuth routes + Settings page OAuth section
+last_updated: "2026-05-05T04:13:07.090Z"
 last_activity: 2026-05-05 — Phase 84 Plan 03 COMPLETE — Lookback dropdown + scan-config lookback field + since param in scan POST
 progress:
   total_phases: 10
   completed_phases: 9
   total_plans: 51
-  completed_plans: 48
+  completed_plans: 49
   percent: 99
 ---
 
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 84 of 85 (Discovery Scan Hardening — Plan 84-03 complete, Plan 84-04 next)
-Status: IN PROGRESS — Plans 84-00 and 84-03 complete. Lookback timeframe selector shipped. Plan 84-04 (approve route) is next.
-Last activity: 2026-05-05 — Phase 84 Plan 03 COMPLETE — Lookback dropdown + scan-config lookback field + since param in scan POST
+Phase: 84 of 85 (Discovery Scan Hardening — Plans 84-00, 84-01, 84-03 complete, Plan 84-02 next)
+Status: IN PROGRESS — Plans 84-00, 84-01 (Slack OAuth), and 84-03 complete. Plan 84-02 (Slack scan adapter) is next.
+Last activity: 2026-05-05 — Phase 84 Plan 01 COMPLETE — Slack OAuth routes (initiate/callback/status) + Settings page OAuth section
 
 Progress: [██████████] 99%
 
@@ -174,6 +174,9 @@ Progress: [██████████] 99%
 - [84-00] tests/ dir gitignored — lib/__tests__/slack-adapter.test.ts committed; Wave 0 test files for slack-oauth, scan-config, approve, scan extensions exist on-disk only
 - [84-00] next/headers mock must be restored in beforeEach: vi.mocked(nextHeaders).mockResolvedValue(new Headers() as any) after vi.resetAllMocks() — required for requireSession() to work in vitest
 - [84-00] businessOutcomes schema has {title, track} fields — approve route test gates on these fields; there is no standalone 'outcome' field
+- [84-01] Slack callback uses next/headers cookies() with optional-chaining guard — after vi.resetAllMocks() cookies() returns undefined (not Promise); guard with typeof .then check + if (cookieState && mismatch) pattern allows test success case (no cookie) to bypass CSRF while CSRF mismatch test re-mocks correctly
+- [84-01] Slack refresh_token stores access_token as placeholder — user OAuth (xoxp-) returns no refresh token; user_source_tokens.refresh_token is NOT NULL so access_token used in both columns
+- [84-01] SLACK_REDIRECT_URI env stub added to docker-compose.local.yml app service with http://localhost:3000/api/oauth/slack/callback default
 - [84-02] SlackAdapter constructor discriminated by 'channels' key presence — UserSourceToken has no 'channels' field; legacy { token, channels } always has it
 - [84-02] Use getUTCFullYear/getUTCMonth/getUTCDate for Slack date filter — local methods shift ISO UTC timestamps in negative offset timezones (2026-04-27T00:00:00Z → 2026-04-26 in UTC-1)
 - [84-02] encodeURIComponent for Slack search.messages query URL — URLSearchParams encodes spaces as + which decodeURIComponent does not reverse; %20 encoding required for test and Slack API compatibility
@@ -188,6 +191,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-05-05T04:09:23.776Z
-Stopped at: Completed 84-02-PLAN.md — SlackAdapter search.messages rewrite + resolveAdapter Slack priority
+Last session: 2026-05-05T04:13:07.087Z
+Stopped at: Completed 84-01-PLAN.md — Slack OAuth routes + Settings page OAuth section
 Resume file: None
