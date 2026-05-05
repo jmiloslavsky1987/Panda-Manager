@@ -120,6 +120,15 @@ Each task was committed atomically:
 - Plan 84-01 (Slack OAuth routes) can proceed: slack-oauth.test.ts provides exact behavioral spec
 - lib/__tests__/slack-adapter.test.ts is committed to git and will run in CI to block premature merges of Plan 84-02
 
+## Self-Check: PASSED
+
+- lib/__tests__/slack-adapter.test.ts: FOUND
+- tests/discovery/slack-oauth.test.ts: FOUND
+- tests/discovery/scan-config.test.ts: FOUND
+- tests/discovery/approve.test.ts: FOUND
+- tests/discovery/scan.test.ts: FOUND
+- Commit 368bb52b: FOUND
+
 ---
 *Phase: 84-discovery-scan-hardening*
 *Completed: 2026-05-05*
