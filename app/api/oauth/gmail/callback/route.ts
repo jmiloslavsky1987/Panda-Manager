@@ -1,5 +1,5 @@
 // GET /api/oauth/gmail/callback — exchange authorization code for tokens, store in DB
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import { db } from '@/db';
 import { userSourceTokens } from '@/db/schema';
@@ -79,9 +79,8 @@ export async function GET(request: NextRequest): Promise<Response> {
       });
 
     // Clear CSRF cookie and redirect to Settings with success flag
-    const successUrl = new URL('/settings?success=gmail', request.url);
-    const response = Response.redirect(successUrl);
-    response.headers.set('Set-Cookie', 'oauth_state=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0');
+    const response = NextResponse.redirect(new URL('/settings?success=gmail', request.url), { status: 302 });
+    response.cookies.set('oauth_state', '', { httpOnly: true, sameSite: 'lax', path: '/', maxAge: 0 });
     return response;
   } catch (err) {
     console.error('[gmail-callback] Token exchange failed:', err instanceof Error ? err.message : err);

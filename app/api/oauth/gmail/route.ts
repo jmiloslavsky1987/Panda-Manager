@@ -1,5 +1,5 @@
 // GET /api/oauth/gmail — redirect user to Google OAuth consent screen
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import { requireSession } from "@/lib/auth-server";
 
@@ -29,11 +29,13 @@ export async function GET(request: NextRequest): Promise<Response> {
     state,
   });
 
-  const response = Response.redirect(authUrl);
+  const response = NextResponse.redirect(authUrl, { status: 302 });
   // HttpOnly cookie prevents JS access; SameSite=Lax allows the OAuth redirect back
-  response.headers.set(
-    'Set-Cookie',
-    `oauth_state=${state}; HttpOnly; SameSite=Lax; Path=/; Max-Age=600`
-  );
+  response.cookies.set('oauth_state', state, {
+    httpOnly: true,
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 600,
+  });
   return response;
 }
