@@ -12,6 +12,14 @@ import {
   engagementHistory,
   stakeholders,
   auditLog,
+  tasks,
+  archTracks,
+  archNodes,
+  e2eWorkflows,
+  workflowSteps,
+  teamEngagementSections,
+  businessOutcomes,
+  architectureIntegrations,
 } from '@/db/schema';
 
 export const dynamic = 'force-dynamic';
@@ -158,6 +166,115 @@ async function insertDiscoveredItem(item: DiscoveryItem): Promise<void> {
         });
       });
       break;
+
+    case 'task':
+      // Insert work item to tasks table with status='todo', source='discovery'
+      await db.insert(tasks).values({
+        project_id: projectId,
+        title: item.content,
+        status: 'todo',
+        source: 'discovery',
+      });
+      break;
+
+    case 'arch_node': {
+      // Parse JSON content {name, track_name}, resolve track FK (create if missing), insert archNode
+      const { name: nodeName, track_name } = JSON.parse(item.content) as { name: string; track_name: string };
+      await db.transaction(async (tx) => {
+        let [track] = await tx.select({ id: archTracks.id })
+          .from(archTracks)
+          .where(and(eq(archTracks.project_id, projectId), eq(archTracks.name, track_name)));
+        if (!track) {
+          [track] = await tx.insert(archTracks)
+            .values({ project_id: projectId, name: track_name, display_order: 0 })
+            .returning();
+        }
+        await tx.insert(archNodes).values({
+          project_id: projectId,
+          track_id: track.id,
+          name: nodeName,
+          display_order: 999,
+          node_type: 'sub-capability',
+        });
+      });
+      break;
+    }
+
+    case 'workflow_step': {
+      // Parse JSON content {label, workflow_name}, resolve workflow FK (create if missing), insert workflowStep
+      const { label, workflow_name } = JSON.parse(item.content) as { label: string; workflow_name: string };
+      await db.transaction(async (tx) => {
+        let [workflow] = await tx.select({ id: e2eWorkflows.id })
+          .from(e2eWorkflows)
+          .where(and(eq(e2eWorkflows.project_id, projectId), eq(e2eWorkflows.workflow_name, workflow_name)));
+        if (!workflow) {
+          [workflow] = await tx.insert(e2eWorkflows)
+            .values({ project_id: projectId, team_name: 'Unknown', workflow_name })
+            .returning();
+        }
+        await tx.insert(workflowSteps).values({ workflow_id: workflow.id, label, position: 0 });
+      });
+      break;
+    }
+
+    case 'team_engagement': {
+      // Parse JSON content {name, content}, upsert teamEngagementSections by (project_id, name)
+      const { name: sectionName, content: sectionContent } = JSON.parse(item.content) as { name: string; content: string };
+      const [existingSection] = await db.select({ id: teamEngagementSections.id })
+        .from(teamEngagementSections)
+        .where(and(eq(teamEngagementSections.project_id, projectId), eq(teamEngagementSections.name, sectionName)));
+      if (existingSection) {
+        await db.update(teamEngagementSections)
+          .set({ content: sectionContent })
+          .where(eq(teamEngagementSections.id, existingSection.id));
+      } else {
+        await db.insert(teamEngagementSections).values({
+          project_id: projectId,
+          name: sectionName,
+          content: sectionContent,
+          display_order: 0,
+        });
+      }
+      break;
+    }
+
+    case 'business_outcome':
+      // Insert to businessOutcomes with title=content, track='discovery'
+      await db.insert(businessOutcomes).values({
+        project_id: projectId,
+        title: item.content,
+        track: 'discovery',
+      });
+      break;
+
+    case 'arch_track':
+      // Insert to archTracks with name=content
+      await db.insert(archTracks).values({
+        project_id: projectId,
+        name: item.content,
+        display_order: 0,
+      });
+      break;
+
+    case 'integration':
+      // Insert to architectureIntegrations with tool_name=content, track='discovery'
+      await db.insert(architectureIntegrations).values({
+        project_id: projectId,
+        tool_name: item.content,
+        track: 'discovery',
+      });
+      break;
+
+    case 'workflow': {
+      // Parse JSON content {team_name, workflow_name}, insert e2eWorkflows
+      const { team_name: wfTeamName, workflow_name: wfName } = JSON.parse(item.content) as { team_name: string; workflow_name: string };
+      await db.insert(e2eWorkflows).values({
+        project_id: projectId,
+        team_name: wfTeamName,
+        workflow_name: wfName,
+      });
+      break;
+    }
 
     case 'history':
     default:
