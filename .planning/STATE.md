@@ -4,7 +4,7 @@ milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: verifying
 stopped_at: Completed 84-05-PLAN.md — Phase 84 Discovery Scan Hardening COMPLETE
-last_updated: "2026-05-05T15:19:36.705Z"
+last_updated: "2026-05-05T15:27:11.728Z"
 last_activity: 2026-05-05 — Phase 84 Plan 05 COMPLETE — per-source SSE breakdown + DiscoveryScanResult + 14 entity type labels human-verified
 progress:
   total_phases: 10
