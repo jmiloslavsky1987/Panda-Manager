@@ -55,10 +55,11 @@ created: 2026-05-04
 
 ## Wave 0 Requirements
 
-- [ ] `__tests__/slack-adapter.test.ts` — stubs for Slack search.messages adapter logic
-- [ ] `__tests__/oauth-slack.test.ts` — stubs for Slack OAuth route handlers
-- [ ] `__tests__/discovery-approve.test.ts` — stubs for FK resolution (arch_node, workflow_step)
-- [ ] `__tests__/discovery-scanner.test.ts` — stubs for expanded entity types + context enrichment
+- [ ] `tests/discovery/slack-oauth.test.ts` — stubs for Slack OAuth route handlers
+- [ ] `lib/__tests__/slack-adapter.test.ts` — stubs for Slack search.messages adapter logic
+- [ ] `tests/discovery/scan-config.test.ts` — stubs for lookback field in scan-config GET/POST
+- [ ] `tests/discovery/approve.test.ts` — extended stubs for FK resolution (arch_node, workflow_step) and new entity types
+- [ ] `tests/discovery/scan.test.ts` — extended stubs for sourceSummary return + enrichment context assertion
 
 *Existing vitest infrastructure assumed to be in place (vitest.config.ts exists).*
 
