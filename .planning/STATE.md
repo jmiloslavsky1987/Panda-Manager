@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
-status: executing
-stopped_at: Checkpoint 84-05 Task 3 — awaiting human visual verification
-last_updated: "2026-05-05T06:15:26.683Z"
-last_activity: 2026-05-04 — Phase 84 Plan 04 COMPLETE — DISCOVERY_SYSTEM 12 entity types + enrichment context + approve route 8 new cases
+status: verifying
+stopped_at: Completed 84-05-PLAN.md — Phase 84 Discovery Scan Hardening COMPLETE
+last_updated: "2026-05-05T15:19:36.705Z"
+last_activity: 2026-05-05 — Phase 84 Plan 05 COMPLETE — per-source SSE breakdown + DiscoveryScanResult + 14 entity type labels human-verified
 progress:
   total_phases: 10
   completed_phases: 10
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 84 of 85 (Discovery Scan Hardening — Plans 84-00, 84-01, 84-02, 84-03, 84-04 complete, Plan 84-05 next)
-Status: IN PROGRESS — Plans 84-00, 84-01, 84-02, 84-03, 84-04 complete. Plan 84-05 (sourceSummary return shape) is next.
-Last activity: 2026-05-04 — Phase 84 Plan 04 COMPLETE — DISCOVERY_SYSTEM 12 entity types + enrichment context + approve route 8 new cases
+Phase: 84 of 85 (Discovery Scan Hardening — All plans 84-00 through 84-05 COMPLETE)
+Status: COMPLETE — All 6 plans (84-00 through 84-05) complete. Phase 84 Discovery Scan Hardening fully shipped and human-verified.
+Last activity: 2026-05-05 — Phase 84 Plan 05 COMPLETE — per-source SSE breakdown + DiscoveryScanResult + 14 entity type labels human-verified
 
 Progress: [██████████] 99%
 
@@ -187,6 +187,9 @@ Progress: [██████████] 99%
 - [84-04] DISCOVERY_SYSTEM_TEMPLATE uses {existingStructureBlock} placeholder replaced at runDiscoveryScan() call time with existing tracks/workflows/sections — enriches Claude context for deduplication and entity matching
 - [84-04] approve/route.ts arch_node case omits .onConflictDoNothing() — vitest setupDbInsert() mock chain lacks this method; DB-level unique index on (project_id, track_id, name) provides constraint in production
 - [84-04] integration approve maps item.content to tool_name (NOT NULL) with track='discovery' default — architectureIntegrations requires both columns NOT NULL
+- [84-05] DiscoveryScanResult interface exported from lib/discovery-scanner.ts — { items: DiscoveryItem[], sourceSummary: Record<string, { fetched: number; skipped: boolean; reason?: string }> }; scan/route.ts and worker/jobs/discovery-scan.ts both updated to destructure items
+- [84-05] sourceSummary wired through SSE complete event payload — client-side ScanForUpdatesButton parses it into per-source breakdown as Sonner toast description
+- [84-05] QueueItemRow TYPE_LABELS map covers all 14 entity types (6 original + 8 Phase 84 new); typeLabel() fallback capitalizes underscored raw suggested_field for any future unknown types
 
 ### Blockers/Concerns
 
@@ -194,6 +197,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-05-05T06:15:26.678Z
-Stopped at: Checkpoint 84-05 Task 3 — awaiting human visual verification
+Last session: 2026-05-05T15:19:36.702Z
+Stopped at: Completed 84-05-PLAN.md — Phase 84 Discovery Scan Hardening COMPLETE
 Resume file: None

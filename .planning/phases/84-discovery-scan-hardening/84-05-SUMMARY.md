@@ -29,6 +29,7 @@ key-files:
   modified:
     - lib/discovery-scanner.ts
     - app/api/discovery/scan/route.ts
+    - worker/jobs/discovery-scan.ts
     - components/ScanForUpdatesButton.tsx
     - components/QueueItemRow.tsx
 
@@ -56,9 +57,9 @@ completed: 2026-05-05
 
 - **Duration:** 28 min
 - **Started:** 2026-05-05T06:12:47Z
-- **Completed:** 2026-05-05T06:41:00Z (partial — stopped at checkpoint Task 3)
-- **Tasks completed:** 2 of 3 (Task 3 is human-verify checkpoint)
-- **Files modified:** 4
+- **Completed:** 2026-05-05T15:16:51Z
+- **Tasks completed:** 3 of 3
+- **Files modified:** 5
 
 ## Accomplishments
 
@@ -73,7 +74,7 @@ Each task was committed atomically:
 
 1. **Task 1: Extend runDiscoveryScan to return sourceSummary + wire through SSE complete event** - `7e8df68f` (feat)
 2. **Task 2: Per-source breakdown in ScanForUpdatesButton + entity labels in ReviewQueue** - `969d800a` (feat)
-3. **Task 3: Human verification checkpoint** - pending (awaiting human verification)
+3. **Task 3: Human verification checkpoint** - APPROVED (user confirmed all visual checks pass)
 
 ## Files Created/Modified
 
@@ -104,11 +105,11 @@ None - no external service configuration required.
 
 ## Next Phase Readiness
 
-- Task 3 checkpoint awaiting human visual verification
-- Dev server running at http://localhost:3000
-- All Phase 84 code changes committed and pushed to remote
-- After human approval: update STATE.md, ROADMAP.md, final commit
+- Phase 84 Discovery Scan Hardening is complete — all 6 plans (84-00 through 84-05) shipped and human-verified
+- Full Phase 84 feature set verified in browser: Slack OAuth flow, SlackAdapter rewrite, lookback dropdown, 12+ entity types, enrichment context, FK resolution, per-source SSE breakdown
+- ReviewQueue entity labels are future-proof: unknown types will capitalized-render rather than blank
+- Ready for Phase 85 or next milestone planning
 
 ---
 *Phase: 84-discovery-scan-hardening*
-*Completed: 2026-05-05 (partial — checkpoint)*
+*Completed: 2026-05-05*
