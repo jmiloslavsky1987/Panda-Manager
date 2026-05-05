@@ -364,6 +364,21 @@ Plans:
 | 82. Chat Write Operations | 5/6 | In Progress | — |
 | 83. Architecture Sub-Capability Columns | 5/5 | Complete    | 2026-04-30 |
 | 84. Discovery Scan Hardening | 6/6 | Complete    | 2026-05-05 |
+| 84.1. Discovery Scan Merge/Update Flow | 0/5 | Planned     | — |
 
 ---
-*Last updated: 2026-05-04 — Phase 84 planned: 6 plans across 4 waves (Wave 0 scaffolds + Slack OAuth + Adapter rewrite + timeframe UI + entity expansion + SSE feedback + verification)*
+*Last updated: 2026-05-04 — Phase 84.1 planned: 5 plans across 5 waves (Wave 0 RED tests + DB migration + approve route + UI + verification)*
+
+### Phase 84.1: discovery-scan-merge-update-flow (INSERTED)
+
+**Goal:** Discovered content can enrich existing entities rather than always creating new ones — merge/update flow for team_engagement, workflow_step, and arch_node types, plus fix the arch_node duplicate approve bug.
+**Requirements**: BUG-01, MERGE-01, MERGE-02, MERGE-03, MERGE-04, MERGE-05
+**Depends on:** Phase 84
+**Plans:** 5 plans
+
+Plans:
+- [ ] 84.1-00-PLAN.md — Wave 0: RED test scaffolds (BUG-01, MERGE-01–05 gates)
+- [ ] 84.1-01-PLAN.md — DB migration 0049 + schema.ts + DiscoveryItem interface + DISCOVERY_SYSTEM_TEMPLATE export (MERGE-01)
+- [ ] 84.1-02-PLAN.md — approve route: .onConflictDoNothing() fix + mergeDiscoveredItem() + resolveStepPosition() (BUG-01, MERGE-03, MERGE-04, MERGE-05)
+- [ ] 84.1-03-PLAN.md — QueueItemRow Merge button + ReviewQueue handleMerge() (MERGE-02)
+- [ ] 84.1-04-PLAN.md — Human verification checkpoint (all requirements)
