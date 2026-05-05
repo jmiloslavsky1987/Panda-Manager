@@ -128,7 +128,7 @@ export default async function discoveryScanJob(job: Job): Promise<{ status: stri
       );
 
       // Run discovery scan
-      const discoveryResults = await runDiscoveryScan({
+      const { items: discoveryResults } = await runDiscoveryScan({
         projectId: project.id,
         projectName,
         sources,

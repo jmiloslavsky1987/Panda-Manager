@@ -17,7 +17,7 @@ import { db } from '@/db';
 import { projects, discoveryItems, userSourceTokens, actions, risks, stakeholders, archTracks, e2eWorkflows, teamEngagementSections } from '@/db/schema';
 import { MCPClientPool } from '@/lib/mcp-config';
 import { readSettings } from '@/lib/settings-core';
-import { runDiscoveryScan, type DiscoveryItem } from '@/lib/discovery-scanner';
+import { runDiscoveryScan, type DiscoveryItem, type DiscoveryScanResult } from '@/lib/discovery-scanner';
 import { requireSession } from "@/lib/auth-server";
 
 export const dynamic = 'force-dynamic';
@@ -181,7 +181,7 @@ export async function POST(request: NextRequest): Promise<Response> {
           // 5. Run discovery scan — adapter selection happens inside scanner
           sendEvent({ type: 'progress', message: 'Analyzing results with Claude…' });
 
-          const discoveryResults = await runDiscoveryScan({
+          const { items: discoveryResults, sourceSummary } = await runDiscoveryScan({
             projectId,
             projectName,
             sources,
@@ -234,6 +234,7 @@ export async function POST(request: NextRequest): Promise<Response> {
             itemCount: discoveryResults.length,
             newItems: newItemCount,
             skippedDups,
+            sourceSummary,
           });
 
           controller.close();

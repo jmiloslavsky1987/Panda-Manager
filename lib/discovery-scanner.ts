@@ -28,6 +28,11 @@ export interface DiscoveryItem {
   likely_duplicate?: boolean;   // true when Claude determines item duplicates existing project data
 }
 
+export interface DiscoveryScanResult {
+  items: DiscoveryItem[];
+  sourceSummary: Record<string, { fetched: number; skipped: boolean; reason?: string }>;
+}
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const MODEL = 'claude-sonnet-4-6';
@@ -119,9 +124,9 @@ function parseDiscoveryItems(text: string): DiscoveryItem[] {
  * @param params.mcpServers         - Active MCPServerConfig entries (MCP fallback path)
  * @param params.source_credentials - Org-level REST credentials from settings.json
  * @param params.userTokens         - Per-user OAuth tokens from DB (Gmail OAuth)
- * @returns DiscoveryItem[] extracted and shaped by Claude
+ * @returns DiscoveryScanResult with items and sourceSummary (per-source fetch stats)
  */
-export async function runDiscoveryScan(params: DiscoveryScanParams): Promise<DiscoveryItem[]> {
+export async function runDiscoveryScan(params: DiscoveryScanParams): Promise<DiscoveryScanResult> {
   const { projectName, sources, since, mcpServers, source_credentials, userTokens, existingProjectSummary, existingStructure } = params;
 
   // Build existing structure block for DISCOVERY_SYSTEM prompt interpolation
@@ -144,6 +149,7 @@ export async function runDiscoveryScan(params: DiscoveryScanParams): Promise<Dis
 
   // ─── Phase 1: Fetch from each source via adapter ──────────────────────────────
   const sourceResults: Record<string, string> = {};
+  const sourceSummary: Record<string, { fetched: number; skipped: boolean; reason?: string }> = {};
 
   for (const source of sources) {
     const server = serverByName.get(source);
@@ -160,6 +166,7 @@ export async function runDiscoveryScan(params: DiscoveryScanParams): Promise<Dis
         `[discovery-scanner] No credentials for source '${source}' — skipping. ` +
         `Configure in Settings > Source Connections.`
       );
+      sourceSummary[source] = { fetched: 0, skipped: true, reason: 'no credentials' };
       continue;
     }
 
@@ -167,10 +174,13 @@ export async function runDiscoveryScan(params: DiscoveryScanParams): Promise<Dis
       const content = await adapter.fetchContent(projectName, since);
       if (content) {
         sourceResults[source] = content;
+        const fetchedCount = content.split('\n').filter(Boolean).length;
+        sourceSummary[source] = { fetched: fetchedCount, skipped: false };
         console.log(
           `[discovery-scanner] ${source}: fetched ${content.length} chars via ${adapter.constructor.name}`
         );
       } else {
+        sourceSummary[source] = { fetched: 0, skipped: false };
         console.log(`[discovery-scanner] ${source}: no content returned`);
       }
     } catch (err) {
@@ -178,13 +188,14 @@ export async function runDiscoveryScan(params: DiscoveryScanParams): Promise<Dis
         `[discovery-scanner] ${source} fetch failed:`,
         err instanceof Error ? err.message : err
       );
+      sourceSummary[source] = { fetched: 0, skipped: true, reason: 'fetch error' };
       // Continue with other sources — partial results are valid
     }
   }
 
-  // If no source results, return empty array
+  // If no source results, return empty items with sourceSummary
   if (Object.keys(sourceResults).length === 0) {
-    return [];
+    return { items: [], sourceSummary };
   }
 
   // ─── Phase 2: Claude analysis of combined results ─────────────────────────────
@@ -219,7 +230,7 @@ export async function runDiscoveryScan(params: DiscoveryScanParams): Promise<Dis
     await stream.finalMessage();
   } catch (err) {
     console.error('[discovery-scanner] Claude analysis failed:', err instanceof Error ? err.message : err);
-    return [];
+    return { items: [], sourceSummary };
   }
 
   // Parse accumulated response — never mid-stream
@@ -227,5 +238,5 @@ export async function runDiscoveryScan(params: DiscoveryScanParams): Promise<Dis
 
   console.log(`[discovery-scanner] analysis complete: ${items.length} items extracted`);
 
-  return items;
+  return { items, sourceSummary };
 }
