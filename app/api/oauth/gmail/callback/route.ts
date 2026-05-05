@@ -5,6 +5,11 @@ import { db } from '@/db';
 import { userSourceTokens } from '@/db/schema';
 import { requireSession } from "@/lib/auth-server";
 
+function appUrl(path: string): string {
+  const base = process.env.BETTER_AUTH_URL ?? 'http://localhost:3000';
+  return `${base.replace(/\/$/, '')}${path}`;
+}
+
 export async function GET(request: NextRequest): Promise<Response> {
   const { session, redirectResponse } = await requireSession();
   if (redirectResponse) return redirectResponse;
@@ -14,19 +19,18 @@ export async function GET(request: NextRequest): Promise<Response> {
   const queryState = searchParams.get('state');
   const error = searchParams.get('error');
 
-  // User denied access
   if (error) {
-    return Response.redirect(new URL('/settings?error=gmail_denied', request.url));
+    return NextResponse.redirect(appUrl('/settings?error=gmail_denied'));
   }
 
   if (!code || !queryState) {
-    return Response.redirect(new URL('/settings?error=gmail_invalid', request.url));
+    return NextResponse.redirect(appUrl('/settings?error=gmail_invalid'));
   }
 
   // CSRF state validation
   const cookieState = request.cookies.get('oauth_state')?.value;
   if (!cookieState || cookieState !== queryState) {
-    return Response.redirect(new URL('/settings?error=gmail_csrf', request.url));
+    return NextResponse.redirect(appUrl('/settings?error=gmail_csrf'));
   }
 
   const clientId = process.env.GOOGLE_CLIENT_ID!;
@@ -39,12 +43,10 @@ export async function GET(request: NextRequest): Promise<Response> {
     const { tokens } = await oauth2Client.getToken(code);
 
     if (!tokens.refresh_token) {
-      // This should not happen with prompt: 'consent' — but guard against it
       console.error('[gmail-callback] No refresh_token returned — prompt: consent may be missing in initiate route');
-      return Response.redirect(new URL('/settings?error=gmail_no_refresh', request.url));
+      return NextResponse.redirect(appUrl('/settings?error=gmail_no_refresh'));
     }
 
-    // Decode id_token to get user email (Google includes it in the token response)
     let email: string | null = null;
     if (tokens.id_token) {
       try {
@@ -55,7 +57,6 @@ export async function GET(request: NextRequest): Promise<Response> {
       }
     }
 
-    // Upsert — single-user app uses user_id='default'
     await db
       .insert(userSourceTokens)
       .values({
@@ -78,12 +79,11 @@ export async function GET(request: NextRequest): Promise<Response> {
         },
       });
 
-    // Clear CSRF cookie and redirect to Settings with success flag
-    const response = NextResponse.redirect(new URL('/settings?success=gmail', request.url), { status: 302 });
+    const response = NextResponse.redirect(appUrl('/settings?success=gmail'), { status: 302 });
     response.cookies.set('oauth_state', '', { httpOnly: true, sameSite: 'lax', path: '/', maxAge: 0 });
     return response;
   } catch (err) {
     console.error('[gmail-callback] Token exchange failed:', err instanceof Error ? err.message : err);
-    return Response.redirect(new URL('/settings?error=gmail_exchange', request.url));
+    return NextResponse.redirect(appUrl('/settings?error=gmail_exchange'));
   }
 }
