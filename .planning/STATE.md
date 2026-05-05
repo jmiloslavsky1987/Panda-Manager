@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
-status: verifying
-stopped_at: Completed 84-00-PLAN.md — Wave 0 RED test scaffolds for Phase 84
-last_updated: "2026-05-05T04:03:33.612Z"
-last_activity: 2026-04-30 — Phase 83 COMPLETE — all 5 plans done (83-00 through 83-04), human visual verification approved for ADR Track section header rendering
+status: executing
+stopped_at: Completed 84-03-PLAN.md — Lookback timeframe selector for discovery scan
+last_updated: "2026-05-05T04:08:04.514Z"
+last_activity: 2026-05-05 — Phase 84 Plan 00 COMPLETE — Wave 0 RED test gates created for Plans 84-01 through 84-05
 progress:
   total_phases: 10
   completed_phases: 9
   total_plans: 51
-  completed_plans: 46
+  completed_plans: 47
   percent: 99
 ---
 
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 84 of 85 (Discovery Scan Hardening — Plan 84-00 complete, Plan 84-01 next)
-Status: IN PROGRESS — Plan 84-00 complete. Wave 0 RED test scaffolds created for all 5 implementation plans. Plan 84-01 (Slack OAuth routes) is next.
-Last activity: 2026-05-05 — Phase 84 Plan 00 COMPLETE — Wave 0 RED test gates created for Plans 84-01 through 84-05
+Phase: 84 of 85 (Discovery Scan Hardening — Plan 84-03 complete, Plan 84-04 next)
+Status: IN PROGRESS — Plans 84-00 and 84-03 complete. Lookback timeframe selector shipped. Plan 84-04 (approve route) is next.
+Last activity: 2026-05-05 — Phase 84 Plan 03 COMPLETE — Lookback dropdown + scan-config lookback field + since param in scan POST
 
 Progress: [██████████] 99%
 
@@ -174,6 +174,9 @@ Progress: [██████████] 99%
 - [84-00] tests/ dir gitignored — lib/__tests__/slack-adapter.test.ts committed; Wave 0 test files for slack-oauth, scan-config, approve, scan extensions exist on-disk only
 - [84-00] next/headers mock must be restored in beforeEach: vi.mocked(nextHeaders).mockResolvedValue(new Headers() as any) after vi.resetAllMocks() — required for requireSession() to work in vitest
 - [84-00] businessOutcomes schema has {title, track} fields — approve route test gates on these fields; there is no standalone 'outcome' field
+- [84-03] scan-config POST uses .optional() lookback Zod field — explicit ?? '7d' fallback in handler is clearer and testable than Zod .default()
+- [84-03] lookbackToMs() placed at module level in ScanForUpdatesButton — pure function, not coupled to component lifecycle
+- [84-03] Lookback pattern: store string token in config, convert to since ISO timestamp at call time — avoids storing absolute timestamps that go stale
 
 ### Blockers/Concerns
 
@@ -181,6 +184,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-05-05T04:03:33.609Z
-Stopped at: Completed 84-00-PLAN.md — Wave 0 RED test scaffolds for Phase 84
+Last session: 2026-05-05T04:08:04.512Z
+Stopped at: Completed 84-03-PLAN.md — Lookback timeframe selector for discovery scan
 Resume file: None

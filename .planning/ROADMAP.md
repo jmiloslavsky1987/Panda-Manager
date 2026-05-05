@@ -363,7 +363,7 @@ Plans:
 | 81. Kata Design System Visual Overhaul | 6/7 | In Progress | — |
 | 82. Chat Write Operations | 5/6 | In Progress | — |
 | 83. Architecture Sub-Capability Columns | 5/5 | Complete    | 2026-04-30 |
-| 84. Discovery Scan Hardening | 1/6 | In Progress|  |
+| 84. Discovery Scan Hardening | 2/6 | In Progress|  |
 
 ---
 *Last updated: 2026-05-04 — Phase 84 planned: 6 plans across 4 waves (Wave 0 scaffolds + Slack OAuth + Adapter rewrite + timeframe UI + entity expansion + SSE feedback + verification)*
