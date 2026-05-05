@@ -38,6 +38,11 @@ Progress: [██████████] 99%
 - **Phase 79:** Core Calendar + Daily Prep (CAL-01–03, PREP-01–07, SKILL-01–02, NAV-01) — full end-to-end: calendar import wiring + /daily-prep page + Meeting Prep generation inline + skill enhancements
 - **Phase 80:** Advanced Features (RECUR-01, OUT-01, AVAIL-01, SCHED-01) — recurring templates, PDF export, stakeholder availability, auto-scheduling job
 
+## Accumulated Context
+
+### Roadmap Evolution
+- Phase 84.1 inserted after Phase 84: discovery-scan-merge-update-flow (INSERTED) — merge/update flow for team engagement, workflow, and architecture entities discovered during Phase 84 execution
+
 ## Milestone History
 
 - **v1.0** — Foundation + Read/Write Surface + Skills + MCP + Cross-Project (Phases 1–16, 63 plans, complete 2026-03-26)
