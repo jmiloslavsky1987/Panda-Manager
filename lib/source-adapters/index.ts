@@ -88,6 +88,11 @@ export function resolveAdapter(
 ): SourceAdapter | null {
   // REST credentials take priority over MCP (per user decision)
 
+  // Priority: user OAuth token (xoxp-) > org bot token > MCP
+  if (source === 'slack' && userToken && userToken.source === 'slack') {
+    return new SlackAdapter(userToken);
+  }
+
   if (source === 'slack' && orgCredentials.slack?.token) {
     return new SlackAdapter({
       token: orgCredentials.slack.token,

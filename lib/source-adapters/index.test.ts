@@ -43,11 +43,47 @@ const mockMcp: MCPServerConfig = {
   enabled: true,
 };
 
+const slackUserToken: UserSourceToken = {
+  id: 2,
+  user_id: 'default',
+  source: 'slack',
+  access_token: 'xoxp-test-user-token',
+  refresh_token: 'xoxp-test-user-token',
+  expires_at: null,
+  email: null,
+};
+
 describe('resolveAdapter', () => {
   it('returns a REST adapter instance when slack org credentials exist', () => {
     const adapter = resolveAdapter('slack', slackCreds, noToken, noMcp);
     expect(adapter).not.toBeNull();
     expect(typeof adapter!.fetchContent).toBe('function');
+  });
+
+  // ─── Slack user OAuth token priority (Phase 84-02) ────────────────────────
+
+  it('returns SlackAdapter when slack userToken provided (no org bot token)', () => {
+    const adapter = resolveAdapter('slack', {}, slackUserToken, noMcp);
+    expect(adapter).not.toBeNull();
+    expect(adapter!.constructor.name).toBe('SlackAdapter');
+  });
+
+  it('prioritizes slack userToken over org bot token when both are present', () => {
+    // Both configured — userToken should win
+    const adapterUserToken = resolveAdapter('slack', slackCreds, slackUserToken, noMcp);
+    const adapterBotOnly = resolveAdapter('slack', slackCreds, noToken, noMcp);
+
+    expect(adapterUserToken).not.toBeNull();
+    expect(adapterBotOnly).not.toBeNull();
+    // Both return SlackAdapter instances
+    expect(adapterUserToken!.constructor.name).toBe('SlackAdapter');
+    expect(adapterBotOnly!.constructor.name).toBe('SlackAdapter');
+  });
+
+  it('falls through to MCP when slack has no userToken and no org bot token', () => {
+    const adapter = resolveAdapter('slack', {}, noToken, mockMcp);
+    expect(adapter).not.toBeNull();
+    expect(adapter!.constructor.name).toBe('MCPAdapter');
   });
 
   it('returns a REST adapter instance when gong org credentials exist', () => {
