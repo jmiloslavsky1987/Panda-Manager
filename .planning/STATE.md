@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: verifying
-stopped_at: Phase 83 plan 04 COMPLETE — human visual verification approved — Phase 83 fully shipped
-last_updated: "2026-04-30T14:25:00.357Z"
+stopped_at: Completed 84-00-PLAN.md — Wave 0 RED test scaffolds for Phase 84
+last_updated: "2026-05-05T04:03:33.612Z"
 last_activity: 2026-04-30 — Phase 83 COMPLETE — all 5 plans done (83-00 through 83-04), human visual verification approved for ADR Track section header rendering
 progress:
-  total_phases: 9
+  total_phases: 10
   completed_phases: 9
-  total_plans: 45
-  completed_plans: 45
+  total_plans: 51
+  completed_plans: 46
   percent: 99
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 **Core value:** Every PS delivery intelligence — 15 AI skills, all project context, all action tracking — lives in one place, runs automatically, and is always current.
-**Current focus:** v10.0 — Calendar Integration & Daily Prep (Phase 79 ready to plan)
+**Current focus:** v11.0 — Discovery, SSO & AWS Readiness (Phase 84 ready to plan)
 
 ## Current Position
 
-Phase: 83 of 83 (Architecture Sub-Capability Columns — ALL PLANS COMPLETE)
-Status: PHASE COMPLETE — Plan 83-04 human verification approved. ADR Track renders 3 colored section headers (Alert Intelligence, Incident Intelligence, Workflow Automation) with 11 sub-capability columns. Console node renders correctly. IntegrationEditModal optgroup picker confirmed. All downstream consumers (extraction pipeline, chat tools, context builder) use sub-capability names.
-Last activity: 2026-04-30 — Phase 83 COMPLETE — all 5 plans done (83-00 through 83-04), human visual verification approved for ADR Track section header rendering
+Phase: 84 of 85 (Discovery Scan Hardening — Plan 84-00 complete, Plan 84-01 next)
+Status: IN PROGRESS — Plan 84-00 complete. Wave 0 RED test scaffolds created for all 5 implementation plans. Plan 84-01 (Slack OAuth routes) is next.
+Last activity: 2026-05-05 — Phase 84 Plan 00 COMPLETE — Wave 0 RED test gates created for Plans 84-01 through 84-05
 
 Progress: [██████████] 99%
 
@@ -171,6 +171,9 @@ Progress: [██████████] 99%
 - [83-04] Migration runner invoked as DATABASE_URL=postgresql://localhost/bigpanda_app npx tsx scripts/run-migrations.ts — DATABASE_URL absent from .env in dev env; both 0045 and 0046 were unapplied and applied successfully
 - [83-04] Pre-existing test failures (status-cycle/column-reorder from Phase 48, portfolio/lifecycle, deployment URL scan) confirmed not Phase 83 regressions — Phase 48 tests mock requireSession but not requireProjectRole which was added in Phase 82; out of scope for Phase 83 gate
 - [83-04] Human visual verification APPROVED — ADR Track section headers, Console node, sub-capability columns, and IntegrationEditModal optgroup all visually confirmed in browser — Phase 83 complete
+- [84-00] tests/ dir gitignored — lib/__tests__/slack-adapter.test.ts committed; Wave 0 test files for slack-oauth, scan-config, approve, scan extensions exist on-disk only
+- [84-00] next/headers mock must be restored in beforeEach: vi.mocked(nextHeaders).mockResolvedValue(new Headers() as any) after vi.resetAllMocks() — required for requireSession() to work in vitest
+- [84-00] businessOutcomes schema has {title, track} fields — approve route test gates on these fields; there is no standalone 'outcome' field
 
 ### Blockers/Concerns
 
@@ -178,6 +181,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-30T01:30:00.000Z
-Stopped at: Phase 83 plan 04 COMPLETE — human visual verification approved — Phase 83 fully shipped
+Last session: 2026-05-05T04:03:33.609Z
+Stopped at: Completed 84-00-PLAN.md — Wave 0 RED test scaffolds for Phase 84
 Resume file: None
