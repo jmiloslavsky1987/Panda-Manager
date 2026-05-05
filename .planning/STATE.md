@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: executing
-stopped_at: Completed 84-03-PLAN.md — Lookback timeframe selector for discovery scan
-last_updated: "2026-05-05T04:08:04.514Z"
-last_activity: 2026-05-05 — Phase 84 Plan 00 COMPLETE — Wave 0 RED test gates created for Plans 84-01 through 84-05
+stopped_at: Completed 84-02-PLAN.md — SlackAdapter search.messages rewrite + resolveAdapter Slack priority
+last_updated: "2026-05-05T04:09:23.779Z"
+last_activity: 2026-05-05 — Phase 84 Plan 03 COMPLETE — Lookback dropdown + scan-config lookback field + since param in scan POST
 progress:
   total_phases: 10
   completed_phases: 9
   total_plans: 51
-  completed_plans: 47
+  completed_plans: 48
   percent: 99
 ---
 
@@ -174,6 +174,10 @@ Progress: [██████████] 99%
 - [84-00] tests/ dir gitignored — lib/__tests__/slack-adapter.test.ts committed; Wave 0 test files for slack-oauth, scan-config, approve, scan extensions exist on-disk only
 - [84-00] next/headers mock must be restored in beforeEach: vi.mocked(nextHeaders).mockResolvedValue(new Headers() as any) after vi.resetAllMocks() — required for requireSession() to work in vitest
 - [84-00] businessOutcomes schema has {title, track} fields — approve route test gates on these fields; there is no standalone 'outcome' field
+- [84-02] SlackAdapter constructor discriminated by 'channels' key presence — UserSourceToken has no 'channels' field; legacy { token, channels } always has it
+- [84-02] Use getUTCFullYear/getUTCMonth/getUTCDate for Slack date filter — local methods shift ISO UTC timestamps in negative offset timezones (2026-04-27T00:00:00Z → 2026-04-26 in UTC-1)
+- [84-02] encodeURIComponent for Slack search.messages query URL — URLSearchParams encodes spaces as + which decodeURIComponent does not reverse; %20 encoding required for test and Slack API compatibility
+- [84-02] resolveAdapter Slack priority: userToken.source === 'slack' guard prevents gmail/gong tokens being mistakenly routed to SlackAdapter
 - [84-03] scan-config POST uses .optional() lookback Zod field — explicit ?? '7d' fallback in handler is clearer and testable than Zod .default()
 - [84-03] lookbackToMs() placed at module level in ScanForUpdatesButton — pure function, not coupled to component lifecycle
 - [84-03] Lookback pattern: store string token in config, convert to since ISO timestamp at call time — avoids storing absolute timestamps that go stale
@@ -184,6 +188,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-05-05T04:08:04.512Z
-Stopped at: Completed 84-03-PLAN.md — Lookback timeframe selector for discovery scan
+Last session: 2026-05-05T04:09:23.776Z
+Stopped at: Completed 84-02-PLAN.md — SlackAdapter search.messages rewrite + resolveAdapter Slack priority
 Resume file: None
