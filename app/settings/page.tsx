@@ -20,6 +20,11 @@ interface GmailStatus {
   email: string | null;
 }
 
+interface SlackStatus {
+  connected: boolean;
+  hint: string | null;
+}
+
 const TAB_CLASS =
   'px-4 py-2 text-sm font-medium text-zinc-500 hover:text-zinc-900 data-[state=active]:text-zinc-900 data-[state=active]:border-b-2 data-[state=active]:border-zinc-900 -mb-px';
 
@@ -85,6 +90,11 @@ function SettingsPageInner() {
   // Gmail success banner (after OAuth redirect)
   const [gmailSuccessBanner, setGmailSuccessBanner] = useState(false);
 
+  // Slack OAuth state
+  const [slackStatus, setSlackStatus] = useState<SlackStatus>({ connected: false, hint: null });
+  const [slackDisconnecting, setSlackDisconnecting] = useState(false);
+  const [slackSuccessBanner, setSlackSuccessBanner] = useState(false);
+
   const fetchSettings = useCallback(async () => {
     const res = await fetch('/api/settings');
     if (res.ok) {
@@ -97,6 +107,8 @@ function SettingsPageInner() {
   const fetchSourceStatus = useCallback(async () => {
     const gmailRes = await fetch('/api/oauth/gmail/status');
     if (gmailRes.ok) setGmailStatus(await gmailRes.json());
+    const slackRes = await fetch('/api/oauth/slack/status');
+    if (slackRes.ok) setSlackStatus(await slackRes.json());
   }, []);
 
   useEffect(() => {
@@ -107,6 +119,10 @@ function SettingsPageInner() {
       const params = new URLSearchParams(window.location.search);
       if (params.get('success') === 'gmail') {
         setGmailSuccessBanner(true);
+        window.history.replaceState({}, '', '/settings');
+      }
+      if (params.get('slack_connected') === '1') {
+        setSlackSuccessBanner(true);
         window.history.replaceState({}, '', '/settings');
       }
     }
@@ -189,6 +205,20 @@ function SettingsPageInner() {
       await fetchSourceStatus();
     } finally {
       setGmailDisconnecting(false);
+    }
+  };
+
+  const handleConnectSlack = () => {
+    window.location.href = '/api/oauth/slack';
+  };
+
+  const handleDisconnectSlack = async () => {
+    setSlackDisconnecting(true);
+    try {
+      await fetch('/api/oauth/slack/status', { method: 'DELETE' });
+      setSlackStatus({ connected: false, hint: null });
+    } finally {
+      setSlackDisconnecting(false);
     }
   };
 
@@ -444,12 +474,49 @@ function SettingsPageInner() {
             </div>
 
             {/* ── Slack ── */}
-            <div className="border border-zinc-200 rounded-lg p-6 max-w-lg opacity-75">
+            <div className="border border-zinc-200 rounded-lg p-6 max-w-lg">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-base font-semibold text-zinc-900">Slack</h2>
-                <PendingAdminBadge />
+                <ConnectedBadge connected={slackStatus.connected} />
               </div>
-              <AdminRequiredBanner tool="Slack" />
+
+              {slackSuccessBanner && (
+                <div className="mb-4 px-4 py-3 rounded bg-green-50 border border-green-200 text-green-800 text-sm flex items-center justify-between">
+                  <span>Slack connected successfully.</span>
+                  <button onClick={() => setSlackSuccessBanner(false)} className="text-green-600 hover:text-green-800 ml-4">
+                    &times;
+                  </button>
+                </div>
+              )}
+
+              {!slackStatus.connected ? (
+                <>
+                  <p className="text-xs text-zinc-500 mb-4 p-3 bg-zinc-50 rounded border border-zinc-100">
+                    Connect your Slack workspace to allow the scanner to search messages across channels you have access to.
+                  </p>
+                  <button
+                    onClick={handleConnectSlack}
+                    className="inline-block px-4 py-2 text-sm bg-zinc-900 text-white rounded hover:bg-zinc-700"
+                  >
+                    Authorize with Slack
+                  </button>
+                </>
+              ) : (
+                <div className="flex items-center gap-4">
+                  {slackStatus.hint && (
+                    <p className="text-sm text-zinc-700">
+                      Connected &mdash; token: <span className="font-mono">...{slackStatus.hint}</span>
+                    </p>
+                  )}
+                  <button
+                    onClick={handleDisconnectSlack}
+                    disabled={slackDisconnecting}
+                    className="px-3 py-1 text-xs border border-red-300 text-red-600 rounded hover:bg-red-50 disabled:opacity-50"
+                  >
+                    {slackDisconnecting ? 'Disconnecting…' : 'Disconnect'}
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* ── Gong ── */}
