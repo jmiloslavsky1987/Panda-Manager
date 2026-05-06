@@ -29,6 +29,9 @@ export const dynamic = 'force-dynamic';
 const ApproveRequestSchema = z.object({
   projectId: z.number(),
   itemIds: z.array(z.number()),
+  action: z.enum(['approve', 'merge']).optional().default('approve'),
+  entity_match: z.string().optional(),
+  suggested_position: z.object({ after: z.string() }).optional(),
 });
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -51,6 +54,8 @@ type DiscoveryItem = {
   source_excerpt: string | null;
   scan_id: string | null;
   created_at: Date;
+  entity_match: string | null;                          // NEW: target entity name for merge action
+  suggested_position: string | null;                    // NEW: JSON string { after: string }
 };
 
 // Capitalize first letter of discovery source tool name (e.g., 'slack' → 'Slack')
@@ -225,7 +230,7 @@ async function insertDiscoveredItem(item: DiscoveryItem): Promise<void> {
           display_order: 999,
           node_type: 'sub-capability',
           parent_id: parentId,
-        });
+        }).onConflictDoNothing();
       });
       break;
     }
@@ -392,7 +397,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Invalid request', issues: parsed.error.issues }, { status: 400 });
   }
 
-  const { projectId, itemIds } = parsed.data;
+  const { projectId, itemIds, action, entity_match, suggested_position } = parsed.data;
 
   let approvedCount = 0;
   const errors: Array<{ itemId: number; error: string }> = [];
