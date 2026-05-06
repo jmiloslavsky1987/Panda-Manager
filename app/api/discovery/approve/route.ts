@@ -211,12 +211,20 @@ async function insertDiscoveredItem(item: DiscoveryItem): Promise<void> {
             .values({ project_id: projectId, name: parsedNode.track_name, display_order: nextOrder })
             .returning();
         }
+        // For tracks that use section-based layout (e.g. ADR Track), nodes need a parent_id
+        // to be visible. Pick the last section on the track as parent.
+        const sections = await tx.select({ id: archNodes.id })
+          .from(archNodes)
+          .where(and(eq(archNodes.track_id, track.id), eq(archNodes.node_type, 'section')))
+          .orderBy(archNodes.display_order);
+        const parentId = sections.length > 0 ? sections[sections.length - 1].id : null;
         await tx.insert(archNodes).values({
           project_id: projectId,
           track_id: track.id,
           name: parsedNode.name,
           display_order: 999,
           node_type: 'sub-capability',
+          parent_id: parentId,
         });
       });
       break;
