@@ -86,36 +86,10 @@ export function QueueItemRow({ item, onApprove, onDismiss, readonly = false }: Q
     ? `Found ${formatDate(item.scan_timestamp)} · via ${sourceLabel(item.source)}`
     : `via ${sourceLabel(item.source)}`
 
-  async function handleApprove(contentOverride?: string) {
+  function handleApprove(contentOverride?: string) {
     setApproving(true)
-    try {
-      const body = {
-        projectId: undefined as unknown, // will be set by caller via onApprove
-        itemIds: [item.id],
-        content: contentOverride ?? editedContent,
-      }
-      const res = await fetch('/api/discovery/approve', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId: 0, itemIds: [item.id] }), // projectId provided by parent
-      })
-
-      if (res.status === 409) {
-        const data = await res.json() as { conflict: boolean; existingValue: string }
-        if (data.conflict) {
-          setConflictExisting(data.existingValue)
-          setShowDiff(true)
-          setApproving(false)
-          return
-        }
-      }
-
-      onApprove(item.id, contentOverride)
-    } catch {
-      onApprove(item.id, contentOverride)
-    } finally {
-      setApproving(false)
-    }
+    onApprove(item.id, contentOverride)
+    setApproving(false)
   }
 
   async function handleDismiss() {
