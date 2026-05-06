@@ -88,6 +88,29 @@ export function ReviewQueue({ projectId }: ReviewQueueProps) {
     }
   }
 
+  async function handleMerge(
+    itemId: number,
+    entityMatch: string,
+    suggestedPosition?: { after: string }
+  ) {
+    try {
+      await fetch('/api/discovery/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          itemIds: [itemId],
+          action: 'merge',
+          entity_match: entityMatch,
+          suggested_position: suggestedPosition,
+        }),
+      })
+    } catch {
+      // silently ignore
+    }
+    await fetchQueue()
+  }
+
   async function handleBulkApprove() {
     if (items.length === 0) return
     setBulkApproving(true)
@@ -158,6 +181,7 @@ export function ReviewQueue({ projectId }: ReviewQueueProps) {
               item={item}
               onApprove={handleApprove}
               onDismiss={handleDismiss}
+              onMerge={handleMerge}
             />
           ))}
         </div>
@@ -178,6 +202,7 @@ export function ReviewQueue({ projectId }: ReviewQueueProps) {
                     item={item}
                     onApprove={handleApprove}
                     onDismiss={handleDismiss}
+                    onMerge={handleMerge}
                   />
                   <span className="absolute top-4 right-0 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200">
                     May already exist
