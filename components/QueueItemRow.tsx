@@ -15,6 +15,8 @@ export interface DiscoveryQueueItem {
   status: 'pending' | 'dismissed'
   likely_duplicate?: boolean // true when Claude flagged item as matching existing project data
   conflict_existing?: string // populated client-side when conflict detected
+  entity_match?: string                    // existing entity name for merge
+  suggested_position?: { after: string }   // workflow_step only
 }
 
 const SOURCE_COLORS: Record<string, string> = {
@@ -69,10 +71,11 @@ interface QueueItemRowProps {
   item: DiscoveryQueueItem
   onApprove: (id: number, resolution?: string) => void
   onDismiss: (id: number) => void
+  onMerge?: (id: number, entityMatch: string, suggestedPosition?: { after: string }) => void
   readonly?: boolean
 }
 
-export function QueueItemRow({ item, onApprove, onDismiss, readonly = false }: QueueItemRowProps) {
+export function QueueItemRow({ item, onApprove, onDismiss, onMerge, readonly = false }: QueueItemRowProps) {
   const [showExcerpt, setShowExcerpt] = useState(false)
   const [editing, setEditing] = useState(false)
   const [editedContent, setEditedContent] = useState(item.content)
@@ -182,6 +185,16 @@ export function QueueItemRow({ item, onApprove, onDismiss, readonly = false }: Q
               >
                 {approving ? 'Approving…' : 'Approve'}
               </button>
+              {item.entity_match && onMerge && (
+                <button
+                  onClick={() => onMerge(item.id, item.entity_match!, item.suggested_position)}
+                  className="rounded-md border border-emerald-300 px-3 py-1.5 text-sm text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
+                  disabled={approving || dismissing}
+                  title={`Merge into existing "${item.entity_match}"`}
+                >
+                  {`Merge into "${item.entity_match}"`}
+                </button>
+              )}
               <button
                 onClick={() => setEditing(true)}
                 className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-50"
