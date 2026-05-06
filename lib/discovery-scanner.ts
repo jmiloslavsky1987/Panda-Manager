@@ -57,12 +57,12 @@ Valid suggested_field values:
   history — general status update or context (catch-all)
   task — a work item to track (title only in content)
   team_engagement — content for a team engagement section; content must be JSON: {"name":"<section name>","content":"<section text>"}
-  arch_track — a new architecture track to suggest (track name only in content)
-  arch_node — a capability/integration node; content must be JSON: {"name":"<node name>","track_name":"<existing or new track name>"}
+  arch_track — a new architecture pipeline track (e.g. "ADR Track"); track name only in content
+  arch_node — a NEW capability stage/column in a pipeline (e.g. "Monitoring Integrations", "Alert Enrichment") — NOT a tool or vendor; content must be JSON: {"name":"<stage name>","track_name":"<existing or new track name>"}; NEVER use this for tools/products/vendors
   workflow — a team workflow; content must be JSON: {"team_name":"<team>","workflow_name":"<workflow>"}
   workflow_step — a step in a workflow; content must be JSON: {"label":"<step label>","workflow_name":"<existing or new workflow name>"}
   business_outcome — a business objective or desired outcome
-  integration — a system integration or tool connection
+  integration — a specific tool, product, or vendor being integrated (e.g. NetBrain, Dynatrace, ServiceNow, Grafana); plain text tool name in content; ALWAYS prefer this over arch_node for named tools/products
 
 Existing project structure (use these names when referencing existing entities):
 {existingStructureBlock}
