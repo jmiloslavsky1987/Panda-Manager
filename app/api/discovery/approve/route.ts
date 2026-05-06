@@ -31,6 +31,12 @@ const ApproveRequestSchema = z.object({
   itemIds: z.array(z.number()),
 });
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function safeParseJSON<T>(content: string): T | null {
+  try { return JSON.parse(content) as T; } catch { return null; }
+}
+
 // ─── Entity router: suggested_field → entity table insert ────────────────────
 
 type DiscoveryItem = {
@@ -178,21 +184,37 @@ async function insertDiscoveredItem(item: DiscoveryItem): Promise<void> {
       break;
 
     case 'arch_node': {
-      // Parse JSON content {name, track_name}, resolve track FK (create if missing), insert archNode
-      const { name: nodeName, track_name } = JSON.parse(item.content) as { name: string; track_name: string };
+      // Parse JSON content {name, track_name} — fall back to history if Claude omitted JSON
+      const parsedNode = safeParseJSON<{ name: string; track_name: string }>(item.content);
+      if (!parsedNode?.name || !parsedNode?.track_name) {
+        // Malformed — store as history so nothing is lost
+        await db.insert(engagementHistory).values({
+          project_id: projectId,
+          content: `[arch_node] ${item.content}`,
+          date: item.scan_timestamp ? item.scan_timestamp.toISOString().split('T')[0] : null,
+          source,
+          discovery_source,
+          created_at: createdAt,
+        });
+        break;
+      }
       await db.transaction(async (tx) => {
         let [track] = await tx.select({ id: archTracks.id })
           .from(archTracks)
-          .where(and(eq(archTracks.project_id, projectId), eq(archTracks.name, track_name)));
+          .where(and(eq(archTracks.project_id, projectId), eq(archTracks.name, parsedNode.track_name)));
         if (!track) {
+          const maxOrder = await tx.select({ v: archTracks.display_order })
+            .from(archTracks).where(eq(archTracks.project_id, projectId))
+            .orderBy(archTracks.display_order).limit(1);
+          const nextOrder = (maxOrder[maxOrder.length - 1]?.v ?? 0) + 1;
           [track] = await tx.insert(archTracks)
-            .values({ project_id: projectId, name: track_name, display_order: 0 })
+            .values({ project_id: projectId, name: parsedNode.track_name, display_order: nextOrder })
             .returning();
         }
         await tx.insert(archNodes).values({
           project_id: projectId,
           track_id: track.id,
-          name: nodeName,
+          name: parsedNode.name,
           display_order: 999,
           node_type: 'sub-capability',
         });
@@ -201,8 +223,18 @@ async function insertDiscoveredItem(item: DiscoveryItem): Promise<void> {
     }
 
     case 'workflow_step': {
-      // Parse JSON content {label, workflow_name}, resolve workflow FK (create if missing), insert workflowStep
-      const { label, workflow_name } = JSON.parse(item.content) as { label: string; workflow_name: string };
+      // Parse JSON content {label, workflow_name} — fall back to history if Claude omitted JSON
+      const parsedStep = safeParseJSON<{ label: string; workflow_name: string }>(item.content);
+      if (!parsedStep?.label || !parsedStep?.workflow_name) {
+        await db.insert(engagementHistory).values({
+          project_id: projectId,
+          content: `[workflow_step] ${item.content}`,
+          date: item.scan_timestamp ? item.scan_timestamp.toISOString().split('T')[0] : null,
+          source, discovery_source, created_at: createdAt,
+        });
+        break;
+      }
+      const { label, workflow_name } = parsedStep;
       await db.transaction(async (tx) => {
         let [workflow] = await tx.select({ id: e2eWorkflows.id })
           .from(e2eWorkflows)
@@ -218,8 +250,18 @@ async function insertDiscoveredItem(item: DiscoveryItem): Promise<void> {
     }
 
     case 'team_engagement': {
-      // Parse JSON content {name, content}, upsert teamEngagementSections by (project_id, name)
-      const { name: sectionName, content: sectionContent } = JSON.parse(item.content) as { name: string; content: string };
+      // Parse JSON content {name, content} — fall back to history if Claude omitted JSON
+      const parsedEngagement = safeParseJSON<{ name: string; content: string }>(item.content);
+      if (!parsedEngagement?.name || !parsedEngagement?.content) {
+        await db.insert(engagementHistory).values({
+          project_id: projectId,
+          content: `[team_engagement] ${item.content}`,
+          date: item.scan_timestamp ? item.scan_timestamp.toISOString().split('T')[0] : null,
+          source, discovery_source, created_at: createdAt,
+        });
+        break;
+      }
+      const { name: sectionName, content: sectionContent } = parsedEngagement;
       const [existingSection] = await db.select({ id: teamEngagementSections.id })
         .from(teamEngagementSections)
         .where(and(eq(teamEngagementSections.project_id, projectId), eq(teamEngagementSections.name, sectionName)));
@@ -266,8 +308,18 @@ async function insertDiscoveredItem(item: DiscoveryItem): Promise<void> {
       break;
 
     case 'workflow': {
-      // Parse JSON content {team_name, workflow_name}, insert e2eWorkflows
-      const { team_name: wfTeamName, workflow_name: wfName } = JSON.parse(item.content) as { team_name: string; workflow_name: string };
+      // Parse JSON content {team_name, workflow_name} — fall back to history if Claude omitted JSON
+      const parsedWf = safeParseJSON<{ team_name: string; workflow_name: string }>(item.content);
+      if (!parsedWf?.team_name || !parsedWf?.workflow_name) {
+        await db.insert(engagementHistory).values({
+          project_id: projectId,
+          content: `[workflow] ${item.content}`,
+          date: item.scan_timestamp ? item.scan_timestamp.toISOString().split('T')[0] : null,
+          source, discovery_source, created_at: createdAt,
+        });
+        break;
+      }
+      const { team_name: wfTeamName, workflow_name: wfName } = parsedWf;
       await db.insert(e2eWorkflows).values({
         project_id: projectId,
         team_name: wfTeamName,
