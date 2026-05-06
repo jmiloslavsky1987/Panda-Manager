@@ -364,7 +364,7 @@ Plans:
 | 82. Chat Write Operations | 5/6 | In Progress | — |
 | 83. Architecture Sub-Capability Columns | 5/5 | Complete    | 2026-04-30 |
 | 84. Discovery Scan Hardening | 6/6 | Complete    | 2026-05-05 |
-| 84.1. Discovery Scan Merge/Update Flow | 3/5 | In Progress|  |
+| 84.1. Discovery Scan Merge/Update Flow | 4/5 | In Progress|  |
 
 ---
 *Last updated: 2026-05-04 — Phase 84.1 planned: 5 plans across 5 waves (Wave 0 RED tests + DB migration + approve route + UI + verification)*
@@ -374,7 +374,7 @@ Plans:
 **Goal:** Discovered content can enrich existing entities rather than always creating new ones — merge/update flow for team_engagement, workflow_step, and arch_node types, plus fix the arch_node duplicate approve bug.
 **Requirements**: BUG-01, MERGE-01, MERGE-02, MERGE-03, MERGE-04, MERGE-05
 **Depends on:** Phase 84
-**Plans:** 3/5 plans executed
+**Plans:** 4/5 plans executed
 
 Plans:
 - [ ] 84.1-00-PLAN.md — Wave 0: RED test scaffolds (BUG-01, MERGE-01–05 gates)

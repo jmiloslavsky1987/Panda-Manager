@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: executing
-stopped_at: Completed 84.1-02-PLAN.md
-last_updated: "2026-05-06T17:25:00.000Z"
+stopped_at: Completed 84.1-03-PLAN.md
+last_updated: "2026-05-06T17:13:20.201Z"
 last_activity: 2026-05-06 — Phase 84.1 Plan 02 COMPLETE — mergeDiscoveredItem() + resolveStepPosition() + BUG-01 fix, all 15 approve tests GREEN
 progress:
   total_phases: 11
   completed_phases: 10
   total_plans: 56
-  completed_plans: 54
+  completed_plans: 55
   percent: 99
 ---
 
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 84.1 of 85 (Discovery Scan Merge/Update Flow — Plans 84.1-00, 84.1-01, and 84.1-02 COMPLETE, Plans 84.1-03 through 84.1-04 pending)
-Status: In Progress — Plan 84.1-02 (approve route merge logic) complete. Plans 84.1-03 and 84.1-04 implement UI Merge button and end-to-end wiring.
-Last activity: 2026-05-06 — Phase 84.1 Plan 02 COMPLETE — mergeDiscoveredItem() + resolveStepPosition() + BUG-01 fix, all 15 approve tests GREEN
+Phase: 84.1 of 85 (Discovery Scan Merge/Update Flow — Plans 84.1-00, 84.1-01, 84.1-02, and 84.1-03 COMPLETE, Plan 84.1-04 pending)
+Status: In Progress — Plan 84.1-03 (UI Merge button) complete. Plan 84.1-04 implements end-to-end wiring and verification.
+Last activity: 2026-05-06 — Phase 84.1 Plan 03 COMPLETE — Merge button in QueueItemRow + handleMerge() in ReviewQueue, MERGE-02 GREEN
 
 Progress: [██████████] 99%
 
@@ -206,6 +206,9 @@ Progress: [██████████] 99%
 - [84.1-02] mergeDiscoveredItem() uses sql template literals (drizzle sql) not JS string concat — Wave 0 tests assert {type:'sql'} object from mocked sql(), making sql-based approach the only way tests pass (RESEARCH.md said JS concat but tests are ground truth)
 - [84.1-02] DISC-84-04 arch_node select mock updated to handle orderBy() chaining — sections query needs where()→this then orderBy()→Promise (not where()→Promise which breaks .orderBy() chain call)
 - [84.1-02] BUG-01 insert mock updated: values()→mockReturnThis(), onConflictDoNothing()→mockResolvedValue([]) — route chains .values().onConflictDoNothing() so both methods must be on the mock chain
+- [84.1-03] Dismissed (readonly) QueueItemRow items intentionally omit onMerge — readonly prop prevents action row rendering; double-protection is clean
+- [84.1-03] onMerge optional in QueueItemRowProps — backward-compatible with all existing QueueItemRow callers that don't pass the prop
+- [84.1-03] Entity merge UI pattern: {item.entity_match && onMerge && (<button>)} checks both data presence and handler presence before rendering Merge button
 
 ### Blockers/Concerns
 
@@ -213,6 +216,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-05-06T16:57:12.296Z
-Stopped at: Completed 84.1-01-PLAN.md
+Last session: 2026-05-06T17:13:20.199Z
+Stopped at: Completed 84.1-03-PLAN.md
 Resume file: None
