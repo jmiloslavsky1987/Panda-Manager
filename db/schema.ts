@@ -557,6 +557,8 @@ export const discoveryItems = pgTable('discovery_items', {
   source_excerpt:  text('source_excerpt'),                          // raw text snippet from source that triggered this item
   scan_id:         text('scan_id'),                                  // e.g. "scan-{projectId}-{timestamp}"; groups items from one scan run
   likely_duplicate: boolean('likely_duplicate').notNull().default(false), // set by Claude when item matches existing project data
+  entity_match:       text('entity_match'),            // NEW: existing entity name for merge
+  suggested_position: text('suggested_position'),       // NEW: JSON string { after: "Step label" }
   created_at:      timestamp('created_at').defaultNow().notNull(),
 });
 
