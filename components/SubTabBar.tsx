@@ -28,7 +28,7 @@ export function SubTabBar({ items, activeSubtab }: SubTabBarProps) {
             }
           >
             {item.label}
-            {item.badge && item.badge > 0 && (
+            {item.badge !== undefined && item.badge > 0 && (
               <span className="ml-1 rounded-full bg-amber-500 text-white text-xs px-1.5 py-0.5">
                 {item.badge}
               </span>
