@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: executing
-stopped_at: Completed 84.1-03-PLAN.md
-last_updated: "2026-05-06T17:13:20.201Z"
-last_activity: 2026-05-06 — Phase 84.1 Plan 02 COMPLETE — mergeDiscoveredItem() + resolveStepPosition() + BUG-01 fix, all 15 approve tests GREEN
+stopped_at: Checkpoint reached — 84.1-04 awaiting human verification
+last_updated: "2026-05-06T17:18:39.028Z"
+last_activity: 2026-05-06 — Phase 84.1 Plan 03 COMPLETE — Merge button in QueueItemRow + handleMerge() in ReviewQueue, MERGE-02 GREEN
 progress:
   total_phases: 11
-  completed_phases: 10
+  completed_phases: 11
   total_plans: 56
-  completed_plans: 55
+  completed_plans: 56
   percent: 99
 ---
 
@@ -216,6 +216,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-05-06T17:13:20.199Z
-Stopped at: Completed 84.1-03-PLAN.md
+Last session: 2026-05-06T17:18:39.023Z
+Stopped at: Checkpoint reached — 84.1-04 awaiting human verification
 Resume file: None
