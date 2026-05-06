@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
-status: verifying
-stopped_at: Completed 84-05-PLAN.md — Phase 84 Discovery Scan Hardening COMPLETE
-last_updated: "2026-05-05T15:27:11.728Z"
-last_activity: 2026-05-05 — Phase 84 Plan 05 COMPLETE — per-source SSE breakdown + DiscoveryScanResult + 14 entity type labels human-verified
+status: executing
+stopped_at: Completed 84.1-01-PLAN.md
+last_updated: "2026-05-06T16:57:12.299Z"
+last_activity: 2026-05-06 — Phase 84.1 Plan 01 COMPLETE — migration 0049 applied, DiscoveryItem extended, MERGE-01 tests GREEN (9/9)
 progress:
-  total_phases: 10
+  total_phases: 11
   completed_phases: 10
-  total_plans: 51
-  completed_plans: 51
+  total_plans: 56
+  completed_plans: 53
   percent: 99
 ---
 
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 84 of 85 (Discovery Scan Hardening — All plans 84-00 through 84-05 COMPLETE)
-Status: COMPLETE — All 6 plans (84-00 through 84-05) complete. Phase 84 Discovery Scan Hardening fully shipped and human-verified.
-Last activity: 2026-05-05 — Phase 84 Plan 05 COMPLETE — per-source SSE breakdown + DiscoveryScanResult + 14 entity type labels human-verified
+Phase: 84.1 of 85 (Discovery Scan Merge/Update Flow — Plans 84.1-00 and 84.1-01 COMPLETE, Plans 84.1-02 through 84.1-04 pending)
+Status: In Progress — Plan 84.1-01 (DB migration + scanner extension) complete. Plans 84.1-02 through 84.1-04 implement approve route merge logic and UI.
+Last activity: 2026-05-06 — Phase 84.1 Plan 01 COMPLETE — migration 0049 applied, DiscoveryItem extended, MERGE-01 tests GREEN (9/9)
 
 Progress: [██████████] 99%
 
@@ -195,6 +195,14 @@ Progress: [██████████] 99%
 - [84-05] DiscoveryScanResult interface exported from lib/discovery-scanner.ts — { items: DiscoveryItem[], sourceSummary: Record<string, { fetched: number; skipped: boolean; reason?: string }> }; scan/route.ts and worker/jobs/discovery-scan.ts both updated to destructure items
 - [84-05] sourceSummary wired through SSE complete event payload — client-side ScanForUpdatesButton parses it into per-source breakdown as Sonner toast description
 - [84-05] QueueItemRow TYPE_LABELS map covers all 14 entity types (6 original + 8 Phase 84 new); typeLabel() fallback capitalizes underscored raw suggested_field for any future unknown types
+- [84.1-00] BUG-01 RED via stateful mock: throws duplicate constraint on archNodes insert; test asserts errors:[] — fails today because route catches throw, GREEN after .onConflictDoNothing() fix
+- [84.1-00] MERGE-03/05 SQL assertion pattern: expect(updateChain.set).toHaveBeenCalledWith(expect.objectContaining({field: expect.objectContaining({type:'sql'})})) — distinguishes SQL expression from plain string in set()
+- [84.1-00] MERGE-01 undefined pattern: DISCOVERY_SYSTEM_TEMPLATE not yet exported from lib/discovery-scanner.ts; import returns undefined; toContain(undefined) throws meaningful assertion error
+- [84.1-00] MERGE-02 source-scan: fs.readFileSync(QueueItemRow.tsx) asserts 'entity_match' and 'onMerge' absent today — follows Phase 79 NAV-01 pattern
+- [84.1-00] tests/ dir gitignored — Wave 0 test files exist on-disk only; no git commit for this plan
+- [84.1-01] 0047 migration applied directly via psql with explicit status::text cast — run-migrations.ts had enum value mismatch ('not-started' not in integration_status enum); 0047/0048/0049 all applied manually, migration SQL files unchanged and correct for Docker
+- [84.1-01] DISCOVERY_SYSTEM_TEMPLATE exported with export const — entity_match/suggested_position field docs added; DiscoveryItem interface extended with optional typed fields; scan/route.ts persists both fields
+- [84.1-01] suggested_position stored as JSON string in DB text column — typed { after: string } in TypeScript interface; serialize with JSON.stringify on write, JSON.parse on approve route read (84.1-02)
 
 ### Blockers/Concerns
 
@@ -202,6 +210,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-05-05T15:19:36.702Z
-Stopped at: Completed 84-05-PLAN.md — Phase 84 Discovery Scan Hardening COMPLETE
+Last session: 2026-05-06T16:57:12.296Z
+Stopped at: Completed 84.1-01-PLAN.md
 Resume file: None
