@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { requireSession } from "@/lib/auth-server";
 import {
@@ -62,6 +62,114 @@ type DiscoveryItem = {
 function capitalizeSource(src: string): string {
   if (!src) return src;
   return src.charAt(0).toUpperCase() + src.slice(1);
+}
+
+// ─── Step position resolver (workflow_step merge) ─────────────────────────────
+
+async function resolveStepPosition(
+  workflowId: number,
+  afterLabel?: string
+): Promise<number> {
+  const existingSteps = await db
+    .select({ id: workflowSteps.id, label: workflowSteps.label, position: workflowSteps.position })
+    .from(workflowSteps)
+    .where(eq(workflowSteps.workflow_id, workflowId));
+
+  if (!afterLabel || existingSteps.length === 0) {
+    const maxPos = existingSteps.reduce((m, s) => Math.max(m, s.position), 0);
+    return maxPos + 1;
+  }
+
+  const anchor = existingSteps.find(s => s.label === afterLabel);
+  if (!anchor) {
+    const maxPos = existingSteps.reduce((m, s) => Math.max(m, s.position), 0);
+    return maxPos + 1;
+  }
+
+  // Insert after anchor; position gaps are acceptable (ORDER BY position ASC, id ASC is stable)
+  return anchor.position + 1;
+}
+
+// ─── Merge discovered item into existing entity ───────────────────────────────
+
+async function mergeDiscoveredItem(
+  item: DiscoveryItem,
+  entityMatch: string,
+  suggestedPosition?: { after: string }
+): Promise<void> {
+  const field = item.suggested_field ?? 'history';
+  const projectId = item.project_id;
+
+  switch (field) {
+    case 'team_engagement': {
+      // item.content for merge is plain text to append (entity_match is the section name)
+      const [existing] = await db
+        .select({ id: teamEngagementSections.id, content: teamEngagementSections.content })
+        .from(teamEngagementSections)
+        .where(
+          and(
+            eq(teamEngagementSections.project_id, projectId),
+            eq(teamEngagementSections.name, entityMatch)
+          )
+        );
+      if (!existing) {
+        throw new Error(`Merge target not found: team_engagement section "${entityMatch}"`);
+      }
+      await db
+        .update(teamEngagementSections)
+        .set({ content: sql`COALESCE(${teamEngagementSections.content}, '') || ${'\n'} || ${item.content}` })
+        .where(eq(teamEngagementSections.id, existing.id));
+      break;
+    }
+
+    case 'workflow_step': {
+      // item.content for merge is the step label (plain text)
+      const [workflow] = await db
+        .select({ id: e2eWorkflows.id })
+        .from(e2eWorkflows)
+        .where(
+          and(
+            eq(e2eWorkflows.project_id, projectId),
+            eq(e2eWorkflows.workflow_name, entityMatch)
+          )
+        );
+      if (!workflow) {
+        throw new Error(`Merge target not found: workflow "${entityMatch}"`);
+      }
+      const position = await resolveStepPosition(workflow.id, suggestedPosition?.after);
+      await db.insert(workflowSteps).values({
+        workflow_id: workflow.id,
+        label: item.content,
+        position,
+      });
+      break;
+    }
+
+    case 'arch_node': {
+      // item.content for merge is plain text to append to notes
+      const [node] = await db
+        .select({ id: archNodes.id, notes: archNodes.notes })
+        .from(archNodes)
+        .where(
+          and(
+            eq(archNodes.project_id, projectId),
+            eq(archNodes.name, entityMatch)
+          )
+        );
+      if (!node) {
+        throw new Error(`Merge target not found: arch_node "${entityMatch}"`);
+      }
+      await db
+        .update(archNodes)
+        .set({ notes: sql`COALESCE(${archNodes.notes}, '') || ${'\n'} || ${item.content}` })
+        .where(eq(archNodes.id, node.id));
+      break;
+    }
+
+    default:
+      // Non-merge-capable types: fall through to create path
+      await insertDiscoveredItem(item);
+  }
 }
 
 async function insertDiscoveredItem(item: DiscoveryItem): Promise<void> {
@@ -417,8 +525,27 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
       const item = rows[0] as DiscoveryItem;
 
-      // Insert into entity table with source='discovery'
-      await insertDiscoveredItem(item);
+      // Route to merge or create path
+      if (action === 'merge') {
+        if (!entity_match) {
+          errors.push({ itemId, error: 'entity_match required for action:merge' });
+          continue;
+        }
+        // Parse suggested_position from request body, or fall back to item.suggested_position (JSON string)
+        let resolvedPosition: { after: string } | undefined = suggested_position;
+        if (!resolvedPosition && item.suggested_position) {
+          try {
+            resolvedPosition = JSON.parse(item.suggested_position) as { after: string };
+          } catch {
+            // malformed JSON — default to insert at end (undefined = last position)
+            resolvedPosition = undefined;
+          }
+        }
+        await mergeDiscoveredItem(item, entity_match, resolvedPosition);
+      } else {
+        // Insert into entity table with source='discovery'
+        await insertDiscoveredItem(item);
+      }
 
       // Mark discovery_item as approved
       await db
