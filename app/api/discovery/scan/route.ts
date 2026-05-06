@@ -223,6 +223,10 @@ export async function POST(request: NextRequest): Promise<Response> {
               source_excerpt: item.source_excerpt,
               scan_id: scanId,
               likely_duplicate: item.likely_duplicate ?? false,
+              entity_match: item.entity_match ?? null,                  // NEW
+              suggested_position: item.suggested_position               // NEW
+                ? JSON.stringify(item.suggested_position)
+                : null,
             });
 
             newItemCount++;

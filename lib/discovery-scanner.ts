@@ -26,6 +26,8 @@ export interface DiscoveryItem {
   source_excerpt: string;
   source_url?: string;
   likely_duplicate?: boolean;   // true when Claude determines item duplicates existing project data
+  entity_match?: string;                        // NEW: existing entity name to enrich
+  suggested_position?: { after: string };       // NEW: workflow_step only — insert after this step
 }
 
 export interface DiscoveryScanResult {
@@ -37,7 +39,7 @@ export interface DiscoveryScanResult {
 
 const MODEL = 'claude-sonnet-4-6';
 
-const DISCOVERY_SYSTEM_TEMPLATE = `You are analyzing communication data for a BigPanda implementation project.
+export const DISCOVERY_SYSTEM_TEMPLATE = `You are analyzing communication data for a BigPanda implementation project.
 Extract structured items representing project intelligence.
 
 For each item return JSON with fields:
@@ -47,6 +49,8 @@ For each item return JSON with fields:
   source_excerpt: verbatim 100-200 char snippet from source
   source_url: if available
   likely_duplicate: true if this maps to existing project data, false otherwise
+  entity_match: (optional) exact name of an existing entity this item should enrich instead of creating new — use only when the content clearly updates or extends an existing {track/workflow/section} listed above
+  suggested_position: (optional, workflow_step type only) JSON object {"after": "<existing step label>"} — where to insert the new step; omit if inserting at end is fine
 
 Valid suggested_field values:
   action — a task or next step someone needs to do
