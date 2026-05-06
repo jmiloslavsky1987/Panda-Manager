@@ -31,12 +31,6 @@ const ApproveRequestSchema = z.object({
   itemIds: z.array(z.number()),
 });
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function safeParseJSON<T>(content: string): T | null {
-  try { return JSON.parse(content) as T; } catch { return null; }
-}
-
 // ─── Entity router: suggested_field → entity table insert ────────────────────
 
 type DiscoveryItem = {
@@ -184,10 +178,8 @@ async function insertDiscoveredItem(item: DiscoveryItem): Promise<void> {
       break;
 
     case 'arch_node': {
-      // Parse JSON content {name, track_name}; fall back to raw string as name if Claude omitted JSON
-      const parsed = safeParseJSON<{ name: string; track_name: string }>(item.content);
-      const nodeName = parsed?.name ?? item.content;
-      const track_name = parsed?.track_name ?? 'Discovered';
+      // Parse JSON content {name, track_name}, resolve track FK (create if missing), insert archNode
+      const { name: nodeName, track_name } = JSON.parse(item.content) as { name: string; track_name: string };
       await db.transaction(async (tx) => {
         let [track] = await tx.select({ id: archTracks.id })
           .from(archTracks)
@@ -209,10 +201,8 @@ async function insertDiscoveredItem(item: DiscoveryItem): Promise<void> {
     }
 
     case 'workflow_step': {
-      // Parse JSON content {label, workflow_name}; fall back to raw string as label if Claude omitted JSON
-      const parsedStep = safeParseJSON<{ label: string; workflow_name: string }>(item.content);
-      const label = parsedStep?.label ?? item.content;
-      const workflow_name = parsedStep?.workflow_name ?? 'Discovered';
+      // Parse JSON content {label, workflow_name}, resolve workflow FK (create if missing), insert workflowStep
+      const { label, workflow_name } = JSON.parse(item.content) as { label: string; workflow_name: string };
       await db.transaction(async (tx) => {
         let [workflow] = await tx.select({ id: e2eWorkflows.id })
           .from(e2eWorkflows)
@@ -228,10 +218,8 @@ async function insertDiscoveredItem(item: DiscoveryItem): Promise<void> {
     }
 
     case 'team_engagement': {
-      // Parse JSON content {name, content}; fall back to raw string as content under 'Discovered' section
-      const parsedEngagement = safeParseJSON<{ name: string; content: string }>(item.content);
-      const sectionName = parsedEngagement?.name ?? 'Discovered';
-      const sectionContent = parsedEngagement?.content ?? item.content;
+      // Parse JSON content {name, content}, upsert teamEngagementSections by (project_id, name)
+      const { name: sectionName, content: sectionContent } = JSON.parse(item.content) as { name: string; content: string };
       const [existingSection] = await db.select({ id: teamEngagementSections.id })
         .from(teamEngagementSections)
         .where(and(eq(teamEngagementSections.project_id, projectId), eq(teamEngagementSections.name, sectionName)));
@@ -278,10 +266,8 @@ async function insertDiscoveredItem(item: DiscoveryItem): Promise<void> {
       break;
 
     case 'workflow': {
-      // Parse JSON content {team_name, workflow_name}; fall back to raw string as workflow_name
-      const parsedWf = safeParseJSON<{ team_name: string; workflow_name: string }>(item.content);
-      const wfTeamName = parsedWf?.team_name ?? 'Discovered';
-      const wfName = parsedWf?.workflow_name ?? item.content;
+      // Parse JSON content {team_name, workflow_name}, insert e2eWorkflows
+      const { team_name: wfTeamName, workflow_name: wfName } = JSON.parse(item.content) as { team_name: string; workflow_name: string };
       await db.insert(e2eWorkflows).values({
         project_id: projectId,
         team_name: wfTeamName,
