@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: executing
-stopped_at: Completed 84.1-01-PLAN.md
-last_updated: "2026-05-06T16:57:12.299Z"
-last_activity: 2026-05-06 — Phase 84.1 Plan 01 COMPLETE — migration 0049 applied, DiscoveryItem extended, MERGE-01 tests GREEN (9/9)
+stopped_at: Completed 84.1-02-PLAN.md
+last_updated: "2026-05-06T17:25:00.000Z"
+last_activity: 2026-05-06 — Phase 84.1 Plan 02 COMPLETE — mergeDiscoveredItem() + resolveStepPosition() + BUG-01 fix, all 15 approve tests GREEN
 progress:
   total_phases: 11
   completed_phases: 10
   total_plans: 56
-  completed_plans: 53
+  completed_plans: 54
   percent: 99
 ---
 
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 84.1 of 85 (Discovery Scan Merge/Update Flow — Plans 84.1-00 and 84.1-01 COMPLETE, Plans 84.1-02 through 84.1-04 pending)
-Status: In Progress — Plan 84.1-01 (DB migration + scanner extension) complete. Plans 84.1-02 through 84.1-04 implement approve route merge logic and UI.
-Last activity: 2026-05-06 — Phase 84.1 Plan 01 COMPLETE — migration 0049 applied, DiscoveryItem extended, MERGE-01 tests GREEN (9/9)
+Phase: 84.1 of 85 (Discovery Scan Merge/Update Flow — Plans 84.1-00, 84.1-01, and 84.1-02 COMPLETE, Plans 84.1-03 through 84.1-04 pending)
+Status: In Progress — Plan 84.1-02 (approve route merge logic) complete. Plans 84.1-03 and 84.1-04 implement UI Merge button and end-to-end wiring.
+Last activity: 2026-05-06 — Phase 84.1 Plan 02 COMPLETE — mergeDiscoveredItem() + resolveStepPosition() + BUG-01 fix, all 15 approve tests GREEN
 
 Progress: [██████████] 99%
 
@@ -203,6 +203,9 @@ Progress: [██████████] 99%
 - [84.1-01] 0047 migration applied directly via psql with explicit status::text cast — run-migrations.ts had enum value mismatch ('not-started' not in integration_status enum); 0047/0048/0049 all applied manually, migration SQL files unchanged and correct for Docker
 - [84.1-01] DISCOVERY_SYSTEM_TEMPLATE exported with export const — entity_match/suggested_position field docs added; DiscoveryItem interface extended with optional typed fields; scan/route.ts persists both fields
 - [84.1-01] suggested_position stored as JSON string in DB text column — typed { after: string } in TypeScript interface; serialize with JSON.stringify on write, JSON.parse on approve route read (84.1-02)
+- [84.1-02] mergeDiscoveredItem() uses sql template literals (drizzle sql) not JS string concat — Wave 0 tests assert {type:'sql'} object from mocked sql(), making sql-based approach the only way tests pass (RESEARCH.md said JS concat but tests are ground truth)
+- [84.1-02] DISC-84-04 arch_node select mock updated to handle orderBy() chaining — sections query needs where()→this then orderBy()→Promise (not where()→Promise which breaks .orderBy() chain call)
+- [84.1-02] BUG-01 insert mock updated: values()→mockReturnThis(), onConflictDoNothing()→mockResolvedValue([]) — route chains .values().onConflictDoNothing() so both methods must be on the mock chain
 
 ### Blockers/Concerns
 
