@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: executing
-stopped_at: Completed 85-03-PLAN.md
-last_updated: "2026-05-07T20:27:26.830Z"
+stopped_at: Completed 85-04-PLAN.md
+last_updated: "2026-05-07T20:36:17.716Z"
 last_activity: 2026-05-07 — Phase 85 Plan 03 COMPLETE — wbs_dependencies GET+POST+DELETE API routes with TDD (5 tests GREEN)
 progress:
   total_phases: 13
   completed_phases: 11
   total_plans: 62
-  completed_plans: 60
+  completed_plans: 61
   percent: 99
 ---
 
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 85 of 85 (WBS MS-Project Style Overhaul — Plans 00-03 COMPLETE, Plans 04-05 pending)
-Status: In Progress — Plan 85-03 (wbs_dependencies API routes) complete. Plan 85-04 implements WbsGrid predecessor cell editing.
-Last activity: 2026-05-07 — Phase 85 Plan 03 COMPLETE — wbs_dependencies GET+POST+DELETE API routes with TDD (5 tests GREEN)
+Phase: 85 of 85 (WBS MS-Project Style Overhaul — Plans 00-04 COMPLETE, Plan 05 pending)
+Status: In Progress — Plan 85-04 (WbsGrid wiring + Gantt updates) complete. All 4 WBS requirements functional end-to-end.
+Last activity: 2026-05-07 — Phase 85 Plan 04 COMPLETE — WbsGrid wired into WBS page, GanttChart updated with percent_complete bars and SVG dependency arrows (42 tests GREEN)
 
 Progress: [██████████] 99%
 
@@ -223,6 +223,10 @@ Progress: [██████████] 99%
 - [85-02] Predecessors column routes through onDependenciesChange callback, not direct PATCH — dependency mutation is parent component responsibility
 - [85-03] onConflictDoNothing() on wbs_dependencies insert — duplicate (from_item_id, to_item_id) silently succeeds via wbs_dependencies_unique constraint; existing dep fetched and returned as 201
 - [85-03] DELETE ownership check: fetch dep.project_id first, compare to route projectId, return 403 before executing delete — prevents cross-project dep deletion
+- [85-04] WbsPageClient.tsx is a separate sibling file (not inline export in page.tsx) — clean RSC/client boundary, easier to test in isolation
+- [85-04] SVG arrows computed inside IIFE in rows.map render block — row positions captured during same render pass, immediately used for arrow geometry without extra useMemo
+- [85-04] wbsRowToProgress: percent_complete wins when defined (even 0); status-derived fallback only for legacy rows without percent_complete field
+- [85-04] onDependenciesChange: DELETE all where to_item_id=itemId, then POST new set — full replace semantics, no partial update needed
 
 ### Blockers/Concerns
 
@@ -230,6 +234,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-05-07T20:26:40Z
-Stopped at: Completed 85-02-PLAN.md
+Last session: 2026-05-07T20:36:17.713Z
+Stopped at: Completed 85-04-PLAN.md
 Resume file: None

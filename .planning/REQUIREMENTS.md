@@ -130,10 +130,10 @@ Deferred to future milestone. Tracked but not in current roadmap.
 | KDS-06 | Phase 81 | Complete |
 | KDS-07 | Phase 81 | Complete |
 | KDS-08 | Phase 81 | Complete |
-| WBS-01 | Phase 85 | Planned |
-| WBS-02 | Phase 85 | Planned |
-| WBS-03 | Phase 85 | Planned |
-| WBS-04 | Phase 85 | Planned |
+| WBS-01 | Phase 85 | Complete |
+| WBS-02 | Phase 85 | Complete |
+| WBS-03 | Phase 85 | Complete |
+| WBS-04 | Phase 85 | Complete |
 
 **Coverage:**
 - v10 requirements: 17 total (Phases 79–80)
