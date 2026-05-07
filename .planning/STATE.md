@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: executing
-stopped_at: Completed 85-00-PLAN.md
-last_updated: "2026-05-07T20:22:00.000Z"
+stopped_at: Completed 85-03-PLAN.md
+last_updated: "2026-05-07T20:26:30.758Z"
 last_activity: 2026-05-07 — Phase 85 Plan 00 COMPLETE — TDD Wave 0 stubs for WBS MS-Project style overhaul (6 test files, WBS-01-04 gated)
 progress:
   total_phases: 13
   completed_phases: 11
   total_plans: 62
-  completed_plans: 58
+  completed_plans: 59
   percent: 99
 ---
 
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 85 of 85 (WBS MS-Project Style Overhaul — Plan 00 COMPLETE, Plans 01-05 pending)
-Status: In Progress — Plan 85-00 (TDD Wave 0 stubs) complete. Plan 85-01 implements WBS route fixes + reorder null parentId.
-Last activity: 2026-05-07 — Phase 85 Plan 00 COMPLETE — TDD Wave 0 stubs for WBS MS-Project style overhaul (6 test files, WBS-01-04 gated)
+Phase: 85 of 85 (WBS MS-Project Style Overhaul — Plans 00-03 COMPLETE, Plans 04-05 pending)
+Status: In Progress — Plan 85-03 (wbs_dependencies API routes) complete. Plan 85-04 implements WbsGrid predecessor cell editing.
+Last activity: 2026-05-07 — Phase 85 Plan 03 COMPLETE — wbs_dependencies GET+POST+DELETE API routes with TDD (5 tests GREEN)
 
 Progress: [██████████] 99%
 
@@ -217,6 +217,8 @@ Progress: [██████████] 99%
 - [85-01] Level recomputation walks parentMap built from full project item list — single query, no recursive DB calls; newLevel starts at 1, increments for each hop to root
 - [85-01] drizzle-orm mock in vitest must include isNull: vi.fn() whenever route imports isNull — missing mock causes runtime 500 in tests
 - [85-01] mockReturnValueOnce/mockReturnValue sequence for multi-select test mocks: first call uses .limit() chain (item fetch), subsequent calls use direct .where() await (bulk fetch)
+- [85-03] onConflictDoNothing() on wbs_dependencies insert — duplicate (from_item_id, to_item_id) silently succeeds via wbs_dependencies_unique constraint; existing dep fetched and returned as 201
+- [85-03] DELETE ownership check: fetch dep.project_id first, compare to route projectId, return 403 before executing delete — prevents cross-project dep deletion
 
 ### Blockers/Concerns
 
@@ -224,6 +226,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-05-07T20:21:34.995Z
-Stopped at: Completed 85-01-PLAN.md
+Last session: 2026-05-07T20:26:30.755Z
+Stopped at: Completed 85-03-PLAN.md
 Resume file: None
