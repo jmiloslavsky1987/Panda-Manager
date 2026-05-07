@@ -835,6 +835,9 @@ export const wbsItems = pgTable('wbs_items', {
   source_trace: text('source_trace'),
   start_date: text('start_date'),
   due_date: text('due_date'),
+  duration_days: integer('duration_days'),
+  percent_complete: integer('percent_complete').default(0).notNull(),
+  assignee: text('assignee'),
   created_at: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -849,6 +852,22 @@ export const wbsTaskAssignments = pgTable('wbs_task_assignments', {
   task_id: integer('task_id').notNull().references(() => tasks.id),
   created_at: timestamp('created_at').defaultNow().notNull(),
 });
+
+// ─── WBS Dependencies ─────────────────────────────────────────────────────────
+
+export const wbsDependencies = pgTable('wbs_dependencies', {
+  id: serial('id').primaryKey(),
+  project_id: integer('project_id').notNull().references(() => projects.id),
+  from_item_id: integer('from_item_id').notNull().references(() => wbsItems.id, { onDelete: 'cascade' }),
+  to_item_id: integer('to_item_id').notNull().references(() => wbsItems.id, { onDelete: 'cascade' }),
+  dependency_type: text('dependency_type').notNull().default('FS'),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  uniquePair: uniqueIndex('wbs_dependencies_unique').on(table.from_item_id, table.to_item_id),
+}))
+
+export type WbsDependency = typeof wbsDependencies.$inferSelect
+export type WbsDependencyInsert = typeof wbsDependencies.$inferInsert
 
 // ─── Team Engagement Sections ─────────────────────────────────────────────────
 
