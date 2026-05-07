@@ -364,7 +364,7 @@ Plans:
 | 82. Chat Write Operations | 5/6 | In Progress | — |
 | 83. Architecture Sub-Capability Columns | 5/5 | Complete    | 2026-04-30 |
 | 84. Discovery Scan Hardening | 6/6 | Complete    | 2026-05-05 |
-| 84.1. Discovery Scan Merge/Update Flow | 5/5 | Complete   | 2026-05-06 |
+| 84.1. Discovery Scan Merge/Update Flow | 5/5 | Complete    | 2026-05-07 |
 
 ---
 *Last updated: 2026-05-04 — Phase 84.1 planned: 5 plans across 5 waves (Wave 0 RED tests + DB migration + approve route + UI + verification)*
