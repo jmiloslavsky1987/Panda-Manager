@@ -1,5 +1,5 @@
-import { getWbsItems, getProjectWithHealth, getTasksForProject } from '@/lib/queries'
-import { WbsTree } from '@/components/WbsTree'
+import { getWbsItems, getProjectWithHealth, getWbsDependencies } from '@/lib/queries'
+import { WbsPageClient } from './WbsPageClient'
 import { auth } from '@/lib/auth'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
@@ -13,23 +13,19 @@ export default async function WbsPage({ params }: { params: Promise<{ id: string
   const { id } = await params
   const projectId = parseInt(id, 10)
 
-  const [adrItems, biggyItems, project, tasks] = await Promise.all([
+  const [adrItems, biggyItems, deps] = await Promise.all([
     getWbsItems(projectId, 'ADR'),
     getWbsItems(projectId, 'Biggy'),
-    getProjectWithHealth(projectId).catch(() => null),
-    getTasksForProject(projectId).catch(() => []),
+    getWbsDependencies(projectId).catch(() => []),
   ])
-
-  const activeTracks = (project?.active_tracks as { adr: boolean; biggy: boolean } | null) ?? { adr: true, biggy: true }
 
   return (
     <div className="p-6">
-      <WbsTree
+      <WbsPageClient
+        projectId={projectId}
         adrItems={adrItems}
         biggyItems={biggyItems}
-        projectId={projectId}
-        activeTracks={activeTracks}
-        tasks={tasks}
+        dependencies={deps}
       />
     </div>
   )

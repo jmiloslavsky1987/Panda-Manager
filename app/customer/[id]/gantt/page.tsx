@@ -1,4 +1,4 @@
-import { getTasksForProject, getMilestonesForProject, getWbsItems, getWbsTaskAssignments } from '@/lib/queries'
+import { getTasksForProject, getMilestonesForProject, getWbsItems, getWbsTaskAssignments, getWbsDependencies } from '@/lib/queries'
 import GanttChart from '@/components/GanttChart'
 import type { GanttTask, GanttMilestone, GanttWbsRow } from '@/components/GanttChart'
 import type { WbsItem } from '@/db/schema'
@@ -127,6 +127,7 @@ function mapDataToWbsRows(
       tasks: ganttTasks,
       startDate: item.start_date ?? null,
       dueDate: item.due_date ?? null,
+      percent_complete: item.percent_complete ?? 0,
     }
   })
 }
@@ -143,14 +144,17 @@ export default async function GanttPage({
   let unassignedTasks: GanttTask[] = []
   let milestones: GanttMilestone[] = []
 
+  let wbsDeps: Awaited<ReturnType<typeof getWbsDependencies>> = []
   try {
-    const [adrWbs, biggyWbs, tasks, assignments, milestonesData] = await Promise.all([
+    const [adrWbs, biggyWbs, tasks, assignments, milestonesData, deps] = await Promise.all([
       getWbsItems(projectId, 'ADR'),
       getWbsItems(projectId, 'Biggy'),
       getTasksForProject(projectId),
       getWbsTaskAssignments(projectId),
       getMilestonesForProject(projectId),
+      getWbsDependencies(projectId),
     ])
+    wbsDeps = deps
 
     // Map Milestone to GanttMilestone (only the fields GanttChart needs)
     milestones = milestonesData.map(m => ({
@@ -207,6 +211,7 @@ export default async function GanttPage({
           viewMode="Month"
           milestones={milestones}
           projectId={projectId}
+          wbsDependencies={wbsDeps}
         />
       </div>
     </div>
