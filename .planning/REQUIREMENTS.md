@@ -63,6 +63,17 @@ Kata Design System visual overhaul — Command Workspace direction. All function
 - [x] **KDS-07**: All existing tabs and functionality (Overview, Plan, Gantt, Stakeholders, Risks, Decisions, Artifacts, Skills, Time, Daily Prep, Settings) work identically after the visual rebuild; no regressions in data display, forms, or navigation
 - [x] **KDS-08**: Default accent is Indigo (`#5B5BFF`); theme and accent preferences persist to localStorage; dark mode sets canvas to gray-950, container to gray-900
 
+## v12 Requirements
+
+WBS MS Project-style overhaul — replace the tree UI with an inline-editable spreadsheet grid with predecessor dependencies and Gantt integration.
+
+### WBS: Work Breakdown Structure Overhaul
+
+- [ ] **WBS-01**: WBS tab renders an MS Project-style spreadsheet grid — every row is a task, every column (Task Name, Duration, Start, Due, %, Assigned To, Predecessors) is directly editable inline; clicking a cell activates an input; Tab navigates to the next cell, Enter advances to the same column on the next row; horizontal scroll when columns overflow; two-track (ADR / Biggy) tab switcher preserved
+- [ ] **WBS-02**: Hierarchy is managed entirely from the grid — Tab key (or toolbar Indent button) when no cell is focused promotes a row to child of the row above; Shift+Tab (or Outdent button) demotes one level; unlimited depth; all rows freely editable (Level 1 lock removed); Add Task row appended at bottom of each track; indent/outdent persists `parent_id` changes to the DB; visual depth computed from `parent_id` chain (never from `level` column)
+- [ ] **WBS-03**: Predecessor dependencies (FS and SS only) are stored in a new `wbs_dependencies` table and surfaced in the Predecessors column as comma-separated row numbers; editing the column parses row numbers to item IDs and replaces the full dependency set for that item on blur; `dependency_type` stored as TEXT for future extensibility (no pgEnum); cross-track dependencies not supported in this phase
+- [ ] **WBS-04**: Gantt tab uses `percent_complete` (0–100) for WBS summary bar fill instead of 3-state status; SVG overlay arrows rendered between task bars that have FS/SS predecessor links; `wbs_items` migrated: `not_started`→0, `in_progress`→50, `complete`→100; migration preserves existing `status` column for backward compatibility
+
 ## v2 Requirements
 
 Deferred to future milestone. Tracked but not in current roadmap.
@@ -119,13 +130,18 @@ Deferred to future milestone. Tracked but not in current roadmap.
 | KDS-06 | Phase 81 | Complete |
 | KDS-07 | Phase 81 | Complete |
 | KDS-08 | Phase 81 | Complete |
+| WBS-01 | Phase 85 | Planned |
+| WBS-02 | Phase 85 | Planned |
+| WBS-03 | Phase 85 | Planned |
+| WBS-04 | Phase 85 | Planned |
 
 **Coverage:**
 - v10 requirements: 17 total (Phases 79–80)
 - v11 requirements: 8 total (Phase 81)
-- Mapped to phases: 25 (100%)
+- v12 requirements: 4 total (Phase 85)
+- Mapped to phases: 29 (100%)
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-27*
-*Last updated: 2026-04-28 — Phase 81 added: 8 KDS requirements for Kata Design System overhaul*
+*Last updated: 2026-05-07 — Phase 85 added: 4 WBS requirements for MS Project-style overhaul*

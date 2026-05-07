@@ -365,9 +365,32 @@ Plans:
 | 83. Architecture Sub-Capability Columns | 5/5 | Complete    | 2026-04-30 |
 | 84. Discovery Scan Hardening | 6/6 | Complete    | 2026-05-05 |
 | 84.1. Discovery Scan Merge/Update Flow | 5/5 | Complete    | 2026-05-07 |
+| 85. WBS MS Project-Style Overhaul | 0/6 | Planned     | — |
+| 86. Multi-User, SSO & AWS Readiness | 0/0 | Planned     | — |
 
 ---
-*Last updated: 2026-05-04 — Phase 84.1 planned: 5 plans across 5 waves (Wave 0 RED tests + DB migration + approve route + UI + verification)*
+*Last updated: 2026-05-07 — Phase 85 planned: 6 plans, 4 waves, requirements WBS-01–04 added*
+
+### Phase 85: wbs-ms-project-style-overhaul
+
+**Goal:** Replace the current WBS tree UI with an MS Project-style spreadsheet grid supporting inline cell editing, keyboard navigation (Tab/Enter), indent/outdent hierarchy management, predecessor dependencies (FS and SS), duration, percent complete, and resource assignment. Gantt tab updated to render dependency arrows and use percent_complete for progress bars. Two-track structure (ADR/Biggy) preserved.
+**Depends on:** Phase 84.1
+**Requirements:** WBS-01, WBS-02, WBS-03, WBS-04
+**Plans:** 6 plans across 4 waves
+
+Plans:
+- [ ] 85-00-PLAN.md — Wave 0: RED test stubs for all requirements (WBS-01 through WBS-04)
+- [ ] 85-01-PLAN.md — DB migration 0050 + schema.ts + queries.ts + remove Level-1 guards (WBS-01, WBS-03, WBS-04)
+- [ ] 85-02-PLAN.md — WbsGrid.tsx spreadsheet grid component (WBS-01, WBS-02)
+- [ ] 85-03-PLAN.md — wbs/dependencies API routes GET/POST/DELETE (WBS-03)
+- [ ] 85-04-PLAN.md — WbsPage wiring + Gantt percent_complete bars + SVG arrows (WBS-01–04)
+- [ ] 85-05-PLAN.md — Human verification checkpoint (WBS-01–04)
+
+### Phase 86: multi-user-sso-aws-readiness
+
+**Goal:** Prepare the app for production deployment on AWS with multiple project managers sharing one instance — per-user source credentials, Okta OIDC SSO, automated daily DB backups, and AWS infrastructure scaffolding.
+**Depends on:** Phase 85
+**Plans:** TBD
 
 ### Phase 84.1: discovery-scan-merge-update-flow (INSERTED)
 
