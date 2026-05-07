@@ -204,6 +204,12 @@ export async function POST(request: NextRequest): Promise<Response> {
           let skippedDups = 0;
 
           for (const item of discoveryResults) {
+            // Stakeholders are managed directly — skip from review queue
+            if (item.suggested_field === 'stakeholder') {
+              skippedDups++;
+              continue;
+            }
+
             // Check for dismissed duplicate (DISC-15)
             const isDup = await isDismissedDuplicate(item, projectId);
             if (isDup) {

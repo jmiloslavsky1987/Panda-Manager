@@ -1,22 +1,22 @@
 'use client'
 
 import { useState } from 'react'
-import { DiffView } from '@/components/DiffView'
+import { TableCell, TableRow } from '@/components/ui/table'
 
 export interface DiscoveryQueueItem {
   id: number
-  source: string          // 'slack' | 'gmail' | 'glean' | 'gong'
-  content: string         // Claude's extracted value
-  suggested_field: string // destination type: 'action' | 'risk' | 'decision' | etc.
-  source_excerpt: string  // raw snippet from source
-  source_url?: string     // link to original message/email
-  scan_timestamp: string  // ISO date string
+  source: string
+  content: string
+  suggested_field: string | null
+  source_excerpt: string
+  source_url?: string
+  scan_timestamp: string
   created_at: string
   status: 'pending' | 'dismissed'
-  likely_duplicate?: boolean // true when Claude flagged item as matching existing project data
-  conflict_existing?: string // populated client-side when conflict detected
-  entity_match?: string                    // existing entity name for merge
-  suggested_position?: { after: string }   // workflow_step only
+  likely_duplicate?: boolean
+  conflict_existing?: string
+  entity_match?: string
+  suggested_position?: { after: string }
 }
 
 const SOURCE_COLORS: Record<string, string> = {
@@ -33,7 +33,6 @@ const TYPE_LABELS: Record<string, string> = {
   milestone: 'Milestone',
   stakeholder: 'Stakeholder',
   history: 'History',
-  // Phase 84 new types
   task: 'Task',
   team_engagement: 'Team Engagement',
   arch_track: 'Arch Track',
@@ -44,27 +43,32 @@ const TYPE_LABELS: Record<string, string> = {
   integration: 'Integration',
 }
 
-function typeLabel(suggested_field: string): string {
+export function typeLabel(suggested_field: string | null): string {
+  if (!suggested_field) return 'Unknown'
   return TYPE_LABELS[suggested_field] ??
-    suggested_field
-      .replace(/_/g, ' ')
-      .replace(/\b\w/g, c => c.toUpperCase())
+    suggested_field.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+}
+
+export function displayContent(content: string, suggested_field: string | null): string {
+  if (!suggested_field) return content
+  try {
+    const parsed = JSON.parse(content)
+    if (suggested_field === 'workflow_step' && parsed.label) return parsed.label
+    if (suggested_field === 'workflow' && parsed.workflow_name) return `${parsed.team_name ?? ''} / ${parsed.workflow_name}`.replace(/^\s*\/\s*/, '')
+    if (suggested_field === 'arch_node' && parsed.name) return `${parsed.name} (${parsed.track_name ?? ''})`
+    if (suggested_field === 'team_engagement' && parsed.content) return parsed.content
+  } catch {
+    // not JSON — display as-is
+  }
+  return content
 }
 
 function formatDate(iso: string): string {
   try {
-    return new Date(iso).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    })
+    return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   } catch {
     return iso
   }
-}
-
-function sourceLabel(source: string): string {
-  return source.charAt(0).toUpperCase() + source.slice(1)
 }
 
 interface QueueItemRowProps {
@@ -79,159 +83,146 @@ export function QueueItemRow({ item, onApprove, onDismiss, onMerge, readonly = f
   const [showExcerpt, setShowExcerpt] = useState(false)
   const [editing, setEditing] = useState(false)
   const [editedContent, setEditedContent] = useState(item.content)
-  const [showDiff, setShowDiff] = useState(false)
-  const [conflictExisting, setConflictExisting] = useState<string | null>(null)
   const [approving, setApproving] = useState(false)
   const [dismissing, setDismissing] = useState(false)
 
   const sourceColorClass = SOURCE_COLORS[item.source] ?? 'bg-zinc-100 text-zinc-700'
-  const dateLabel = item.scan_timestamp
-    ? `Found ${formatDate(item.scan_timestamp)} · via ${sourceLabel(item.source)}`
-    : `via ${sourceLabel(item.source)}`
+  const label = displayContent(item.content, item.suggested_field)
 
-  function handleApprove(contentOverride?: string) {
+  function handleApprove() {
     setApproving(true)
-    onApprove(item.id, contentOverride)
+    onApprove(item.id, editing ? editedContent : undefined)
     setApproving(false)
+    setEditing(false)
   }
 
-  async function handleDismiss() {
+  function handleDismiss() {
     setDismissing(true)
     onDismiss(item.id)
   }
 
-  function handleEditSave() {
-    setEditing(false)
-    onApprove(item.id, editedContent)
-  }
-
   return (
-    <div className="border-b border-zinc-100 py-4">
-      {/* Header row */}
-      <div className="flex flex-wrap items-center gap-2 mb-2">
-        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${sourceColorClass}`}>
-          {sourceLabel(item.source)}
+    <TableRow>
+      {/* Source */}
+      <TableCell className="w-24">
+        <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${sourceColorClass}`}>
+          {item.source.charAt(0).toUpperCase() + item.source.slice(1)}
         </span>
-        <span className="text-xs text-zinc-400">{dateLabel}</span>
-        <span className="rounded bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600">
+      </TableCell>
+
+      {/* Type */}
+      <TableCell className="w-36">
+        <span className="inline-block rounded bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600">
           {typeLabel(item.suggested_field)}
         </span>
-      </div>
+      </TableCell>
 
-      {/* Content row */}
-      {editing ? (
-        <div className="mb-3">
+      {/* Content */}
+      <TableCell>
+        {editing ? (
           <textarea
             className="w-full rounded-md border border-zinc-300 p-2 text-sm text-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-400"
-            rows={3}
+            rows={2}
             value={editedContent}
-            onChange={(e) => setEditedContent(e.target.value)}
+            onChange={e => setEditedContent(e.target.value)}
           />
-        </div>
-      ) : (
-        <p className="mb-2 font-medium text-zinc-800">{item.content}</p>
-      )}
-
-      {/* Source excerpt */}
-      <div className="mb-3">
-        <button
-          className="text-xs text-zinc-400 hover:text-zinc-600 underline"
-          onClick={() => setShowExcerpt((v) => !v)}
-        >
-          {showExcerpt ? 'Hide source excerpt' : 'Show source excerpt'}
-        </button>
-        {showExcerpt && (
-          <div className="mt-2 rounded bg-zinc-50 p-2">
-            <p className="text-sm italic text-zinc-500">{item.source_excerpt}</p>
-            {item.source_url && (
-              <a
-                href={item.source_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-1 block text-xs text-blue-500 hover:underline"
-              >
-                View original
-              </a>
+        ) : (
+          <div>
+            <p className="text-sm text-zinc-800">{label}</p>
+            <button
+              className="mt-1 text-xs text-zinc-400 hover:text-zinc-600 underline"
+              onClick={() => setShowExcerpt(v => !v)}
+            >
+              {showExcerpt ? 'Hide excerpt' : 'Show excerpt'}
+            </button>
+            {showExcerpt && (
+              <div className="mt-1 rounded bg-zinc-50 p-2">
+                <p className="text-xs italic text-zinc-500">{item.source_excerpt}</p>
+                {item.source_url && (
+                  <a href={item.source_url} target="_blank" rel="noopener noreferrer"
+                    className="mt-1 block text-xs text-blue-500 hover:underline">
+                    View original
+                  </a>
+                )}
+              </div>
             )}
           </div>
         )}
-      </div>
+      </TableCell>
 
-      {/* Action row */}
+      {/* Entity match */}
+      <TableCell className="w-40">
+        {item.entity_match ? (
+          <span className="text-xs text-zinc-500 truncate block max-w-[160px]" title={item.entity_match}>
+            {item.entity_match}
+          </span>
+        ) : (
+          <span className="text-xs text-zinc-300">—</span>
+        )}
+      </TableCell>
+
+      {/* Date */}
+      <TableCell className="w-28 text-xs text-zinc-400">
+        {item.scan_timestamp ? formatDate(item.scan_timestamp) : '—'}
+      </TableCell>
+
+      {/* Actions */}
       {!readonly && (
-        <div className="flex items-center gap-2">
-          {editing ? (
-            <>
-              <button
-                onClick={handleEditSave}
-                className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50"
-                disabled={approving}
-              >
-                Save &amp; Approve
-              </button>
-              <button
-                onClick={() => { setEditing(false); setEditedContent(item.content) }}
-                className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-50"
-              >
-                Cancel
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={() => handleApprove()}
-                className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50"
-                disabled={approving || dismissing}
-              >
-                {approving ? 'Approving…' : 'Approve'}
-              </button>
-              {item.entity_match && onMerge && (
+        <TableCell className="w-56">
+          <div className="flex items-center gap-1 flex-wrap">
+            {editing ? (
+              <>
                 <button
-                  onClick={() => onMerge(item.id, item.entity_match!, item.suggested_position)}
-                  className="rounded-md border border-emerald-300 px-3 py-1.5 text-sm text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
-                  disabled={approving || dismissing}
-                  title={`Merge into existing "${item.entity_match}"`}
+                  onClick={handleApprove}
+                  disabled={approving}
+                  className="rounded bg-zinc-900 px-2.5 py-1 text-xs font-medium text-white hover:bg-zinc-700 disabled:opacity-50"
                 >
-                  {`Merge into "${item.entity_match}"`}
+                  Save &amp; Approve
                 </button>
-              )}
-              <button
-                onClick={() => setEditing(true)}
-                className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-50"
-              >
-                Edit
-              </button>
-              <button
-                onClick={handleDismiss}
-                className="px-3 py-1.5 text-sm text-zinc-400 hover:text-zinc-600 disabled:opacity-50"
-                disabled={approving || dismissing}
-              >
-                {dismissing ? 'Dismissing…' : 'Dismiss'}
-              </button>
-            </>
-          )}
-        </div>
+                <button
+                  onClick={() => { setEditing(false); setEditedContent(item.content) }}
+                  className="rounded border border-zinc-300 px-2.5 py-1 text-xs text-zinc-600 hover:bg-zinc-50"
+                >
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={handleApprove}
+                  disabled={approving || dismissing}
+                  className="rounded bg-zinc-900 px-2.5 py-1 text-xs font-medium text-white hover:bg-zinc-700 disabled:opacity-50"
+                >
+                  {approving ? 'Approving…' : 'Approve'}
+                </button>
+                {item.entity_match && onMerge && (
+                  <button
+                    onClick={() => onMerge(item.id, item.entity_match!, item.suggested_position)}
+                    disabled={approving || dismissing}
+                    className="rounded border border-emerald-300 px-2.5 py-1 text-xs text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
+                    title={`Merge into "${item.entity_match}"`}
+                  >
+                    Merge
+                  </button>
+                )}
+                <button
+                  onClick={() => setEditing(true)}
+                  className="rounded border border-zinc-300 px-2.5 py-1 text-xs text-zinc-600 hover:bg-zinc-50"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={handleDismiss}
+                  disabled={approving || dismissing}
+                  className="px-2.5 py-1 text-xs text-zinc-400 hover:text-zinc-600 disabled:opacity-50"
+                >
+                  {dismissing ? 'Dismissing…' : 'Dismiss'}
+                </button>
+              </>
+            )}
+          </div>
+        </TableCell>
       )}
-
-      {/* Conflict diff view */}
-      {showDiff && conflictExisting !== null && (
-        <DiffView
-          existing={conflictExisting}
-          discovered={item.content}
-          onMerge={() => {
-            setShowDiff(false)
-            onApprove(item.id, `${conflictExisting}\n\n${item.content}`)
-          }}
-          onReplace={() => {
-            setShowDiff(false)
-            onApprove(item.id, item.content)
-          }}
-          onSkip={() => {
-            setShowDiff(false)
-            onDismiss(item.id)
-          }}
-        />
-      )}
-    </div>
+    </TableRow>
   )
 }

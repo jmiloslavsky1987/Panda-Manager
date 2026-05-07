@@ -28,11 +28,19 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'projectId must be a number' }, { status: 400 });
   }
 
-  const items = await db
+  const rows = await db
     .select()
     .from(discoveryItems)
     .where(and(eq(discoveryItems.project_id, projectId), eq(discoveryItems.status, 'pending')))
     .orderBy(desc(discoveryItems.created_at));
+
+  // Parse suggested_position from JSON string → object so the client receives the right shape
+  const items = rows.map(row => ({
+    ...row,
+    suggested_position: row.suggested_position
+      ? (() => { try { return JSON.parse(row.suggested_position!); } catch { return undefined; } })()
+      : undefined,
+  }));
 
   return NextResponse.json({ items });
 }

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import { Icon } from './Icon'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -43,7 +42,6 @@ interface ScanForUpdatesButtonProps {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function ScanForUpdatesButton({ projectId }: ScanForUpdatesButtonProps) {
-  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [scanning, setScanning] = useState(false)
   const [scanProgress, setScanProgress] = useState<string>('')
@@ -184,7 +182,9 @@ export function ScanForUpdatesButton({ projectId }: ScanForUpdatesButtonProps) {
               } else {
                 toast.info('Scan complete — no new items found', breakdown ? { description: breakdown } : undefined)
               }
-              router.push(`/customer/${projectId}/queue`)
+              setScanning(false)
+              setScanProgress('')
+              window.location.href = `/customer/${projectId}/queue`
               return
             } else if (payload.type === 'error') {
               throw new Error(payload.message ?? 'Scan error')

@@ -40,38 +40,45 @@ export interface DiscoveryScanResult {
 const MODEL = 'claude-sonnet-4-6';
 
 export const DISCOVERY_SYSTEM_TEMPLATE = `You are analyzing communication data for a BigPanda implementation project.
-Extract structured items representing project intelligence.
+Extract structured items representing substantive project intelligence. Skip scheduling noise (meeting invites, cancellations, rescheduling, attendance confirmations) — only extract items if they contain a concrete action, decision, risk, technical update, or meaningful progress note.
 
 For each item return JSON with fields:
   source: communication channel name
-  content: extracted insight (plain text for most types; JSON string for arch_node and workflow_step — see below)
+  content: extracted insight (plain text for most types; JSON string for arch_node, workflow, workflow_step, team_engagement — see below)
   suggested_field: one of the valid types listed below
   source_excerpt: verbatim 100-200 char snippet from source
   source_url: if available
   likely_duplicate: true if this maps to existing project data, false otherwise
-  entity_match: (optional) exact name of an existing entity this item should enrich instead of creating new — use only when the content clearly updates or extends an existing {track/workflow/section} listed above
-  suggested_position: (optional, workflow_step type only) JSON object {"after": "<existing step label>"} — where to insert the new step; omit if inserting at end is fine
+  entity_match: (optional) for workflow_step, history-on-workflow, and team_engagement — set to the EXACT name from the existing structure list below. For workflows the list shows "Team / WorkflowName" format — use ONLY the workflow_name portion after the slash (e.g. for "GOC / MIM/GOC Major Incident Management Workflow (Biggy)" use "GOC Major Incident Management Workflow (Biggy)"). For engagement sections use the exact section name.
+  suggested_position: (optional, workflow_step only) JSON object {"after": "<existing step label>"}
 
 Valid suggested_field values:
-  action — a task or next step someone needs to do
+  action — a concrete task or next step assigned to someone
   risk — a concern, blocker, or potential issue
-  decision — a confirmed choice or direction
-  milestone — a key date or deliverable target
-  stakeholder — a person or team involved
-  history — general status update or context (catch-all)
+  decision — a confirmed choice or direction that was made
+  milestone — a key date, deadline, or deliverable
+  history — significant status update or progress note (NOT scheduling/logistics)
   task — a work item to track (title only in content)
-  team_engagement — content for a team engagement section; content must be JSON: {"name":"<section name>","content":"<section text>"}
-  arch_track — a new architecture pipeline track (e.g. "ADR Track"); track name only in content
-  arch_node — a NEW capability stage/column in a pipeline (e.g. "Monitoring Integrations", "Alert Enrichment") — NOT a tool or vendor; content must be JSON: {"name":"<stage name>","track_name":"<existing or new track name>"}; NEVER use this for tools/products/vendors
-  workflow — a team workflow; content must be JSON: {"team_name":"<team>","workflow_name":"<workflow>"}
-  workflow_step — a step in a workflow; content must be JSON: {"label":"<step label>","workflow_name":"<existing or new workflow name>"}
+  team_engagement — update to an existing engagement section; content must be JSON: {"name":"<section name>","content":"<section text>"}
+  arch_track — a new architecture pipeline track; track name only in content
+  arch_node — a NEW capability stage in a pipeline (NOT a tool/vendor); content must be JSON: {"name":"<stage name>","track_name":"<track name>"}
+  workflow — a new team workflow; content must be JSON: {"team_name":"<team>","workflow_name":"<workflow name>"}
+  workflow_step — a step in a workflow; content must be JSON: {"label":"<step label>","workflow_name":"<workflow name>"}
   business_outcome — a business objective or desired outcome
-  integration — a specific tool, product, or vendor being integrated (e.g. NetBrain, Dynatrace, ServiceNow, Grafana); plain text tool name in content; ALWAYS prefer this over arch_node for named tools/products
+  integration — a specific tool, product, or vendor (e.g. NetBrain, Dynatrace, ServiceNow); ALWAYS use this for named tools/products, never arch_node
 
-Existing project structure (use these names when referencing existing entities):
+Classification rules:
+  - A meeting being scheduled, cancelled, or rescheduled with no substantive content → SKIP entirely
+  - A working session that produced decisions or updates → extract the decisions/updates, not the meeting itself
+  - Named tools or vendors → integration, never arch_node
+  - Concrete progress on an existing workflow (e.g. "GOC onboarding started", "TOPS environment configured") → workflow_step with entity_match set to the matching workflow_name from the list
+  - A new step being added to a workflow → workflow_step with entity_match set to the workflow_name
+  - Updates to engagement sections (Teams, Architecture, etc.) → team_engagement with entity_match set to the section name
+  - If unsure between workflow_step and history, prefer workflow_step when the item describes something that happened within a named workflow
+
+Existing project structure:
 {existingStructureBlock}
 
-Prefer enriching/updating existing items over creating new ones when content maps to something already present.
 Return ONLY a JSON array — no prose, no markdown fences.`;
 
 // ─── Params ───────────────────────────────────────────────────────────────────
@@ -137,7 +144,7 @@ export async function runDiscoveryScan(params: DiscoveryScanParams): Promise<Dis
   const existingStructureBlock = existingStructure
     ? [
         `Tracks: ${existingStructure.tracks.length > 0 ? existingStructure.tracks.join(', ') : 'none'}`,
-        `Workflows: ${existingStructure.workflows.length > 0 ? existingStructure.workflows.join(', ') : 'none'}`,
+        `Workflows (use exact workflow_name for entity_match): ${existingStructure.workflows.length > 0 ? existingStructure.workflows.map(w => w.split('/').pop()!.trim()).join(', ') : 'none'}`,
         `Engagement sections: ${existingStructure.sections.length > 0 ? existingStructure.sections.join(', ') : 'none'}`,
       ].join('\n')
     : 'Tracks: none\nWorkflows: none\nEngagement sections: none';

@@ -102,7 +102,9 @@ async function mergeDiscoveredItem(
 
   switch (field) {
     case 'team_engagement': {
-      // item.content for merge is plain text to append (entity_match is the section name)
+      // content may be JSON {"name":"...","content":"..."} — extract the text portion if so
+      const parsedEngagement = safeParseJSON<{ name: string; content: string }>(item.content);
+      const appendText = parsedEngagement?.content ?? item.content;
       const [existing] = await db
         .select({ id: teamEngagementSections.id, content: teamEngagementSections.content })
         .from(teamEngagementSections)
@@ -117,13 +119,15 @@ async function mergeDiscoveredItem(
       }
       await db
         .update(teamEngagementSections)
-        .set({ content: sql`COALESCE(${teamEngagementSections.content}, '') || ${'\n'} || ${item.content}` })
+        .set({ content: sql`COALESCE(${teamEngagementSections.content}, '') || ${'\n'} || ${appendText}` })
         .where(eq(teamEngagementSections.id, existing.id));
       break;
     }
 
     case 'workflow_step': {
-      // item.content for merge is the step label (plain text)
+      // content may be JSON {"label":"...","workflow_name":"..."} — extract label if so
+      const parsedStep = safeParseJSON<{ label: string; workflow_name: string }>(item.content);
+      const stepLabel = parsedStep?.label ?? item.content;
       const [workflow] = await db
         .select({ id: e2eWorkflows.id })
         .from(e2eWorkflows)
@@ -139,7 +143,7 @@ async function mergeDiscoveredItem(
       const position = await resolveStepPosition(workflow.id, suggestedPosition?.after);
       await db.insert(workflowSteps).values({
         workflow_id: workflow.id,
-        label: item.content,
+        label: stepLabel,
         position,
       });
       break;
@@ -163,6 +167,20 @@ async function mergeDiscoveredItem(
         .update(archNodes)
         .set({ notes: sql`COALESCE(${archNodes.notes}, '') || ${'\n'} || ${item.content}` })
         .where(eq(archNodes.id, node.id));
+      break;
+    }
+
+    case 'history': {
+      // history item with entity_match → append as a workflow step on the named workflow
+      const [wf] = await db
+        .select({ id: e2eWorkflows.id })
+        .from(e2eWorkflows)
+        .where(and(eq(e2eWorkflows.project_id, projectId), eq(e2eWorkflows.workflow_name, entityMatch)));
+      if (!wf) {
+        throw new Error(`Merge target not found: workflow "${entityMatch}"`);
+      }
+      const position = await resolveStepPosition(wf.id, undefined);
+      await db.insert(workflowSteps).values({ workflow_id: wf.id, label: item.content, position });
       break;
     }
 
