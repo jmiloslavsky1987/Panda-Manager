@@ -20,6 +20,7 @@ import {
   teamEngagementSections,
   businessOutcomes,
   architectureIntegrations,
+  integrations,
 } from '@/db/schema';
 
 export const dynamic = 'force-dynamic';
@@ -437,14 +438,32 @@ async function insertDiscoveredItem(item: DiscoveryItem): Promise<void> {
       });
       break;
 
-    case 'integration':
-      // Insert to architectureIntegrations with tool_name=content, track='discovery'
+    case 'integration': {
+      // Resolve track: use the first existing arch track for this project so the
+      // integration appears in the diagram. Fall back to 'Unassigned' if none exist.
+      const existingTracks = await db
+        .select({ name: archTracks.name, display_order: archTracks.display_order })
+        .from(archTracks)
+        .where(eq(archTracks.project_id, projectId))
+        .orderBy(archTracks.display_order);
+      const resolvedTrack = existingTracks[0]?.name ?? 'Unassigned';
       await db.insert(architectureIntegrations).values({
         project_id: projectId,
         tool_name: item.content,
-        track: 'discovery',
+        track: resolvedTrack,
+        source: 'discovery',
+        discovery_source: item.source ? capitalizeSource(item.source) : null,
+      });
+      // Also insert into integrations table so Overview metrics reflect it
+      await db.insert(integrations).values({
+        project_id: projectId,
+        tool: item.content,
+        status: 'not-started',
+        track: resolvedTrack,
+        display_order: 0,
       });
       break;
+    }
 
     case 'workflow': {
       // Parse JSON content {team_name, workflow_name} — fall back to history if Claude omitted JSON
