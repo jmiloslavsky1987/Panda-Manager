@@ -14,6 +14,9 @@ const UpdateWbsItemSchema = z
     status: z.enum(['not_started', 'in_progress', 'complete']).optional(),
     start_date: z.string().nullable().optional(),
     due_date: z.string().nullable().optional(),
+    percent_complete: z.number().int().min(0).max(100).optional(),
+    duration_days: z.number().int().nullable().optional(),
+    assignee: z.string().nullable().optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {
     message: 'At least one field is required',
@@ -48,10 +51,10 @@ export async function PATCH(
     return Response.json({ error: parsed.error.flatten() }, { status: 400 })
   }
 
-  const { name, status, start_date, due_date } = parsed.data
+  const { name, status, start_date, due_date, percent_complete, duration_days, assignee } = parsed.data
 
   try {
-    // Fetch the item to check its level
+    // Fetch the item to verify it exists
     const [item] = await db
       .select({ level: wbsItems.level })
       .from(wbsItems)
@@ -62,17 +65,23 @@ export async function PATCH(
       return Response.json({ error: 'Item not found' }, { status: 404 })
     }
 
-    // Level 1 nodes cannot have their name changed
-    if (item.level === 1 && name !== undefined) {
-      return Response.json({ error: 'Level 1 headers are locked' }, { status: 403 })
-    }
-
     // Build update object with only provided fields
-    const updateFields: { name?: string; status?: 'not_started' | 'in_progress' | 'complete'; start_date?: string | null; due_date?: string | null } = {}
+    const updateFields: {
+      name?: string
+      status?: 'not_started' | 'in_progress' | 'complete'
+      start_date?: string | null
+      due_date?: string | null
+      percent_complete?: number
+      duration_days?: number | null
+      assignee?: string | null
+    } = {}
     if (name !== undefined) updateFields.name = name
     if (status !== undefined) updateFields.status = status
     if (start_date !== undefined) updateFields.start_date = start_date
     if (due_date !== undefined) updateFields.due_date = due_date
+    if (percent_complete !== undefined) updateFields.percent_complete = percent_complete
+    if (duration_days !== undefined) updateFields.duration_days = duration_days
+    if (assignee !== undefined) updateFields.assignee = assignee
 
     // Perform update
     const [updatedItem] = await db
@@ -115,11 +124,6 @@ export async function DELETE(
 
     if (!item) {
       return Response.json({ error: 'Item not found' }, { status: 404 })
-    }
-
-    // Level 1 nodes cannot be deleted
-    if (item.level === 1) {
-      return Response.json({ error: 'Level 1 headers cannot be deleted' }, { status: 403 })
     }
 
     // Delete the item and its entire subtree

@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import db from '@/db'
 import { wbsItems } from '@/db/schema'
-import { eq, and, gte } from 'drizzle-orm'
+import { eq, and, gte, isNull } from 'drizzle-orm'
 import { requireProjectRole } from '@/lib/auth-server'
 import { sql } from 'drizzle-orm'
 
@@ -10,7 +10,7 @@ import { sql } from 'drizzle-orm'
 
 const ReorderWbsItemSchema = z.object({
   itemId: z.number().int(),
-  newParentId: z.number().int(),
+  newParentId: z.number().int().nullable(),
   newDisplayOrder: z.number().int().min(0),
 })
 
@@ -55,39 +55,45 @@ export async function POST(
       return Response.json({ error: 'Item not found' }, { status: 404 })
     }
 
-    // Level 1 nodes cannot be reordered
-    if (item.level === 1) {
-      return Response.json({ error: 'Level 1 headers cannot be reordered' }, { status: 403 })
-    }
-
     // 0 means "append to end" — resolve to max sibling order + 1
     let newDisplayOrder = requestedOrder
     if (newDisplayOrder === 0) {
+      const siblingCondition = newParentId === null
+        ? and(eq(wbsItems.project_id, projectId), isNull(wbsItems.parent_id))
+        : and(eq(wbsItems.project_id, projectId), eq(wbsItems.parent_id, newParentId))
       const [maxRow] = await db
         .select({ max: sql<number>`COALESCE(MAX(${wbsItems.display_order}), 0)` })
         .from(wbsItems)
-        .where(and(eq(wbsItems.project_id, projectId), eq(wbsItems.parent_id, newParentId)))
+        .where(siblingCondition)
       newDisplayOrder = (maxRow?.max ?? 0) + 1
     }
 
     // Shift siblings at target position (those with display_order >= newDisplayOrder)
+    const shiftCondition = newParentId === null
+      ? and(eq(wbsItems.project_id, projectId), isNull(wbsItems.parent_id), gte(wbsItems.display_order, newDisplayOrder))
+      : and(eq(wbsItems.project_id, projectId), eq(wbsItems.parent_id, newParentId), gte(wbsItems.display_order, newDisplayOrder))
+
     await db
       .update(wbsItems)
       .set({ display_order: sql`${wbsItems.display_order} + 1` })
-      .where(
-        and(
-          eq(wbsItems.project_id, projectId),
-          eq(wbsItems.parent_id, newParentId),
-          gte(wbsItems.display_order, newDisplayOrder)
-        )
-      )
+      .where(shiftCondition)
 
-    // Update the moved item's parent_id and display_order
+    // Recompute level from parent chain
+    let newLevel = 1
+    if (newParentId !== null) {
+      const allItems = await db.select({ id: wbsItems.id, parent_id: wbsItems.parent_id }).from(wbsItems).where(eq(wbsItems.project_id, projectId))
+      const parentMap = new Map(allItems.map(i => [i.id, i.parent_id ?? null]))
+      let cur: number | null = newParentId
+      while (cur !== null) { newLevel++; cur = parentMap.get(cur) ?? null }
+    }
+
+    // Update the moved item's parent_id, display_order, and level
     await db
       .update(wbsItems)
       .set({
         parent_id: newParentId,
         display_order: newDisplayOrder,
+        level: newLevel,
       })
       .where(eq(wbsItems.id, itemId))
 

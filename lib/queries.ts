@@ -26,12 +26,14 @@ import {
   auditLog,
   wbsItems,
   wbsTaskAssignments,
+  wbsDependencies,
   archTracks,
   archNodes,
   archTeamStatus,
   onboardingPhases,
   onboardingSteps,
   projectMembers,
+  type WbsDependency,
 } from '../db/schema';
 import { eq, and, inArray, ne, gt, or, desc, asc } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
@@ -1265,6 +1267,17 @@ export async function getWbsTaskAssignments(
     .from(wbsTaskAssignments)
     .innerJoin(wbsItems, eq(wbsTaskAssignments.wbs_item_id, wbsItems.id))
     .where(eq(wbsItems.project_id, projectId));
+}
+
+/**
+ * Returns WBS dependency edges for a project.
+ * Used by Phase 85 WBS overhaul to render Gantt dependency arrows.
+ */
+export async function getWbsDependencies(projectId: number): Promise<WbsDependency[]> {
+  return db
+    .select()
+    .from(wbsDependencies)
+    .where(eq(wbsDependencies.project_id, projectId));
 }
 
 /**
