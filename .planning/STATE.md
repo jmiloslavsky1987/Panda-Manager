@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: executing
-stopped_at: Checkpoint reached — 84.1-04 awaiting human verification
-last_updated: "2026-05-07T18:20:58.431Z"
-last_activity: 2026-05-06 — Phase 84.1 Plan 03 COMPLETE — Merge button in QueueItemRow + handleMerge() in ReviewQueue, MERGE-02 GREEN
+stopped_at: Completed 85-00-PLAN.md
+last_updated: "2026-05-07T20:22:00.000Z"
+last_activity: 2026-05-07 — Phase 85 Plan 00 COMPLETE — TDD Wave 0 stubs for WBS MS-Project style overhaul (6 test files, WBS-01-04 gated)
 progress:
-  total_phases: 11
+  total_phases: 13
   completed_phases: 11
-  total_plans: 56
-  completed_plans: 56
+  total_plans: 62
+  completed_plans: 58
   percent: 99
 ---
 
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 84.1 of 85 (Discovery Scan Merge/Update Flow — Plans 84.1-00, 84.1-01, 84.1-02, and 84.1-03 COMPLETE, Plan 84.1-04 pending)
-Status: In Progress — Plan 84.1-03 (UI Merge button) complete. Plan 84.1-04 implements end-to-end wiring and verification.
-Last activity: 2026-05-06 — Phase 84.1 Plan 03 COMPLETE — Merge button in QueueItemRow + handleMerge() in ReviewQueue, MERGE-02 GREEN
+Phase: 85 of 85 (WBS MS-Project Style Overhaul — Plan 00 COMPLETE, Plans 01-05 pending)
+Status: In Progress — Plan 85-00 (TDD Wave 0 stubs) complete. Plan 85-01 implements WBS route fixes + reorder null parentId.
+Last activity: 2026-05-07 — Phase 85 Plan 00 COMPLETE — TDD Wave 0 stubs for WBS MS-Project style overhaul (6 test files, WBS-01-04 gated)
 
 Progress: [██████████] 99%
 
@@ -209,6 +209,14 @@ Progress: [██████████] 99%
 - [84.1-03] Dismissed (readonly) QueueItemRow items intentionally omit onMerge — readonly prop prevents action row rendering; double-protection is clean
 - [84.1-03] onMerge optional in QueueItemRowProps — backward-compatible with all existing QueueItemRow callers that don't pass the prop
 - [84.1-03] Entity merge UI pattern: {item.entity_match && onMerge && (<button>)} checks both data presence and handler presence before rendering Merge button
+- [85-00] Level-1 guards already removed from WBS routes before plan execution — wbs-crud.test.ts tests expect 200/204 and are GREEN immediately (pre-work occurred)
+- [85-00] migration 0050_wbs_overhaul.sql and schema additions (wbsDependencies, percent_complete, duration_days, assignee) pre-existed — wbs-overhaul.test.ts all GREEN
+- [85-00] wbs-reorder.test.ts RED because route returns 500 on null parentId (not missing route) — gates Plan 85-01 null parentId fix
+- [85-00] requireProjectRole mocked alongside requireSession in wbs-crud.test.ts for backward compat with both auth patterns in WBS routes
+- [85-01] isNull() from drizzle-orm required for nullable parent_id comparisons — eq(col, null) silently produces incorrect SQL; import isNull alongside eq/and in route files
+- [85-01] Level recomputation walks parentMap built from full project item list — single query, no recursive DB calls; newLevel starts at 1, increments for each hop to root
+- [85-01] drizzle-orm mock in vitest must include isNull: vi.fn() whenever route imports isNull — missing mock causes runtime 500 in tests
+- [85-01] mockReturnValueOnce/mockReturnValue sequence for multi-select test mocks: first call uses .limit() chain (item fetch), subsequent calls use direct .where() await (bulk fetch)
 
 ### Blockers/Concerns
 
@@ -216,6 +224,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-05-06T17:18:39.023Z
-Stopped at: Checkpoint reached — 84.1-04 awaiting human verification
+Last session: 2026-05-07T20:21:34.995Z
+Stopped at: Completed 85-01-PLAN.md
 Resume file: None
