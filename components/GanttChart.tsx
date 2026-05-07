@@ -31,6 +31,7 @@ export interface GanttWbsRow {
   tasks: GanttTask[]
   startDate?: string | null
   dueDate?: string | null
+  percent_complete?: number
 }
 
 interface GanttChartProps {
@@ -39,6 +40,46 @@ interface GanttChartProps {
   milestones?: GanttMilestone[]
   viewMode?: ViewMode
   projectId?: number
+  wbsDependencies?: Array<{ id: number; from_item_id: number; to_item_id: number; dependency_type: string }>
+}
+
+// ── Pure functions: WBS dependency arrows + progress (exported for TDD) ───────
+
+export type DependencyArrow = {
+  id: number
+  x1: number; y1: number
+  x2: number; y2: number
+  type: string
+}
+
+type RowPosition = { rowY: number; barLeft: number; barRight: number }
+
+export function buildWbsDependencyArrows(
+  deps: Array<{ id: number; from_item_id: number; to_item_id: number; dependency_type: string }>,
+  rowPositions: Map<number, RowPosition>,
+  rowHeight: number = 40
+): DependencyArrow[] {
+  return deps.flatMap(dep => {
+    const from = rowPositions.get(dep.from_item_id)
+    const to = rowPositions.get(dep.to_item_id)
+    if (!from || !to) return []
+    const midY = rowHeight / 2
+    const x1 = dep.dependency_type === 'SS' ? from.barLeft : from.barRight
+    const y1 = from.rowY + midY
+    const x2 = to.barLeft  // both FS and SS arrive at left edge of to-bar
+    const y2 = to.rowY + midY
+    return [{ id: dep.id, x1, y1, x2, y2, type: dep.dependency_type }]
+  })
+}
+
+export function wbsRowToProgress(item: { percent_complete?: number | null; status?: string }): number {
+  if (item.percent_complete !== undefined && item.percent_complete !== null) {
+    return item.percent_complete
+  }
+  // Fallback for legacy rows without percent_complete
+  if (item.status === 'complete') return 100
+  if (item.status === 'in_progress') return 50
+  return 0
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -289,6 +330,7 @@ export default function GanttChart({
   viewMode: initVM = 'Month',
   milestones = [],
   projectId,
+  wbsDependencies = [],
 }: GanttChartProps) {
   const [viewMode, setViewMode] = useState<ViewMode>(initVM)
   // Start with all WBS groups expanded so task date inputs are immediately visible
@@ -422,6 +464,11 @@ export default function GanttChart({
     }
     return result
   }, [wbsSummaryRows, expanded])
+
+  // ── WBS row positions for dependency arrows ───────────────────────────────
+  // Computed after rows+barGeometry — wbsRowPositions is used to build SVG arrows
+
+  // (barLeft/barWidth are defined further below; we compute positions lazily at render)
 
   // ── Timeline bounds ───────────────────────────────────────────────────────
 
@@ -1093,92 +1140,114 @@ export default function GanttChart({
                 )
               })}
 
-              {/* Data rows */}
-              {rows.map((row, i) => {
-                if (row.kind === 'section-header') {
-                  return (
-                    <div key={`rsec-${row.label}-${i}`} className="relative border-b border-zinc-300 bg-zinc-100"
-                      style={{ height: ROW_H }} />
-                  )
-                }
+              {/* Data rows — collect WBS row positions for dependency arrows */}
+              {(() => {
+                // Collect WBS item positions during row render for SVG dependency arrows
+                const wbsRowPositions = new Map<number, { rowY: number; barLeft: number; barRight: number }>()
+                let rowYOffset = 0
 
-                const color = row.colorIdx === -1 ? UNASSIGNED_COLOR : COLORS[row.colorIdx]
+                const renderedRows = rows.map((row, i) => {
+                  const rowY = rowYOffset
+                  rowYOffset += ROW_H
 
-                if (row.kind === 'wbs') {
-                  // Use task-derived span OR manually-set WBS dates OR override
-                  const wbsNumId2 = row.wbsId !== 'unassigned' ? (row.wbsId as number) : null
-                  const dateOverride2 = wbsNumId2 !== null ? wbsDateOverride.get(wbsNumId2) : undefined
-                  const effectiveStart = row.spanStart ?? (dateOverride2?.start ? parseDate(dateOverride2.start) : null)
-                  const effectiveEnd   = row.spanEnd   ?? (dateOverride2?.end   ? parseDate(dateOverride2.end)   : null)
-
-                  if (effectiveStart === null || effectiveEnd === null) {
-                    // No dates at all — empty row
+                  if (row.kind === 'section-header') {
                     return (
-                      <div key={`rwbs-${row.wbsId}-${i}`} className="relative border-b border-zinc-100"
-                        style={{ height: ROW_H, background: '#fafafa' }} />
-                    )
-                  } else {
-                    // Span bar showing date range
-                    const left  = barLeft(effectiveStart)
-                    const width = barWidth(effectiveStart, effectiveEnd)
-                    const childOriginals = row.tasks
-                      .filter(t => t.start && t.end)
-                      .map(t => ({ taskId: t.id, origStart: parseDate(t.start), origEnd: parseDate(t.end) }))
-                    // Ghost WBS span bar
-                    const ghostWbsBar = (() => {
-                      if (!activeBaselineSnapshot) return null
-                      const baselineStarts = row.tasks
-                        .map(t => activeBaselineSnapshot[t.id]?.start)
-                        .filter((s): s is string => Boolean(s))
-                        .map(s => parseDate(s))
-                      const baselineEnds = row.tasks
-                        .map(t => activeBaselineSnapshot[t.id]?.end)
-                        .filter((e): e is string => Boolean(e))
-                        .map(e => parseDate(e))
-                      if (!baselineStarts.length || !baselineEnds.length) return null
-                      const ghostStart = new Date(Math.min(...baselineStarts.map(d => d.getTime())))
-                      const ghostEnd = new Date(Math.max(...baselineEnds.map(d => d.getTime())))
-                      return (
-                        <div
-                          className="absolute rounded pointer-events-none"
-                          style={{
-                            left: barLeft(ghostStart),
-                            width: barWidth(ghostStart, ghostEnd),
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            height: 8,
-                            background: color.bar,
-                            opacity: 0.3,
-                            zIndex: 3,
-                          }}
-                        />
-                      )
-                    })()
-                    return (
-                      <div key={`rwbs-${row.wbsId}-${i}`} className="relative border-b border-zinc-100"
-                        style={{ height: ROW_H, background: '#fafafa' }}>
-                        {ghostWbsBar}
-                        <div
-                          className="absolute rounded flex items-center cursor-grab"
-                          style={{ left, width, top: '50%', transform: 'translateY(-50%)', height: 8, background: color.bar, opacity: 0.25, zIndex: 5 }}
-                          onMouseDown={e => onBarMouseDown(e, `wbs-${row.wbsId}`, effectiveStart, effectiveEnd, childOriginals)}>
-                          {/* Left edge handle */}
-                          <div
-                            className="absolute top-0 bottom-0 w-1.5 rounded-l cursor-ew-resize hover:bg-black/20 z-20"
-                            style={{ left: 0 }}
-                            onMouseDown={e => onEdgeMouseDown(e, `wbs-${row.wbsId}`, effectiveStart, effectiveEnd, 'left', childOriginals)}
-                          />
-                          {/* Right edge handle */}
-                          <div
-                            className="absolute top-0 bottom-0 w-1.5 rounded-r cursor-ew-resize hover:bg-black/20 z-20"
-                            style={{ right: 0 }}
-                            onMouseDown={e => onEdgeMouseDown(e, `wbs-${row.wbsId}`, effectiveStart, effectiveEnd, 'right', childOriginals)}
-                          />
-                        </div>
-                      </div>
+                      <div key={`rsec-${row.label}-${i}`} className="relative border-b border-zinc-300 bg-zinc-100"
+                        style={{ height: ROW_H }} />
                     )
                   }
-                }
+
+                  const color = row.colorIdx === -1 ? UNASSIGNED_COLOR : COLORS[row.colorIdx]
+
+                  if (row.kind === 'wbs') {
+                    // Use task-derived span OR manually-set WBS dates OR override
+                    const wbsNumId2 = row.wbsId !== 'unassigned' ? (row.wbsId as number) : null
+                    const dateOverride2 = wbsNumId2 !== null ? wbsDateOverride.get(wbsNumId2) : undefined
+                    const effectiveStart = row.spanStart ?? (dateOverride2?.start ? parseDate(dateOverride2.start) : null)
+                    const effectiveEnd   = row.spanEnd   ?? (dateOverride2?.end   ? parseDate(dateOverride2.end)   : null)
+
+                    if (effectiveStart === null || effectiveEnd === null) {
+                      // No dates at all — empty row
+                      return (
+                        <div key={`rwbs-${row.wbsId}-${i}`} className="relative border-b border-zinc-100"
+                          style={{ height: ROW_H, background: '#fafafa' }} />
+                      )
+                    } else {
+                      // Span bar showing date range
+                      const left  = barLeft(effectiveStart)
+                      const width = barWidth(effectiveStart, effectiveEnd)
+                      // Track position for SVG arrows
+                      if (wbsNumId2 !== null) {
+                        wbsRowPositions.set(wbsNumId2, { rowY, barLeft: left, barRight: left + width })
+                      }
+                      // Compute progress fill using percent_complete
+                      const wbsRowData = wbsRows.find(r => r.id === wbsNumId2)
+                      const progress = wbsRowData ? wbsRowToProgress(wbsRowData) : 0
+                      const childOriginals = row.tasks
+                        .filter(t => t.start && t.end)
+                        .map(t => ({ taskId: t.id, origStart: parseDate(t.start), origEnd: parseDate(t.end) }))
+                      // Ghost WBS span bar
+                      const ghostWbsBar = (() => {
+                        if (!activeBaselineSnapshot) return null
+                        const baselineStarts = row.tasks
+                          .map(t => activeBaselineSnapshot[t.id]?.start)
+                          .filter((s): s is string => Boolean(s))
+                          .map(s => parseDate(s))
+                        const baselineEnds = row.tasks
+                          .map(t => activeBaselineSnapshot[t.id]?.end)
+                          .filter((e): e is string => Boolean(e))
+                          .map(e => parseDate(e))
+                        if (!baselineStarts.length || !baselineEnds.length) return null
+                        const ghostStart = new Date(Math.min(...baselineStarts.map(d => d.getTime())))
+                        const ghostEnd = new Date(Math.max(...baselineEnds.map(d => d.getTime())))
+                        return (
+                          <div
+                            className="absolute rounded pointer-events-none"
+                            style={{
+                              left: barLeft(ghostStart),
+                              width: barWidth(ghostStart, ghostEnd),
+                              top: '50%',
+                              transform: 'translateY(-50%)',
+                              height: 8,
+                              background: color.bar,
+                              opacity: 0.3,
+                              zIndex: 3,
+                            }}
+                          />
+                        )
+                      })()
+                      return (
+                        <div key={`rwbs-${row.wbsId}-${i}`} className="relative border-b border-zinc-100"
+                          style={{ height: ROW_H, background: '#fafafa' }}>
+                          {ghostWbsBar}
+                          <div
+                            className="absolute rounded flex items-center cursor-grab overflow-hidden"
+                            style={{ left, width, top: '50%', transform: 'translateY(-50%)', height: 8, background: color.bar, opacity: 0.25, zIndex: 5 }}
+                            onMouseDown={e => onBarMouseDown(e, `wbs-${row.wbsId}`, effectiveStart, effectiveEnd, childOriginals)}>
+                            {/* Progress fill — uses percent_complete */}
+                            {progress > 0 && (
+                              <div
+                                className="absolute top-0 left-0 h-full rounded-l pointer-events-none"
+                                style={{ width: `${Math.min(100, progress)}%`, background: color.bar, opacity: 3 }}
+                              />
+                            )}
+                            {/* Left edge handle */}
+                            <div
+                              className="absolute top-0 bottom-0 w-1.5 rounded-l cursor-ew-resize hover:bg-black/20 z-20"
+                              style={{ left: 0 }}
+                              onMouseDown={e => onEdgeMouseDown(e, `wbs-${row.wbsId}`, effectiveStart, effectiveEnd, 'left', childOriginals)}
+                            />
+                            {/* Right edge handle */}
+                            <div
+                              className="absolute top-0 bottom-0 w-1.5 rounded-r cursor-ew-resize hover:bg-black/20 z-20"
+                              style={{ right: 0 }}
+                              onMouseDown={e => onEdgeMouseDown(e, `wbs-${row.wbsId}`, effectiveStart, effectiveEnd, 'right', childOriginals)}
+                            />
+                          </div>
+                        </div>
+                      )
+                    }
+                  }
 
                 // task row
                 const { start, end } = resolvedDates(row.task)
@@ -1249,7 +1318,41 @@ export default function GanttChart({
                     </div>
                   </div>
                 )
-              })}
+                })
+
+                // Build dependency arrows from collected WBS row positions
+                const depArrows = buildWbsDependencyArrows(wbsDependencies, wbsRowPositions, ROW_H)
+
+                return (
+                  <>
+                    {renderedRows}
+                    {/* SVG overlay for WBS dependency arrows */}
+                    {depArrows.length > 0 && (
+                      <svg
+                        className="absolute top-0 left-0 pointer-events-none"
+                        style={{ width: Math.max(totalWidth, 800), height: rows.length * ROW_H }}
+                      >
+                        <defs>
+                          <marker id="dep-arrow" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
+                            <polygon points="0 0, 6 2, 0 4" fill="#6366f1" opacity={0.7} />
+                          </marker>
+                        </defs>
+                        {depArrows.map(arrow => (
+                          <path
+                            key={arrow.id}
+                            d={`M ${arrow.x1} ${arrow.y1} C ${arrow.x1 + 20} ${arrow.y1}, ${arrow.x2 - 20} ${arrow.y2}, ${arrow.x2} ${arrow.y2}`}
+                            fill="none"
+                            stroke="#6366f1"
+                            strokeWidth={1.5}
+                            opacity={0.6}
+                            markerEnd="url(#dep-arrow)"
+                          />
+                        ))}
+                      </svg>
+                    )}
+                  </>
+                )
+              })()}
             </div>
           </div>
         </div>
