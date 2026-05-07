@@ -365,7 +365,7 @@ Plans:
 | 83. Architecture Sub-Capability Columns | 5/5 | Complete    | 2026-04-30 |
 | 84. Discovery Scan Hardening | 6/6 | Complete    | 2026-05-05 |
 | 84.1. Discovery Scan Merge/Update Flow | 5/5 | Complete    | 2026-05-07 |
-| 85. WBS MS Project-Style Overhaul | 3/6 | In Progress|  |
+| 85. WBS MS Project-Style Overhaul | 4/6 | In Progress|  |
 | 86. Multi-User, SSO & AWS Readiness | 0/0 | Planned     | — |
 
 ---
@@ -376,7 +376,7 @@ Plans:
 **Goal:** Replace the current WBS tree UI with an MS Project-style spreadsheet grid supporting inline cell editing, keyboard navigation (Tab/Enter), indent/outdent hierarchy management, predecessor dependencies (FS and SS), duration, percent complete, and resource assignment. Gantt tab updated to render dependency arrows and use percent_complete for progress bars. Two-track structure (ADR/Biggy) preserved.
 **Depends on:** Phase 84.1
 **Requirements:** WBS-01, WBS-02, WBS-03, WBS-04
-**Plans:** 3/6 plans executed
+**Plans:** 4/6 plans executed
 
 Plans:
 - [ ] 85-00-PLAN.md — Wave 0: RED test stubs for all requirements (WBS-01 through WBS-04)
