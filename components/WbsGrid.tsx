@@ -378,6 +378,7 @@ export function WbsGrid(props: WbsGridProps) {
       <div className="min-w-max">
         {/* Header row */}
         <div className="flex border-b bg-muted/50 text-xs font-medium text-muted-foreground">
+          <div className="w-10 px-2 py-1.5 shrink-0 text-right">#</div>
           {COLUMNS.map(col => (
             <div key={col.key} className={`${col.width} px-2 py-1.5 shrink-0`}>
               {col.label}
@@ -394,6 +395,9 @@ export function WbsGrid(props: WbsGridProps) {
             onKeyDown={(e) => handleGridKeyDown(e, rowIdx)}
             onClick={() => setSelectedRowIdx(rowIdx)}
           >
+            <div className="w-10 px-2 py-1 shrink-0 text-right text-xs text-muted-foreground/70 self-center">
+              {rowIdx + 1}
+            </div>
             {COLUMNS.map((col) => {
               const isActive = focusedCell?.rowIdx === rowIdx && focusedCell?.col === col.key
               const depth = computeDepth(item.id)
