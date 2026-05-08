@@ -212,20 +212,46 @@ export function WbsGrid(props: WbsGridProps) {
     const value = editValueRef.current
     const col = focusedCell.col
 
-    // Predecessors column — optimistic update + delegate to parent
+    // Predecessors column — handle directly (delete existing, post new) with visible feedback
     if (col === 'predecessors') {
       const predIds = parsePredecessors(value, rowNumberMap)
-      const newDeps = predIds.map(fromId => ({
+      // Skip self-references
+      const validPredIds = predIds.filter(id => id !== item.id)
+      const newDeps = validPredIds.map(fromId => ({
         from_item_id: fromId,
         to_item_id: item.id,
-        dependency_type: 'FS',
+        dependency_type: 'FS' as const,
       }))
-      // Optimistic: replace any existing deps where this item is the to_item_id
+
+      // Optimistic update: replace any existing deps where this item is the to_item_id
+      const existingForItem = localDeps.filter(d => d.to_item_id === item.id)
       setLocalDeps(prev => [
         ...prev.filter(d => d.to_item_id !== item.id),
         ...newDeps.map((d, idx) => ({ id: -(Date.now() + idx), ...d })),
       ])
-      onDependenciesChange(item.id, newDeps)
+
+      try {
+        // Delete existing deps targeting this item (use the freshest known list)
+        for (const dep of existingForItem) {
+          if (dep.id < 0) continue  // skip optimistic temp entries
+          const r = await fetch(`/api/projects/${projectId}/wbs/dependencies/${dep.id}`, { method: 'DELETE' })
+          if (!r.ok) throw new Error(`DELETE ${dep.id} → ${r.status}: ${await r.text()}`)
+        }
+        // Insert new deps
+        for (const dep of newDeps) {
+          const r = await fetch(`/api/projects/${projectId}/wbs/dependencies`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dep),
+          })
+          if (!r.ok) throw new Error(`POST → ${r.status}: ${await r.text()}`)
+        }
+        if (newDeps.length > 0) toast.success(`Saved ${newDeps.length} predecessor${newDeps.length > 1 ? 's' : ''}`)
+        router.refresh()
+      } catch (err) {
+        toast.error(`Predecessor save failed: ${err instanceof Error ? err.message : String(err)}`)
+        router.refresh()  // revert optimistic state from server
+      }
       return
     }
 
