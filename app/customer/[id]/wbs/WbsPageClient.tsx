@@ -6,18 +6,24 @@ import { toast } from 'sonner'
 import { WbsGrid } from '@/components/WbsGrid'
 import type { WbsGridItem, WbsDependencyItem } from '@/components/WbsGrid.types'
 
+type WbsTrack = 'ADR' | 'Biggy' | 'Incident Prevention'
+
 interface WbsPageClientProps {
   projectId: number
   adrItems: WbsGridItem[]
   biggyItems: WbsGridItem[]
+  incidentPreventionItems: WbsGridItem[]
   dependencies: WbsDependencyItem[]
 }
 
-export function WbsPageClient({ projectId, adrItems, biggyItems, dependencies }: WbsPageClientProps) {
+export function WbsPageClient({ projectId, adrItems, biggyItems, incidentPreventionItems, dependencies }: WbsPageClientProps) {
   const router = useRouter()
-  const [activeTrack, setActiveTrack] = useState<'ADR' | 'Biggy'>('ADR')
+  const [activeTrack, setActiveTrack] = useState<WbsTrack>('ADR')
 
-  const items = activeTrack === 'ADR' ? adrItems : biggyItems
+  const items =
+    activeTrack === 'ADR' ? adrItems
+    : activeTrack === 'Biggy' ? biggyItems
+    : incidentPreventionItems
   const trackItemIds = new Set(items.map(i => i.id))
   const trackDeps = dependencies.filter(
     d => trackItemIds.has(d.from_item_id) && trackItemIds.has(d.to_item_id)
@@ -103,20 +109,18 @@ export function WbsPageClient({ projectId, adrItems, biggyItems, dependencies }:
   return (
     <div className="flex flex-col gap-4">
       <div className="flex gap-2">
-        <button
-          onClick={() => setActiveTrack('ADR')}
-          className={`px-4 py-2 rounded ${activeTrack === 'ADR' ? 'bg-indigo-600 text-white' : 'bg-gray-100'}`}
-        >
-          ADR
-        </button>
-        <button
-          onClick={() => setActiveTrack('Biggy')}
-          className={`px-4 py-2 rounded ${activeTrack === 'Biggy' ? 'bg-indigo-600 text-white' : 'bg-gray-100'}`}
-        >
-          Biggy
-        </button>
+        {(['ADR', 'Biggy', 'Incident Prevention'] as const).map(track => (
+          <button
+            key={track}
+            onClick={() => setActiveTrack(track)}
+            className={`px-4 py-2 rounded ${activeTrack === track ? 'bg-indigo-600 text-white' : 'bg-gray-100'}`}
+          >
+            {track}
+          </button>
+        ))}
       </div>
       <WbsGrid
+        key={activeTrack}
         items={items}
         dependencies={trackDeps}
         projectId={projectId}

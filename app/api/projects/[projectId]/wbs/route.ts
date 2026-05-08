@@ -12,7 +12,7 @@ const CreateWbsItemSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   parent_id: z.number().int().nullable().optional(),
   level: z.number().int().min(1),
-  track: z.enum(['ADR', 'Biggy']),
+  track: z.enum(['ADR', 'Biggy', 'Incident Prevention']),
   duration_days: z.number().int().nullable().optional(),
   percent_complete: z.number().int().min(0).max(100).optional(),
   assignee: z.string().nullable().optional(),

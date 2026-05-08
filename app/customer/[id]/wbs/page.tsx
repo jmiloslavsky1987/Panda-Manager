@@ -13,9 +13,10 @@ export default async function WbsPage({ params }: { params: Promise<{ id: string
   const { id } = await params
   const projectId = parseInt(id, 10)
 
-  const [adrItems, biggyItems, deps] = await Promise.all([
+  const [adrItems, biggyItems, incidentPreventionItems, deps] = await Promise.all([
     getWbsItems(projectId, 'ADR'),
     getWbsItems(projectId, 'Biggy'),
+    getWbsItems(projectId, 'Incident Prevention'),
     getWbsDependencies(projectId).catch(() => []),
   ])
 
@@ -25,6 +26,7 @@ export default async function WbsPage({ params }: { params: Promise<{ id: string
         projectId={projectId}
         adrItems={adrItems}
         biggyItems={biggyItems}
+        incidentPreventionItems={incidentPreventionItems}
         dependencies={deps}
       />
     </div>
