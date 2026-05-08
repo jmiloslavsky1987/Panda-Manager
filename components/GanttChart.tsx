@@ -27,7 +27,7 @@ export interface GanttWbsRow {
   colorIdx: number
   level: number
   parentId: number | null
-  track?: 'ADR' | 'Biggy' | 'Incident Prevention'
+  track?: 'ADR' | 'Biggy' | 'Incident Prevention' | 'Incident Prevention'
   tasks: GanttTask[]
   startDate?: string | null
   dueDate?: string | null
@@ -145,7 +145,7 @@ type WbsSummaryRow = {
   level: number
   parentWbsId: number | null
   hasChildren: boolean   // true if any WBS item lists this as parentId
-  track?: 'ADR' | 'Biggy'
+  track?: 'ADR' | 'Biggy' | 'Incident Prevention'
   tasks: GanttTask[]
   spanStart: Date | null
   spanEnd: Date | null
