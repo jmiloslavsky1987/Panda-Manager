@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useMemo, useCallback } from 'react'
+import { useRef, useState, useMemo, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import type {
@@ -80,6 +80,58 @@ export function predecessorDisplay(
 }
 
 /**
+ * Date helpers — work with YYYY-MM-DD strings in local time.
+ */
+export function addDays(dateStr: string, days: number): string {
+  const d = new Date(dateStr + 'T00:00:00')
+  d.setDate(d.getDate() + days)
+  return d.toISOString().split('T')[0]
+}
+
+export function diffDays(start: string, due: string): number {
+  const s = new Date(start + 'T00:00:00')
+  const e = new Date(due + 'T00:00:00')
+  return Math.round((e.getTime() - s.getTime()) / 86400000)
+}
+
+/**
+ * computeDateFields: given an item and the field being edited with its new value,
+ * return the multi-field update that keeps start/duration/due consistent.
+ *
+ * Rules:
+ *  - edit duration + start set → recompute due
+ *  - edit due + start set → recompute duration
+ *  - edit start + duration set → recompute due (preserve duration)
+ *  - edit start + due set (no duration) → recompute duration
+ */
+export function computeDateFields(
+  item: { start_date: string | null; due_date: string | null; duration_days: number | null },
+  field: 'start_date' | 'due_date' | 'duration_days',
+  newValue: string | number | null
+): Record<string, string | number | null> {
+  const next = {
+    start_date: item.start_date,
+    due_date: item.due_date,
+    duration_days: item.duration_days,
+    [field]: newValue,
+  } as { start_date: string | null; due_date: string | null; duration_days: number | null }
+  const out: Record<string, string | number | null> = { [field]: newValue }
+
+  if (field === 'duration_days' && next.start_date && next.duration_days != null) {
+    out.due_date = addDays(next.start_date, next.duration_days)
+  } else if (field === 'due_date' && next.start_date && next.due_date) {
+    out.duration_days = diffDays(next.start_date, next.due_date)
+  } else if (field === 'start_date' && next.start_date) {
+    if (next.duration_days != null) {
+      out.due_date = addDays(next.start_date, next.duration_days)
+    } else if (next.due_date) {
+      out.duration_days = diffDays(next.start_date, next.due_date)
+    }
+  }
+  return out
+}
+
+/**
  * parsePredecessors: Parse "3,4" → array of item IDs using rowNumberMap.
  */
 export function parsePredecessors(input: string, rowNumberMap: Map<number, number>): number[] {
@@ -97,11 +149,16 @@ export function WbsGrid(props: WbsGridProps) {
   const router = useRouter()
 
   const [localItems, setLocalItems] = useState<WbsGridItem[]>(items)
+  const [localDeps, setLocalDeps] = useState<WbsDependencyItem[]>(dependencies)
   const [focusedCell, setFocusedCell] = useState<FocusedCell>(null)
   const [selectedRowIdx, setSelectedRowIdx] = useState<number | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   // Track the current editing value separately from item data
   const editValueRef = useRef<string>('')
+
+  // Sync optimistic state when server-fetched props change (after router.refresh)
+  useEffect(() => { setLocalItems(items) }, [items])
+  useEffect(() => { setLocalDeps(dependencies) }, [dependencies])
 
   const flatItems = useMemo(() => flattenTree(localItems), [localItems])
   const rowNumberMap = useMemo(() => buildRowNumberMap(localItems), [localItems])
@@ -126,43 +183,87 @@ export function WbsGrid(props: WbsGridProps) {
 
   // ── Save cell function ────────────────────────────────────────────────────────
 
-  async function saveCell(itemId: number, field: string, value: unknown) {
+  async function saveCellMulti(itemId: number, fields: Record<string, unknown>): Promise<boolean> {
     const res = await fetch(`/api/projects/${projectId}/wbs/${itemId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ [field]: value }),
+      body: JSON.stringify(fields),
     })
     if (!res.ok) {
       toast.error('Save failed — please try again')
       router.refresh()
+      return false
     }
+    return true
+  }
+
+  async function undoNameChange(itemId: number, priorName: string) {
+    setLocalItems(prev => prev.map(i => i.id === itemId ? { ...i, name: priorName } : i))
+    await saveCellMulti(itemId, { name: priorName })
+    router.refresh()
   }
 
   // ── Get current input value and save ──────────────────────────────────────────
 
-  function saveCurrentCell() {
+  async function saveCurrentCell() {
     if (!focusedCell) return
     const item = flatItems[focusedCell.rowIdx]
     if (!item) return
     const value = editValueRef.current
-    // Optimistic update
-    setLocalItems(prev => prev.map(i =>
-      i.id === item.id
-        ? { ...i, [focusedCell.col]: value === '' ? null : focusedCell.col === 'duration_days' || focusedCell.col === 'percent_complete' ? Number(value) : value }
-        : i
-    ))
-    if (focusedCell.col !== 'predecessors') {
-      const coercedValue = value === '' ? null : (focusedCell.col === 'duration_days' || focusedCell.col === 'percent_complete') ? Number(value) : value
-      saveCell(item.id, focusedCell.col, coercedValue)
-    } else {
-      // Predecessors column — parse and call onDependenciesChange
+    const col = focusedCell.col
+
+    // Predecessors column — optimistic update + delegate to parent
+    if (col === 'predecessors') {
       const predIds = parsePredecessors(value, rowNumberMap)
       const newDeps = predIds.map(fromId => ({
         from_item_id: fromId,
         to_item_id: item.id,
         dependency_type: 'FS',
       }))
+      // Optimistic: replace any existing deps where this item is the to_item_id
+      setLocalDeps(prev => [
+        ...prev.filter(d => d.to_item_id !== item.id),
+        ...newDeps.map((d, idx) => ({ id: -(Date.now() + idx), ...d })),
+      ])
       onDependenciesChange(item.id, newDeps)
+      return
+    }
+
+    // Coerce value based on column type
+    let coerced: string | number | null
+    if (value === '') {
+      coerced = null
+    } else if (col === 'duration_days' || col === 'percent_complete') {
+      coerced = Number(value)
+    } else {
+      coerced = value
+    }
+
+    // Compute multi-field update for date/duration fields, single-field otherwise
+    const fields: Record<string, string | number | null> =
+      (col === 'start_date' || col === 'due_date' || col === 'duration_days')
+        ? computeDateFields(item, col, coerced)
+        : { [col]: coerced }
+
+    // Skip if no actual change (avoid spurious toasts)
+    const isUnchanged = (item as Record<string, unknown>)[col] === coerced
+    const priorName = col === 'name' ? item.name : null
+
+    // Optimistic update
+    setLocalItems(prev => prev.map(i =>
+      i.id === item.id ? { ...i, ...fields } as WbsGridItem : i
+    ))
+
+    if (isUnchanged) return  // no-op edit, don't bother PATCHing or toasting
+
+    const ok = await saveCellMulti(item.id, fields)
+    if (ok && priorName !== null && coerced !== priorName) {
+      toast('Renamed', {
+        action: {
+          label: 'Undo',
+          onClick: () => undoNameChange(item.id, priorName),
+        },
+      })
     }
   }
 
@@ -220,7 +321,7 @@ export function WbsGrid(props: WbsGridProps) {
 
   function getCellDisplayValue(item: WbsGridItem, col: ColKey): string {
     if (col === 'predecessors') {
-      return predecessorDisplay(item.id, dependencies, rowNumberMap)
+      return predecessorDisplay(item.id, localDeps, rowNumberMap)
     }
     const val = item[col as keyof WbsGridItem]
     if (val === null || val === undefined) return ''
@@ -229,7 +330,7 @@ export function WbsGrid(props: WbsGridProps) {
 
   function getCellEditValue(item: WbsGridItem, col: ColKey): string {
     if (col === 'predecessors') {
-      return predecessorDisplay(item.id, dependencies, rowNumberMap)
+      return predecessorDisplay(item.id, localDeps, rowNumberMap)
     }
     const val = item[col as keyof WbsGridItem]
     if (val === null || val === undefined) return ''

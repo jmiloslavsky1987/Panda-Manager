@@ -27,10 +27,11 @@ export interface GanttWbsRow {
   colorIdx: number
   level: number
   parentId: number | null
-  track?: 'ADR' | 'Biggy'
+  track?: 'ADR' | 'Biggy' | 'Incident Prevention'
   tasks: GanttTask[]
   startDate?: string | null
   dueDate?: string | null
+  duration_days?: number | null
   percent_complete?: number
 }
 
@@ -343,6 +344,13 @@ export default function GanttChart({
     const m = new Map<number, { start: string; end: string }>()
     wbsRows.forEach(r => {
       if (r.startDate || r.dueDate) m.set(r.id, { start: r.startDate ?? '', end: r.dueDate ?? '' })
+    })
+    return m
+  })
+  const [wbsDurationOverride, setWbsDurationOverride] = useState<Map<number, number | null>>(() => {
+    const m = new Map<number, number | null>()
+    wbsRows.forEach(r => {
+      if (r.duration_days !== undefined && r.duration_days !== null) m.set(r.id, r.duration_days)
     })
     return m
   })
@@ -943,6 +951,26 @@ export default function GanttChart({
                 })
               }
 
+              const durationVal = wbsNumId !== null ? wbsDurationOverride.get(wbsNumId) ?? null : null
+              const saveWbsDuration = (raw: string) => {
+                if (wbsNumId === null) return
+                const parsed = raw === '' ? null : Number(raw)
+                if (parsed !== null && (!Number.isFinite(parsed) || parsed < 0)) return
+                setWbsDurationOverride(prev => new Map(prev).set(wbsNumId, parsed))
+                const body: Record<string, string | number | null> = { duration_days: parsed }
+                // Auto-compute due_date when start_date is set and duration provided
+                if (parsed !== null && startVal) {
+                  const newEnd = fmtISO(addDays(parseDate(startVal), parsed))
+                  body.due_date = newEnd
+                  setWbsDateOverride(prev => new Map(prev).set(wbsNumId, { start: startVal, end: newEnd }))
+                }
+                fetch(`/api/projects/${projectId}/wbs/${wbsNumId}`, {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(body),
+                })
+              }
+
               return (
                 <div key={`lwbs-${row.wbsId}-${i}`}
                   className="flex items-center shrink-0 border-b border-zinc-100 font-medium hover:bg-zinc-100/60"
@@ -986,8 +1014,18 @@ export default function GanttChart({
                       <span className="text-xs text-zinc-400">{displayEnd ? fmtShort(displayEnd) : '—'}</span>
                     )}
                   </div>
-                  <div className="w-10 text-right shrink-0 pr-3 text-xs text-zinc-400">
-                    {displayStart && displayEnd ? fmtDuration(displayStart, displayEnd) : '—'}
+                  <div className="w-14 text-right shrink-0 pr-3 text-xs text-zinc-500">
+                    {wbsNumId !== null ? (
+                      <input type="number" min="0"
+                        value={durationVal ?? ''}
+                        placeholder={displayStart && displayEnd ? fmtDuration(displayStart, displayEnd).replace(/[^\d]/g, '') : '—'}
+                        onClick={e => e.stopPropagation()}
+                        onChange={e => saveWbsDuration(e.target.value)}
+                        className="w-full text-right text-xs text-zinc-500 border-0 bg-transparent cursor-pointer focus:outline-none"
+                      />
+                    ) : (
+                      <span>{displayStart && displayEnd ? fmtDuration(displayStart, displayEnd) : '—'}</span>
+                    )}
                   </div>
                   {activeBaselineSnapshot && (() => {
                     const baselineEnds = row.tasks

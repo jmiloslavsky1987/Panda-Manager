@@ -19,12 +19,14 @@ function addDays(dateStr: string, days: number): string {
 function mapDataToWbsRows(
   adrWbsItems: WbsItem[],
   biggyWbsItems: WbsItem[],
+  ipWbsItems: WbsItem[],
   tasks: Awaited<ReturnType<typeof getTasksForProject>>,
   assignments: Array<{ wbs_item_id: number; task_id: number }>,
   milestoneList: GanttMilestone[]
 ): GanttWbsRow[] {
-  const allWbsItems = [...adrWbsItems, ...biggyWbsItems]
+  const allWbsItems = [...adrWbsItems, ...biggyWbsItems, ...ipWbsItems]
   const adrItemIds = new Set(adrWbsItems.map(i => i.id))
+  const biggyItemIds = new Set(biggyWbsItems.map(i => i.id))
   const level1Items = allWbsItems.filter(item => item.level === 1)
 
   // Assign colorIdx to L1 items; L2/L3 inherit from their L1 ancestor
@@ -123,10 +125,13 @@ function mapDataToWbsRows(
       colorIdx: itemColorIdx.get(item.id) ?? 0,
       level: item.level,
       parentId: item.parent_id ?? null,
-      track: item.level === 1 ? (adrItemIds.has(item.id) ? 'ADR' : 'Biggy') : undefined,
+      track: item.level === 1
+        ? (adrItemIds.has(item.id) ? 'ADR' : biggyItemIds.has(item.id) ? 'Biggy' : 'Incident Prevention')
+        : undefined,
       tasks: ganttTasks,
       startDate: item.start_date ?? null,
       dueDate: item.due_date ?? null,
+      duration_days: item.duration_days ?? null,
       percent_complete: item.percent_complete ?? 0,
     }
   })
@@ -146,9 +151,10 @@ export default async function GanttPage({
 
   let wbsDeps: Awaited<ReturnType<typeof getWbsDependencies>> = []
   try {
-    const [adrWbs, biggyWbs, tasks, assignments, milestonesData, deps] = await Promise.all([
+    const [adrWbs, biggyWbs, ipWbs, tasks, assignments, milestonesData, deps] = await Promise.all([
       getWbsItems(projectId, 'ADR'),
       getWbsItems(projectId, 'Biggy'),
+      getWbsItems(projectId, 'Incident Prevention'),
       getTasksForProject(projectId),
       getWbsTaskAssignments(projectId),
       getMilestonesForProject(projectId),
@@ -164,8 +170,8 @@ export default async function GanttPage({
       status: m.status,
     }))
 
-    // Build WBS rows with assigned tasks — ADR first, then Biggy
-    wbsRows = mapDataToWbsRows(adrWbs, biggyWbs, tasks, assignments, milestones)
+    // Build WBS rows with assigned tasks — ADR, Biggy, then Incident Prevention
+    wbsRows = mapDataToWbsRows(adrWbs, biggyWbs, ipWbs, tasks, assignments, milestones)
 
     // Compute unassigned tasks — exclude any task already placed in a WBS row
     // (covers both junction-table assignments and phase-name fallback matches)
