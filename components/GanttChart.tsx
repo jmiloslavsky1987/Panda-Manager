@@ -168,7 +168,7 @@ type Row = WbsSummaryRow | TaskRow | SectionHeaderRow
 // ── Pure function: build WBS summary rows with span computation ───────────────
 
 export function buildWbsRows(
-  wbsItems: Array<{ id: number; name: string; colorIdx: number; level: number; parentId: number | null; track?: 'ADR' | 'Biggy'; tasks: GanttTask[] }>,
+  wbsItems: Array<{ id: number; name: string; colorIdx: number; level: number; parentId: number | null; track?: 'ADR' | 'Biggy' | 'Incident Prevention'; tasks: GanttTask[] }>,
   unassignedTasks: GanttTask[]
 ): WbsSummaryRow[] {
   // Compute actual tree depth from parent chain (DB `level` column can be stale/wrong)
