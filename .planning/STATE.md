@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: executing
-stopped_at: Completed 85.1-02-PLAN.md
-last_updated: "2026-05-12T15:08:00Z"
-last_activity: 2026-05-12 — Phase 85.1 Plan 02 complete (see 85.1-02-SUMMARY.md)
+stopped_at: Completed 85.1-03-PLAN.md
+last_updated: "2026-05-12T15:02:41.303Z"
+last_activity: 2026-05-12 — Phase 85.1 Plan 03 complete (see 85.1-03-SUMMARY.md)
 progress:
   total_phases: 14
   completed_phases: 12
   total_plans: 67
   completed_plans: 65
-  percent: 98
+  percent: 99
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 ## Current Position
 
 Phase: 85.1 of 85.1 (Screen Density and UX Overhaul — IN PROGRESS)
-Plan: 2 of 4 complete (85.1-02 done — shadcn primitive density sweep)
-Status: In progress — Plans 01-02 complete. Plans 03-04 pending (global chrome density, per-tab cleanup).
-Last activity: 2026-05-12 — Phase 85.1 Plan 02 complete (see 85.1-02-SUMMARY.md)
+Plan: 3 of 4 complete (85.1-03 done — global chrome density trim)
+Status: In progress — Plans 01-03 complete. Plan 04 pending (per-tab density sweep).
+Last activity: 2026-05-12 — Phase 85.1 Plan 03 complete (see 85.1-03-SUMMARY.md)
 
-Progress: [██████████] 98%
+Progress: [██████████] 99%
 
 ## v10.0 Roadmap Summary
 
@@ -236,6 +236,9 @@ Progress: [██████████] 98%
 - [85.1-02] Button size=lg transitioned from h-11 (44px) to h-10 (40px) — explicit height reduction per CONTEXT.md density spec
 - [85.1-02] DialogHeader and DialogFooter NOT modified — no padding in this repo's baseline; DialogContent p-4 plus gap-4 provides correct spacing
 - [85.1-02] textarea.tsx template-literal ${className || ''} pattern preserved (NOT converted to cn())
+- [85.1-03] KDS-04 PageBar amended from 44px to 36px — the only KDS spec change in Phase 85.1; documented inline in PageBar.tsx with comment referencing the amendment
+- [85.1-03] SubTabBar actual baseline was py-2 (not py-1.5 as stated in plan interfaces) — changed to py-1 per target spec; no behavioral regression
+- [85.1-03] WorkspaceTabs active tab className lacked text-sm — added alongside py-2->py-1.5 change for spec compliance
 
 ### Blockers/Concerns
 
@@ -243,6 +246,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-05-12T14:52:50.933Z
-Stopped at: Completed 85.1-01-PLAN.md
+Last session: 2026-05-12T15:02:41.301Z
+Stopped at: Completed 85.1-03-PLAN.md
 Resume file: None
