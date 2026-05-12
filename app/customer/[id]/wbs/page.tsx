@@ -21,7 +21,7 @@ export default async function WbsPage({ params }: { params: Promise<{ id: string
   ])
 
   return (
-    <div className="p-6">
+    <div className="p-4">
       <WbsPageClient
         projectId={projectId}
         adrItems={adrItems}

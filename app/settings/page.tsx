@@ -228,8 +228,8 @@ function SettingsPageInner() {
       : null;
 
   return (
-    <div className="p-8 max-w-5xl">
-      <h1 className="text-2xl font-semibold text-zinc-900 mb-6">Settings</h1>
+    <div className="p-6 max-w-5xl">
+      <h1 className="text-2xl font-semibold text-zinc-900 mb-4">Settings</h1>
 
       {gmailSuccessBanner && (
         <div className="mb-6 px-4 py-3 rounded bg-green-50 border border-green-200 text-green-800 text-sm flex items-center justify-between">

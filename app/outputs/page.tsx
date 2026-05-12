@@ -91,8 +91,8 @@ export default function OutputLibraryPage() {
   const allProjects = [...new Set(outputs.filter(o => o.project_id).map(o => `${o.project_id}:${o.project_name ?? o.project_id}`))];
 
   return (
-    <div className="p-6 max-w-5xl mx-auto" data-testid="output-library">
-      <div className="mb-6">
+    <div className="p-4 max-w-5xl mx-auto" data-testid="output-library">
+      <div className="mb-4">
         <h1 className="text-xl font-semibold text-zinc-900">Output Library</h1>
         <p className="text-sm text-zinc-500 mt-1">All generated skill outputs — filterable by account, skill type, and date.</p>
       </div>

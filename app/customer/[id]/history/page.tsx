@@ -40,7 +40,7 @@ export default async function HistoryPage({ params }: { params: Promise<{ id: st
   ].sort((a, b) => b.sortDate.getTime() - a.sortDate.getTime())
 
   return (
-    <div data-testid="history-tab" className="space-y-6">
+    <div data-testid="history-tab" className="space-y-3">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-zinc-900">Engagement History</h2>
         <Link

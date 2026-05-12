@@ -13,7 +13,7 @@ export default async function OverviewPage({
   const projectId = parseInt(id, 10)
 
   return (
-    <div className="space-y-6 py-4">
+    <div className="space-y-3 py-4">
       <div className="flex gap-4">
         <div className="w-[30%]">
           <HealthDashboard projectId={projectId} />

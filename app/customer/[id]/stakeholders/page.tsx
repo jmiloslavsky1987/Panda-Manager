@@ -108,7 +108,7 @@ export default async function StakeholdersPage({ params }: { params: Promise<{ i
   )
 
   return (
-    <div data-testid="stakeholders-tab" className="space-y-6">
+    <div data-testid="stakeholders-tab" className="space-y-3">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-zinc-900">Stakeholders</h2>
         <div className="flex items-center gap-2">

@@ -83,8 +83,8 @@ function SearchPageInner() {
   }, [query, filterAccount, filterType, filterFrom, filterTo, fetchResults]);
 
   return (
-    <div className="p-6">
-      <h1 className="text-lg font-semibold text-zinc-900 mb-6">
+    <div className="p-4">
+      <h1 className="text-lg font-semibold text-zinc-900 mb-4">
         {query ? `Search results for "${query}"` : 'Search'}
       </h1>
       <div className="grid grid-cols-4 gap-6">

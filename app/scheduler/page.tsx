@@ -28,9 +28,9 @@ export default async function SchedulerPage() {
   }
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-semibold text-zinc-900 mb-6">Scheduler</h1>
-      <p className="text-sm text-zinc-500 mb-6">
+    <div className="p-4">
+      <h1 className="text-2xl font-semibold text-zinc-900 mb-4">Scheduler</h1>
+      <p className="text-sm text-zinc-500 mb-4">
         Global scheduled jobs — not scoped to any project. Project-specific jobs are managed from each project&apos;s Skills tab.
       </p>
       <SchedulerJobTable initialJobs={jobs} />

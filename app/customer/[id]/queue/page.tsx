@@ -8,8 +8,8 @@ export default async function QueuePage({ params }: PageProps) {
   const { id } = await params
 
   return (
-    <div className="px-6 py-8">
-      <div className="mb-6">
+    <div className="px-4 py-4">
+      <div className="mb-4">
         <h1 className="text-2xl font-semibold text-zinc-900">Review Queue</h1>
         <p className="mt-1 text-sm text-zinc-500">
           Items discovered from external sources pending your review

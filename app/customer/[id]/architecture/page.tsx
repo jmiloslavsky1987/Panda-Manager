@@ -29,7 +29,7 @@ export default async function ArchitecturePage({ params }: { params: Promise<{ i
   }
 
   return (
-    <div data-testid="architecture-tab" className="space-y-6">
+    <div data-testid="architecture-tab" className="space-y-3">
       <WorkflowDiagram
         projectId={projectId}
         customer={project.customer}

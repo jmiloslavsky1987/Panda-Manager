@@ -44,7 +44,7 @@ export default async function PortfolioDashboardPage() {
 
       <PortfolioHeroStats projects={projects} weekMetrics={weekMetrics} />
 
-      <div className="px-8 py-6 space-y-6">
+      <div className="px-6 py-4 space-y-3">
         <PortfolioBriefingStrip data={briefingData} />
         <PortfolioProjectGrid projects={projects} />
       </div>

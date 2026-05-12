@@ -46,7 +46,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ id: s
 
   return (
     <div className="max-w-2xl">
-      <h2 className="text-lg font-semibold text-zinc-900 mb-6">Project Settings</h2>
+      <h2 className="text-lg font-semibold text-zinc-900 mb-4">Project Settings</h2>
       {project ? (
         <ProjectSettingsForm
           project={project}

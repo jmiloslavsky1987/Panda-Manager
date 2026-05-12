@@ -27,7 +27,7 @@ export default async function ArtifactsPage({ params }: { params: Promise<{ id: 
 
   return (
     <ArtifactsDropZone projectId={projectId}>
-      <div className="p-6 space-y-8" data-testid="artifacts-tab">
+      <div className="p-4 space-y-8" data-testid="artifacts-tab">
 
         {/* ── Intake Artifacts ───────────────────────────────────────────── */}
         <div>
