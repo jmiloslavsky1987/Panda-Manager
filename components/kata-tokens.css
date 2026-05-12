@@ -123,3 +123,35 @@
 
   --kata-icon-ai:                   var(--kata-purple-500);
 }
+
+/* ============================================================
+   5. SPACING SCALE — PALETTE LAYER
+   4px base, 8-step semantic scale. Per CONTEXT.md decisions.
+   Values match Tailwind v4 defaults so the override is transparent.
+   ============================================================ */
+
+:root {
+  --kata-space-1: 4px;
+  --kata-space-2: 8px;
+  --kata-space-3: 12px;
+  --kata-space-4: 16px;
+  --kata-space-5: 20px;
+  --kata-space-6: 24px;
+  --kata-space-7: 32px;
+  --kata-space-8: 48px;
+}
+
+/* ============================================================
+   6. SEMANTIC HEIGHT TOKENS
+   Row, input, and control heights expressed as intents.
+   Consumed via var(--kata-row-md) or via Tailwind h-* utilities
+   that resolve through the @theme inline mapping in globals.css.
+   ============================================================ */
+
+:root {
+  --kata-row-sm:   28px;  /* dense list rows, sidebar items, chips */
+  --kata-row-md:   32px;  /* default body row, table cell, input */
+  --kata-row-lg:   36px;  /* table header, PageBar, large input    */
+  --kata-input:    32px;  /* default form control                  */
+  --kata-input-lg: 36px;  /* larger form control                   */
+}
