@@ -44,6 +44,28 @@
   /* Typography fonts */
   --font-sans: var(--font-inter);
   --font-mono: var(--font-jbm);
+
+  /* ============================================================
+     Spacing scale — aliased to Kata tokens (Phase 85.1).
+     Values are IDENTICAL to Tailwind v4 defaults; the indirection is
+     transparent. Density comes from the sweep using denser classes
+     (e.g. `p-6` -> `p-4`), NOT from redefining what `p-4` means.
+     If you ever change these values, every utility class in the
+     codebase silently shifts — do not do that here.
+     ============================================================ */
+  --spacing-1:   var(--kata-space-1);   /* 4px  */
+  --spacing-2:   var(--kata-space-2);   /* 8px  */
+  --spacing-3:   var(--kata-space-3);   /* 12px */
+  --spacing-4:   var(--kata-space-4);   /* 16px */
+  --spacing-5:   var(--kata-space-5);   /* 20px */
+  --spacing-6:   var(--kata-space-6);   /* 24px */
+  --spacing-8:   var(--kata-space-7);   /* 32px (Kata step 7 = Tailwind 8) */
+  --spacing-12:  var(--kata-space-8);   /* 48px (Kata step 8 = Tailwind 12) */
+
+  /* Semantic height aliases — consumed via inline style or arbitrary
+     value utilities (e.g. h-[var(--kata-row-md)]). Tailwind h-7/h-8/h-9
+     keep their default 28/32/36 mappings; these tokens are for components
+     that prefer semantic naming. */
 }
 
 body {
