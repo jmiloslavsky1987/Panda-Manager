@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
-status: verifying
-stopped_at: Completed 85.1-01-PLAN.md
-last_updated: "2026-05-12T14:52:50.936Z"
-last_activity: 2026-05-07 — Phase 85 APPROVED via manual UAT (see 85-05-SUMMARY.md)
+status: executing
+stopped_at: Completed 85.1-02-PLAN.md
+last_updated: "2026-05-12T15:08:00Z"
+last_activity: 2026-05-12 — Phase 85.1 Plan 02 complete (see 85.1-02-SUMMARY.md)
 progress:
   total_phases: 14
   completed_phases: 12
   total_plans: 67
-  completed_plans: 63
-  percent: 100
+  completed_plans: 65
+  percent: 98
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 ## Current Position
 
 Phase: 85.1 of 85.1 (Screen Density and UX Overhaul — IN PROGRESS)
-Plan: 1 of 4 complete (85.1-01 done — token foundation)
-Status: In progress — Plan 01 (spacing + height token foundation) complete. Plans 02-04 pending (global chrome density, shared primitives sweep, per-tab cleanup).
-Last activity: 2026-05-12 — Phase 85.1 Plan 01 complete (see 85.1-01-SUMMARY.md)
+Plan: 2 of 4 complete (85.1-02 done — shadcn primitive density sweep)
+Status: In progress — Plans 01-02 complete. Plans 03-04 pending (global chrome density, per-tab cleanup).
+Last activity: 2026-05-12 — Phase 85.1 Plan 02 complete (see 85.1-02-SUMMARY.md)
 
-Progress: [██████████] 100%
+Progress: [██████████] 98%
 
 ## v10.0 Roadmap Summary
 
@@ -232,6 +232,10 @@ Progress: [██████████] 100%
 - [85.1-01] Explicit per-step --spacing-{n} approach in @theme inline (not root --spacing scale) — safer one-to-one mapping, auditable in DevTools
 - [85.1-01] Kata step misalignment: kata-space-7 (32px) -> --spacing-8; kata-space-8 (48px) -> --spacing-12; fractional Tailwind steps (1.5, 2.5, 3.5, 7, 9, 10, 11) intentionally not aliased
 - [85.1-01] Density sweep in Plans 02-04 will change WHICH class is used (e.g. p-6 -> p-4), NOT redefine what p-4 means — transparent indirection is the key invariant
+- [85.1-02] 13px body text applied at TableCell scope only — global body change deferred to Plan 05 human verification to avoid typography cascade regressions
+- [85.1-02] Button size=lg transitioned from h-11 (44px) to h-10 (40px) — explicit height reduction per CONTEXT.md density spec
+- [85.1-02] DialogHeader and DialogFooter NOT modified — no padding in this repo's baseline; DialogContent p-4 plus gap-4 provides correct spacing
+- [85.1-02] textarea.tsx template-literal ${className || ''} pattern preserved (NOT converted to cn())
 
 ### Blockers/Concerns
 

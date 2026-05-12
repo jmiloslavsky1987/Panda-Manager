@@ -391,7 +391,7 @@ Plans:
 **Goal:** Hard-set a denser default across the entire app (visual-only — no data, API, or behavioral changes). Three layers: global chrome (Sidebar, PageBar, WorkspaceTabs, SubTabBar, page wrappers), shared primitives (`components/ui/*` table/input/select/button/dialog/card/textarea), and per-tab cleanup of residual `p-6`/`space-y-6` patterns across ~28 workspace tabs + global pages. Linear is the visual reference. KDS-04 amended from 44px to 36px PageBar; KDS-03 240px Sidebar width honored. WBS and Gantt internals explicitly excluded.
 **Requirements**: DENSITY-01..04, DENSITY-VERIFY (phase-local; no v12 roadmap requirements — visual-only)
 **Depends on:** Phase 85
-**Plans:** 1/5 plans executed
+**Plans:** 2/5 plans executed
 
 Plans:
 - [ ] 85.1-01-PLAN.md — Token foundation: `kata-tokens.css` spacing/height tokens + `globals.css` `@theme inline` aliases (transparent override)
