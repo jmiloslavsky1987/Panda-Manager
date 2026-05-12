@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
-status: executing
-stopped_at: Completed 85-04-PLAN.md
-last_updated: "2026-05-07T20:36:17.716Z"
-last_activity: 2026-05-07 — Phase 85 Plan 03 COMPLETE — wbs_dependencies GET+POST+DELETE API routes with TDD (5 tests GREEN)
+status: verifying
+stopped_at: Phase 85.1 context gathered
+last_updated: "2026-05-12T04:36:08.860Z"
+last_activity: 2026-05-07 — Phase 85 APPROVED via manual UAT (see 85-05-SUMMARY.md)
 progress:
-  total_phases: 13
-  completed_phases: 11
+  total_phases: 14
+  completed_phases: 12
   total_plans: 62
-  completed_plans: 61
-  percent: 99
+  completed_plans: 62
+  percent: 100
 ---
 
 # Project State
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 85 of 85 (WBS MS-Project Style Overhaul — Plans 00-04 COMPLETE, Plan 05 pending)
-Status: In Progress — Plan 85-04 (WbsGrid wiring + Gantt updates) complete. All 4 WBS requirements functional end-to-end.
-Last activity: 2026-05-07 — Phase 85 Plan 04 COMPLETE — WbsGrid wired into WBS page, GanttChart updated with percent_complete bars and SVG dependency arrows (42 tests GREEN)
+Phase: 85 of 85 (WBS MS-Project Style Overhaul — APPROVED)
+Status: Complete — all 5 plans done. Manual UAT 2026-05-07 verified WBS-01..04 + follow-on improvements (Incident Prevention placeholder track, name-edit undo, bidirectional date/duration autocompute, predecessor optimistic UI with row-number column, editable Gantt Duration column).
+Last activity: 2026-05-07 — Phase 85 APPROVED via manual UAT (see 85-05-SUMMARY.md)
 
-Progress: [██████████] 99%
+Progress: [██████████] 100%
 
 ## v10.0 Roadmap Summary
 
@@ -68,6 +68,7 @@ Progress: [██████████] 99%
 ### Roadmap Evolution
 
 - Phase 82 added: Chat write operations — full CRUD (create, update, delete) for actions, milestones, risks, teams, and architecture nodes with confirmation UX
+- Phase 85.1 inserted after Phase 85: screen density and UX overhaul (URGENT) — hard-set denser default across global chrome, shared primitives, and per-tab cleanup; promoted ahead of Phase 86 (AWS readiness) because screen real-estate pain is hurting daily use (2026-05-11)
 
 ### Key Decisions (carry-forward)
 
@@ -234,6 +235,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-05-07T20:36:17.713Z
-Stopped at: Completed 85-04-PLAN.md
-Resume file: None
+Last session: 2026-05-12T04:36:08.857Z
+Stopped at: Phase 85.1 context gathered
+Resume file: .planning/phases/85.1-screen-density-and-ux-overhaul/85.1-CONTEXT.md
