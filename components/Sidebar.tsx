@@ -25,7 +25,7 @@ export async function Sidebar() {
     >
       {/* Header: logo + name */}
       <div
-        className="flex items-center gap-2 px-4 py-3.5 border-b"
+        className="flex items-center gap-2 px-4 py-2 border-b"
         style={{ borderColor: 'var(--kata-gray-800)' }}
       >
         <span className="text-[22px] font-bold" style={{ color: 'var(--kata-indigo-500)' }}>P</span>
@@ -33,9 +33,9 @@ export async function Sidebar() {
       </div>
 
       {/* ⌘K search pill */}
-      <div className="px-3 py-2.5">
+      <div className="px-3 py-2">
         <div
-          className="flex items-center gap-2 h-7 px-2 rounded-md"
+          className="flex items-center gap-2 h-6 px-2 rounded-md"
           style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.06)' }}
         >
           <Icon name="search" size={14} className="opacity-40" />
@@ -45,10 +45,10 @@ export async function Sidebar() {
       </div>
 
       {/* Top nav: Portfolio / Daily Prep */}
-      <nav className="px-2 space-y-0.5">
+      <nav className="px-2 space-y-0">
         <Link
           href="/"
-          className="flex items-center gap-2 px-2 py-1.5 rounded text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+          className="flex items-center gap-2 px-2 py-1 rounded text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
         >
           <Icon name="grid_view" size={16} />
           Portfolio
@@ -56,7 +56,7 @@ export async function Sidebar() {
         <Link
           href="/daily-prep"
           data-testid="sidebar-daily-prep-link"
-          className="flex items-center gap-2 px-2 py-1.5 rounded text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+          className="flex items-center gap-2 px-2 py-1 rounded text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
         >
           <Icon name="event_note" size={16} />
           Daily Prep
@@ -75,7 +75,7 @@ export async function Sidebar() {
 
       {/* Project list */}
       <div className="flex-1 overflow-y-auto">
-        <ul className="space-y-0.5 px-2">
+        <ul className="space-y-0 px-2">
           {projects.map((p) => (
             <SidebarProjectItem key={p.id} project={p} />
           ))}
@@ -83,17 +83,17 @@ export async function Sidebar() {
         {archivedProjects.length > 0 && (
           <details className="px-2 mt-2">
             <summary
-              className="px-2 py-1.5 text-xs uppercase tracking-wider cursor-pointer select-none hover:text-white/50 list-none"
+              className="px-2 py-1 text-xs uppercase tracking-wider cursor-pointer select-none hover:text-white/50 list-none"
               style={{ color: 'rgba(255,255,255,0.35)' }}
             >
               Archived ({archivedProjects.length})
             </summary>
-            <ul className="space-y-0.5 mt-1">
+            <ul className="space-y-0 mt-1">
               {archivedProjects.map((p) => (
                 <li key={p.id}>
                   <Link
                     href={`/customer/${p.id}/overview`}
-                    className="flex items-center gap-2.5 px-2 py-2 rounded text-sm transition-colors"
+                    className="flex items-center gap-2 px-2 py-1 rounded text-sm transition-colors"
                     style={{ color: 'rgba(255,255,255,0.4)' }}
                   >
                     {p.customer}
@@ -106,10 +106,10 @@ export async function Sidebar() {
       </div>
 
       {/* Additional nav links */}
-      <div className="px-2 pb-1 space-y-0.5 border-t" style={{ borderColor: 'var(--kata-gray-800)' }}>
+      <div className="px-2 pb-1 space-y-0 border-t" style={{ borderColor: 'var(--kata-gray-800)' }}>
         <Link
           href="/weekly-report"
-          className="flex items-center gap-2 px-2 py-1.5 rounded text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+          className="flex items-center gap-2 px-2 py-1 rounded text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
           data-testid="sidebar-weekly-report-link"
         >
           <Icon name="table_chart" size={16} />
@@ -117,7 +117,7 @@ export async function Sidebar() {
         </Link>
         <Link
           href="/knowledge-base"
-          className="flex items-center gap-2 px-2 py-1.5 rounded text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+          className="flex items-center gap-2 px-2 py-1 rounded text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
           data-testid="sidebar-knowledge-base-link"
         >
           <Icon name="book" size={16} />
@@ -125,7 +125,7 @@ export async function Sidebar() {
         </Link>
         <Link
           href="/outputs"
-          className="flex items-center gap-2 px-2 py-1.5 rounded text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+          className="flex items-center gap-2 px-2 py-1 rounded text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
           data-testid="sidebar-outputs-link"
         >
           <Icon name="library_books" size={16} />
@@ -133,7 +133,7 @@ export async function Sidebar() {
         </Link>
         <Link
           href="/settings"
-          className="flex items-center gap-2 px-2 py-1.5 rounded text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+          className="flex items-center gap-2 px-2 py-1 rounded text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
           data-testid="sidebar-settings-link"
         >
           <Icon name="settings" size={16} />
@@ -141,7 +141,7 @@ export async function Sidebar() {
         </Link>
         <Link
           href="/scheduler"
-          className="flex items-center gap-2 px-2 py-1.5 rounded text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+          className="flex items-center gap-2 px-2 py-1 rounded text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
           data-testid="sidebar-scheduler-link"
         >
           <Icon name="calendar_clock" size={16} />
@@ -149,7 +149,7 @@ export async function Sidebar() {
         </Link>
         <Link
           href="/time-tracking"
-          className="flex items-center gap-2 px-2 py-1.5 rounded text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+          className="flex items-center gap-2 px-2 py-1 rounded text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
           data-testid="sidebar-time-tracking-link"
         >
           <Icon name="schedule" size={16} />

@@ -18,7 +18,7 @@ export function SidebarProjectItem({ project }: Props) {
     <li>
       <Link
         href={`/customer/${project.id}/overview`}
-        className="flex items-start gap-2.5 px-2 py-2 rounded transition-colors group"
+        className="flex items-start gap-2 px-2 py-1 rounded transition-colors group"
         style={{ color: 'rgba(255,255,255,0.7)' }}
       >
         <span

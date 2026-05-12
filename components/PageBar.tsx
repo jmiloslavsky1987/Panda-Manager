@@ -56,8 +56,9 @@ export function PageBar() {
   return (
     <div
       className="flex items-center justify-between px-4"
+      // Phase 85.1 amends KDS-04 from 44px to 36px page-bar height (Linear density target).
       style={{
-        height: 44,
+        height: 36,
         background: 'var(--kata-surface-container)',
         borderBottom: '1px solid var(--kata-stroke-subtle)',
       }}
