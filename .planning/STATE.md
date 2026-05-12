@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: verifying
-stopped_at: Phase 85.1 context gathered
-last_updated: "2026-05-12T04:36:08.860Z"
+stopped_at: Completed 85.1-01-PLAN.md
+last_updated: "2026-05-12T14:52:50.936Z"
 last_activity: 2026-05-07 — Phase 85 APPROVED via manual UAT (see 85-05-SUMMARY.md)
 progress:
   total_phases: 14
   completed_phases: 12
-  total_plans: 62
-  completed_plans: 62
+  total_plans: 67
+  completed_plans: 63
   percent: 100
 ---
 
@@ -25,9 +25,10 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 85 of 85 (WBS MS-Project Style Overhaul — APPROVED)
-Status: Complete — all 5 plans done. Manual UAT 2026-05-07 verified WBS-01..04 + follow-on improvements (Incident Prevention placeholder track, name-edit undo, bidirectional date/duration autocompute, predecessor optimistic UI with row-number column, editable Gantt Duration column).
-Last activity: 2026-05-07 — Phase 85 APPROVED via manual UAT (see 85-05-SUMMARY.md)
+Phase: 85.1 of 85.1 (Screen Density and UX Overhaul — IN PROGRESS)
+Plan: 1 of 4 complete (85.1-01 done — token foundation)
+Status: In progress — Plan 01 (spacing + height token foundation) complete. Plans 02-04 pending (global chrome density, shared primitives sweep, per-tab cleanup).
+Last activity: 2026-05-12 — Phase 85.1 Plan 01 complete (see 85.1-01-SUMMARY.md)
 
 Progress: [██████████] 100%
 
@@ -228,6 +229,9 @@ Progress: [██████████] 100%
 - [85-04] SVG arrows computed inside IIFE in rows.map render block — row positions captured during same render pass, immediately used for arrow geometry without extra useMemo
 - [85-04] wbsRowToProgress: percent_complete wins when defined (even 0); status-derived fallback only for legacy rows without percent_complete field
 - [85-04] onDependenciesChange: DELETE all where to_item_id=itemId, then POST new set — full replace semantics, no partial update needed
+- [85.1-01] Explicit per-step --spacing-{n} approach in @theme inline (not root --spacing scale) — safer one-to-one mapping, auditable in DevTools
+- [85.1-01] Kata step misalignment: kata-space-7 (32px) -> --spacing-8; kata-space-8 (48px) -> --spacing-12; fractional Tailwind steps (1.5, 2.5, 3.5, 7, 9, 10, 11) intentionally not aliased
+- [85.1-01] Density sweep in Plans 02-04 will change WHICH class is used (e.g. p-6 -> p-4), NOT redefine what p-4 means — transparent indirection is the key invariant
 
 ### Blockers/Concerns
 
@@ -235,6 +239,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-05-12T04:36:08.857Z
-Stopped at: Phase 85.1 context gathered
-Resume file: .planning/phases/85.1-screen-density-and-ux-overhaul/85.1-CONTEXT.md
+Last session: 2026-05-12T14:52:50.933Z
+Stopped at: Completed 85.1-01-PLAN.md
+Resume file: None
