@@ -121,8 +121,8 @@ export function WorkspaceTabs({ projectId }: WorkspaceTabsProps) {
                 href={href}
                 className={
                   isActive
-                    ? 'text-zinc-900 dark:text-zinc-100 border-b-2 border-zinc-900 dark:border-zinc-100 px-4 py-2 font-medium whitespace-nowrap flex items-center gap-1'
-                    : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 border-b-2 border-transparent px-4 py-2 whitespace-nowrap flex items-center gap-1'
+                    ? 'text-zinc-900 dark:text-zinc-100 border-b-2 border-zinc-900 dark:border-zinc-100 px-4 py-1.5 text-sm font-medium whitespace-nowrap flex items-center gap-1'
+                    : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 border-b-2 border-transparent px-4 py-1.5 text-sm whitespace-nowrap flex items-center gap-1'
                 }
               >
                 {group.label}
