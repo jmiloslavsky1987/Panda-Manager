@@ -386,6 +386,20 @@ Plans:
 - [ ] 85-04-PLAN.md — WbsPage wiring + Gantt percent_complete bars + SVG arrows (WBS-01–04)
 - [ ] 85-05-PLAN.md — Human verification checkpoint (WBS-01–04)
 
+### Phase 85.1: screen density and UX overhaul (INSERTED)
+
+**Goal:** Hard-set a denser default across the entire app (visual-only — no data, API, or behavioral changes). Three layers: global chrome (Sidebar, PageBar, WorkspaceTabs, SubTabBar, page wrappers), shared primitives (`components/ui/*` table/input/select/button/dialog/card/textarea), and per-tab cleanup of residual `p-6`/`space-y-6` patterns across ~28 workspace tabs + global pages. Linear is the visual reference. KDS-04 amended from 44px to 36px PageBar; KDS-03 240px Sidebar width honored. WBS and Gantt internals explicitly excluded.
+**Requirements**: DENSITY-01..04, DENSITY-VERIFY (phase-local; no v12 roadmap requirements — visual-only)
+**Depends on:** Phase 85
+**Plans:** 5 plans
+
+Plans:
+- [ ] 85.1-01-PLAN.md — Token foundation: `kata-tokens.css` spacing/height tokens + `globals.css` `@theme inline` aliases (transparent override)
+- [ ] 85.1-02-PLAN.md — Shared primitives: ui/table, ui/input, ui/select, ui/button, ui/dialog, ui/card, ui/textarea defaults tightened
+- [ ] 85.1-03-PLAN.md — Global chrome: Sidebar rows, PageBar 44->36, WorkspaceTabs, SubTabBar
+- [ ] 85.1-04-PLAN.md — Per-tab + global page sweep (~21 customer tabs + 9 global pages); WBS/Gantt internals excluded
+- [ ] 85.1-05-PLAN.md — Human verification checkpoint (Linear-density target + WBS/Gantt exclusion intact)
+
 ### Phase 86: multi-user-sso-aws-readiness
 
 **Goal:** Prepare the app for production deployment on AWS with multiple project managers sharing one instance — per-user source credentials, Okta OIDC SSO, automated daily DB backups, and AWS infrastructure scaffolding.
