@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
-status: executing
-stopped_at: Completed 85.1-04-PLAN.md
-last_updated: "2026-05-12T15:08:47.078Z"
-last_activity: 2026-05-12 — Phase 85.1 Plan 04 complete (see 85.1-04-SUMMARY.md)
+status: verifying
+stopped_at: Completed 85.1-05-PLAN.md
+last_updated: "2026-05-12T15:35:46.850Z"
+last_activity: 2026-05-12 — Phase 85.1 Plan 05 complete (see 85.1-05-SUMMARY.md)
 progress:
   total_phases: 14
-  completed_phases: 12
+  completed_phases: 13
   total_plans: 67
-  completed_plans: 66
-  percent: 99
+  completed_plans: 67
+  percent: 100
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 85.1 of 85.1 (Screen Density and UX Overhaul — IN PROGRESS)
-Plan: 4 of 4 complete (85.1-04 done — per-tab and global page density sweep)
-Status: In progress — Plans 01-04 complete. Plan 05 pending (human visual verification).
-Last activity: 2026-05-12 — Phase 85.1 Plan 03 complete (see 85.1-03-SUMMARY.md)
+Phase: 85.1 of 85.1 (Screen Density and UX Overhaul — COMPLETE)
+Plan: 5 of 5 complete (85.1-05 done — human visual verification APPROVED)
+Status: Complete — All 5 plans executed and human-verified. Phase 85.1 fully done.
+Last activity: 2026-05-12 — Phase 85.1 Plan 05 complete (see 85.1-05-SUMMARY.md)
 
-Progress: [██████████] 99%
+Progress: [██████████] 100%
 
 ## v10.0 Roadmap Summary
 
@@ -243,6 +243,10 @@ Progress: [██████████] 99%
 - [85.1-04] artifacts/page.tsx effective top-level content wrapper is inside <ArtifactsDropZone>; swept p-6→p-4 on inner div (space-y-8 not in sweep set)
 - [85.1-04] settings/page.tsx (global): inner card p-6 instances left untouched — sub-component scope; only outermost p-8→p-6 and h1 mb-6→mb-4 swept
 - [85.1-04] Plan 04 commit (4acbc692) predates Plan 05 human verification — rollback path is gap-closure plan, not git revert
+- [85.1-05] Human approved Phase 85.1 density changes without qualification after Docker rebuild — no regressions, no follow-up gaps
+- [85.1-05] Body-13px scoping decision (tables-only, 14px elsewhere) accepted as-is by user — no global body rule needed
+- [85.1-05] Button size=lg transition (44px -> 40px) and KDS-04 PageBar amendment (44px -> 36px) both confirmed correct by user
+- [85.1-05] Docker rebuild (~/bin/panda-rebuild.sh) required for committed changes to be visible — code commit alone does not restart container
 
 ### Blockers/Concerns
 
@@ -250,6 +254,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-05-12T15:08:47.076Z
-Stopped at: Completed 85.1-04-PLAN.md
+Last session: 2026-05-12T15:30:00.000Z
+Stopped at: Completed 85.1-05-PLAN.md
 Resume file: None
