@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
-status: executing
-stopped_at: Completed 85.2-04-PLAN.md
-last_updated: "2026-05-14T19:38:29.960Z"
-last_activity: 2026-05-14 — Phase 85.2 Plan 04 complete (see 85.2-04-SUMMARY.md)
+status: gaps_found
+stopped_at: Phase 85.2 manual UAT — 2 gaps recorded (see 85.2-VERIFICATION.md)
+last_updated: "2026-05-14T20:00:00.000Z"
+last_activity: 2026-05-14 — Phase 85.2 Plan 05 manual UAT rejected; gaps recorded
 progress:
   total_phases: 15
   completed_phases: 13
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 85.2-daily-briefing-tab (Daily Briefing Tab — In Progress)
-Plan: 5 of 6 complete (85.2-00 RED tests + 85.2-01 DB foundation + 85.2-02 synthesis route + 85.2-03 UI shell + 85.2-04 calendar wiring done)
-Status: In Progress — All waves complete except Plan 05 (human verification).
-Last activity: 2026-05-14 — Phase 85.2 Plan 04 complete (see 85.2-04-SUMMARY.md)
+Phase: 85.2-daily-briefing-tab (Daily Briefing Tab — Gaps Found)
+Plan: 5 of 6 complete (Plans 00–04 done; Plan 05 manual UAT rejected — 2 gaps recorded in 85.2-VERIFICATION.md)
+Status: Gaps Found — awaiting `/gsd:plan-phase 85.2 --gaps` to create closure plans, then `/gsd:execute-phase 85.2 --gaps-only`.
+Last activity: 2026-05-14 — Phase 85.2 Plan 05 manual UAT rejected; gaps: (1) markdown contrast/visibility regression in `app/daily-prep/briefing/page.tsx`, (2) Action/Critical items missing customer attribution.
 
 Progress: [██████████] 99%
 
