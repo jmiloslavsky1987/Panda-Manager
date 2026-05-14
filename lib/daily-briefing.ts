@@ -21,13 +21,16 @@ import {
   projects,
 } from '@/db/schema';
 
-async function fetchProjectMap(projectIds: number[]): Promise<Map<number, { name: string; customer: string }>> {
+// Active project map — only `active` and `draft` projects are surfaced in the briefing.
+// Matches the rest of the app's convention (lib/queries.ts: status IN ('active','draft')).
+// Archived and closed projects must NEVER appear in the daily briefing.
+async function fetchActiveProjectMap(projectIds: number[]): Promise<Map<number, { name: string; customer: string }>> {
   const unique = Array.from(new Set(projectIds)).filter((id) => Number.isFinite(id));
   if (unique.length === 0) return new Map();
   const rows = await db
     .select({ id: projects.id, name: projects.name, customer: projects.customer })
     .from(projects)
-    .where(inArray(projects.id, unique));
+    .where(and(inArray(projects.id, unique), inArray(projects.status, ['active', 'draft'])));
   return new Map(rows.map((r) => [r.id, { name: r.name, customer: r.customer }]));
 }
 
@@ -92,12 +95,16 @@ export async function fetchTodayActionCandidates(
       });
     }
   }
-  const projectMap = await fetchProjectMap(candidates.map((c) => c.project_id));
+  const projectMap = await fetchActiveProjectMap(candidates.map((c) => c.project_id));
+  const surviving: ActionCandidate[] = [];
   for (const c of candidates) {
     const p = projectMap.get(c.project_id);
-    if (p) { c.project_name = p.name; c.customer = p.customer; }
+    if (!p) continue;  // drop candidates whose project is archived/closed/missing
+    c.project_name = p.name;
+    c.customer = p.customer;
+    surviving.push(c);
   }
-  return candidates.sort((a, b) => a.parsed_due.getTime() - b.parsed_due.getTime());
+  return surviving.sort((a, b) => a.parsed_due.getTime() - b.parsed_due.getTime());
 }
 
 // ─── Week Critical Candidates ─────────────────────────────────────────────────
@@ -259,21 +266,24 @@ export async function fetchWeekCriticalCandidates(
     ...decisionCandidates.map((c) => c.project_id),
     ...wbsCandidates.map((c) => c.project_id),
   ];
-  const projectMap = await fetchProjectMap(allProjectIds);
-  const apply = <T extends { project_id: number; project_name: string | null; customer: string | null }>(c: T): void => {
-    const p = projectMap.get(c.project_id);
-    if (p) { c.project_name = p.name; c.customer = p.customer; }
+  const projectMap = await fetchActiveProjectMap(allProjectIds);
+  const enrichAndFilter = <T extends { project_id: number; project_name: string | null; customer: string | null }>(rows: T[]): T[] => {
+    const out: T[] = [];
+    for (const c of rows) {
+      const p = projectMap.get(c.project_id);
+      if (!p) continue;  // drop archived/closed projects
+      c.project_name = p.name;
+      c.customer = p.customer;
+      out.push(c);
+    }
+    return out;
   };
-  riskCandidates.forEach(apply);
-  milestoneCandidates.forEach(apply);
-  decisionCandidates.forEach(apply);
-  wbsCandidates.forEach(apply);
 
   return {
-    risks: riskCandidates,
-    milestones: milestoneCandidates,
-    decisions: decisionCandidates,
-    wbsItems: wbsCandidates,
+    risks: enrichAndFilter(riskCandidates),
+    milestones: enrichAndFilter(milestoneCandidates),
+    decisions: enrichAndFilter(decisionCandidates),
+    wbsItems: enrichAndFilter(wbsCandidates),
   };
 }
 
