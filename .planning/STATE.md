@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
-status: verifying
-stopped_at: Completed 85.2-00-PLAN.md
-last_updated: "2026-05-14T19:15:46.939Z"
-last_activity: 2026-05-12 — Phase 85.1 Plan 05 complete (see 85.1-05-SUMMARY.md)
+status: executing
+stopped_at: Completed 85.2-01-PLAN.md
+last_updated: "2026-05-14T19:24:47.421Z"
+last_activity: 2026-05-14 — Phase 85.2 Plan 00 complete (see 85.2-00-SUMMARY.md)
 progress:
   total_phases: 15
   completed_phases: 13
   total_plans: 73
-  completed_plans: 68
-  percent: 100
+  completed_plans: 69
+  percent: 98
 ---
 
 # Project State
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 ## Current Position
 
 Phase: 85.2-daily-briefing-tab (Daily Briefing Tab — In Progress)
-Plan: 1 of 6 complete (85.2-00 done — RED test gates created for all 7 BRIEF-* requirements)
-Status: In Progress — Plan 00 (Wave 0 RED tests) complete. Wave 1 implementation plans pending.
-Last activity: 2026-05-14 — Phase 85.2 Plan 00 complete (see 85.2-00-SUMMARY.md)
+Plan: 2 of 6 complete (85.2-00 RED tests + 85.2-01 DB foundation + helpers done)
+Status: In Progress — Wave 1 (DB foundation) complete. Wave 2 (route + UI) plans pending.
+Last activity: 2026-05-14 — Phase 85.2 Plan 01 complete (see 85.2-01-SUMMARY.md)
 
 Progress: [██████████] 98%
 
@@ -252,6 +252,10 @@ Progress: [██████████] 98%
 - [85.2-00] BRIEF-06a Promise.all pre-passes: app/daily-prep/page.tsx uses Promise.all for data fetching already; key behavioral gates BRIEF-06b (POST to briefing route) and BRIEF-06c (router.push navigation) are RED — acceptable per [80-00] precedent
 - [85.2-00] Source-scan pattern applied for all 4 new BRIEF-* test files: fs.readFileSync + try/catch returning '' on ENOENT prevents vitest crashes in RED state (no postgres driver import errors)
 - [85.2-00] BRIEF-05b dynamic import gate: await import('@/lib/daily-briefing') inside try/catch; expect.fail on import error gives clean RED message in Wave 0 state
+- [85.2-01] calendarEvents is not a Drizzle table — calendar data comes from Google Calendar API only; fetchTodayMeetingsAndBriefs returns DB-stored briefs only; route layer (Plan 02) must cross-reference with Google API response to build meetingsWithoutBriefs
+- [85.2-01] Schema column names: actions.description (not title), risks.description (not title), milestones.name (not title), keyDecisions.decision (not title) — plan template used generic 'title'; actual schema differs
+- [85.2-01] For-loop accumulation pattern used instead of .map().filter() type predicate — TypeScript cannot narrow (T | null)[] filter to T[] safely via type predicates in this context
+- [85.2-01] Migration 0051 applied via psql direct (IF NOT EXISTS guards); single-line UNIQUE INDEX required for BRIEF-01c regex test
 
 ### Blockers/Concerns
 
@@ -259,6 +263,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-05-14T19:15:46.936Z
-Stopped at: Completed 85.2-00-PLAN.md
+Last session: 2026-05-14T19:24:47.418Z
+Stopped at: Completed 85.2-01-PLAN.md
 Resume file: None
