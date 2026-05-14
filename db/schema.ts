@@ -1000,3 +1000,21 @@ export const meetingPrepTemplates = pgTable('meeting_prep_templates', {
 
 export type MeetingPrepTemplate = typeof meetingPrepTemplates.$inferSelect;
 export type MeetingPrepTemplateInsert = typeof meetingPrepTemplates.$inferInsert;
+
+// ─── Daily Briefings (Phase 85.2 — BRIEF-*) ──────────────────────────────────
+
+export const dailyBriefings = pgTable('daily_briefings', {
+  id:                  serial('id').primaryKey(),
+  user_id:             text('user_id').notNull(),
+  date:                text('date').notNull(),                // YYYY-MM-DD
+  briefing_content:    text('briefing_content').notNull(),
+  meeting_event_ids:   text('meeting_event_ids').array(),
+  action_ids:          integer('action_ids').array(),
+  critical_item_refs:  jsonb('critical_item_refs'),
+  generated_at:        timestamp('generated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (t) => ({
+  uniq: uniqueIndex('daily_briefings_user_date').on(t.user_id, t.date),
+}));
+
+export type DailyBriefing = typeof dailyBriefings.$inferSelect;
+export type DailyBriefingInsert = typeof dailyBriefings.$inferInsert;
