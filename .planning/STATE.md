@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
-status: gaps_found
-stopped_at: Phase 85.2 manual UAT — 2 gaps recorded (see 85.2-VERIFICATION.md)
-last_updated: "2026-05-14T20:00:00.000Z"
-last_activity: 2026-05-14 — Phase 85.2 Plan 05 manual UAT rejected; gaps recorded
+status: awaiting_reverification
+stopped_at: Phase 85.2 manual UAT gaps fixed inline (Panda-Manager d45dcb20); awaiting re-test
+last_updated: "2026-05-14T20:30:00.000Z"
+last_activity: 2026-05-14 — Phase 85.2 gaps 01 + 02 closed inline; Docker rebuilt
 progress:
   total_phases: 15
   completed_phases: 13
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 85.2-daily-briefing-tab (Daily Briefing Tab — Gaps Found)
-Plan: 5 of 6 complete (Plans 00–04 done; Plan 05 manual UAT rejected — 2 gaps recorded in 85.2-VERIFICATION.md)
-Status: Gaps Found — awaiting `/gsd:plan-phase 85.2 --gaps` to create closure plans, then `/gsd:execute-phase 85.2 --gaps-only`.
-Last activity: 2026-05-14 — Phase 85.2 Plan 05 manual UAT rejected; gaps: (1) markdown contrast/visibility regression in `app/daily-prep/briefing/page.tsx`, (2) Action/Critical items missing customer attribution.
+Phase: 85.2-daily-briefing-tab (Daily Briefing Tab — Awaiting Re-verification)
+Plan: 5 of 6 complete (Plans 00–04 done; Plan 05 paused at human checkpoint — gaps closed inline)
+Status: Awaiting Re-verification — both UAT gaps fixed and Docker rebuilt. User to refresh /daily-prep/briefing and re-test the two failed checks (prose contrast + customer attribution).
+Last activity: 2026-05-14 — Phase 85.2 gaps closed inline (Panda-Manager d45dcb20): (1) prose-zinc replaces dark:prose-invert in briefing page, (2) candidate fetchers join projects table + system prompt requires Customer — Project attribution.
 
 Progress: [██████████] 99%
 
