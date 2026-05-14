@@ -2,6 +2,7 @@
 export const dynamic = 'force-dynamic'
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { DailyPrepCard, EventCardState, Project } from '@/components/DailyPrepCard';
 import { CalendarEventItem } from '@/app/api/time-entries/calendar-import/route';
 
@@ -17,6 +18,7 @@ type MatchedStakeholderMap = Record<string, Array<{ email: string; name: string 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function DailyPrepPage() {
+  const router = useRouter();
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().slice(0, 10),
   );
@@ -233,91 +235,126 @@ export default function DailyPrepPage() {
     }
   }
 
+  async function generateSingleCard(card: EventCardState): Promise<void> {
+    const eventId = card.event.event_id;
+    const projectId = card.selectedProjectId;
+
+    setCards((prev) =>
+      prev.map((c) =>
+        c.event.event_id === eventId ? { ...c, briefStatus: 'loading', briefContent: '' } : c,
+      ),
+    );
+
+    try {
+      const response = await fetch('/api/daily-prep/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventId,
+          eventTitle: card.event.summary,
+          projectId,
+          attendees: card.event.attendee_names,
+          durationHours: card.event.duration_hours,
+          recurrenceFlag: card.event.recurrence_flag,
+          eventDescription: card.event.event_description,
+        }),
+      });
+
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
+      let accumulated = '';
+      let lineBuffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        lineBuffer += decoder.decode(value, { stream: true });
+        const lines = lineBuffer.split('\n');
+        // Keep the last (possibly incomplete) line in the buffer
+        lineBuffer = lines.pop() ?? '';
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const parsed = JSON.parse(line.slice(6));
+              if (parsed.text) {
+                accumulated += parsed.text;
+                setCards((prev) =>
+                  prev.map((c) =>
+                    c.event.event_id === eventId
+                      ? { ...c, briefContent: accumulated }
+                      : c,
+                  ),
+                );
+              }
+            } catch {
+              /* incomplete SSE chunk — skip */
+            }
+          }
+          if (line.startsWith('event: done')) {
+            setCards((prev) =>
+              prev.map((c) =>
+                c.event.event_id === eventId
+                  ? { ...c, briefStatus: 'done', selected: false, expanded: true }
+                  : c,
+              ),
+            );
+            // Brief is now persisted to DB by the generate route — no localStorage write needed
+          }
+        }
+      }
+    } catch {
+      setCards((prev) =>
+        prev.map((c) =>
+          c.event.event_id === eventId ? { ...c, briefStatus: 'error' } : c,
+        ),
+      );
+    }
+  }
+
+  async function chainToBriefing(date: string): Promise<void> {
+    try {
+      const response = await fetch('/api/daily-prep/briefing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date }),
+      });
+      if (!response.ok || !response.body) {
+        console.error('[daily-prep] briefing chain HTTP error:', response.status);
+        return;
+      }
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let lineBuffer = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        lineBuffer += decoder.decode(value, { stream: true });
+        const lines = lineBuffer.split('\n');
+        lineBuffer = lines.pop() ?? '';
+        for (const line of lines) {
+          if (line.startsWith('event: done')) {
+            // Synthesis complete + persisted — navigate to briefing tab
+            router.push('/daily-prep/briefing');
+            return;
+          }
+          // We don't render the streaming text on Calendar tab — the Briefing tab page
+          // will GET the persisted row on mount. Just drain the stream until 'done'.
+        }
+      }
+    } catch (err) {
+      console.error('[daily-prep] briefing chain error:', err instanceof Error ? err.message : String(err));
+    }
+  }
+
   async function handleGenerate() {
     const selectedCards = cards.filter((c) => c.selected);
     if (!selectedCards.length) return;
 
-    // Fire all requests in parallel — do NOT await one before starting the next
-    selectedCards.forEach(async (card) => {
-      const eventId = card.event.event_id;
-      const projectId = card.selectedProjectId;
+    // Fire all per-event briefs in parallel and wait for ALL to finish before chaining
+    await Promise.all(selectedCards.map((card) => generateSingleCard(card)));
 
-      // Set loading state
-      setCards((prev) =>
-        prev.map((c) =>
-          c.event.event_id === eventId
-            ? { ...c, briefStatus: 'loading', briefContent: '' }
-            : c,
-        ),
-      );
-
-      try {
-        const response = await fetch('/api/daily-prep/generate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            eventId,
-            eventTitle: card.event.summary,
-            projectId,
-            attendees: card.event.attendee_names,
-            durationHours: card.event.duration_hours,
-            recurrenceFlag: card.event.recurrence_flag,
-            eventDescription: card.event.event_description,
-          }),
-        });
-
-        const reader = response.body!.getReader();
-        const decoder = new TextDecoder();
-        let accumulated = '';
-        let lineBuffer = '';
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          lineBuffer += decoder.decode(value, { stream: true });
-          const lines = lineBuffer.split('\n');
-          // Keep the last (possibly incomplete) line in the buffer
-          lineBuffer = lines.pop() ?? '';
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              try {
-                const parsed = JSON.parse(line.slice(6));
-                if (parsed.text) {
-                  accumulated += parsed.text;
-                  setCards((prev) =>
-                    prev.map((c) =>
-                      c.event.event_id === eventId
-                        ? { ...c, briefContent: accumulated }
-                        : c,
-                    ),
-                  );
-                }
-              } catch {
-                /* incomplete SSE chunk — skip */
-              }
-            }
-            if (line.startsWith('event: done')) {
-              setCards((prev) =>
-                prev.map((c) =>
-                  c.event.event_id === eventId
-                    ? { ...c, briefStatus: 'done', selected: false, expanded: true }
-                    : c,
-                ),
-              );
-              // Brief is now persisted to DB by the generate route — no localStorage write needed
-            }
-          }
-        }
-      } catch {
-        setCards((prev) =>
-          prev.map((c) =>
-            c.event.event_id === eventId
-              ? { ...c, briefStatus: 'error' }
-              : c,
-          ),
-        );
-      }
-    });
+    // Chain to briefing synthesis once all per-event briefs are persisted
+    await chainToBriefing(selectedDate);
   }
 
   // ── Export handlers ──────────────────────────────────────────────────────
