@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: executing
-stopped_at: Completed 85.2-02-PLAN.md
-last_updated: "2026-05-14T20:35:00.000Z"
-last_activity: 2026-05-14 — Phase 85.2 Plan 02 complete (see 85.2-02-SUMMARY.md)
+stopped_at: Completed 85.2-03-PLAN.md
+last_updated: "2026-05-14T19:34:28.042Z"
+last_activity: 2026-05-14 — Phase 85.2 Plan 03 complete (see 85.2-03-SUMMARY.md)
 progress:
   total_phases: 15
   completed_phases: 13
   total_plans: 73
-  completed_plans: 70
+  completed_plans: 71
   percent: 98
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 ## Current Position
 
 Phase: 85.2-daily-briefing-tab (Daily Briefing Tab — In Progress)
-Plan: 3 of 6 complete (85.2-00 RED tests + 85.2-01 DB foundation + 85.2-02 synthesis route done)
-Status: In Progress — Wave 1 (DB foundation) + Wave 2 partial (route done). Wave 3 (UI + calendar wiring) pending.
-Last activity: 2026-05-14 — Phase 85.2 Plan 02 complete (see 85.2-02-SUMMARY.md)
+Plan: 4 of 6 complete (85.2-00 RED tests + 85.2-01 DB foundation + 85.2-02 synthesis route + 85.2-03 UI shell done)
+Status: In Progress — Wave 1 (DB foundation) + Wave 2 (route) + Wave 3 partial (UI shell done). Calendar wiring (Plan 04) pending.
+Last activity: 2026-05-14 — Phase 85.2 Plan 03 complete (see 85.2-03-SUMMARY.md)
 
-Progress: [██████████] 98%
+Progress: [██████████] 99%
 
 ## v10.0 Roadmap Summary
 
@@ -261,6 +261,10 @@ Progress: [██████████] 98%
 - [85.2-02] Empty-data short-circuit emits static placeholder via SSE (not plain JSON) — maintains identical wire format for UI consumer regardless of whether Claude was invoked
 - [85.2-02] persistBriefing uses ON CONFLICT (user_id, date) DO UPDATE — POST is idempotent, safe to call multiple times on same date
 - [85.2-02] POST returns 401 as plain text (not JSON) — matches generate/route.ts pattern; GET returns JSON error body
+- [85.2-03] layout.tsx is 'use client' (required for usePathname) but no force-dynamic — layouts should not force-dynamic; individual page.tsx retains its own export
+- [85.2-03] Active tab derived solely from pathname startsWith check — no query params, no state, survives full-page nav
+- [85.2-03] Regenerate re-fetches persisted row after event: done — ensures id and generated_at from DB are canonical, not synthesized client-side
+- [85.2-03] printing-all CSS class reused from Phase 80 — single-content briefing page needs no print-single/per-card selection
 
 ### Blockers/Concerns
 
@@ -268,6 +272,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-05-14T19:24:47.418Z
-Stopped at: Completed 85.2-01-PLAN.md
+Last session: 2026-05-14T19:34:28.039Z
+Stopped at: Completed 85.2-03-PLAN.md
 Resume file: None
