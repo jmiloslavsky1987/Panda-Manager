@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: executing
-stopped_at: Completed 85.2-03-PLAN.md
-last_updated: "2026-05-14T19:34:28.042Z"
-last_activity: 2026-05-14 — Phase 85.2 Plan 03 complete (see 85.2-03-SUMMARY.md)
+stopped_at: Completed 85.2-04-PLAN.md
+last_updated: "2026-05-14T19:38:29.960Z"
+last_activity: 2026-05-14 — Phase 85.2 Plan 04 complete (see 85.2-04-SUMMARY.md)
 progress:
   total_phases: 15
   completed_phases: 13
   total_plans: 73
-  completed_plans: 71
-  percent: 98
+  completed_plans: 72
+  percent: 99
 ---
 
 # Project State
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 ## Current Position
 
 Phase: 85.2-daily-briefing-tab (Daily Briefing Tab — In Progress)
-Plan: 4 of 6 complete (85.2-00 RED tests + 85.2-01 DB foundation + 85.2-02 synthesis route + 85.2-03 UI shell done)
-Status: In Progress — Wave 1 (DB foundation) + Wave 2 (route) + Wave 3 partial (UI shell done). Calendar wiring (Plan 04) pending.
-Last activity: 2026-05-14 — Phase 85.2 Plan 03 complete (see 85.2-03-SUMMARY.md)
+Plan: 5 of 6 complete (85.2-00 RED tests + 85.2-01 DB foundation + 85.2-02 synthesis route + 85.2-03 UI shell + 85.2-04 calendar wiring done)
+Status: In Progress — All waves complete except Plan 05 (human verification).
+Last activity: 2026-05-14 — Phase 85.2 Plan 04 complete (see 85.2-04-SUMMARY.md)
 
 Progress: [██████████] 99%
 
@@ -265,6 +265,9 @@ Progress: [██████████] 99%
 - [85.2-03] Active tab derived solely from pathname startsWith check — no query params, no state, survives full-page nav
 - [85.2-03] Regenerate re-fetches persisted row after event: done — ensures id and generated_at from DB are canonical, not synthesized client-side
 - [85.2-03] printing-all CSS class reused from Phase 80 — single-content briefing page needs no print-single/per-card selection
+- [85.2-04] generateSingleCard() extracted from forEach fire-and-forget; all setCards(prev => ...) functional updater calls preserved — per-card state transitions still happen independently at each card's own SSE timing
+- [85.2-04] chainToBriefing drains SSE stream but does NOT render text on Calendar tab — Briefing page.tsx fetches persisted row on mount
+- [85.2-04] Promise.all gates chainToBriefing; parallel generation timing is unchanged — all N fetches still fire concurrently
 
 ### Blockers/Concerns
 
@@ -272,6 +275,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-05-14T19:34:28.039Z
-Stopped at: Completed 85.2-03-PLAN.md
+Last session: 2026-05-14T19:38:29.957Z
+Stopped at: Completed 85.2-04-PLAN.md
 Resume file: None
