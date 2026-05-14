@@ -391,7 +391,7 @@ Plans:
 **Goal:** Add a synthesized "Today's Briefing" view to `/daily-prep` so the user can answer "what do I need to know to start my day?" from a single 3-minute glance. Adds a synthesis layer on top of the existing per-meeting brief pipeline (Phase 80) plus two new content streams (today's action items, this week's critical items). Three-section markdown render: Today's Meetings, Today's Action Items (top 5), This Week's Critical Items (top 5 mixed). New `daily_briefings` table, `/api/daily-prep/briefing` SSE route, sub-route `/daily-prep/briefing`, SubTabBar wiring.
 **Requirements**: BRIEF-01, BRIEF-02, BRIEF-03, BRIEF-04, BRIEF-05, BRIEF-06, BRIEF-07 (phase-local; defined in 85.2-RESEARCH.md Validation Architecture section)
 **Depends on:** Phase 85
-**Plans:** 2/6 plans executed
+**Plans:** 3/6 plans executed
 
 Plans:
 - [ ] 85.2-00-PLAN.md — Wave 0: RED test stubs for all BRIEF-* requirements
