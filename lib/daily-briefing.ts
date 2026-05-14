@@ -18,7 +18,18 @@ import {
   keyDecisions,
   wbsItems,
   dailyPrepBriefs,
+  projects,
 } from '@/db/schema';
+
+async function fetchProjectMap(projectIds: number[]): Promise<Map<number, { name: string; customer: string }>> {
+  const unique = Array.from(new Set(projectIds)).filter((id) => Number.isFinite(id));
+  if (unique.length === 0) return new Map();
+  const rows = await db
+    .select({ id: projects.id, name: projects.name, customer: projects.customer })
+    .from(projects)
+    .where(inArray(projects.id, unique));
+  return new Map(rows.map((r) => [r.id, { name: r.name, customer: r.customer }]));
+}
 
 // ─── Date Parsing ─────────────────────────────────────────────────────────────
 
@@ -40,6 +51,8 @@ export function parseFlexibleDate(value: string | null | undefined): Date | null
 export interface ActionCandidate {
   id: number;
   project_id: number;
+  project_name: string | null;
+  customer: string | null;
   description: string;  // actions.description (not title)
   due: string | null;
   parsed_due: Date;     // never null — already filtered
@@ -70,12 +83,19 @@ export async function fetchTodayActionCandidates(
       candidates.push({
         id: r.id,
         project_id: r.project_id,
+        project_name: null,
+        customer: null,
         description: r.description,
         due: r.due,
         parsed_due: parsed,
         status: r.status,
       });
     }
+  }
+  const projectMap = await fetchProjectMap(candidates.map((c) => c.project_id));
+  for (const c of candidates) {
+    const p = projectMap.get(c.project_id);
+    if (p) { c.project_name = p.name; c.customer = p.customer; }
   }
   return candidates.sort((a, b) => a.parsed_due.getTime() - b.parsed_due.getTime());
 }
@@ -85,6 +105,8 @@ export async function fetchTodayActionCandidates(
 export interface RiskCandidate {
   id: number;
   project_id: number;
+  project_name: string | null;
+  customer: string | null;
   description: string;  // risks.description (not title)
   severity: string | null;
   status: string | null;
@@ -94,6 +116,8 @@ export interface RiskCandidate {
 export interface MilestoneCandidate {
   id: number;
   project_id: number;
+  project_name: string | null;
+  customer: string | null;
   name: string;          // milestones.name (not title)
   date: string | null;
   parsed_date: Date;
@@ -103,6 +127,8 @@ export interface MilestoneCandidate {
 export interface DecisionCandidate {
   id: number;
   project_id: number;
+  project_name: string | null;
+  customer: string | null;
   decision: string;      // keyDecisions.decision (not title; APPEND-ONLY table)
   date: string | null;
 }
@@ -110,6 +136,8 @@ export interface DecisionCandidate {
 export interface WbsCandidate {
   id: number;
   project_id: number;
+  project_name: string | null;
+  customer: string | null;
   name: string;
   due_date: string | null;
   percent_complete: number | null;
@@ -146,6 +174,8 @@ export async function fetchWeekCriticalCandidates(
   const riskCandidates: RiskCandidate[] = riskRows.map((r) => ({
     id: r.id,
     project_id: r.project_id,
+    project_name: null,
+    customer: null,
     description: r.description,
     severity: r.severity,
     status: r.status,
@@ -166,6 +196,8 @@ export async function fetchWeekCriticalCandidates(
     milestoneCandidates.push({
       id: m.id,
       project_id: m.project_id,
+      project_name: null,
+      customer: null,
       name: m.name,
       date: m.date,
       parsed_date: parsed,
@@ -192,6 +224,8 @@ export async function fetchWeekCriticalCandidates(
     .map((d) => ({
       id: d.id,
       project_id: d.project_id,
+      project_name: null,
+      customer: null,
       decision: d.decision,
       date: d.date,
     }));
@@ -211,11 +245,29 @@ export async function fetchWeekCriticalCandidates(
     wbsCandidates.push({
       id: w.id,
       project_id: w.project_id,
+      project_name: null,
+      customer: null,
       name: w.name,
       due_date: w.due_date,
       percent_complete: w.percent_complete,
     });
   }
+
+  const allProjectIds = [
+    ...riskCandidates.map((c) => c.project_id),
+    ...milestoneCandidates.map((c) => c.project_id),
+    ...decisionCandidates.map((c) => c.project_id),
+    ...wbsCandidates.map((c) => c.project_id),
+  ];
+  const projectMap = await fetchProjectMap(allProjectIds);
+  const apply = <T extends { project_id: number; project_name: string | null; customer: string | null }>(c: T): void => {
+    const p = projectMap.get(c.project_id);
+    if (p) { c.project_name = p.name; c.customer = p.customer; }
+  };
+  riskCandidates.forEach(apply);
+  milestoneCandidates.forEach(apply);
+  decisionCandidates.forEach(apply);
+  wbsCandidates.forEach(apply);
 
   return {
     risks: riskCandidates,

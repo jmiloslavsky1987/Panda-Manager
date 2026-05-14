@@ -111,7 +111,7 @@ export default function BriefingPage() {
     return (
       <div className="max-w-3xl mx-auto px-4 py-4">
         <div className="mb-3 text-xs text-zinc-500">Synthesizing…</div>
-        <div className="prose prose-sm dark:prose-invert">
+        <div className="prose prose-sm prose-zinc">
           <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{streamingText || 'Working…'}</ReactMarkdown>
         </div>
       </div>
@@ -169,7 +169,7 @@ export default function BriefingPage() {
           Generated {new Date(briefing.generated_at).toLocaleString()}
         </span>
       </div>
-      <div className="prose prose-sm dark:prose-invert">
+      <div className="prose prose-sm prose-zinc">
         <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{briefing.briefing_content}</ReactMarkdown>
       </div>
       {error && <p className="mt-3 text-xs text-red-600 no-print">Error: {error}</p>}

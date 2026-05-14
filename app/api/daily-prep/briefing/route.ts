@@ -25,12 +25,12 @@ Output strictly the following markdown structure with no preamble:
 [Chronological list. Per meeting: 1-paragraph synthesis (~3 sentences) of the full per-meeting brief if provided, else "Time + attendees + matched project". Max 5; if more than 5 meetings, prioritize meetings with briefs.]
 
 ## Today's Action Items
-[Top 5 only. One line per item: action description — one-sentence "why this matters today". Pull from the provided candidate list. If fewer than 5 candidates, list fewer; do not pad.]
+[Top 5 only. One line per item, formatted as: **Customer — Project**: action description — one-sentence "why this matters today". Pull customer and project_name from the provided candidate row; if customer is null, use "Internal" for that field; if project_name is null, omit "— Project" (keep just **Customer**). If fewer than 5 candidates, list fewer; do not pad.]
 
 ## This Week's Critical Items
-[Top 5 mixed across risks, near-due milestones, recent decisions (FYI only), and overdue in-progress WBS work. One line per item: category label + title — one-sentence "why this matters". Hard cap 5.]
+[Top 5 mixed across risks, near-due milestones, recent decisions (FYI only), and overdue in-progress WBS work. One line per item, formatted as: **Customer — Project** · category label: title — one-sentence "why this matters". Same customer/project_name fallback rule as Action Items. Hard cap 5.]
 
-Tone: tight prose, executive-ready, no fluff. No tables, no emojis, no nested bullets.`;
+Tone: tight prose, executive-ready, no fluff. No tables, no emojis, no nested bullets. Never output the literal strings "undefined" or "null" — apply the fallback rules above.`;
 
 // ─── POST — synthesize + stream + persist ─────────────────────────────────────
 
