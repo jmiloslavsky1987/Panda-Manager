@@ -386,6 +386,21 @@ Plans:
 - [ ] 85-04-PLAN.md — WbsPage wiring + Gantt percent_complete bars + SVG arrows (WBS-01–04)
 - [ ] 85-05-PLAN.md — Human verification checkpoint (WBS-01–04)
 
+### Phase 85.2: daily-briefing-tab (INSERTED)
+
+**Goal:** Add a synthesized "Today's Briefing" view to `/daily-prep` so the user can answer "what do I need to know to start my day?" from a single 3-minute glance. Adds a synthesis layer on top of the existing per-meeting brief pipeline (Phase 80) plus two new content streams (today's action items, this week's critical items). Three-section markdown render: Today's Meetings, Today's Action Items (top 5), This Week's Critical Items (top 5 mixed). New `daily_briefings` table, `/api/daily-prep/briefing` SSE route, sub-route `/daily-prep/briefing`, SubTabBar wiring.
+**Requirements**: BRIEF-01, BRIEF-02, BRIEF-03, BRIEF-04, BRIEF-05, BRIEF-06, BRIEF-07 (phase-local; defined in 85.2-RESEARCH.md Validation Architecture section)
+**Depends on:** Phase 85
+**Plans:** 1/6 plans executed
+
+Plans:
+- [ ] 85.2-00-PLAN.md — Wave 0: RED test stubs for all BRIEF-* requirements
+- [ ] 85.2-01-PLAN.md — Wave 1: Migration 0051 + dailyBriefings schema + lib/daily-briefing.ts helpers (BRIEF-01, BRIEF-05, BRIEF-07)
+- [ ] 85.2-02-PLAN.md — Wave 2: /api/daily-prep/briefing route — POST SSE synthesis + GET (BRIEF-04)
+- [ ] 85.2-03-PLAN.md — Wave 2: app/daily-prep/layout.tsx + briefing/page.tsx UI (BRIEF-02, BRIEF-03)
+- [ ] 85.2-04-PLAN.md — Wave 3: Calendar page chain-to-briefing wiring (BRIEF-06)
+- [ ] 85.2-05-PLAN.md — Wave 4: Human verification checkpoint (all BRIEF-*)
+
 ### Phase 85.1: screen density and UX overhaul (INSERTED)
 
 **Goal:** Hard-set a denser default across the entire app (visual-only — no data, API, or behavioral changes). Three layers: global chrome (Sidebar, PageBar, WorkspaceTabs, SubTabBar, page wrappers), shared primitives (`components/ui/*` table/input/select/button/dialog/card/textarea), and per-tab cleanup of residual `p-6`/`space-y-6` patterns across ~28 workspace tabs + global pages. Linear is the visual reference. KDS-04 amended from 44px to 36px PageBar; KDS-03 240px Sidebar width honored. WBS and Gantt internals explicitly excluded.

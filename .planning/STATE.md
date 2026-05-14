@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: verifying
-stopped_at: Completed 85.1-05-PLAN.md
-last_updated: "2026-05-12T15:40:30.130Z"
+stopped_at: Completed 85.2-00-PLAN.md
+last_updated: "2026-05-14T19:15:46.939Z"
 last_activity: 2026-05-12 — Phase 85.1 Plan 05 complete (see 85.1-05-SUMMARY.md)
 progress:
-  total_phases: 14
+  total_phases: 15
   completed_phases: 13
-  total_plans: 67
-  completed_plans: 67
+  total_plans: 73
+  completed_plans: 68
   percent: 100
 ---
 
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 85.1 of 85.1 (Screen Density and UX Overhaul — COMPLETE)
-Plan: 5 of 5 complete (85.1-05 done — human visual verification APPROVED)
-Status: Complete — All 5 plans executed and human-verified. Phase 85.1 fully done.
-Last activity: 2026-05-12 — Phase 85.1 Plan 05 complete (see 85.1-05-SUMMARY.md)
+Phase: 85.2-daily-briefing-tab (Daily Briefing Tab — In Progress)
+Plan: 1 of 6 complete (85.2-00 done — RED test gates created for all 7 BRIEF-* requirements)
+Status: In Progress — Plan 00 (Wave 0 RED tests) complete. Wave 1 implementation plans pending.
+Last activity: 2026-05-14 — Phase 85.2 Plan 00 complete (see 85.2-00-SUMMARY.md)
 
-Progress: [██████████] 100%
+Progress: [██████████] 98%
 
 ## v10.0 Roadmap Summary
 
@@ -70,6 +70,7 @@ Progress: [██████████] 100%
 
 - Phase 82 added: Chat write operations — full CRUD (create, update, delete) for actions, milestones, risks, teams, and architecture nodes with confirmation UX
 - Phase 85.1 inserted after Phase 85: screen density and UX overhaul (URGENT) — hard-set denser default across global chrome, shared primitives, and per-tab cleanup; promoted ahead of Phase 86 (AWS readiness) because screen real-estate pain is hurting daily use (2026-05-11)
+- Phase 85.2 inserted after Phase 85: daily-briefing-tab (URGENT) — synthesized "Today's Briefing" view on `/daily-prep` combining per-meeting briefs (Phase 80) with today's action items + this week's critical items; context already gathered (2026-05-14)
 
 ### Key Decisions (carry-forward)
 
@@ -247,6 +248,10 @@ Progress: [██████████] 100%
 - [85.1-05] Body-13px scoping decision (tables-only, 14px elsewhere) accepted as-is by user — no global body rule needed
 - [85.1-05] Button size=lg transition (44px -> 40px) and KDS-04 PageBar amendment (44px -> 36px) both confirmed correct by user
 - [85.1-05] Docker rebuild (~/bin/panda-rebuild.sh) required for committed changes to be visible — code commit alone does not restart container
+- [85.2-00] tests/ gitignored — all 5 BRIEF-* test files exist on-disk only, no git commit for this plan (per [79-00] decision 166d7604)
+- [85.2-00] BRIEF-06a Promise.all pre-passes: app/daily-prep/page.tsx uses Promise.all for data fetching already; key behavioral gates BRIEF-06b (POST to briefing route) and BRIEF-06c (router.push navigation) are RED — acceptable per [80-00] precedent
+- [85.2-00] Source-scan pattern applied for all 4 new BRIEF-* test files: fs.readFileSync + try/catch returning '' on ENOENT prevents vitest crashes in RED state (no postgres driver import errors)
+- [85.2-00] BRIEF-05b dynamic import gate: await import('@/lib/daily-briefing') inside try/catch; expect.fail on import error gives clean RED message in Wave 0 state
 
 ### Blockers/Concerns
 
@@ -254,6 +259,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-05-12T15:30:00.000Z
-Stopped at: Completed 85.1-05-PLAN.md
+Last session: 2026-05-14T19:15:46.936Z
+Stopped at: Completed 85.2-00-PLAN.md
 Resume file: None
