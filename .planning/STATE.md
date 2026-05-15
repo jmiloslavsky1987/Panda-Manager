@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
-status: awaiting_reverification
-stopped_at: Phase 85.2 manual UAT gaps fixed inline (Panda-Manager d45dcb20); awaiting re-test
-last_updated: "2026-05-14T20:30:00.000Z"
-last_activity: 2026-05-14 — Phase 85.2 gaps 01 + 02 closed inline; Docker rebuilt
+status: verifying
+stopped_at: Completed 85.2-04-PLAN.md
+last_updated: "2026-05-15T16:43:59.219Z"
+last_activity: "2026-05-14 — Phase 85.2 gaps closed inline (Panda-Manager d45dcb20): (1) prose-zinc replaces dark:prose-invert in briefing page, (2) candidate fetchers join projects table + system prompt requires Customer — Project attribution."
 progress:
   total_phases: 15
-  completed_phases: 13
+  completed_phases: 14
   total_plans: 73
-  completed_plans: 72
+  completed_plans: 73
   percent: 99
 ---
 
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 85.2-daily-briefing-tab (Daily Briefing Tab — Awaiting Re-verification)
-Plan: 5 of 6 complete (Plans 00–04 done; Plan 05 paused at human checkpoint — gaps closed inline)
-Status: Awaiting Re-verification — both UAT gaps fixed and Docker rebuilt. User to refresh /daily-prep/briefing and re-test the two failed checks (prose contrast + customer attribution).
-Last activity: 2026-05-14 — Phase 85.2 gaps closed inline (Panda-Manager d45dcb20): (1) prose-zinc replaces dark:prose-invert in briefing page, (2) candidate fetchers join projects table + system prompt requires Customer — Project attribution.
+Phase: 85.2-daily-briefing-tab (Daily Briefing Tab — Complete 2026-05-15)
+Plan: 6 of 6 complete (Plans 00–05; Plan 05 closed after gap fixes resolved 3 UAT issues — prose contrast, customer attribution, archived-project leak)
+Status: Complete — user signed off 2026-05-15. Ready for next phase: 86 (multi-user-sso-aws-readiness).
+Last activity: 2026-05-15 — Phase 85.2 closed. Gap fixes shipped (Panda-Manager d45dcb20 + 70b8a772): prose-zinc legibility, fetchActiveProjectMap filters archived/closed projects, system prompt requires `**Customer — Project**` attribution on Action and Critical items.
 
 Progress: [██████████] 99%
 
