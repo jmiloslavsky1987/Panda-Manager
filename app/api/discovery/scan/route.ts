@@ -159,11 +159,21 @@ export async function POST(request: NextRequest): Promise<Response> {
           ].filter(Boolean).join('\n\n');
 
           // 2. Read org-level source credentials and user OAuth tokens in parallel
-          const [settings, dbUserTokens, allMcpServers] = await Promise.all([
+          // Phase 86: scan with the requesting user's tokens. Fall back to legacy 'default' tokens
+          // so single-user Docker installs (no per-user connect yet) keep working.
+          const [settings, scopedUserTokens, allMcpServers] = await Promise.all([
             readSettings(),
-            db.select().from(userSourceTokens).where(eq(userSourceTokens.user_id, 'default')),
+            db.select().from(userSourceTokens).where(eq(userSourceTokens.user_id, session!.user.id)),
             MCPClientPool.getInstance().getServersForSkill('discovery-scan'),
           ]);
+
+          let dbUserTokens = scopedUserTokens;
+          if (dbUserTokens.length === 0) {
+            dbUserTokens = await db
+              .select()
+              .from(userSourceTokens)
+              .where(eq(userSourceTokens.user_id, 'default'));
+          }
 
           const source_credentials = settings.source_credentials ?? {};
 

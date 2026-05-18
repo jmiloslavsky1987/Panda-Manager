@@ -11,7 +11,7 @@ function appUrl(path: string): string {
 }
 
 export async function GET(request: NextRequest): Promise<Response> {
-  const { redirectResponse } = await requireSession();
+  const { session, redirectResponse } = await requireSession();
   if (redirectResponse) return redirectResponse;
 
   const { searchParams } = new URL(request.url);
@@ -89,11 +89,13 @@ export async function GET(request: NextRequest): Promise<Response> {
     const { db } = await import('@/db');
     const { userSourceTokens } = await import('@/db/schema');
 
+    // Phase 86: per-user scoping — tokens are owned by the connecting user, not 'default'.
+    // Existing 'default' rows remain valid via the fallback read pattern in status/scan routes.
     // Upsert token — Slack has no refresh token; use access_token as placeholder for NOT NULL column
     await db
       .insert(userSourceTokens)
       .values({
-        user_id: 'default',
+        user_id: session!.user.id,
         source: 'slack',
         access_token: token,
         refresh_token: token,  // Slack has no refresh token — use access_token as placeholder

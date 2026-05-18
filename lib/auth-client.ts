@@ -6,9 +6,14 @@
  */
 
 import { createAuthClient } from "better-auth/react";
+import { genericOAuthClient } from "better-auth/client/plugins";
 
+// Phase 86: genericOAuthClient() registers signIn.oauth2() on authClient.
+// Safe with Okta env blank — the client plugin only adds method shims;
+// no network calls fire until signIn.oauth2({ providerId: 'okta' }) is invoked.
 export const authClient = createAuthClient({
   basePath: "/api/auth",
+  plugins: [genericOAuthClient()],
 });
 
 // Re-export convenience methods

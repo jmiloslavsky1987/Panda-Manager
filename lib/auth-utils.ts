@@ -21,11 +21,13 @@ export function resolveRole(session: CredentialSession | OIDCSession): "admin" |
   if ("user" in session && session.user?.role) {
     return session.user.role === "admin" ? "admin" : "user";
   }
-  // Future OIDC path (Okta) — checks groups or roles claims
+  // Future OIDC path (Okta) — checks groups or roles claims.
+  // Phase 86: group name corrected to 'panda-admins' per CONTEXT.md decision.
+  // 'panda-admins' is the Okta group whose members map to role='admin'.
   if ("claims" in session) {
     const groups = session.claims?.groups ?? [];
     const roles = session.claims?.roles ?? [];
-    if (groups.includes("Admins") || roles.includes("admin")) return "admin";
+    if (groups.includes("panda-admins") || roles.includes("admin")) return "admin";
   }
   return "user";
 }

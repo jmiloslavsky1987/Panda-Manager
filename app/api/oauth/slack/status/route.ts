@@ -7,23 +7,38 @@ import { requireSession } from '@/lib/auth-server';
 export const dynamic = 'force-dynamic';
 
 export async function GET(_request: NextRequest): Promise<Response> {
-  const { redirectResponse } = await requireSession();
+  const { session, redirectResponse } = await requireSession();
   if (redirectResponse) return redirectResponse;
 
   // Lazy dynamic DB import for Docker build compatibility
   const { db } = await import('@/db');
   const { userSourceTokens } = await import('@/db/schema');
 
-  const [row] = await db
+  // Phase 86: read the real user's token first; fall back to legacy 'default' row
+  // so single-user Docker installs (no per-user connect yet) keep working.
+  let [row] = await db
     .select({ access_token: userSourceTokens.access_token })
     .from(userSourceTokens)
     .where(
       and(
-        eq(userSourceTokens.user_id, 'default'),
+        eq(userSourceTokens.user_id, session!.user.id),
         eq(userSourceTokens.source, 'slack')
       )
     )
     .limit(1);
+
+  if (!row) {
+    [row] = await db
+      .select({ access_token: userSourceTokens.access_token })
+      .from(userSourceTokens)
+      .where(
+        and(
+          eq(userSourceTokens.user_id, 'default'),
+          eq(userSourceTokens.source, 'slack')
+        )
+      )
+      .limit(1);
+  }
 
   if (!row) {
     return Response.json({ connected: false, hint: null });
@@ -35,18 +50,20 @@ export async function GET(_request: NextRequest): Promise<Response> {
 }
 
 export async function DELETE(_request: NextRequest): Promise<Response> {
-  const { redirectResponse } = await requireSession();
+  const { session, redirectResponse } = await requireSession();
   if (redirectResponse) return redirectResponse;
 
   // Lazy dynamic DB import for Docker build compatibility
   const { db } = await import('@/db');
   const { userSourceTokens } = await import('@/db/schema');
 
+  // Phase 86: only delete the real user's row. Never delete the 'default'
+  // fallback row — other concurrent users may rely on it during multi-PM rollout.
   await db
     .delete(userSourceTokens)
     .where(
       and(
-        eq(userSourceTokens.user_id, 'default'),
+        eq(userSourceTokens.user_id, session!.user.id),
         eq(userSourceTokens.source, 'slack')
       )
     );

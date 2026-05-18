@@ -11,8 +11,30 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
+import { genericOAuth, okta } from "better-auth/plugins/generic-oauth";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
+
+// Phase 86: Okta OIDC SSO — DORMANT by default.
+// When OKTA_CLIENT_ID is unset/blank, oktaPlugins is empty and behavior is
+// byte-for-byte identical to pre-Phase-86 (email/password only).
+// To activate post-AWS migration: set OKTA_DOMAIN, OKTA_CLIENT_ID,
+// OKTA_CLIENT_SECRET, OKTA_REDIRECT_URI in the environment.
+// Truthy check intentionally — empty string '' and undefined both evaluate false.
+const oktaPlugins = process.env.OKTA_CLIENT_ID
+  ? [
+      genericOAuth({
+        config: [
+          okta({
+            clientId: process.env.OKTA_CLIENT_ID!,
+            clientSecret: process.env.OKTA_CLIENT_SECRET!,
+            issuer: process.env.OKTA_DOMAIN!,
+            redirectURI: process.env.OKTA_REDIRECT_URI,
+          }),
+        ],
+      }),
+    ]
+  : [];
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -63,5 +85,5 @@ export const auth = betterAuth({
       },
     },
   },
-  plugins: [nextCookies()],  // Must be last; enables cookie setting in Server Actions
+  plugins: [...oktaPlugins, nextCookies()],  // nextCookies() MUST remain last; enables cookie setting in Server Actions
 });
