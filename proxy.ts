@@ -4,12 +4,13 @@ import { getSessionCookie } from "better-auth/cookies";
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Always allow: login page, setup page, auth API, invite flow, Next.js internals
+  // Always allow: login page, setup page, auth API, invite flow, health probe, Next.js internals
   if (
     pathname.startsWith("/login") ||
     pathname.startsWith("/setup") ||
     pathname.startsWith("/accept-invite") ||
     pathname.startsWith("/api/auth") ||
+    pathname === "/api/health" ||
     pathname.startsWith("/_next") ||
     pathname === "/favicon.ico"
   ) {
@@ -28,6 +29,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!login|setup|api/auth|_next/static|_next/image|favicon\\.ico).*)",
+    "/((?!login|setup|api/auth|api/health|_next/static|_next/image|favicon\\.ico).*)",
   ],
 };

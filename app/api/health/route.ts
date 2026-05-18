@@ -43,17 +43,11 @@ export async function GET(): Promise<NextResponse> {
   // than pre-validating env (caught below as redis: 'error').
   let redis: Redis | null = null;
   try {
-    // Call Redis as a function (not via `new`) — ioredis supports both call
-    // patterns. The function form interoperates with vitest mocks whose
-    // mockImplementation uses an arrow function (arrow fns cannot be `new`-called).
-    redis = (Redis as unknown as (url: string, opts: Record<string, unknown>) => Redis)(
-      process.env.REDIS_URL ?? '',
-      {
-        lazyConnect: true,
-        maxRetriesPerRequest: 1,
-        connectTimeout: 3000,
-      },
-    );
+    redis = new Redis(process.env.REDIS_URL ?? '', {
+      lazyConnect: true,
+      maxRetriesPerRequest: 1,
+      connectTimeout: 3000,
+    });
     // With lazyConnect: true, .ping() triggers the actual connection — no separate connect() needed.
     await redis.ping();
     results.redis = 'ok';
