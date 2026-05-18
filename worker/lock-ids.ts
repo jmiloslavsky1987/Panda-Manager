@@ -14,4 +14,5 @@ export const LOCK_IDS = {
   SKILL_RUN:       1007,  // Added Phase 5
   WEEKLY_FOCUS:         1008,  // Phase 35 — weekly focus generation
   MEETING_PREP_DAILY:   1009,  // Phase 80 — daily meeting prep auto-generation
+  DB_BACKUP:            1010,  // Phase 86 — automated daily pg_dump backup
 } as const;
