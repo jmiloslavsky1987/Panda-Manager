@@ -423,7 +423,7 @@ Plans:
 **Plans:** 1/6 plans executed
 
 Plans:
-- [ ] 86-00-PLAN.md — Wave 0: RED test scaffolds (DORM, TOKEN, HEALTH, BACKUP, RBAC gates)
+- [x] 86-00-PLAN.md — Wave 0: RED test scaffolds (DORM, TOKEN, HEALTH, BACKUP, RBAC gates) — Complete 2026-05-18 (86-00-SUMMARY.md)
 - [ ] 86-01-PLAN.md — Wave 2: Per-user OAuth token migration (Gmail + Slack + Discovery scan) — TOKEN-01..04
 - [ ] 86-02-PLAN.md — Wave 2: Okta scaffold (conditional plugin + login server-wrapper + /api/auth/providers) — DORM-01..04
 - [ ] 86-03-PLAN.md — Wave 2: BullMQ db-backup job + Dockerfile postgresql-client-16 + admin status endpoint — BACKUP-01..03
