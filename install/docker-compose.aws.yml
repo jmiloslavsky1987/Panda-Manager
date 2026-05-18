@@ -1,0 +1,36 @@
+# Phase 86: AWS production compose. NOT executed directly by ECS — used as a reference for ECS task definitions.
+# RDS and ElastiCache are external (referenced via DATABASE_URL and REDIS_URL); only the app + worker containers run.
+#
+# To deploy: build the image from install/Dockerfile.local, push to ECR, create ECS task definitions with the
+# env vars from install/env.aws.example, register service behind ALB targeting /api/health on port 3000.
+
+version: '3.9'
+
+services:
+  app:
+    image: ${ECR_IMAGE_URI:-bigpanda-app:latest}
+    command: ["npm", "run", "start"]
+    ports:
+      - "3000:3000"
+    environment:
+      # All env vars must be provided via ECS task definition (env or secrets references).
+      # See install/env.aws.example for the full manifest.
+      NODE_ENV: production
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  worker:
+    image: ${ECR_IMAGE_URI:-bigpanda-app:latest}
+    command: ["npm", "run", "worker"]
+    environment:
+      NODE_ENV: production
+    # No public port; only DB + Redis network access required.
+
+# Notes:
+# - postgres and redis are NOT in this compose — they are RDS + ElastiCache external services.
+# - Backup volume on AWS: deferred to ops (RDS automated backups handle the production safety net).
+#   The BullMQ db-backup job is for local Docker installs only.
+# - Logging: rely on ECS CloudWatch log routing; the app logs to stdout/stderr.
