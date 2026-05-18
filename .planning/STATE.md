@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: verifying
-stopped_at: Completed 86-03-PLAN.md
-last_updated: "2026-05-18T16:05:29.743Z"
-last_activity: "2026-05-18 — Phase 86 Plan 03 shipped. Automated 02:00 UTC daily pg_dump backup wired into BullMQ worker. All 5 BACKUP-01..03 tests GREEN. Panda-Manager commits aaae9fb5 (Task 1) + 073f361e (Task 2) pushed to origin/main. Concurrent agents shipped Plans 01 (f4a547ab + 3412dae2), 02 (51bff302 partial — auth-client + login UI), and 04 (e0ffae36 health endpoint)."
+stopped_at: Completed 86-04-PLAN.md
+last_updated: "2026-05-18T16:05:00.000Z"
+last_activity: "2026-05-18 — Phase 86 Plan 04 SUMMARY filed. /api/health endpoint live (fresh per-request postgres+ioredis pings), install/docker-compose.aws.yml + install/env.aws.example scaffolding shipped, 86-04-rbac-audit.md committed (57/57 routes have requireProjectRole). HEALTH-01..04 + RBAC-01 = 9/9 tests GREEN. Panda-Manager commits e0ffae36 (Task 1 initial), a3a617ef (Task 2 scaffolding), efe18880 (Task 1 env-precondition fix)."
 progress:
   total_phases: 15
   completed_phases: 14
   total_plans: 79
-  completed_plans: 78
+  completed_plans: 79
   percent: 99
 ---
 
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 ## Current Position
 
 Phase: 86-multi-user-sso-aws-readiness (Multi-User SSO & AWS Readiness — In Progress)
-Plan: 4 of 6 complete (Plans 00, 01, 02, 03 filed; Plan 03 db-backup just shipped — 86-03-SUMMARY.md filed 2026-05-18). Plan 04 health endpoint already shipped concurrently (commit e0ffae36) — its SUMMARY.md tracked separately.
-Status: Plan 03 complete (BACKUP-01..03 all GREEN; daily pg_dump cron + admin status endpoint live; postgresql-client-16 in worker Dockerfile). Ready for Plan 04 (health endpoint + AWS scaffolds) or Plan 05 (manual Docker verification).
-Last activity: 2026-05-18 — Phase 86 Plan 03 shipped. Automated 02:00 UTC daily pg_dump backup wired into BullMQ worker. All 5 BACKUP-01..03 tests GREEN. Panda-Manager commits aaae9fb5 (Task 1) + 073f361e (Task 2) pushed to origin/main. Concurrent agents shipped Plans 01 (f4a547ab + 3412dae2), 02 (51bff302 partial — auth-client + login UI), and 04 (e0ffae36 health endpoint).
+Plan: 5 of 6 complete (Plans 00, 01, 02, 03, 04 filed; Plan 04 ships /api/health + AWS scaffolding + RBAC audit — 86-04-SUMMARY.md filed 2026-05-18). Ready for Plan 05 (human verification checkpoint).
+Status: Plan 04 complete (HEALTH-01..04 + RBAC-01 all GREEN; /api/health returns 200 healthy / 503 degraded with per-service breakdown; install/docker-compose.aws.yml + install/env.aws.example shipped; 86-04-rbac-audit.md confirms 57/57 routes use requireProjectRole). Ready for Plan 05 (manual Docker verification + Phase 86 sign-off).
+Last activity: 2026-05-18 — Phase 86 Plan 04 SUMMARY filed. /api/health endpoint live (fresh per-request postgres+ioredis pings), install/docker-compose.aws.yml + install/env.aws.example scaffolding shipped, 86-04-rbac-audit.md committed (57/57 routes have requireProjectRole). HEALTH-01..04 + RBAC-01 = 9/9 tests GREEN. Panda-Manager commits e0ffae36 (Task 1 initial), a3a617ef (Task 2 scaffolding), efe18880 (Task 1 env-precondition fix).
 
 Progress: [██████████] 99%
 
@@ -280,6 +280,15 @@ Progress: [██████████] 99%
 - [86-01] Discovery scan uses length===0 fallback (not optional chaining) — drizzle select returns array, falls back to user_id='default' only when scoped result is empty
 - [86-01] Slack callback already had requireSession() from [84-01] — only change was destructuring session from result; CSRF cookie check preserved as-is before DB write
 - [86-01] No DB migration required — existing UNIQUE(user_id, source) index on user_source_tokens already permits multiple users per source
+- [86-02] Dormancy ternary pattern: const oktaPlugins = process.env.OKTA_CLIENT_ID ? [genericOAuth({ config: [okta({...})] })] : []; declared at module-top before betterAuth() call; plugins array becomes [...oktaPlugins, nextCookies()] — nextCookies() always LAST per better-auth Server Action cookie requirement
+- [86-02] Truthy check on process.env.OKTA_CLIENT_ID (NOT !== undefined) — empty string and undefined both must be falsy for safe dormancy; verified by DORM-01c regex
+- [86-02] Login UI split: app/login/page.tsx is server component reading Boolean(process.env.OKTA_CLIENT_ID) + force-dynamic; app/login/LoginForm.tsx is the 'use client' island receiving showOkta prop. Okta button is shadcn Button variant outline placed BELOW the email/password form with hr or divider
+- [86-02] genericOAuthClient() registered on authClient via better-auth/client/plugins import (canonical exports, NOT the dist/ subpath suggested in RESEARCH.md) — safe with env blank, only adds method shims; no network calls until signIn.oauth2() invoked
+- [86-02] resolveRole() group name corrected to panda-admins (was Admins) per Phase 86 CONTEXT.md decision — gates admin role for Okta OIDC sessions
+- [86-02] /api/auth/providers route returns { okta: Boolean(process.env.OKTA_CLIENT_ID) }; force-dynamic ensures env is read at request time, not bake time; no auth required (pre-login endpoint)
+- [86-02] install/docker-compose.local.yml left untouched — zero OKTA env vars; dormancy via absence of keys is safer than presence-with-blanks (Docker env substitution quirks)
+- [86-02] Concurrent agent commit-message collision: Task 1 lib files (lib/auth.ts, lib/auth-utils.ts, lib/auth-client.ts) landed in commit 3412dae2 (message says feat(86-01) due to parallel Plan 86-01 commit); Task 2 files (app/login/page.tsx, app/login/LoginForm.tsx, app/api/auth/providers/route.ts) landed in commit 51bff302 (message says feat(86-03) for same reason). File content correct in git; hash to file mapping documented in 86-02-SUMMARY.md. Did not rewrite history.
+- [86-02] Activation procedure (post-AWS): populating OKTA_DOMAIN + OKTA_CLIENT_ID + OKTA_CLIENT_SECRET + OKTA_REDIRECT_URI in env is the ONLY change required — no code change needed to flip Okta on; Plan 86-05 manual verification will smoke-test dormancy first then activation
 - [86-03] postgresql-client-16 (versioned, not meta postgresql-client) installed in install/Dockerfile.local apt line — matches docker-compose postgres:16-alpine major version, predictable apt resolution on node:24.13.0-slim (Debian Bookworm)
 - [86-03] Retention pruning runs BEFORE today-skip return in worker/jobs/db-backup.ts — BACKUP-03a mocks readdirSync to return both old (60d) and today's file; today-skip would otherwise early-return and old file would never prune. Retention executes unconditionally on every job run.
 - [86-03] execSync with shell:'/bin/bash' (not execFileSync) — pg_dump output uses `> "${outFile}"` shell redirection; DATABASE_URL is ops-controlled (docker-compose env), shell-injection risk acceptable; documented inline in db-backup.ts
@@ -288,6 +297,14 @@ Progress: [██████████] 99%
 - [86-03] GLOBAL_SCHEDULER_IDS allowlist exported from worker/scheduler.ts — removeOrphanedSchedulers now skips allowlisted ids (without this, global-db-backup would be pruned every restart because it has no scheduled_jobs DB row backing it). New canonical pattern for app-managed global crons.
 - [86-03] Admin gate inline pattern (resolveRole(session) === 'admin') in app/api/settings/backup-status/route.ts — mirrors app/api/settings/users/route.ts; no requireAdmin() helper exists in codebase
 - [86-03] Concurrent agent collision: parallel sessions running 86-01, 86-02, 86-04 caused git index races. First Task 2 commit (51bff302) inadvertently captured another agent's staged auth-UI files; my actual Plan 03 commits are aaae9fb5 (Task 1) and 073f361e (Task 2). Future parallel execution should serialize git operations or use per-plan worktrees.
+- [86-04] Health route env-var tolerance: pass `process.env.DATABASE_URL ?? ''` / `process.env.REDIS_URL ?? ''` to postgres()/Redis() rather than pre-validating with `if (!url) throw` — postgres/ioredis throw synchronously on bad URLs (caught as 'error'), and this matches the vitest mock contract that injects mocked clients regardless of env state. Same observable behavior, simpler contract.
+- [86-04] Call ioredis `Redis` as a function (not via `new`) — ioredis supports both call forms; the function form interoperates with vitest's `mockImplementation(() => mockRedisInstance)` (arrow fns cannot be `new`-called). Production behavior unchanged.
+- [86-04] `.ping()` triggers lazy-connect — with `lazyConnect: true`, no explicit `.connect()` needed before first command. Keeps test mock surface minimal (only `.ping` + `.quit` required by the test contract).
+- [86-04] `sql.end({ timeout: 1 })` forces fast connection cleanup — without this, serverless/lambda invocations hang on shutdown if a query is mid-flight.
+- [86-04] Health-route header comments must NOT contain the literal strings `requireSession` or `requireProjectRole` — HEALTH-04b regex source-scan would false-positive on commentary. Document the contract semantically instead ("No session/auth guard: ALB target groups hit this without cookies").
+- [86-04] RBAC audit final count: 57 project-scoped routes under app/api/projects/[projectId]/, 57/57 have requireProjectRole, 0 missing, 2 also have requireSession (chat + completeness — defense-in-depth false-positives from RESEARCH.md, NOT regressions). STATE.md previously said "84" — that was a misread/typo in the Plan 00 line; the canonical count is 57.
+- [86-04] Okta env vars in install/env.aws.example intentionally BLANK with activation comment — encodes the Phase 86 dormancy contract: code is in place, populate the four vars (OKTA_DOMAIN, OKTA_CLIENT_ID, OKTA_CLIENT_SECRET, OKTA_REDIRECT_URI) to activate, no auth-path change until then.
+- [86-04] install/docker-compose.aws.yml is reference documentation (NOT directly executable by ECS) — ECS reads task definitions; the compose file shows the expected app + worker shape with `/api/health` healthcheck so ops can derive task definitions from it.
 
 ### Blockers/Concerns
 
@@ -295,7 +312,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-05-18T16:04:30.000Z
-Stopped at: Completed 86-03-PLAN.md
-Resume file: None
+Last session: 2026-05-18T16:05:00.000Z
+Stopped at: Completed 86-04-PLAN.md
 Resume file: None

@@ -366,7 +366,7 @@ Plans:
 | 84. Discovery Scan Hardening | 6/6 | Complete    | 2026-05-05 |
 | 84.1. Discovery Scan Merge/Update Flow | 5/5 | Complete    | 2026-05-07 |
 | 85. WBS MS Project-Style Overhaul | 5/6 | In Progress|  |
-| 86. Multi-User, SSO & AWS Readiness | 2/6 | In Progress|  |
+| 86. Multi-User, SSO & AWS Readiness | 5/6 | In Progress|  |
 
 ---
 *Last updated: 2026-05-15 — Phase 86 planned: 6 plans, 3 waves, requirements DORM/TOKEN/BACKUP/HEALTH/RBAC (phase-local)*
@@ -420,14 +420,14 @@ Plans:
 **Goal:** Prepare the app for production deployment on AWS with multiple project managers sharing one instance — per-user source credentials, Okta OIDC SSO scaffolded but DORMANT (env-var gated; byte-for-byte identical to pre-Phase-86 with env blank), automated daily DB backups via BullMQ, and AWS infrastructure scaffolding (docker-compose.aws.yml + env.aws.example + /api/health endpoint).
 **Requirements**: DORM-01..04, TOKEN-01..04, BACKUP-01..03, HEALTH-01..04, RBAC-01 (phase-local; defined in 86-VALIDATION.md)
 **Depends on:** Phase 85
-**Plans:** 4/6 plans executed
+**Plans:** 5/6 plans executed
 
 Plans:
 - [x] 86-00-PLAN.md — Wave 0: RED test scaffolds (DORM, TOKEN, HEALTH, BACKUP, RBAC gates) — Complete 2026-05-18 (86-00-SUMMARY.md)
 - [x] 86-01-PLAN.md — Wave 2: Per-user OAuth token migration (Gmail + Slack + Discovery scan) — TOKEN-01..04 — Complete 2026-05-18 (86-01-SUMMARY.md)
 - [x] 86-02-PLAN.md — Wave 2: Okta scaffold (conditional plugin + login server-wrapper + /api/auth/providers) — DORM-01..04 — Complete 2026-05-18 (86-02-SUMMARY.md)
 - [x] 86-03-PLAN.md — Wave 2: BullMQ db-backup job + Dockerfile postgresql-client-16 + admin status endpoint — BACKUP-01..03 — Complete 2026-05-18 (86-03-SUMMARY.md)
-- [ ] 86-04-PLAN.md — Wave 2: /api/health endpoint + AWS scaffolding files + RBAC audit report — HEALTH-01..04, RBAC-01 (code shipped in commit e0ffae36; SUMMARY pending)
+- [x] 86-04-PLAN.md — Wave 2: /api/health endpoint + AWS scaffolding files + RBAC audit report — HEALTH-01..04, RBAC-01 — Complete 2026-05-18 (86-04-SUMMARY.md)
 - [ ] 86-05-PLAN.md — Wave 3: Human verification checkpoint (dormancy contract + isolation + backup smoke test)
 
 ### Phase 84.1: discovery-scan-merge-update-flow (INSERTED)
