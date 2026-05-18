@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v11.0
-milestone_name: — Discovery, SSO & AWS Readiness
-status: in-progress
-stopped_at: Completed 86-00-PLAN.md
-last_updated: "2026-05-18T15:52:32.200Z"
-last_activity: 2026-05-18 — Phase 86 Plan 00 shipped. 5 test files created (tests/auth/okta-dormancy.test.ts, tests/api/per-user-tokens.test.ts, tests/api/health.test.ts, worker/jobs/__tests__/db-backup.test.ts, tests/api/rbac-coverage.test.ts). RBAC-01 GREEN immediately confirming 84 project-scoped routes all use requireProjectRole. Panda-Manager commit 274072aa for the tracked worker test.
+milestone: v10.0
+milestone_name: — Calendar Integration & Daily Prep
+status: completed
+stopped_at: Completed 86-01-PLAN.md
+last_updated: "2026-05-18T16:01:15.807Z"
+last_activity: 2026-05-18 — Phase 86 Plan 01 shipped. 5 OAuth/scan route files migrated from hardcoded 'default' to per-user session.user.id with 'default' fallback on reads. All 8 TOKEN-01..04 tests GREEN. Panda-Manager commits f4a547ab (Gmail) + 3412dae2 (Slack + scan) pushed to origin/main. No DB migration required.
 progress:
-  total_phases: 16
+  total_phases: 15
   completed_phases: 14
   total_plans: 79
-  completed_plans: 74
+  completed_plans: 75
   percent: 98
 ---
 
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 ## Current Position
 
 Phase: 86-multi-user-sso-aws-readiness (Multi-User SSO & AWS Readiness — In Progress)
-Plan: 1 of 6 complete (Plan 00 Wave 0 RED test stubs — 86-00-SUMMARY.md filed 2026-05-18)
-Status: Plan 00 complete (31 vitest tests scaffolded: 24 RED + 7 GREEN at creation). Ready for Plan 01 (per-user OAuth tokens).
-Last activity: 2026-05-18 — Phase 86 Plan 00 shipped. 5 test files created (tests/auth/okta-dormancy.test.ts, tests/api/per-user-tokens.test.ts, tests/api/health.test.ts, worker/jobs/__tests__/db-backup.test.ts, tests/api/rbac-coverage.test.ts). RBAC-01 GREEN immediately confirming 84 project-scoped routes all use requireProjectRole. Panda-Manager commit 274072aa for the tracked worker test.
+Plan: 2 of 6 complete (Plan 01 per-user OAuth tokens — 86-01-SUMMARY.md filed 2026-05-18)
+Status: Plan 01 complete (TOKEN-01..04 all GREEN; 5 OAuth/scan routes migrated to session.user.id with 'default' fallback). Ready for Plan 02 (Okta SSO dormant scaffold).
+Last activity: 2026-05-18 — Phase 86 Plan 01 shipped. 5 OAuth/scan route files migrated from hardcoded 'default' to per-user session.user.id with 'default' fallback on reads. All 8 TOKEN-01..04 tests GREEN. Panda-Manager commits f4a547ab (Gmail) + 3412dae2 (Slack + scan) pushed to origin/main. No DB migration required.
 
 Progress: [██████████] 98%
 
@@ -275,6 +275,11 @@ Progress: [██████████] 98%
 - [86-00] Combined Wave 2 verification: `cd Panda-Manager && npx vitest run tests/auth/okta-dormancy.test.ts tests/api/per-user-tokens.test.ts tests/api/health.test.ts worker/jobs/__tests__/db-backup.test.ts tests/api/rbac-coverage.test.ts` → 31 tests, target 31 GREEN after Plans 01-04 ship
 - [86-00] RBAC-01 baseline: 84 project-scoped route.ts files under app/api/projects/[projectId]/; 0 missing requireProjectRole; 0 using requireSession alone — GREEN immediately, now serves as regression sentinel for future plans
 - [86-00] BACKUP retention tests use mtimeMs deltas (60d = pruned, 10d = kept) with vi.mocked(fs.statSync).mockImplementation returning per-path mtimeMs; vi.clearAllMocks + per-mock mockReset in beforeEach prevents state leakage
+- [86-01] Real-user-first + 'default' fallback pattern: `let [row] = select(user_id=session!.user.id); if (!row) [row] = select(user_id='default');` — no DB migration needed, single-user Docker installs continue working
+- [86-01] OAuth DELETE never touches 'default' fallback row — defense for multi-user during rollout; single-user-install users who only have 'default' rows can simply reconnect to migrate their token
+- [86-01] Discovery scan uses length===0 fallback (not optional chaining) — drizzle select returns array, falls back to user_id='default' only when scoped result is empty
+- [86-01] Slack callback already had requireSession() from [84-01] — only change was destructuring session from result; CSRF cookie check preserved as-is before DB write
+- [86-01] No DB migration required — existing UNIQUE(user_id, source) index on user_source_tokens already permits multiple users per source
 
 ### Blockers/Concerns
 
@@ -282,6 +287,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-05-18T15:52:32.189Z
-Stopped at: Completed 86-00-PLAN.md
+Last session: 2026-05-18T16:01:15.804Z
+Stopped at: Completed 86-01-PLAN.md
 Resume file: None
