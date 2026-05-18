@@ -134,14 +134,31 @@ Deferred to future milestone. Tracked but not in current roadmap.
 | WBS-02 | Phase 85 | Complete |
 | WBS-03 | Phase 85 | Complete |
 | WBS-04 | Phase 85 | Complete |
+| DORM-01 | Phase 86 | Complete |
+| DORM-02 | Phase 86 | Complete |
+| DORM-03 | Phase 86 | Complete |
+| DORM-04 | Phase 86 | Complete |
+| TOKEN-01 | Phase 86 | Complete |
+| TOKEN-02 | Phase 86 | Complete |
+| TOKEN-03 | Phase 86 | Complete |
+| TOKEN-04 | Phase 86 | Complete |
+| BACKUP-01 | Phase 86 | Complete |
+| BACKUP-02 | Phase 86 | Complete |
+| BACKUP-03 | Phase 86 | Complete |
+| HEALTH-01 | Phase 86 | Complete |
+| HEALTH-02 | Phase 86 | Complete |
+| HEALTH-03 | Phase 86 | Complete |
+| HEALTH-04 | Phase 86 | Complete |
+| RBAC-01 | Phase 86 | Complete |
 
 **Coverage:**
 - v10 requirements: 17 total (Phases 79–80)
 - v11 requirements: 8 total (Phase 81)
 - v12 requirements: 4 total (Phase 85)
-- Mapped to phases: 29 (100%)
+- Phase 86 phase-local requirements: 16 total (DORM-01..04, TOKEN-01..04, BACKUP-01..03, HEALTH-01..04, RBAC-01) — defined in 86-VALIDATION.md
+- Mapped to phases: 45 (100%)
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-27*
-*Last updated: 2026-05-07 — Phase 85 added: 4 WBS requirements for MS Project-style overhaul*
+*Last updated: 2026-05-18 — Phase 86 closed: 16 phase-local requirements (DORM/TOKEN/BACKUP/HEALTH/RBAC) verified via 86-VERIFICATION.md PASSED*

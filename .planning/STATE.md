@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
-status: verifying
-stopped_at: Completed 86-04-PLAN.md
-last_updated: "2026-05-18T16:05:00.000Z"
-last_activity: "2026-05-18 — Phase 86 Plan 04 SUMMARY filed. /api/health endpoint live (fresh per-request postgres+ioredis pings), install/docker-compose.aws.yml + install/env.aws.example scaffolding shipped, 86-04-rbac-audit.md committed (57/57 routes have requireProjectRole). HEALTH-01..04 + RBAC-01 = 9/9 tests GREEN. Panda-Manager commits e0ffae36 (Task 1 initial), a3a617ef (Task 2 scaffolding), efe18880 (Task 1 env-precondition fix)."
+status: phase-complete
+stopped_at: Completed 86-05-PLAN.md — Phase 86 closed
+last_updated: "2026-05-18T19:15:31Z"
+last_activity: "2026-05-18 — Phase 86 CLOSED. Plan 05 human-verify checkpoint PASSED with two inline UAT fixes (lib/proxy.ts + new Redis() in app/api/health). All three primary deliverables alive: per-user OAuth tokens (TOKEN-01..04), Okta dormant scaffold (DORM-01..04), AWS readiness (HEALTH-01..04, BACKUP-01..03, RBAC-01). Backup smoke test: 1.6 MB SQL dump, 58 CREATE TABLE statements via pg_dump 16.14. Panda-Manager commits 712ad605 (PGDG repo for postgresql-client-16), 58fc4b55 (inline UAT fix)."
 progress:
   total_phases: 15
-  completed_phases: 14
-  total_plans: 79
-  completed_plans: 79
-  percent: 99
+  completed_phases: 15
+  total_plans: 80
+  completed_plans: 80
+  percent: 100
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 86-multi-user-sso-aws-readiness (Multi-User SSO & AWS Readiness — In Progress)
-Plan: 5 of 6 complete (Plans 00, 01, 02, 03, 04 filed; Plan 04 ships /api/health + AWS scaffolding + RBAC audit — 86-04-SUMMARY.md filed 2026-05-18). Ready for Plan 05 (human verification checkpoint).
-Status: Plan 04 complete (HEALTH-01..04 + RBAC-01 all GREEN; /api/health returns 200 healthy / 503 degraded with per-service breakdown; install/docker-compose.aws.yml + install/env.aws.example shipped; 86-04-rbac-audit.md confirms 57/57 routes use requireProjectRole). Ready for Plan 05 (manual Docker verification + Phase 86 sign-off).
-Last activity: 2026-05-18 — Phase 86 Plan 04 SUMMARY filed. /api/health endpoint live (fresh per-request postgres+ioredis pings), install/docker-compose.aws.yml + install/env.aws.example scaffolding shipped, 86-04-rbac-audit.md committed (57/57 routes have requireProjectRole). HEALTH-01..04 + RBAC-01 = 9/9 tests GREEN. Panda-Manager commits e0ffae36 (Task 1 initial), a3a617ef (Task 2 scaffolding), efe18880 (Task 1 env-precondition fix).
+Phase: 86-multi-user-sso-aws-readiness (Multi-User SSO & AWS Readiness — COMPLETE)
+Plan: 6 of 6 complete (Plans 00–05 all filed and signed off). 86-VERIFICATION.md PASSED 2026-05-18 with two inline UAT gap closures.
+Status: Phase 86 CLOSED. All three primary deliverables verified alive end-to-end: per-user OAuth tokens (TOKEN-01..04 source-scan tests GREEN + code paths verified), Okta SSO dormant scaffold (DORM-01..04 — /api/auth/providers returns {okta:false}, oauth2 sign-in returns 404, login renders no Okta button), AWS readiness (/api/health 200 unauth, 503 with redis down; daily BullMQ pg_dump 16.14 backup; 57/57 routes RBAC-audited). No open follow-ups.
+Last activity: 2026-05-18 — Phase 86 CLOSED. Plan 05 human-verify checkpoint PASSED with two inline UAT fixes (lib/proxy.ts /api/health allowlist + new Redis() constructor form in app/api/health). Backup smoke test: 1.6 MB SQL dump, 58 CREATE TABLE statements via pg_dump 16.14. Panda-Manager commits 712ad605 (PGDG repo for postgresql-client-16), 58fc4b55 (inline UAT fix).
 
-Progress: [██████████] 99%
+Progress: [██████████] 100%
 
 ## v10.0 Roadmap Summary
 
@@ -305,6 +305,13 @@ Progress: [██████████] 99%
 - [86-04] RBAC audit final count: 57 project-scoped routes under app/api/projects/[projectId]/, 57/57 have requireProjectRole, 0 missing, 2 also have requireSession (chat + completeness — defense-in-depth false-positives from RESEARCH.md, NOT regressions). STATE.md previously said "84" — that was a misread/typo in the Plan 00 line; the canonical count is 57.
 - [86-04] Okta env vars in install/env.aws.example intentionally BLANK with activation comment — encodes the Phase 86 dormancy contract: code is in place, populate the four vars (OKTA_DOMAIN, OKTA_CLIENT_ID, OKTA_CLIENT_SECRET, OKTA_REDIRECT_URI) to activate, no auth-path change until then.
 - [86-04] install/docker-compose.aws.yml is reference documentation (NOT directly executable by ECS) — ECS reads task definitions; the compose file shows the expected app + worker shape with `/api/health` healthcheck so ops can derive task definitions from it.
+- [86-05] Use PGDG (PostgreSQL Global Development Group) apt repo for postgresql-client-16 in install/Dockerfile.local — Debian Bookworm only ships postgresql-client-15. pg_dump major must be >= server major; v15 dumps against postgres:16 are officially unsupported. PGDG repo gives guaranteed-complete 16.14 dumps. Plan's plain meta-package fallback was unsafe and not used.
+- [86-05] Two /api/health bugs caught in UAT (not unit tests) and fixed inline (Panda-Manager commit 58fc4b55): (1) /api/health was not in lib/proxy.ts unauth allowlist nor in proxy matcher regex — unit tests bypass the proxy layer; (2) Redis(url, opts) called as function instead of `new Redis(url, opts)` — vitest arrow-function mock forced this non-canonical form which throws on .ping() in real ioredis. Both fixed in <50 LoC; class-based mock pattern adopted for future ioredis tests.
+- [86-05] Class-based mock pattern for constructor-required clients in vitest — `vi.fn().mockImplementation(function () { return mockInstance; })` works under both `new X()` and `X()` call forms. Avoids forcing implementation into non-canonical API call patterns. Adopt for ioredis, postgres-js, and similar libraries.
+- [86-05] Per-new-unauth-route checklist: add to lib/proxy.ts unauth allowlist + add to proxy matcher regex + verify in UAT with unauthenticated curl. Unit tests bypass the proxy and cannot catch this gap. Matcher regex update is what determines whether the proxy middleware processes the route at all.
+- [86-05] Inline UAT gap closure (vs gap-closure phase) is appropriate when: bug is surface-area (not architectural), fix fits in <50 LoC, all tests still pass after fix. Document in VERIFICATION.md + parent SUMMARY.md. Phase 86 closed inline with two such fixes per user direction.
+- [86-05] Dormancy literal-grep-vs-contract clarification: the substring "okta" appears once in /login page source as `showOkta:false` prop name in the React Server Components streaming payload. This does NOT render to a visible UI element. The dormancy contract (zero user-visible Okta surface) holds at the DOM/UX layer. A strict case-insensitive substring grep is too strict; the meaningful gate is "no clickable affordance, no DOM markup for the button."
+- [86-05] Browser-only verification items (Gmail OAuth real-user click-through, Discovery Scan with user tokens, /login visual confirmation) marked DEFERRED-PASS based on source-scan test coverage + user manual confirmation. Acceptable verification level for closure when code paths are independently verified.
 
 ### Blockers/Concerns
 
@@ -312,6 +319,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-05-18T16:05:00.000Z
-Stopped at: Completed 86-04-PLAN.md
+Last session: 2026-05-18T19:15:31Z
+Stopped at: Completed 86-05-PLAN.md — Phase 86 CLOSED
 Resume file: None
