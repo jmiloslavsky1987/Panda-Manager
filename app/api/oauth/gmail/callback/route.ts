@@ -57,10 +57,12 @@ export async function GET(request: NextRequest): Promise<Response> {
       }
     }
 
+    // Phase 86: per-user scoping — tokens are owned by the connecting user, not 'default'.
+    // Existing 'default' rows remain valid via the fallback read pattern in status/scan routes.
     await db
       .insert(userSourceTokens)
       .values({
-        user_id: 'default',
+        user_id: session!.user.id,
         source: 'gmail',
         access_token: tokens.access_token ?? null,
         refresh_token: tokens.refresh_token,
