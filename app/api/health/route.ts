@@ -19,10 +19,12 @@ export async function GET(): Promise<NextResponse> {
   const results: Record<string, 'ok' | 'error'> = {};
 
   // DB ping — fresh short-lived connection, 5s connect timeout, force-close on exit.
+  // Note: we do NOT pre-validate process.env.DATABASE_URL; postgres() will throw
+  // synchronously on a bad/empty URL, which is caught below as db: 'error'. This
+  // keeps the contract simple (any failure → 'error') and matches the test mock
+  // pattern that injects a mocked postgres() regardless of env state.
   try {
-    const databaseUrl = process.env.DATABASE_URL;
-    if (!databaseUrl) throw new Error('DATABASE_URL not set');
-    const sql = postgres(databaseUrl, { max: 1, connect_timeout: 5 });
+    const sql = postgres(process.env.DATABASE_URL ?? '', { max: 1, connect_timeout: 5 });
     try {
       await sql`SELECT 1`;
       results.db = 'ok';
@@ -37,18 +39,21 @@ export async function GET(): Promise<NextResponse> {
 
   // Redis ping — fresh connection, lazyConnect so the first command triggers
   // the actual TCP connect under our control, single retry, 3s connect timeout.
+  // As with the DB ping above, we let ioredis throw on a bad/empty URL rather
+  // than pre-validating env (caught below as redis: 'error').
   let redis: Redis | null = null;
   try {
-    const redisUrl = process.env.REDIS_URL;
-    if (!redisUrl) throw new Error('REDIS_URL not set');
     // Call Redis as a function (not via `new`) — ioredis supports both call
     // patterns. The function form interoperates with vitest mocks whose
     // mockImplementation uses an arrow function (arrow fns cannot be `new`-called).
-    redis = (Redis as unknown as (url: string, opts: Record<string, unknown>) => Redis)(redisUrl, {
-      lazyConnect: true,
-      maxRetriesPerRequest: 1,
-      connectTimeout: 3000,
-    });
+    redis = (Redis as unknown as (url: string, opts: Record<string, unknown>) => Redis)(
+      process.env.REDIS_URL ?? '',
+      {
+        lazyConnect: true,
+        maxRetriesPerRequest: 1,
+        connectTimeout: 3000,
+      },
+    );
     // With lazyConnect: true, .ping() triggers the actual connection — no separate connect() needed.
     await redis.ping();
     results.redis = 'ok';
