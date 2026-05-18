@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v10.0
-milestone_name: — Calendar Integration & Daily Prep
-status: verifying
-stopped_at: Completed 85.2-04-PLAN.md
-last_updated: "2026-05-15T16:43:59.219Z"
-last_activity: "2026-05-14 — Phase 85.2 gaps closed inline (Panda-Manager d45dcb20): (1) prose-zinc replaces dark:prose-invert in briefing page, (2) candidate fetchers join projects table + system prompt requires Customer — Project attribution."
+milestone: v11.0
+milestone_name: — Discovery, SSO & AWS Readiness
+status: in-progress
+stopped_at: Completed 86-00-PLAN.md
+last_updated: "2026-05-18T15:52:32.200Z"
+last_activity: 2026-05-18 — Phase 86 Plan 00 shipped. 5 test files created (tests/auth/okta-dormancy.test.ts, tests/api/per-user-tokens.test.ts, tests/api/health.test.ts, worker/jobs/__tests__/db-backup.test.ts, tests/api/rbac-coverage.test.ts). RBAC-01 GREEN immediately confirming 84 project-scoped routes all use requireProjectRole. Panda-Manager commit 274072aa for the tracked worker test.
 progress:
-  total_phases: 15
+  total_phases: 16
   completed_phases: 14
-  total_plans: 73
-  completed_plans: 73
-  percent: 99
+  total_plans: 79
+  completed_plans: 74
+  percent: 98
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 85.2-daily-briefing-tab (Daily Briefing Tab — Complete 2026-05-15)
-Plan: 6 of 6 complete (Plans 00–05; Plan 05 closed after gap fixes resolved 3 UAT issues — prose contrast, customer attribution, archived-project leak)
-Status: Complete — user signed off 2026-05-15. Ready for next phase: 86 (multi-user-sso-aws-readiness).
-Last activity: 2026-05-15 — Phase 85.2 closed. Gap fixes shipped (Panda-Manager d45dcb20 + 70b8a772): prose-zinc legibility, fetchActiveProjectMap filters archived/closed projects, system prompt requires `**Customer — Project**` attribution on Action and Critical items.
+Phase: 86-multi-user-sso-aws-readiness (Multi-User SSO & AWS Readiness — In Progress)
+Plan: 1 of 6 complete (Plan 00 Wave 0 RED test stubs — 86-00-SUMMARY.md filed 2026-05-18)
+Status: Plan 00 complete (31 vitest tests scaffolded: 24 RED + 7 GREEN at creation). Ready for Plan 01 (per-user OAuth tokens).
+Last activity: 2026-05-18 — Phase 86 Plan 00 shipped. 5 test files created (tests/auth/okta-dormancy.test.ts, tests/api/per-user-tokens.test.ts, tests/api/health.test.ts, worker/jobs/__tests__/db-backup.test.ts, tests/api/rbac-coverage.test.ts). RBAC-01 GREEN immediately confirming 84 project-scoped routes all use requireProjectRole. Panda-Manager commit 274072aa for the tracked worker test.
 
-Progress: [██████████] 99%
+Progress: [██████████] 98%
 
 ## v10.0 Roadmap Summary
 
@@ -268,6 +268,13 @@ Progress: [██████████] 99%
 - [85.2-04] generateSingleCard() extracted from forEach fire-and-forget; all setCards(prev => ...) functional updater calls preserved — per-card state transitions still happen independently at each card's own SSE timing
 - [85.2-04] chainToBriefing drains SSE stream but does NOT render text on Calendar tab — Briefing page.tsx fetches persisted row on mount
 - [85.2-04] Promise.all gates chainToBriefing; parallel generation timing is unchanged — all N fetches still fire concurrently
+- [86-00] tests/ remains gitignored (per [79-00] convention); worker/jobs/__tests__/ is NOT gitignored — db-backup.test.ts committed as 274072aa to match the lib/__tests__/ tracked-in-git pattern
+- [86-00] DORM-04 (/api/auth/sign-in/oauth2 404 when Okta env blank) covered transitively by DORM-01 conditional guard — live HTTP test deferred to manual verification per 86-VALIDATION.md (better-auth catch-all requires full Next runtime, out of scope for vitest)
+- [86-00] HEALTH-01..03 mock contract: vi.mock('postgres') exports callable default returning mockSql with .end(); vi.mock('ioredis') exports both Redis named + default with ping/quit — Plan 04 implementer must match this shape or update tests/api/health.test.ts
+- [86-00] TOKEN-03 regex limitation: TOKEN-03b/c may falsely GREEN if `.length > 0` and `'default'` co-occur anywhere in scan route (e.g., existingActions.length > 0 ? ... summary builder). TOKEN-03a (session.user.id reference) is the meaningful primary gate
+- [86-00] Combined Wave 2 verification: `cd Panda-Manager && npx vitest run tests/auth/okta-dormancy.test.ts tests/api/per-user-tokens.test.ts tests/api/health.test.ts worker/jobs/__tests__/db-backup.test.ts tests/api/rbac-coverage.test.ts` → 31 tests, target 31 GREEN after Plans 01-04 ship
+- [86-00] RBAC-01 baseline: 84 project-scoped route.ts files under app/api/projects/[projectId]/; 0 missing requireProjectRole; 0 using requireSession alone — GREEN immediately, now serves as regression sentinel for future plans
+- [86-00] BACKUP retention tests use mtimeMs deltas (60d = pruned, 10d = kept) with vi.mocked(fs.statSync).mockImplementation returning per-path mtimeMs; vi.clearAllMocks + per-mock mockReset in beforeEach prevents state leakage
 
 ### Blockers/Concerns
 
@@ -275,6 +282,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-05-14T19:38:29.957Z
-Stopped at: Completed 85.2-04-PLAN.md
+Last session: 2026-05-18T15:52:32.189Z
+Stopped at: Completed 86-00-PLAN.md
 Resume file: None
