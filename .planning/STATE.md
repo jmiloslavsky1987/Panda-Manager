@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
-status: completed
-stopped_at: Completed 86-01-PLAN.md
-last_updated: "2026-05-18T16:01:15.807Z"
-last_activity: 2026-05-18 — Phase 86 Plan 01 shipped. 5 OAuth/scan route files migrated from hardcoded 'default' to per-user session.user.id with 'default' fallback on reads. All 8 TOKEN-01..04 tests GREEN. Panda-Manager commits f4a547ab (Gmail) + 3412dae2 (Slack + scan) pushed to origin/main. No DB migration required.
+status: verifying
+stopped_at: Completed 86-03-PLAN.md
+last_updated: "2026-05-18T16:05:29.743Z"
+last_activity: "2026-05-18 — Phase 86 Plan 03 shipped. Automated 02:00 UTC daily pg_dump backup wired into BullMQ worker. All 5 BACKUP-01..03 tests GREEN. Panda-Manager commits aaae9fb5 (Task 1) + 073f361e (Task 2) pushed to origin/main. Concurrent agents shipped Plans 01 (f4a547ab + 3412dae2), 02 (51bff302 partial — auth-client + login UI), and 04 (e0ffae36 health endpoint)."
 progress:
   total_phases: 15
   completed_phases: 14
   total_plans: 79
-  completed_plans: 75
-  percent: 98
+  completed_plans: 78
+  percent: 99
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 ## Current Position
 
 Phase: 86-multi-user-sso-aws-readiness (Multi-User SSO & AWS Readiness — In Progress)
-Plan: 2 of 6 complete (Plan 01 per-user OAuth tokens — 86-01-SUMMARY.md filed 2026-05-18)
-Status: Plan 01 complete (TOKEN-01..04 all GREEN; 5 OAuth/scan routes migrated to session.user.id with 'default' fallback). Ready for Plan 02 (Okta SSO dormant scaffold).
-Last activity: 2026-05-18 — Phase 86 Plan 01 shipped. 5 OAuth/scan route files migrated from hardcoded 'default' to per-user session.user.id with 'default' fallback on reads. All 8 TOKEN-01..04 tests GREEN. Panda-Manager commits f4a547ab (Gmail) + 3412dae2 (Slack + scan) pushed to origin/main. No DB migration required.
+Plan: 4 of 6 complete (Plans 00, 01, 02, 03 filed; Plan 03 db-backup just shipped — 86-03-SUMMARY.md filed 2026-05-18). Plan 04 health endpoint already shipped concurrently (commit e0ffae36) — its SUMMARY.md tracked separately.
+Status: Plan 03 complete (BACKUP-01..03 all GREEN; daily pg_dump cron + admin status endpoint live; postgresql-client-16 in worker Dockerfile). Ready for Plan 04 (health endpoint + AWS scaffolds) or Plan 05 (manual Docker verification).
+Last activity: 2026-05-18 — Phase 86 Plan 03 shipped. Automated 02:00 UTC daily pg_dump backup wired into BullMQ worker. All 5 BACKUP-01..03 tests GREEN. Panda-Manager commits aaae9fb5 (Task 1) + 073f361e (Task 2) pushed to origin/main. Concurrent agents shipped Plans 01 (f4a547ab + 3412dae2), 02 (51bff302 partial — auth-client + login UI), and 04 (e0ffae36 health endpoint).
 
-Progress: [██████████] 98%
+Progress: [██████████] 99%
 
 ## v10.0 Roadmap Summary
 
@@ -280,6 +280,14 @@ Progress: [██████████] 98%
 - [86-01] Discovery scan uses length===0 fallback (not optional chaining) — drizzle select returns array, falls back to user_id='default' only when scoped result is empty
 - [86-01] Slack callback already had requireSession() from [84-01] — only change was destructuring session from result; CSRF cookie check preserved as-is before DB write
 - [86-01] No DB migration required — existing UNIQUE(user_id, source) index on user_source_tokens already permits multiple users per source
+- [86-03] postgresql-client-16 (versioned, not meta postgresql-client) installed in install/Dockerfile.local apt line — matches docker-compose postgres:16-alpine major version, predictable apt resolution on node:24.13.0-slim (Debian Bookworm)
+- [86-03] Retention pruning runs BEFORE today-skip return in worker/jobs/db-backup.ts — BACKUP-03a mocks readdirSync to return both old (60d) and today's file; today-skip would otherwise early-return and old file would never prune. Retention executes unconditionally on every job run.
+- [86-03] execSync with shell:'/bin/bash' (not execFileSync) — pg_dump output uses `> "${outFile}"` shell redirection; DATABASE_URL is ops-controlled (docker-compose env), shell-injection risk acceptable; documented inline in db-backup.ts
+- [86-03] DB_BACKUP=1010 advisory lock id reserved (next sequential in worker/lock-ids.ts; current namespace 1001-1010)
+- [86-03] global-db-backup BullMQ scheduler registered via upsertJobScheduler('global-db-backup', { pattern: '0 2 * * *' }, ...) in worker/index.ts start() — always-on, not user-configurable via scheduled_jobs DB
+- [86-03] GLOBAL_SCHEDULER_IDS allowlist exported from worker/scheduler.ts — removeOrphanedSchedulers now skips allowlisted ids (without this, global-db-backup would be pruned every restart because it has no scheduled_jobs DB row backing it). New canonical pattern for app-managed global crons.
+- [86-03] Admin gate inline pattern (resolveRole(session) === 'admin') in app/api/settings/backup-status/route.ts — mirrors app/api/settings/users/route.ts; no requireAdmin() helper exists in codebase
+- [86-03] Concurrent agent collision: parallel sessions running 86-01, 86-02, 86-04 caused git index races. First Task 2 commit (51bff302) inadvertently captured another agent's staged auth-UI files; my actual Plan 03 commits are aaae9fb5 (Task 1) and 073f361e (Task 2). Future parallel execution should serialize git operations or use per-plan worktrees.
 
 ### Blockers/Concerns
 
@@ -287,6 +295,7 @@ None
 
 ## Session Continuity
 
-Last session: 2026-05-18T16:01:15.804Z
-Stopped at: Completed 86-01-PLAN.md
+Last session: 2026-05-18T16:04:30.000Z
+Stopped at: Completed 86-03-PLAN.md
+Resume file: None
 Resume file: None
