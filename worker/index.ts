@@ -14,7 +14,7 @@ import './env-loader';
 
 import { Worker } from 'bullmq';
 import { createRedisConnection } from './connection';
-import { registerAllSchedulers, registerDbSchedulers, removeOrphanedSchedulers } from './scheduler';
+import { jobQueue, registerAllSchedulers, registerDbSchedulers, removeOrphanedSchedulers } from './scheduler';
 import {
   appendRunHistoryEntry,
   insertSchedulerFailureNotification,
@@ -47,6 +47,7 @@ import biggyWeeklyBriefingJob       from './jobs/biggy-weekly-briefing';
 import riskAssessmentJob            from './jobs/risk-assessment';
 import qbrPrepJob                   from './jobs/qbr-prep';
 import meetingPrepDailyJob          from './jobs/meeting-prep-daily';
+import dbBackupJob                  from './jobs/db-backup';
 
 const JOB_HANDLERS: Record<string, (job: Parameters<typeof actionSync>[0]) => Promise<{ status: string }>> = {
   'action-sync':            actionSync,
@@ -72,6 +73,7 @@ const JOB_HANDLERS: Record<string, (job: Parameters<typeof actionSync>[0]) => Pr
   'risk-assessment':              riskAssessmentJob,
   'qbr-prep':                     qbrPrepJob,
   'meeting-prep-daily':           meetingPrepDailyJob,
+  'db-backup':                    dbBackupJob,
 };
 
 // Worker needs its own connection — NEVER share with Queue (BullMQ requirement)
@@ -176,6 +178,21 @@ async function start() {
   await registerAllSchedulers();        // removes named legacy schedulers
   await removeOrphanedSchedulers();     // removes any BullMQ scheduler not backed by a DB row
   await registerDbSchedulers();
+
+  // Phase 86: global daily DB backup at 02:00 UTC. Always-on (not user-configurable via
+  // scheduled_jobs DB). upsertJobScheduler is idempotent — safe across worker restarts.
+  // Registered AFTER removeOrphanedSchedulers so it isn't pruned (no DB row backs it).
+  await jobQueue.upsertJobScheduler(
+    'global-db-backup',
+    { pattern: '0 2 * * *' },
+    {
+      name: 'db-backup',
+      data: { triggeredBy: 'cron' },
+      opts: { removeOnComplete: 10, removeOnFail: 10 },
+    },
+  );
+  console.log('[worker] Registered global-db-backup scheduler (0 2 * * *)');
+
   console.log('[worker] all schedulers registered');
 
   // Re-register every 60s — picks up DB job changes (enable/disable/edit)

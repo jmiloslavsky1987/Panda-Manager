@@ -38,6 +38,14 @@ export async function registerAllSchedulers(): Promise<void> {
  * This cleans up phantom schedulers registered directly (e.g. weekly-focus-project-N)
  * before the scheduler UI was wired. Safe to call on every restart — idempotent.
  */
+/**
+ * Allowlist of always-on global schedulers (registered in worker startup, not backed by
+ * a scheduled_jobs DB row). Add to this set when adding new app-managed cron schedulers.
+ */
+export const GLOBAL_SCHEDULER_IDS = new Set<string>([
+  'global-db-backup', // Phase 86 — daily pg_dump at 02:00 UTC
+]);
+
 export async function removeOrphanedSchedulers(): Promise<void> {
   // Get all BullMQ job schedulers currently registered in Redis
   const allSchedulers = await jobQueue.getJobSchedulers();
@@ -48,8 +56,9 @@ export async function removeOrphanedSchedulers(): Promise<void> {
 
   let removed = 0;
   for (const scheduler of allSchedulers) {
-    // Skip schedulers with no ID (can't remove them); remove any not in the valid DB-backed set
-    if (scheduler.id && !validIds.has(scheduler.id)) {
+    // Skip schedulers with no ID (can't remove them); skip allowlisted globals;
+    // remove any other that is not in the valid DB-backed set
+    if (scheduler.id && !validIds.has(scheduler.id) && !GLOBAL_SCHEDULER_IDS.has(scheduler.id)) {
       await jobQueue.removeJobScheduler(scheduler.id);
       console.log(`[scheduler] removed orphaned scheduler: ${scheduler.id}`);
       removed++;
