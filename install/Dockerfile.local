@@ -2,9 +2,21 @@ FROM node:24.13.0-slim
 
 WORKDIR /app
 
-# curl needed for healthchecks; postgresql-client-16 provides pg_dump for Phase 86 db-backup job
+# curl needed for healthchecks; postgresql-client-16 provides pg_dump for Phase 86 db-backup job.
+# Debian Bookworm's default repos only ship postgresql-client-15 (and the meta-package, which
+# also points to 15). pg_dump major-version MUST match (or be greater than) the server major
+# version — server is postgres:16, so we need pg_dump 16. Solution: add the official PostgreSQL
+# Global Development Group (PGDG) apt repo, which provides versioned packages for all majors.
+# Documented in 86-VERIFICATION.md / 86-05-SUMMARY.md (Rule 3 deviation from plan 86-05).
 RUN apt-get update \
- && apt-get install -y --no-install-recommends curl postgresql-client-16 \
+ && apt-get install -y --no-install-recommends curl ca-certificates gnupg \
+ && install -d /usr/share/postgresql-common/pgdg \
+ && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+      -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
+ && echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" \
+      > /etc/apt/sources.list.d/pgdg.list \
+ && apt-get update \
+ && apt-get install -y --no-install-recommends postgresql-client-16 \
  && rm -rf /var/lib/apt/lists/*
 
 COPY package.json package-lock.json ./
