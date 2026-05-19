@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
-status: phase-complete
-stopped_at: Completed 86-05-PLAN.md — Phase 86 closed
-last_updated: "2026-05-18T19:15:31Z"
-last_activity: "2026-05-18 — Phase 86 CLOSED. Plan 05 human-verify checkpoint PASSED with two inline UAT fixes (lib/proxy.ts + new Redis() in app/api/health). All three primary deliverables alive: per-user OAuth tokens (TOKEN-01..04), Okta dormant scaffold (DORM-01..04), AWS readiness (HEALTH-01..04, BACKUP-01..03, RBAC-01). Backup smoke test: 1.6 MB SQL dump, 58 CREATE TABLE statements via pg_dump 16.14. Panda-Manager commits 712ad605 (PGDG repo for postgresql-client-16), 58fc4b55 (inline UAT fix)."
+status: verifying
+stopped_at: Phase 87 context gathered
+last_updated: "2026-05-19T20:19:18.765Z"
+last_activity: "2026-05-18 — Phase 86 CLOSED. Plan 05 human-verify checkpoint PASSED with two inline UAT fixes (lib/proxy.ts /api/health allowlist + new Redis() constructor form in app/api/health). Backup smoke test: 1.6 MB SQL dump, 58 CREATE TABLE statements via pg_dump 16.14. Panda-Manager commits 712ad605 (PGDG repo for postgresql-client-16), 58fc4b55 (inline UAT fix)."
 progress:
-  total_phases: 15
+  total_phases: 16
   completed_phases: 15
-  total_plans: 80
-  completed_plans: 80
+  total_plans: 79
+  completed_plans: 79
   percent: 100
 ---
 
@@ -71,6 +71,7 @@ Progress: [██████████] 100%
 - Phase 82 added: Chat write operations — full CRUD (create, update, delete) for actions, milestones, risks, teams, and architecture nodes with confirmation UX
 - Phase 85.1 inserted after Phase 85: screen density and UX overhaul (URGENT) — hard-set denser default across global chrome, shared primitives, and per-tab cleanup; promoted ahead of Phase 86 (AWS readiness) because screen real-estate pain is hurting daily use (2026-05-11)
 - Phase 85.2 inserted after Phase 85: daily-briefing-tab (URGENT) — synthesized "Today's Briefing" view on `/daily-prep` combining per-meeting briefs (Phase 80) with today's action items + this week's critical items; context already gathered (2026-05-14)
+- Phase 87 added: incident-prevention-track-support — third product track alongside ADR and Biggy, modeled as a sibling track (`active_tracks.incident_prevention`). Covers BigPanda's AI Change Risk Prediction product (change-ticket risk scoring via ITSM integration, custom data sources, 5-category weighted risk engine, write-back to ServiceNow change tickets). Adds onboarding-config, project-create WBS seeding (11 L1, ~39 L2), settings schema/UI, extraction prompt inference rule, seed-project team placeholder. Briefing skill left untouched (already track-agnostic — "Biggy" in the skill name is the AI persona, not the product track). (2026-05-18)
 
 ### Key Decisions (carry-forward)
 
@@ -319,6 +320,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-05-18T19:15:31Z
-Stopped at: Completed 86-05-PLAN.md — Phase 86 CLOSED
-Resume file: None
+Last session: 2026-05-19T20:19:18.761Z
+Stopped at: Phase 87 context gathered
+Resume file: .planning/phases/87-incident-prevention-track-support/87-CONTEXT.md
