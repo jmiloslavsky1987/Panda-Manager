@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: verifying
-stopped_at: Completed 87-03-PLAN.md (seed-project track-conditional team inserts)
-last_updated: "2026-05-20T02:27:00.000Z"
-last_activity: "2026-05-20 — Phase 87 Plan 03 COMPLETE. lib/seed-project.ts now reads project.active_tracks and inserts each team placeholder (Alpha/ADR, Beta/Biggy, Gamma/IP) conditionally. Team Gamma / track='Incident Prevention' added; all three inserts gated on active_tracks[trackKey]. IP-10 and IP-11 GREEN; all 7 tests in tests/ui/seed-project.test.ts pass. Panda-Manager commit aa487f53. Retroactive seeding (false→true Settings toggle) deliberately deferred to Plan 87-05's seedIncidentPreventionForProject helper."
+stopped_at: Completed 87-06-PLAN.md (InteractiveArchGraph + 7 supporting arch UI files extended for IP Track)
+last_updated: "2026-05-20T02:36:00.000Z"
+last_activity: 2026-05-20 — Phase 87 Plan 06 COMPLETE. components/arch/InteractiveArchGraph.tsx + 7 supporting arch/skill/chat files extended to render Incident Prevention Track as third section-grouped diagram identical to ADR. 8 hardcoded ADR-only locations rewired (ConsoleNode 'Change Risk Console' bg-violet-700, sectionColor 3 IP sections, TrackPipeline isIP, section-grouped gate (isADR || isIP), handleDragEnd isADRTrack→isSectionGrouped, top-nav pill bg-violet-600, teamNames 3-way + optional ipTeamNames prop). Console placement generalized via derived consoleAfterIdx (IP=0 for migration 0052 do=15; ADR=1 unchanged) — Rule 1 auto-fix. Task 2 widened 7 supporting files (TeamOnboardingTable + EditModal, IntegrationEditModal with new IP_PHASES_BY_SECTION optgroups, CurrentFutureStateTab + IP button, skill-context-arch, skill-context-teams, chat-context-builder tool hint). IP-12 GREEN (2/2). Panda-Manager commits cd29600f (Task 1) + 7bdbe4a5 (Task 2).
 progress:
   total_phases: 16
   completed_phases: 15
   total_plans: 88
-  completed_plans: 84
-  percent: 95
+  completed_plans: 86
+  percent: 98
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 ## Current Position
 
 Phase: 87-incident-prevention-track-support (Incident Prevention Track Support — IN PROGRESS)
-Plan: 3 of 8 complete (Plan 00 Wave 0 scaffolding; Plan 01 schema/migration foundation; Plan 02 config + extraction + discovery layer; Plan 03 seed-project track-conditional team inserts)
-Status: Phase 87 active. Plan 03 closed 2026-05-20 — lib/seed-project.ts now seeds Team Alpha/Beta/Gamma conditionally on active_tracks[trackKey]; Team Gamma (track='Incident Prevention') added. IP-10 + IP-11 GREEN (7/7). Next: Plan 04 (project-create wizard + POST route accepts active_tracks). Live Docker apply (IP-01, IP-02) deferred to Plan 87-08 human verification.
-Last activity: 2026-05-20 — Phase 87 Plan 03 COMPLETE. lib/seed-project.ts now reads project.active_tracks and inserts each team placeholder (Alpha/ADR, Beta/Biggy, Gamma/IP) conditionally. Team Gamma / track='Incident Prevention' added; all three inserts gated on active_tracks[trackKey]. IP-10 and IP-11 GREEN; all 7 tests in tests/ui/seed-project.test.ts pass. Panda-Manager commit aa487f53. Retroactive seeding (false→true Settings toggle) deliberately deferred to Plan 87-05's seedIncidentPreventionForProject helper.
+Plan: 4 of 8 complete (Plan 00 Wave 0 scaffolding; Plan 01 schema/migration foundation; Plan 02 config + extraction + discovery layer; Plan 03 seed-project track-conditional team inserts; Plan 04 project-create active_tracks gating + IP wizard + shared seeder helper)
+Status: Phase 87 active. Plan 04 closed 2026-05-20 — new shared lib/seed-incident-prevention.ts helper (305 LOC, idempotent, 8 entity classes) ready for Plan 05's settings PATCH retroactive seeding. POST /api/projects + onboarding/seed + BasicInfoStep wizard now fully active_tracks-aware. IP-06 + IP-07 GREEN (20/20 incl. IP-04/05 from Plan 02). Next: Plan 05 (Settings PATCH route + retroactive seeding for false→true track flips). Live Docker apply (IP-01, IP-02) deferred to Plan 87-08 human verification.
+Last activity: 2026-05-20 — Phase 87 Plan 04 COMPLETE. New shared helper lib/seed-incident-prevention.ts (305 LOC) exports seedIncidentPreventionForProject(tx, projectId) — fully idempotent across 8 entity classes. POST /api/projects now accepts active_tracks: {adr, biggy, incident_prevention}; returns 400 when all false; every seeding block gated on tracks[trackKey]; IP helper called inside the transaction when incident_prevention=true. Legacy onboarding/seed POST extended with third seedTrack(INCIDENT_PREVENTION_ONBOARDING_CONFIG) call; response shape gains incident_prevention key. BasicInfoStep.tsx wizard renders three checkboxes in order ADR → Biggy → Incident Prevention, all default OFF, Submit disabled until ≥1 checked. IP-04 + IP-05 + IP-06 + IP-07 GREEN (20/20). IP-09 helper-contract GREEN. Panda-Manager commits 4d69d093 (helper) + 29e4e6b8 (route+wizard wiring).
 
-Progress: [█████████░] 95%
+Progress: [██████████] 98%
 
 ## v10.0 Roadmap Summary
 
@@ -336,6 +336,14 @@ Progress: [█████████░] 95%
 - [87-03] Default fallback for `project.active_tracks` is all-false (`{ adr:false, biggy:false, incident_prevention:false }`) matching Plan 01's new schema default — defensive against NULL rows; a NULL active_tracks seeds zero teams (observable) instead of legacy 2-row Alpha+Beta default.
 - [87-03] Existing 5 tests in `tests/ui/seed-project.test.ts` required zero fixture updates — they only assert `mockInsert.mock.calls.length > 1` and `mockInsert.mock.results[0].value.values).toBeDefined()`, both satisfied by actions/risks/milestones/etc. inserts that run before the now-conditional team-insert block. The 2 new IP-10/IP-11 tests use mock-introspection (flatten `.values()` calls) to assert team-row payloads.
 - [87-03] Retroactive seeding (false→true Settings toggle) deliberately deferred to Plan 87-05's dedicated `seedIncidentPreventionForProject(tx, projectId)` helper — `seedProjectFromRegistry` stays scoped to `seeded:false` initial-creation path only. Clean separation: Plan 03 = coarse `seeded` gate; Plan 05 = fine-grained `WHERE NOT EXISTS` per insert.
+- [87-04] `lib/seed-incident-prevention.ts` extracted now (before second consumer exists) — Plan 05's settings PATCH retroactive seeding will import the same helper. Write-once-use-twice pattern: extract shared helpers when the second consumer is the next plan, not when it exists today.
+- [87-04] Idempotency strategy is per-table: `onConflictDoNothing` + fallback `select` for `arch_nodes` (backed by `arch_nodes_project_track_name_idx` on `project_id+track_id+name`); pure `select-then-insert` for `arch_tracks`, `wbs_items`, `onboarding_phases`, `onboarding_steps`, `team_onboarding_status` (no unique index). Read `db/schema.ts` for each target table before picking the guard.
+- [87-04] BasicInfoStep.tsx is the canonical project-create form (NewProjectModal does not exist; NewProjectButton just opens ProjectWizard which renders BasicInfoStep). The IP-07 test scaffold listed three candidates — BasicInfoStep is the only one with a `fetch('/api/projects', { method: 'POST' })`. Resolved the RESEARCH.md "Wizard Architecture" open question.
+- [87-04] AI Assistant arch track gated on `tracks.biggy`, NOT on `tracks.incident_prevention`. Per Phase 83, the AI Assistant Track IS Biggy's arch surface (Biggy is the AI persona; AI Assistant is the arch label). Renaming would be a UX migration out of Plan 04 scope.
+- [87-04] Legacy onboarding/seed POST route deliberately does NOT gate on active_tracks — it's an admin re-seed tool; gating would silently break legacy callers that don't pass active_tracks. Idempotent inserts (onConflictDoNothing) make unconditional seeding safe; render-layer filters handle visibility.
+- [87-04] Backward-compatible POST body — missing active_tracks falls back to `{adr:true, biggy:true, incident_prevention:false}` to preserve pre-Phase-87 callers; the new wizard always passes the field explicitly. Default-deny would break tests in other phases that don't construct active_tracks payloads.
+- [87-04] Defense-in-depth Submit guard pattern: `disabled={loading || !atLeastOneTrack}` on the button AND `if (!atLeastOneTrack) { setError(...); return }` inside handleSubmit AND server 400 — three layers because button.disabled in some browsers does not block keyboard-submit on a focused checkbox.
+- [87-04] Parallel-agent file collisions handled by explicit per-file `git add` — never used `git add .` or `git add -A`. Plans 03/04/06 all touching `app/api/projects/...` paths in flight; isolation requires file-level staging. Established as repeating pattern when multiple parallel agents are active.
 
 ### Blockers/Concerns
 
@@ -343,6 +351,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-05-20T02:27:00.000Z
-Stopped at: Completed 87-03-PLAN.md (seed-project track-conditional team inserts)
+Last session: 2026-05-20T02:34:00.000Z
+Stopped at: Completed 87-04-PLAN.md (project-create active_tracks gating + IP wizard checkbox + shared seeder helper)
 Resume file: None
