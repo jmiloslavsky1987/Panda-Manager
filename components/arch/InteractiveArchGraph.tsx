@@ -20,6 +20,7 @@ interface Props {
   onEdit?:           (integration: ArchitectureIntegration) => void
   adrTeamNames?:     string[]
   biggyTeamNames?:   string[]
+  ipTeamNames?:      string[]
 }
 
 // Node status badge colors
@@ -120,9 +121,22 @@ function Arrow() {
 
 function ConsoleNode({ track }: { track: string }) {
   const isADR = track.includes('ADR')
+  const isIP = track.includes('Incident Prevention')
   const isAI = track.includes('AI') || track.includes('Biggy')
-  const label = isADR ? 'BigPanda Console' : isAI ? 'Biggy AI Console' : 'Console'
-  const bgColor = isADR ? 'bg-zinc-900' : isAI ? 'bg-amber-500' : 'bg-zinc-700'
+  const label = isADR
+    ? 'BigPanda Console'
+    : isIP
+    ? 'Change Risk Console'
+    : isAI
+    ? 'Biggy AI Console'
+    : 'Console'
+  const bgColor = isADR
+    ? 'bg-zinc-900'
+    : isIP
+    ? 'bg-violet-700'
+    : isAI
+    ? 'bg-amber-500'
+    : 'bg-zinc-700'
 
   return (
     <div className="flex flex-col items-center justify-start pt-2">
@@ -194,6 +208,10 @@ function sectionColor(name: string): string {
   if (name === 'Alert Intelligence') return 'blue'
   if (name === 'Incident Intelligence') return 'amber'
   if (name === 'Workflow Automation') return 'green'
+  // Incident Prevention Track sections
+  if (name === 'Data Ingestion') return 'violet'
+  if (name === 'Risk Engine') return 'red'
+  if (name === 'Decision & Write-Back') return 'green'
   return 'zinc'
 }
 
@@ -348,14 +366,27 @@ function TrackPipeline({
   sensors: ReturnType<typeof useSensors>
 }) {
   const isADR = trackData.name === 'ADR Track'
+  const isIP = trackData.name === 'Incident Prevention Track'
   const isBiggy = trackData.name.includes('Biggy') || trackData.name.includes('AI')
-  const borderClass = isADR ? 'border-l-blue-600' : isBiggy ? 'border-l-amber-500' : 'border-l-zinc-400'
-  const labelClass = isADR ? 'text-blue-700' : isBiggy ? 'text-amber-700' : 'text-zinc-600'
+  const borderClass = isADR
+    ? 'border-l-blue-600'
+    : isIP
+    ? 'border-l-violet-600'
+    : isBiggy
+    ? 'border-l-amber-500'
+    : 'border-l-zinc-400'
+  const labelClass = isADR
+    ? 'text-blue-700'
+    : isIP
+    ? 'text-violet-700'
+    : isBiggy
+    ? 'text-amber-700'
+    : 'text-zinc-600'
 
   const byPhase = (p: string) => integrations.filter((i) => i.phase === p)
 
-  // ADR grouped layout
-  if (isADR) {
+  // Section-grouped layout (ADR + Incident Prevention)
+  if (isADR || isIP) {
     const sectionNodes = nodes
       .filter(n => n.node_type === 'section')
       .sort((a, b) => a.display_order - b.display_order)
@@ -370,7 +401,10 @@ function TrackPipeline({
       }
     })
 
-    // Build column list: sections interleaved with console after Incident Intelligence (index 1)
+    // Build column list: sections interleaved with console.
+    // - ADR: Console between Incident Intelligence (idx 1) and Workflow Automation (idx 2)
+    // - IP:  Console between Data Ingestion (idx 0) and Risk Engine (idx 1) — display_order=15 per migration 0052
+    const consoleAfterIdx = isIP ? 0 : 1
     const columns: React.ReactNode[] = []
     sectionNodes.forEach((section, sectionIdx) => {
       const subCaps = subCapByParent.get(section.id) ?? []
@@ -395,8 +429,8 @@ function TrackPipeline({
           </SortableContext>
         </div>
       )
-      // Insert Console column between Incident Intelligence (index 1) and Workflow Automation (index 2)
-      if (sectionIdx === 1 && consoleNode) {
+      // Insert Console column at track-specific position
+      if (sectionIdx === consoleAfterIdx && consoleNode) {
         columns.push(
           <div key="console-node" className="flex flex-col items-center justify-start pt-8">
             <ConsoleNode track={trackData.name} />
@@ -430,7 +464,7 @@ function TrackPipeline({
     )
   }
 
-  // Non-ADR (AI Assistant Track) flat layout — unchanged
+  // Non-section-grouped (AI Assistant Track) flat layout — unchanged
   const sortedNodes = [...nodes].sort((a, b) => a.display_order - b.display_order)
 
   return (
@@ -484,6 +518,7 @@ export function InteractiveArchGraph({
   onPathwaysUpdate,
   adrTeamNames = [],
   biggyTeamNames = [],
+  ipTeamNames = [],
 }: Props) {
   const router = useRouter()
   const [selectedIntegration, setSelectedIntegration] = useState<ArchitectureIntegration | null>(null)
@@ -523,15 +558,15 @@ export function InteractiveArchGraph({
     if (!over || active.id === over.id) return
 
     const track = tracks.find(t => t.id === trackId)
-    const isADRTrack = track?.name === 'ADR Track'
+    const isSectionGrouped = track?.name === 'ADR Track' || track?.name === 'Incident Prevention Track'
 
     let sectionNodes: ArchNode[]
     let draggedNode: ArchNode
     let targetNode: ArchNode
     let reordered: ArchNode[]
 
-    if (isADRTrack) {
-      // For ADR track: scope reorder to the section that contains active.id
+    if (isSectionGrouped) {
+      // For section-grouped tracks (ADR, Incident Prevention): scope reorder to the section that contains active.id
       const subCapNodes = localNodes.filter(
         n => n.track_id === trackId && n.node_type === 'sub-capability'
       )
@@ -559,7 +594,7 @@ export function InteractiveArchGraph({
       targetNode = sectionSubCaps[newIndex]
       sectionNodes = sectionSubCaps
     } else {
-      // Non-ADR track: flat reorder as before
+      // Non-section-grouped track (e.g. AI Assistant Track): flat reorder as before
       const trackNodes = localNodes
         .filter((n) => n.track_id === trackId)
         .sort((a, b) => a.display_order - b.display_order)
@@ -612,7 +647,8 @@ export function InteractiveArchGraph({
         <div className="flex items-center gap-2 mb-1 flex-wrap">
           {sortedTracks.map((track) => {
             const isADR = track.name.includes('ADR')
-            const bgClass = isADR ? 'bg-blue-600' : 'bg-amber-500'
+            const isIP = track.name.includes('Incident Prevention')
+            const bgClass = isADR ? 'bg-blue-600' : isIP ? 'bg-violet-600' : 'bg-amber-500'
             return (
               <span key={track.id} className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${bgClass} text-white`}>
                 {track.name}
@@ -632,7 +668,8 @@ export function InteractiveArchGraph({
               const trackNodes = localNodes.filter((n) => n.track_id === track.id)
               const trackIntegrations = integrations.filter((i) => i.track === track.name)
               const isADR = track.name.includes('ADR')
-              const trackTeamNames = isADR ? adrTeamNames : biggyTeamNames
+              const isIP = track.name.includes('Incident Prevention')
+              const trackTeamNames = isADR ? adrTeamNames : isIP ? (ipTeamNames ?? []) : biggyTeamNames
 
               return (
                 <div key={track.id}>
