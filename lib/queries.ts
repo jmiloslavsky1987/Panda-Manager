@@ -33,6 +33,9 @@ import {
   onboardingPhases,
   onboardingSteps,
   projectMembers,
+  evidenceLog,
+  teamCards,
+  teamCardKeyMetrics,
   type WbsDependency,
 } from '../db/schema';
 import { eq, and, inArray, ne, gt, or, desc, asc } from 'drizzle-orm';
@@ -1019,6 +1022,10 @@ export interface TeamsTabData {
   openActions: OpenAction[];  // open + in_progress actions for the project, sorted by id asc
   teamOnboardingStatus: TeamOnboardingStatus[];
   stakeholders: Stakeholder[];
+  // Phase 88.1 additions — new entity arrays (always present, empty if no rows)
+  teamCards: import('../db/schema').TeamCard[];
+  teamCardKeyMetrics: import('../db/schema').TeamCardKeyMetric[];
+  evidenceLog: import('../db/schema').EvidenceLog[];
 }
 
 // ─── Teams Tab Query ──────────────────────────────────────────────────────────
@@ -1030,7 +1037,7 @@ export interface TeamsTabData {
  * and open/in_progress actions (for the Teams & Engagement Status section).
  */
 export async function getTeamsTabData(projectId: number): Promise<TeamsTabData> {
-  const [outcomes, workflows, steps, areas, archIntegrations, openActs, onboardingRows, stakeholderRows] = await Promise.all([
+  const [outcomes, workflows, steps, areas, archIntegrations, openActs, onboardingRows, stakeholderRows, teamCardsRows] = await Promise.all([
     db.select().from(businessOutcomes).where(eq(businessOutcomes.project_id, projectId)),
     db.select().from(e2eWorkflows).where(eq(e2eWorkflows.project_id, projectId)),
     db.select().from(workflowSteps)
@@ -1054,6 +1061,8 @@ export async function getTeamsTabData(projectId: number): Promise<TeamsTabData> 
     ).orderBy(asc(actions.id)),
     db.select().from(teamOnboardingStatus).where(eq(teamOnboardingStatus.project_id, projectId)).orderBy(asc(teamOnboardingStatus.team_name)),
     db.select().from(stakeholders).where(eq(stakeholders.project_id, projectId)).orderBy(asc(stakeholders.name)),
+    // Phase 88.1: team cards for this project
+    db.select().from(teamCards).where(eq(teamCards.project_id, projectId)),
   ]);
 
   const stepsMap = new Map<number, WorkflowStep[]>();
@@ -1063,6 +1072,21 @@ export async function getTeamsTabData(projectId: number): Promise<TeamsTabData> 
     stepsMap.get(wfId)!.push(row.workflow_steps);
   }
 
+  // Phase 88.1: fetch key metrics and evidence log rows (guarded against empty arrays)
+  const teamCardIds = teamCardsRows.map((c) => c.id);
+  const teamCardKeyMetricsRows = teamCardIds.length > 0
+    ? await db.select().from(teamCardKeyMetrics).where(inArray(teamCardKeyMetrics.team_card_id, teamCardIds))
+    : [];
+
+  const businessOutcomeIds = outcomes.map((o) => o.id);
+  const evidenceLogRows = businessOutcomeIds.length > 0
+    ? await db
+        .select()
+        .from(evidenceLog)
+        .where(inArray(evidenceLog.business_outcome_id, businessOutcomeIds))
+        .orderBy(desc(evidenceLog.date))
+    : [];
+
   return {
     businessOutcomes: outcomes,
     e2eWorkflows: workflows.map(wf => ({ ...wf, steps: stepsMap.get(wf.id) ?? [] })),
@@ -1071,6 +1095,10 @@ export async function getTeamsTabData(projectId: number): Promise<TeamsTabData> 
     openActions: openActs,
     teamOnboardingStatus: onboardingRows,
     stakeholders: stakeholderRows,
+    // Phase 88.1 additions — Wave 2 components consume these arrays
+    teamCards: teamCardsRows,
+    teamCardKeyMetrics: teamCardKeyMetricsRows,
+    evidenceLog: evidenceLogRows,
   };
 }
 
