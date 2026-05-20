@@ -10,6 +10,30 @@ const BIGGY_PHASES = [
   'Outputs & Actions',
 ]
 
+// Incident Prevention Track sub-capability phases (mirrors migration 0052 seed).
+// Three sections × N sub-caps = 13 total.
+const IP_PHASES_BY_SECTION = {
+  'Data Ingestion': [
+    'ITSM Connectors',
+    'CMDB Connectors',
+    'Monitoring Connectors',
+    'Deployment History Connectors',
+  ],
+  'Risk Engine': [
+    'Change History Risk',
+    'Blast Radius Risk',
+    'CI Criticality Risk',
+    'Timing & Freeze Window Risk',
+    'Team Performance Risk',
+  ],
+  'Decision & Write-Back': [
+    'Risk Threshold Rules',
+    'ITSM Write-Back',
+    'CAB Notifications',
+    'Reporting & Dashboards',
+  ],
+} as const
+
 const STATUS_OPTIONS = [
   { value: 'live', label: 'Live' },
   { value: 'in_progress', label: 'In Progress' },
@@ -20,15 +44,15 @@ const STATUS_OPTIONS = [
 interface Props {
   projectId: number
   integration?: ArchitectureIntegration | null
-  defaultTrack?: 'ADR' | 'Biggy'
+  defaultTrack?: 'ADR' | 'Biggy' | 'Incident Prevention'
   onSave: (integration: ArchitectureIntegration) => void
   onClose: () => void
 }
 
 export function IntegrationEditModal({ projectId, integration, defaultTrack, onSave, onClose }: Props) {
   const [toolName, setToolName] = useState(integration?.tool_name ?? '')
-  const [track, setTrack] = useState<'ADR' | 'Biggy'>(
-    (integration?.track as 'ADR' | 'Biggy') ?? defaultTrack ?? 'ADR'
+  const [track, setTrack] = useState<'ADR' | 'Biggy' | 'Incident Prevention'>(
+    (integration?.track as 'ADR' | 'Biggy' | 'Incident Prevention') ?? defaultTrack ?? 'ADR'
   )
   const [phase, setPhase] = useState(integration?.phase ?? 'Monitoring Integrations')
   const [group, setGroup] = useState(integration?.integration_group ?? '')
@@ -38,10 +62,12 @@ export function IntegrationEditModal({ projectId, integration, defaultTrack, onS
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  function handleTrackChange(newTrack: 'ADR' | 'Biggy') {
+  function handleTrackChange(newTrack: 'ADR' | 'Biggy' | 'Incident Prevention') {
     setTrack(newTrack)
     if (newTrack === 'ADR') {
       setPhase('Monitoring Integrations')
+    } else if (newTrack === 'Incident Prevention') {
+      setPhase(IP_PHASES_BY_SECTION['Data Ingestion'][0])
     } else {
       setPhase(BIGGY_PHASES[0])
     }
@@ -126,11 +152,12 @@ export function IntegrationEditModal({ projectId, integration, defaultTrack, onS
             <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: 4 }}>Track</label>
             <select
               value={track}
-              onChange={(e) => handleTrackChange(e.target.value as 'ADR' | 'Biggy')}
+              onChange={(e) => handleTrackChange(e.target.value as 'ADR' | 'Biggy' | 'Incident Prevention')}
               style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 4, padding: '6px 10px', fontSize: '0.875rem' }}
             >
               <option value="ADR">ADR</option>
               <option value="Biggy">Biggy</option>
+              <option value="Incident Prevention">Incident Prevention</option>
             </select>
           </div>
           <div>
@@ -159,6 +186,14 @@ export function IntegrationEditModal({ projectId, integration, defaultTrack, onS
                     <option value="Automated Incident Notification">Automated Incident Notification</option>
                     <option value="Automated Incident Remediation">Automated Incident Remediation</option>
                   </optgroup>
+                </>
+              ) : track === 'Incident Prevention' ? (
+                <>
+                  {(Object.entries(IP_PHASES_BY_SECTION) as [string, readonly string[]][]).map(([section, phases]) => (
+                    <optgroup key={section} label={section}>
+                      {phases.map(p => <option key={p} value={p}>{p}</option>)}
+                    </optgroup>
+                  ))}
                 </>
               ) : (
                 BIGGY_PHASES.map(p => <option key={p} value={p}>{p}</option>)

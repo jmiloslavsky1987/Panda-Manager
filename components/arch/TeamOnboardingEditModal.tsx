@@ -13,15 +13,15 @@ const STATUS_OPTIONS = [
 interface Props {
   projectId: number
   row?: TeamOnboardingStatus | null
-  defaultTrack?: 'ADR' | 'Biggy'
+  defaultTrack?: 'ADR' | 'Biggy' | 'Incident Prevention'
   onSave: (row: TeamOnboardingStatus) => void
   onClose: () => void
 }
 
 export function TeamOnboardingEditModal({ projectId, row, defaultTrack, onSave, onClose }: Props) {
   const [teamName, setTeamName] = useState(row?.team_name ?? '')
-  const [track, setTrack] = useState<'ADR' | 'Biggy'>(
-    (row?.track as 'ADR' | 'Biggy') ?? defaultTrack ?? 'ADR'
+  const [track, setTrack] = useState<'ADR' | 'Biggy' | 'Incident Prevention'>(
+    (row?.track as 'ADR' | 'Biggy' | 'Incident Prevention') ?? defaultTrack ?? 'ADR'
   )
   const [ingestStatus, setIngestStatus] = useState(row?.ingest_status ?? '')
   const [correlationStatus, setCorrelationStatus] = useState(row?.correlation_status ?? '')
@@ -132,11 +132,12 @@ export function TeamOnboardingEditModal({ projectId, row, defaultTrack, onSave, 
           <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: 4 }}>Track</label>
           <select
             value={track}
-            onChange={(e) => setTrack(e.target.value as 'ADR' | 'Biggy')}
+            onChange={(e) => setTrack(e.target.value as 'ADR' | 'Biggy' | 'Incident Prevention')}
             style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 4, padding: '6px 10px', fontSize: '0.875rem' }}
           >
             <option value="ADR">ADR</option>
             <option value="Biggy">Biggy</option>
+            <option value="Incident Prevention">Incident Prevention</option>
           </select>
         </div>
 

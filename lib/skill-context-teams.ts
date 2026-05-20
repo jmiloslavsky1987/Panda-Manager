@@ -22,10 +22,13 @@ export async function buildTeamsSkillContext(projectId: number): Promise<string>
     sections.push('## Architecture Overview')
     const adr = data.architectureIntegrations.filter(i => i.track === 'ADR')
     const biggy = data.architectureIntegrations.filter(i => i.track === 'Biggy')
+    const ip = data.architectureIntegrations.filter(i => i.track === 'Incident Prevention')
     sections.push('### ADR Track')
     adr.forEach(i => sections.push(`  - [${i.phase ?? 'N/A'}] ${i.tool_name} | Status: ${i.status}`))
     sections.push('### Biggy AI Track')
     biggy.forEach(i => sections.push(`  - [${i.phase ?? 'N/A'}] ${i.tool_name} | Status: ${i.status}`))
+    sections.push('### Incident Prevention Track')
+    ip.forEach(i => sections.push(`  - [${i.phase ?? 'N/A'}] ${i.tool_name} | Status: ${i.status}`))
   } else {
     sections.push('## Architecture Overview\n_No integration data recorded._')
   }

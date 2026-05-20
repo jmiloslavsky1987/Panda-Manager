@@ -19,7 +19,7 @@ interface Props {
 
 interface EditModalState {
   integration: ArchitectureIntegration | null
-  defaultTrack: 'ADR' | 'Biggy'
+  defaultTrack: 'ADR' | 'Biggy' | 'Incident Prevention'
 }
 
 export function CurrentFutureStateTab({
@@ -64,6 +64,12 @@ export function CurrentFutureStateTab({
             >
               + Biggy Integration
             </button>
+            <button
+              onClick={() => setEditModal({ integration: null, defaultTrack: 'Incident Prevention' })}
+              className="px-3 py-1.5 text-xs font-semibold border border-violet-200 bg-violet-50 text-violet-700 rounded hover:bg-violet-100"
+            >
+              + Incident Prevention Integration
+            </button>
           </div>
         </div>
 
@@ -77,6 +83,7 @@ export function CurrentFutureStateTab({
           onPathwaysUpdate={onPathwaysUpdate}
           adrTeamNames={onboardingRows.filter((r) => r.track === 'ADR').map((r) => r.team_name)}
           biggyTeamNames={onboardingRows.filter((r) => r.track === 'Biggy').map((r) => r.team_name)}
+          ipTeamNames={onboardingRows.filter((r) => r.track === 'Incident Prevention').map((r) => r.team_name)}
         />
       </div>
 

@@ -27,10 +27,13 @@ export async function buildArchSkillContext(projectId: number): Promise<string> 
     sections.push('## Architecture Integrations')
     const adr = data.architectureIntegrations.filter(i => i.track === 'ADR')
     const biggy = data.architectureIntegrations.filter(i => i.track === 'Biggy')
+    const ip = data.architectureIntegrations.filter(i => i.track === 'Incident Prevention')
     sections.push('### ADR Track')
     adr.forEach(i => sections.push(`  - [${i.phase ?? 'N/A'}] ${i.tool_name} | Method: ${i.integration_method ?? 'N/A'} | Status: ${i.status}`))
     sections.push('### Biggy AI Track')
     biggy.forEach(i => sections.push(`  - [${i.phase ?? 'N/A'}] ${i.tool_name} | Method: ${i.integration_method ?? 'N/A'} | Status: ${i.status}`))
+    sections.push('### Incident Prevention Track')
+    ip.forEach(i => sections.push(`  - [${i.phase ?? 'N/A'}] ${i.tool_name} | Method: ${i.integration_method ?? 'N/A'} | Status: ${i.status}`))
   } else {
     sections.push('## Architecture Integrations\n_No integration nodes recorded._')
   }

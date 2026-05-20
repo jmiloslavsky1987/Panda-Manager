@@ -21,10 +21,11 @@ const COLUMNS = [
 type StatusKey = typeof COLUMNS[number]['key']
 
 export function TeamOnboardingTable({ projectId, rows, onUpdate }: Props) {
-  const [editRow, setEditRow] = useState<TeamOnboardingStatus | null | 'new-adr' | 'new-biggy'>(null)
+  const [editRow, setEditRow] = useState<TeamOnboardingStatus | null | 'new-adr' | 'new-biggy' | 'new-ip'>(null)
 
   const adrRows = rows.filter((r) => !r.track || r.track === 'ADR')
   const biggyRows = rows.filter((r) => r.track === 'Biggy')
+  const ipRows = rows.filter((r) => r.track === 'Incident Prevention')
 
   function handleSave(saved: TeamOnboardingStatus) {
     const existing = rows.find((r) => r.id === saved.id)
@@ -157,6 +158,38 @@ export function TeamOnboardingTable({ projectId, rows, onUpdate }: Props) {
                 </button>
               </td>
             </tr>
+
+            {/* Incident Prevention Track section */}
+            <SectionHeader label="Incident Prevention Track" bg="#7c3aed" />
+            {ipRows.length === 0 ? (
+              <tr>
+                <td colSpan={6} style={{ padding: '10px 12px', color: '#94a3b8', fontStyle: 'italic', fontSize: '0.8rem' }}>
+                  No Incident Prevention teams recorded yet.
+                </td>
+              </tr>
+            ) : (
+              ipRows.map((row) => (
+                <tr key={row.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <td
+                    style={{ padding: '8px 12px', fontWeight: 500, color: '#1e293b', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                    onClick={() => setEditRow(row)}
+                  >
+                    {row.team_name}
+                  </td>
+                  {COLUMNS.map((col) => renderStatusCell(row, col.key))}
+                </tr>
+              ))
+            )}
+            <tr>
+              <td colSpan={6} style={{ padding: '6px 12px' }}>
+                <button
+                  onClick={() => setEditRow('new-ip')}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#7c3aed', fontSize: '0.78rem', fontWeight: 600, padding: 0 }}
+                >
+                  + Add Incident Prevention Team Row
+                </button>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -181,7 +214,8 @@ export function TeamOnboardingTable({ projectId, rows, onUpdate }: Props) {
           defaultTrack={
             editRow === 'new-adr' ? 'ADR' :
             editRow === 'new-biggy' ? 'Biggy' :
-            (editRow as TeamOnboardingStatus).track as 'ADR' | 'Biggy' | undefined
+            editRow === 'new-ip' ? 'Incident Prevention' :
+            (editRow as TeamOnboardingStatus).track as 'ADR' | 'Biggy' | 'Incident Prevention' | undefined
           }
           onSave={handleSave}
           onClose={() => setEditRow(null)}
