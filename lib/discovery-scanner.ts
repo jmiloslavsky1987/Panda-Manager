@@ -76,6 +76,8 @@ Classification rules:
   - Updates to engagement sections (Teams, Architecture, etc.) → team_engagement with entity_match set to the section name
   - If unsure between workflow_step and history, prefer workflow_step when the item describes something that happened within a named workflow
 
+Three product tracks exist in this codebase: ADR, Biggy (AI Assistant), and Incident Prevention. Match entities to the appropriate track based on document content. The Incident Prevention track covers change-ticket risk scoring (cues: change ticket, change request, CHG-, RFC, CAB / change advisory board, risk score, change risk, ServiceNow change, JSM change, blast radius, freeze window, 5-category weighted risk).
+
 Existing project structure:
 {existingStructureBlock}
 
