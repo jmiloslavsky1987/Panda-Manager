@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: verifying
-stopped_at: Completed 87-06-PLAN.md (InteractiveArchGraph + 7 supporting arch UI files extended for IP Track)
-last_updated: "2026-05-20T02:36:00.000Z"
-last_activity: 2026-05-20 — Phase 87 Plan 06 COMPLETE. components/arch/InteractiveArchGraph.tsx + 7 supporting arch/skill/chat files extended to render Incident Prevention Track as third section-grouped diagram identical to ADR. 8 hardcoded ADR-only locations rewired (ConsoleNode 'Change Risk Console' bg-violet-700, sectionColor 3 IP sections, TrackPipeline isIP, section-grouped gate (isADR || isIP), handleDragEnd isADRTrack→isSectionGrouped, top-nav pill bg-violet-600, teamNames 3-way + optional ipTeamNames prop). Console placement generalized via derived consoleAfterIdx (IP=0 for migration 0052 do=15; ADR=1 unchanged) — Rule 1 auto-fix. Task 2 widened 7 supporting files (TeamOnboardingTable + EditModal, IntegrationEditModal with new IP_PHASES_BY_SECTION optgroups, CurrentFutureStateTab + IP button, skill-context-arch, skill-context-teams, chat-context-builder tool hint). IP-12 GREEN (2/2). Panda-Manager commits cd29600f (Task 1) + 7bdbe4a5 (Task 2).
+stopped_at: Completed 87-07-PLAN.md (OnboardingDashboard + 3 other dashboard surfaces extended for IP Track)
+last_updated: "2026-05-20T02:36:55.000Z"
+last_activity: 2026-05-20 — Phase 87 Plan 07 COMPLETE. components/OnboardingDashboard.tsx extended with parallel ipPhases/rawIpPhases/ipGoLivePhase state, STATIC_IP_TRACKS derived from INCIDENT_PREVENTION_ONBOARDING_CONFIG, IP integrations/teams filters, IP step/integ/team aggregate counts, third ProgressRing in sticky header, third column in phases grid (`md:grid-cols-3` when ipActive), and third IP track section in Integration Tracker — all gated on projectSummary?.active_tracks?.incident_prevention. 4 setBiggyPhases callsites matched with 4 setIpPhases insertions; 2 setBiggyGoLivePhase matched with 2 setIpGoLivePhase. WorkspaceKpiStrip: ipSteps/ipInteg/ipTeams via sumTrack('incident prevention') feed aggregate totals. OverviewMetrics: parallel fetchActiveTracks + third violet IP ring in Onboarding Progress card. HealthDashboard: computeTrackHealth signature widened + third ip-health-badge. GET /api/projects/[projectId]/onboarding now returns {adr, biggy, incident_prevention}; GET /api/projects/[projectId] now selects active_tracks. Rule 3 deviation: API contract widening was required to surface active_tracks to client surfaces. IP-16 visual verification deferred to Plan 87-08. Panda-Manager commits 6e248713 (Task 1: OnboardingDashboard + 2 API routes) + d5731a63 (Task 2: KpiStrip + OverviewMetrics + HealthDashboard).
 progress:
   total_phases: 16
   completed_phases: 15
   total_plans: 88
-  completed_plans: 87
-  percent: 99
+  completed_plans: 88
+  percent: 100
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 ## Current Position
 
 Phase: 87-incident-prevention-track-support (Incident Prevention Track Support — IN PROGRESS)
-Plan: 6 of 8 complete (Plans 00-04 + 06 done; Plan 05 settings PATCH retroactive seeding remains for in-flight work; Plan 07 onboarding-dashboard UI; Plan 08 human verification)
-Status: Phase 87 active. Plan 06 closed 2026-05-20 — InteractiveArchGraph.tsx + 7 supporting arch/skill/chat files extended to render IP Track as third section-grouped diagram. All 8 hardcoded ADR-only locations now 3-way ADR/IP/Biggy aware. IP-12 GREEN (2/2). Next: Plan 05 (Settings PATCH retroactive seeding) and Plan 07 (OnboardingDashboard third-track column). Live Docker apply (IP-01, IP-02) deferred to Plan 87-08 human verification.
-Last activity: 2026-05-20 — Phase 87 Plan 06 COMPLETE. components/arch/InteractiveArchGraph.tsx (8 hardcoded locations rewired + Console placement generalized + props extended with optional ipTeamNames) + 7 supporting files (TeamOnboardingTable adds Incident Prevention section/row; TeamOnboardingEditModal track union widened; IntegrationEditModal gets IP_PHASES_BY_SECTION optgroups + 3rd track dropdown; CurrentFutureStateTab adds + IP Integration button + ipTeamNames prop wiring; skill-context-arch + skill-context-teams add third filter + section; chat-context-builder tool hint lists 3 valid track names). isADRTrack fully renamed to isSectionGrouped (0 residual matches). Color: violet. IP-12 GREEN (2/2). Pre-existing column-reorder + status-cycle test failures (6 tests) confirmed unrelated to my changes via git stash — same Phase 48 mock issue as [83-04]; logged to deferred-items.md. Panda-Manager commits cd29600f (Task 1: InteractiveArchGraph), 7bdbe4a5 (Task 2: 7 supporting files).
+Plan: 7 of 8 complete (Plans 00-04 + 06 + 07 done; Plan 05 settings PATCH retroactive seeding remains for in-flight work; Plan 08 human verification)
+Status: Phase 87 active. Plan 07 closed 2026-05-20 — OnboardingDashboard + 3 other dashboard surfaces (WorkspaceKpiStrip, OverviewMetrics, HealthDashboard) and 2 API routes (GET /api/projects/[projectId] and GET /api/projects/[projectId]/onboarding) extended for Incident Prevention third track. All IP UI gated on active_tracks.incident_prevention. IP-16 visual verification deferred to Plan 87-08 alongside IP-01/IP-02 live Docker apply. Next: Plan 05 (Settings PATCH retroactive seeding) and Plan 08 (human verify).
+Last activity: 2026-05-20 — Phase 87 Plan 07 COMPLETE. components/OnboardingDashboard.tsx extended with parallel IP state and third-column render gated on active_tracks.incident_prevention; 4 setBiggyPhases sites matched with 4 setIpPhases insertions; 2 setBiggyGoLivePhase sites matched with 2 setIpGoLivePhase. WorkspaceKpiStrip ipSteps/ipInteg/ipTeams via sumTrack('incident prevention') in aggregate totals. OverviewMetrics gains third violet IP ring + parallel fetchActiveTracks. HealthDashboard computeTrackHealth widened + third ip-health-badge. API routes: GET /api/projects/[projectId]/onboarding returns {adr, biggy, incident_prevention}; GET /api/projects/[projectId] selects active_tracks. Rule 3 deviation: API contract widening required to surface active_tracks to client components. Pre-existing TS error in app/api/projects/[projectId]/settings/route.ts (owned by Plan 87-05) logged to deferred-items.md. Panda-Manager commits 6e248713 (Task 1) + d5731a63 (Task 2).
 
-Progress: [██████████] 99%
+Progress: [██████████] 100%
 
 ## v10.0 Roadmap Summary
 
@@ -352,6 +352,13 @@ Progress: [██████████] 99%
 - [87-06] Optional `ipTeamNames?: string[]` prop on InteractiveArchGraph (defaults to []) — backward compatibility with any external caller; CurrentFutureStateTab is the one in-tree caller, updated in Task 2 to pass it. Pattern: optional with default-empty preserves existing call-sites while opening the door for IP.
 - [87-06] Open Question 2 resolved (skill-context-arch + skill-context-teams + chat-context-builder): hardcoded third branch (filter + section header) chosen over generic refactor. Per CONTEXT.md guidance — lower risk for the Phase 87 audit pass, clearer assertion targets, more readable. The 4th track (whenever it arrives) is when generic iteration becomes worth the refactor cost.
 - [87-06] Pre-existing arch route test failures (6 tests in tests/arch/column-reorder + status-cycle) confirmed unrelated to Plan 87-06 — same Phase 48 mock issue documented in STATE.md [83-04] (requireProjectRole added Phase 82, not mocked in pre-existing tests). Verified by stashing my changes and re-running. Out of scope for Plan 87-06; logged to `.planning/phases/87-incident-prevention-track-support/deferred-items.md` for future test-mock-fix plan.
+- [87-07] OnboardingDashboard / OverviewMetrics / HealthDashboard take only `projectId` (not the full project object), so the plan's intended conditional render `project.active_tracks?.incident_prevention` was unreachable from these client islands. Resolution (Rule 3 deviation): extended `GET /api/projects/[projectId]` select() to include `active_tracks` (additive — one column), then OverviewMetrics + HealthDashboard added a parallel `fetchActiveTracks()` call to the same endpoint. OnboardingDashboard's existing `projectSummary` fetch already targets `/api/projects/[projectId]`, so only the API + ProjectSummary type widening was needed.
+- [87-07] Negative placeholder phase IDs for IP track offset by -100 (so -101, -103, -105) to prevent collision with ADR placeholder IDs (-1, -3, -5) and Biggy (-11, -13, -15) when the DB has no rows yet — these IDs appear in the `collapsed` map keying and `renderPhaseCard` fallback objects. Without the offset, a Biggy "Validation" placeholder (-15) would collide with an IP "Validation" placeholder, causing collapse-state cross-contamination.
+- [87-07] `'Change Risk Data Sources'` label for the IP integrations live-card (vs ADR's "Integrations" and Biggy's "IT Knowledge Graph") — matches IP product domain. `IP_TYPES = ['ITSM', 'Data Source', 'Write-Back']` for the integration-type dropdown when track === 'Incident Prevention' (parallel to ADR_TYPES = ['Inbound', 'Outbound', 'Enrichment'] and BIGGY_TYPES = ['Real-time', 'Context', 'Knowledge', 'UDC']).
+- [87-07] `sumTrack` in WorkspaceKpiStrip + OverviewMetrics is case-insensitive (`r.track.toLowerCase() === lc`), so `sumTrack(metrics, 'incident prevention')` matches DB values whether stored as `'Incident Prevention'` or any case variant — natural zero-fill when no IP metric rows exist (project without IP active). Saves a separate fetch + branch.
+- [87-07] WorkspaceKpiStrip deliberately does NOT gate IP totals on `active_tracks` — when IP is not active, the metric rows for IP don't exist, so the sum returns 0 anyway. Conditional unnecessary; reduces complexity. Plan 87-08 visual verify should confirm the aggregate "Progress" KPI matches whichever combination of tracks is active.
+- [87-07] Integration `<select>` "Incident Prevention" option in OnboardingDashboard's `renderIntegCard` is only rendered when `ipActive === true` — prevents users from misassigning integrations to a disabled track via the per-card dropdown. Track filter rows in the Integration Tracker section also conditionally include the IP column.
+- [87-07] Pre-existing TS error in `app/api/projects/[projectId]/settings/route.ts:39` (Zod schema `{adr, biggy}` mismatched with widened schema `{adr, biggy, incident_prevention}`) is owned by Plan 87-05 (its truth list says: "PATCH /api/projects/[projectId]/settings accepts incident_prevention: boolean in active_tracks Zod schema"). Plan 87-07 does NOT touch settings/route.ts. Logged to deferred-items.md.
 
 ### Blockers/Concerns
 
@@ -359,6 +366,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-05-20T02:35:30.000Z
-Stopped at: Completed 87-06-PLAN.md (InteractiveArchGraph + 7 supporting arch UI files extended for IP Track)
+Last session: 2026-05-20T02:36:55.000Z
+Stopped at: Completed 87-07-PLAN.md (OnboardingDashboard + 3 other dashboard surfaces extended for IP Track)
 Resume file: None
