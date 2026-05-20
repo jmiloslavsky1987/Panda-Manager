@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: verifying
-stopped_at: Completed 87-02-PLAN.md (config + extraction + discovery layer)
-last_updated: "2026-05-20T02:21:59.341Z"
-last_activity: "2026-05-20 — Phase 87 Plan 02 COMPLETE. INCIDENT_PREVENTION_ONBOARDING_CONFIG (4 phases / 13 steps) added to lib/onboarding-config.ts; ALL_STANDARD_STEP_NAMES extended with dedup. document-extraction.ts gains Pass 0 IP cue block + arch_node allowlist widened to 3 tracks + wbs_task INFER rule extended for change-management cues. discovery-scanner.ts DISCOVERY_SYSTEM_TEMPLATE now names all 3 tracks explicitly (Case A — builder was already generic). IP-04, IP-05, IP-14 all GREEN (23/23 tests). Panda-Manager commits ab0180eb (onboarding-config), c65b2797 (document-extraction prompts), 51a73da3 (discovery-scanner)."
+stopped_at: Completed 87-03-PLAN.md (seed-project track-conditional team inserts)
+last_updated: "2026-05-20T02:27:00.000Z"
+last_activity: "2026-05-20 — Phase 87 Plan 03 COMPLETE. lib/seed-project.ts now reads project.active_tracks and inserts each team placeholder (Alpha/ADR, Beta/Biggy, Gamma/IP) conditionally. Team Gamma / track='Incident Prevention' added; all three inserts gated on active_tracks[trackKey]. IP-10 and IP-11 GREEN; all 7 tests in tests/ui/seed-project.test.ts pass. Panda-Manager commit aa487f53. Retroactive seeding (false→true Settings toggle) deliberately deferred to Plan 87-05's seedIncidentPreventionForProject helper."
 progress:
   total_phases: 16
   completed_phases: 15
   total_plans: 88
-  completed_plans: 83
-  percent: 94
+  completed_plans: 84
+  percent: 95
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 ## Current Position
 
 Phase: 87-incident-prevention-track-support (Incident Prevention Track Support — IN PROGRESS)
-Plan: 2 of 8 complete (Plan 00 Wave 0 scaffolding done previously; Plan 01 schema/migration foundation; Plan 02 config + extraction + discovery layer)
-Status: Phase 87 active. Plan 02 closed 2026-05-20 — IP onboarding config registry, document-extraction prompt cues (Pass 0/2/3), and discovery-scanner template all IP-aware. IP-04 + IP-05 + IP-14 GREEN (23/23). Next: Plan 03 (project-create WBS seeding for IP track). Live Docker apply (IP-01, IP-02) still deferred to Plan 87-08 human verification.
-Last activity: 2026-05-20 — Phase 87 Plan 02 COMPLETE. INCIDENT_PREVENTION_ONBOARDING_CONFIG (4 phases / 13 steps) added to lib/onboarding-config.ts; ALL_STANDARD_STEP_NAMES extended with dedup. document-extraction.ts gains Pass 0 IP cue block + arch_node allowlist widened to 3 tracks + wbs_task INFER rule extended for change-management cues. discovery-scanner.ts DISCOVERY_SYSTEM_TEMPLATE now names all 3 tracks explicitly (Case A — builder was already generic). IP-04, IP-05, IP-14 all GREEN (23/23 tests). Panda-Manager commits ab0180eb (onboarding-config), c65b2797 (document-extraction prompts), 51a73da3 (discovery-scanner).
+Plan: 3 of 8 complete (Plan 00 Wave 0 scaffolding; Plan 01 schema/migration foundation; Plan 02 config + extraction + discovery layer; Plan 03 seed-project track-conditional team inserts)
+Status: Phase 87 active. Plan 03 closed 2026-05-20 — lib/seed-project.ts now seeds Team Alpha/Beta/Gamma conditionally on active_tracks[trackKey]; Team Gamma (track='Incident Prevention') added. IP-10 + IP-11 GREEN (7/7). Next: Plan 04 (project-create wizard + POST route accepts active_tracks). Live Docker apply (IP-01, IP-02) deferred to Plan 87-08 human verification.
+Last activity: 2026-05-20 — Phase 87 Plan 03 COMPLETE. lib/seed-project.ts now reads project.active_tracks and inserts each team placeholder (Alpha/ADR, Beta/Biggy, Gamma/IP) conditionally. Team Gamma / track='Incident Prevention' added; all three inserts gated on active_tracks[trackKey]. IP-10 and IP-11 GREEN; all 7 tests in tests/ui/seed-project.test.ts pass. Panda-Manager commit aa487f53. Retroactive seeding (false→true Settings toggle) deliberately deferred to Plan 87-05's seedIncidentPreventionForProject helper.
 
-Progress: [█████████░] 94%
+Progress: [█████████░] 95%
 
 ## v10.0 Roadmap Summary
 
@@ -330,6 +330,12 @@ Progress: [█████████░] 94%
 - [87-02] `wbs_task` INFER rule "Default to ADR if unclear" fallback preserved — IP track requires affirmative cue evidence (change-ticket / CAB / risk-score etc); silent IP routing without cues would over-fire on enterprise/ADR documents that happen to mention ServiceNow.
 - [87-02] arch_node entity-type schema changed from union `("ADR Track" | "AI Assistant Track")` to three-value union `("ADR Track" | "AI Assistant Track" | "Incident Prevention Track")` in both EXTRACTION_BASE and Pass 2 prompts. Replaced with `replace_all=true` after auditing every occurrence; backtick parity preserved (122 → 122).
 - [87-02] Pre-existing discovery test failures (dismiss.test.ts 3, queue.test.ts 5 — `lib/auth-server.ts:39` `h.forEach` on undefined Headers because `next/headers` mock not seeded) confirmed unrelated to Plan 87-02 via git-stash repro; logged in `.planning/phases/87-incident-prevention-track-support/deferred-items.md` for future test-mock-fix plan; not in scope for Plan 87-02.
+- [87-03] `lib/seed-project.ts` `findFirst` columns selector widened additively from `{ seeded: true }` to `{ seeded: true, active_tracks: true }` — same DB query, no extra round trip; downstream consumers that only need `seeded` still type-check.
+- [87-03] Track-conditional template row build pattern: `[cond && row, ...].filter(Boolean) as typeof teamOnboardingStatus.$inferInsert[]` — preserves Drizzle types via single cast at filter boundary; TypeScript cannot otherwise narrow `(false | InferInsert)[]` to `InferInsert[]`. Adopt for any future per-track placeholder seeding.
+- [87-03] `if (teamRows.length > 0)` guard mandatory before `db.insert().values(teamRows)` — Drizzle's `.values()` rejects empty arrays; required whenever dynamic row count can be zero (e.g., all tracks off).
+- [87-03] Default fallback for `project.active_tracks` is all-false (`{ adr:false, biggy:false, incident_prevention:false }`) matching Plan 01's new schema default — defensive against NULL rows; a NULL active_tracks seeds zero teams (observable) instead of legacy 2-row Alpha+Beta default.
+- [87-03] Existing 5 tests in `tests/ui/seed-project.test.ts` required zero fixture updates — they only assert `mockInsert.mock.calls.length > 1` and `mockInsert.mock.results[0].value.values).toBeDefined()`, both satisfied by actions/risks/milestones/etc. inserts that run before the now-conditional team-insert block. The 2 new IP-10/IP-11 tests use mock-introspection (flatten `.values()` calls) to assert team-row payloads.
+- [87-03] Retroactive seeding (false→true Settings toggle) deliberately deferred to Plan 87-05's dedicated `seedIncidentPreventionForProject(tx, projectId)` helper — `seedProjectFromRegistry` stays scoped to `seeded:false` initial-creation path only. Clean separation: Plan 03 = coarse `seeded` gate; Plan 05 = fine-grained `WHERE NOT EXISTS` per insert.
 
 ### Blockers/Concerns
 
@@ -337,6 +343,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-05-20T02:21:59.338Z
-Stopped at: Completed 87-02-PLAN.md (config + extraction + discovery layer)
+Last session: 2026-05-20T02:27:00.000Z
+Stopped at: Completed 87-03-PLAN.md (seed-project track-conditional team inserts)
 Resume file: None

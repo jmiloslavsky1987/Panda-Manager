@@ -367,14 +367,14 @@ Plans:
 | 84.1. Discovery Scan Merge/Update Flow | 5/5 | Complete    | 2026-05-07 |
 | 85. WBS MS Project-Style Overhaul | 5/6 | In Progress|  |
 | 86. Multi-User, SSO & AWS Readiness | 6/6 | Complete    | 2026-05-18 |
-| 87. Incident Prevention Track Support | 3/9 | In Progress|  |
+| 87. Incident Prevention Track Support | 4/9 | In Progress|  |
 
 ### Phase 87: incident-prevention-track-support
 
 **Goal:** Add a third product track ("Incident Prevention" — BigPanda's AI Change Risk Prediction) as a co-equal sibling of ADR and Biggy throughout the app. Adds `active_tracks.incident_prevention` JSONB key (migration 0052, additive backfill preserving adr/biggy), `INCIDENT_PREVENTION_ONBOARDING_CONFIG` (4 phases / 13 steps), 10 IP L1 WBS phases (~33 L2 sub-tasks), section-grouped Architecture diagram (3 sections + Change Risk Console centerpiece + 13 sub-capabilities), project-create wizard track-selection (3 checkboxes, ≥1 required, all unchecked by default), Settings PATCH retroactive seeding on false→true toggle via dedicated `seedIncidentPreventionForProject` helper, third-column OnboardingDashboard rendering, third health badge / KPI / metrics ring, and IP cues in extraction prompts. Briefing skill intentionally untouched (track-agnostic by design).
 **Requirements:** IP-01, IP-02, IP-03, IP-04, IP-05, IP-06, IP-07, IP-08, IP-09, IP-10, IP-11, IP-12, IP-13, IP-14, IP-15, IP-16 (phase-local — defined in 87-VALIDATION.md)
 **Depends on:** Phase 86
-**Plans:** 3/9 plans executed
+**Plans:** 4/9 plans executed
 
 Plans:
 - [x] 87-00-PLAN.md — Wave 0: RED test scaffolds for IP-03..IP-14 (Wave 1) — COMPLETE
