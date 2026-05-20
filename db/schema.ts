@@ -111,7 +111,7 @@ export const projects = pgTable('projects', {
   end_date: text('end_date'),
   seeded: boolean('seeded').default(false).notNull(),
   exec_action_required: boolean('exec_action_required').default(false).notNull(),
-  active_tracks: jsonb('active_tracks').$type<{ adr: boolean; biggy: boolean }>().default({ adr: true, biggy: true }),
+  active_tracks: jsonb('active_tracks').$type<{ adr: boolean; biggy: boolean; incident_prevention: boolean }>().default({ adr: false, biggy: false, incident_prevention: false }),
   project_type: text('project_type'),
   budgeted_hours: numeric('budgeted_hours', { precision: 8, scale: 2 }),
   arr: text('arr'),
