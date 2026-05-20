@@ -24,6 +24,7 @@ export async function GET(
       customer: projects.customer,
       status_summary: projects.status_summary,
       go_live_target: projects.go_live_target,
+      active_tracks: projects.active_tracks,
     })
     .from(projects)
     .where(eq(projects.id, numericId))

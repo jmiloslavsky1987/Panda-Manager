@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { INCIDENT_PREVENTION_ONBOARDING_CONFIG } from '@/lib/onboarding-config'
 
 // ─── Type definitions ────────────────────────────────────────────────────────
 
@@ -33,7 +34,7 @@ interface Integration {
   color: string | null
   notes: string | null
   display_order: number
-  track: 'ADR' | 'Biggy' | null
+  track: 'ADR' | 'Biggy' | 'Incident Prevention' | null
   integration_type: string | null
 }
 
@@ -58,6 +59,7 @@ interface ProjectSummary {
   customer: string
   status_summary: string | null
   go_live_target: string | null
+  active_tracks?: { adr: boolean; biggy: boolean; incident_prevention: boolean } | null
 }
 
 interface TeamOnboardingRow {
@@ -84,6 +86,7 @@ const INTEG_STATUS_CYCLE = ['not-started', 'in-progress', 'complete', 'blocked']
 
 const ADR_TYPES = ['Inbound', 'Outbound', 'Enrichment'] as const
 const BIGGY_TYPES = ['Real-time', 'Context', 'Knowledge', 'UDC'] as const
+const IP_TYPES = ['ITSM', 'Data Source', 'Write-Back'] as const
 
 // Static track configuration — phase names must match DB exactly.
 // Only the 3 content phases per track (live cards and Go-Live are rendered separately).
@@ -98,6 +101,12 @@ const STATIC_BIGGY_TRACKS = [
   { name: 'Platform Configuration', display_order: 3 },
   { name: 'Validation', display_order: 5 },
 ] as const
+
+// Incident Prevention static tracks — sourced from INCIDENT_PREVENTION_ONBOARDING_CONFIG
+// (excluding Go-Live, which is rendered as a special card). Filter to display_order < 6.
+const STATIC_IP_TRACKS = INCIDENT_PREVENTION_ONBOARDING_CONFIG
+  .filter(p => p.display_order < 6)
+  .map(p => ({ name: p.name, display_order: p.display_order }))
 
 // ─── Status badge colors ──────────────────────────────────────────────────────
 
@@ -227,18 +236,20 @@ const _seedCalledForProject = new Set<number>()
 export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
   const [adrPhases, setAdrPhases] = useState<PhaseWithSteps[]>([])
   const [biggyPhases, setBiggyPhases] = useState<PhaseWithSteps[]>([])
-  // rawAdrPhases / rawBiggyPhases hold ALL phases from DB before static filtering.
-  // REQUIRED: Teams phase is not in STATIC_ADR_TRACKS/STATIC_BIGGY_TRACKS, so
-  // adrPhases/biggyPhases will never contain it. rawAdrPhases/rawBiggyPhases are
-  // the source of truth for the Teams dynamic summary cards.
+  const [ipPhases, setIpPhases] = useState<PhaseWithSteps[]>([])
+  // rawAdrPhases / rawBiggyPhases / rawIpPhases hold ALL phases from DB before static filtering.
+  // REQUIRED: Teams phase is not in STATIC_*_TRACKS, so the static-mapped arrays will
+  // never contain it. The raw arrays are the source of truth for Teams dynamic summary cards.
   const [rawAdrPhases, setRawAdrPhases] = useState<PhaseWithSteps[]>([])
   const [rawBiggyPhases, setRawBiggyPhases] = useState<PhaseWithSteps[]>([])
+  const [rawIpPhases, setRawIpPhases] = useState<PhaseWithSteps[]>([])
   const [integrations, setIntegrations] = useState<Integration[]>([])
   const [risks, setRisks] = useState<Risk[]>([])
   const [milestones, setMilestones] = useState<Milestone[]>([])
   const [projectSummary, setProjectSummary] = useState<ProjectSummary | null>(null)
   const [adrGoLivePhase, setAdrGoLivePhase] = useState<PhaseWithSteps | null>(null)
   const [biggyGoLivePhase, setBiggyGoLivePhase] = useState<PhaseWithSteps | null>(null)
+  const [ipGoLivePhase, setIpGoLivePhase] = useState<PhaseWithSteps | null>(null)
   const [loading, setLoading] = useState(true)
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
@@ -246,8 +257,8 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
   const [noteInputs, setNoteInputs] = useState<Record<number, string>>({})
   const [integNotes, setIntegNotes] = useState<Record<number, string>>({})
   const [teams, setTeams] = useState<TeamOnboardingRow[]>([])
-  const [addingTeam, setAddingTeam] = useState<{ ADR: boolean; Biggy: boolean }>({ ADR: false, Biggy: false })
-  const [newTeamName, setNewTeamName] = useState<{ ADR: string; Biggy: string }>({ ADR: '', Biggy: '' })
+  const [addingTeam, setAddingTeam] = useState<{ ADR: boolean; Biggy: boolean; 'Incident Prevention': boolean }>({ ADR: false, Biggy: false, 'Incident Prevention': false })
+  const [newTeamName, setNewTeamName] = useState<{ ADR: string; Biggy: string; 'Incident Prevention': string }>({ ADR: '', Biggy: '', 'Incident Prevention': '' })
 
   useEffect(() => {
     const load = async () => {
@@ -265,6 +276,7 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
 
         let fetchedAdr: PhaseWithSteps[] = ob.adr ?? []
         let fetchedBiggy: PhaseWithSteps[] = ob.biggy ?? []
+        let fetchedIp: PhaseWithSteps[] = ob.incident_prevention ?? []
         const fetchedIntegrations: Integration[] = ig.integrations ?? []
         const fetchedRisks: Risk[] = rk.risks ?? rk ?? []
         const fetchedMilestones: Milestone[] = ml.milestones ?? ml ?? []
@@ -272,6 +284,8 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
         // Seed standard steps if any standard phase is missing steps
         const standardAdrNames = ['Discovery & Kickoff', 'Platform Configuration', 'UAT']
         const standardBiggyNames = ['Discovery & Kickoff', 'Platform Configuration', 'Validation']
+        const standardIpNames = ['Discovery & Kickoff', 'Platform Configuration', 'Validation']
+        const ipEnabled = ps.project?.active_tracks?.incident_prevention === true
         const needsSeed =
           standardAdrNames.some(n => {
             const p = fetchedAdr.find(x => x.name === n)
@@ -280,7 +294,11 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
           standardBiggyNames.some(n => {
             const p = fetchedBiggy.find(x => x.name === n)
             return !p || p.steps.length === 0
-          })
+          }) ||
+          (ipEnabled && standardIpNames.some(n => {
+            const p = fetchedIp.find(x => x.name === n)
+            return !p || p.steps.length === 0
+          }))
         if (needsSeed && !_seedCalledForProject.has(projectId)) {
           _seedCalledForProject.add(projectId)
           const seeded = await fetch(`/api/projects/${projectId}/onboarding/seed`, {
@@ -288,15 +306,18 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
           }).then(r => r.json())
           if (seeded.adr) fetchedAdr = seeded.adr
           if (seeded.biggy) fetchedBiggy = seeded.biggy
+          if (seeded.incident_prevention) fetchedIp = seeded.incident_prevention
         }
 
         // Capture raw DB phases for Teams live card data
         setRawAdrPhases(fetchedAdr)
         setRawBiggyPhases(fetchedBiggy)
+        setRawIpPhases(fetchedIp)
 
         // Extract Go-Live phases (rendered as special cards, not regular phase cards)
         setAdrGoLivePhase(fetchedAdr.find(p => p.name === 'Go-Live') ?? null)
         setBiggyGoLivePhase(fetchedBiggy.find(p => p.name === 'Go-Live') ?? null)
+        setIpGoLivePhase(fetchedIp.find(p => p.name === 'Go-Live') ?? null)
 
         // Map static config → DB phases matched by name
         const staticAdrPhases = STATIC_ADR_TRACKS.map(track => {
@@ -307,8 +328,14 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
           const dbPhase = fetchedBiggy.find((p: PhaseWithSteps) => p.name === track.name)
           return dbPhase ?? { id: -track.display_order, name: track.name, display_order: track.display_order, steps: [] }
         })
+        const staticIpPhases = STATIC_IP_TRACKS.map(track => {
+          const dbPhase = fetchedIp.find((p: PhaseWithSteps) => p.name === track.name)
+          // Negative IDs offset by -100 to avoid collision with ADR/Biggy placeholder IDs
+          return dbPhase ?? { id: -100 - track.display_order, name: track.name, display_order: track.display_order, steps: [] }
+        })
         setAdrPhases(staticAdrPhases)
         setBiggyPhases(staticBiggyPhases)
+        setIpPhases(staticIpPhases)
 
         setIntegrations(fetchedIntegrations)
         setRisks(Array.isArray(fetchedRisks) ? fetchedRisks : [])
@@ -318,7 +345,7 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
 
         // Default: all phases collapsed
         const collapseMap: Record<string | number, boolean> = {}
-        ;[...staticAdrPhases, ...staticBiggyPhases].forEach((p) => {
+        ;[...staticAdrPhases, ...staticBiggyPhases, ...staticIpPhases].forEach((p) => {
           collapseMap[p.id] = true
         })
         setCollapsed(collapseMap)
@@ -340,6 +367,7 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
 
   const adrIntegrations = integrations.filter(i => i.track === 'ADR')
   const biggyIntegrations = integrations.filter(i => i.track === 'Biggy')
+  const ipIntegrations = integrations.filter(i => i.track === 'Incident Prevention')
   const unassignedIntegrations = integrations.filter(i => !i.track)
 
   // ─── Derived stats ──────────────────────────────────────────────────────────
@@ -353,11 +381,17 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
   const biggyStepsTotal = biggySteps.length
   const biggyStepsComplete = biggySteps.filter((s) => s.status === 'complete').length
 
+  const ipSteps = ipPhases.flatMap((p) => p.steps)
+  const ipStepsTotal = ipSteps.length
+  const ipStepsComplete = ipSteps.filter((s) => s.status === 'complete').length
+
   // Integrations per track
   const adrIntegTotal = adrIntegrations.length
   const adrIntegComplete = adrIntegrations.filter((i) => i.status === 'complete').length
   const biggyIntegTotal = biggyIntegrations.length
   const biggyIntegComplete = biggyIntegrations.filter((i) => i.status === 'complete').length
+  const ipIntegTotal = ipIntegrations.length
+  const ipIntegComplete = ipIntegrations.filter((i) => i.status === 'complete').length
 
   // Teams per track
   const adrTeams = teams.filter((t) => t.track === 'ADR')
@@ -366,6 +400,9 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
   const biggyTeams = teams.filter((t) => t.track === 'Biggy')
   const biggyTeamsTotal = biggyTeams.length
   const biggyTeamsComplete = biggyTeams.filter((t) => t.status === 'complete').length
+  const ipTeams = teams.filter((t) => t.track === 'Incident Prevention')
+  const ipTeamsTotal = ipTeams.length
+  const ipTeamsComplete = ipTeams.filter((t) => t.status === 'complete').length
 
   // Combined per-track totals (steps + integrations + teams)
   const adrTotal = adrStepsTotal + adrIntegTotal + adrTeamsTotal
@@ -376,8 +413,17 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
   const biggyComplete = biggyStepsComplete + biggyIntegComplete + biggyTeamsComplete
   const biggyPct = biggyTotal > 0 ? (biggyComplete / biggyTotal) * 100 : 0
 
-  const totalSteps = adrTotal + biggyTotal
-  const completedSteps = adrComplete + biggyComplete
+  const ipTotal = ipStepsTotal + ipIntegTotal + ipTeamsTotal
+  const ipComplete = ipStepsComplete + ipIntegComplete + ipTeamsComplete
+  const ipPct = ipTotal > 0 ? (ipComplete / ipTotal) * 100 : 0
+
+  // IP visibility — render IP UI only when explicitly enabled in active_tracks
+  const ipActive = projectSummary?.active_tracks?.incident_prevention === true
+
+  // When IP is not active, IP contributions to aggregate totals are intentionally
+  // excluded (ipTotal/ipComplete stay 0 because ipPhases/ipIntegrations/ipTeams are empty).
+  const totalSteps = adrTotal + biggyTotal + ipTotal
+  const completedSteps = adrComplete + biggyComplete + ipComplete
   const pct = totalSteps > 0 ? (completedSteps / totalSteps) * 100 : 0
 
   // ─── Optimistic handlers ────────────────────────────────────────────────────
@@ -404,6 +450,15 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
       )
     )
 
+    // Update in Incident Prevention array
+    setIpPhases((prev) =>
+      prev.map((p) =>
+        p.id === phaseId
+          ? { ...p, steps: p.steps.map((s) => (s.id === stepId ? { ...s, status: nextStatus } : s)) }
+          : p
+      )
+    )
+
     // Update Go-Live phases
     setAdrGoLivePhase((prev) =>
       prev?.id === phaseId
@@ -411,6 +466,11 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
         : prev
     )
     setBiggyGoLivePhase((prev) =>
+      prev?.id === phaseId
+        ? { ...prev, steps: prev.steps.map((s) => (s.id === stepId ? { ...s, status: nextStatus } : s)) }
+        : prev
+    )
+    setIpGoLivePhase((prev) =>
       prev?.id === phaseId
         ? { ...prev, steps: prev.steps.map((s) => (s.id === stepId ? { ...s, status: nextStatus } : s)) }
         : prev
@@ -454,6 +514,15 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
           : p
       )
     )
+
+    // Update in Incident Prevention array
+    setIpPhases((prev) =>
+      prev.map((p) =>
+        p.id === phaseId
+          ? { ...p, steps: p.steps.map((s) => (s.id === stepId ? { ...s, owner } : s)) }
+          : p
+      )
+    )
   }
 
   const submitNote = async (phaseId: number, stepId: number) => {
@@ -490,6 +559,20 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
       )
     )
 
+    // Update in Incident Prevention array
+    setIpPhases((prev) =>
+      prev.map((p) =>
+        p.id === phaseId
+          ? {
+              ...p,
+              steps: p.steps.map((s) =>
+                s.id === stepId ? { ...s, updates: [...(s.updates ?? []), newUpdate] } : s
+              ),
+            }
+          : p
+      )
+    )
+
     setNoteInputs((prev) => ({ ...prev, [stepId]: '' }))
     await fetch(`/api/projects/${projectId}/onboarding/steps/${stepId}`, {
       method: 'PATCH',
@@ -508,7 +591,7 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
     })
   }
 
-  const saveIntegTrack = async (integId: number, track: 'ADR' | 'Biggy' | null, integration_type: string | null) => {
+  const saveIntegTrack = async (integId: number, track: 'ADR' | 'Biggy' | 'Incident Prevention' | null, integration_type: string | null) => {
     // Store previous state for rollback
     const prevIntegrations = integrations
 
@@ -553,7 +636,7 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
 
   // ─── Team handlers ──────────────────────────────────────────────────────────
 
-  const addTeam = async (track: 'ADR' | 'Biggy') => {
+  const addTeam = async (track: 'ADR' | 'Biggy' | 'Incident Prevention') => {
     const name = newTeamName[track].trim()
     if (!name) return
     try {
@@ -621,6 +704,8 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
       ? ADR_TYPES
       : integ.track === 'Biggy'
       ? BIGGY_TYPES
+      : integ.track === 'Incident Prevention'
+      ? IP_TYPES
       : []
 
     return (
@@ -676,7 +761,7 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
           <select
             value={integ.track ?? ''}
             onChange={(e) => {
-              const newTrack = e.target.value === '' ? null : (e.target.value as 'ADR' | 'Biggy')
+              const newTrack = e.target.value === '' ? null : (e.target.value as 'ADR' | 'Biggy' | 'Incident Prevention')
               saveIntegTrack(integ.id, newTrack, integ.integration_type)
             }}
             className="flex-1 min-w-0 text-xs border border-zinc-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-zinc-400"
@@ -684,6 +769,7 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
             <option value="">Unassigned</option>
             <option value="ADR">ADR</option>
             <option value="Biggy">Biggy</option>
+            {ipActive && <option value="Incident Prevention">Incident Prevention</option>}
           </select>
           {integ.track && (
             <select
@@ -756,7 +842,7 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
 
   // ─── Live card renderers ─────────────────────────────────────────────────────
 
-  const renderIntegrationsCard = (track: 'ADR' | 'Biggy') => {
+  const renderIntegrationsCard = (track: 'ADR' | 'Biggy' | 'Incident Prevention') => {
     const key = `integrations-${track}`
     const isCollapsed = collapsed[key] ?? true
     const trackIntegrations = integrations.filter(i => i.track === track)
@@ -764,7 +850,11 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
     const inProgress = trackIntegrations.filter(i => i.status === 'in-progress').length
     const blocked = trackIntegrations.filter(i => i.status === 'blocked').length
     const total = trackIntegrations.length
-    const label = track === 'ADR' ? 'Integrations' : 'IT Knowledge Graph'
+    const label = track === 'ADR'
+      ? 'Integrations'
+      : track === 'Biggy'
+      ? 'IT Knowledge Graph'
+      : 'Change Risk Data Sources'
     return (
       <div key={key} className="border border-zinc-200 rounded-lg overflow-hidden">
         <button
@@ -797,7 +887,7 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
     )
   }
 
-  const renderTeamsCard = (track: 'ADR' | 'Biggy') => {
+  const renderTeamsCard = (track: 'ADR' | 'Biggy' | 'Incident Prevention') => {
     const key = `teams-${track}`
     const isCollapsed = collapsed[key] ?? true
     const trackTeams = teams.filter(t => t.track === track)
@@ -876,8 +966,12 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
     )
   }
 
-  const renderGoLiveCard = (track: 'ADR' | 'Biggy') => {
-    const phase = track === 'ADR' ? adrGoLivePhase : biggyGoLivePhase
+  const renderGoLiveCard = (track: 'ADR' | 'Biggy' | 'Incident Prevention') => {
+    const phase = track === 'ADR'
+      ? adrGoLivePhase
+      : track === 'Biggy'
+      ? biggyGoLivePhase
+      : ipGoLivePhase
     const step = phase?.steps[0] ?? null
     const isLive = step?.status === 'complete'
     return (
@@ -1059,6 +1153,15 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
                 <p className="text-xs text-zinc-500">{biggyComplete}/{biggyTotal} steps</p>
               </div>
             </div>
+            {ipActive && (
+              <div data-testid="ip-track-ring" className="flex items-center gap-3">
+                <ProgressRing pct={ipPct} />
+                <div>
+                  <p className="text-xs font-semibold text-zinc-900">Incident Prevention</p>
+                  <p className="text-xs text-zinc-500">{ipComplete}/{ipTotal} steps</p>
+                </div>
+              </div>
+            )}
             <div data-testid="project-summary" className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-zinc-900 truncate">
                 {projectSummary?.customer ?? 'Loading…'}
@@ -1105,8 +1208,12 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
         />
       </div>
 
-      {/* ── Onboarding Phases section (dual-track) ───────────────────────── */}
-      <div data-testid="onboarding-phases" className="px-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* ── Onboarding Phases section (multi-track) ──────────────────────── */}
+      {/* Grid widens to 3 columns when Incident Prevention is active */}
+      <div
+        data-testid="onboarding-phases"
+        className={`px-4 grid grid-cols-1 gap-6 ${ipActive ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}
+      >
         {/* ADR Column — interleaved: phase cards + live cards + go-live */}
         <section data-testid="adr-track" className="space-y-4 border-l-4 border-blue-200 pl-4">
           <h2 className="text-sm font-semibold text-zinc-700 uppercase tracking-wide">
@@ -1152,6 +1259,31 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
             </>
           )}
         </section>
+
+        {/* Incident Prevention Column — conditionally rendered based on active_tracks */}
+        {ipActive && (
+          <section data-testid="incident-prevention-track" className="space-y-4 border-l-4 border-violet-200 pl-4">
+            <h2 className="text-sm font-semibold text-zinc-700 uppercase tracking-wide">
+              Incident Prevention Onboarding
+            </h2>
+            {loading ? (
+              <div className="space-y-2 animate-pulse">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div key={i} className="h-14 bg-zinc-100 rounded-lg" />
+                ))}
+              </div>
+            ) : (
+              <>
+                {renderPhaseCard(ipPhases.find(p => p.name === 'Discovery & Kickoff') ?? { id: -101, name: 'Discovery & Kickoff', display_order: 1, steps: [] })}
+                {renderIntegrationsCard('Incident Prevention')}
+                {renderPhaseCard(ipPhases.find(p => p.name === 'Platform Configuration') ?? { id: -103, name: 'Platform Configuration', display_order: 3, steps: [] })}
+                {renderTeamsCard('Incident Prevention')}
+                {renderPhaseCard(ipPhases.find(p => p.name === 'Validation') ?? { id: -105, name: 'Validation', display_order: 5, steps: [] })}
+                {renderGoLiveCard('Incident Prevention')}
+              </>
+            )}
+          </section>
+        )}
       </div>
 
       <hr className="border-zinc-200 mx-4" />
@@ -1172,7 +1304,7 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
           </p>
         ) : (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className={`grid grid-cols-1 gap-6 ${ipActive ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
               <div className="border-l-4 border-blue-200 pl-4">
                 {adrIntegrations.length === 0 ? (
                   <div className="space-y-2">
@@ -1189,6 +1321,16 @@ export function OnboardingDashboard({ projectId }: OnboardingDashboardProps) {
                   </div>
                 ) : renderTrackSection('Biggy', biggyIntegrations, BIGGY_TYPES)}
               </div>
+              {ipActive && (
+                <div className="border-l-4 border-violet-200 pl-4">
+                  {ipIntegrations.length === 0 ? (
+                    <div className="space-y-2">
+                      <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Incident Prevention</h3>
+                      <p className="text-sm text-zinc-400">No Incident Prevention integrations — assign from Unassigned below.</p>
+                    </div>
+                  ) : renderTrackSection('Incident Prevention', ipIntegrations, IP_TYPES)}
+                </div>
+              )}
             </div>
             {unassignedIntegrations.length > 0 && renderTrackSection('Unassigned', unassignedIntegrations, [])}
           </div>

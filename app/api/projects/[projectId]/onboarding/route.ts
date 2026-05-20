@@ -42,8 +42,9 @@ export async function GET(
       // Group by track
       const adr = phasesWithSteps.filter((p) => p.track === 'ADR')
       const biggy = phasesWithSteps.filter((p) => p.track === 'Biggy')
+      const incident_prevention = phasesWithSteps.filter((p) => p.track === 'Incident Prevention')
 
-      return { adr, biggy }
+      return { adr, biggy, incident_prevention }
     })
 
     return NextResponse.json(grouped)
