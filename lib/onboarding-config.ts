@@ -56,8 +56,32 @@ export const BIGGY_ONBOARDING_CONFIG: PhaseConfig[] = [
   },
 ]
 
-/** All step names across both tracks — used to sharpen extraction prompt matching. */
+export const INCIDENT_PREVENTION_ONBOARDING_CONFIG: PhaseConfig[] = [
+  {
+    name: 'Discovery & Kickoff',
+    display_order: 1,
+    steps: ['Kickoff', 'Change Process Discovery', 'ITSM Audit', 'Single Sign-On'],
+  },
+  {
+    name: 'Platform Configuration',
+    display_order: 3,
+    steps: ['ITSM Integration', 'Data Source Connectors', 'Risk Categories & Weights', 'Write-Back Setup'],
+  },
+  {
+    name: 'Validation',
+    display_order: 5,
+    steps: ['Historical Backtest', 'Live Scoring UAT', 'Threshold Tuning'],
+  },
+  {
+    name: 'Go-Live',
+    display_order: 6,
+    steps: ['Go Live', 'CAB Enablement'],
+  },
+]
+
+/** All step names across all tracks — used to sharpen extraction prompt matching. */
 export const ALL_STANDARD_STEP_NAMES = [
   ...ADR_ONBOARDING_CONFIG.flatMap(p => p.steps),
   ...BIGGY_ONBOARDING_CONFIG.flatMap(p => p.steps),
+  ...INCIDENT_PREVENTION_ONBOARDING_CONFIG.flatMap(p => p.steps),
 ].filter((v, i, a) => a.indexOf(v) === i)
