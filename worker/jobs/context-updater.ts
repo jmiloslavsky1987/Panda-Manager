@@ -11,6 +11,7 @@ import { MCPClientPool } from '../../lib/mcp-config';
 import { getActiveProjects } from '../../lib/queries';
 import { readSettings } from '../../lib/settings-core';
 import { resolveSkillsDir } from './skill-run';
+import { applyContextUpdaterResult } from '../../lib/context-updater-applier';
 
 const orchestrator = new SkillOrchestrator();
 
@@ -70,6 +71,18 @@ export default async function contextUpdaterJob(job: Job): Promise<{ status: str
         content: outputText,
         completed_at: new Date(),
       }).onConflictDoNothing();
+
+      // Phase 88.1: apply the 4 new write paths (Evidence Log, Team Card Latest Activity,
+      // Team Card Key Metrics, Milestone target dates). Runs AFTER the outputs insert so the
+      // raw output is preserved for human review even if the applier crashes.
+      // Errors are caught and logged — applier failure does NOT break the BullMQ worker job.
+      try {
+        const counts = await applyContextUpdaterResult(project.id, outputText);
+        console.log(`[context-updater] project=${project.id} applier applied:`, counts);
+      } catch (err) {
+        console.error(`[context-updater] applier failed for project=${project.id} (non-fatal):`, err);
+        // Do NOT rethrow — output is preserved in outputs table for fallback human review.
+      }
 
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
