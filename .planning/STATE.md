@@ -5,13 +5,13 @@ milestone_name: — Calendar Integration & Daily Prep
 status: verifying
 stopped_at: Completed 87-02-PLAN.md (config + extraction + discovery layer)
 last_updated: "2026-05-20T02:21:59.341Z"
-last_activity: "2026-05-19 — Phase 87 Plan 01 COMPLETE. Migration 0052_incident_prevention_track.sql written (idempotent: additive JSONB || backfill + per-project IF EXISTS guard on arch_tracks seed); db/schema.ts:114 widened (active_tracks type now includes incident_prevention:boolean, default flipped to all-false triple). IP-03 + IP-13 source-scan tests GREEN; all 24 tests in tests/schema/ pass. Panda-Manager commits bf411050 (migration), 8f1ad518 (schema widening) — pushed to origin/main."
+last_activity: "2026-05-20 — Phase 87 Plan 02 COMPLETE. INCIDENT_PREVENTION_ONBOARDING_CONFIG (4 phases / 13 steps) added to lib/onboarding-config.ts; ALL_STANDARD_STEP_NAMES extended with dedup. document-extraction.ts gains Pass 0 IP cue block + arch_node allowlist widened to 3 tracks + wbs_task INFER rule extended for change-management cues. discovery-scanner.ts DISCOVERY_SYSTEM_TEMPLATE now names all 3 tracks explicitly (Case A — builder was already generic). IP-04, IP-05, IP-14 all GREEN (23/23 tests). Panda-Manager commits ab0180eb (onboarding-config), c65b2797 (document-extraction prompts), 51a73da3 (discovery-scanner)."
 progress:
   total_phases: 16
   completed_phases: 15
   total_plans: 88
-  completed_plans: 82
-  percent: 91
+  completed_plans: 83
+  percent: 94
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 ## Current Position
 
 Phase: 87-incident-prevention-track-support (Incident Prevention Track Support — IN PROGRESS)
-Plan: 1 of 8 complete (Plan 00 Wave 0 scaffolding done previously; Plan 01 schema/migration foundation complete)
-Status: Phase 87 active. Plan 01 closed 2026-05-19 — Migration 0052 written (idempotent: additive `||` JSONB backfill preserves adr/biggy; per-project IF EXISTS guard on arch_tracks seed); db/schema.ts:114 widened (active_tracks type + default now include incident_prevention). IP-03 + IP-13 GREEN. Next: Plan 02 (lib/onboarding-config.ts + lib/seed-project.ts extensions). Live Docker apply (IP-01, IP-02) deferred to Plan 87-08 human verification.
-Last activity: 2026-05-19 — Phase 87 Plan 01 COMPLETE. Migration 0052_incident_prevention_track.sql written (idempotent: additive JSONB || backfill + per-project IF EXISTS guard on arch_tracks seed); db/schema.ts:114 widened (active_tracks type now includes incident_prevention:boolean, default flipped to all-false triple). IP-03 + IP-13 source-scan tests GREEN; all 24 tests in tests/schema/ pass. Panda-Manager commits bf411050 (migration), 8f1ad518 (schema widening) — pushed to origin/main.
+Plan: 2 of 8 complete (Plan 00 Wave 0 scaffolding done previously; Plan 01 schema/migration foundation; Plan 02 config + extraction + discovery layer)
+Status: Phase 87 active. Plan 02 closed 2026-05-20 — IP onboarding config registry, document-extraction prompt cues (Pass 0/2/3), and discovery-scanner template all IP-aware. IP-04 + IP-05 + IP-14 GREEN (23/23). Next: Plan 03 (project-create WBS seeding for IP track). Live Docker apply (IP-01, IP-02) still deferred to Plan 87-08 human verification.
+Last activity: 2026-05-20 — Phase 87 Plan 02 COMPLETE. INCIDENT_PREVENTION_ONBOARDING_CONFIG (4 phases / 13 steps) added to lib/onboarding-config.ts; ALL_STANDARD_STEP_NAMES extended with dedup. document-extraction.ts gains Pass 0 IP cue block + arch_node allowlist widened to 3 tracks + wbs_task INFER rule extended for change-management cues. discovery-scanner.ts DISCOVERY_SYSTEM_TEMPLATE now names all 3 tracks explicitly (Case A — builder was already generic). IP-04, IP-05, IP-14 all GREEN (23/23 tests). Panda-Manager commits ab0180eb (onboarding-config), c65b2797 (document-extraction prompts), 51a73da3 (discovery-scanner).
 
-Progress: [█████████░] 91%
+Progress: [█████████░] 94%
 
 ## v10.0 Roadmap Summary
 
@@ -323,6 +323,13 @@ Progress: [█████████░] 91%
 - [87-00] IP-03/04/05/13/14 pre-pass on parallel-agent prep (Plans 87-01 and 87-02 shipped before 87-00 ran) — acceptable per [80-00] precedent because key gating tests (IP-06/07/08/09/10/12) remain RED. Combined Wave 0 run: 7 files, 44 tests, 32 passed, 12 failed with named IP-XX assertions, 253ms.
 - [87-00] Mock-introspection pattern inline in seed-project.test.ts: flatten mockInsert.mock.results[*].value.values.mock.calls to find Team Gamma by {team_name, track} — no extra harness needed for IP-10/IP-11. Pattern reusable for any future seeder gating tests.
 - [87-00] Direct-import (synchronous require + try/catch fallback to empty constants) reserved for pure config modules (lib/onboarding-config.ts) where assertion messages are clearer; source-scan reserved for any test against Next routes or BullMQ workers where module resolution pulls full DB/middleware stack.
+- [87-02] `ALL_STANDARD_STEP_NAMES` `.filter` dedup is intentional — IP-05 contract is "all 13 IP step names ARE PRESENT in array" (not "all 13 produce unique entries"). `Kickoff`, `Single Sign-On`, `Go Live` overlap with ADR/Biggy and dedup correctly; net unique IP additions = 10.
+- [87-02] IP phase `display_orders` `[1, 3, 5, 6]` mirror ADR/Biggy cadence (verified by reading existing ADR_ONBOARDING_CONFIG before writing) — gaps allow inserted phases in the future without renumbering downstream consumers.
+- [87-02] discovery-scanner.ts Case A applied — the existing-structure builder in `runDiscoveryScan()` is fully generic (iterates `existingStructure.tracks/.workflows/.sections` with no hardcoded `'ADR'`/`'Biggy'` literals). Only the `DISCOVERY_SYSTEM_TEMPLATE` preamble needed an IP-aware comment; no builder code change.
+- [87-02] Pass 0 IP cue block placed between STEP 2 (entity prediction) and STEP 3 (relevant section quoting), NOT appended after STEP 3 — track classification guidance reads naturally adjacent to entity-type prediction in prompt flow.
+- [87-02] `wbs_task` INFER rule "Default to ADR if unclear" fallback preserved — IP track requires affirmative cue evidence (change-ticket / CAB / risk-score etc); silent IP routing without cues would over-fire on enterprise/ADR documents that happen to mention ServiceNow.
+- [87-02] arch_node entity-type schema changed from union `("ADR Track" | "AI Assistant Track")` to three-value union `("ADR Track" | "AI Assistant Track" | "Incident Prevention Track")` in both EXTRACTION_BASE and Pass 2 prompts. Replaced with `replace_all=true` after auditing every occurrence; backtick parity preserved (122 → 122).
+- [87-02] Pre-existing discovery test failures (dismiss.test.ts 3, queue.test.ts 5 — `lib/auth-server.ts:39` `h.forEach` on undefined Headers because `next/headers` mock not seeded) confirmed unrelated to Plan 87-02 via git-stash repro; logged in `.planning/phases/87-incident-prevention-track-support/deferred-items.md` for future test-mock-fix plan; not in scope for Plan 87-02.
 
 ### Blockers/Concerns
 

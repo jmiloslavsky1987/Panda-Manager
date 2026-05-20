@@ -377,9 +377,9 @@ Plans:
 **Plans:** 3/9 plans executed
 
 Plans:
-- [ ] 87-00-PLAN.md — Wave 0: RED test scaffolds for IP-03..IP-14 (Wave 1)
+- [x] 87-00-PLAN.md — Wave 0: RED test scaffolds for IP-03..IP-14 (Wave 1) — COMPLETE
 - [x] 87-01-PLAN.md — Migration 0052 (JSONB default + backfill + arch seed) + db/schema.ts type widening (IP-01, IP-02, IP-03, IP-13) (Wave 1) — COMPLETE 2026-05-19 (commits bf411050, 8f1ad518)
-- [ ] 87-02-PLAN.md — lib/onboarding-config.ts INCIDENT_PREVENTION_ONBOARDING_CONFIG + extraction prompts + discovery scanner (IP-04, IP-05, IP-14) (Wave 1)
+- [x] 87-02-PLAN.md — lib/onboarding-config.ts INCIDENT_PREVENTION_ONBOARDING_CONFIG + extraction prompts + discovery scanner (IP-04, IP-05, IP-14) (Wave 1) — COMPLETE 2026-05-20 (commits ab0180eb, c65b2797, 51a73da3)
 - [ ] 87-03-PLAN.md — lib/seed-project.ts track-conditional team placeholder inserts (IP-10, IP-11) (Wave 2)
 - [ ] 87-04-PLAN.md — lib/seed-incident-prevention.ts helper + POST /api/projects refactor + NewProjectModal track-selection UI (IP-06, IP-07) (Wave 2)
 - [ ] 87-05-PLAN.md — Settings PATCH retroactive seeding + ProjectSettingsForm third checkbox (IP-08, IP-09) (Wave 2)
@@ -388,7 +388,7 @@ Plans:
 - [ ] 87-08-PLAN.md — Human verification checkpoint (IP-01, IP-02, IP-15, IP-16) (Wave 3)
 
 ---
-*Last updated: 2026-05-19 — Phase 87 planned: 9 plans across 3 waves cover all 16 phase-local IP-XX requirements. Wave 1 (3 parallel plans): test scaffolds + migration 0052 + onboarding-config/extraction. Wave 2 (5 parallel plans, joined by Plan 03 on seed-project): seed-project conditional, project-create refactor + helper, settings PATCH retroactive, arch graph extension, OnboardingDashboard 3-column. Wave 3 (1 plan): human verification checkpoint.*
+*Last updated: 2026-05-20 — Phase 87 Wave 1 complete (3/9 plans). Plan 02 added INCIDENT_PREVENTION_ONBOARDING_CONFIG (4 phases / 13 steps) + Pass 0/2/3 extraction prompt IP cues + discovery-scanner template three-track preamble; IP-04, IP-05, IP-14 GREEN. Wave 2 next: Plans 03–07 (seed-project, project-create wizard, settings retroactive, arch graph extension, onboarding dashboard 3-column).*
 
 ### Phase 85: wbs-ms-project-style-overhaul
 
