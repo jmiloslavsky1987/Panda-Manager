@@ -30,6 +30,14 @@ export function BasicInfoStep({ onComplete }: BasicInfoStepProps) {
     endDate: '',
     description: '',
   })
+  // Phase 87, Plan 04 — track selection at project create.
+  // All three checkboxes default OFF. Submit is disabled until ≥1 is checked.
+  // Order: ADR → Biggy → Incident Prevention (per CONTEXT.md "Labels, ordering").
+  const [adrChecked, setAdrChecked] = useState(false)
+  const [biggyChecked, setBiggyChecked] = useState(false)
+  const [ipChecked, setIpChecked] = useState(false)
+  const atLeastOneTrack = adrChecked || biggyChecked || ipChecked
+
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof FormFields, string>>>({})
@@ -55,6 +63,12 @@ export function BasicInfoStep({ onComplete }: BasicInfoStepProps) {
       return
     }
 
+    // Defense in depth — Submit button is also disabled when atLeastOneTrack=false
+    if (!atLeastOneTrack) {
+      setError('Select at least one track before continuing.')
+      return
+    }
+
     setLoading(true)
     setError(null)
 
@@ -69,6 +83,12 @@ export function BasicInfoStep({ onComplete }: BasicInfoStepProps) {
           start_date: fields.startDate || undefined,
           end_date: fields.endDate || undefined,
           description: fields.description.trim() || undefined,
+          // Phase 87, Plan 04 — order preserved: adr → biggy → incident_prevention
+          active_tracks: {
+            adr: adrChecked,
+            biggy: biggyChecked,
+            incident_prevention: ipChecked,
+          },
         }),
       })
 
@@ -204,6 +224,53 @@ export function BasicInfoStep({ onComplete }: BasicInfoStepProps) {
         />
       </div>
 
+      {/* Track Selection (Phase 87, Plan 04) ─────────────────────────────── */}
+      <fieldset className="space-y-2 rounded-md border border-gray-200 p-3" data-testid="track-selection">
+        <legend className="px-1 text-sm font-medium text-gray-700">
+          Select active tracks <span className="text-red-500">*</span>
+        </legend>
+        <p className="text-xs text-gray-500">Choose at least one product track for this engagement.</p>
+
+        <label className="flex items-center gap-2 text-sm text-gray-700">
+          <input
+            type="checkbox"
+            checked={adrChecked}
+            onChange={e => setAdrChecked(e.target.checked)}
+            disabled={loading}
+            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+          ADR
+        </label>
+
+        <label className="flex items-center gap-2 text-sm text-gray-700">
+          <input
+            type="checkbox"
+            checked={biggyChecked}
+            onChange={e => setBiggyChecked(e.target.checked)}
+            disabled={loading}
+            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+          Biggy
+        </label>
+
+        <label className="flex items-center gap-2 text-sm text-gray-700">
+          <input
+            type="checkbox"
+            checked={ipChecked}
+            onChange={e => setIpChecked(e.target.checked)}
+            disabled={loading}
+            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+          Incident Prevention
+        </label>
+
+        {!atLeastOneTrack && (
+          <p className="text-xs text-red-600" role="alert">
+            Select at least one track to continue.
+          </p>
+        )}
+      </fieldset>
+
       {/* Submission error */}
       {error && (
         <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-700" role="alert">
@@ -215,7 +282,7 @@ export function BasicInfoStep({ onComplete }: BasicInfoStepProps) {
       <div className="flex justify-end">
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !atLeastOneTrack}
           className="px-6 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? 'Creating…' : 'Next'}

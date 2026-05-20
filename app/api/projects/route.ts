@@ -6,6 +6,19 @@ import { requireSession } from "@/lib/auth-server";
 import { getActiveProjects } from '@/lib/queries'
 import { resolveRole } from '@/lib/auth-utils'
 import { ADR_ONBOARDING_CONFIG, BIGGY_ONBOARDING_CONFIG } from '@/lib/onboarding-config'
+import { seedIncidentPreventionForProject } from '@/lib/seed-incident-prevention'
+
+// Phase 87, Plan 04 — track selection at project create.
+// Body now accepts { active_tracks: { adr, biggy, incident_prevention } }.
+// At least one track must be true; every seeding block (onboarding phases,
+// onboarding steps, WBS L1+L2, arch track + nodes) is gated on the matching
+// active_tracks key. teamEngagementSections + project_members + scheduled
+// weekly-focus job remain project-wide and unconditional.
+type ActiveTracks = {
+  adr: boolean
+  biggy: boolean
+  incident_prevention: boolean
+}
 
 export async function GET(req: NextRequest) {
   const { session, redirectResponse } = await requireSession();
@@ -41,6 +54,28 @@ export async function POST(req: NextRequest) {
     )
   }
 
+  // ─── active_tracks validation (Phase 87, Plan 04) ──────────────────────────
+  // Default-deny: if a caller does NOT pass active_tracks (legacy callers / tests),
+  // fall back to {adr:true, biggy:true, incident_prevention:false} to preserve
+  // the pre-Phase-87 behavior. The new wizard always passes active_tracks
+  // explicitly with at least one true.
+  let tracks: ActiveTracks
+  if (body.active_tracks && typeof body.active_tracks === 'object') {
+    tracks = {
+      adr: body.active_tracks.adr === true,
+      biggy: body.active_tracks.biggy === true,
+      incident_prevention: body.active_tracks.incident_prevention === true,
+    }
+    if (!tracks.adr && !tracks.biggy && !tracks.incident_prevention) {
+      return NextResponse.json(
+        { error: 'At least one track (adr, biggy, or incident_prevention) must be selected' },
+        { status: 400 }
+      )
+    }
+  } else {
+    tracks = { adr: true, biggy: true, incident_prevention: false }
+  }
+
   // Full phase list — standard phases + live-track phases (Integrations, Teams, IT Knowledge Graph)
   const adrPhases = [
     { name: 'Discovery & Kickoff', display_order: 1 },
@@ -60,9 +95,9 @@ export async function POST(req: NextRequest) {
     { name: 'Go-Live', display_order: 6 },
   ]
 
-  // Atomic transaction: project creation + phase seeding
+  // Atomic transaction: project creation + per-track seeding gated on active_tracks
   const result = await db.transaction(async (tx) => {
-    // Insert project
+    // Insert project — persist the selected active_tracks alongside the row
     const [inserted] = await tx
       .insert(projects)
       .values({
@@ -72,31 +107,34 @@ export async function POST(req: NextRequest) {
         description: description ? String(description) : null,
         start_date: start_date ? String(start_date) : null,
         end_date: end_date ? String(end_date) : null,
+        active_tracks: tracks,
       })
       .returning({ id: projects.id })
 
-    // Seed ADR phases
-    await tx.insert(onboardingPhases).values(
-      adrPhases.map((p) => ({
-        project_id: inserted.id,
-        track: 'ADR',
-        name: p.name,
-        display_order: p.display_order,
-      }))
-    )
+    // ─── Onboarding Phase Seeding (gated per track) ───────────────────────
+    if (tracks.adr) {
+      await tx.insert(onboardingPhases).values(
+        adrPhases.map((p) => ({
+          project_id: inserted.id,
+          track: 'ADR',
+          name: p.name,
+          display_order: p.display_order,
+        }))
+      )
+    }
 
-    // Seed Biggy phases
-    await tx.insert(onboardingPhases).values(
-      biggyPhases.map((p) => ({
-        project_id: inserted.id,
-        track: 'Biggy',
-        name: p.name,
-        display_order: p.display_order,
-      }))
-    )
+    if (tracks.biggy) {
+      await tx.insert(onboardingPhases).values(
+        biggyPhases.map((p) => ({
+          project_id: inserted.id,
+          track: 'Biggy',
+          name: p.name,
+          display_order: p.display_order,
+        }))
+      )
+    }
 
-    // ─── Onboarding Step Seeding ──────────────────────────────────────────
-
+    // ─── Onboarding Step Seeding (gated per track) ────────────────────────
     // Fetch all just-inserted phases with track so we can match by name+track
     const insertedPhases = await tx
       .select({ id: onboardingPhases.id, name: onboardingPhases.name, track: onboardingPhases.track })
@@ -122,85 +160,93 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    await seedSteps(ADR_ONBOARDING_CONFIG, 'ADR')
-    await seedSteps(BIGGY_ONBOARDING_CONFIG, 'Biggy')
-
-    // ─── WBS Template Seeding ─────────────────────────────────────────────
-
-    // ADR WBS Level 1 seeding (10 parent items)
-    const adrWbsL1 = await tx.insert(wbsItems).values([
-      { project_id: inserted.id, level: 1, track: 'ADR', name: 'Discovery & Kickoff', display_order: 1, status: 'not_started' as const, source_trace: 'template' },
-      { project_id: inserted.id, level: 1, track: 'ADR', name: 'Solution Design', display_order: 2, status: 'not_started' as const, source_trace: 'template' },
-      { project_id: inserted.id, level: 1, track: 'ADR', name: 'Alert Source Integration', display_order: 3, status: 'not_started' as const, source_trace: 'template' },
-      { project_id: inserted.id, level: 1, track: 'ADR', name: 'Alert Enrichment & Normalization', display_order: 4, status: 'not_started' as const, source_trace: 'template' },
-      { project_id: inserted.id, level: 1, track: 'ADR', name: 'Platform Configuration', display_order: 5, status: 'not_started' as const, source_trace: 'template' },
-      { project_id: inserted.id, level: 1, track: 'ADR', name: 'Correlation', display_order: 6, status: 'not_started' as const, source_trace: 'template' },
-      { project_id: inserted.id, level: 1, track: 'ADR', name: 'Routing & Escalation', display_order: 7, status: 'not_started' as const, source_trace: 'template' },
-      { project_id: inserted.id, level: 1, track: 'ADR', name: 'Teams & Training', display_order: 8, status: 'not_started' as const, source_trace: 'template' },
-      { project_id: inserted.id, level: 1, track: 'ADR', name: 'UAT & Go-Live Preparation', display_order: 9, status: 'not_started' as const, source_trace: 'template' },
-      { project_id: inserted.id, level: 1, track: 'ADR', name: 'Go-Live', display_order: 10, status: 'not_started' as const, source_trace: 'template' },
-    ]).returning({ id: wbsItems.id, name: wbsItems.name });
-
-    // ADR WBS Level 2 seeding (25 child items)
-    const adrChildRows = [
-      { parentName: 'Solution Design', children: ['Ops Shadowing / Current State', 'Future State Workflow', 'ADR Process Consulting'] },
-      { parentName: 'Alert Source Integration', children: ['Outbound Integrations', 'Inbound Integrations'] },
-      { parentName: 'Alert Enrichment & Normalization', children: ['Tag Documentation', 'Normalization Configuration', 'CMDB'] },
-      { parentName: 'Platform Configuration', children: ['Environments', 'Incident Tags', 'Role Based Access Control', 'Incident Routing', 'Maintenance Plans', 'Single Sign-On', 'Admin / Reporting'] },
-      { parentName: 'Correlation', children: ['Use Case Discovery', 'Correlation Configuration'] },
-      { parentName: 'Teams & Training', children: ['User Training'] },
-      { parentName: 'UAT & Go-Live Preparation', children: ['UAT', 'Documentation', 'Go-Live Prep'] },
-      { parentName: 'Go-Live', children: ['Go Live', 'Post Go-Live Survey', 'Unified Analytics', 'Project Closure'] },
-    ].flatMap(({ parentName, children }) => {
-      const parent = adrWbsL1.find(p => p.name === parentName);
-      if (!parent) return [];
-      return children.map((name, i) => ({
-        project_id: inserted.id,
-        parent_id: parent.id,
-        level: 2,
-        track: 'ADR',
-        name,
-        display_order: i + 1,
-        status: 'not_started' as const,
-        source_trace: 'template',
-      }));
-    });
-
-    if (adrChildRows.length > 0) {
-      await tx.insert(wbsItems).values(adrChildRows);
+    if (tracks.adr) {
+      await seedSteps(ADR_ONBOARDING_CONFIG, 'ADR')
+    }
+    if (tracks.biggy) {
+      await seedSteps(BIGGY_ONBOARDING_CONFIG, 'Biggy')
     }
 
-    // Biggy WBS Level 1 seeding (5 parent items)
-    const biggyWbsL1 = await tx.insert(wbsItems).values([
-      { project_id: inserted.id, level: 1, track: 'Biggy', name: 'Discovery & Kickoff', display_order: 1, status: 'not_started' as const, source_trace: 'template' },
-      { project_id: inserted.id, level: 1, track: 'Biggy', name: 'Integrations', display_order: 2, status: 'not_started' as const, source_trace: 'template' },
-      { project_id: inserted.id, level: 1, track: 'Biggy', name: 'Workflow', display_order: 3, status: 'not_started' as const, source_trace: 'template' },
-      { project_id: inserted.id, level: 1, track: 'Biggy', name: 'Teams & Training', display_order: 4, status: 'not_started' as const, source_trace: 'template' },
-      { project_id: inserted.id, level: 1, track: 'Biggy', name: 'Deploy', display_order: 5, status: 'not_started' as const, source_trace: 'template' },
-    ]).returning({ id: wbsItems.id, name: wbsItems.name });
+    // ─── WBS Template Seeding (gated per track) ───────────────────────────
 
-    // Biggy WBS Level 2 seeding (9 child items)
-    const biggyChildRows = [
-      { parentName: 'Integrations', children: ['Real-Time Integrations', 'Context Integrations', 'UDC'] },
-      { parentName: 'Workflow', children: ['Action Plans', 'Workflows', 'Managed Incident Channels'] },
-      { parentName: 'Teams & Training', children: ['Team-Specific Workflow Enablement', 'Workflow Automations', 'Training'] },
-    ].flatMap(({ parentName, children }) => {
-      const parent = biggyWbsL1.find(p => p.name === parentName);
-      if (!parent) return [];
-      return children.map((name, i) => ({
-        project_id: inserted.id,
-        parent_id: parent.id,
-        level: 2,
-        track: 'Biggy',
-        name,
-        display_order: i + 1,
-        status: 'not_started' as const,
-        source_trace: 'template',
-      }));
-    });
+    if (tracks.adr) {
+      // ADR WBS Level 1 seeding (10 parent items)
+      const adrWbsL1 = await tx.insert(wbsItems).values([
+        { project_id: inserted.id, level: 1, track: 'ADR', name: 'Discovery & Kickoff', display_order: 1, status: 'not_started' as const, source_trace: 'template' },
+        { project_id: inserted.id, level: 1, track: 'ADR', name: 'Solution Design', display_order: 2, status: 'not_started' as const, source_trace: 'template' },
+        { project_id: inserted.id, level: 1, track: 'ADR', name: 'Alert Source Integration', display_order: 3, status: 'not_started' as const, source_trace: 'template' },
+        { project_id: inserted.id, level: 1, track: 'ADR', name: 'Alert Enrichment & Normalization', display_order: 4, status: 'not_started' as const, source_trace: 'template' },
+        { project_id: inserted.id, level: 1, track: 'ADR', name: 'Platform Configuration', display_order: 5, status: 'not_started' as const, source_trace: 'template' },
+        { project_id: inserted.id, level: 1, track: 'ADR', name: 'Correlation', display_order: 6, status: 'not_started' as const, source_trace: 'template' },
+        { project_id: inserted.id, level: 1, track: 'ADR', name: 'Routing & Escalation', display_order: 7, status: 'not_started' as const, source_trace: 'template' },
+        { project_id: inserted.id, level: 1, track: 'ADR', name: 'Teams & Training', display_order: 8, status: 'not_started' as const, source_trace: 'template' },
+        { project_id: inserted.id, level: 1, track: 'ADR', name: 'UAT & Go-Live Preparation', display_order: 9, status: 'not_started' as const, source_trace: 'template' },
+        { project_id: inserted.id, level: 1, track: 'ADR', name: 'Go-Live', display_order: 10, status: 'not_started' as const, source_trace: 'template' },
+      ]).returning({ id: wbsItems.id, name: wbsItems.name });
 
-    if (biggyChildRows.length > 0) {
-      await tx.insert(wbsItems).values(biggyChildRows);
+      // ADR WBS Level 2 seeding (25 child items)
+      const adrChildRows = [
+        { parentName: 'Solution Design', children: ['Ops Shadowing / Current State', 'Future State Workflow', 'ADR Process Consulting'] },
+        { parentName: 'Alert Source Integration', children: ['Outbound Integrations', 'Inbound Integrations'] },
+        { parentName: 'Alert Enrichment & Normalization', children: ['Tag Documentation', 'Normalization Configuration', 'CMDB'] },
+        { parentName: 'Platform Configuration', children: ['Environments', 'Incident Tags', 'Role Based Access Control', 'Incident Routing', 'Maintenance Plans', 'Single Sign-On', 'Admin / Reporting'] },
+        { parentName: 'Correlation', children: ['Use Case Discovery', 'Correlation Configuration'] },
+        { parentName: 'Teams & Training', children: ['User Training'] },
+        { parentName: 'UAT & Go-Live Preparation', children: ['UAT', 'Documentation', 'Go-Live Prep'] },
+        { parentName: 'Go-Live', children: ['Go Live', 'Post Go-Live Survey', 'Unified Analytics', 'Project Closure'] },
+      ].flatMap(({ parentName, children }) => {
+        const parent = adrWbsL1.find(p => p.name === parentName);
+        if (!parent) return [];
+        return children.map((name, i) => ({
+          project_id: inserted.id,
+          parent_id: parent.id,
+          level: 2,
+          track: 'ADR',
+          name,
+          display_order: i + 1,
+          status: 'not_started' as const,
+          source_trace: 'template',
+        }));
+      });
+
+      if (adrChildRows.length > 0) {
+        await tx.insert(wbsItems).values(adrChildRows);
+      }
+    }
+
+    if (tracks.biggy) {
+      // Biggy WBS Level 1 seeding (5 parent items)
+      const biggyWbsL1 = await tx.insert(wbsItems).values([
+        { project_id: inserted.id, level: 1, track: 'Biggy', name: 'Discovery & Kickoff', display_order: 1, status: 'not_started' as const, source_trace: 'template' },
+        { project_id: inserted.id, level: 1, track: 'Biggy', name: 'Integrations', display_order: 2, status: 'not_started' as const, source_trace: 'template' },
+        { project_id: inserted.id, level: 1, track: 'Biggy', name: 'Workflow', display_order: 3, status: 'not_started' as const, source_trace: 'template' },
+        { project_id: inserted.id, level: 1, track: 'Biggy', name: 'Teams & Training', display_order: 4, status: 'not_started' as const, source_trace: 'template' },
+        { project_id: inserted.id, level: 1, track: 'Biggy', name: 'Deploy', display_order: 5, status: 'not_started' as const, source_trace: 'template' },
+      ]).returning({ id: wbsItems.id, name: wbsItems.name });
+
+      // Biggy WBS Level 2 seeding (9 child items)
+      const biggyChildRows = [
+        { parentName: 'Integrations', children: ['Real-Time Integrations', 'Context Integrations', 'UDC'] },
+        { parentName: 'Workflow', children: ['Action Plans', 'Workflows', 'Managed Incident Channels'] },
+        { parentName: 'Teams & Training', children: ['Team-Specific Workflow Enablement', 'Workflow Automations', 'Training'] },
+      ].flatMap(({ parentName, children }) => {
+        const parent = biggyWbsL1.find(p => p.name === parentName);
+        if (!parent) return [];
+        return children.map((name, i) => ({
+          project_id: inserted.id,
+          parent_id: parent.id,
+          level: 2,
+          track: 'Biggy',
+          name,
+          display_order: i + 1,
+          status: 'not_started' as const,
+          source_trace: 'template',
+        }));
+      });
+
+      if (biggyChildRows.length > 0) {
+        await tx.insert(wbsItems).values(biggyChildRows);
+      }
     }
 
     // ─── Team Engagement Sections Seeding ─────────────────────────────────
@@ -213,66 +259,77 @@ export async function POST(req: NextRequest) {
       { project_id: inserted.id, name: 'Top Focus Areas', content: '', display_order: 5, source_trace: 'template' },
     ]);
 
-    // ─── Architecture Tracks & Nodes Seeding ──────────────────────────────
+    // ─── Architecture Tracks & Nodes Seeding (gated per track) ────────────
 
-    // ADR Track
-    const [adrTrack] = await tx.insert(archTracks).values({
-      project_id: inserted.id,
-      name: 'ADR Track',
-      display_order: 1,
-    }).returning({ id: archTracks.id });
+    if (tracks.adr) {
+      // ADR Track
+      const [adrTrack] = await tx.insert(archTracks).values({
+        project_id: inserted.id,
+        name: 'ADR Track',
+        display_order: 1,
+      }).returning({ id: archTracks.id });
 
-    // Insert ADR section nodes first (capturing IDs for parent_id references)
-    const [sectionAI] = await tx.insert(archNodes).values({
-      track_id: adrTrack.id, project_id: inserted.id, name: 'Alert Intelligence',
-      display_order: 10, status: 'planned' as const, node_type: 'section', source_trace: 'template',
-    }).returning({ id: archNodes.id });
+      // Insert ADR section nodes first (capturing IDs for parent_id references)
+      const [sectionAI] = await tx.insert(archNodes).values({
+        track_id: adrTrack.id, project_id: inserted.id, name: 'Alert Intelligence',
+        display_order: 10, status: 'planned' as const, node_type: 'section', source_trace: 'template',
+      }).returning({ id: archNodes.id });
 
-    const [sectionII] = await tx.insert(archNodes).values({
-      track_id: adrTrack.id, project_id: inserted.id, name: 'Incident Intelligence',
-      display_order: 20, status: 'planned' as const, node_type: 'section', source_trace: 'template',
-    }).returning({ id: archNodes.id });
+      const [sectionII] = await tx.insert(archNodes).values({
+        track_id: adrTrack.id, project_id: inserted.id, name: 'Incident Intelligence',
+        display_order: 20, status: 'planned' as const, node_type: 'section', source_trace: 'template',
+      }).returning({ id: archNodes.id });
 
-    const [sectionWA] = await tx.insert(archNodes).values({
-      track_id: adrTrack.id, project_id: inserted.id, name: 'Workflow Automation',
-      display_order: 30, status: 'planned' as const, node_type: 'section', source_trace: 'template',
-    }).returning({ id: archNodes.id });
+      const [sectionWA] = await tx.insert(archNodes).values({
+        track_id: adrTrack.id, project_id: inserted.id, name: 'Workflow Automation',
+        display_order: 30, status: 'planned' as const, node_type: 'section', source_trace: 'template',
+      }).returning({ id: archNodes.id });
 
-    // Insert Console node (between II and WA by display_order)
-    await tx.insert(archNodes).values({
-      track_id: adrTrack.id, project_id: inserted.id, name: 'Console',
-      display_order: 25, status: 'planned' as const, node_type: 'console', source_trace: 'template',
-    });
+      // Insert Console node (between II and WA by display_order)
+      await tx.insert(archNodes).values({
+        track_id: adrTrack.id, project_id: inserted.id, name: 'Console',
+        display_order: 25, status: 'planned' as const, node_type: 'console', source_trace: 'template',
+      });
 
-    // Insert all 11 sub-capability nodes with parent_id references
-    await tx.insert(archNodes).values([
-      { track_id: adrTrack.id, project_id: inserted.id, parent_id: sectionAI.id, name: 'Monitoring Integrations', display_order: 1, status: 'planned' as const, node_type: 'sub-capability', source_trace: 'template' },
-      { track_id: adrTrack.id, project_id: inserted.id, parent_id: sectionAI.id, name: 'Alert Normalization', display_order: 2, status: 'planned' as const, node_type: 'sub-capability', source_trace: 'template' },
-      { track_id: adrTrack.id, project_id: inserted.id, parent_id: sectionAI.id, name: 'Alert Enrichment', display_order: 3, status: 'planned' as const, node_type: 'sub-capability', source_trace: 'template' },
-      { track_id: adrTrack.id, project_id: inserted.id, parent_id: sectionII.id, name: 'Alert Correlation', display_order: 1, status: 'planned' as const, node_type: 'sub-capability', source_trace: 'template' },
-      { track_id: adrTrack.id, project_id: inserted.id, parent_id: sectionII.id, name: 'Incident Enrichment', display_order: 2, status: 'planned' as const, node_type: 'sub-capability', source_trace: 'template' },
-      { track_id: adrTrack.id, project_id: inserted.id, parent_id: sectionII.id, name: 'Incident Classification', display_order: 3, status: 'planned' as const, node_type: 'sub-capability', source_trace: 'template' },
-      { track_id: adrTrack.id, project_id: inserted.id, parent_id: sectionII.id, name: 'Suggested Root Cause', display_order: 4, status: 'planned' as const, node_type: 'sub-capability', source_trace: 'template' },
-      { track_id: adrTrack.id, project_id: inserted.id, parent_id: sectionWA.id, name: 'Environments', display_order: 1, status: 'planned' as const, node_type: 'sub-capability', source_trace: 'template' },
-      { track_id: adrTrack.id, project_id: inserted.id, parent_id: sectionWA.id, name: 'Automated Incident Creation', display_order: 2, status: 'planned' as const, node_type: 'sub-capability', source_trace: 'template' },
-      { track_id: adrTrack.id, project_id: inserted.id, parent_id: sectionWA.id, name: 'Automated Incident Notification', display_order: 3, status: 'planned' as const, node_type: 'sub-capability', source_trace: 'template' },
-      { track_id: adrTrack.id, project_id: inserted.id, parent_id: sectionWA.id, name: 'Automated Incident Remediation', display_order: 4, status: 'planned' as const, node_type: 'sub-capability', source_trace: 'template' },
-    ]);
+      // Insert all 11 sub-capability nodes with parent_id references
+      await tx.insert(archNodes).values([
+        { track_id: adrTrack.id, project_id: inserted.id, parent_id: sectionAI.id, name: 'Monitoring Integrations', display_order: 1, status: 'planned' as const, node_type: 'sub-capability', source_trace: 'template' },
+        { track_id: adrTrack.id, project_id: inserted.id, parent_id: sectionAI.id, name: 'Alert Normalization', display_order: 2, status: 'planned' as const, node_type: 'sub-capability', source_trace: 'template' },
+        { track_id: adrTrack.id, project_id: inserted.id, parent_id: sectionAI.id, name: 'Alert Enrichment', display_order: 3, status: 'planned' as const, node_type: 'sub-capability', source_trace: 'template' },
+        { track_id: adrTrack.id, project_id: inserted.id, parent_id: sectionII.id, name: 'Alert Correlation', display_order: 1, status: 'planned' as const, node_type: 'sub-capability', source_trace: 'template' },
+        { track_id: adrTrack.id, project_id: inserted.id, parent_id: sectionII.id, name: 'Incident Enrichment', display_order: 2, status: 'planned' as const, node_type: 'sub-capability', source_trace: 'template' },
+        { track_id: adrTrack.id, project_id: inserted.id, parent_id: sectionII.id, name: 'Incident Classification', display_order: 3, status: 'planned' as const, node_type: 'sub-capability', source_trace: 'template' },
+        { track_id: adrTrack.id, project_id: inserted.id, parent_id: sectionII.id, name: 'Suggested Root Cause', display_order: 4, status: 'planned' as const, node_type: 'sub-capability', source_trace: 'template' },
+        { track_id: adrTrack.id, project_id: inserted.id, parent_id: sectionWA.id, name: 'Environments', display_order: 1, status: 'planned' as const, node_type: 'sub-capability', source_trace: 'template' },
+        { track_id: adrTrack.id, project_id: inserted.id, parent_id: sectionWA.id, name: 'Automated Incident Creation', display_order: 2, status: 'planned' as const, node_type: 'sub-capability', source_trace: 'template' },
+        { track_id: adrTrack.id, project_id: inserted.id, parent_id: sectionWA.id, name: 'Automated Incident Notification', display_order: 3, status: 'planned' as const, node_type: 'sub-capability', source_trace: 'template' },
+        { track_id: adrTrack.id, project_id: inserted.id, parent_id: sectionWA.id, name: 'Automated Incident Remediation', display_order: 4, status: 'planned' as const, node_type: 'sub-capability', source_trace: 'template' },
+      ]);
+    }
 
-    // AI Assistant Track
-    const [aiTrack] = await tx.insert(archTracks).values({
-      project_id: inserted.id,
-      name: 'AI Assistant Track',
-      display_order: 2,
-    }).returning({ id: archTracks.id });
+    if (tracks.biggy) {
+      // AI Assistant Track (per CONTEXT.md, "Biggy" === "AI Assistant" arch label)
+      const [aiTrack] = await tx.insert(archTracks).values({
+        project_id: inserted.id,
+        name: 'AI Assistant Track',
+        display_order: 2,
+      }).returning({ id: archTracks.id });
 
-    await tx.insert(archNodes).values([
-      { track_id: aiTrack.id, project_id: inserted.id, name: 'Knowledge Sources', display_order: 1, status: 'planned' as const, source_trace: 'template' },
-      { track_id: aiTrack.id, project_id: inserted.id, name: 'Real-Time Query', display_order: 2, status: 'planned' as const, source_trace: 'template' },
-      { track_id: aiTrack.id, project_id: inserted.id, name: 'AI Capabilities', display_order: 3, status: 'planned' as const, source_trace: 'template' },
-      { track_id: aiTrack.id, project_id: inserted.id, name: 'Console', display_order: 4, status: 'planned' as const, source_trace: 'template' },
-      { track_id: aiTrack.id, project_id: inserted.id, name: 'Outputs & Actions', display_order: 5, status: 'planned' as const, source_trace: 'template' },
-    ]);
+      await tx.insert(archNodes).values([
+        { track_id: aiTrack.id, project_id: inserted.id, name: 'Knowledge Sources', display_order: 1, status: 'planned' as const, source_trace: 'template' },
+        { track_id: aiTrack.id, project_id: inserted.id, name: 'Real-Time Query', display_order: 2, status: 'planned' as const, source_trace: 'template' },
+        { track_id: aiTrack.id, project_id: inserted.id, name: 'AI Capabilities', display_order: 3, status: 'planned' as const, source_trace: 'template' },
+        { track_id: aiTrack.id, project_id: inserted.id, name: 'Console', display_order: 4, status: 'planned' as const, source_trace: 'template' },
+        { track_id: aiTrack.id, project_id: inserted.id, name: 'Outputs & Actions', display_order: 5, status: 'planned' as const, source_trace: 'template' },
+      ]);
+    }
+
+    if (tracks.incident_prevention) {
+      // Phase 87, Plan 04 — Incident Prevention track seeding via shared helper.
+      // Covers arch_track + sections + console + sub-caps, WBS L1+L2, onboarding
+      // phases + steps, and Team Gamma teamOnboardingStatus row. Idempotent.
+      await seedIncidentPreventionForProject(tx, inserted.id)
+    }
 
     // Seed creator as Admin in project_members
     await tx.insert(projectMembers).values({

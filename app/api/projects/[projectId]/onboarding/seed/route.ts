@@ -4,7 +4,7 @@ import { onboardingPhases, onboardingSteps } from '@/db/schema'
 import { eq, and, asc, inArray } from 'drizzle-orm'
 import { sql } from 'drizzle-orm'
 import { requireProjectRole } from '@/lib/auth-server'
-import { ADR_ONBOARDING_CONFIG, BIGGY_ONBOARDING_CONFIG, PhaseConfig } from '@/lib/onboarding-config'
+import { ADR_ONBOARDING_CONFIG, BIGGY_ONBOARDING_CONFIG, INCIDENT_PREVENTION_ONBOARDING_CONFIG, PhaseConfig } from '@/lib/onboarding-config'
 
 /**
  * POST /api/projects/[projectId]/onboarding/seed
@@ -98,6 +98,10 @@ export async function POST(
 
       await seedTrack(ADR_ONBOARDING_CONFIG, 'ADR')
       await seedTrack(BIGGY_ONBOARDING_CONFIG, 'Biggy')
+      // Phase 87, Plan 04 — legacy retroactive seeder now also includes IP.
+      // Does NOT gate on active_tracks: this is a manual re-seed admin tool and
+      // seeding is idempotent (onConflictDoNothing on every step insert).
+      await seedTrack(INCIDENT_PREVENTION_ONBOARDING_CONFIG, 'Incident Prevention')
     })
 
     // Return full updated data (same shape as GET /onboarding)
@@ -124,6 +128,7 @@ export async function POST(
       return {
         adr: phasesWithSteps.filter(p => p.track === 'ADR'),
         biggy: phasesWithSteps.filter(p => p.track === 'Biggy'),
+        incident_prevention: phasesWithSteps.filter(p => p.track === 'Incident Prevention'),
       }
     })
 
