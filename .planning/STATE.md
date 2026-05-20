@@ -10,8 +10,8 @@ progress:
   total_phases: 16
   completed_phases: 15
   total_plans: 88
-  completed_plans: 86
-  percent: 98
+  completed_plans: 87
+  percent: 99
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 ## Current Position
 
 Phase: 87-incident-prevention-track-support (Incident Prevention Track Support — IN PROGRESS)
-Plan: 4 of 8 complete (Plan 00 Wave 0 scaffolding; Plan 01 schema/migration foundation; Plan 02 config + extraction + discovery layer; Plan 03 seed-project track-conditional team inserts; Plan 04 project-create active_tracks gating + IP wizard + shared seeder helper)
-Status: Phase 87 active. Plan 04 closed 2026-05-20 — new shared lib/seed-incident-prevention.ts helper (305 LOC, idempotent, 8 entity classes) ready for Plan 05's settings PATCH retroactive seeding. POST /api/projects + onboarding/seed + BasicInfoStep wizard now fully active_tracks-aware. IP-06 + IP-07 GREEN (20/20 incl. IP-04/05 from Plan 02). Next: Plan 05 (Settings PATCH route + retroactive seeding for false→true track flips). Live Docker apply (IP-01, IP-02) deferred to Plan 87-08 human verification.
-Last activity: 2026-05-20 — Phase 87 Plan 04 COMPLETE. New shared helper lib/seed-incident-prevention.ts (305 LOC) exports seedIncidentPreventionForProject(tx, projectId) — fully idempotent across 8 entity classes. POST /api/projects now accepts active_tracks: {adr, biggy, incident_prevention}; returns 400 when all false; every seeding block gated on tracks[trackKey]; IP helper called inside the transaction when incident_prevention=true. Legacy onboarding/seed POST extended with third seedTrack(INCIDENT_PREVENTION_ONBOARDING_CONFIG) call; response shape gains incident_prevention key. BasicInfoStep.tsx wizard renders three checkboxes in order ADR → Biggy → Incident Prevention, all default OFF, Submit disabled until ≥1 checked. IP-04 + IP-05 + IP-06 + IP-07 GREEN (20/20). IP-09 helper-contract GREEN. Panda-Manager commits 4d69d093 (helper) + 29e4e6b8 (route+wizard wiring).
+Plan: 6 of 8 complete (Plans 00-04 + 06 done; Plan 05 settings PATCH retroactive seeding remains for in-flight work; Plan 07 onboarding-dashboard UI; Plan 08 human verification)
+Status: Phase 87 active. Plan 06 closed 2026-05-20 — InteractiveArchGraph.tsx + 7 supporting arch/skill/chat files extended to render IP Track as third section-grouped diagram. All 8 hardcoded ADR-only locations now 3-way ADR/IP/Biggy aware. IP-12 GREEN (2/2). Next: Plan 05 (Settings PATCH retroactive seeding) and Plan 07 (OnboardingDashboard third-track column). Live Docker apply (IP-01, IP-02) deferred to Plan 87-08 human verification.
+Last activity: 2026-05-20 — Phase 87 Plan 06 COMPLETE. components/arch/InteractiveArchGraph.tsx (8 hardcoded locations rewired + Console placement generalized + props extended with optional ipTeamNames) + 7 supporting files (TeamOnboardingTable adds Incident Prevention section/row; TeamOnboardingEditModal track union widened; IntegrationEditModal gets IP_PHASES_BY_SECTION optgroups + 3rd track dropdown; CurrentFutureStateTab adds + IP Integration button + ipTeamNames prop wiring; skill-context-arch + skill-context-teams add third filter + section; chat-context-builder tool hint lists 3 valid track names). isADRTrack fully renamed to isSectionGrouped (0 residual matches). Color: violet. IP-12 GREEN (2/2). Pre-existing column-reorder + status-cycle test failures (6 tests) confirmed unrelated to my changes via git stash — same Phase 48 mock issue as [83-04]; logged to deferred-items.md. Panda-Manager commits cd29600f (Task 1: InteractiveArchGraph), 7bdbe4a5 (Task 2: 7 supporting files).
 
-Progress: [██████████] 98%
+Progress: [██████████] 99%
 
 ## v10.0 Roadmap Summary
 
@@ -344,6 +344,14 @@ Progress: [██████████] 98%
 - [87-04] Backward-compatible POST body — missing active_tracks falls back to `{adr:true, biggy:true, incident_prevention:false}` to preserve pre-Phase-87 callers; the new wizard always passes the field explicitly. Default-deny would break tests in other phases that don't construct active_tracks payloads.
 - [87-04] Defense-in-depth Submit guard pattern: `disabled={loading || !atLeastOneTrack}` on the button AND `if (!atLeastOneTrack) { setError(...); return }` inside handleSubmit AND server 400 — three layers because button.disabled in some browsers does not block keyboard-submit on a focused checkbox.
 - [87-04] Parallel-agent file collisions handled by explicit per-file `git add` — never used `git add .` or `git add -A`. Plans 03/04/06 all touching `app/api/projects/...` paths in flight; isolation requires file-level staging. Established as repeating pattern when multiple parallel agents are active.
+- [87-06] Console placement index made track-aware via derived `consoleAfterIdx` (IP=0, ADR=1) inside the section-grouped block — required because migration 0052 places the IP Change Risk Console at `display_order=15` (between Data Ingestion at do=10 and Risk Engine at do=20), which is between sections idx 0 and idx 1 (not idx 1 and idx 2 like ADR). The plan's claim that the section-grouped JSX was fully data-driven was off by this one constant. Single-line Rule 1 auto-fix inside the existing block; pattern generalizes to any future track with a different Console position.
+- [87-06] `isADRTrack` renamed to `isSectionGrouped` in `handleDragEnd` — cleaner abstraction now that both ADR and IP share section-grouped rendering. Future section-grouped tracks plug into the union without touching the boolean's identity (`track?.name === 'ADR Track' || track?.name === 'Incident Prevention Track'`).
+- [87-06] Section-grouped layout gate generalized via boolean union: `if (isADR || isIP) { ... }` reuses the entire existing ADR rendering block verbatim. No code duplication — the same JSX serves both tracks since `sections`, `subCaps`, and `consoleNode` are derived from DB query results (track-agnostic).
+- [87-06] Color choice violet (Tailwind 600/700) for IP track applied consistently across 6 surfaces: top-nav pill (bg-violet-600), TrackPipeline border (border-l-violet-600) + label (text-violet-700), Console node bg (bg-violet-700), TeamOnboardingTable section header (#7c3aed inline style — outside Tailwind because the component uses inline styles, not className), CurrentFutureStateTab + IP Integration button (violet-200/50/700). Distinct from ADR blue and Biggy amber; pairs semantically with "Risk".
+- [87-06] `IP_PHASES_BY_SECTION` constant placed inline in IntegrationEditModal (not extracted) — 13 IP sub-cap phases organized by their 3 sections, byte-for-byte aligned with migration 0052's seeded sub-cap names. Single in-tree consumer; if Phase 88+ needs the list elsewhere, extract then. KISS over premature abstraction.
+- [87-06] Optional `ipTeamNames?: string[]` prop on InteractiveArchGraph (defaults to []) — backward compatibility with any external caller; CurrentFutureStateTab is the one in-tree caller, updated in Task 2 to pass it. Pattern: optional with default-empty preserves existing call-sites while opening the door for IP.
+- [87-06] Open Question 2 resolved (skill-context-arch + skill-context-teams + chat-context-builder): hardcoded third branch (filter + section header) chosen over generic refactor. Per CONTEXT.md guidance — lower risk for the Phase 87 audit pass, clearer assertion targets, more readable. The 4th track (whenever it arrives) is when generic iteration becomes worth the refactor cost.
+- [87-06] Pre-existing arch route test failures (6 tests in tests/arch/column-reorder + status-cycle) confirmed unrelated to Plan 87-06 — same Phase 48 mock issue documented in STATE.md [83-04] (requireProjectRole added Phase 82, not mocked in pre-existing tests). Verified by stashing my changes and re-running. Out of scope for Plan 87-06; logged to `.planning/phases/87-incident-prevention-track-support/deferred-items.md` for future test-mock-fix plan.
 
 ### Blockers/Concerns
 
@@ -351,6 +359,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-05-20T02:34:00.000Z
-Stopped at: Completed 87-04-PLAN.md (project-create active_tracks gating + IP wizard checkbox + shared seeder helper)
+Last session: 2026-05-20T02:35:30.000Z
+Stopped at: Completed 87-06-PLAN.md (InteractiveArchGraph + 7 supporting arch UI files extended for IP Track)
 Resume file: None
