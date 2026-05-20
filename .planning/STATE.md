@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: verifying
-stopped_at: Phase 87 context gathered
-last_updated: "2026-05-19T20:19:18.765Z"
+stopped_at: Completed 87-01-PLAN.md
+last_updated: "2026-05-20T02:18:45.932Z"
 last_activity: "2026-05-18 — Phase 86 CLOSED. Plan 05 human-verify checkpoint PASSED with two inline UAT fixes (lib/proxy.ts /api/health allowlist + new Redis() constructor form in app/api/health). Backup smoke test: 1.6 MB SQL dump, 58 CREATE TABLE statements via pg_dump 16.14. Panda-Manager commits 712ad605 (PGDG repo for postgresql-client-16), 58fc4b55 (inline UAT fix)."
 progress:
-  total_phases: 16
+  total_phases: 17
   completed_phases: 15
-  total_plans: 79
-  completed_plans: 79
-  percent: 100
+  total_plans: 88
+  completed_plans: 80
+  percent: 91
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-04-27 after v10.0 milestone scoping)
 
 ## Current Position
 
-Phase: 86-multi-user-sso-aws-readiness (Multi-User SSO & AWS Readiness — COMPLETE)
-Plan: 6 of 6 complete (Plans 00–05 all filed and signed off). 86-VERIFICATION.md PASSED 2026-05-18 with two inline UAT gap closures.
-Status: Phase 86 CLOSED. All three primary deliverables verified alive end-to-end: per-user OAuth tokens (TOKEN-01..04 source-scan tests GREEN + code paths verified), Okta SSO dormant scaffold (DORM-01..04 — /api/auth/providers returns {okta:false}, oauth2 sign-in returns 404, login renders no Okta button), AWS readiness (/api/health 200 unauth, 503 with redis down; daily BullMQ pg_dump 16.14 backup; 57/57 routes RBAC-audited). No open follow-ups.
-Last activity: 2026-05-18 — Phase 86 CLOSED. Plan 05 human-verify checkpoint PASSED with two inline UAT fixes (lib/proxy.ts /api/health allowlist + new Redis() constructor form in app/api/health). Backup smoke test: 1.6 MB SQL dump, 58 CREATE TABLE statements via pg_dump 16.14. Panda-Manager commits 712ad605 (PGDG repo for postgresql-client-16), 58fc4b55 (inline UAT fix).
+Phase: 87-incident-prevention-track-support (Incident Prevention Track Support — IN PROGRESS)
+Plan: 1 of 8 complete (Plan 00 Wave 0 scaffolding done previously; Plan 01 schema/migration foundation complete)
+Status: Phase 87 active. Plan 01 closed 2026-05-19 — Migration 0052 written (idempotent: additive `||` JSONB backfill preserves adr/biggy; per-project IF EXISTS guard on arch_tracks seed); db/schema.ts:114 widened (active_tracks type + default now include incident_prevention). IP-03 + IP-13 GREEN. Next: Plan 02 (lib/onboarding-config.ts + lib/seed-project.ts extensions). Live Docker apply (IP-01, IP-02) deferred to Plan 87-08 human verification.
+Last activity: 2026-05-19 — Phase 87 Plan 01 COMPLETE. Migration 0052_incident_prevention_track.sql written (idempotent: additive JSONB || backfill + per-project IF EXISTS guard on arch_tracks seed); db/schema.ts:114 widened (active_tracks type now includes incident_prevention:boolean, default flipped to all-false triple). IP-03 + IP-13 source-scan tests GREEN; all 24 tests in tests/schema/ pass. Panda-Manager commits bf411050 (migration), 8f1ad518 (schema widening) — pushed to origin/main.
 
-Progress: [██████████] 100%
+Progress: [█████████░] 91%
 
 ## v10.0 Roadmap Summary
 
@@ -313,6 +313,12 @@ Progress: [██████████] 100%
 - [86-05] Inline UAT gap closure (vs gap-closure phase) is appropriate when: bug is surface-area (not architectural), fix fits in <50 LoC, all tests still pass after fix. Document in VERIFICATION.md + parent SUMMARY.md. Phase 86 closed inline with two such fixes per user direction.
 - [86-05] Dormancy literal-grep-vs-contract clarification: the substring "okta" appears once in /login page source as `showOkta:false` prop name in the React Server Components streaming payload. This does NOT render to a visible UI element. The dormancy contract (zero user-visible Okta surface) holds at the DOM/UX layer. A strict case-insensitive substring grep is too strict; the meaningful gate is "no clickable affordance, no DOM markup for the button."
 - [86-05] Browser-only verification items (Gmail OAuth real-user click-through, Discovery Scan with user tokens, /login visual confirmation) marked DEFERRED-PASS based on source-scan test coverage + user manual confirmation. Acceptable verification level for closure when code paths are independently verified.
+- [87-01] Migration 0052 uses additive JSONB || operator with `NOT (active_tracks ? 'incident_prevention')` guard — re-running 0052 cannot overwrite a user's manually-set `incident_prevention: true` (set via Settings — Plan 87-03) back to `false`. This is the mandatory idempotency guard for any additive JSONB backfill.
+- [87-01] Per-project IF EXISTS guard at top of DO-block FOR LOOP (`SELECT 1 FROM arch_tracks WHERE project_id = proj_id AND name = 'Incident Prevention Track' THEN CONTINUE`) is the sole idempotency primitive for arch seeding — no DELETE block needed (unlike 0046) because the IP track is greenfield with no pre-existing rows to clean up.
+- [87-01] `projects.active_tracks` DEFAULT flipped from `{adr:true,biggy:true}` to `{adr:false,biggy:false,incident_prevention:false}` — new projects must opt in to ≥1 track via wizard (Plan 87-04); existing projects unaffected because the UPDATE uses `||` (additive, never overwrites adr/biggy). Customer-protection: schema default is forward-looking; backfill is backward-safe.
+- [87-01] Single migration file pattern: schema ALTER + JSONB backfill + DO-block arch seed in one transaction. Matches 0046 precedent; splitting offers no rollback safety because the per-project IF EXISTS guard makes the entire DO block idempotent.
+- [87-01] Change Risk Console placed at display_order=15 (between Data Ingestion section at 10 and Risk Engine section at 20) with `node_type='console'` — mirrors ADR's Console placement pattern from 0046 for visual consistency across tracks.
+- [87-01] db/schema.ts:114 type widening is additive — existing `{ adr; biggy }` callers continue to compile against `{ adr; biggy; incident_prevention }` without changes; downstream TypeScript breakage from new code that expects only 2 keys is intentional, caught at Plan 04/05/07 build steps.
 
 ### Blockers/Concerns
 
@@ -320,6 +326,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-05-19T20:19:18.761Z
-Stopped at: Phase 87 context gathered
-Resume file: .planning/phases/87-incident-prevention-track-support/87-CONTEXT.md
+Last session: 2026-05-20T02:18:45.928Z
+Stopped at: Completed 87-01-PLAN.md
+Resume file: None
