@@ -11,7 +11,7 @@ export async function seedProjectFromRegistry(projectId: number): Promise<void> 
   // Idempotency check — skip if already seeded
   const project = await db.query.projects.findFirst({
     where: eq(projects.id, projectId),
-    columns: { seeded: true },
+    columns: { seeded: true, active_tracks: true },
   })
   if (!project || project.seeded) return
 
@@ -92,11 +92,24 @@ export async function seedProjectFromRegistry(projectId: number): Promise<void> 
     })
   }
 
-  // --- teams tab — insert placeholder teamOnboardingStatus rows (one per track) ---
-  await db.insert(teamOnboardingStatus).values([
-    { project_id: projectId, team_name: 'Team Alpha', track: 'ADR',   source: 'template' },
-    { project_id: projectId, team_name: 'Team Beta',  track: 'Biggy', source: 'template' },
-  ])
+  // --- teams tab — insert placeholder teamOnboardingStatus rows (one per ACTIVE track) ---
+  // Phase 87: All three placeholder team inserts (Alpha/ADR, Beta/Biggy, Gamma/Incident Prevention)
+  // are now conditional on active_tracks[trackKey] === true. Honors the wizard-driven track-selection
+  // rule (Plan 87-04) that a project may have only 1-3 tracks active at creation time. The seeded:false
+  // gate above keeps this fully scoped to initial creation — Plan 87-05 owns retroactive seeding
+  // for false→true Settings toggles via the dedicated seedIncidentPreventionForProject helper.
+  const tracks = (project.active_tracks as { adr: boolean; biggy: boolean; incident_prevention: boolean } | null)
+    ?? { adr: false, biggy: false, incident_prevention: false }
+
+  const teamRows = [
+    tracks.adr                 && { project_id: projectId, team_name: 'Team Alpha', track: 'ADR',                  source: 'template' as const },
+    tracks.biggy               && { project_id: projectId, team_name: 'Team Beta',  track: 'Biggy',                source: 'template' as const },
+    tracks.incident_prevention && { project_id: projectId, team_name: 'Team Gamma', track: 'Incident Prevention', source: 'template' as const },
+  ].filter(Boolean) as typeof teamOnboardingStatus.$inferInsert[]
+
+  if (teamRows.length > 0) {
+    await db.insert(teamOnboardingStatus).values(teamRows)
+  }
 
   // --- plan tab — insert business_outcomes placeholder (Business Outcomes section) ---
   const planTemplate = TAB_TEMPLATE_REGISTRY.plan
