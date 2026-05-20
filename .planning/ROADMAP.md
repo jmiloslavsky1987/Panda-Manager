@@ -367,9 +367,28 @@ Plans:
 | 84.1. Discovery Scan Merge/Update Flow | 5/5 | Complete    | 2026-05-07 |
 | 85. WBS MS Project-Style Overhaul | 5/6 | In Progress|  |
 | 86. Multi-User, SSO & AWS Readiness | 6/6 | Complete    | 2026-05-18 |
+| 87. Incident Prevention Track Support | 0/9 | Planned     | — |
+
+### Phase 87: incident-prevention-track-support
+
+**Goal:** Add a third product track ("Incident Prevention" — BigPanda's AI Change Risk Prediction) as a co-equal sibling of ADR and Biggy throughout the app. Adds `active_tracks.incident_prevention` JSONB key (migration 0052, additive backfill preserving adr/biggy), `INCIDENT_PREVENTION_ONBOARDING_CONFIG` (4 phases / 13 steps), 10 IP L1 WBS phases (~33 L2 sub-tasks), section-grouped Architecture diagram (3 sections + Change Risk Console centerpiece + 13 sub-capabilities), project-create wizard track-selection (3 checkboxes, ≥1 required, all unchecked by default), Settings PATCH retroactive seeding on false→true toggle via dedicated `seedIncidentPreventionForProject` helper, third-column OnboardingDashboard rendering, third health badge / KPI / metrics ring, and IP cues in extraction prompts. Briefing skill intentionally untouched (track-agnostic by design).
+**Requirements:** IP-01, IP-02, IP-03, IP-04, IP-05, IP-06, IP-07, IP-08, IP-09, IP-10, IP-11, IP-12, IP-13, IP-14, IP-15, IP-16 (phase-local — defined in 87-VALIDATION.md)
+**Depends on:** Phase 86
+**Plans:** 9 plans across 3 waves
+
+Plans:
+- [ ] 87-00-PLAN.md — Wave 0: RED test scaffolds for IP-03..IP-14 (Wave 1)
+- [ ] 87-01-PLAN.md — Migration 0052 (JSONB default + backfill + arch seed) + db/schema.ts type widening (IP-01, IP-02, IP-03, IP-13) (Wave 1)
+- [ ] 87-02-PLAN.md — lib/onboarding-config.ts INCIDENT_PREVENTION_ONBOARDING_CONFIG + extraction prompts + discovery scanner (IP-04, IP-05, IP-14) (Wave 1)
+- [ ] 87-03-PLAN.md — lib/seed-project.ts track-conditional team placeholder inserts (IP-10, IP-11) (Wave 2)
+- [ ] 87-04-PLAN.md — lib/seed-incident-prevention.ts helper + POST /api/projects refactor + NewProjectModal track-selection UI (IP-06, IP-07) (Wave 2)
+- [ ] 87-05-PLAN.md — Settings PATCH retroactive seeding + ProjectSettingsForm third checkbox (IP-08, IP-09) (Wave 2)
+- [ ] 87-06-PLAN.md — InteractiveArchGraph 8-location section-grouped extension + supporting arch/skill/chat components (IP-12) (Wave 2)
+- [ ] 87-07-PLAN.md — OnboardingDashboard 3-column refactor + onboarding GET route + KpiStrip/OverviewMetrics/HealthDashboard third-track (IP-16) (Wave 2)
+- [ ] 87-08-PLAN.md — Human verification checkpoint (IP-01, IP-02, IP-15, IP-16) (Wave 3)
 
 ---
-*Last updated: 2026-05-18 — Phase 86 CLOSED: 6/6 plans complete, 16/16 phase-local requirements verified, 86-VERIFICATION.md PASSED with two inline UAT fixes (lib/proxy.ts + new Redis()). Per-user OAuth tokens, Okta dormant scaffold, daily pg_dump 16.14 backups (1.6 MB / 58 tables), /api/health unauth, 57/57 routes RBAC-audited.*
+*Last updated: 2026-05-19 — Phase 87 planned: 9 plans across 3 waves cover all 16 phase-local IP-XX requirements. Wave 1 (3 parallel plans): test scaffolds + migration 0052 + onboarding-config/extraction. Wave 2 (5 parallel plans, joined by Plan 03 on seed-project): seed-project conditional, project-create refactor + helper, settings PATCH retroactive, arch graph extension, OnboardingDashboard 3-column. Wave 3 (1 plan): human verification checkpoint.*
 
 ### Phase 85: wbs-ms-project-style-overhaul
 
@@ -410,7 +429,7 @@ Plans:
 
 Plans:
 - [ ] 85.1-01-PLAN.md — Token foundation: `kata-tokens.css` spacing/height tokens + `globals.css` `@theme inline` aliases (transparent override)
-- [ ] 85.1-02-PLAN.md — Shared primitives: ui/table, ui/input, ui/select, ui/button, ui/dialog, ui/card, ui/textarea defaults tightened
+- [ ] 85.1-02-PLAN.md — Shared primitives: ui/table, ui/input, ui/select, ui/button, ui/card, ui/textarea defaults tightened
 - [ ] 85.1-03-PLAN.md — Global chrome: Sidebar rows, PageBar 44->36, WorkspaceTabs, SubTabBar
 - [ ] 85.1-04-PLAN.md — Per-tab + global page sweep (~21 customer tabs + 9 global pages); WBS/Gantt internals excluded
 - [ ] 85.1-05-PLAN.md — Human verification checkpoint (Linear-density target + WBS/Gantt exclusion intact)
