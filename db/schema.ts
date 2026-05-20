@@ -76,6 +76,12 @@ export const deliveryStatusEnum = pgEnum('delivery_status', [
   'live', 'in_progress', 'blocked', 'planned',
 ]);
 
+// ─── v13.0 Enums (Phase 88.1) ─────────────────────────────────────────────────
+
+export const outcomeAchievementStatusEnum = pgEnum('outcome_achievement_status', [
+  'not_started', 'in_progress', 'partially_achieved', 'achieved', 'blocked',
+]);
+
 export const integrationTrackStatusEnum = pgEnum('integration_track_status', [
   'live', 'in_progress', 'pilot', 'planned',
 ]);
@@ -216,6 +222,7 @@ export const milestones = pgTable('milestones', {
   notes: text('notes'),
   owner: text('owner'),
   owner_id: integer('owner_id').references(() => stakeholders.id, { onDelete: 'set null' }),
+  linked_track: text('linked_track'), // Phase 88.1 — nullable TEXT; user populates via UI when relevant
   source: text('source').notNull(),
   source_artifact_id: integer('source_artifact_id').references((): AnyPgColumn => artifacts.id, { onDelete: 'set null' }),
   discovery_source: text('discovery_source'),
@@ -580,6 +587,8 @@ export const businessOutcomes = pgTable('business_outcomes', {
   track:           text('track').notNull(),
   description:     text('description'),
   delivery_status: deliveryStatusEnum('delivery_status').default('planned').notNull(),
+  // Phase 88.1: new 5-value achievement status enum (added alongside delivery_status, not replacing it)
+  achievement_status: outcomeAchievementStatusEnum('achievement_status').default('not_started').notNull(),
   mapping_note:    text('mapping_note'),
   source:          text('source').notNull().default('manual'),
   source_artifact_id: integer('source_artifact_id').references(() => artifacts.id, { onDelete: 'set null' }),
@@ -607,6 +616,50 @@ export const evidenceLog = pgTable('evidence_log', {
 
 export type EvidenceLog = typeof evidenceLog.$inferSelect;
 export type NewEvidenceLog = typeof evidenceLog.$inferInsert;
+
+// ─── Table: team_cards (Phase 88.1) ───────────────────────────────────────────
+// One row per (project_id, team_name). UNIQUE (project_id, team_name).
+// Stores traffic-light status, success definition, latest activity, and next milestone link.
+export const teamCards = pgTable('team_cards', {
+  id:                    serial('id').primaryKey(),
+  project_id:            integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  team_name:             text('team_name').notNull(),
+  success_definition:    text('success_definition'),
+  overall_status:        text('overall_status').default('not_started').notNull(),
+  latest_activity_date:  text('latest_activity_date'),
+  latest_activity_text:  text('latest_activity_text'),
+  latest_activity_source: text('latest_activity_source'),
+  next_milestone_id:     integer('next_milestone_id').references((): AnyPgColumn => milestones.id, { onDelete: 'set null' }),
+  notes:                 text('notes'),
+  source:                text('source').default('manual').notNull(),
+  source_artifact_id:    integer('source_artifact_id').references(() => artifacts.id, { onDelete: 'set null' }),
+  created_at:            timestamp('created_at').defaultNow().notNull(),
+  updated_at:            timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex('team_cards_project_team_idx').on(table.project_id, table.team_name),
+]);
+
+export type TeamCard = typeof teamCards.$inferSelect;
+export type NewTeamCard = typeof teamCards.$inferInsert;
+
+// ─── Table: team_card_key_metrics (Phase 88.1) ───────────────────────────────
+// Key metrics rows for a team card. FK to team_cards ON DELETE CASCADE.
+export const teamCardKeyMetrics = pgTable('team_card_key_metrics', {
+  id:                 serial('id').primaryKey(),
+  team_card_id:       integer('team_card_id').notNull().references(() => teamCards.id, { onDelete: 'cascade' }),
+  label:              text('label').notNull(),
+  target:             text('target'),
+  current:            text('current'),
+  trend:              text('trend'),
+  display_order:      integer('display_order').default(0).notNull(),
+  source:             text('source').default('manual').notNull(),
+  source_artifact_id: integer('source_artifact_id').references(() => artifacts.id, { onDelete: 'set null' }),
+  created_at:         timestamp('created_at').defaultNow().notNull(),
+  updated_at:         timestamp('updated_at').defaultNow().notNull(),
+});
+
+export type TeamCardKeyMetric = typeof teamCardKeyMetrics.$inferSelect;
+export type NewTeamCardKeyMetric = typeof teamCardKeyMetrics.$inferInsert;
 
 export const e2eWorkflows = pgTable('e2e_workflows', {
   id:            serial('id').primaryKey(),

@@ -96,6 +96,7 @@ export function BusinessOutcomesSection({ projectId, outcomes, onUpdate }: Props
       track: (values.track as BusinessOutcome['track']) ?? 'ADR',
       description: values.description ?? null,
       delivery_status: (values.delivery_status as BusinessOutcome['delivery_status']) ?? 'planned',
+      achievement_status: 'not_started',
       mapping_note: values.mapping_note ?? null,
       source: 'manual',
       source_artifact_id: null,
