@@ -24,6 +24,7 @@ export async function PATCH(
     track?: string
     description?: string
     delivery_status?: string
+    achievement_status?: string
     mapping_note?: string
   }
   try {
@@ -37,6 +38,7 @@ export async function PATCH(
   if (body.track !== undefined) updates.track = body.track
   if (body.description !== undefined) updates.description = body.description
   if (body.delivery_status !== undefined) updates.delivery_status = body.delivery_status
+  if (body.achievement_status !== undefined) updates.achievement_status = body.achievement_status
   if (body.mapping_note !== undefined) updates.mapping_note = body.mapping_note
 
   if (Object.keys(updates).length === 0) {

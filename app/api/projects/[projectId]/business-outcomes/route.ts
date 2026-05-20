@@ -48,6 +48,7 @@ export async function POST(
     track?: string
     description?: string
     delivery_status?: string
+    achievement_status?: string
     mapping_note?: string
   }
   try {
@@ -69,6 +70,7 @@ export async function POST(
         track: body.track!,
         description: body.description ?? null,
         delivery_status: (body.delivery_status as 'live' | 'in_progress' | 'blocked' | 'planned') ?? 'planned',
+        achievement_status: (body.achievement_status as 'not_started' | 'in_progress' | 'partially_achieved' | 'achieved' | 'blocked') ?? 'not_started',
         mapping_note: body.mapping_note ?? null,
       }).returning()
     })
