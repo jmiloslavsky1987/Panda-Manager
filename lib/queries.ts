@@ -1026,6 +1026,7 @@ export interface TeamsTabData {
   teamCards: import('../db/schema').TeamCard[];
   teamCardKeyMetrics: import('../db/schema').TeamCardKeyMetric[];
   evidenceLog: import('../db/schema').EvidenceLog[];
+  milestones: Milestone[]; // Phase 88.1 — for MilestoneTrackerSection
 }
 
 // ─── Teams Tab Query ──────────────────────────────────────────────────────────
@@ -1037,7 +1038,7 @@ export interface TeamsTabData {
  * and open/in_progress actions (for the Teams & Engagement Status section).
  */
 export async function getTeamsTabData(projectId: number): Promise<TeamsTabData> {
-  const [outcomes, workflows, steps, areas, archIntegrations, openActs, onboardingRows, stakeholderRows, teamCardsRows] = await Promise.all([
+  const [outcomes, workflows, steps, areas, archIntegrations, openActs, onboardingRows, stakeholderRows, teamCardsRows, milestonesRows] = await Promise.all([
     db.select().from(businessOutcomes).where(eq(businessOutcomes.project_id, projectId)),
     db.select().from(e2eWorkflows).where(eq(e2eWorkflows.project_id, projectId)),
     db.select().from(workflowSteps)
@@ -1063,6 +1064,8 @@ export async function getTeamsTabData(projectId: number): Promise<TeamsTabData> 
     db.select().from(stakeholders).where(eq(stakeholders.project_id, projectId)).orderBy(asc(stakeholders.name)),
     // Phase 88.1: team cards for this project
     db.select().from(teamCards).where(eq(teamCards.project_id, projectId)),
+    // Phase 88.1: milestones for MilestoneTrackerSection
+    db.select().from(milestones).where(eq(milestones.project_id, projectId)),
   ]);
 
   const stepsMap = new Map<number, WorkflowStep[]>();
@@ -1099,6 +1102,7 @@ export async function getTeamsTabData(projectId: number): Promise<TeamsTabData> 
     teamCards: teamCardsRows,
     teamCardKeyMetrics: teamCardKeyMetricsRows,
     evidenceLog: evidenceLogRows,
+    milestones: milestonesRows,  // Phase 88.1 — MilestoneTrackerSection
   };
 }
 
