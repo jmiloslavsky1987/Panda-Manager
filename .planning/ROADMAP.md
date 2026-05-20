@@ -367,14 +367,14 @@ Plans:
 | 84.1. Discovery Scan Merge/Update Flow | 5/5 | Complete    | 2026-05-07 |
 | 85. WBS MS Project-Style Overhaul | 5/6 | In Progress|  |
 | 86. Multi-User, SSO & AWS Readiness | 6/6 | Complete    | 2026-05-18 |
-| 87. Incident Prevention Track Support | 7/9 | In Progress|  |
+| 87. Incident Prevention Track Support | 9/9 | Complete   | 2026-05-20 |
 
 ### Phase 87: incident-prevention-track-support
 
 **Goal:** Add a third product track ("Incident Prevention" — BigPanda's AI Change Risk Prediction) as a co-equal sibling of ADR and Biggy throughout the app. Adds `active_tracks.incident_prevention` JSONB key (migration 0052, additive backfill preserving adr/biggy), `INCIDENT_PREVENTION_ONBOARDING_CONFIG` (4 phases / 13 steps), 10 IP L1 WBS phases (~33 L2 sub-tasks), section-grouped Architecture diagram (3 sections + Change Risk Console centerpiece + 13 sub-capabilities), project-create wizard track-selection (3 checkboxes, ≥1 required, all unchecked by default), Settings PATCH retroactive seeding on false→true toggle via dedicated `seedIncidentPreventionForProject` helper, third-column OnboardingDashboard rendering, third health badge / KPI / metrics ring, and IP cues in extraction prompts. Briefing skill intentionally untouched (track-agnostic by design).
 **Requirements:** IP-01, IP-02, IP-03, IP-04, IP-05, IP-06, IP-07, IP-08, IP-09, IP-10, IP-11, IP-12, IP-13, IP-14, IP-15, IP-16 (phase-local — defined in 87-VALIDATION.md)
 **Depends on:** Phase 86
-**Plans:** 8/9 plans executed
+**Plans:** 9/9 plans complete
 
 Plans:
 - [x] 87-00-PLAN.md — Wave 0: RED test scaffolds for IP-03..IP-14 (Wave 1) — COMPLETE
@@ -385,10 +385,10 @@ Plans:
 - [x] 87-05-PLAN.md — Settings PATCH retroactive seeding + ProjectSettingsForm third checkbox (IP-08, IP-09) (Wave 2) — COMPLETE 2026-05-20 (commits 418ffb8d, 292c18e7)
 - [x] 87-06-PLAN.md — InteractiveArchGraph 8-location section-grouped extension + supporting arch/skill/chat components (IP-12) (Wave 2) — COMPLETE 2026-05-20 (commits cd29600f, 7bdbe4a5)
 - [x] 87-07-PLAN.md — OnboardingDashboard 3-column refactor + onboarding GET route + KpiStrip/OverviewMetrics/HealthDashboard third-track (IP-16) (Wave 2) — COMPLETE 2026-05-20 (commits 6e248713, d5731a63)
-- [ ] 87-08-PLAN.md — Human verification checkpoint (IP-01, IP-02, IP-15, IP-16) (Wave 3)
+- [x] 87-08-PLAN.md — Human verification checkpoint (IP-01, IP-02, IP-15, IP-16) (Wave 3) — COMPLETE 2026-05-20 (87-VERIFICATION.md PASSED 16/16; inline UAT fix Panda-Manager d4bd889c per [86-05] precedent)
 
 ---
-*Last updated: 2026-05-20 — Phase 87 Plan 05 COMPLETE. Settings PATCH retroactive IP seeding wired: route's Zod schema widened to closed 3-key shape, UPDATE + seedIncidentPreventionForProject(tx) wrapped in db.transaction on false->true flip detection, ProjectSettingsForm gains 3rd 'Incident Prevention' checkbox and always sends complete 3-key active_tracks payload (closes Pitfall 2). IP-08 + IP-09 GREEN. All Phase 87 code plans (00-07) complete; only Plan 87-08 (human verification) remains.*
+*Last updated: 2026-05-20 — Phase 87 CLOSED. All 9 plans complete (00..08); 87-VERIFICATION.md PASSED 16/16; one inline UAT fix (Panda-Manager d4bd889c) applied under the [86-05] < 50 LoC budget gating WBS + Gantt subtab strip on project.active_tracks (Phase 85 aa6ef069 placeholder leftover). Briefing skill contract honored — zero changes to skills/briefing.md across the phase. v12.0 milestone ready for closure.*
 
 ### Phase 85: wbs-ms-project-style-overhaul
 
