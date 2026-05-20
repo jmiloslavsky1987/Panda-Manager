@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: verifying
-stopped_at: Completed 87-01-PLAN.md
-last_updated: "2026-05-20T02:18:45.932Z"
-last_activity: "2026-05-18 — Phase 86 CLOSED. Plan 05 human-verify checkpoint PASSED with two inline UAT fixes (lib/proxy.ts /api/health allowlist + new Redis() constructor form in app/api/health). Backup smoke test: 1.6 MB SQL dump, 58 CREATE TABLE statements via pg_dump 16.14. Panda-Manager commits 712ad605 (PGDG repo for postgresql-client-16), 58fc4b55 (inline UAT fix)."
+stopped_at: Completed 87-02-PLAN.md (config + extraction + discovery layer)
+last_updated: "2026-05-20T02:21:59.341Z"
+last_activity: "2026-05-19 — Phase 87 Plan 01 COMPLETE. Migration 0052_incident_prevention_track.sql written (idempotent: additive JSONB || backfill + per-project IF EXISTS guard on arch_tracks seed); db/schema.ts:114 widened (active_tracks type now includes incident_prevention:boolean, default flipped to all-false triple). IP-03 + IP-13 source-scan tests GREEN; all 24 tests in tests/schema/ pass. Panda-Manager commits bf411050 (migration), 8f1ad518 (schema widening) — pushed to origin/main."
 progress:
-  total_phases: 17
+  total_phases: 16
   completed_phases: 15
   total_plans: 88
-  completed_plans: 80
+  completed_plans: 82
   percent: 91
 ---
 
@@ -319,6 +319,10 @@ Progress: [█████████░] 91%
 - [87-01] Single migration file pattern: schema ALTER + JSONB backfill + DO-block arch seed in one transaction. Matches 0046 precedent; splitting offers no rollback safety because the per-project IF EXISTS guard makes the entire DO block idempotent.
 - [87-01] Change Risk Console placed at display_order=15 (between Data Ingestion section at 10 and Risk Engine section at 20) with `node_type='console'` — mirrors ADR's Console placement pattern from 0046 for visual consistency across tracks.
 - [87-01] db/schema.ts:114 type widening is additive — existing `{ adr; biggy }` callers continue to compile against `{ adr; biggy; incident_prevention }` without changes; downstream TypeScript breakage from new code that expects only 2 keys is intentional, caught at Plan 04/05/07 build steps.
+- [87-00] Wave 0 RED test scaffolds: 6 new + 1 extended test file under tests/ (gitignored per [79-00]); 12 named failing tests covering IP-06/07/08/09/10/12; source-scan pattern (fs.readFileSync + try/catch '' on ENOENT) prevents module-resolution crashes in RED state.
+- [87-00] IP-03/04/05/13/14 pre-pass on parallel-agent prep (Plans 87-01 and 87-02 shipped before 87-00 ran) — acceptable per [80-00] precedent because key gating tests (IP-06/07/08/09/10/12) remain RED. Combined Wave 0 run: 7 files, 44 tests, 32 passed, 12 failed with named IP-XX assertions, 253ms.
+- [87-00] Mock-introspection pattern inline in seed-project.test.ts: flatten mockInsert.mock.results[*].value.values.mock.calls to find Team Gamma by {team_name, track} — no extra harness needed for IP-10/IP-11. Pattern reusable for any future seeder gating tests.
+- [87-00] Direct-import (synchronous require + try/catch fallback to empty constants) reserved for pure config modules (lib/onboarding-config.ts) where assertion messages are clearer; source-scan reserved for any test against Next routes or BullMQ workers where module resolution pulls full DB/middleware stack.
 
 ### Blockers/Concerns
 
@@ -326,6 +330,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-05-20T02:18:45.928Z
-Stopped at: Completed 87-01-PLAN.md
+Last session: 2026-05-20T02:21:59.338Z
+Stopped at: Completed 87-02-PLAN.md (config + extraction + discovery layer)
 Resume file: None
