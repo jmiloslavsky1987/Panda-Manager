@@ -10,15 +10,21 @@ type WbsTrack = 'ADR' | 'Biggy' | 'Incident Prevention'
 
 interface WbsPageClientProps {
   projectId: number
+  activeTracks: { adr: boolean; biggy: boolean; incident_prevention: boolean }
   adrItems: WbsGridItem[]
   biggyItems: WbsGridItem[]
   incidentPreventionItems: WbsGridItem[]
   dependencies: WbsDependencyItem[]
 }
 
-export function WbsPageClient({ projectId, adrItems, biggyItems, incidentPreventionItems, dependencies }: WbsPageClientProps) {
+export function WbsPageClient({ projectId, activeTracks, adrItems, biggyItems, incidentPreventionItems, dependencies }: WbsPageClientProps) {
   const router = useRouter()
-  const [activeTrack, setActiveTrack] = useState<WbsTrack>('ADR')
+  const visibleTracks = (['ADR', 'Biggy', 'Incident Prevention'] as const).filter(t =>
+    t === 'ADR' ? activeTracks.adr
+    : t === 'Biggy' ? activeTracks.biggy
+    : activeTracks.incident_prevention
+  )
+  const [activeTrack, setActiveTrack] = useState<WbsTrack>(visibleTracks[0] ?? 'ADR')
 
   const items =
     activeTrack === 'ADR' ? adrItems
@@ -109,7 +115,7 @@ export function WbsPageClient({ projectId, adrItems, biggyItems, incidentPrevent
   return (
     <div className="flex flex-col gap-4">
       <div className="flex gap-2">
-        {(['ADR', 'Biggy', 'Incident Prevention'] as const).map(track => (
+        {visibleTracks.map(track => (
           <button
             key={track}
             onClick={() => setActiveTrack(track)}

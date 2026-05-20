@@ -1,4 +1,4 @@
-import { getTasksForProject, getMilestonesForProject, getWbsItems, getWbsTaskAssignments, getWbsDependencies } from '@/lib/queries'
+import { getTasksForProject, getMilestonesForProject, getWbsItems, getWbsTaskAssignments, getWbsDependencies, getProjectById } from '@/lib/queries'
 import GanttChart from '@/components/GanttChart'
 import type { GanttTask, GanttMilestone, GanttWbsRow } from '@/components/GanttChart'
 import type { WbsItem } from '@/db/schema'
@@ -151,10 +151,12 @@ export default async function GanttPage({
 
   let wbsDeps: Awaited<ReturnType<typeof getWbsDependencies>> = []
   try {
+    const project = await getProjectById(projectId)
+    const activeTracks = project.active_tracks ?? { adr: false, biggy: false, incident_prevention: false }
     const [adrWbs, biggyWbs, ipWbs, tasks, assignments, milestonesData, deps] = await Promise.all([
-      getWbsItems(projectId, 'ADR'),
-      getWbsItems(projectId, 'Biggy'),
-      getWbsItems(projectId, 'Incident Prevention'),
+      activeTracks.adr ? getWbsItems(projectId, 'ADR') : Promise.resolve([]),
+      activeTracks.biggy ? getWbsItems(projectId, 'Biggy') : Promise.resolve([]),
+      activeTracks.incident_prevention ? getWbsItems(projectId, 'Incident Prevention') : Promise.resolve([]),
       getTasksForProject(projectId),
       getWbsTaskAssignments(projectId),
       getMilestonesForProject(projectId),
