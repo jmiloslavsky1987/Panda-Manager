@@ -588,6 +588,26 @@ export const businessOutcomes = pgTable('business_outcomes', {
   created_at:      timestamp('created_at').defaultNow().notNull(),
 });
 
+// ─── Table: evidence_log — APPEND ONLY (Phase 88.1) ─────────────────────────
+// DB trigger (evidence_log_append_only) prevents UPDATE and DELETE.
+// Partial UNIQUE INDEX evidence_log_idem_idx on (business_outcome_id, source_artifact_id, text)
+// WHERE source = 'context_upload' enforces idempotency for context-updater applier re-runs.
+export const evidenceLog = pgTable('evidence_log', {
+  id:                  serial('id').primaryKey(),
+  business_outcome_id: integer('business_outcome_id')
+    .notNull()
+    .references(() => businessOutcomes.id, { onDelete: 'cascade' }),
+  date:               text('date').notNull(),
+  source:             text('source').notNull(),
+  source_artifact_id: integer('source_artifact_id').references(() => artifacts.id, { onDelete: 'set null' }),
+  text:               text('text').notNull(),
+  ingested_at:        timestamp('ingested_at'),
+  created_at:         timestamp('created_at').defaultNow().notNull(),
+});
+
+export type EvidenceLog = typeof evidenceLog.$inferSelect;
+export type NewEvidenceLog = typeof evidenceLog.$inferInsert;
+
 export const e2eWorkflows = pgTable('e2e_workflows', {
   id:            serial('id').primaryKey(),
   project_id:    integer('project_id').notNull().references(() => projects.id),
