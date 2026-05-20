@@ -4,13 +4,13 @@ milestone: v10.0
 milestone_name: — Calendar Integration & Daily Prep
 status: verifying
 stopped_at: Completed 87-08-PLAN.md (Phase 87 final human-verification CLOSED — 87-VERIFICATION.md PASSED 16/16 with one inline UAT fix per [86-05] precedent)
-last_updated: "2026-05-20T16:48:35Z"
+last_updated: "2026-05-20T16:55:37.274Z"
 last_activity: "2026-05-20 — Phase 87 CLOSED. Plan 08 final human-verification PASSED: Task 1 (IP-01, IP-02) — migration 0052 applied via direct psql ([85.2-01] precedent), 4 backfilled projects with {adr:true, biggy:true, incident_prevention:false}, arch_tracks=4, arch_nodes=68 (=4×17 IP nodes per project), idempotency UPDATE 0 on re-apply, backfill-protection guard verified (manually set IP=true then re-applied → value preserved). Task 2 (IP-15, IP-16) — browser UAT approved across 3 test projects: Project A (regression, 2 tabs only) / Project B (IP-only wizard, 3 colored sections + Change Risk Console + 13 sub-caps + 1-column OnboardingDashboard + Team Gamma) / Project C (mid-engagement flip, IP arch+WBS+3-column dashboard+Team Gamma all appear on ON, hide on OFF preserving DB rows, no duplicate on re-ON). Inline UAT fix per [86-05] precedent: Phase 85 commit aa6ef069 had hardcoded all three WBS+Gantt subtab strip tabs without active_tracks gating; fixed in Panda-Manager d4bd889c (3 files, 23+/11-, under 50 LoC budget). 87-VERIFICATION.md written PASSED 16/16. Briefing skill contract honored — zero changes to skills/briefing.md across entire phase (track-agnostic by design per CONTEXT.md). All 16 IP-XX requirements closed. v12.0 milestone ready for closure."
 progress:
   total_phases: 16
   completed_phases: 16
-  total_plans: 89
-  completed_plans: 89
+  total_plans: 88
+  completed_plans: 88
   percent: 100
 ---
 

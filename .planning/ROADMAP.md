@@ -367,7 +367,7 @@ Plans:
 | 84.1. Discovery Scan Merge/Update Flow | 5/5 | Complete    | 2026-05-07 |
 | 85. WBS MS Project-Style Overhaul | 5/6 | In Progress|  |
 | 86. Multi-User, SSO & AWS Readiness | 6/6 | Complete    | 2026-05-18 |
-| 87. Incident Prevention Track Support | 9/9 | Complete   | 2026-05-20 |
+| 87. Incident Prevention Track Support | 9/9 | Complete    | 2026-05-20 |
 
 ### Phase 87: incident-prevention-track-support
 
