@@ -76,6 +76,7 @@ const RISK_SEVERITY_COLORS: Record<string, string> = {
 export function OverviewMetrics({ projectId }: OverviewMetricsProps) {
   const router = useRouter()
   const [data, setData] = useState<OverviewMetricsData | null>(null)
+  const [activeTracks, setActiveTracks] = useState<{ adr: boolean; biggy: boolean; incident_prevention: boolean } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
 
@@ -97,9 +98,20 @@ export function OverviewMetrics({ projectId }: OverviewMetricsProps) {
     }
   }
 
+  // Fetch project active_tracks for IP conditional render (lightweight, parallel to metrics)
+  const fetchActiveTracks = async () => {
+    try {
+      const res = await fetch(`/api/projects/${projectId}`)
+      if (!res.ok) return
+      const { project } = await res.json()
+      if (project?.active_tracks) setActiveTracks(project.active_tracks)
+    } catch {}
+  }
+
   // Initial fetch on mount
   useEffect(() => {
     fetchMetrics()
+    fetchActiveTracks()
   }, [projectId])
 
   // Listen for metrics:invalidate events
@@ -158,6 +170,15 @@ export function OverviewMetrics({ projectId }: OverviewMetricsProps) {
   const biggyTotal       = biggyStepCounts.total + biggyIntegCounts.total + biggyTeamCounts.total
   const biggyComplete    = biggyStepCounts.complete + biggyIntegCounts.complete + biggyTeamCounts.complete
   const biggyPct         = biggyTotal > 0 ? (biggyComplete / biggyTotal) * 100 : 0
+
+  // Incident Prevention — only rendered when active_tracks.incident_prevention === true
+  const ipStepCounts     = trackSum(data.stepCounts, 'incident prevention')
+  const ipIntegCounts    = trackSum(data.integrationTrackCounts ?? [], 'incident prevention')
+  const ipTeamCounts     = trackSum(data.teamCounts ?? [], 'incident prevention')
+  const ipTotal          = ipStepCounts.total + ipIntegCounts.total + ipTeamCounts.total
+  const ipComplete       = ipStepCounts.complete + ipIntegCounts.complete + ipTeamCounts.complete
+  const ipCompletion     = ipTotal > 0 ? (ipComplete / ipTotal) * 100 : 0
+  const ipActive         = activeTracks?.incident_prevention === true
 
   // ─── Prepare risk chart data ─────────────────────────────────────────────────
 
@@ -223,6 +244,12 @@ export function OverviewMetrics({ projectId }: OverviewMetricsProps) {
               <ProgressRing pct={biggyPct} />
               <p className="text-xs text-zinc-500 mt-1 font-medium">Biggy</p>
             </div>
+            {ipActive && (
+              <div data-testid="ip-ring" className="flex flex-col items-center">
+                <ProgressRing pct={ipCompletion} />
+                <p className="text-xs text-violet-600 mt-1 font-medium">Incident Prevention</p>
+              </div>
+            )}
           </div>
         </div>
 

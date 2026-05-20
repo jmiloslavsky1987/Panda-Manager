@@ -54,9 +54,15 @@ export function WorkspaceKpiStrip({ project, projectId }: WorkspaceKpiStripProps
     const biggySteps = sumTrack(metrics.stepCounts, 'biggy')
     const biggyInteg = sumTrack(metrics.integrationTrackCounts ?? [], 'biggy')
     const biggyTeams = sumTrack(metrics.teamCounts ?? [], 'biggy')
+    // Incident Prevention — sumTrack already does case-insensitive match on track string.
+    // When IP is not active for this project, the metrics rows for IP will be absent
+    // and these totals will naturally be 0, contributing nothing to the aggregate.
+    const ipSteps = sumTrack(metrics.stepCounts, 'incident prevention')
+    const ipInteg = sumTrack(metrics.integrationTrackCounts ?? [], 'incident prevention')
+    const ipTeams = sumTrack(metrics.teamCounts ?? [], 'incident prevention')
 
-    const total    = adrSteps.total + adrInteg.total + adrTeams.total + biggySteps.total + biggyInteg.total + biggyTeams.total
-    const complete = adrSteps.complete + adrInteg.complete + adrTeams.complete + biggySteps.complete + biggyInteg.complete + biggyTeams.complete
+    const total    = adrSteps.total + adrInteg.total + adrTeams.total + biggySteps.total + biggyInteg.total + biggyTeams.total + ipSteps.total + ipInteg.total + ipTeams.total
+    const complete = adrSteps.complete + adrInteg.complete + adrTeams.complete + biggySteps.complete + biggyInteg.complete + biggyTeams.complete + ipSteps.complete + ipInteg.complete + ipTeams.complete
     percentComplete = total > 0 ? Math.round((complete / total) * 100) : 0
 
     openRisks = metrics.riskCounts.reduce((s, r) => s + r.count, 0)

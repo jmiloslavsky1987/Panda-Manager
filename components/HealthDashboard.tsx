@@ -40,7 +40,7 @@ export function computeOverallHealth(metrics: {
 
 function computeTrackHealth(
   stepCounts: { track: string; status: string; count: number }[],
-  track: 'ADR' | 'Biggy',
+  track: 'ADR' | 'Biggy' | 'Incident Prevention',
   openCriticalRisks: number
 ): 'red' | 'yellow' | 'green' {
   const trackSteps = stepCounts.filter(s => s.track.toLowerCase() === track.toLowerCase())
@@ -65,6 +65,7 @@ const ragConfig = {
 
 export function HealthDashboard({ projectId }: HealthDashboardProps) {
   const [data, setData] = useState<OverviewMetricsData | null>(null)
+  const [activeTracks, setActiveTracks] = useState<{ adr: boolean; biggy: boolean; incident_prevention: boolean } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
 
@@ -86,9 +87,20 @@ export function HealthDashboard({ projectId }: HealthDashboardProps) {
     }
   }
 
+  // Fetch project active_tracks for IP conditional render
+  const fetchActiveTracks = async () => {
+    try {
+      const res = await fetch(`/api/projects/${projectId}`)
+      if (!res.ok) return
+      const { project } = await res.json()
+      if (project?.active_tracks) setActiveTracks(project.active_tracks)
+    } catch {}
+  }
+
   // Initial fetch on mount
   useEffect(() => {
     fetchMetrics()
+    fetchActiveTracks()
   }, [projectId])
 
   // Listen for metrics:invalidate events
@@ -147,6 +159,8 @@ export function HealthDashboard({ projectId }: HealthDashboardProps) {
   // Per-track health
   const adrHealth = computeTrackHealth(data.stepCounts, 'ADR', criticalRisks)
   const biggyHealth = computeTrackHealth(data.stepCounts, 'Biggy', criticalRisks)
+  const ipHealth = computeTrackHealth(data.stepCounts, 'Incident Prevention', criticalRisks)
+  const ipActive = activeTracks?.incident_prevention === true
 
   // ─── Verdict label with inline trigger ───────────────────────────────────────
 
@@ -214,6 +228,12 @@ export function HealthDashboard({ projectId }: HealthDashboardProps) {
             className={`inline-flex px-2 py-0.5 text-xs rounded-full border ${ragConfig[biggyHealth].className}`}>
             Biggy: {ragConfig[biggyHealth].label}
           </span>
+          {ipActive && (
+            <span data-testid="ip-health-badge"
+              className={`inline-flex px-2 py-0.5 text-xs rounded-full border ${ragConfig[ipHealth].className}`}>
+              Incident Prevention: {ragConfig[ipHealth].label}
+            </span>
+          )}
         </div>
 
       </div>
