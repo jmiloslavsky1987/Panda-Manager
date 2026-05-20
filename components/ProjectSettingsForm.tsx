@@ -15,9 +15,10 @@ export function ProjectSettingsForm({ project, projectId, isAdmin }: ProjectSett
   const [name, setName] = useState(project.name ?? '')
   const [goLive, setGoLive] = useState(project.go_live_target ?? '')
   const [description, setDescription] = useState(project.description ?? '')
-  const activeTracks = (project.active_tracks as { adr: boolean; biggy: boolean } | null) ?? { adr: true, biggy: true }
+  const activeTracks = (project.active_tracks as { adr: boolean; biggy: boolean; incident_prevention?: boolean } | null) ?? { adr: true, biggy: true, incident_prevention: false }
   const [adrEnabled, setAdrEnabled] = useState(activeTracks.adr)
   const [biggyEnabled, setBiggyEnabled] = useState(activeTracks.biggy)
+  const [ipEnabled, setIpEnabled] = useState<boolean>(activeTracks.incident_prevention ?? false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
@@ -34,7 +35,14 @@ export function ProjectSettingsForm({ project, projectId, isAdmin }: ProjectSett
           name: name.trim(),
           go_live_target: goLive.trim() || null,
           description: description.trim() || null,
-          active_tracks: { adr: adrEnabled, biggy: biggyEnabled },
+          // Always send all three keys — partial payloads would silently
+          // drop other track flags via JSONB overwrite (Pitfall 2 in
+          // Phase 87 RESEARCH.md).
+          active_tracks: {
+            adr: adrEnabled,
+            biggy: biggyEnabled,
+            incident_prevention: ipEnabled,
+          },
         }),
       })
       if (!res.ok) {
@@ -123,6 +131,18 @@ export function ProjectSettingsForm({ project, projectId, isAdmin }: ProjectSett
           <span className="text-sm text-zinc-900">Biggy Track</span>
         </label>
         <p className="text-xs text-zinc-500 ml-7">Disabling this track hides it from WBS, Gantt, and Overview for all project members.</p>
+
+        <label className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            checked={ipEnabled}
+            onChange={(e) => setIpEnabled(e.target.checked)}
+            disabled={!isAdmin}
+            className="h-4 w-4 rounded border-zinc-300"
+          />
+          <span className="text-sm text-zinc-900">Incident Prevention</span>
+        </label>
+        <p className="text-xs text-zinc-500 ml-7">Enabling this track retroactively seeds the Incident Prevention arch, WBS, and onboarding rows. Disabling hides it from WBS, Gantt, and Overview for all project members.</p>
       </div>
 
       {error && <p className="text-red-600 text-sm">{error}</p>}
