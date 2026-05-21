@@ -30,6 +30,12 @@ import {
   extractionJobs,
 } from '@/db/schema';
 import type { EntityType, ExtractionItem } from '@/lib/extraction-types';
+import {
+  applyEvidenceLogEntry,
+  applyTeamCardActivity,
+  applyTeamMetricCurrent,
+  applyMilestoneDate,
+} from '@/lib/context-updater-applier';
 import { requireProjectRole } from "@/lib/auth-server";
 import { createApiRedisConnection } from '@/worker/connection';
 import { coerceWbsItemStatus, coerceArchNodeStatus } from './coercers';
@@ -46,6 +52,8 @@ const ApprovalItemSchema = z.object({
     'wbs_task', 'team_engagement', 'arch_node',
     'focus_area', 'e2e_workflow',   // Gap 3+4 — added Phase 50
     'before_state', 'weekly_focus',  // Gap A+G — added Phase 51
+    // Phase 88.1 G5 (Plan 12):
+    'evidence_log_entry', 'team_card_activity', 'team_metric_current', 'milestone_date_update',
   ]),
   fields: z.record(z.string(), z.union([
     z.string(), z.number(), z.boolean(), z.null(),
@@ -119,13 +127,15 @@ function coerceRiskSeverity(raw: string | undefined | null): RiskSeverity {
   return 'medium';
 }
 
-type TrackStatus = 'live' | 'in_progress' | 'pilot' | 'planned';
+type TrackStatus = 'live' | 'in_progress' | 'complete' | 'planned';
 function coerceTrackStatus(raw: string | undefined | null): TrackStatus | null {
   if (!raw) return null;
   const v = raw.toLowerCase().trim();
   if (['live', 'production', 'active', 'enabled'].includes(v)) return 'live';
   if (['in_progress', 'in progress', 'ongoing', 'running'].includes(v)) return 'in_progress';
-  if (['pilot', 'testing', 'trial'].includes(v)) return 'pilot';
+  // 'pilot' kept as a backward-compat INPUT alias from Claude/free-text, but RETURN is 'complete'.
+  // 'complete', 'done' added as preferred new input forms.
+  if (['complete', 'done', 'finished', 'pilot', 'testing', 'trial'].includes(v)) return 'complete';
   if (['planned', 'scheduled', 'upcoming', 'not started', 'not_started'].includes(v)) return 'planned';
   return null;
 }
@@ -727,7 +737,7 @@ async function insertItem(
           project_id:         projectId,
           team_name:          f.team_name ?? '',
           route_steps:        routeSteps as unknown as typeof teamPathways.$inferInsert['route_steps'],
-          status:             (f.status as 'live' | 'in_progress' | 'pilot' | 'planned' | undefined) ?? 'planned',
+          status:             (f.status as 'live' | 'in_progress' | 'complete' | 'planned' | undefined) ?? 'planned',
           notes:              f.notes ?? null,
           source:             'ingestion',
           source_artifact_id: artifactId,
@@ -1103,6 +1113,69 @@ async function insertItem(
       // No DB audit log for Redis cache writes
       return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
     }
+
+    // ── Phase 88.1 G5 (Plan 12) — new entity types routed to context-updater applier ──
+    // NOTE: item.fields is Record<string, string> after Zod transform (all values stringified).
+    // Use function-scope artifactId (NOT item.source_artifact_id — not a field on ApprovalItem).
+
+    case 'evidence_log_entry': {
+      const fields = item.fields  // Record<string, string> after Zod transform
+      if (!fields.business_outcome_id || !fields.date || !fields.text) {
+        throw new Error(`evidence_log_entry missing required fields: ${JSON.stringify(fields)}`)
+      }
+      const r = await applyEvidenceLogEntry(projectId, {
+        business_outcome_id: Number(fields.business_outcome_id),
+        date: fields.date,
+        text: fields.text,
+      }, artifactId)
+      if (!r.inserted && r.reason !== 'duplicate') {
+        console.warn('[approve/evidence_log_entry] failed:', r.reason)
+      }
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
+    }
+
+    case 'team_card_activity': {
+      const fields = item.fields
+      if (!fields.team_name || !fields.latest_activity) {
+        throw new Error(`team_card_activity missing required fields`)
+      }
+      const r = await applyTeamCardActivity(projectId, {
+        team_name: fields.team_name,
+        latest_activity: fields.latest_activity,
+        latest_activity_at: fields.latest_activity_at || undefined,
+      }, artifactId)
+      if (!r.updated) console.warn('[approve/team_card_activity] failed:', r.reason)
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
+    }
+
+    case 'team_metric_current': {
+      const fields = item.fields
+      if (!fields.current || (!fields.metric_id && !(fields.team_card_id && fields.label))) {
+        throw new Error(`team_metric_current needs current + (metric_id OR (team_card_id+label))`)
+      }
+      const r = await applyTeamMetricCurrent(projectId, {
+        metric_id: fields.metric_id ? Number(fields.metric_id) : undefined,
+        team_card_id: fields.team_card_id ? Number(fields.team_card_id) : undefined,
+        label: fields.label || undefined,
+        current: fields.current,
+      }, artifactId)
+      if (!r.updated) console.warn('[approve/team_metric_current] failed:', r.reason)
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
+    }
+
+    case 'milestone_date_update': {
+      const fields = item.fields
+      if (!fields.target_date || (!fields.milestone_id && !fields.name)) {
+        throw new Error(`milestone_date_update needs target_date + (milestone_id OR name)`)
+      }
+      const r = await applyMilestoneDate(projectId, {
+        milestone_id: fields.milestone_id ? Number(fields.milestone_id) : undefined,
+        name: fields.name || undefined,
+        target_date: fields.target_date,
+      }, artifactId)
+      if (!r.updated) console.warn('[approve/milestone_date_update] failed:', r.reason)
+      return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
+    }
   }
   return { unresolvedMilestones: 0, unresolvedWorkstreams: 0 };
 }
@@ -1317,7 +1390,7 @@ async function mergeItem(
         : undefined;
       const patch: Partial<typeof teamPathways.$inferInsert> = {
         ...(routeSteps ? { route_steps: routeSteps as unknown as typeof teamPathways.$inferInsert['route_steps'] } : {}),
-        ...(f.status ? { status: f.status as 'live' | 'in_progress' | 'pilot' | 'planned' } : {}),
+        ...(f.status ? { status: f.status as 'live' | 'in_progress' | 'complete' | 'planned' } : {}),
         ...(f.notes ? { notes: f.notes } : {}),
         source_artifact_id: artifactId,
         ingested_at: new Date(),
