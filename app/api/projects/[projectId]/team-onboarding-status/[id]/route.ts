@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/db'
-import { teamOnboardingStatus, auditLog } from '@/db/schema'
+import { teamOnboardingStatus, teamOnboardingStageStatus, auditLog } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { sql } from 'drizzle-orm'
 import { z } from 'zod'
@@ -10,15 +10,24 @@ const trackStatusEnum = z.enum(['live', 'in_progress', 'pilot', 'planned']).null
 
 const onboardingStatusEnum = z.enum(['not-started', 'in-progress', 'complete', 'blocked']).optional()
 
+// Phase 88.1 G1: per-stage status entry for the new pivot table
+const stageStatusEntry = z.object({
+  stage_key: z.string().min(1),
+  status:    z.enum(['live', 'in_progress', 'pilot', 'planned']).nullable(),
+})
+
 const patchSchema = z.object({
   team_name: z.string().min(1).optional(),
   track: z.string().nullable().optional(),
   status: onboardingStatusEnum,
+  // Legacy 5 fields — still accepted for backwards compat during transition
   ingest_status: trackStatusEnum,
   correlation_status: trackStatusEnum,
   incident_intelligence_status: trackStatusEnum,
   sn_automation_status: trackStatusEnum,
   biggy_ai_status: trackStatusEnum,
+  // Phase 88.1 G1: new per-track stages array
+  stage_status: z.array(stageStatusEntry).optional(),
 })
 
 export async function PATCH(
@@ -61,6 +70,7 @@ export async function PATCH(
     incident_intelligence_status,
     sn_automation_status,
     biggy_ai_status,
+    stage_status,
   } = parsed.data
 
   if (team_name !== undefined) updateData.team_name = team_name
@@ -93,6 +103,22 @@ export async function PATCH(
           )
         )
         .returning()
+
+      // Phase 88.1 G1: UPSERT per-stage pivot rows when stage_status array provided
+      if (stage_status && stage_status.length > 0) {
+        for (const s of stage_status) {
+          await tx.insert(teamOnboardingStageStatus).values({
+            team_onboarding_id: numericId,
+            stage_key: s.stage_key,
+            status: s.status,
+            source: 'manual',
+          }).onConflictDoUpdate({
+            target: [teamOnboardingStageStatus.team_onboarding_id, teamOnboardingStageStatus.stage_key],
+            set: { status: s.status, updated_at: new Date(), source: 'manual' },
+          })
+        }
+      }
+
       await tx.insert(auditLog).values({
         entity_type: 'team_onboarding_status',
         entity_id: numericId,

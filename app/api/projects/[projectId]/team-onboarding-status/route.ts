@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/db'
-import { teamOnboardingStatus } from '@/db/schema'
+import { teamOnboardingStatus, teamOnboardingStageStatus } from '@/db/schema'
 import { eq, asc } from 'drizzle-orm'
 import { sql } from 'drizzle-orm'
 import { z } from 'zod'
@@ -10,15 +10,24 @@ const trackStatusEnum = z.enum(['live', 'in_progress', 'pilot', 'planned']).null
 
 const onboardingStatusEnum = z.enum(['not-started', 'in-progress', 'complete', 'blocked']).optional()
 
+// Phase 88.1 G1: per-stage status entry for the new pivot table
+const stageStatusEntry = z.object({
+  stage_key: z.string().min(1),
+  status:    z.enum(['live', 'in_progress', 'pilot', 'planned']).nullable(),
+})
+
 const postSchema = z.object({
   team_name: z.string().min(1),
   track: z.string().nullable().optional(),
   status: onboardingStatusEnum,
+  // Legacy 5 fields — still accepted for backwards compat during transition
   ingest_status: trackStatusEnum,
   correlation_status: trackStatusEnum,
   incident_intelligence_status: trackStatusEnum,
   sn_automation_status: trackStatusEnum,
   biggy_ai_status: trackStatusEnum,
+  // Phase 88.1 G1: new per-track stages array
+  stage_status: z.array(stageStatusEntry).optional(),
 })
 
 export async function GET(
@@ -86,13 +95,14 @@ export async function POST(
     incident_intelligence_status,
     sn_automation_status,
     biggy_ai_status,
+    stage_status,
   } = parsed.data
 
   try {
     const result = await db.transaction(async (tx) => {
       await tx.execute(sql.raw(`SET LOCAL app.current_project_id = ${numericId}`))
 
-      return tx
+      const inserted = await tx
         .insert(teamOnboardingStatus)
         .values({
           project_id: numericId,
@@ -107,6 +117,21 @@ export async function POST(
           source: 'manual',
         })
         .returning()
+
+      const newRow = inserted[0]
+      // Phase 88.1 G1: write per-stage pivot rows when stage_status array provided
+      if (stage_status && stage_status.length > 0 && newRow) {
+        await tx.insert(teamOnboardingStageStatus).values(
+          stage_status.map((s) => ({
+            team_onboarding_id: newRow.id,
+            stage_key: s.stage_key,
+            status: s.status,
+            source: 'manual',
+          }))
+        ).onConflictDoNothing()
+      }
+
+      return inserted
     })
 
     return NextResponse.json({ row: result[0] }, { status: 201 })

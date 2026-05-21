@@ -115,4 +115,9 @@ describe('XCUT-88-01: Phase 88.1 new routes use requireProjectRole', () => {
     const src = readRouteSafe('team-cards/[teamCardId]/key-metrics/[metricId]/route.ts');
     expect(src, 'team-cards/[teamCardId]/key-metrics/[metricId]/route.ts not yet created or missing requireProjectRole').toContain('requireProjectRole');
   });
+
+  it('XCUT-88-01: /api/projects/[projectId]/track-workstream-stages/route.ts calls requireProjectRole', () => {
+    const src = readRouteSafe('track-workstream-stages/route.ts');
+    expect(src, 'track-workstream-stages/route.ts not yet created or missing requireProjectRole').toContain('requireProjectRole');
+  });
 });
