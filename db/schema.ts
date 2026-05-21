@@ -83,7 +83,7 @@ export const outcomeAchievementStatusEnum = pgEnum('outcome_achievement_status',
 ]);
 
 export const integrationTrackStatusEnum = pgEnum('integration_track_status', [
-  'live', 'in_progress', 'pilot', 'planned',
+  'live', 'in_progress', 'complete', 'planned',
 ]);
 
 // ─── v6.0 Enums ──────────────────────────────────────────────────────────────
@@ -766,7 +766,7 @@ export type TrackWorkstreamStage    = typeof trackWorkstreamStages.$inferSelect;
 export type NewTrackWorkstreamStage = typeof trackWorkstreamStages.$inferInsert;
 
 // Per-team-row, per-stage status pivot. FK to team_onboarding_status; ON DELETE CASCADE.
-// Reuses the existing integrationTrackStatusEnum (live | in_progress | pilot | planned).
+// Reuses the existing integrationTrackStatusEnum (live | in_progress | complete | planned).
 // Nullable status matches current legacy column semantics.
 
 export const teamOnboardingStageStatus = pgTable('team_onboarding_stage_status', {
