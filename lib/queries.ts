@@ -1032,6 +1032,8 @@ export interface TeamsTabData {
   // Phase 88.1 G1 gap closure: per-track workstream stages
   trackWorkstreamStages: import('../db/schema').TrackWorkstreamStage[];
   teamOnboardingStageStatus: import('../db/schema').TeamOnboardingStageStatus[];
+  // Phase 88.1 G2 gap closure: per-team per-track stage progress
+  trackProgressByTeam: import('./teams-track-progress').TrackProgressByTeam;
 }
 
 // ─── Teams Tab Query ──────────────────────────────────────────────────────────
@@ -1106,6 +1108,14 @@ export async function getTeamsTabData(projectId: number): Promise<TeamsTabData> 
         .orderBy(desc(evidenceLog.date))
     : [];
 
+  // Phase 88.1 G2: aggregate per-team per-track progress for TeamCard Progress Bars
+  const { buildTrackProgressByTeam } = await import('./teams-track-progress')
+  const trackProgressByTeam = buildTrackProgressByTeam(
+    onboardingRows.map((r) => ({ id: r.id, team_name: r.team_name, track: r.track })),
+    trackStagesRows.map((r) => ({ track: r.track, stage_key: r.stage_key })),
+    teamOnboardingStageStatusRows.map((r) => ({ team_onboarding_id: r.team_onboarding_id, stage_key: r.stage_key, status: r.status })),
+  )
+
   return {
     businessOutcomes: outcomes,
     e2eWorkflows: workflows.map(wf => ({ ...wf, steps: stepsMap.get(wf.id) ?? [] })),
@@ -1122,6 +1132,8 @@ export async function getTeamsTabData(projectId: number): Promise<TeamsTabData> 
     // Phase 88.1 G1 gap closure: per-track workstream stages
     trackWorkstreamStages: trackStagesRows,
     teamOnboardingStageStatus: teamOnboardingStageStatusRows,
+    // Phase 88.1 G2 gap closure: per-team per-track stage progress
+    trackProgressByTeam,
   };
 }
 
