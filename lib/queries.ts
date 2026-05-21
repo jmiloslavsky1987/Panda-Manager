@@ -36,6 +36,8 @@ import {
   evidenceLog,
   teamCards,
   teamCardKeyMetrics,
+  trackWorkstreamStages,
+  teamOnboardingStageStatus,
   type WbsDependency,
 } from '../db/schema';
 import { eq, and, inArray, ne, gt, or, desc, asc } from 'drizzle-orm';
@@ -1027,6 +1029,9 @@ export interface TeamsTabData {
   teamCardKeyMetrics: import('../db/schema').TeamCardKeyMetric[];
   evidenceLog: import('../db/schema').EvidenceLog[];
   milestones: Milestone[]; // Phase 88.1 — for MilestoneTrackerSection
+  // Phase 88.1 G1 gap closure: per-track workstream stages
+  trackWorkstreamStages: import('../db/schema').TrackWorkstreamStage[];
+  teamOnboardingStageStatus: import('../db/schema').TeamOnboardingStageStatus[];
 }
 
 // ─── Teams Tab Query ──────────────────────────────────────────────────────────
@@ -1038,7 +1043,7 @@ export interface TeamsTabData {
  * and open/in_progress actions (for the Teams & Engagement Status section).
  */
 export async function getTeamsTabData(projectId: number): Promise<TeamsTabData> {
-  const [outcomes, workflows, steps, areas, archIntegrations, openActs, onboardingRows, stakeholderRows, teamCardsRows, milestonesRows] = await Promise.all([
+  const [outcomes, workflows, steps, areas, archIntegrations, openActs, onboardingRows, stakeholderRows, teamCardsRows, milestonesRows, trackStagesRows] = await Promise.all([
     db.select().from(businessOutcomes).where(eq(businessOutcomes.project_id, projectId)),
     db.select().from(e2eWorkflows).where(eq(e2eWorkflows.project_id, projectId)),
     db.select().from(workflowSteps)
@@ -1066,6 +1071,10 @@ export async function getTeamsTabData(projectId: number): Promise<TeamsTabData> 
     db.select().from(teamCards).where(eq(teamCards.project_id, projectId)),
     // Phase 88.1: milestones for MilestoneTrackerSection
     db.select().from(milestones).where(eq(milestones.project_id, projectId)),
+    // Phase 88.1 G1: per-track workstream stages for this project
+    db.select().from(trackWorkstreamStages)
+      .where(eq(trackWorkstreamStages.project_id, projectId))
+      .orderBy(asc(trackWorkstreamStages.track), asc(trackWorkstreamStages.display_order)),
   ]);
 
   const stepsMap = new Map<number, WorkflowStep[]>();
@@ -1074,6 +1083,13 @@ export async function getTeamsTabData(projectId: number): Promise<TeamsTabData> 
     if (!stepsMap.has(wfId)) stepsMap.set(wfId, []);
     stepsMap.get(wfId)!.push(row.workflow_steps);
   }
+
+  // Phase 88.1 G1: fetch stage status rows for all team_onboarding_status rows in this project
+  const teamOnboardingIds = onboardingRows.map((r) => r.id);
+  const teamOnboardingStageStatusRows = teamOnboardingIds.length > 0
+    ? await db.select().from(teamOnboardingStageStatus)
+        .where(inArray(teamOnboardingStageStatus.team_onboarding_id, teamOnboardingIds))
+    : [];
 
   // Phase 88.1: fetch key metrics and evidence log rows (guarded against empty arrays)
   const teamCardIds = teamCardsRows.map((c) => c.id);
@@ -1103,6 +1119,9 @@ export async function getTeamsTabData(projectId: number): Promise<TeamsTabData> 
     teamCardKeyMetrics: teamCardKeyMetricsRows,
     evidenceLog: evidenceLogRows,
     milestones: milestonesRows,  // Phase 88.1 — MilestoneTrackerSection
+    // Phase 88.1 G1 gap closure: per-track workstream stages
+    trackWorkstreamStages: trackStagesRows,
+    teamOnboardingStageStatus: teamOnboardingStageStatusRows,
   };
 }
 
@@ -1117,6 +1136,9 @@ export interface ArchTabData {
   beforeState: BeforeState | null;
   teamOnboardingStatus: TeamOnboardingStatus[];
   teamPathways: TeamPathway[];
+  // Phase 88.1 G1 gap closure: per-track workstream stages
+  trackWorkstreamStages: import('../db/schema').TrackWorkstreamStage[];
+  teamOnboardingStageStatus: import('../db/schema').TeamOnboardingStageStatus[];
 }
 
 // ─── Architecture Tab Query ───────────────────────────────────────────────────
@@ -1127,7 +1149,7 @@ export interface ArchTabData {
  * and team onboarding status rows for the project.
  */
 export async function getArchTabData(projectId: number): Promise<ArchTabData> {
-  const [integrations, beforeStateRows, onboardingRows, pathwaysRows] = await Promise.all([
+  const [integrations, beforeStateRows, onboardingRows, pathwaysRows, trackStagesRows] = await Promise.all([
     db.select().from(architectureIntegrations)
       .where(eq(architectureIntegrations.project_id, projectId))
       .orderBy(asc(architectureIntegrations.phase), asc(architectureIntegrations.tool_name)),
@@ -1138,12 +1160,27 @@ export async function getArchTabData(projectId: number): Promise<ArchTabData> {
     db.select().from(teamPathways)
       .where(eq(teamPathways.project_id, projectId))
       .orderBy(asc(teamPathways.team_name)),
+    // Phase 88.1 G1: per-track workstream stages for this project
+    db.select().from(trackWorkstreamStages)
+      .where(eq(trackWorkstreamStages.project_id, projectId))
+      .orderBy(asc(trackWorkstreamStages.track), asc(trackWorkstreamStages.display_order)),
   ]);
+
+  // Phase 88.1 G1: fetch stage status rows for all team_onboarding_status rows in this project
+  const teamOnboardingIds = onboardingRows.map((r) => r.id);
+  const teamOnboardingStageStatusRows = teamOnboardingIds.length > 0
+    ? await db.select().from(teamOnboardingStageStatus)
+        .where(inArray(teamOnboardingStageStatus.team_onboarding_id, teamOnboardingIds))
+    : [];
+
   return {
     architectureIntegrations: integrations,
     beforeState: beforeStateRows[0] ?? null,
     teamOnboardingStatus: onboardingRows,
     teamPathways: pathwaysRows,
+    // Phase 88.1 G1 gap closure: per-track workstream stages
+    trackWorkstreamStages: trackStagesRows,
+    teamOnboardingStageStatus: teamOnboardingStageStatusRows,
   };
 }
 

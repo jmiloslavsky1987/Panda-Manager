@@ -743,6 +743,47 @@ export const teamOnboardingStatus = pgTable('team_onboarding_status', {
   created_at:                      timestamp('created_at').defaultNow().notNull(),
 });
 
+// ─── Phase 88.1 G1 gap closure: per-track workstream stages ──────────────────
+// Replaces the hardcoded COLUMNS constant in components/arch/TeamOnboardingTable.tsx.
+// Each project gets a row per (track, stage_key) describing the column headers for that
+// track's workstreams. Seeded by migration 0055 from DEFAULT_TRACK_WORKSTREAM_STAGES.
+// Stage labels mirror the project Overview tab's 5 expandable onboarding pillars per track.
+
+export const trackWorkstreamStages = pgTable('track_workstream_stages', {
+  id:            serial('id').primaryKey(),
+  project_id:    integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  track:         text('track').notNull(),       // 'ADR' | 'Biggy' | 'Incident Prevention'
+  stage_key:     text('stage_key').notNull(),
+  stage_label:   text('stage_label').notNull(),
+  display_order: integer('display_order').notNull(),
+  source:        text('source').notNull().default('seed'),
+  created_at:    timestamp('created_at').defaultNow().notNull(),
+}, (t) => [
+  uniqueIndex('track_workstream_stages_uniq').on(t.project_id, t.track, t.stage_key),
+]);
+
+export type TrackWorkstreamStage    = typeof trackWorkstreamStages.$inferSelect;
+export type NewTrackWorkstreamStage = typeof trackWorkstreamStages.$inferInsert;
+
+// Per-team-row, per-stage status pivot. FK to team_onboarding_status; ON DELETE CASCADE.
+// Reuses the existing integrationTrackStatusEnum (live | in_progress | pilot | planned).
+// Nullable status matches current legacy column semantics.
+
+export const teamOnboardingStageStatus = pgTable('team_onboarding_stage_status', {
+  id:                 serial('id').primaryKey(),
+  team_onboarding_id: integer('team_onboarding_id').notNull().references(() => teamOnboardingStatus.id, { onDelete: 'cascade' }),
+  stage_key:          text('stage_key').notNull(),
+  status:             integrationTrackStatusEnum('status'),
+  source:             text('source').notNull().default('manual'),
+  created_at:         timestamp('created_at').defaultNow().notNull(),
+  updated_at:         timestamp('updated_at').defaultNow().notNull(),
+}, (t) => [
+  uniqueIndex('team_onboarding_stage_status_uniq').on(t.team_onboarding_id, t.stage_key),
+]);
+
+export type TeamOnboardingStageStatus    = typeof teamOnboardingStageStatus.$inferSelect;
+export type NewTeamOnboardingStageStatus = typeof teamOnboardingStageStatus.$inferInsert;
+
 export const weeklyReportNotes = pgTable('weekly_report_notes', {
   id:         serial('id').primaryKey(),
   project_id: integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
