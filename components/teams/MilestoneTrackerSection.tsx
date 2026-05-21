@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Icon } from '@/components/Icon';
 import type { Milestone } from '@/lib/queries';
+import { StatusPill } from '@/components/StatusPill';
 
 interface Props {
   projectId: number;
@@ -151,7 +152,9 @@ export default function MilestoneTrackerSection({ projectId, milestones }: Props
               {m.owner && (
                 <span className="text-xs text-muted-foreground flex-shrink-0">{m.owner}</span>
               )}
-              <span className="text-xs uppercase flex-shrink-0">{m.status ?? 'planned'}</span>
+              <span className="flex-shrink-0">
+                <StatusPill variant="milestone" status={m.status ?? 'planned'} />
+              </span>
             </li>
           ))}
         </ul>
