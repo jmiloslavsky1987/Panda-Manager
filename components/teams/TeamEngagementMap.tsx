@@ -48,7 +48,7 @@ export function TeamEngagementMap({
         teamOnboardingStageStatus={data.teamOnboardingStageStatus}
         active_tracks={active_tracks}
         milestonesByTeam={milestonesByTeam}
-        trackProgressByTeam={{}} // v1 stub — Phase 88.2 wires real arch integration counts
+        trackProgressByTeam={data.trackProgressByTeam} // Phase 88.1 G2 — real per-track counts from team_onboarding_stage_status
         openRisksByTeam={openRisksByTeam}
         recentDecisionByTeam={recentDecisionByTeam}
       />
