@@ -2,6 +2,10 @@
 // Helper that applies the context-updater skill's JSON output to the four new Phase 88.1 DB write paths.
 // Called by worker/jobs/context-updater.ts after orchestrator.run completes.
 //
+// Plan 12 refactor: exposes 4 per-entity write fns callable piecewise from approve/route.ts.
+// The applyContextUpdaterResult bulk entrypoint (Plan 04 BullMQ path) is preserved and delegates
+// to the per-entity fns.
+//
 // Idempotency: DB-level partial UNIQUE INDEX evidence_log_idem_idx prevents duplicate context_upload entries.
 // Applier catches Postgres error code 23505 (duplicate key violation) and swallows it — a second run on
 // the same input silently skips already-inserted Evidence Log rows.
@@ -11,7 +15,7 @@
 //
 // All auto-generated writes set source: 'context_upload' — SourceBadge differentiates manual vs auto entries.
 
-import { eq, and } from 'drizzle-orm';
+import { eq, and, ilike } from 'drizzle-orm';
 import db from '@/db';
 import { evidenceLog, teamCards, teamCardKeyMetrics, milestones } from '@/db/schema';
 
@@ -50,6 +54,256 @@ export interface ApplyCounts {
   milestoneDateUpdates: number;
 }
 
+// ─── Per-entity write fns (Plan 12 — callable piecewise from approve route) ───
+
+/**
+ * Append an Evidence Log entry for a business outcome.
+ * 23505 idempotency guard: on duplicate key violation (evidence_log_idem_idx), silently skips.
+ */
+export async function applyEvidenceLogEntry(
+  projectId: number,
+  fields: { business_outcome_id: number; date: string; text: string },
+  artifactId?: number,
+): Promise<{ inserted: boolean; reason?: string }> {
+  try {
+    await db.insert(evidenceLog).values({
+      business_outcome_id: fields.business_outcome_id,
+      date: fields.date,
+      source: 'context_upload',
+      source_artifact_id: artifactId ?? null,
+      text: fields.text,
+      ingested_at: new Date(),
+    });
+    console.log(
+      `[ctx-applier] project=${projectId} table=evidence_log action=insert source=context_upload outcome_id=${fields.business_outcome_id}`,
+    );
+    return { inserted: true };
+  } catch (err) {
+    // Postgres 23505 = duplicate key value violates unique constraint (evidence_log_idem_idx)
+    const code = (err as { code?: string }).code;
+    if (code === '23505') {
+      console.log(
+        `[ctx-applier] evidence_log duplicate skipped (23505) — outcome_id=${fields.business_outcome_id} text="${fields.text.slice(0, 60)}"`,
+      );
+      return { inserted: false, reason: 'duplicate' };
+    }
+    console.error(
+      `[ctx-applier] evidence_log insert failed (code=${code ?? 'unknown'}): ${err instanceof Error ? err.message : err}`,
+    );
+    return { inserted: false, reason: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+/**
+ * Overwrite latest_activity_text for a team card identified by team_name within the project.
+ * Ownership chain: card must belong to projectId.
+ */
+export async function applyTeamCardActivity(
+  projectId: number,
+  fields: { team_name: string; latest_activity: string; latest_activity_at?: string },
+  artifactId?: number,
+): Promise<{ updated: boolean; team_card_id?: number; reason?: string }> {
+  const [card] = await db
+    .select()
+    .from(teamCards)
+    .where(and(eq(teamCards.project_id, projectId), eq(teamCards.team_name, fields.team_name)));
+  if (!card) {
+    // Try case-insensitive fallback
+    const [cardFuzzy] = await db
+      .select()
+      .from(teamCards)
+      .where(and(eq(teamCards.project_id, projectId), ilike(teamCards.team_name, fields.team_name)));
+    if (!cardFuzzy) {
+      console.log(
+        `[ctx-applier] team_card not found for team_name="${fields.team_name}" project=${projectId}; skipping`,
+      );
+      return { updated: false, reason: `team_card not found: ${fields.team_name}` };
+    }
+    // use fuzzy match
+    try {
+      await db
+        .update(teamCards)
+        .set({
+          latest_activity_date: fields.latest_activity_at ?? null,
+          latest_activity_text: fields.latest_activity,
+          latest_activity_source: 'context_upload',
+          updated_at: new Date(),
+        })
+        .where(eq(teamCards.id, cardFuzzy.id));
+      console.log(
+        `[ctx-applier] project=${projectId} table=team_cards action=update source=context_upload team="${fields.team_name}"`,
+      );
+      return { updated: true, team_card_id: cardFuzzy.id };
+    } catch (err) {
+      console.error(
+        `[ctx-applier] team_cards update failed for team="${fields.team_name}": ${err instanceof Error ? err.message : err}`,
+      );
+      return { updated: false, reason: err instanceof Error ? err.message : String(err) };
+    }
+  }
+  try {
+    await db
+      .update(teamCards)
+      .set({
+        latest_activity_date: fields.latest_activity_at ?? null,
+        latest_activity_text: fields.latest_activity,
+        latest_activity_source: 'context_upload',
+        updated_at: new Date(),
+      })
+      .where(eq(teamCards.id, card.id));
+    console.log(
+      `[ctx-applier] project=${projectId} table=team_cards action=update source=context_upload team="${fields.team_name}"`,
+    );
+    return { updated: true, team_card_id: card.id };
+  } catch (err) {
+    console.error(
+      `[ctx-applier] team_cards update failed for team="${fields.team_name}": ${err instanceof Error ? err.message : err}`,
+    );
+    return { updated: false, reason: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+/**
+ * Update the current value of a key metric for a team card.
+ * Lookup: by metric_id (direct), or by team_card_id + label (fuzzy match).
+ * Ownership chain: metric's team_card must belong to projectId.
+ */
+export async function applyTeamMetricCurrent(
+  projectId: number,
+  fields: { metric_id?: number; team_card_id?: number; label?: string; current: string },
+  artifactId?: number,
+): Promise<{ updated: boolean; metric_id?: number; reason?: string }> {
+  let metricId: number | undefined = fields.metric_id;
+
+  if (!metricId && fields.team_card_id && fields.label) {
+    // Lookup by team_card_id + label (case-insensitive)
+    const [found] = await db
+      .select()
+      .from(teamCardKeyMetrics)
+      .where(and(
+        eq(teamCardKeyMetrics.team_card_id, fields.team_card_id),
+        ilike(teamCardKeyMetrics.label, fields.label),
+      ));
+    if (!found) {
+      console.log(
+        `[ctx-applier] key_metric not found for team_card_id=${fields.team_card_id} label="${fields.label}"; skipping`,
+      );
+      return { updated: false, reason: `metric not found: ${fields.label}` };
+    }
+    metricId = found.id;
+  }
+
+  if (!metricId) {
+    return { updated: false, reason: 'metric_id not resolved — provide metric_id or team_card_id+label' };
+  }
+
+  const [metric] = await db
+    .select()
+    .from(teamCardKeyMetrics)
+    .where(eq(teamCardKeyMetrics.id, metricId));
+  if (!metric) {
+    console.log(`[ctx-applier] key_metric id=${metricId} not found; skipping`);
+    return { updated: false, reason: `metric id=${metricId} not found` };
+  }
+
+  // Ownership chain: verify metric belongs to this project
+  const [parentCard] = await db
+    .select()
+    .from(teamCards)
+    .where(eq(teamCards.id, metric.team_card_id));
+  if (!parentCard || parentCard.project_id !== projectId) {
+    console.log(
+      `[ctx-applier] key_metric ${metricId} not in project ${projectId} (belongs to project ${parentCard?.project_id ?? 'unknown'}); skipping`,
+    );
+    return { updated: false, reason: `metric ${metricId} not in project ${projectId}` };
+  }
+
+  try {
+    await db
+      .update(teamCardKeyMetrics)
+      .set({
+        current: fields.current,
+        source: 'context_upload',
+        source_artifact_id: artifactId ?? metric.source_artifact_id,
+        updated_at: new Date(),
+      })
+      .where(eq(teamCardKeyMetrics.id, metricId));
+    console.log(
+      `[ctx-applier] project=${projectId} table=team_card_key_metrics action=update source=context_upload metric_id=${metricId}`,
+    );
+    return { updated: true, metric_id: metricId };
+  } catch (err) {
+    console.error(
+      `[ctx-applier] key_metrics update failed for metric_id=${metricId}: ${err instanceof Error ? err.message : err}`,
+    );
+    return { updated: false, reason: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+/**
+ * Update the target date of an existing milestone.
+ * Lookup: by milestone_id (direct), or by name within project.
+ * Ownership chain: milestone must belong to projectId.
+ */
+export async function applyMilestoneDate(
+  projectId: number,
+  fields: { milestone_id?: number; name?: string; target_date: string },
+  artifactId?: number,
+): Promise<{ updated: boolean; milestone_id?: number; reason?: string }> {
+  let milestoneId: number | undefined = fields.milestone_id;
+
+  if (!milestoneId && fields.name) {
+    // Lookup by name (fuzzy match within project)
+    const [found] = await db
+      .select()
+      .from(milestones)
+      .where(and(
+        eq(milestones.project_id, projectId),
+        ilike(milestones.name, `%${fields.name}%`),
+      ));
+    if (!found) {
+      console.log(
+        `[ctx-applier] milestone not found for name="${fields.name}" project=${projectId}; skipping`,
+      );
+      return { updated: false, reason: `milestone not found: ${fields.name}` };
+    }
+    milestoneId = found.id;
+  }
+
+  if (!milestoneId) {
+    return { updated: false, reason: 'milestone_id not resolved — provide milestone_id or name' };
+  }
+
+  const [milestone] = await db
+    .select()
+    .from(milestones)
+    .where(eq(milestones.id, milestoneId));
+  if (!milestone || milestone.project_id !== projectId) {
+    console.log(
+      `[ctx-applier] milestone id=${milestoneId} not in project ${projectId}; skipping`,
+    );
+    return { updated: false, reason: `milestone ${milestoneId} not in project ${projectId}` };
+  }
+
+  try {
+    await db
+      .update(milestones)
+      .set({ date: fields.target_date, target: fields.target_date })
+      .where(eq(milestones.id, milestoneId));
+    console.log(
+      `[ctx-applier] project=${projectId} table=milestones action=update_date milestone_id=${milestoneId} date=${fields.target_date}`,
+    );
+    return { updated: true, milestone_id: milestoneId };
+  } catch (err) {
+    console.error(
+      `[ctx-applier] milestones date update failed for milestone_id=${milestoneId}: ${err instanceof Error ? err.message : err}`,
+    );
+    return { updated: false, reason: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+// ─── Bulk entrypoint (Plan 04 BullMQ path — preserved) ────────────────────────
+
 /**
  * Applies the context-updater skill result to the 4 new Phase 88.1 DB surfaces.
  *
@@ -74,38 +328,15 @@ export async function applyContextUpdaterResult(
   };
 
   // ── 1. Evidence Log entries (append-only) ────────────────────────────────────
-  // Idempotency: DB partial UNIQUE INDEX evidence_log_idem_idx on (business_outcome_id, source_artifact_id, text)
-  // WHERE source = 'context_upload' prevents duplicate rows. On conflict (Postgres 23505) we log and skip.
   if (Array.isArray(parsed.evidenceLog)) {
     for (const entry of parsed.evidenceLog) {
       if (!entry || !entry.business_outcome_id || !entry.text || !entry.date) continue;
-      try {
-        await db.insert(evidenceLog).values({
-          business_outcome_id: entry.business_outcome_id,
-          date: entry.date,
-          source: 'context_upload',
-          source_artifact_id: artifactId ?? null,
-          text: entry.text,
-          ingested_at: new Date(),
-        });
-        counts.evidenceLogInserts++;
-        console.log(
-          `[ctx-applier] project=${projectId} table=evidence_log action=insert source=context_upload outcome_id=${entry.business_outcome_id}`,
-        );
-      } catch (err) {
-        // Postgres 23505 = duplicate key value violates unique constraint (evidence_log_idem_idx)
-        // Idempotency guard: swallow the error so BullMQ retries don't produce duplicate rows.
-        const code = (err as { code?: string }).code;
-        if (code === '23505') {
-          console.log(
-            `[ctx-applier] evidence_log duplicate skipped (23505) — outcome_id=${entry.business_outcome_id} text="${entry.text.slice(0, 60)}"`,
-          );
-        } else {
-          console.error(
-            `[ctx-applier] evidence_log insert failed (code=${code ?? 'unknown'}): ${err instanceof Error ? err.message : err}`,
-          );
-        }
-      }
+      const r = await applyEvidenceLogEntry(projectId, {
+        business_outcome_id: entry.business_outcome_id,
+        date: entry.date,
+        text: entry.text,
+      }, artifactId);
+      if (r.inserted) counts.evidenceLogInserts++;
     }
   }
 
@@ -113,35 +344,12 @@ export async function applyContextUpdaterResult(
   if (Array.isArray(parsed.teamCardLatestActivity)) {
     for (const upd of parsed.teamCardLatestActivity) {
       if (!upd || !upd.team_name || !upd.latest_activity_text) continue;
-      const [card] = await db
-        .select()
-        .from(teamCards)
-        .where(and(eq(teamCards.project_id, projectId), eq(teamCards.team_name, upd.team_name)));
-      if (!card) {
-        console.log(
-          `[ctx-applier] team_card not found for team_name="${upd.team_name}" project=${projectId}; skipping`,
-        );
-        continue;
-      }
-      try {
-        await db
-          .update(teamCards)
-          .set({
-            latest_activity_date: upd.latest_activity_date,
-            latest_activity_text: upd.latest_activity_text,
-            latest_activity_source: 'context_upload',
-            updated_at: new Date(),
-          })
-          .where(eq(teamCards.id, card.id));
-        counts.teamCardUpdates++;
-        console.log(
-          `[ctx-applier] project=${projectId} table=team_cards action=update source=context_upload team="${upd.team_name}"`,
-        );
-      } catch (err) {
-        console.error(
-          `[ctx-applier] team_cards update failed for team="${upd.team_name}": ${err instanceof Error ? err.message : err}`,
-        );
-      }
+      const r = await applyTeamCardActivity(projectId, {
+        team_name: upd.team_name,
+        latest_activity: upd.latest_activity_text,
+        latest_activity_at: upd.latest_activity_date ?? undefined,
+      }, artifactId);
+      if (r.updated) counts.teamCardUpdates++;
     }
   }
 
@@ -149,44 +357,11 @@ export async function applyContextUpdaterResult(
   if (Array.isArray(parsed.teamCardKeyMetricsCurrent)) {
     for (const upd of parsed.teamCardKeyMetricsCurrent) {
       if (!upd || !upd.metric_id || !upd.current) continue;
-      const [metric] = await db
-        .select()
-        .from(teamCardKeyMetrics)
-        .where(eq(teamCardKeyMetrics.id, upd.metric_id));
-      if (!metric) {
-        console.log(`[ctx-applier] key_metric id=${upd.metric_id} not found; skipping`);
-        continue;
-      }
-      // Ownership chain: verify metric belongs to this project
-      const [parentCard] = await db
-        .select()
-        .from(teamCards)
-        .where(eq(teamCards.id, metric.team_card_id));
-      if (!parentCard || parentCard.project_id !== projectId) {
-        console.log(
-          `[ctx-applier] key_metric ${upd.metric_id} not in project ${projectId} (belongs to project ${parentCard?.project_id ?? 'unknown'}); skipping`,
-        );
-        continue;
-      }
-      try {
-        await db
-          .update(teamCardKeyMetrics)
-          .set({
-            current: upd.current,
-            source: 'context_upload',
-            source_artifact_id: artifactId ?? metric.source_artifact_id,
-            updated_at: new Date(),
-          })
-          .where(eq(teamCardKeyMetrics.id, upd.metric_id));
-        counts.keyMetricUpdates++;
-        console.log(
-          `[ctx-applier] project=${projectId} table=team_card_key_metrics action=update source=context_upload metric_id=${upd.metric_id}`,
-        );
-      } catch (err) {
-        console.error(
-          `[ctx-applier] key_metrics update failed for metric_id=${upd.metric_id}: ${err instanceof Error ? err.message : err}`,
-        );
-      }
+      const r = await applyTeamMetricCurrent(projectId, {
+        metric_id: upd.metric_id,
+        current: upd.current,
+      }, artifactId);
+      if (r.updated) counts.keyMetricUpdates++;
     }
   }
 
@@ -194,30 +369,11 @@ export async function applyContextUpdaterResult(
   if (Array.isArray(parsed.milestoneTargetDateUpdates)) {
     for (const upd of parsed.milestoneTargetDateUpdates) {
       if (!upd || !upd.milestone_id || !upd.date) continue;
-      const [milestone] = await db
-        .select()
-        .from(milestones)
-        .where(eq(milestones.id, upd.milestone_id));
-      if (!milestone || milestone.project_id !== projectId) {
-        console.log(
-          `[ctx-applier] milestone id=${upd.milestone_id} not in project ${projectId}; skipping`,
-        );
-        continue;
-      }
-      try {
-        await db
-          .update(milestones)
-          .set({ date: upd.date })
-          .where(eq(milestones.id, upd.milestone_id));
-        counts.milestoneDateUpdates++;
-        console.log(
-          `[ctx-applier] project=${projectId} table=milestones action=update_date milestone_id=${upd.milestone_id} date=${upd.date}`,
-        );
-      } catch (err) {
-        console.error(
-          `[ctx-applier] milestones date update failed for milestone_id=${upd.milestone_id}: ${err instanceof Error ? err.message : err}`,
-        );
-      }
+      const r = await applyMilestoneDate(projectId, {
+        milestone_id: upd.milestone_id,
+        target_date: upd.date,
+      }, artifactId);
+      if (r.updated) counts.milestoneDateUpdates++;
     }
   }
 

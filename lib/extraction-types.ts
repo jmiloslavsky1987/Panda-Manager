@@ -54,7 +54,12 @@ export type EntityType =
   | 'focus_area'     // Gap 3 — added Phase 50
   | 'e2e_workflow'   // Gap 4 — added Phase 50
   | 'before_state'   // Gap A — added Phase 51
-  | 'weekly_focus';  // Gap G — added Phase 51
+  | 'weekly_focus'   // Gap G — added Phase 51
+  // Phase 88.1 G5 (Plan 12) — new entity types routed to context-updater applier:
+  | 'evidence_log_entry'      // append-only, business_outcome_id + date + text
+  | 'team_card_activity'      // team_card.latest_activity_text overwrite per team_name
+  | 'team_metric_current'     // team_card_key_metrics.current update per metric label
+  | 'milestone_date_update';  // milestones.date update per milestone name
 
 export interface ExtractionItem {
   entityType: EntityType;
@@ -297,6 +302,13 @@ export async function isAlreadyIngested(
 
     case 'weekly_focus':
       // Ephemeral Redis cache — always allow re-extraction
+      return false;
+
+    // Phase 88.1 G5 (Plan 12) — new types are update/append writes, always surface for review
+    case 'evidence_log_entry':
+    case 'team_card_activity':
+    case 'team_metric_current':
+    case 'milestone_date_update':
       return false;
 
     default:

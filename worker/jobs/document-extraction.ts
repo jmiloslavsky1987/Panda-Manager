@@ -17,6 +17,7 @@ import { extractionJobs, artifacts, actions, risks, milestones, keyDecisions, en
 import { extractDocumentText } from '../../lib/document-extractor';
 import { readSettings } from '../../lib/settings-core';
 import { isAlreadyIngested } from '../../lib/extraction-types';
+import type { EntityType } from '../../lib/extraction-types';
 import { runPass5ChangeDetection } from './change-detection';
 import { runDirectIntentExtraction, type DirectIntentItem } from './direct-intent-extraction';
 
@@ -112,12 +113,12 @@ Entity type guidance:
 - onboarding_step: { team_name, step_name, track, status, completed_date } — specific onboarding step for a team. Prefer exact standard step names: ADR: "Kickoff", "Workflow Discovery", "Solution Design", "Single Sign-On", "Data Normalization", "Environments", "Incident Tags", "Correlation", "Documentation", "Go-Live Prep", "UAT". Biggy: "Kickoff", "Single Sign-On", "Security & Approvals", "Action Plans", "Workflows", "Managed Incident Channels", "Testing", "Validation", "Team Launch Prep". NOT the same as a generic task
 - integration: { tool_name, category, connection_status, notes } — connection status of a tool (not-connected | configured | validated | production | blocked); focus on operational readiness and connection state, NOT architecture workflow phase. Status guide: configured = basic connection active OR currently in pilot/testing; validated = tested end-to-end and verified; production = fully live at scale; blocked = connection failed or on hold; not-connected = no active connection or only planned
 - wbs_task: { title, track (WBS template track — INFER from document context: "ADR" if BigPanda/enterprise deployment, "Biggy" if startup/SMB, "Incident Prevention" if document contains change-ticket / change-request / CHG- / RFC / CAB / change advisory board / risk score / change risk / ServiceNow change / JSM change / blast radius / freeze window / 5-category / weighted risk references. Default to "ADR" if unclear), parent_section_name (section heading this task falls under — INFER from heading hierarchy; if item appears under "Solution Design", use "Solution Design". Match to seeded template names: Solution Design, Technical Architecture, Implementation, Go-Live), level (1, 2, or 3 — 1 for top-level sections, 2 for sub-items, 3 for leaf tasks), status ("not_started" | "in_progress" | "complete" — normalize variants: "done"/"finished" → "complete", "in progress"/"ongoing" → "in_progress", "not started"/"todo" → "not_started"), description (task details or null) } — task that belongs in WBS structure; extract track and parent section verbatim as they appear in document; use level to indicate hierarchy depth. QUALITY RULES: (1) Do NOT extract generic checklist items that are standard boilerplate (e.g., "Schedule meeting", "Send email", "Review document") — only extract tasks with specific project context. (2) Do NOT extract tasks that are clearly duplicates of each other within this document — if two tasks describe the same work, keep only the most specific one. (3) Prefer fewer, higher-quality tasks over exhaustive lists of micro-steps.
-- arch_node: { track ("ADR Track" | "AI Assistant Track" | "Incident Prevention Track" — ONLY these three values are valid; if track name is different, skip this entity), node_name (tool or capability name — e.g., "Alert Intelligence", "Incident Intelligence", "Knowledge Sources", "Change Risk Console"), status (Node deployment status — See STATUS NORMALIZATION table above. Common signals: "configured" → live, "in testing" → pilot, "on roadmap" → planned), notes (integration details, status notes, or null) } — architecture capability or tool node; extract track verbatim; use for system components, tools, integrations mentioned in architecture context
+- arch_node: { track ("ADR Track" | "AI Assistant Track" | "Incident Prevention Track" — ONLY these three values are valid; if track name is different, skip this entity), node_name (tool or capability name — e.g., "Alert Intelligence", "Incident Intelligence", "Knowledge Sources", "Change Risk Console"), status (Node deployment status — See STATUS NORMALIZATION table above. Common signals: "configured" → live, "in testing" → complete, "on roadmap" → planned), notes (integration details, status notes, or null) } — architecture capability or tool node; extract track verbatim; use for system components, tools, integrations mentioned in architecture context
 - focus_area: { title, tracks, why_it_matters, current_status, next_step, bp_owner, customer_owner } — a named focus area or strategic priority with ownership and status; use for named workstreams, priorities, or initiatives with a clear owner and next step
 - e2e_workflow: { team_name, workflow_name, steps } — an end-to-end workflow for a team. ASSEMBLE from scattered mentions: stitch together a team's end-to-end journey even when steps appear across multiple sections of the transcript. steps is an array of { label, track, status, position } objects; assign sequential positions starting at 1.
   Example: Document mentions "NOC team starts with alert ingestion, then correlation, then creates incidents in ServiceNow" → extract as steps: [{"label": "Alert Ingestion", "track": "ADR", "status": "live", "position": 1}, {"label": "Correlation", "track": "ADR", "status": "live", "position": 2}, {"label": "Incident Creation in ServiceNow", "track": "ADR", "status": "live", "position": 3}]. Use null for any step field not determinable from context.
 - note: { content, context } — use for any valuable content that does not fit the above types: observations, meeting highlights, open questions, context, or anything that would be useful to preserve but has no specific schema. NEVER use note for: pre-BigPanda pain-point descriptions or alert-noise/manual-triage content (use before_state instead), team workflow step sequences (use e2e_workflow instead), or tool connection statuses (use integration instead).
-- team_pathway: { team_name, route_description (the delivery route steps joined by ' → ' e.g. "Alert Ingest → Correlation → Incident Creation → SNow Ticket"), status ("live" | "in_progress" | "pilot" | "planned"), notes } — named delivery pathway for a team through the BigPanda platform; use when document describes team-specific routes or journeys through the system
+- team_pathway: { team_name, route_description (the delivery route steps joined by ' → ' e.g. "Alert Ingest → Correlation → Incident Creation → SNow Ticket"), status ("live" | "in_progress" | "complete" | "planned"), notes } — named delivery pathway for a team through the BigPanda platform; use when document describes team-specific routes or journeys through the system
 - before_state: { aggregation_hub_name (INFER the primary tool being replaced or supplemented — reason from context even if not explicitly named; e.g., if ServiceNow is described as the current ticketing system being supplemented, use "ServiceNow"), alert_to_ticket_problem (ASSEMBLE from scattered pain-point mentions throughout the document — describe the alert workflow pain), pain_points (SYNTHESIZE all pain points found anywhere — comma-separate comparative phrases like "before BigPanda", "we used to", "currently struggling with", problem descriptions) } — customer's current state before BigPanda adoption. TRIGGER: Attempt extraction if ANY pain-point signal exists anywhere (comparative language, "struggling with", "manual triage", "alert noise", "previously", broken-state descriptions). THRESHOLD: A thin entity is more useful than a missing one — users can edit or dismiss. SINGLETON: Extract at most ONE before_state per document.
 - weekly_focus: { bullets (JSON array of 3–5 strings — SYNTHESIZE from actual project signals; each bullet is an action-oriented imperative phrase, e.g. "Resolve ServiceNow integration blocker before pilot launch") } — ALWAYS synthesize weekly_focus even if no "This Week" section exists. SOURCE SIGNALS in priority order: (1) open action items and overdue tasks, (2) unresolved risks, (3) upcoming milestones. Do NOT extract verbatim; generate focused, prioritized items from the document's actual project state. Hard limit: 3–5 bullets maximum — prioritize rather than enumerate everything. SINGLETON: Extract at most ONE weekly_focus entity per document.
 
@@ -132,7 +133,7 @@ Always map extracted status values to canonical enum values using this table:
 | completed         | complete, completed, done, finished, closed, resolved      |
 | blocked           | blocked, on hold, waiting, stalled, paused, deferred       |
 | live              | live, deployed, production, in production, released        |
-| pilot             | pilot, trial, testing, poc, proof of concept               |
+| complete          | complete, pilot, trial, testing, poc, proof of concept     |
 | planned           | planned, roadmap, future, upcoming, scheduled              |
 
 IMPORTANT disambiguation rules — read carefully before assigning entityType:
@@ -199,6 +200,7 @@ Output: [] (no task/action entities — wbs_task is handled in Pass 3)
 - decision: { decision, rationale, made_by, date }
 - note: { content, context } — use for any valuable content that does not fit the above types: observations, meeting highlights, open questions, context, or anything that would be useful to preserve but has no specific schema. NEVER use note for: pre-BigPanda pain-point descriptions or alert-noise/manual-triage content (use before_state instead), team workflow step sequences (use e2e_workflow instead), or tool connection statuses (use integration instead).
 - history: { date, content, author }
+- milestone_date_update: { name, target_date } OR { milestone_id, target_date } — update the target date of an existing milestone when document explicitly states a new or revised date. Use when text says "the Go-Live milestone has been moved to X", "we pushed the deadline to Y", or similar explicit date-change language. target_date is an ISO date string (e.g. "2026-08-15"). name is the milestone name verbatim; milestone_id if known. TRIGGER: only extract when the document says an EXISTING milestone date is changing. Do NOT extract for new milestones (use milestone instead).
 
 Key disambiguation for this pass:
 - task vs wbs_task: task = generic project action item with owner, status, phase (not tied to a WBS template). If document mentions WBS structure, ADR/Biggy tracks, or explicit template section names → skip it (will be extracted in pass 3 as wbs_task).
@@ -237,7 +239,7 @@ Extract all names exactly as they appear in the document. Do not abbreviate, nor
 FOCUS ON THESE ENTITY TYPES ONLY FOR THIS PASS:
 <example>
 Input: "BigPanda Alert Intelligence module is currently in pilot with the NOC team"
-Output: [{"entityType": "arch_node", "fields": {"track": "ADR Track", "node_name": "Alert Intelligence", "status": "pilot", "notes": "Currently in pilot with NOC team"}, "confidence": 0.9, "sourceExcerpt": "Alert Intelligence module is currently in pilot"}]
+Output: [{"entityType": "arch_node", "fields": {"track": "ADR Track", "node_name": "Alert Intelligence", "status": "complete", "notes": "Currently in pilot with NOC team"}, "confidence": 0.9, "sourceExcerpt": "Alert Intelligence module is currently in pilot"}]
 NOT an "architecture" (diagram text) — this is a specific named arch_node with a status.
 </example>
 
@@ -259,7 +261,7 @@ NOT a "note" or "history" — conversational pain-point language about pre-BigPa
 
 
 - architecture: { tool_name, track, phase, integration_group, status, integration_method } — workflow phase and integration method; integration_group = logical grouping within a phase (e.g. "ALERT NORMALIZATION", "ON-DEMAND DURING INVESTIGATION") or null; focus on how the tool integrates into delivery workflow
-- arch_node: { track ("ADR Track" | "AI Assistant Track" | "Incident Prevention Track" — ONLY these three values are valid; if track name is different, skip this entity), node_name (tool or capability name — e.g., "Alert Intelligence", "Incident Intelligence", "Knowledge Sources", "Change Risk Console"), status (Node deployment status — See STATUS NORMALIZATION table above. Common signals: "configured" → live, "in testing" → pilot, "on roadmap" → planned), notes (integration details, status notes, or null) } — architecture capability or tool node; extract track verbatim; use for system components, tools, integrations mentioned in architecture context
+- arch_node: { track ("ADR Track" | "AI Assistant Track" | "Incident Prevention Track" — ONLY these three values are valid; if track name is different, skip this entity), node_name (tool or capability name — e.g., "Alert Intelligence", "Incident Intelligence", "Knowledge Sources", "Change Risk Console"), status (Node deployment status — See STATUS NORMALIZATION table above. Common signals: "configured" → live, "in testing" → complete, "on roadmap" → planned), notes (integration details, status notes, or null) } — architecture capability or tool node; extract track verbatim; use for system components, tools, integrations mentioned in architecture context
 - integration: { tool_name, category, connection_status, notes } — connection status of a tool (not-connected | configured | validated | production | blocked); focus on operational readiness and connection state, NOT architecture workflow phase. Status guide: configured = basic connection active OR currently in pilot/testing; validated = tested end-to-end and verified; production = fully live at scale; blocked = connection failed or on hold; not-connected = no active connection or only planned
 - before_state: { aggregation_hub_name (INFER the primary tool being replaced or supplemented — reason from context even if not explicitly named; e.g., if ServiceNow is described as the current ticketing system being supplemented, use "ServiceNow"), alert_to_ticket_problem (ASSEMBLE from scattered pain-point mentions throughout the document — describe the alert workflow pain), pain_points (SYNTHESIZE all pain points found anywhere — comma-separate comparative phrases like "before BigPanda", "we used to", "currently struggling with", problem descriptions) } — customer's current state before BigPanda adoption. TRIGGER: Attempt extraction if ANY pain-point signal exists anywhere (comparative language, "struggling with", "manual triage", "alert noise", "previously", broken-state descriptions). THRESHOLD: A thin entity is more useful than a missing one — users can edit or dismiss. SINGLETON: Extract at most ONE before_state per document.
 
@@ -320,7 +322,7 @@ Output: [{"entityType": "team", "fields": {"team_name": "NOC Team", "track": "AD
 
 <example>
 Input: "Mike: End-to-end for the NOC — alerts come in from Dynatrace and Splunk, BigPanda runs correlation and enrichment, then anything that hits the severity threshold automatically creates a ticket in ServiceNow. The NOC engineer reviews it there, works the incident, closes it out. We're also routing high-severity incidents to PagerDuty for on-call escalation but that's still manual."
-Output: [{"entityType": "e2e_workflow", "fields": {"team_name": "NOC", "workflow_name": "NOC Alert-to-Resolution Workflow", "steps": [{"label": "Alert Ingest (Dynatrace, Splunk)", "track": "ADR", "status": "live", "position": 1}, {"label": "Correlation and Enrichment", "track": "ADR", "status": "live", "position": 2}, {"label": "ServiceNow Ticket Creation", "track": "ADR", "status": "pilot", "position": 3}, {"label": "NOC Engineer Review and Resolution", "track": "ADR", "status": "live", "position": 4}, {"label": "PagerDuty Escalation (manual)", "track": "ADR", "status": "planned", "position": 5}]}, "confidence": 0.85, "sourceExcerpt": "End-to-end for the NOC — alerts come in from Dynatrace and Splunk..."}]
+Output: [{"entityType": "e2e_workflow", "fields": {"team_name": "NOC", "workflow_name": "NOC Alert-to-Resolution Workflow", "steps": [{"label": "Alert Ingest (Dynatrace, Splunk)", "track": "ADR", "status": "live", "position": 1}, {"label": "Correlation and Enrichment", "track": "ADR", "status": "live", "position": 2}, {"label": "ServiceNow Ticket Creation", "track": "ADR", "status": "complete", "position": 3}, {"label": "NOC Engineer Review and Resolution", "track": "ADR", "status": "live", "position": 4}, {"label": "PagerDuty Escalation (manual)", "track": "ADR", "status": "planned", "position": 5}]}, "confidence": 0.85, "sourceExcerpt": "End-to-end for the NOC — alerts come in from Dynatrace and Splunk..."}]
 NOT a "workstream" or "team_pathway" — a described sequence of steps for a named team is always e2e_workflow.
 </example>
 
@@ -332,6 +334,8 @@ NOT a "workstream" or "team_pathway" — a described sequence of steps for a nam
 - e2e_workflow: { team_name, workflow_name, steps } — PRIMARY type for any team workflow sequence. Use this whenever a team's process steps are described, even conversationally. ASSEMBLE from scattered mentions: stitch together a team's end-to-end journey even when steps appear across multiple sections. steps is an array of { label, track, status, position } objects; assign sequential positions starting at 1.
   Example: Document mentions "NOC team starts with alert ingestion, then correlation, then creates incidents in ServiceNow" → extract as steps: [{"label": "Alert Ingestion", "track": "ADR", "status": "live", "position": 1}, {"label": "Correlation", "track": "ADR", "status": "live", "position": 2}, {"label": "Incident Creation in ServiceNow", "track": "ADR", "status": "live", "position": 3}]. Use null for any step field not determinable from context.
   IMPORTANT: Prefer e2e_workflow for any described sequence. team_pathway is handled in Pass 4.
+- team_card_activity: { team_name, latest_activity, latest_activity_at } — update the most recent activity summary for a named team card. Use when the document describes what a specific team last did or their current activity focus. latest_activity is a brief description of the most recent team activity. latest_activity_at is an optional ISO date string (e.g. "2026-05-15"). TRIGGER: extract when document says a team "completed X", "is currently working on Y", or "last activity was Z". One entity per team — if multiple activities mentioned, use the most recent.
+- team_metric_current: { team_card_id, label, current } OR { metric_id, current } — update the current value of a named key metric for a team card. Use when the document contains a numeric progress update for a tracked metric. label is the metric name as it appears in the team card (e.g. "Risk Categories Live", "MTTR", "Alert Noise Reduction"). current is the current value string (e.g. "3 / 5", "1.5hrs", "67%"). Provide either metric_id (if known) OR team_card_id + label to identify the metric. TRIGGER: extract when document gives a specific measured value for a team metric.
 
 Key disambiguation for this pass:
 - e2e_workflow vs team_pathway: If a team's process involves identifiable steps (even described conversationally), use e2e_workflow. Use team_pathway ONLY for a simple named route string with no step-level detail. When in doubt, prefer e2e_workflow.
@@ -391,15 +395,17 @@ NOT e2e_workflow — this is a simple route string with no per-step detail. e2e_
 </example>
 
 
-- team_pathway: { team_name, route_description (the delivery route steps joined by ' → ' e.g. "Alert Ingest → Correlation → Incident Creation → SNow Ticket"), status ("live" | "in_progress" | "pilot" | "planned"), notes } — use ONLY when the document describes a named delivery route as a simple route string with no step details. If step details exist, e2e_workflow (Pass 3) already captured it.
+- team_pathway: { team_name, route_description (the delivery route steps joined by ' → ' e.g. "Alert Ingest → Correlation → Incident Creation → SNow Ticket"), status ("live" | "in_progress" | "complete" | "planned"), notes } — use ONLY when the document describes a named delivery route as a simple route string with no step details. If step details exist, e2e_workflow (Pass 3) already captured it.
 - stakeholder: { name, role, email, account } — a NAMED INDIVIDUAL with role, email, account. Not a team (teams were handled in Pass 3).
 - businessOutcome: { title, track, description, delivery_status } — STRICT SCOPE: Only extract outcomes that directly speak to business value delivered by BigPanda adoption: reduced MTTR, alert noise reduction, operational cost savings, improved SLA compliance, team efficiency gains, business risk reduction, revenue protection. Do NOT extract task completions, configuration steps, onboarding progress, or process activities. Each outcome must describe a tangible business benefit.
 - onboarding_step: { team_name, step_name, track, status, completed_date } — specific onboarding step for a team. Prefer exact standard step names: ADR: "Kickoff", "Workflow Discovery", "Solution Design", "Single Sign-On", "Data Normalization", "Environments", "Incident Tags", "Correlation", "Documentation", "Go-Live Prep", "UAT". Biggy: "Kickoff", "Single Sign-On", "Security & Approvals", "Action Plans", "Workflows", "Managed Incident Channels", "Testing", "Validation", "Team Launch Prep". NOT the same as a generic task.
+- evidence_log_entry: { business_outcome_id, date, text } — append an evidence entry to the Evidence Log for a business outcome. Use when the document describes evidence of business-outcome progress such as reduced MTTR, improved alert noise ratio, SLA improvements, or operational efficiency gains that are tied to a specific, measurable outcome already tracked in the system. business_outcome_id is the numeric ID of the related business outcome (infer from context if mentioned, otherwise omit). date is an ISO date string (e.g. "2026-05-15") — infer from document context or use today's date as fallback. text is a concise description of the evidence (1-2 sentences). TRIGGER: extract when text says something like "MTTR dropped to X", "we reduced alert noise by Y%", "SLA compliance improved to Z%", or any measurable progress signal tied to a named business outcome.
 
 Key disambiguation for this pass:
 - team_pathway vs e2e_workflow: Use team_pathway ONLY for a simple route string with no per-step detail. If step-level detail exists, it was extracted as e2e_workflow in Pass 3.
 - stakeholder vs team: stakeholder = a NAMED INDIVIDUAL with role, email, account. team = a GROUP with onboarding status (handled in Pass 3).
 - onboarding_step vs task: onboarding_step = a specific named step in the BigPanda onboarding template for a specific team. Generic project tasks go to task (Pass 1).
+- evidence_log_entry vs businessOutcome: businessOutcome = a named goal/target (already exists in DB). evidence_log_entry = a new data point proving progress toward that goal. Extract both if both apply.
 
 ## SCANNING INSTRUCTION
 Before extracting, scan the document section-by-section (introduction, main body, tables, bullet lists,
@@ -480,7 +486,7 @@ export const PASSES: ExtractionPass[] = [
   {
     passNumber: 1,
     label: 'Project data',
-    entityTypes: ['action', 'risk', 'task', 'milestone', 'decision', 'note', 'history'],
+    entityTypes: ['action', 'risk', 'task', 'milestone', 'decision', 'note', 'history', 'milestone_date_update'],
   },
   {
     passNumber: 2,
@@ -492,6 +498,7 @@ export const PASSES: ExtractionPass[] = [
     label: 'Teams & delivery',
     entityTypes: [
       'team', 'wbs_task', 'workstream', 'focus_area', 'e2e_workflow',
+      'team_card_activity', 'team_metric_current',
     ],
   },
   {
@@ -499,32 +506,14 @@ export const PASSES: ExtractionPass[] = [
     label: 'People & outcomes',
     entityTypes: [
       'team_pathway', 'stakeholder', 'businessOutcome', 'onboarding_step',
+      'evidence_log_entry',
     ],
   },
 ];
 
-export type EntityType =
-  | 'action'
-  | 'risk'
-  | 'decision'
-  | 'milestone'
-  | 'stakeholder'
-  | 'task'
-  | 'architecture'
-  | 'history'
-  | 'businessOutcome'
-  | 'team'
-  | 'note'
-  | 'team_pathway'
-  | 'workstream'
-  | 'onboarding_step'
-  | 'integration'
-  | 'wbs_task'
-  | 'arch_node'
-  | 'focus_area'
-  | 'e2e_workflow'
-  | 'before_state'
-  | 'weekly_focus';
+// Plan 12 — canonical EntityType lives in lib/extraction-types.ts.
+// Re-exported here for backward compat with prior local consumers.
+export type { EntityType } from '../../lib/extraction-types';
 
 export interface ExtractionItem {
   entityType: EntityType;
