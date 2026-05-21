@@ -28,7 +28,7 @@ import { describe, expect, it } from 'vitest'
 import { readFileSync, existsSync, readdirSync } from 'fs'
 import { join } from 'path'
 
-const repoRoot = join(__dirname, '..', '..')
+const repoRoot = process.cwd()
 const migrationPath = join(repoRoot, 'db/migrations/0056_rename_pilot_to_complete.sql')
 const schemaPath = join(repoRoot, 'db/schema.ts')
 const constantsPath = join(repoRoot, 'lib/constants/track-workstream-stages.ts')
@@ -97,12 +97,15 @@ describe('Phase 88.1 G4 — pilot → complete enum rename (integration_track_st
       const rel = filePath.replace(repoRoot + '/', '')
       // (b) tests
       if (/\/tests\/|\/__tests__\/|\.test\.|\.spec\./.test(rel)) return true
-      // (a) coerceIntegrationStatus
+      // (a) coerceIntegrationStatus — 'pilot' is IntegrationStatus enum #2 input synonym mapping to 'configured'
+      // (a2) coerceTrackStatus input alias — 'pilot' is kept as backward-compat INPUT alias that RETURNS 'complete'
       if (rel === 'app/api/ingestion/approve/route.ts') {
         const ctxStart = Math.max(0, lineNo - 3)
         const ctxEnd = Math.min(lines.length, lineNo + 2)
         const ctx = lines.slice(ctxStart, ctxEnd).join('\n')
         if (/coerceIntegrationStatus|return 'configured'/.test(ctx)) return true
+        // coerceTrackStatus: 'pilot' input alias kept in array that returns 'complete'
+        if (/return 'complete'/.test(ctx) && /\['complete'.*'pilot'|'pilot'.*'testing'/.test(ctx)) return true
       }
       // (c) worker prompt sourceExcerpt verbatim
       if (rel === 'worker/jobs/document-extraction.ts') {

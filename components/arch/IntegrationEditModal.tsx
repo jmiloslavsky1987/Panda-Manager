@@ -37,7 +37,7 @@ const IP_PHASES_BY_SECTION = {
 const STATUS_OPTIONS = [
   { value: 'live', label: 'Live' },
   { value: 'in_progress', label: 'In Progress' },
-  { value: 'pilot', label: 'Pilot' },
+  { value: 'complete', label: 'Complete' },
   { value: 'planned', label: 'Planned' },
 ]
 

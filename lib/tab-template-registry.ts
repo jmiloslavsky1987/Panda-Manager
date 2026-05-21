@@ -107,7 +107,7 @@ export const TAB_TEMPLATE_REGISTRY = {
       {
         name: 'Integration Track',
         requiredFields: ['name', 'status', 'type'],
-        placeholderText: 'Add an integration — name, current status (live/in_progress/pilot/planned), and integration type'
+        placeholderText: 'Add an integration — name, current status (live/in_progress/complete/planned), and integration type'
       },
       {
         name: 'Workflow',

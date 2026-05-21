@@ -22,10 +22,10 @@ function StatusPill({ status }: StatusPillProps) {
     bg = '#fef3c7'
     color = '#92400e'
     label = 'In Progress'
-  } else if (normalized === 'pilot') {
+  } else if (normalized === 'complete') {
     bg = '#fef3c7'
     color = '#92400e'
-    label = 'Pilot'
+    label = 'Complete'
   } else if (normalized === 'planned') {
     bg = '#f1f5f9'
     color = '#475569'

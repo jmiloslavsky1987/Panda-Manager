@@ -69,7 +69,7 @@ export const DEFAULT_TRACK_WORKSTREAM_STAGES: Record<TrackKey, TrackWorkstreamSt
  *
  * NOTE: Because TWO legacy columns each map to `integrations` and THREE map to
  * `platform_configuration`, the migration must reduce per-row using a "highest progress wins"
- * rule (live > in_progress > pilot > planned) when collapsing duplicates. Plan 07
+ * rule (live > complete > in_progress > planned) when collapsing duplicates. Plan 07
  * implements this reduction; this mapping only declares the column-to-stage relationship.
  */
 export const LEGACY_ADR_COLUMN_TO_STAGE_KEY: Record<string, string> = {

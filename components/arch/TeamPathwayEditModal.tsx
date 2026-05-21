@@ -4,7 +4,7 @@ import type { TeamPathway } from '@/lib/queries'
 
 const STATUS_OPTIONS = [
   { value: 'planned',     label: 'Planned' },
-  { value: 'pilot',       label: 'Pilot' },
+  { value: 'complete',     label: 'Complete' },
   { value: 'in_progress', label: 'In Progress' },
   { value: 'live',        label: 'Live' },
 ]

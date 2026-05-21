@@ -11,7 +11,7 @@ const postSchema = z.object({
   track: z.string().min(1),
   phase: z.string().optional(),
   integration_group: z.string().nullish(),
-  status: z.enum(['live', 'in_progress', 'pilot', 'planned']).optional(),
+  status: z.enum(['live', 'in_progress', 'complete', 'planned']).optional(),
   integration_method: z.string().nullish(),
   notes: z.string().nullish(),
 })

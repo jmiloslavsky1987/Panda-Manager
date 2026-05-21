@@ -1001,7 +1001,7 @@ export type WorkflowStep = typeof workflowSteps.$inferSelect;
 export type FocusArea = typeof focusAreas.$inferSelect;
 export type ArchitectureIntegration = typeof architectureIntegrations.$inferSelect;
 // ArchitectureIntegration: { id, project_id, tool_name, track, phase, integration_group, status, integration_method, notes, created_at }
-// track: 'ADR' | 'Biggy'; status: 'live' | 'in_progress' | 'pilot' | 'planned'
+// track: 'ADR' | 'Biggy'; status: 'live' | 'in_progress' | 'complete' | 'planned'
 
 export interface E2eWorkflowWithSteps extends E2eWorkflow {
   steps: WorkflowStep[];

@@ -47,7 +47,7 @@ function cardBg(status: string): string {
   switch (status) {
     case 'live':        return 'bg-green-50 border-green-200 hover:bg-green-100'
     case 'in_progress': return 'bg-amber-50 border-amber-200 hover:bg-amber-100'
-    case 'pilot':       return 'bg-sky-50 border-sky-200 hover:bg-sky-100'
+    case 'complete':    return 'bg-sky-50 border-sky-200 hover:bg-sky-100'
     case 'planned':     return 'bg-zinc-50 border-zinc-200 hover:bg-zinc-100'
     default:            return 'bg-zinc-50 border-zinc-200 hover:bg-zinc-100'
   }
@@ -57,7 +57,7 @@ function statusLabel(status: string): string {
   switch (status) {
     case 'live':        return 'LIVE'
     case 'in_progress': return 'In Progress'
-    case 'pilot':       return 'Pilot'
+    case 'complete':    return 'Complete'
     case 'planned':     return 'Planned'
     default:            return status
   }
@@ -67,7 +67,7 @@ function statusColor(status: string): string {
   switch (status) {
     case 'live':        return 'text-green-600 font-semibold'
     case 'in_progress': return 'text-amber-600 font-semibold'
-    case 'pilot':       return 'text-sky-600 font-semibold'
+    case 'complete':    return 'text-sky-600 font-semibold'
     case 'planned':     return 'text-zinc-400'
     default:            return 'text-zinc-400'
   }

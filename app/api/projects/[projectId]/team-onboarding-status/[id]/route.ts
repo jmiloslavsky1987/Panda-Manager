@@ -6,14 +6,14 @@ import { sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { requireProjectRole } from "@/lib/auth-server";
 
-const trackStatusEnum = z.enum(['live', 'in_progress', 'pilot', 'planned']).nullable().optional()
+const trackStatusEnum = z.enum(['live', 'in_progress', 'complete', 'planned']).nullable().optional()
 
 const onboardingStatusEnum = z.enum(['not-started', 'in-progress', 'complete', 'blocked']).optional()
 
 // Phase 88.1 G1: per-stage status entry for the new pivot table
 const stageStatusEntry = z.object({
   stage_key: z.string().min(1),
-  status:    z.enum(['live', 'in_progress', 'pilot', 'planned']).nullable(),
+  status:    z.enum(['live', 'in_progress', 'complete', 'planned']).nullable(),
 })
 
 const patchSchema = z.object({

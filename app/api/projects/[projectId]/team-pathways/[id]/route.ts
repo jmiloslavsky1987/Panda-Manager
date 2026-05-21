@@ -9,7 +9,7 @@ import { requireProjectRole } from "@/lib/auth-server"
 const patchSchema = z.object({
   team_name:   z.string().min(1).optional(),
   route_steps: z.array(z.object({ label: z.string() })).optional(),
-  status:      z.enum(['live', 'in_progress', 'pilot', 'planned']).optional(),
+  status:      z.enum(['live', 'in_progress', 'complete', 'planned']).optional(),
   notes:       z.string().nullable().optional(),
 })
 

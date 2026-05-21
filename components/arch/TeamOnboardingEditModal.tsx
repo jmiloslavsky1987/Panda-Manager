@@ -8,11 +8,11 @@ const STATUS_OPTIONS = [
   { value: '',            label: '—' },
   { value: 'live',        label: 'Live' },
   { value: 'in_progress', label: 'In Progress' },
-  { value: 'pilot',       label: 'Pilot' },
+  { value: 'complete',     label: 'Complete' },
   { value: 'planned',     label: 'Planned' },
 ]
 
-type IntegrationTrackStatus = 'live' | 'in_progress' | 'pilot' | 'planned'
+type IntegrationTrackStatus = 'live' | 'in_progress' | 'complete' | 'planned'
 
 interface Props {
   projectId: number

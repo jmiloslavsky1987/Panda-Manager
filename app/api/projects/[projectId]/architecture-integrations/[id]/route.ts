@@ -11,7 +11,7 @@ const patchSchema = z.object({
   track: z.string().min(1).optional(),
   phase: z.string().nullable().optional(),
   integration_group: z.string().nullable().optional(),
-  status: z.enum(['live', 'in_progress', 'pilot', 'planned']).optional(),
+  status: z.enum(['live', 'in_progress', 'complete', 'planned']).optional(),
   integration_method: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
 })
