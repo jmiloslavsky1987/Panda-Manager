@@ -2,10 +2,32 @@ import 'server-only'
 import { db } from '@/db'
 import {
   actions, risks, milestones, engagementHistory, keyDecisions,
-  stakeholders, businessOutcomes, teamOnboardingStatus, projects
+  stakeholders, businessOutcomes, teamOnboardingStatus, projects,
+  trackWorkstreamStages,
 } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { TAB_TEMPLATE_REGISTRY } from './tab-template-registry'
+import { DEFAULT_TRACK_WORKSTREAM_STAGES, type TrackKey } from './constants/track-workstream-stages'
+
+/**
+ * Seeds default track_workstream_stages rows for the given project + enabled tracks.
+ * Idempotent via onConflictDoNothing — safe to call multiple times.
+ * Phase 88.1 G1 gap closure: replaces the global COLUMNS constant with a data-driven model.
+ */
+async function seedTrackWorkstreamStages(projectId: number, enabledTracks: Set<TrackKey>): Promise<void> {
+  const rows = Array.from(enabledTracks).flatMap((track) =>
+    DEFAULT_TRACK_WORKSTREAM_STAGES[track].map((s) => ({
+      project_id: projectId,
+      track,
+      stage_key: s.stage_key,
+      stage_label: s.stage_label,
+      display_order: s.display_order,
+      source: 'seed' as const,
+    }))
+  )
+  if (rows.length === 0) return
+  await db.insert(trackWorkstreamStages).values(rows).onConflictDoNothing()
+}
 
 export async function seedProjectFromRegistry(projectId: number): Promise<void> {
   // Idempotency check — skip if already seeded
@@ -110,6 +132,16 @@ export async function seedProjectFromRegistry(projectId: number): Promise<void> 
   if (teamRows.length > 0) {
     await db.insert(teamOnboardingStatus).values(teamRows)
   }
+
+  // --- teams tab: seed default track_workstream_stages for each enabled track ---
+  // Phase 88.1 G1 gap closure: replaces global COLUMNS constant with per-project stage config.
+  // Idempotent via UNIQUE (project_id, track, stage_key) index + onConflictDoNothing.
+  const enabledTracks = new Set<TrackKey>([
+    ...(tracks.adr                 ? ['ADR']                  as TrackKey[] : []),
+    ...(tracks.biggy               ? ['Biggy']                as TrackKey[] : []),
+    ...(tracks.incident_prevention ? ['Incident Prevention']  as TrackKey[] : []),
+  ])
+  await seedTrackWorkstreamStages(projectId, enabledTracks)
 
   // --- plan tab — insert business_outcomes placeholder (Business Outcomes section) ---
   const planTemplate = TAB_TEMPLATE_REGISTRY.plan

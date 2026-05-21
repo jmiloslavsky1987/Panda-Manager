@@ -31,9 +31,11 @@ import {
   onboardingPhases,
   onboardingSteps,
   teamOnboardingStatus,
+  trackWorkstreamStages,
   wbsItems,
 } from '@/db/schema'
 import { INCIDENT_PREVENTION_ONBOARDING_CONFIG } from '@/lib/onboarding-config'
+import { DEFAULT_TRACK_WORKSTREAM_STAGES } from '@/lib/constants/track-workstream-stages'
 
 /**
  * Seeds the full Incident Prevention track surface for a project:
@@ -302,4 +304,18 @@ export async function seedIncidentPreventionForProject(
       source: 'template',
     })
   }
+
+  // ─── 9. track_workstream_stages — Incident Prevention stages (idempotent) ─
+  // Phase 88.1 G1 gap closure: seed the 5 Incident Prevention workstream stage rows
+  // so the TeamOnboardingTable has column headers for this track on retroactive enable.
+  // Idempotent via UNIQUE (project_id, track, stage_key) index + onConflictDoNothing.
+  const ipStages = DEFAULT_TRACK_WORKSTREAM_STAGES['Incident Prevention'].map((s) => ({
+    project_id: projectId,
+    track: 'Incident Prevention' as const,
+    stage_key: s.stage_key,
+    stage_label: s.stage_label,
+    display_order: s.display_order,
+    source: 'seed' as const,
+  }))
+  await tx.insert(trackWorkstreamStages).values(ipStages).onConflictDoNothing()
 }
