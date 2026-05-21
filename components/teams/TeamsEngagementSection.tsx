@@ -4,7 +4,7 @@ import { useState } from 'react';
 import TeamCard from './TeamCard';
 import TeamCardDrawer from './TeamCardDrawer';
 import { TeamOnboardingTable } from '@/components/arch/TeamOnboardingTable';
-import type { TeamCard as TeamCardType, TeamCardKeyMetric } from '@/db/schema';
+import type { TeamCard as TeamCardType, TeamCardKeyMetric, TrackWorkstreamStage, TeamOnboardingStageStatus } from '@/db/schema';
 import type { Milestone, TeamOnboardingStatus } from '@/lib/queries';
 
 interface Props {
@@ -25,6 +25,8 @@ interface Props {
   openRisksByTeam: Record<string, number>;
   recentDecisionByTeam: Record<string, string | null>;
   teamOnboardingStatusRows: TeamOnboardingStatus[];
+  trackWorkstreamStages: TrackWorkstreamStage[];
+  teamOnboardingStageStatus: TeamOnboardingStageStatus[];
 }
 
 export function TeamsEngagementSection(props: Props) {
@@ -42,6 +44,9 @@ export function TeamsEngagementSection(props: Props) {
       <TeamOnboardingTable
         projectId={props.projectId}
         rows={onboardingRows}
+        stages={props.trackWorkstreamStages}
+        stageStatus={props.teamOnboardingStageStatus}
+        active_tracks={props.active_tracks}
         onUpdate={setOnboardingRows}
       />
 

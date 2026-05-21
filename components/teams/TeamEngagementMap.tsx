@@ -44,6 +44,8 @@ export function TeamEngagementMap({
         teamCards={teamCards}
         teamCardKeyMetrics={data.teamCardKeyMetrics}
         teamOnboardingStatusRows={data.teamOnboardingStatus}
+        trackWorkstreamStages={data.trackWorkstreamStages}
+        teamOnboardingStageStatus={data.teamOnboardingStageStatus}
         active_tracks={active_tracks}
         milestonesByTeam={milestonesByTeam}
         trackProgressByTeam={{}} // v1 stub — Phase 88.2 wires real arch integration counts
